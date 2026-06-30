@@ -3,7 +3,7 @@
 // Charger l'autoloader de Composer
 require __DIR__ . '/../vendor/autoload.php';
 
-// Charger l'application Laravel
+// Créer l'application Laravel
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
 // Exécuter la requête
