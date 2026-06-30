@@ -4,10 +4,7 @@
   "installCommand": "npm install",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.1",
-      "environment": {
-        "PHP_VERSION": "8.3"
-      }
+      "runtime": "vercel-php@0.7.1"
     }
   },
   "rewrites": [
