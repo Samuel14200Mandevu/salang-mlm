@@ -4,12 +4,15 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "watch": "vite build --watch",
+        "prod": "npm run build && php artisan view:clear && php artisan cache:clear",
+        "serve": "concurrently \"php artisan serve\" \"npm run dev\""
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.2",
+        "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/vite": "^4.0.0",
-        "alpinejs": "^3.4.2",
+        "alpinejs": "^3.15.12",
         "autoprefixer": "^10.5.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^3.1",
@@ -19,9 +22,7 @@
     },
     "dependencies": {
         "@iconify/iconify": "^3.1.1",
-        "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/typography": "^0.5.20",
-        "alpinejs": "^3.15.12",
         "axios": "^1.18.0",
         "chart.js": "^4.5.1",
         "flowbite": "^4.0.2",

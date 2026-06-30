@@ -8,7 +8,12 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    css: {
-        postcss: './postcss.config.cjs',
+    server: {
+        host: '0.0.0.0',  // Permet l'accès depuis le réseau
+        port: 5173,
+        cors: true,
+        hmr: {
+            host: '192.168.43.60', // Votre IP locale
+        },
     },
 });

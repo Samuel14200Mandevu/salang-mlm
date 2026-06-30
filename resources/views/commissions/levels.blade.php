@@ -1,0 +1,133 @@
+@extends('layouts.app')
+
+@push('styles')
+<style>
+    .level-card {
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+    .level-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+    .level-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        font-weight: 800;
+        font-size: 1rem;
+    }
+    .level-number-1 { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .level-number-2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .level-number-3 { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .level-number-4 { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .level-number-5 { background: rgba(236,72,153,0.15); color: #ec4899; }
+</style>
+@endpush
+
+@section('content')
+<div class="space-y-6">
+    <!-- En-tête -->
+    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">📊 Commissions par Niveau</h1>
+            <p class="text-[var(--text-secondary)] mt-1">Détail des commissions par niveau Unilevel</p>
+        </div>
+        <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm">
+            ← Retour aux commissions
+        </a>
+    </div>
+
+    <!-- Total -->
+    <div class="card-stats animate-fadeInUp delay-1 border-l-4 border-primary-500">
+        <p class="text-sm text-[var(--text-secondary)]">Total des commissions par niveau</p>
+        <p class="text-3xl font-bold text-primary-500">${{ number_format($total ?? 0, 2) }}</p>
+        <p class="text-xs text-[var(--text-secondary)] mt-1">Tous niveaux confondus</p>
+    </div>
+
+    <!-- Niveaux -->
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fadeInUp delay-2">
+        @foreach($levels ?? [] as $level => $data)
+            <div class="level-card card text-center p-4">
+                <div class="level-number level-number-{{ $level }} mx-auto mb-3">
+                    {{ $level }}
+                </div>
+                <h4 class="font-semibold text-[var(--text-primary)] text-sm">{{ $data['label'] }}</h4>
+                <p class="text-2xl font-bold text-primary-500 mt-2">
+                    ${{ number_format($data['amount'], 2) }}
+                </p>
+                <p class="text-sm text-[var(--text-secondary)]">
+                    {{ $data['count'] ?? 0 }} membre(s)
+                </p>
+                <div class="mt-3 p-2 bg-[var(--bg-secondary)] rounded-lg">
+                    <p class="text-xs text-[var(--text-secondary)]">Commission</p>
+                    <p class="font-bold text-primary-500">{{ $data['percentage'] }}%</p>
+                </div>
+                <!-- Barre de progression -->
+                <div class="mt-3 w-full h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                    @php 
+                        $percent = ($total ?? 1) > 0 ? ($data['amount'] / ($total ?? 1)) * 100 : 0;
+                    @endphp
+                    <div class="h-full bg-primary-500 rounded-full" style="width: {{ $percent }}%"></div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <!-- Explication des niveaux -->
+    <div class="card animate-fadeInUp delay-3">
+        <h3 class="font-semibold text-[var(--text-primary)] mb-4">📖 Comment fonctionnent les niveaux</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="flex items-center gap-2">
+                    <span class="level-number level-number-1 text-xs w-8 h-8">1</span>
+                    <div>
+                        <p class="font-semibold text-[var(--text-primary)]">Niveau 1 - Direct</p>
+                        <p class="text-[var(--text-secondary)]">30% des commissions sur les achats de vos filleuls directs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="flex items-center gap-2">
+                    <span class="level-number level-number-2 text-xs w-8 h-8">2</span>
+                    <div>
+                        <p class="font-semibold text-[var(--text-primary)]">Niveau 2 - Indirect</p>
+                        <p class="text-[var(--text-secondary)]">15% des commissions sur les achats des filleuls de vos filleuls</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="flex items-center gap-2">
+                    <span class="level-number level-number-3 text-xs w-8 h-8">3</span>
+                    <div>
+                        <p class="font-semibold text-[var(--text-primary)]">Niveau 3 - Leadership</p>
+                        <p class="text-[var(--text-secondary)]">10% des commissions sur les achats des niveaux 3</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="flex items-center gap-2">
+                    <span class="level-number level-number-4 text-xs w-8 h-8">4-5</span>
+                    <div>
+                        <p class="font-semibold text-[var(--text-primary)]">Niveaux 4 & 5</p>
+                        <p class="text-[var(--text-secondary)]">5% des commissions sur les achats des niveaux 4 et 5</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-3 animate-fadeInUp delay-4">
+        <a href="{{ route('commissions.export') }}" class="btn btn-primary btn-sm">
+            📊 Exporter en CSV
+        </a>
+        <a href="{{ route('commissions.pdf') }}" class="btn btn-outline btn-sm">
+            📄 Exporter en PDF
+        </a>
+    </div>
+</div>
+@endsection

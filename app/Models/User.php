@@ -7,10 +7,16 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Traits\Encryptable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Encryptable;
+
+    /**
+     * Champs à chiffrer avec AES-256
+     */
+    protected $encryptable = ['phone', 'address'];
 
     protected $fillable = [
         'name',
@@ -27,6 +33,8 @@ class User extends Authenticatable
         'total_sponsors',
         'total_team',
         'is_active',
+        'kyc_status',
+        'kyc_verified_at',
         'package_expiry',
         'avatar',
         'country',
@@ -42,6 +50,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'package_expiry' => 'datetime',
+        'kyc_verified_at' => 'datetime',
         'password' => 'hashed',
         'pv_balance' => 'integer',
         'bv_balance' => 'integer',
@@ -106,6 +115,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function kycDocuments()
+    {
+        return $this->hasMany(KycDocument::class);
+    }
+
     // Accesseurs
     public function getFullNameAttribute()
     {
@@ -134,10 +148,24 @@ class User extends Authenticatable
         
         if ($this->package_id) {
             $package = Package::find($this->package_id);
-            return $package ? $package->name : 'None';
+            return $package ? $package->name : 'Aucun package';
         }
         
-        return 'None';
+        return 'Aucun package';
+    }
+
+    public function getPackageIconAttribute()
+    {
+        if ($this->relationLoaded('package') && $this->package) {
+            return $this->package->icon;
+        }
+        
+        if ($this->package_id) {
+            $package = Package::find($this->package_id);
+            return $package ? $package->icon : '📦';
+        }
+        
+        return '📦';
     }
 
     public function getWalletBalanceAttribute()
@@ -154,8 +182,35 @@ class User extends Authenticatable
         return 0;
     }
 
+    public function getStatusLabelAttribute()
+    {
+        return $this->is_active ? '✅ Actif' : '❌ Inactif';
+    }
+
+    public function getKycStatusLabelAttribute()
+    {
+        $labels = [
+            'not_submitted' => '📤 Non soumis',
+            'pending' => '⏳ En attente',
+            'partial' => '⚠️ Partiel',
+            'verified' => '✅ Vérifié',
+            'rejected' => '❌ Rejeté',
+        ];
+        return $labels[$this->kyc_status] ?? ucfirst($this->kyc_status);
+    }
+
+    public function getDecryptedPhoneAttribute()
+    {
+        return $this->phone;
+    }
+
     public function isAdmin()
     {
         return $this->hasRole('admin');
+    }
+
+    public function isKycVerified()
+    {
+        return $this->kyc_status === 'verified';
     }
 }

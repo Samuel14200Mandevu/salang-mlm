@@ -8,6 +8,7 @@ use App\Models\Package;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\RankHistory;
+use App\Notifications\CommissionPaidNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -159,6 +160,20 @@ class CommissionService
             $commission->status = 'paid';
             $commission->paid_at = now();
             $commission->save();
+
+            // Envoyer la notification par email
+            $user = User::find($userId);
+            if ($user) {
+                try {
+                    $user->notify(new CommissionPaidNotification(
+                        $amount,
+                        $type,
+                        $commission->id
+                    ));
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi notification commission: ' . $e->getMessage());
+                }
+            }
         }
 
         return $commission;

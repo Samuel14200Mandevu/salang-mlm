@@ -6,8 +6,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 
 class ProfileController extends Controller
 {
@@ -31,7 +29,7 @@ class ProfileController extends Controller
 
         $user->update($request->only(['name', 'phone', 'country', 'city', 'address']));
 
-        return back()->with('success', 'Profile updated successfully!');
+        return redirect()->route('profile.index')->with('success', 'Profil mis à jour avec succès !');
     }
 
     public function updateAvatar(Request $request)
@@ -42,31 +40,20 @@ class ProfileController extends Controller
 
         $user = Auth::user();
 
-        // Supprimer l'ancien avatar s'il existe
         if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
             unlink(public_path('storage/avatars/' . $user->avatar));
         }
 
         $image = $request->file('avatar');
         $filename = 'avatar_' . $user->id . '_' . time() . '.' . $image->getClientOriginalExtension();
-
-        // Redimensionner et sauvegarder l'image
-        try {
-            $manager = new ImageManager(new Driver());
-            $img = $manager->read($image);
-            $img->cover(300, 300);
-            $img->save(public_path('storage/avatars/' . $filename));
-        } catch (\Exception $e) {
-            // Fallback: sauvegarder sans redimensionnement si Intervention échoue
-            $image->move(public_path('storage/avatars'), $filename);
-        }
+        $image->move(public_path('storage/avatars'), $filename);
 
         $user->avatar = $filename;
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar updated successfully!',
+            'message' => 'Avatar mis à jour avec succès !',
             'avatar_url' => asset('storage/avatars/' . $filename)
         ]);
     }
@@ -81,13 +68,13 @@ class ProfileController extends Controller
         ]);
 
         if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect.']);
         }
 
         $user->password = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Password updated successfully!');
+        return redirect()->route('profile.index')->with('success', 'Mot de passe mis à jour avec succès !');
     }
 
     public function deleteAvatar()
@@ -103,7 +90,33 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar removed successfully!'
+            'message' => 'Avatar supprimé avec succès !'
         ]);
+    }
+
+    public function destroy(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Le mot de passe est incorrect.']);
+        }
+
+        if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
+            unlink(public_path('storage/avatars/' . $user->avatar));
+        }
+
+        if ($user->wallet) {
+            $user->wallet->delete();
+        }
+
+        $user->delete();
+        Auth::logout();
+
+        return redirect('/')->with('success', 'Votre compte a été supprimé.');
     }
 }

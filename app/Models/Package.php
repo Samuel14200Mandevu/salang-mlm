@@ -52,6 +52,43 @@ class Package extends Model
 
     public function getBenefitListAttribute()
     {
-        return $this->benefits ? implode(', ', $this->benefits) : '';
+        if ($this->benefits) {
+            return is_array($this->benefits) ? implode(', ', $this->benefits) : $this->benefits;
+        }
+        
+        // Bénéfices par défaut selon le package
+        $defaultBenefits = [
+            1 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité'],
+            2 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage'],
+            3 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse'],
+            4 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse', 'Support prioritaire'],
+            5 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse', 'Support prioritaire', 'Événements exclusifs'],
+        ];
+        
+        return implode(', ', $defaultBenefits[$this->id] ?? ['Commission jusqu\'à 30%', 'Accès à la boutique']);
+    }
+
+    public function getIconAttribute()
+    {
+        $icons = [
+            1 => '🚀',
+            2 => '🥈',
+            3 => '🥉',
+            4 => '🥇',
+            5 => '💎',
+        ];
+        return $icons[$this->id] ?? '📦';
+    }
+
+    public function getColorAttribute()
+    {
+        $colors = [
+            1 => 'primary',
+            2 => 'info',
+            3 => 'warning',
+            4 => 'purple',
+            5 => 'success',
+        ];
+        return $colors[$this->id] ?? 'primary';
     }
 }

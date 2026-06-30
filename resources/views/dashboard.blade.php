@@ -1,300 +1,246 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    .stat-icon svg { width: 1.25rem; height: 1.25rem; }
+</style>
+@endpush
+
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- ============================================================ -->
-        <!-- EN-TÊTE AVEC ANIMATION -->
-        <!-- ============================================================ -->
-        <div class="mb-6 animate-fadeInUp">
-            <h1 class="text-3xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-            <p class="text-[var(--text-secondary)] mt-1">Bonjour, <span class="font-semibold text-primary-600">{{ Auth::user()->name }}</span></p>
-        </div>
+<div class="space-y-6">
+    <!-- En-tête -->
+    <div class="animate-fadeInUp">
+        <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+        <p class="text-[var(--text-secondary)] mt-1">
+            Bonjour, <span class="font-semibold text-primary-500">{{ Auth::user()->name }}</span>
+        </p>
+    </div>
 
-        <!-- ============================================================ -->
-        <!-- SECTION 1 : PROFIL + STATS -->
-        <!-- ============================================================ -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-            
-            <!-- Carte Profil -->
-            <div class="card-modern lg:col-span-1 animate-slideInLeft">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-2xl text-white font-bold shadow-lg shadow-primary-500/30">
-                        {{ substr(Auth::user()->name, 0, 2) }}
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-[var(--text-primary)]">{{ Auth::user()->name }}</h3>
-                        <p class="text-xs text-[var(--text-secondary)]">EXECUTIVE RANKS</p>
-                        <span class="badge-modern badge-success text-xs">Rank {{ Auth::user()->rank_id ?? 1 }}</span>
-                    </div>
-                </div>
-                
-                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                        <p class="text-[var(--text-secondary)]">MEMBER ID</p>
-                        <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->id }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[var(--text-secondary)]">JOINED</p>
-                        <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->created_at->format('d M Y') }}</p>
-                    </div>
-                </div>
-                
-                <div class="mt-4 p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                    <p class="text-xs text-[var(--text-secondary)]">MY SPONSOR</p>
-                    <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->sponsor?->name ?? 'N/A' }}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">{{ Auth::user()->sponsor?->email ?? 'Aucun parrain' }}</p>
-                </div>
-                
-                <div class="mt-3">
-                    <p class="text-xs text-[var(--text-secondary)]">PACKAGE NAME</p>
-                    <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->package?->name ?? 'Starter Package' }}</p>
-                    <button class="mt-1 text-xs text-primary-600 hover:text-primary-700 font-semibold transition-colors">
-                        Update Package →
-                    </button>
-                </div>
-            </div>
-
-            <!-- 3 Stats Cards -->
-            <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="stat-card animate-fadeInUp delay-1">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Wallet Amount</p>
-                            <p class="text-2xl font-bold text-primary-600 mt-1">₮ {{ number_format($walletBalance ?? 0, 2) }}</p>
-                        </div>
-                        <div class="stat-icon bg-primary-500/10 text-primary-500">💰</div>
-                    </div>
-                    <div class="mt-3 flex justify-between text-sm border-t border-[var(--border-color)] pt-2">
-                        <span class="text-[var(--text-secondary)]">Balance</span>
-                        <span class="font-semibold">₮ {{ number_format($walletBalance ?? 0, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-[var(--text-secondary)]">Payouts</span>
-                        <span class="font-semibold">₮ {{ number_format($totalCommission ?? 0, 2) }}</span>
-                    </div>
-                </div>
-
-                <div class="stat-card animate-fadeInUp delay-2">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Active Status</p>
-                            <p class="text-2xl font-bold text-green-500 mt-1">Active</p>
-                        </div>
-                        <div class="stat-icon bg-green-500/10 text-green-500">✅</div>
-                    </div>
-                    <div class="mt-3 border-t border-[var(--border-color)] pt-2">
-                        <p class="text-sm text-[var(--text-secondary)]">Personal Sales</p>
-                        <p class="font-semibold">₮ {{ number_format($totalCommission ?? 0, 2) }}</p>
-                    </div>
-                </div>
-
-                <div class="stat-card animate-fadeInUp delay-3">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">My Rank</p>
-                            <p class="text-2xl font-bold text-primary-600 mt-1">{{ Auth::user()->rank ?? 'Distributor' }}</p>
-                        </div>
-                        <div class="stat-icon bg-purple-500/10 text-purple-500">🏆</div>
-                    </div>
-                    <div class="mt-3 flex justify-between text-sm border-t border-[var(--border-color)] pt-2">
-                        <span class="text-[var(--text-secondary)]">Current</span>
-                        <span class="font-semibold">{{ Auth::user()->rank ?? 'Distributor' }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-[var(--text-secondary)]">Last Rank</span>
-                        <span class="font-semibold">-</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- SECTION 2 : NETWORK ANALYTICS -->
-        <!-- ============================================================ -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            
-            <div class="card-modern lg:col-span-2 animate-fadeInUp delay-2">
-                <h4 class="font-bold text-[var(--text-primary)] mb-4">📊 NETWORK ANALYTICS</h4>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="text-center p-3 bg-[var(--bg-secondary)] rounded-xl">
-                        <p class="text-2xl font-bold text-primary-500">{{ $totalDownlines ?? 0 }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Total Downlines</p>
-                    </div>
-                    <div class="text-center p-3 bg-[var(--bg-secondary)] rounded-xl">
-                        <p class="text-2xl font-bold text-blue-500">₮ {{ number_format($totalCommission ?? 0, 2) }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Purchase Volume</p>
-                    </div>
-                    <div class="text-center p-3 bg-[var(--bg-secondary)] rounded-xl">
-                        <p class="text-2xl font-bold text-green-500">{{ $level1 ?? 0 }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Active Members</p>
-                    </div>
-                    <div class="text-center p-3 bg-[var(--bg-secondary)] rounded-xl">
-                        <p class="text-2xl font-bold text-purple-500">{{ ($level2 ?? 0) + ($level3 ?? 0) }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Paid Accounts</p>
-                    </div>
-                </div>
-
-                <!-- Graphique -->
+    <!-- Statistiques -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div class="card-stats animate-fadeInUp delay-1">
+            <div class="flex items-center justify-between">
                 <div>
-                    <div class="flex justify-between text-xs text-[var(--text-secondary)] mb-2">
-                        @foreach($monthlyData ?? [] as $data)
-                            <span>{{ substr($data['month'], 0, 3) }}</span>
-                        @endforeach
+                    <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Portefeuille</p>
+                    <p class="text-xl md:text-2xl font-bold text-primary-500">${{ number_format($walletBalance ?? 0, 2) }}</p>
+                </div>
+                <div class="stat-icon stat-icon-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-stats animate-fadeInUp delay-2">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Commissions</p>
+                    <p class="text-xl md:text-2xl font-bold text-green-500">${{ number_format($totalCommission ?? 0, 2) }}</p>
+                </div>
+                <div class="stat-icon stat-icon-success">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-stats animate-fadeInUp delay-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Filleuls</p>
+                    <p class="text-xl md:text-2xl font-bold text-blue-500">{{ $totalDownlines ?? 0 }}</p>
+                </div>
+                <div class="stat-icon stat-icon-info">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-stats animate-fadeInUp delay-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Rang</p>
+                    <p class="text-xl md:text-2xl font-bold text-purple-500">{{ Auth::user()->rank ?? 'Distributor' }}</p>
+                </div>
+                <div class="stat-icon stat-icon-purple">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profil + Stats -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <!-- Carte Profil -->
+        <div class="card animate-fadeInLeft delay-2">
+            <div class="flex items-center gap-4">
+                <div class="avatar avatar-xl avatar-gradient avatar-ring">
+                    {{ substr(Auth::user()->name, 0, 2) }}
+                </div>
+                <div>
+                    <h3 class="font-bold text-[var(--text-primary)]">{{ Auth::user()->name }}</h3>
+                    <p class="text-xs text-[var(--text-secondary)]">MEMBER</p>
+                    <span class="badge badge-success text-xs">Rank {{ Auth::user()->rank_id ?? 1 }}</span>
+                </div>
+            </div>
+            
+            <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div>
+                    <p class="text-xs text-[var(--text-secondary)]">ID</p>
+                    <p class="font-semibold text-[var(--text-primary)]">#{{ Auth::user()->id }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--text-secondary)]">Inscrit le</p>
+                    <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->created_at->format('d M Y') }}</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                <p class="text-xs text-[var(--text-secondary)]">Parrain</p>
+                <p class="font-semibold text-[var(--text-primary)]">{{ Auth::user()->sponsor?->name ?? 'Aucun' }}</p>
+                <p class="text-xs text-[var(--text-secondary)]">{{ Auth::user()->sponsor?->email ?? '--' }}</p>
+            </div>
+        </div>
+
+        <!-- 3 Stats supplémentaires -->
+        <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="card-stats animate-fadeInUp delay-3">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV Total</p>
+                        <p class="text-2xl font-bold text-primary-500">{{ number_format(Auth::user()->pv_balance ?? 0) }}</p>
                     </div>
-                    <div class="h-32 flex items-end gap-1">
-                        @if(isset($monthlyData) && count($monthlyData) > 0)
-                            @php $max = max(array_column($monthlyData, 'amount')) ?: 1; @endphp
-                            @foreach($monthlyData as $index => $data)
-                                <div class="flex-1 flex flex-col items-center group">
-                                    <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500 transition-all"
-                                         style="height: {{ $data['amount'] > 0 ? max(5, ($data['amount'] / $max) * 100) : 5 }}%">
-                                        <span class="tooltip">₮ {{ number_format($data['amount'], 2) }}</span>
-                                    </div>
-                                </div>
-                            @endforeach
+                    <div class="stat-icon stat-icon-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-stats animate-fadeInUp delay-4">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 1</p>
+                        <p class="text-2xl font-bold text-blue-500">{{ $level1 ?? 0 }}</p>
+                    </div>
+                    <div class="stat-icon stat-icon-info">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-stats animate-fadeInUp delay-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Package</p>
+                        <p class="text-2xl font-bold text-green-500">{{ Auth::user()->package?->name ?? 'Starter' }}</p>
+                    </div>
+                    <div class="stat-icon stat-icon-success">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphique + Activités -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Graphique des gains -->
+        <div class="card lg:col-span-2 animate-fadeInUp delay-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-[var(--text-primary)]">Évolution des gains</h3>
+                <span class="text-xs text-[var(--text-secondary)]">{{ now()->format('Y') }}</span>
+            </div>
+            <div class="h-48 flex items-end gap-1 md:gap-2">
+                @php $max = max(array_column($monthlyData ?? [], 'amount') ?: [1]); @endphp
+                @foreach($monthlyData ?? [] as $data)
+                    @php $height = ($data['amount'] / max($max, 1)) * 100; @endphp
+                    <div class="flex-1 flex flex-col items-center group">
+                        <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500"
+                             style="height: {{ max(8, $height) }}%">
+                            <span class="tooltip">${{ number_format($data['amount'], 2) }}</span>
+                        </div>
+                        <span class="text-[10px] text-[var(--text-secondary)] mt-1">{{ substr($data['month'], 0, 3) }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- Activités récentes -->
+        <div class="card animate-fadeInRight delay-7">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-[var(--text-primary)]">Activités</h3>
+                <span class="badge badge-neutral text-xs">{{ $recentActivities->count() ?? 0 }}</span>
+            </div>
+            <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                @forelse($recentActivities ?? [] as $activity)
+                    <div class="activity-item">
+                        <div class="avatar avatar-sm avatar-gradient">
+                            {{ substr($activity->fromUser->name ?? 'S', 0, 1) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-[var(--text-primary)] truncate">
+                                <span class="font-semibold">{{ $activity->fromUser->name ?? 'Système' }}</span>
+                                <span class="text-[var(--text-secondary)]">{{ $activity->type_label ?? 'a effectué une action' }}</span>
+                            </p>
+                            <p class="text-xs text-[var(--text-secondary)]">{{ $activity->created_at->diffForHumans() }}</p>
+                        </div>
+                        @if($activity->amount)
+                            <span class="text-sm font-bold text-green-500">+${{ number_format($activity->amount, 2) }}</span>
                         @endif
                     </div>
-                </div>
-            </div>
-
-            <!-- Sales Category -->
-            <div class="card-modern animate-fadeInUp delay-3">
-                <h4 class="font-bold text-[var(--text-primary)] mb-4">📈 Sales Category</h4>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-[var(--text-secondary)]">Macbook, Inc</span>
-                            <span class="font-semibold text-primary-500">4.26%</span>
-                        </div>
-                        <div class="progress-bar mt-1">
-                            <div class="progress-bar-fill" style="width: 58%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-[var(--text-secondary)]">Short Products</span>
-                            <span class="font-semibold text-blue-500">0.31%</span>
-                        </div>
-                        <div class="progress-bar mt-1">
-                            <div class="progress-bar-fill" style="width: 42%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-[var(--text-secondary)]">User Growth</span>
-                            <span class="font-semibold text-green-500">+3.85%</span>
-                        </div>
-                        <div class="progress-bar mt-1">
-                            <div class="progress-bar-fill" style="width: 76%"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4 text-center p-4 bg-[var(--bg-secondary)] rounded-xl">
-                    <p class="text-3xl font-bold text-primary-500">3,768</p>
-                    <p class="text-xs text-[var(--text-secondary)]">New signups website + mobile</p>
-                </div>
+                @empty
+                    <p class="text-center text-[var(--text-secondary)] py-8">Aucune activité récente</p>
+                @endforelse
             </div>
         </div>
+    </div>
 
-        <!-- ============================================================ -->
-        <!-- SECTION 3 : RECENT MEMBERS + ACTIVITIES -->
-        <!-- ============================================================ -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            
-            <div class="card-modern animate-slideInLeft delay-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="font-bold text-[var(--text-primary)]">👥 Recent Downline Members</h4>
-                    <span class="text-xs text-[var(--text-secondary)]">{{ $totalDownlines ?? 0 }} total</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="table-modern">
-                        <thead>
-                            <tr>
-                                <th>Member</th>
-                                <th>Package</th>
-                                <th class="text-right">Paid</th>
-                                <th class="text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if(isset($recentMembers) && $recentMembers->count() > 0)
-                                @foreach($recentMembers as $member)
-                                    <tr>
-                                        <td>
-                                            <p class="font-medium text-[var(--text-primary)]">{{ $member->name }}</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">{{ $member->country ?? 'US' }}</p>
-                                        </td>
-                                        <td>{{ $member->package->name ?? 'Starter' }}</td>
-                                        <td class="text-right text-green-500 font-semibold">₮ {{ number_format($member->total_earnings ?? 0, 2) }}</td>
-                                        <td class="text-right">
-                                            <span class="badge-modern {{ ($member->is_active ?? true) ? 'badge-success' : 'badge-danger' }}">
-                                                {{ ($member->is_active ?? true) ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-4 text-right">
-                    <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-semibold transition-colors">
-                        SEE ALL ({{ $totalDownlines ?? 0 }}) →
-                    </a>
-                </div>
+    <!-- Actions rapides -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fadeInUp delay-8">
+        <a href="{{ route('subscriptions.index') }}" class="card-stats text-center">
+            <div class="stat-icon stat-icon-primary mx-auto mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                </svg>
             </div>
-
-            <div class="card-modern animate-slideInRight delay-5">
-                <h4 class="font-bold text-[var(--text-primary)] mb-4">🔄 Activities</h4>
-                <div class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
-                    @if(isset($recentActivities) && $recentActivities->count() > 0)
-                        @foreach($recentActivities as $activity)
-                            <div class="activity-item">
-                                <div class="activity-avatar">
-                                    {{ substr($activity->fromUser->name ?? 'S', 0, 1) }}
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm text-[var(--text-primary)]">
-                                        <span class="font-semibold">{{ $activity->fromUser->name ?? 'System' }}</span>
-                                        {{ $activity->type_label ?? 'joined membership' }}
-                                    </p>
-                                    <p class="text-xs text-[var(--text-secondary)]">
-                                        Paid Membership (₮ {{ number_format($activity->amount ?? 0, 2) }})
-                                    </p>
-                                    <p class="text-xs text-[var(--text-secondary)] mt-0.5">{{ $activity->created_at->diffForHumans() ?? 'Recently' }}</p>
-                                </div>
-                            </div>
-                        @endforeach
-                    @endif
-                </div>
+            <p class="text-sm font-semibold text-[var(--text-primary)]">Packages</p>
+        </a>
+        <a href="{{ route('products.index') }}" class="card-stats text-center">
+            <div class="stat-icon stat-icon-success mx-auto mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
             </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- SECTION 4 : BOTTOM STATS -->
-        <!-- ============================================================ -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeInUp delay-6">
-            <div class="stat-card text-center">
-                <p class="text-2xl font-bold text-primary-500">{{ $totalDownlines ?? 0 }}</p>
-                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Downlines</p>
+            <p class="text-sm font-semibold text-[var(--text-primary)]">Boutique</p>
+        </a>
+        <a href="{{ route('withdrawal.index') }}" class="card-stats text-center">
+            <div class="stat-icon stat-icon-warning mx-auto mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
-            <div class="stat-card text-center">
-                <p class="text-2xl font-bold text-blue-500">₮ {{ number_format($totalCommission ?? 0, 2) }}</p>
-                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Commissions</p>
+            <p class="text-sm font-semibold text-[var(--text-primary)]">Retrait</p>
+        </a>
+        <a href="{{ route('network.index') }}" class="card-stats text-center">
+            <div class="stat-icon stat-icon-purple mx-auto mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
             </div>
-            <div class="stat-card text-center">
-                <p class="text-2xl font-bold text-green-500">{{ $level1 ?? 0 }}</p>
-                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Active Members</p>
-            </div>
-            <div class="stat-card text-center">
-                <p class="text-2xl font-bold text-purple-500">{{ ($level2 ?? 0) + ($level3 ?? 0) }}</p>
-                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Paid Accounts</p>
-            </div>
-        </div>
-
+            <p class="text-sm font-semibold text-[var(--text-primary)]">Mon Équipe</p>
+        </a>
     </div>
 </div>
 @endsection

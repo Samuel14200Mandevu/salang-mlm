@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Rank;
+use App\Notifications\WelcomeNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,14 @@ class RegisteredUserController extends Controller
             
             // Mettre à jour les niveaux supérieurs
             $this->updateTeamCounters($sponsor);
+        }
+
+        // Envoyer la notification de bienvenue
+        try {
+            $sponsorName = $sponsor ? $sponsor->name : null;
+            $user->notify(new WelcomeNotification($sponsorName));
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi notification bienvenue: ' . $e->getMessage());
         }
 
         event(new Registered($user));
