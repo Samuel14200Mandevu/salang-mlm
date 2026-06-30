@@ -1,4 +1,13 @@
 {
+  "experimentalServices": [
+    {
+      "name": "web",
+      "root": ".",
+      "framework": "vite",
+      "buildCommand": "npm run build",
+      "outputDirectory": "public/build"
+    }
+  ],
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.1"
@@ -9,8 +18,5 @@
       "source": "/(.*)",
       "destination": "/api/index.php"
     }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "public/build",
-  "installCommand": "npm install"
+  ]
 }
