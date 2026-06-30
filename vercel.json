@@ -1,12 +1,9 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "public/build",
-  "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
+  "buildCommand": "composer vercel-build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.1",
-      "maxDuration": 10,
-      "memory": 1024
+      "runtime": "vercel-php@0.7.1"
     }
   },
   "rewrites": [
