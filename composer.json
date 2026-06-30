@@ -18,7 +18,6 @@
         "spatie/laravel-permission": "^8.0"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^4.3",
         "fakerphp/faker": "^1.23",
         "laravel/breeze": "^2.4",
         "laravel/pail": "^1.2.5",
@@ -88,17 +87,20 @@
             "dont-discover": []
         }
     },
-    "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true,
-            "laravel/pail": true,
-            "laravel/sail": true
-        }
+   "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "platform": {
+        "php": "8.3"
     },
+    "allow-plugins": {
+        "pestphp/pest-plugin": true,
+        "php-http/discovery": true,
+        "laravel/pail": true,
+        "laravel/sail": true
+    }
+},
     "minimum-stability": "stable",
     "prefer-stable": true
 }

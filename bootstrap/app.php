@@ -1,5 +1,9 @@
 <?php
 
+// Forcer les logs vers /tmp/ sur Vercel
+putenv('LOG_STREAM_PATH=/tmp/storage/logs/laravel.log');
+putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
