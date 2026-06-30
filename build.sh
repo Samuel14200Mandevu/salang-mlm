@@ -9,11 +9,15 @@ curl -sS https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
 chmod +x /usr/local/bin/composer
 
-# Créer les dossiers nécessaires dans /tmp/
+# Créer les dossiers de cache dans /tmp/
 mkdir -p /tmp/storage/framework/{cache,sessions,views}
 mkdir -p /tmp/storage/logs
 chmod -R 755 /tmp/storage/framework
 chmod -R 755 /tmp/storage/logs
+
+# Configurer l'environnement
+export VIEW_COMPILED_PATH=/tmp/storage/framework/views
+export LOG_STREAM_PATH=/tmp/storage/logs/laravel.log
 
 # Exécuter le build
 composer install --no-dev --optimize-autoloader

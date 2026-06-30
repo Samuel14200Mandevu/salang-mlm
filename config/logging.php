@@ -1,11 +1,11 @@
 <?php
 
 return [
+    'default' => env('LOG_CHANNEL', 'null'),
+
     'channels' => [
-        'single' => [
-            'driver' => 'single',
-            'path' => env('LOG_STREAM_PATH', '/tmp/storage/logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+        'null' => [
+            'driver' => 'null',
         ],
     ],
 ];
