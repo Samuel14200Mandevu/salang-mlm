@@ -1,9 +1,16 @@
 <?php
 
-// Forcer les chemins de cache et logs pour Vercel
+// Forcer les logs vers null dès le début
+putenv('LOG_CHANNEL=null');
+putenv('APP_DEBUG=false');
+putenv('DEBUGBAR_ENABLED=false');
+
+// Rediriger le cache vers /tmp/
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
 putenv('LOG_STREAM_PATH=/tmp/storage/logs/laravel.log');
-putenv('LOG_CHANNEL=null');
+$app = new Illuminate\Foundation\Application(
+    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
+);
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

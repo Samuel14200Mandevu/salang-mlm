@@ -18,7 +18,15 @@ chmod -R 755 /tmp/storage/logs
 # Configurer l'environnement
 export VIEW_COMPILED_PATH=/tmp/storage/framework/views
 export LOG_STREAM_PATH=/tmp/storage/logs/laravel.log
+export LOG_CHANNEL=null
 
-# Exécuter le build
+# Installer les dépendances
 composer install --no-dev --optimize-autoloader
+
+# Effacer le cache de configuration
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+
+# Build des assets
 npm run build
