@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost:3306
--- Généré le : dim. 28 juin 2026 à 18:05
+-- Généré le : mer. 01 juil. 2026 à 14:17
 -- Version du serveur : 8.4.9-0ubuntu0.26.04.1
 -- Version de PHP : 8.5.4
 
@@ -267,6 +267,29 @@ CREATE TABLE `job_batches` (
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `kyc_documents`
+--
+
+CREATE TABLE `kyc_documents` (
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `document_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'id_card, passport, proof_of_address, selfie',
+  `document_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mime_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int NOT NULL,
+  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending' COMMENT 'pending, verified, rejected',
+  `rejection_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `verified_by` bigint UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `migrations`
 --
 
@@ -384,6 +407,13 @@ CREATE TABLE `orders` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Déchargement des données de la table `orders`
+--
+
+INSERT INTO `orders` (`id`, `user_id`, `order_number`, `subtotal`, `tax`, `shipping`, `discount`, `total`, `status`, `payment_status`, `payment_method`, `shipping_address`, `billing_address`, `metadata`, `paid_at`, `created_at`, `updated_at`) VALUES
+(1, 2, 'ORD-6A42B86CD55EE', 1398.00, 251.64, 0.00, 0.00, 1649.64, 'cancelled', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-06-29 16:24:44', '2026-06-29 16:24:51');
+
 -- --------------------------------------------------------
 
 --
@@ -404,6 +434,14 @@ CREATE TABLE `order_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `package_id`, `name`, `sku`, `quantity`, `price`, `total`, `options`, `created_at`, `updated_at`) VALUES
+(1, 1, 21, NULL, 'Apple Watch Ultra 2', NULL, 1, 899.00, 899.00, NULL, '2026-06-29 16:24:44', '2026-06-29 16:24:44'),
+(2, 1, 22, NULL, 'Apple Watch Series 9', NULL, 1, 499.00, 499.00, NULL, '2026-06-29 16:24:45', '2026-06-29 16:24:45');
 
 -- --------------------------------------------------------
 
@@ -525,8 +563,8 @@ INSERT INTO `products` (`id`, `name`, `slug`, `description`, `price`, `cost`, `s
 (18, 'iPad Air 5', 'ipad-air-5', 'iPad Air avec puce M1', 799.00, 600.00, 25, 'IPA-5-018', 'Tablette', '1782467146_ipad-air-5.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:45', '2026-06-26 07:45:46'),
 (19, 'iPad 10e', 'ipad-10e', 'iPad 10e génération', 499.00, 380.00, 30, 'IPD-10-019', 'Tablette', '1782467319_ipad-10e.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:45', '2026-06-26 07:48:39'),
 (20, 'iPad mini 6', 'ipad-mini-6', 'iPad mini avec écran 8.3\"', 599.00, 450.00, 18, 'IPM-6-020', 'Tablette', '1782467343_ipad-mini-6.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:45', '2026-06-26 07:49:03'),
-(21, 'Apple Watch Ultra 2', 'apple-watch-ultra-2', 'La montre connectée la plus robuste avec écran toujours allumé', 899.00, 700.00, 12, 'AWU-2-021', 'Montres', '1782465713_apple-watch-ultra-2.jpeg', NULL, 1, 1, NULL, '2026-06-25 14:16:46', '2026-06-26 07:21:53'),
-(22, 'Apple Watch Series 9', 'apple-watch-series-9', 'Apple Watch Series 9 avec puce S9', 499.00, 380.00, 25, 'AWS-9-022', 'Montres', '1782465761_apple-watch-series-9.jpeg', NULL, 1, 1, NULL, '2026-06-25 14:16:46', '2026-06-26 07:22:41'),
+(21, 'Apple Watch Ultra 2', 'apple-watch-ultra-2', 'La montre connectée la plus robuste avec écran toujours allumé', 899.00, 700.00, 12, 'AWU-2-021', 'Montres', '1782465713_apple-watch-ultra-2.jpeg', NULL, 1, 1, NULL, '2026-06-25 14:16:46', '2026-06-29 16:24:51'),
+(22, 'Apple Watch Series 9', 'apple-watch-series-9', 'Apple Watch Series 9 avec puce S9', 499.00, 380.00, 25, 'AWS-9-022', 'Montres', '1782465761_apple-watch-series-9.jpeg', NULL, 1, 1, NULL, '2026-06-25 14:16:46', '2026-06-29 16:24:51'),
 (23, 'Apple Watch SE 2', 'apple-watch-se-2', 'Apple Watch SE 2e génération', 299.00, 220.00, 30, 'AWSE-2-023', 'Montres', '1782465800_apple-watch-se-2.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:46', '2026-06-26 07:23:20'),
 (24, 'Apple Watch Hermès', 'apple-watch-hermes', 'Apple Watch Series 9 Hermès', 1299.00, 1000.00, 5, 'AWH-024', 'Montres', '1782465866_apple-watch-hermes.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:46', '2026-06-26 07:24:26'),
 (25, 'Apple Watch Nike', 'apple-watch-nike', 'Apple Watch Series 9 Nike', 499.00, 380.00, 15, 'AWN-025', 'Montres', '1782465914_apple-watch-nike.jpeg', NULL, 1, 0, NULL, '2026-06-25 14:16:46', '2026-06-26 07:25:14'),
@@ -663,7 +701,8 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('7vzWxrHmC96dc2V7sKh57UECpFkruD1hL0djUDQN', NULL, '127.0.0.1', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibTZ6YUdTN2syYmpUZ2N0dERUUzlDNXJkdVI3c2ZSbzBxbEZBcnREQyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1782668405);
+('fncx20cQ94WkS9kda4LXjZhxxufqojzatEgxH2JY', NULL, '192.168.43.65', 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_5_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/149.0.7827.137 Mobile/15E148 Safari/604.1', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiT3dKYnM2d2NtWWg4aXM5Mk82cjhmWU5yb0xVY05LSkU3SHFrd2tnayI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MzE6Imh0dHA6Ly8xOTIuMTY4LjQzLjYwOjgwMDAvbG9naW4iO3M6NToicm91dGUiO3M6NToibG9naW4iO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjM6InVybCI7YToxOntzOjg6ImludGVuZGVkIjtzOjM1OiJodHRwOi8vMTkyLjE2OC40My42MDo4MDAwL2Rhc2hib2FyZCI7fX0=', 1782821897),
+('VIOvq4S1XgoCVKxXSoMssskA0VxoUI0chwz1lc0e', NULL, '127.0.0.1', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoicUVzcUl1MklxQjVRRGFNUk1HWExTVXJERnBwNVFlQkZVQkxRblc5NyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1782822887);
 
 -- --------------------------------------------------------
 
@@ -729,7 +768,8 @@ INSERT INTO `transactions` (`id`, `user_id`, `wallet_id`, `type`, `amount`, `fee
 (32, 1, 1, 'withdrawal', 406.00, 10.15, 395.85, 498.00, 2424.00, 'completed', NULL, 'Withdrawal transaction', NULL, '2026-06-07 14:34:54', '2026-06-22 14:34:54', '2026-06-22 14:34:54'),
 (33, 1, 1, 'commission', 388.00, 0.00, 388.00, 1298.00, 723.00, 'completed', NULL, 'Commission transaction', NULL, '2026-06-11 14:34:54', '2026-06-22 14:34:54', '2026-06-22 14:34:54'),
 (34, 1, 1, 'purchase', 490.00, 0.00, 490.00, 1302.00, 1912.00, 'completed', NULL, 'Purchase transaction', NULL, '2026-06-19 14:34:55', '2026-06-22 14:34:55', '2026-06-22 14:34:55'),
-(35, 1, 1, 'deposit', 230.00, 0.00, 230.00, 1956.00, 1576.00, 'completed', NULL, 'Deposit transaction', NULL, '2026-06-17 14:34:55', '2026-06-22 14:34:55', '2026-06-22 14:34:55');
+(35, 1, 1, 'deposit', 230.00, 0.00, 230.00, 1956.00, 1576.00, 'completed', NULL, 'Deposit transaction', NULL, '2026-06-17 14:34:55', '2026-06-22 14:34:55', '2026-06-22 14:34:55'),
+(36, 2, 2, 'purchase', -1649.64, 0.00, -1649.64, 341.00, -1308.64, 'pending', NULL, 'Commande #ORD-6A42B86CD55EE', NULL, NULL, '2026-06-29 16:24:45', '2026-06-29 16:24:45');
 
 -- --------------------------------------------------------
 
@@ -753,6 +793,8 @@ CREATE TABLE `users` (
   `total_sponsors` int NOT NULL DEFAULT '0',
   `total_team` int NOT NULL DEFAULT '0',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `kyc_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'not_submitted',
+  `kyc_verified_at` timestamp NULL DEFAULT NULL,
   `package_expiry` timestamp NULL DEFAULT NULL,
   `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `country` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -769,34 +811,34 @@ CREATE TABLE `users` (
 -- Déchargement des données de la table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `sponsor_id`, `phone`, `rank`, `rank_id`, `package_id`, `pv_balance`, `bv_balance`, `commission_balance`, `total_earnings`, `total_sponsors`, `total_team`, `is_active`, `package_expiry`, `avatar`, `country`, `city`, `address`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Administrator', 'admin@salang.com', 'SALADMIN', '+225 0700000000', 'Pearl', 10, 5, 50000, 50000, 0.00, 4238.00, 2, 27, 1, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$ZBAOB9BgU8FyTqcjhks.G.1zu0C2kC33AoqADM72IxuZnF1qW7kau', NULL, '2026-06-22 14:32:45', '2026-06-22 18:07:10'),
-(2, 'Jean Dupont', 'test1@salang.com', 'SALE4623B', '+225 0720408256', 'Distributor', 3, 2, 992, 5974, 0.00, 4382.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$YCXYggWoyy/eQWInRiRh2.XbJhZo8foq1zHatBmg4iKRU2S.bbxH.', NULL, '2026-05-03 14:32:46', '2026-06-22 14:32:46'),
-(3, 'Marie Martin', 'test2@salang.com', 'SALEBA2A5', '+225 0749526808', 'Distributor', 2, 2, 767, 7046, 0.00, 2023.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$CsoduRKp63NRrI0WKfUe9ezAI4i40y47I2NhxXjAt7yzfRXpQjBmO', NULL, '2026-06-16 14:32:46', '2026-06-22 14:32:46'),
-(4, 'Pierre Durand', 'test3@salang.com', 'SALF3B92B', '+225 0762654964', 'Distributor', 4, 1, 7033, 5171, 0.00, 242.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$qXfON1vtnep14H3EC6fGwevAOvOAriINDzLLJeuFvs7qB6td/j2oW', NULL, '2026-06-01 14:32:47', '2026-06-22 14:32:47'),
-(5, 'Sophie Lefevre', 'test4@salang.com', 'SALFABAEA', '+225 0799099244', 'Distributor', 8, 3, 5701, 6249, 0.00, 1143.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$vr7VFCD8khg36rMYqZCvKet.WMH/nI1gyAAcxnGwARTDwTzX9E88u', NULL, '2026-06-18 14:32:47', '2026-06-22 14:32:47'),
-(6, 'Lucas Bernard', 'test5@salang.com', 'SAL03625B', '+225 0775328790', 'Distributor', 3, 3, 4113, 1331, 0.00, 4469.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$4JVHXqQdAL1Yb6/m3szb0O4cNKT9e.Weak6H9vmXkTfuwj18Za.9.', NULL, '2026-05-05 14:32:48', '2026-06-22 14:32:48'),
-(7, 'Emma Petit', 'test6@salang.com', 'SAL0AF7EB', '+225 0738041683', 'Distributor', 1, 3, 4682, 5509, 0.00, 3162.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$gGVKBVGT2NfsY0dE1FK3LuN3reCiBTzKz64C7We8zuqF7mFQLo/Iy', NULL, '2026-05-15 14:32:48', '2026-06-22 14:32:48'),
-(8, 'Thomas Robert', 'test7@salang.com', 'SAL13E5E6', '+225 0740316698', 'Distributor', 3, 1, 907, 4895, 0.00, 3819.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$JX/x6E8KcVayTRFyzUxVxO.pp4cknXTbookXkFT8vztpSOvtLc/YS', NULL, '2026-04-23 14:32:49', '2026-06-22 14:32:49'),
-(9, 'Julie Richard', 'test8@salang.com', 'SAL1B1C4E', '+225 0761619508', 'Distributor', 4, 4, 2275, 5382, 0.00, 1998.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$23evTUpmJ5MiHU8h8hdcQOZ/Pk5vJqiOeja.QNeAI3IN5VjveG7Wq', NULL, '2026-06-20 14:32:49', '2026-06-22 14:32:49'),
-(10, 'Nicolas Dubois', 'test9@salang.com', 'SAL233CA5', '+225 0721656274', 'Distributor', 1, 5, 6243, 3522, 0.00, 2975.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$Ib0GbWMHW1YlP2zMO1UjL.fOheId6qKoAadwAcdQ2MPUiOQqQK06q', NULL, '2026-05-07 14:32:50', '2026-06-22 14:32:50'),
-(11, 'Camille Moreau', 'test10@salang.com', 'SAL2A565C', '+225 0773929706', 'Distributor', 9, 3, 3801, 128, 0.00, 4944.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$Tu3RZ0gwbw1fEaBs3pJCXu/nszx26Yp7cbZPFwoV6GWphs7y2MTsK', NULL, '2026-05-05 14:32:50', '2026-06-22 14:32:50'),
-(12, 'Alexandre Laurent', 'test11@salang.com', 'SAL334098', '+225 0761962375', 'Distributor', 6, 2, 3918, 3975, 0.00, 976.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$f0d15wxWyQhWymF9gMPkOOW8qMuBw8INxRdj8ArV3T.7Ez/CVobea', NULL, '2026-06-04 14:32:51', '2026-06-22 14:32:51'),
-(13, 'Isabelle Simon', 'test12@salang.com', 'SAL3A4A1E', '+225 0707724794', 'Distributor', 9, 3, 1899, 2729, 0.00, 1257.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$g0vlkw46U5l6graiah0/7.5zyA/RCo.PPsg2sHfW9BwE38l.hve1u', NULL, '2026-04-25 14:32:51', '2026-06-22 14:32:51'),
-(14, 'Michel Francois', 'test13@salang.com', 'SAL43486A', '+225 0770573589', 'Distributor', 2, 3, 7136, 6139, 0.00, 1262.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$TMB.JrHZHTzvMWdtEFVdgO/5YA39jRoAOtrE9HREkyGrEhNZwylW.', NULL, '2026-06-04 14:32:52', '2026-06-22 14:32:52'),
-(15, 'Catherine Michel', 'test14@salang.com', 'SAL4B35B7', '+225 0774662789', 'Distributor', 6, 5, 1922, 1925, 0.00, 1073.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$iLZORbuSb2.TdZQ4ZHsDNeNFhzMwnFvpE3VsRM.FhPdN0O8N9gbjS', NULL, '2026-05-24 14:32:52', '2026-06-22 14:32:52'),
-(16, 'Philippe Garcia', 'test15@salang.com', 'SAL538886', '+225 0742986294', 'Distributor', 9, 1, 413, 5790, 0.00, 4433.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$jv9kp3g3GV6C87yQz4tN4uCkTKmN4Ye75yrt4F0hGQfake9zWM4.O', NULL, '2026-06-20 14:32:53', '2026-06-22 14:32:53'),
-(17, 'Jean Dupont', 'demo1@salang.com', 'SAL8E6EC0', '+225 0741292554', 'Distributor', 1, 5, 4759, 0, 0.00, 1268.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$rIWWpagusL7O52U3WNXKDugM/Tg10tzirXS/cdBH1JOL83tZ738Nm', NULL, '2026-06-22 14:34:48', '2026-06-22 14:34:48'),
-(18, 'Marie Martin', 'demo2@salang.com', 'SAL96B5B6', '+225 0706277416', 'Distributor', 3, 5, 1302, 0, 0.00, 1107.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$4JjmOCKlLHFSh7sioKhXLuZmdjT93bP0BsTj20rVqoBr6rrZZMJ8u', NULL, '2026-06-22 14:34:49', '2026-06-22 14:34:49'),
-(19, 'Pierre Durand', 'demo3@salang.com', 'SAL9DAEFE', '+225 0781159165', 'Distributor', 1, 2, 1994, 0, 0.00, 550.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$snE2nKv8UddoUQbUfZPLku9VprO2gikWS2OUYGVaIxfTr7kkAJxA2', NULL, '2026-06-22 14:34:49', '2026-06-22 14:34:49'),
-(20, 'Sophie Lefevre', 'demo4@salang.com', 'SALA5CAF4', '+225 0785683085', 'Distributor', 10, 2, 4087, 0, 0.00, 211.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$huSyEa5B2/Y/KEi3N8c0juWIAXY422BmBDyjDRayktJ2VurGwL4iC', NULL, '2026-06-22 14:34:50', '2026-06-22 14:34:50'),
-(21, 'Lucas Bernard', 'demo5@salang.com', 'SALAC45DC', '+225 0766855108', 'Distributor', 4, 2, 585, 0, 0.00, 724.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$9UocFWDg7Ig/bwtbCBa38.g9ESQLbXfYB4IjxC/S6k2JVFBHKMOQ6', NULL, '2026-06-22 14:34:50', '2026-06-22 14:34:50'),
-(22, 'Emma Petit', 'demo6@salang.com', 'SALB4760B', '+225 0759990557', 'Distributor', 1, 1, 4072, 0, 0.00, 1857.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$6.EX4nlOiACqFsNRsKn8n.Rx047FOGfBLyK1sWG2XmFVPA2AJsgPe', NULL, '2026-06-22 14:34:51', '2026-06-22 14:34:51'),
-(23, 'Thomas Robert', 'demo7@salang.com', 'SALBB316E', '+225 0779298220', 'Distributor', 8, 1, 3384, 0, 0.00, 1040.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Yamoussoukro', NULL, NULL, '$2y$12$RoyUw4.zhzW9UZ5r/RAQl.IZUQ.Y9zWALfNVMf.4ZX/58QDGm1I2W', NULL, '2026-06-22 14:34:51', '2026-06-22 14:34:51'),
-(24, 'Julie Richard', 'demo8@salang.com', 'SALC36B76', '+225 0737076705', 'Distributor', 6, 3, 1379, 0, 0.00, 233.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$5vy2vCiuaUfhVgnivpn7vetLkIklsGjL5bTdIiXOfLHi4/NKxO5Ue', NULL, '2026-06-22 14:34:52', '2026-06-22 14:34:52'),
-(25, 'Nicolas Dubois', 'demo9@salang.com', 'SALCA5BB3', '+225 0779994543', 'Distributor', 3, 2, 4561, 0, 0.00, 687.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Yamoussoukro', NULL, NULL, '$2y$12$SKokPF/jTQa2oSA9Hqtzv.LsmmMDvDI7D1dbnDio.9gP9wD8yhZmi', NULL, '2026-06-22 14:34:52', '2026-06-22 14:34:52'),
-(26, 'Camille Moreau', 'demo10@salang.com', 'SALD28C8B', '+225 0712757884', 'Distributor', 2, 2, 1430, 0, 0.00, 2115.00, 0, 0, 1, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$JVnz06gcjogNybJ5ITP1Me8RpCZUnZnPk9UZSE3Tw.FkOElD1Klxa', NULL, '2026-06-22 14:34:53', '2026-06-22 14:34:53'),
-(27, 'samuel mandevu martin', 'samuelmandevu10@gmail.com', 'SALDEBF71', '975746415', 'Distributor', 1, NULL, 0, 0, 0.00, 0.00, 0, 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, '$2y$12$5vAF7arDmkgANsSuI/op8uzOj17SWN6EDb.wchdqfJxhsuEkj9frO', NULL, '2026-06-22 18:07:10', '2026-06-22 18:07:10');
+INSERT INTO `users` (`id`, `name`, `email`, `sponsor_id`, `phone`, `rank`, `rank_id`, `package_id`, `pv_balance`, `bv_balance`, `commission_balance`, `total_earnings`, `total_sponsors`, `total_team`, `is_active`, `kyc_status`, `kyc_verified_at`, `package_expiry`, `avatar`, `country`, `city`, `address`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Administrator', 'admin@salang.com', 'SALADMIN', '+225 0700000000', 'Pearl', 10, 5, 50000, 50000, 0.00, 4238.00, 2, 27, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$ZBAOB9BgU8FyTqcjhks.G.1zu0C2kC33AoqADM72IxuZnF1qW7kau', NULL, '2026-06-22 14:32:45', '2026-06-22 18:07:10'),
+(2, 'Jean Dupont', 'test1@salang.com', 'SALE4623B', '+225 0720408256', 'Distributor', 3, 2, 992, 5974, 0.00, 4382.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$YCXYggWoyy/eQWInRiRh2.XbJhZo8foq1zHatBmg4iKRU2S.bbxH.', NULL, '2026-05-03 14:32:46', '2026-06-22 14:32:46'),
+(3, 'Marie Martin', 'test2@salang.com', 'SALEBA2A5', '+225 0749526808', 'Distributor', 2, 2, 767, 7046, 0.00, 2023.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$CsoduRKp63NRrI0WKfUe9ezAI4i40y47I2NhxXjAt7yzfRXpQjBmO', NULL, '2026-06-16 14:32:46', '2026-06-22 14:32:46'),
+(4, 'Pierre Durand', 'test3@salang.com', 'SALF3B92B', '+225 0762654964', 'Distributor', 4, 1, 7033, 5171, 0.00, 242.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$qXfON1vtnep14H3EC6fGwevAOvOAriINDzLLJeuFvs7qB6td/j2oW', NULL, '2026-06-01 14:32:47', '2026-06-22 14:32:47'),
+(5, 'Sophie Lefevre', 'test4@salang.com', 'SALFABAEA', '+225 0799099244', 'Distributor', 8, 3, 5701, 6249, 0.00, 1143.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$vr7VFCD8khg36rMYqZCvKet.WMH/nI1gyAAcxnGwARTDwTzX9E88u', NULL, '2026-06-18 14:32:47', '2026-06-22 14:32:47'),
+(6, 'Lucas Bernard', 'test5@salang.com', 'SAL03625B', '+225 0775328790', 'Distributor', 3, 3, 4113, 1331, 0.00, 4469.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$4JVHXqQdAL1Yb6/m3szb0O4cNKT9e.Weak6H9vmXkTfuwj18Za.9.', NULL, '2026-05-05 14:32:48', '2026-06-22 14:32:48'),
+(7, 'Emma Petit', 'test6@salang.com', 'SAL0AF7EB', '+225 0738041683', 'Distributor', 1, 3, 4682, 5509, 0.00, 3162.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$gGVKBVGT2NfsY0dE1FK3LuN3reCiBTzKz64C7We8zuqF7mFQLo/Iy', NULL, '2026-05-15 14:32:48', '2026-06-22 14:32:48'),
+(8, 'Thomas Robert', 'test7@salang.com', 'SAL13E5E6', '+225 0740316698', 'Distributor', 3, 1, 907, 4895, 0.00, 3819.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$JX/x6E8KcVayTRFyzUxVxO.pp4cknXTbookXkFT8vztpSOvtLc/YS', NULL, '2026-04-23 14:32:49', '2026-06-22 14:32:49'),
+(9, 'Julie Richard', 'test8@salang.com', 'SAL1B1C4E', '+225 0761619508', 'Distributor', 4, 4, 2275, 5382, 0.00, 1998.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$23evTUpmJ5MiHU8h8hdcQOZ/Pk5vJqiOeja.QNeAI3IN5VjveG7Wq', NULL, '2026-06-20 14:32:49', '2026-06-22 14:32:49'),
+(10, 'Nicolas Dubois', 'test9@salang.com', 'SAL233CA5', '+225 0721656274', 'Distributor', 1, 5, 6243, 3522, 0.00, 2975.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$Ib0GbWMHW1YlP2zMO1UjL.fOheId6qKoAadwAcdQ2MPUiOQqQK06q', NULL, '2026-05-07 14:32:50', '2026-06-22 14:32:50'),
+(11, 'Camille Moreau', 'test10@salang.com', 'SAL2A565C', '+225 0773929706', 'Distributor', 9, 3, 3801, 128, 0.00, 4944.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$Tu3RZ0gwbw1fEaBs3pJCXu/nszx26Yp7cbZPFwoV6GWphs7y2MTsK', NULL, '2026-05-05 14:32:50', '2026-06-22 14:32:50'),
+(12, 'Alexandre Laurent', 'test11@salang.com', 'SAL334098', '+225 0761962375', 'Distributor', 6, 2, 3918, 3975, 0.00, 976.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$f0d15wxWyQhWymF9gMPkOOW8qMuBw8INxRdj8ArV3T.7Ez/CVobea', NULL, '2026-06-04 14:32:51', '2026-06-22 14:32:51'),
+(13, 'Isabelle Simon', 'test12@salang.com', 'SAL3A4A1E', '+225 0707724794', 'Distributor', 9, 3, 1899, 2729, 0.00, 1257.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$g0vlkw46U5l6graiah0/7.5zyA/RCo.PPsg2sHfW9BwE38l.hve1u', NULL, '2026-04-25 14:32:51', '2026-06-22 14:32:51'),
+(14, 'Michel Francois', 'test13@salang.com', 'SAL43486A', '+225 0770573589', 'Distributor', 2, 3, 7136, 6139, 0.00, 1262.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'San-Pédro', NULL, NULL, '$2y$12$TMB.JrHZHTzvMWdtEFVdgO/5YA39jRoAOtrE9HREkyGrEhNZwylW.', NULL, '2026-06-04 14:32:52', '2026-06-22 14:32:52'),
+(15, 'Catherine Michel', 'test14@salang.com', 'SAL4B35B7', '+225 0774662789', 'Distributor', 6, 5, 1922, 1925, 0.00, 1073.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$iLZORbuSb2.TdZQ4ZHsDNeNFhzMwnFvpE3VsRM.FhPdN0O8N9gbjS', NULL, '2026-05-24 14:32:52', '2026-06-22 14:32:52'),
+(16, 'Philippe Garcia', 'test15@salang.com', 'SAL538886', '+225 0742986294', 'Distributor', 9, 1, 413, 5790, 0.00, 4433.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Daloa', NULL, NULL, '$2y$12$jv9kp3g3GV6C87yQz4tN4uCkTKmN4Ye75yrt4F0hGQfake9zWM4.O', NULL, '2026-06-20 14:32:53', '2026-06-22 14:32:53'),
+(17, 'Jean Dupont', 'demo1@salang.com', 'SAL8E6EC0', '+225 0741292554', 'Distributor', 1, 5, 4759, 0, 0.00, 1268.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$rIWWpagusL7O52U3WNXKDugM/Tg10tzirXS/cdBH1JOL83tZ738Nm', NULL, '2026-06-22 14:34:48', '2026-06-22 14:34:48'),
+(18, 'Marie Martin', 'demo2@salang.com', 'SAL96B5B6', '+225 0706277416', 'Distributor', 3, 5, 1302, 0, 0.00, 1107.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$4JjmOCKlLHFSh7sioKhXLuZmdjT93bP0BsTj20rVqoBr6rrZZMJ8u', NULL, '2026-06-22 14:34:49', '2026-06-22 14:34:49'),
+(19, 'Pierre Durand', 'demo3@salang.com', 'SAL9DAEFE', '+225 0781159165', 'Distributor', 1, 2, 1994, 0, 0.00, 550.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$snE2nKv8UddoUQbUfZPLku9VprO2gikWS2OUYGVaIxfTr7kkAJxA2', NULL, '2026-06-22 14:34:49', '2026-06-22 14:34:49'),
+(20, 'Sophie Lefevre', 'demo4@salang.com', 'SALA5CAF4', '+225 0785683085', 'Distributor', 10, 2, 4087, 0, 0.00, 211.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$huSyEa5B2/Y/KEi3N8c0juWIAXY422BmBDyjDRayktJ2VurGwL4iC', NULL, '2026-06-22 14:34:50', '2026-06-22 14:34:50'),
+(21, 'Lucas Bernard', 'demo5@salang.com', 'SALAC45DC', '+225 0766855108', 'Distributor', 4, 2, 585, 0, 0.00, 724.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Abidjan', NULL, NULL, '$2y$12$9UocFWDg7Ig/bwtbCBa38.g9ESQLbXfYB4IjxC/S6k2JVFBHKMOQ6', NULL, '2026-06-22 14:34:50', '2026-06-22 14:34:50'),
+(22, 'Emma Petit', 'demo6@salang.com', 'SALB4760B', '+225 0759990557', 'Distributor', 1, 1, 4072, 0, 0.00, 1857.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$6.EX4nlOiACqFsNRsKn8n.Rx047FOGfBLyK1sWG2XmFVPA2AJsgPe', NULL, '2026-06-22 14:34:51', '2026-06-22 14:34:51'),
+(23, 'Thomas Robert', 'demo7@salang.com', 'SALBB316E', '+225 0779298220', 'Distributor', 8, 1, 3384, 0, 0.00, 1040.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Yamoussoukro', NULL, NULL, '$2y$12$RoyUw4.zhzW9UZ5r/RAQl.IZUQ.Y9zWALfNVMf.4ZX/58QDGm1I2W', NULL, '2026-06-22 14:34:51', '2026-06-22 14:34:51'),
+(24, 'Julie Richard', 'demo8@salang.com', 'SALC36B76', '+225 0737076705', 'Distributor', 6, 3, 1379, 0, 0.00, 233.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$5vy2vCiuaUfhVgnivpn7vetLkIklsGjL5bTdIiXOfLHi4/NKxO5Ue', NULL, '2026-06-22 14:34:52', '2026-06-22 14:34:52'),
+(25, 'Nicolas Dubois', 'demo9@salang.com', 'SALCA5BB3', '+225 0779994543', 'Distributor', 3, 2, 4561, 0, 0.00, 687.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Yamoussoukro', NULL, NULL, '$2y$12$SKokPF/jTQa2oSA9Hqtzv.LsmmMDvDI7D1dbnDio.9gP9wD8yhZmi', NULL, '2026-06-22 14:34:52', '2026-06-22 14:34:52'),
+(26, 'Camille Moreau', 'demo10@salang.com', 'SALD28C8B', '+225 0712757884', 'Distributor', 2, 2, 1430, 0, 0.00, 2115.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, 'Côte d\'Ivoire', 'Bouaké', NULL, NULL, '$2y$12$JVnz06gcjogNybJ5ITP1Me8RpCZUnZnPk9UZSE3Tw.FkOElD1Klxa', NULL, '2026-06-22 14:34:53', '2026-06-22 14:34:53'),
+(27, 'samuel mandevu martin', 'samuelmandevu10@gmail.com', 'SALDEBF71', '975746415', 'Distributor', 1, NULL, 0, 0, 0.00, 0.00, 0, 0, 1, 'not_submitted', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '$2y$12$5vAF7arDmkgANsSuI/op8uzOj17SWN6EDb.wchdqfJxhsuEkj9frO', NULL, '2026-06-22 18:07:10', '2026-06-22 18:07:10');
 
 -- --------------------------------------------------------
 
@@ -946,6 +988,16 @@ ALTER TABLE `job_batches`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Index pour la table `kyc_documents`
+--
+ALTER TABLE `kyc_documents`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `kyc_documents_user_id_foreign` (`user_id`),
+  ADD KEY `kyc_documents_verified_by_foreign` (`verified_by`),
+  ADD KEY `kyc_documents_user_id_status_index` (`user_id`,`status`),
+  ADD KEY `kyc_documents_document_type_status_index` (`document_type`,`status`);
+
+--
 -- Index pour la table `migrations`
 --
 ALTER TABLE `migrations`
@@ -1066,7 +1118,8 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `users_email_unique` (`email`),
   ADD KEY `users_rank_id_foreign` (`rank_id`),
-  ADD KEY `users_package_id_foreign` (`package_id`);
+  ADD KEY `users_package_id_foreign` (`package_id`),
+  ADD KEY `users_kyc_status_index` (`kyc_status`);
 
 --
 -- Index pour la table `wallets`
@@ -1113,6 +1166,12 @@ ALTER TABLE `jobs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `kyc_documents`
+--
+ALTER TABLE `kyc_documents`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pour la table `migrations`
 --
 ALTER TABLE `migrations`
@@ -1122,13 +1181,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT pour la table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `packages`
@@ -1170,7 +1229,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT pour la table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT pour la table `users`
@@ -1210,6 +1269,13 @@ ALTER TABLE `genealogy`
   ADD CONSTRAINT `genealogy_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `genealogy_sponsor_id_foreign` FOREIGN KEY (`sponsor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `genealogy_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `kyc_documents`
+--
+ALTER TABLE `kyc_documents`
+  ADD CONSTRAINT `kyc_documents_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `kyc_documents_verified_by_foreign` FOREIGN KEY (`verified_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Contraintes pour la table `model_has_permissions`
