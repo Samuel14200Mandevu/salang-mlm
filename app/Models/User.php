@@ -37,6 +37,8 @@ class User extends Authenticatable
         'kyc_verified_at',
         'package_expiry',
         'avatar',
+        'provider',
+        'provider_id',
         'country',
         'city',
         'address',
