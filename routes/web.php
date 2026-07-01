@@ -19,6 +19,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CommissionTriggerController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\KycController;
+use App\Http\Controllers\Auth\SocialiteController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -39,6 +40,14 @@ Route::get('/onboarding/skip', [OnboardingController::class, 'skip'])->name('onb
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/api/products/search', [ProductController::class, 'search'])->name('api.products.search');
+
+// ============================================================
+// AUTHENTIFICATION SOCIALE
+// ============================================================
+Route::prefix('auth')->name('social.')->group(function () {
+    Route::get('{provider}', [SocialiteController::class, 'redirect'])->name('redirect');
+    Route::get('{provider}/callback', [SocialiteController::class, 'callback'])->name('callback');
+});
 
 // ============================================================
 // PAGES LEGALES
@@ -144,7 +153,7 @@ Route::middleware(['auth'])->group(function () {
     // PANIER
     // ============================================================
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count'); // ⚠️ NOUVELLE ROUTE
+    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::post('/cart/add-package', [CartController::class, 'addPackage'])->name('cart.add-package');
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
