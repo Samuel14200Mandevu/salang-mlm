@@ -1175,3 +1175,537 @@ a:not(.btn):not(.sidebar-link):hover {
     min-height: 100vh;
     padding: 1rem;
 }
+
+/* ================================================================ */
+/* RESPONSIVE - MOBILE FIRST (Ajouté à la fin) */
+/* ================================================================ */
+
+/* ================================================================ */
+/* 1. CONTENEURS RESPONSIVES */
+/* ================================================================ */
+
+.container-responsive {
+    width: 100%;
+    padding: 0 12px;
+    margin: 0 auto;
+}
+
+/* ================================================================ */
+/* 2. GRILLES RESPONSIVES */
+/* ================================================================ */
+
+.grid-responsive {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+}
+
+.grid-2cols {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-3cols {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.grid-4cols {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+/* ================================================================ */
+/* 3. TABLEAUX RESPONSIVES */
+/* ================================================================ */
+
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+/* ================================================================ */
+/* 4. FORMULAIRES RESPONSIVES */
+/* ================================================================ */
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+/* ================================================================ */
+/* 5. BOUTONS ADAPTABLES */
+/* ================================================================ */
+
+.btn-responsive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-responsive-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* ================================================================ */
+/* 6. MODAL RESPONSIVE */
+/* ================================================================ */
+
+.modal-responsive {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 16px;
+}
+
+.modal-responsive .modal-content {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* ================================================================ */
+/* 7. NAVIGATION RESPONSIVE */
+/* ================================================================ */
+
+.nav-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.nav-responsive a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.nav-responsive a:hover,
+.nav-responsive a.active {
+    background: rgba(99,102,241,0.08);
+    color: var(--primary-500);
+}
+
+/* ================================================================ */
+/* 8. TABLETTE (≥ 600px) */
+/* ================================================================ */
+
+@media (min-width: 600px) {
+    .container-responsive {
+        padding: 0 20px;
+    }
+
+    .grid-responsive {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .grid-2cols {
+        gap: 16px;
+    }
+
+    .grid-3cols {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .grid-4cols {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .btn-responsive {
+        width: auto;
+        padding: 10px 24px;
+    }
+}
+
+/* ================================================================ */
+/* 9. PC / GRAND ÉCRAN (≥ 1024px) */
+/* ================================================================ */
+
+@media (min-width: 1024px) {
+    .container-responsive {
+        max-width: 1200px;
+        padding: 0 32px;
+    }
+
+    .grid-responsive {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .grid-4cols {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .btn-responsive {
+        padding: 12px 32px;
+        font-size: 16px;
+    }
+
+    .table-responsive table {
+        min-width: 100%;
+    }
+}
+
+/* ================================================================ */
+/* 10. UTILITAIRES RESPONSIVES */
+/* ================================================================ */
+
+/* Texte responsive */
+.text-responsive {
+    font-size: clamp(14px, 2vw, 18px);
+}
+
+.heading-responsive {
+    font-size: clamp(18px, 3vw, 32px);
+}
+
+/* Cache sur mobile */
+.hide-mobile {
+    display: none;
+}
+
+@media (min-width: 600px) {
+    .hide-mobile {
+        display: block;
+    }
+}
+
+/* Cache sur PC */
+.hide-desktop {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .hide-desktop {
+        display: none;
+    }
+}
+
+/* Espacements */
+.mt-responsive { margin-top: clamp(8px, 2vw, 24px); }
+.mb-responsive { margin-bottom: clamp(8px, 2vw, 24px); }
+.p-responsive { padding: clamp(12px, 2vw, 24px); }
+.gap-responsive { gap: clamp(8px, 1.5vw, 20px); }
+
+/* ================================================================ */
+/* 11. FIXES POUR LES VUES EXISTANTES */
+/* ================================================================ */
+
+/* Fix pour les tableaux admin */
+.admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 500px;
+    border-collapse: collapse;
+}
+
+/* Fix pour les cartes produits */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+@media (min-width: 600px) {
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+}
+
+/* Fix pour les listes d'utilisateurs */
+.user-list-responsive .user-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-list-responsive .user-item .user-info {
+    flex: 1;
+    min-width: 120px;
+}
+
+.user-list-responsive .user-item .user-status {
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .user-list-responsive .user-item {
+        padding: 8px 10px;
+    }
+    .user-list-responsive .user-item .user-info .user-name {
+        font-size: 13px;
+    }
+    .user-list-responsive .user-item .user-info .user-rank {
+        font-size: 10px;
+    }
+}
+
+/* ================================================================ */
+/* 12. DASHBOARD RESPONSIVE */
+/* ================================================================ */
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.dashboard-stats .stat-card {
+    padding: 12px 14px;
+}
+
+.dashboard-stats .stat-card .stat-value {
+    font-size: 18px;
+}
+
+@media (min-width: 600px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 22px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-stats {
+        gap: 18px;
+    }
+    .dashboard-stats .stat-card {
+        padding: 16px 20px;
+    }
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 26px;
+    }
+}
+
+/* ================================================================ */
+/* 13. FLOATING BUTTON MOBILE */
+/* ================================================================ */
+
+.btn-floating {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 440px;
+    padding: 12px 20px;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 24px rgba(99,102,241,0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100;
+    text-decoration: none;
+}
+
+.btn-floating:hover {
+    transform: translateX(-50%) scale(1.02);
+    box-shadow: 0 6px 32px rgba(99,102,241,0.4);
+}
+
+.btn-floating:active {
+    transform: translateX(-50%) scale(0.96);
+}
+
+@media (min-width: 1024px) {
+    .btn-floating {
+        display: none;
+    }
+}
+
+/* ================================================================ */
+/* 14. SIDEBAR RESPONSIVE */
+/* ================================================================ */
+
+.sidebar-responsive {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 280px;
+    background: var(--bg-navbar);
+    border-right: 1px solid var(--border-color);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar-responsive.open {
+    transform: translateX(0);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+}
+
+.sidebar-overlay.open {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .sidebar-responsive {
+        transform: translateX(0);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+    }
+    .sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* ================================================================ */
+/* 15. AUTH PAGES RESPONSIVE */
+/* ================================================================ */
+
+.auth-container-responsive {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.auth-card-responsive {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 480px) {
+    .auth-card-responsive {
+        padding: 16px;
+        border-radius: 12px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .auth-card-responsive {
+        padding: 40px;
+        max-width: 480px;
+    }
+}
+
+/* ================================================================ */
+/* 16. DARK MODE FIXES */
+/* ================================================================ */
+
+.dark .btn-floating {
+    background: var(--gradient-primary);
+}
+
+.dark .sidebar-responsive {
+    background: var(--bg-navbar);
+    border-color: var(--border-color);
+}
+
+.dark .auth-card-responsive {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+/* ================================================================ */
+/* 17. ANIMATIONS RESPONSIVES */
+/* ================================================================ */
+
+@media (max-width: 480px) {
+    .animate-fadeInUp {
+        animation-duration: 0.4s;
+    }
+    .animate-fadeInUp.delay-1 { animation-delay: 0.02s; }
+    .animate-fadeInUp.delay-2 { animation-delay: 0.04s; }
+    .animate-fadeInUp.delay-3 { animation-delay: 0.06s; }
+    .animate-fadeInUp.delay-4 { animation-delay: 0.08s; }
+    .animate-fadeInUp.delay-5 { animation-delay: 0.10s; }
+}
