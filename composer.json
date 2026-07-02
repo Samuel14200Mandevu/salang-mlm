@@ -15,6 +15,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.28",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/livewire": "^4.3",
         "spatie/laravel-permission": "^8.0"
     },
@@ -81,6 +82,9 @@
             "php artisan config:cache",
             "php artisan route:cache",
             "php artisan view:cache"
+        ],
+        "post-install-cmd": [
+        "php artisan storage:link"
         ]
     },
     "extra": {
