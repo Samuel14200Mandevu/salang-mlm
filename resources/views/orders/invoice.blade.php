@@ -4,10 +4,12 @@
     <meta charset="utf-8">
     <title>Facture #{{ $order->order_number }}</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'DejaVu Sans', 'Helvetica', Arial, sans-serif;
             margin: 20px;
             color: #333;
+            font-size: 13px;
         }
         .invoice-header {
             display: flex;
@@ -15,22 +17,25 @@
             border-bottom: 2px solid #6366f1;
             padding-bottom: 20px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .invoice-title h1 {
             color: #6366f1;
             margin: 0;
-            font-size: 28px;
+            font-size: 24px;
         }
         .invoice-title p {
             color: #666;
             margin: 5px 0 0;
+            font-size: 13px;
         }
         .invoice-info {
             text-align: right;
         }
         .invoice-info p {
             margin: 3px 0;
-            font-size: 13px;
+            font-size: 12px;
         }
         .invoice-info strong {
             color: #333;
@@ -42,10 +47,12 @@
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .company-info div p {
             margin: 3px 0;
-            font-size: 13px;
+            font-size: 12px;
             color: #666;
         }
         .company-info div strong {
@@ -59,20 +66,18 @@
         th {
             background: #6366f1;
             color: white;
-            padding: 10px 12px;
+            padding: 8px 12px;
             text-align: left;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         td {
-            padding: 10px 12px;
+            padding: 8px 12px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: 13px;
+            font-size: 12px;
         }
-        .text-right {
-            text-align: right;
-        }
+        .text-right { text-align: right; }
         .total-section {
             margin-top: 20px;
             border-top: 2px solid #6366f1;
@@ -80,28 +85,26 @@
             display: flex;
             justify-content: flex-end;
         }
-        .total-box {
-            width: 300px;
-        }
+        .total-box { width: 280px; }
         .total-box .row {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
-            font-size: 14px;
+            padding: 4px 0;
+            font-size: 13px;
         }
         .total-box .row.total {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             border-top: 2px solid #333;
-            padding-top: 10px;
-            margin-top: 5px;
+            padding-top: 8px;
+            margin-top: 4px;
             color: #6366f1;
         }
         .status-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
         }
         .status-completed { background: #dcfce7; color: #22c55e; }
@@ -111,17 +114,30 @@
         .footer {
             margin-top: 40px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
             border-top: 1px solid #e5e7eb;
             padding-top: 20px;
+        }
+        @media print {
+            body { margin: 10px; }
+            .no-print { display: none; }
+        }
+        @media (max-width: 600px) {
+            body { margin: 10px; font-size: 11px; }
+            .invoice-header { flex-direction: column; text-align: center; }
+            .invoice-info { text-align: center; }
+            .company-info { flex-direction: column; text-align: center; }
+            .total-section { justify-content: center; }
+            .total-box { width: 100%; }
+            th, td { padding: 5px 8px; font-size: 10px; }
         }
     </style>
 </head>
 <body>
     <div class="invoice-header">
         <div class="invoice-title">
-            <h1>🧾 FACTURE</h1>
+            <h1>FACTURE</h1>
             <p>Salang Group • E-Commerce & MLM</p>
         </div>
         <div class="invoice-info">
@@ -138,7 +154,7 @@
     <div class="company-info">
         <div>
             <p><strong>Salang Group</strong></p>
-            <p>Abidjan, Côte d'Ivoire</p>
+            <p>Abidjan, Cote d'Ivoire</p>
             <p>Email: contact@salang.com</p>
             <p>Tel: +225 07 00 00 00 00</p>
         </div>
@@ -152,13 +168,13 @@
         </div>
     </div>
 
-    <h3 style="margin: 20px 0 10px;">🛍️ Articles commandés</h3>
+    <h3 style="margin: 20px 0 10px; font-size: 16px;">Articles commandes</h3>
     
     <table>
         <thead>
             <tr>
                 <th>Produit</th>
-                <th>Quantité</th>
+                <th>Quantite</th>
                 <th class="text-right">Prix unitaire</th>
                 <th class="text-right">Total</th>
             </tr>
@@ -169,7 +185,7 @@
                 <td>
                     {{ $item->name }}
                     @if($item->package_id)
-                        <span style="color: #6366f1; font-size: 11px;">(Package)</span>
+                        <span style="color: #6366f1; font-size: 10px;">(Package)</span>
                     @endif
                 </td>
                 <td>{{ $item->quantity }}</td>
@@ -196,7 +212,7 @@
             </div>
             @if($order->discount > 0)
             <div class="row" style="color: #ef4444;">
-                <span>Réduction</span>
+                <span>Reduction</span>
                 <span>-${{ number_format($order->discount, 2) }}</span>
             </div>
             @endif
@@ -209,14 +225,14 @@
 
     @if($order->shipping_address)
     <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 8px;">
-        <p><strong>📦 Adresse de livraison</strong></p>
+        <p><strong>Adresse de livraison</strong></p>
         <p style="margin: 5px 0 0; color: #666;">{{ nl2br($order->shipping_address) }}</p>
     </div>
     @endif
 
     <div class="footer">
         <p>Merci pour votre confiance !</p>
-        <p style="font-size: 10px;">Cette facture est générée automatiquement par Salang MLM.</p>
+        <p style="font-size: 10px;">Cette facture est generee automatiquement par Salang MLM.</p>
     </div>
 </body>
 </html>

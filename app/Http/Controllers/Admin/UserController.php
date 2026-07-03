@@ -19,6 +19,23 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
+    // ============================================================
+    // AFFICHER LES DÉTAILS D'UN UTILISATEUR
+    // ============================================================
+    public function show($id)
+    {
+        $user = User::with(['rank', 'package', 'sponsor'])->findOrFail($id);
+        
+        // Compter les downlines (filleuls)
+        $downlinesCount = Genealogy::where('sponsor_id', $id)->count();
+        
+        // Compter les commissions
+        $commissionsCount = $user->commissions()->count();
+        $totalCommissions = $user->commissions()->sum('amount');
+        
+        return view('admin.users.show', compact('user', 'downlinesCount', 'commissionsCount', 'totalCommissions'));
+    }
+
     public function create()
     {
         $ranks = Rank::all();
@@ -63,7 +80,7 @@ class UserController extends Controller
             'level' => 0,
         ]);
 
-        return redirect()->route('admin.users')->with('success', '👤 Utilisateur créé avec succès.');
+        return redirect()->route('admin.users')->with('success', 'Utilisateur cree avec succes.');
     }
 
     public function edit($id)
@@ -99,14 +116,14 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($request->password)]);
         }
 
-        return redirect()->route('admin.users')->with('success', '✏️ Utilisateur mis à jour.');
+        return redirect()->route('admin.users')->with('success', 'Utilisateur mis a jour.');
     }
 
     public function destroy($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
-        return redirect()->route('admin.users')->with('success', '🗑️ Utilisateur supprimé.');
+        return redirect()->route('admin.users')->with('success', 'Utilisateur supprime.');
     }
 
     public function toggleStatus($id)
@@ -115,7 +132,7 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
         
-        $status = $user->is_active ? 'activé' : 'désactivé';
-        return redirect()->route('admin.users')->with('success', "👤 Utilisateur {$status} avec succès.");
+        $status = $user->is_active ? 'active' : 'desactive';
+        return redirect()->route('admin.users')->with('success', "Utilisateur {$status} avec succes.");
     }
 }

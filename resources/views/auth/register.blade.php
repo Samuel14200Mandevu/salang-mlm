@@ -100,6 +100,91 @@
         height: 1.25rem;
         flex-shrink: 0;
     }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.375rem;
+    }
+    .form-group label svg {
+        display: inline;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.375rem;
+        vertical-align: middle;
+    }
+    .form-group .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-group .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .form-group .input-error {
+        border-color: #ef4444;
+    }
+    .form-group .input-error:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    }
+    .password-wrapper {
+        position: relative;
+    }
+    .password-wrapper .input {
+        padding-right: 2.75rem;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+    }
+    .password-toggle:hover {
+        color: var(--text-primary);
+    }
+    .password-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    .form-hint {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 640px) {
+        .auth-card { padding: 1.5rem; }
+        .auth-logo img { height: 50px; }
+        .auth-logo .brand-name { font-size: 1.25rem; }
+        .auth-title { font-size: 1.25rem; }
+        .form-group label { font-size: 0.813rem; }
+        .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
+        .social-btn { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
+        .social-btn svg { width: 1.125rem; height: 1.125rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .auth-card { padding: 1.25rem; }
+    }
 </style>
 @endpush
 
@@ -116,8 +201,8 @@
         <span class="brand-name">Salang MLM</span>
     </div>
 
-    <h2 class="auth-title">Créer un compte</h2>
-    <p class="auth-subtitle">Rejoignez la communauté Salang</p>
+    <h2 class="auth-title">Creer un compte</h2>
+    <p class="auth-subtitle">Rejoignez la communaute Salang</p>
 
     @if ($errors->any())
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
@@ -133,9 +218,9 @@
         @csrf
 
         <!-- Nom -->
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
                 Nom complet
@@ -153,9 +238,9 @@
         </div>
 
         <!-- Email -->
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
                 Email
@@ -171,19 +256,19 @@
             @enderror
         </div>
 
-        <!-- Téléphone -->
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Telephone -->
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
-                Téléphone
+                Telephone
             </label>
             <input type="tel" 
                    name="phone" 
                    value="{{ old('phone') }}" 
                    class="input @error('phone') input-error @enderror"
-                   placeholder="Entrez votre numéro de téléphone"
+                   placeholder="Entrez votre numero de telephone"
                    required>
             @error('phone')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
@@ -191,9 +276,9 @@
         </div>
 
         <!-- Sponsor ID -->
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
                 ID du parrain (optionnel)
@@ -203,34 +288,32 @@
                    value="{{ request()->query('ref') ?? old('sponsor_id') }}" 
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Entrez l'ID du parrain">
-            <p class="text-xs text-[var(--text-tertiary)] mt-1">
-                Entrez l'ID de la personne qui vous a invité
-            </p>
+            <p class="form-hint">Entrez l'ID de la personne qui vous a invite</p>
             @error('sponsor_id')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
             @enderror
         </div>
 
         <!-- Password -->
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
                 Mot de passe
             </label>
-            <div class="relative">
+            <div class="password-wrapper">
                 <input type="password" 
                        id="password"
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="•••••••• (8 caractères min)"
+                       placeholder="8 caracteres minimum"
                        required
                        minlength="8">
                 <button type="button" 
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition"
+                        class="password-toggle"
                         onclick="togglePassword(this)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
@@ -240,7 +323,7 @@
                 <div class="password-strength-bar" id="passwordStrength"></div>
             </div>
             <p class="password-strength-text text-[var(--text-tertiary)]" id="passwordStrengthText">
-                Minimum 8 caractères
+                Minimum 8 caracteres
             </p>
             @error('password')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
@@ -248,9 +331,9 @@
         </div>
 
         <!-- Confirm Password -->
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
                 Confirmer le mot de passe
@@ -258,12 +341,12 @@
             <input type="password" 
                    name="password_confirmation" 
                    class="input"
-                   placeholder="••••••••"
+                   placeholder="Confirmez votre mot de passe"
                    required>
         </div>
 
         <!-- Terms -->
-        <div class="mb-6">
+        <div class="form-group mb-6">
             <label class="flex items-start gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                 <input type="checkbox" 
                        name="terms" 
@@ -273,11 +356,11 @@
                 <span>
                     J'accepte les 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        conditions générales
+                        conditions generales
                     </a>
                     et la 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        politique de confidentialité
+                        politique de confidentialite
                     </a>
                 </span>
             </label>
@@ -291,15 +374,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
             </svg>
-            Créer mon compte
+            Creer mon compte
         </button>
     </form>
 
     <div class="auth-divider">ou</div>
 
-    <!-- Social Login -->
     <div class="space-y-2">
-        <!-- Google -->
         <a href="{{ route('social.redirect', 'google') }}" class="social-btn">
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -310,52 +391,34 @@
             Continuer avec Google
         </a>
 
-        <!-- Facebook -->
         <a href="{{ route('social.redirect', 'facebook') }}" class="social-btn">
             <svg viewBox="0 0 24 24" fill="#1877F2">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
             Continuer avec Facebook
         </a>
-
-        <!-- Twitter/X -->
-        <a href="{{ route('social.redirect', 'twitter') }}" class="social-btn">
-            <svg viewBox="0 0 24 24" fill="#000000">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-            Continuer avec Twitter/X
-        </a>
-
-        <!-- Instagram -->
-        <a href="{{ route('social.redirect', 'instagram') }}" class="social-btn">
-            <svg viewBox="0 0 24 24" fill="#E4405F">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.332.014 7.052.072 2.695.272.273 2.69.073 7.052.014 8.332 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.332 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-            </svg>
-            Continuer avec Instagram
-        </a>
-
-        <!-- TikTok -->
-        <a href="{{ route('social.redirect', 'tiktok') }}" class="social-btn">
-            <svg viewBox="0 0 24 24" fill="#000000">
-                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.11-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.3-.7.32-1.06.12-2.14.04-4.28.07-6.42.02-1.08.06-2.17.09-3.25.03-1.34.12-2.67.22-4.01-.21-.02-.42-.04-.63-.05z"/>
-            </svg>
-            Continuer avec TikTok
-        </a>
     </div>
 
-    <!-- Login Link -->
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
-        Déjà un compte ?
+        Deja un compte ?
         <a href="{{ route('login') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
             Se connecter
         </a>
     </p>
+    <!-- Lien retour accueil -->
+    <div class="mb-4">
+        <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
+        <a href="{{ route('home') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
+            &larr; Retour a l'accueil
+        </a>
+    </p>    
+    </div>
 </div>
 
 @push('scripts')
 <script>
 function togglePassword(btn) {
-    const input = btn.closest('.relative').querySelector('input');
+    const input = btn.closest('.password-wrapper').querySelector('input');
     const icon = btn.querySelector('svg');
     if (input.type === 'password') {
         input.type = 'text';
@@ -395,14 +458,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 label = 'Fort';
             } else {
                 strengthBar.style.background = '#22c55e';
-                label = 'Très fort';
+                label = 'Tres fort';
             }
 
             if (value.length > 0) {
                 strengthText.textContent = 'Force: ' + label;
                 strengthText.className = 'password-strength-text mt-0.5';
             } else {
-                strengthText.textContent = 'Minimum 8 caractères';
+                strengthText.textContent = 'Minimum 8 caracteres';
                 strengthText.className = 'password-strength-text text-[var(--text-tertiary)]';
             }
         });

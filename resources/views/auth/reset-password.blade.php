@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Réinitialisation - Salang MLM')
+@section('title', 'Reinitialisation - Salang MLM')
 
 @push('styles')
 <style>
@@ -61,6 +61,86 @@
         transition: width 0.3s ease, background 0.3s ease;
         width: 0%;
     }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.375rem;
+    }
+    .form-group label svg {
+        display: inline;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.375rem;
+        vertical-align: middle;
+    }
+    .form-group .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-group .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .form-group .input-error {
+        border-color: #ef4444;
+    }
+    .form-group .input-error:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    }
+    .password-wrapper {
+        position: relative;
+    }
+    .password-wrapper .input {
+        padding-right: 2.75rem;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+    }
+    .password-toggle:hover {
+        color: var(--text-primary);
+    }
+    .password-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    @media (max-width: 640px) {
+        .auth-card { padding: 1.5rem; }
+        .auth-logo img { height: 50px; }
+        .auth-logo .brand-name { font-size: 1.25rem; }
+        .auth-title { font-size: 1.25rem; }
+        .auth-subtitle { font-size: 0.813rem; }
+        .form-group label { font-size: 0.813rem; }
+        .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
+        .icon-big { font-size: 2.5rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .auth-card { padding: 1.25rem; }
+    }
 </style>
 @endpush
 
@@ -77,9 +157,14 @@
         <span class="brand-name">Salang MLM</span>
     </div>
 
-    <span class="icon-big animate-float">🔐</span>
-    <h2 class="auth-title">Réinitialiser le mot de passe</h2>
-    <p class="auth-subtitle">Créez un nouveau mot de passe sécurisé</p>
+    <div class="icon-big animate-float">
+        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+    </div>
+    
+    <h2 class="auth-title">Reinitialiser le mot de passe</h2>
+    <p class="auth-subtitle">Creez un nouveau mot de passe securise</p>
 
     @if ($errors->any())
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
@@ -96,9 +181,9 @@
 
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
                 Email
@@ -114,24 +199,24 @@
             @enderror
         </div>
 
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
                 Nouveau mot de passe
             </label>
-            <div class="relative">
+            <div class="password-wrapper">
                 <input type="password" 
                        id="password"
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="••••••••"
+                       placeholder="8 caracteres minimum"
                        required>
                 <button type="button" 
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition"
+                        class="password-toggle"
                         onclick="togglePassword(this)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
@@ -145,9 +230,9 @@
             @enderror
         </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
                 Confirmer
@@ -155,7 +240,7 @@
             <input type="password" 
                    name="password_confirmation" 
                    class="input"
-                   placeholder="••••••••"
+                   placeholder="Confirmez votre mot de passe"
                    required>
         </div>
 
@@ -163,7 +248,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            Réinitialiser
+            Reinitialiser
         </button>
     </form>
 </div>
@@ -171,7 +256,7 @@
 @push('scripts')
 <script>
 function togglePassword(btn) {
-    const input = btn.closest('.relative').querySelector('input');
+    const input = btn.closest('.password-wrapper').querySelector('input');
     const icon = btn.querySelector('svg');
     if (input.type === 'password') {
         input.type = 'text';

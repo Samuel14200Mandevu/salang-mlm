@@ -60,6 +60,85 @@
         font-weight: 600;
         margin-bottom: 1rem;
     }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.375rem;
+    }
+    .form-group label svg {
+        display: inline;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.375rem;
+        vertical-align: middle;
+    }
+    .form-group .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-group .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .form-group .input-error {
+        border-color: #ef4444;
+    }
+    .form-group .input-error:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    }
+    .password-wrapper {
+        position: relative;
+    }
+    .password-wrapper .input {
+        padding-right: 2.75rem;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+    }
+    .password-toggle:hover {
+        color: var(--text-primary);
+    }
+    .password-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    @media (max-width: 640px) {
+        .auth-card { padding: 1.5rem; }
+        .auth-logo img { height: 50px; }
+        .auth-logo .brand-name { font-size: 1.25rem; }
+        .auth-title { font-size: 1.25rem; }
+        .form-group label { font-size: 0.813rem; }
+        .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
+        .icon-big { font-size: 2.5rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .auth-card { padding: 1.25rem; }
+    }
 </style>
 @endpush
 
@@ -76,19 +155,24 @@
         <span class="brand-name">Salang MLM</span>
     </div>
 
-    <span class="icon-big animate-float">🛡️</span>
+    <div class="icon-big animate-float">
+        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+    </div>
+    
     <div class="text-center">
         <span class="secure-badge">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
-            Zone sécurisée
+            Zone securisee
         </span>
     </div>
 
     <h2 class="auth-title">Confirmez votre mot de passe</h2>
     <p class="auth-subtitle">
-        Cette zone est sécurisée. Veuillez confirmer votre mot de passe avant de continuer.
+        Cette zone est securisee. Veuillez confirmer votre mot de passe avant de continuer.
     </p>
 
     @if ($errors->any())
@@ -104,24 +188,24 @@
     <form method="POST" action="{{ route('password.confirm') }}">
         @csrf
 
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                <svg class="inline w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="form-group">
+            <label>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
                 Mot de passe
             </label>
-            <div class="relative">
+            <div class="password-wrapper">
                 <input type="password" 
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="••••••••"
+                       placeholder="Entrez votre mot de passe"
                        required 
                        autofocus>
                 <button type="button" 
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition"
+                        class="password-toggle"
                         onclick="togglePassword(this)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
@@ -142,7 +226,7 @@
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
         <a href="{{ route('dashboard') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
-            ← Retour au tableau de bord
+            &larr; Retour au tableau de bord
         </a>
     </p>
 </div>
@@ -150,7 +234,7 @@
 @push('scripts')
 <script>
 function togglePassword(btn) {
-    const input = btn.closest('.relative').querySelector('input');
+    const input = btn.closest('.password-wrapper').querySelector('input');
     const icon = btn.querySelector('svg');
     if (input.type === 'password') {
         input.type = 'text';

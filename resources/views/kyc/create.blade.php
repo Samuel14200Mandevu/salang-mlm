@@ -16,14 +16,14 @@
         background: rgba(99,102,241,0.05);
     }
     .document-type-card .doc-icon {
-        font-size: 2.5rem;
+        font-size: 2rem;
         display: block;
         margin-bottom: 0.5rem;
     }
     .drop-zone {
         border: 2px dashed var(--border-color);
         border-radius: var(--radius-lg);
-        padding: 2rem;
+        padding: 1.5rem;
         text-align: center;
         transition: all 0.3s ease;
         cursor: pointer;
@@ -38,8 +38,8 @@
         background: rgba(99,102,241,0.05);
     }
     .drop-zone .file-preview {
-        max-width: 200px;
-        max-height: 150px;
+        max-width: 150px;
+        max-height: 120px;
         margin: 0 auto;
         border-radius: var(--radius-md);
         overflow: hidden;
@@ -49,19 +49,28 @@
         height: 100%;
         object-fit: cover;
     }
+    
+    @media (max-width: 640px) {
+        .card { padding: 0.75rem; }
+        .document-type-card { padding: 0.75rem; }
+        .document-type-card .doc-icon { font-size: 1.5rem; }
+        .drop-zone { padding: 1rem; }
+        .text-4xl { font-size: 2rem; }
+        .btn { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
     <!-- En-tête -->
     <div class="animate-fadeInUp">
-        <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">📤 Soumettre un document KYC</h1>
-        <p class="text-[var(--text-secondary)] mt-1">Vérifiez votre identité en soumettant vos documents</p>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Soumettre un document KYC</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Verifiez votre identite en soumettant vos documents</p>
     </div>
 
     @if($errors->any())
-        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 animate-fadeIn">
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             <ul class="list-disc list-inside">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -70,35 +79,47 @@
         </div>
     @endif
 
-    <div class="card animate-fadeInUp delay-1 max-w-2xl mx-auto">
+    <div class="card animate-fadeInUp delay-1 max-w-2xl mx-auto p-3 sm:p-4 md:p-6">
         <form action="{{ route('kyc.store') }}" method="POST" enctype="multipart/form-data" id="kycForm">
             @csrf
 
             <!-- Type de document -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-3">
-                    📋 Type de document *
+            <div class="mb-4 sm:mb-6">
+                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2 sm:mb-3">
+                    Type de document *
                 </label>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="document-type-card card p-3 text-center" data-value="id_card" onclick="selectDocumentType(this)">
-                        <span class="doc-icon">🪪</span>
-                        <p class="text-sm font-medium text-[var(--text-primary)]">Carte d'identité</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Recto/Verso</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                    <div class="document-type-card card p-2 sm:p-3 text-center" data-value="id_card" onclick="selectDocumentType(this)">
+                        <span class="doc-icon">
+                            <svg class="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                            </svg>
+                        </span>
+                        <p class="text-[10px] sm:text-xs font-medium text-[var(--text-primary)]">Carte d'identite</p>
                     </div>
-                    <div class="document-type-card card p-3 text-center" data-value="passport" onclick="selectDocumentType(this)">
-                        <span class="doc-icon">📘</span>
-                        <p class="text-sm font-medium text-[var(--text-primary)]">Passeport</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Page photo</p>
+                    <div class="document-type-card card p-2 sm:p-3 text-center" data-value="passport" onclick="selectDocumentType(this)">
+                        <span class="doc-icon">
+                            <svg class="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </span>
+                        <p class="text-[10px] sm:text-xs font-medium text-[var(--text-primary)]">Passeport</p>
                     </div>
-                    <div class="document-type-card card p-3 text-center" data-value="proof_of_address" onclick="selectDocumentType(this)">
-                        <span class="doc-icon">📬</span>
-                        <p class="text-sm font-medium text-[var(--text-primary)]">Justificatif de domicile</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Facture récente</p>
+                    <div class="document-type-card card p-2 sm:p-3 text-center" data-value="proof_of_address" onclick="selectDocumentType(this)">
+                        <span class="doc-icon">
+                            <svg class="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </span>
+                        <p class="text-[10px] sm:text-xs font-medium text-[var(--text-primary)]">Justificatif de domicile</p>
                     </div>
-                    <div class="document-type-card card p-3 text-center" data-value="selfie" onclick="selectDocumentType(this)">
-                        <span class="doc-icon">🤳</span>
-                        <p class="text-sm font-medium text-[var(--text-primary)]">Selfie</p>
-                        <p class="text-xs text-[var(--text-secondary)]">Avec pièce d'identité</p>
+                    <div class="document-type-card card p-2 sm:p-3 text-center" data-value="selfie" onclick="selectDocumentType(this)">
+                        <span class="doc-icon">
+                            <svg class="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </span>
+                        <p class="text-[10px] sm:text-xs font-medium text-[var(--text-primary)]">Selfie</p>
                     </div>
                 </div>
                 <input type="hidden" name="document_type" id="document_type" required>
@@ -107,36 +128,38 @@
                 @enderror
             </div>
 
-            <!-- Numéro de document -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    🔢 Numéro de document (optionnel)
+            <!-- Numero de document -->
+            <div class="mb-3 sm:mb-4">
+                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Numero de document (optionnel)
                 </label>
                 <input type="text" 
                        name="document_number" 
-                       class="input" 
+                       class="input text-sm sm:text-base" 
                        placeholder="Ex: AB123456"
                        value="{{ old('document_number') }}">
-                <p class="text-xs text-[var(--text-secondary)] mt-1">Facultatif, mais recommandé pour accélérer la vérification</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">Facultatif, mais recommande pour accelerer la verification</p>
             </div>
 
-            <!-- Upload de fichier -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    📎 Fichier * (max 5MB)
+            <!-- Upload -->
+            <div class="mb-3 sm:mb-4">
+                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Fichier * (max 5MB)
                 </label>
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
                     <div id="dropZoneContent">
-                        <span class="text-4xl block mb-2">📁</span>
-                        <p class="text-[var(--text-secondary)]">Cliquez ou glissez-déposez votre fichier ici</p>
-                        <p class="text-xs text-[var(--text-tertiary)] mt-1">Formats acceptés : JPG, PNG, PDF</p>
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-[var(--text-tertiary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Cliquez ou glissez-deposez votre fichier ici</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-tertiary)] mt-1">Formats acceptes : JPG, PNG, PDF</p>
                     </div>
                     <div id="dropZonePreview" class="hidden">
                         <div class="file-preview">
-                            <img id="filePreviewImage" src="" alt="Aperçu" class="w-full h-full object-cover">
+                            <img id="filePreviewImage" src="" alt="Apercu" class="w-full h-full object-cover">
                         </div>
-                        <p id="filePreviewName" class="text-sm font-medium text-[var(--text-primary)] mt-2"></p>
-                        <p id="filePreviewSize" class="text-xs text-[var(--text-secondary)]"></p>
+                        <p id="filePreviewName" class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-2"></p>
+                        <p id="filePreviewSize" class="text-[10px] sm:text-xs text-[var(--text-secondary)]"></p>
                     </div>
                 </div>
                 <input type="file" 
@@ -149,31 +172,31 @@
                 @error('file')
                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                 @enderror
-                <p class="text-xs text-[var(--text-secondary)] mt-1">
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
                     Formats: JPG, PNG, PDF • Taille max: 5MB
                 </p>
             </div>
 
             <!-- Informations -->
-            <div class="p-4 bg-[var(--bg-secondary)] rounded-lg mb-6">
-                <p class="text-sm text-[var(--text-secondary)]">
-                    <span class="font-semibold text-[var(--text-primary)]">📌 Important :</span>
+            <div class="p-2 sm:p-4 bg-[var(--bg-secondary)] rounded-lg mb-4 sm:mb-6">
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                    <span class="font-semibold text-[var(--text-primary)]">Important :</span>
                     <br>
-                    • Les documents doivent être clairs et lisibles.<br>
-                    • Seuls les formats JPG, PNG et PDF sont acceptés.<br>
+                    • Les documents doivent etre clairs et lisibles.<br>
+                    • Seuls les formats JPG, PNG et PDF sont acceptes.<br>
                     • La taille maximale est de 5MB par fichier.<br>
-                    • La vérification peut prendre jusqu'à 48 heures.
+                    • La verification peut prendre jusqu'a 48 heures.
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-3">
-                <button type="submit" class="btn btn-primary flex-1" id="submitBtn">
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                <button type="submit" class="btn btn-primary w-full sm:flex-1 text-sm sm:text-base py-2 sm:py-2.5" id="submitBtn">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                     Soumettre le document
                 </button>
-                <a href="{{ route('kyc.index') }}" class="btn btn-outline">
+                <a href="{{ route('kyc.index') }}" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
                     Annuler
                 </a>
             </div>
@@ -184,35 +207,31 @@
 @push('scripts')
 <script>
 function selectDocumentType(element) {
-    // Retirer la sélection de tous
-    document.querySelectorAll('.document-type-card').forEach(card => {
+    document.querySelectorAll('.document-type-card').forEach(function(card) {
         card.classList.remove('selected');
     });
-    // Sélectionner celui-ci
     element.classList.add('selected');
     document.getElementById('document_type').value = element.dataset.value;
 }
 
 function handleFileSelect(input) {
-    const file = input.files[0];
+    var file = input.files[0];
     if (file) {
-        const preview = document.getElementById('dropZonePreview');
-        const content = document.getElementById('dropZoneContent');
-        const previewImg = document.getElementById('filePreviewImage');
-        const previewName = document.getElementById('filePreviewName');
-        const previewSize = document.getElementById('filePreviewSize');
+        var preview = document.getElementById('dropZonePreview');
+        var content = document.getElementById('dropZoneContent');
+        var previewImg = document.getElementById('filePreviewImage');
+        var previewName = document.getElementById('filePreviewName');
+        var previewSize = document.getElementById('filePreviewSize');
 
-        // Vérifier la taille (5MB max)
         if (file.size > 5 * 1024 * 1024) {
             alert('Le fichier est trop volumineux. Taille max: 5MB');
             input.value = '';
             return;
         }
 
-        // Vérifier le type
-        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        var allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Format non supporté. Utilisez JPG, PNG ou PDF.');
+            alert('Format non supporte. Utilisez JPG, PNG ou PDF.');
             input.value = '';
             return;
         }
@@ -221,7 +240,7 @@ function handleFileSelect(input) {
         preview.classList.remove('hidden');
 
         if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
+            var reader = new FileReader();
             reader.onload = function(e) {
                 previewImg.src = e.target.result;
                 previewImg.style.display = 'block';
@@ -237,8 +256,7 @@ function handleFileSelect(input) {
     }
 }
 
-// Drag and Drop
-const dropZone = document.getElementById('dropZone');
+var dropZone = document.getElementById('dropZone');
 
 dropZone.addEventListener('dragover', function(e) {
     e.preventDefault();
@@ -254,28 +272,27 @@ dropZone.addEventListener('drop', function(e) {
     e.preventDefault();
     this.classList.remove('dragover');
     
-    const files = e.dataTransfer.files;
+    var files = e.dataTransfer.files;
     if (files.length > 0) {
-        const input = document.getElementById('fileInput');
+        var input = document.getElementById('fileInput');
         input.files = files;
         handleFileSelect(input);
     }
 });
 
-// Validation du formulaire
 document.getElementById('kycForm').addEventListener('submit', function(e) {
-    const docType = document.getElementById('document_type').value;
-    const fileInput = document.getElementById('fileInput');
+    var docType = document.getElementById('document_type').value;
+    var fileInput = document.getElementById('fileInput');
     
     if (!docType) {
         e.preventDefault();
-        alert('Veuillez sélectionner un type de document.');
+        alert('Veuillez selectionner un type de document.');
         return;
     }
     
     if (!fileInput.files || !fileInput.files[0]) {
         e.preventDefault();
-        alert('Veuillez sélectionner un fichier.');
+        alert('Veuillez selectionner un fichier.');
         return;
     }
 });

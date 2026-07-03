@@ -6,21 +6,19 @@
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-lg);
-        padding: 1.5rem;
+        padding: 1.25rem;
         transition: all 0.3s ease;
     }
-    .detail-card:hover {
-        border-color: var(--primary-500);
-    }
+    .detail-card:hover { border-color: var(--primary-500); }
     .detail-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--text-secondary);
         font-weight: 600;
     }
     .detail-value {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: var(--text-primary);
         margin-top: 0.25rem;
@@ -28,16 +26,14 @@
     .timeline-item {
         display: flex;
         align-items: flex-start;
-        gap: 1rem;
-        padding: 0.75rem 0;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
         border-bottom: 1px solid var(--border-color);
     }
-    .timeline-item:last-child {
-        border-bottom: none;
-    }
+    .timeline-item:last-child { border-bottom: none; }
     .timeline-dot {
-        width: 0.75rem;
-        height: 0.75rem;
+        width: 0.625rem;
+        height: 0.625rem;
         border-radius: 50%;
         margin-top: 0.25rem;
         flex-shrink: 0;
@@ -45,46 +41,65 @@
     .timeline-dot-success { background: #22c55e; }
     .timeline-dot-pending { background: #f59e0b; }
     .timeline-dot-info { background: #3b82f6; }
+    
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--radius-full);
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .type-badge-direct { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .type-badge-indirect { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .type-badge-leadership { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .type-badge-retail { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .type-badge-bonus { background: rgba(236,72,153,0.15); color: #ec4899; }
+    
+    @media (max-width: 640px) {
+        .detail-card { padding: 0.75rem; }
+        .detail-value { font-size: 0.95rem; }
+        .avatar-lg { width: 2.5rem; height: 2.5rem; font-size: 0.75rem; }
+        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
     <!-- En-tête -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                💰 Commission #{{ $commission->id }}
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+                Commission #{{ $commission->id }}
             </h1>
-            <p class="text-[var(--text-secondary)] mt-1">Détails de la commission</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Details de la commission</p>
         </div>
-        <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm">
-            ← Retour à la liste
+        <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Retour a la liste
         </a>
     </div>
 
-    <!-- Détails -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeInUp delay-1">
-        <!-- Informations générales -->
+    <!-- Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-1">
         <div class="detail-card">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-[var(--text-primary)]">📋 Informations</h3>
-                <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }}">
-                    {{ $commission->status == 'paid' ? '✅ Payé' : '⏳ En attente' }}
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Informations</h3>
+                <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
+                    {{ $commission->status == 'paid' ? 'Paye' : 'En attente' }}
                 </span>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                     <p class="detail-label">Type</p>
-                    <p class="detail-value">
+                    <p class="detail-value text-sm">
                         <span class="type-badge type-badge-{{ $commission->type }}">
-                            @if($commission->type == 'direct') 👤 Direct
-                            @elseif($commission->type == 'indirect') 👥 Indirect
-                            @elseif($commission->type == 'leadership') 👑 Leadership
-                            @elseif($commission->type == 'retail') 🛍️ Retail
-                            @else 🎁 Bonus
-                            @endif
+                            {{ ucfirst($commission->type) }}
                         </span>
                     </p>
                 </div>
@@ -103,40 +118,39 @@
             </div>
         </div>
 
-        <!-- Source -->
         <div class="detail-card">
-            <h3 class="font-semibold text-[var(--text-primary)] mb-4">👤 Source</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Source</h3>
 
             @if($commission->fromUser)
-                <div class="flex items-center gap-4 p-3 bg-[var(--bg-secondary)] rounded-lg">
+                <div class="flex items-center gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="avatar avatar-lg avatar-gradient">
                         {{ substr($commission->fromUser->name, 0, 2) }}
                     </div>
-                    <div>
-                        <p class="font-semibold text-[var(--text-primary)]">{{ $commission->fromUser->name }}</p>
-                        <p class="text-sm text-[var(--text-secondary)]">{{ $commission->fromUser->email }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">{{ $commission->fromUser->name }}</p>
+                        <p class="text-xs sm:text-sm text-[var(--text-secondary)] truncate">{{ $commission->fromUser->email }}</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                             Sponsor: {{ $commission->fromUser->sponsor?->name ?? 'Aucun' }}
                         </p>
                     </div>
                 </div>
             @else
-                <p class="text-[var(--text-secondary)]">Système / Automatique</p>
+                <p class="text-[var(--text-secondary)] text-sm">Systeme / Automatique</p>
             @endif
 
             @if($commission->package)
-                <div class="mt-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
-                    <p class="text-sm text-[var(--text-secondary)]">Package associé</p>
-                    <p class="font-semibold text-[var(--text-primary)]">{{ $commission->package->name }}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">${{ number_format($commission->package->price, 2) }}</p>
+                <div class="mt-2 sm:mt-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Package associe</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">{{ $commission->package->name }}</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">${{ number_format($commission->package->price, 2) }}</p>
                 </div>
             @endif
 
             @if($commission->order)
-                <div class="mt-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
-                    <p class="text-sm text-[var(--text-secondary)]">Commande associée</p>
-                    <p class="font-semibold text-[var(--text-primary)]">#{{ $commission->order->order_number }}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">${{ number_format($commission->order->total, 2) }}</p>
+                <div class="mt-2 sm:mt-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Commande associee</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">#{{ $commission->order->order_number }}</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">${{ number_format($commission->order->total, 2) }}</p>
                 </div>
             @endif
         </div>
@@ -145,20 +159,20 @@
     <!-- Description -->
     @if($commission->description)
     <div class="detail-card animate-fadeInUp delay-2">
-        <h3 class="font-semibold text-[var(--text-primary)] mb-2">📝 Description</h3>
-        <p class="text-[var(--text-secondary)]">{{ $commission->description }}</p>
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-2">Description</h3>
+        <p class="text-[var(--text-secondary)] text-sm">{{ $commission->description }}</p>
     </div>
     @endif
 
     <!-- Timeline -->
     <div class="detail-card animate-fadeInUp delay-3">
-        <h3 class="font-semibold text-[var(--text-primary)] mb-4">⏳ Chronologie</h3>
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Chronologie</h3>
 
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-success"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)]">Commission créée</p>
-                <p class="text-sm text-[var(--text-secondary)]">{{ $commission->created_at->format('d/m/Y H:i') }}</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission creee</p>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $commission->created_at->format('d/m/Y H:i') }}</p>
             </div>
         </div>
 
@@ -166,16 +180,16 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-success"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)]">Commission payée</p>
-                <p class="text-sm text-[var(--text-secondary)]">{{ $commission->paid_at?->format('d/m/Y H:i') ?? 'N/A' }}</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission payee</p>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $commission->paid_at?->format('d/m/Y H:i') ?? 'N/A' }}</p>
             </div>
         </div>
         @else
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-pending"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)]">En attente de paiement</p>
-                <p class="text-sm text-[var(--text-secondary)]">La commission sera payée automatiquement lors du prochain cycle</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">En attente de paiement</p>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">La commission sera payee automatiquement lors du prochain cycle</p>
             </div>
         </div>
         @endif
