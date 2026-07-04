@@ -33,21 +33,32 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'Erreur d\'authentification avec ' . ucfirst($provider));
         }
 
+        // Vérifie si l'utilisateur existe déjà avec cet email
         $user = User::where('email', $socialUser->getEmail())->first();
 
         if ($user) {
+            // Met à jour le provider_id si nécessaire (pour un utilisateur existant)
+            $providerColumn = $provider . '_id';
+            if (empty($user->$providerColumn)) {
+                $user->$providerColumn = $socialUser->getId();
+                $user->avatar = $socialUser->getAvatar() ?? $user->avatar;
+                $user->last_provider = $provider;
+                $user->save();
+            }
+            
             Auth::login($user);
             return redirect()->intended('/dashboard');
         }
 
+        // Crée un nouvel utilisateur
         $newUser = User::create([
-            'name' => $socialUser->getName() ?? $socialUser->getNickname(),
+            'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
             'email' => $socialUser->getEmail(),
             'password' => bcrypt(Str::random(16)),
-            'provider' => $provider,
-            'provider_id' => $socialUser->getId(),
+            $provider . '_id' => $socialUser->getId(),  // google_id, facebook_id, etc.
             'avatar' => $socialUser->getAvatar(),
             'email_verified_at' => now(),
+            'last_provider' => $provider,
         ]);
 
         Auth::login($newUser);

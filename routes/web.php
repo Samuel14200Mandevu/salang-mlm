@@ -65,7 +65,7 @@ Route::get('/cookie-policy', function () {
 })->name('cookie-policy');
 
 // ============================================================
-// ROUTES AUTHENTIFIÉES (Utilisateur)
+// ROUTES AUTHENTIFIEES (Utilisateur)
 // ============================================================
 Route::middleware(['auth'])->group(function () {
     
@@ -88,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/subscriptions/upgrade', [UserPackageController::class, 'upgrade'])->name('subscriptions.upgrade');
     
     // ============================================================
-    // RÉSEAU
+    // RESEAU
     // ============================================================
     Route::get('/network', [NetworkController::class, 'index'])->name('network.index');
     Route::get('/network/tree', [NetworkController::class, 'treeData'])->name('network.tree');
@@ -102,7 +102,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rank/history', [RankController::class, 'history'])->name('rank.history');
     
     // ============================================================
-    // ÉQUIPE (GARDE POUR COMPATIBILITÉ)
+    // EQUIPE (GARDE POUR COMPATIBILITE)
     // ============================================================
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     
@@ -112,6 +112,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
     Route::get('/wallet/transactions', [WalletController::class, 'transactions'])->name('wallet.transactions');
     Route::get('/wallet/export', [WalletController::class, 'export'])->name('wallet.export');
+    Route::get('/wallet/deposit', [WalletController::class, 'deposit'])->name('wallet.deposit');
+    Route::post('/wallet/deposit', [WalletController::class, 'storeDeposit'])->name('wallet.deposit.store');
     
     Route::get('/withdrawal', [WithdrawalController::class, 'index'])->name('withdrawal.index');
     Route::post('/withdrawal', [WithdrawalController::class, 'store'])->name('withdrawal.store');
@@ -119,7 +121,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/withdrawal/{id}/cancel', [WithdrawalController::class, 'cancel'])->name('withdrawal.cancel');
     
     // ============================================================
-    // KYC (VÉRIFICATION D'IDENTITÉ)
+    // KYC (VERIFICATION D'IDENTITE)
     // ============================================================
     Route::get('/kyc', [KycController::class, 'index'])->name('kyc.index');
     Route::get('/kyc/create', [KycController::class, 'create'])->name('kyc.create');

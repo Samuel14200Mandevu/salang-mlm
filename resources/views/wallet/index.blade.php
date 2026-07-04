@@ -18,7 +18,7 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+<div class="space-y-4 sm:space-y-6 px-4 sm:px-0">
     <!-- En-tête -->
     <div class="animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Portefeuille</h1>
@@ -66,7 +66,7 @@
                                 {{ $transaction->created_at->format('d/m/Y H:i') }}
                             </td>
                             <td class="hidden sm:table-cell">
-                                <span class="badge {{ $transaction->type == 'commission' ? 'badge-success' : 'badge-info' }} text-[10px] sm:text-xs">
+                                <span class="badge {{ $transaction->type == 'commission' ? 'badge-success' : ($transaction->type == 'deposit' ? 'badge-info' : 'badge-warning') }} text-[10px] sm:text-xs">
                                     {{ $transaction->type_label ?? $transaction->type }}
                                 </span>
                             </td>
@@ -103,7 +103,13 @@
 
     <!-- Actions -->
     <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-5">
-        <a href="{{ route('withdrawal.index') }}" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+        <a href="{{ route('wallet.deposit') }}" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Faire un depot
+        </a>
+        <a href="{{ route('withdrawal.index') }}" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
