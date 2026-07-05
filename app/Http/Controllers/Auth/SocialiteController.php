@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class SocialiteController extends Controller
 {
-    protected $providers = ['google', 'facebook', 'twitter', 'instagram', 'tiktok'];
+    protected $providers = ['google', 'facebook'];
 
     /**
      * Rediriger vers le provider OAuth
@@ -62,9 +62,10 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'Erreur d\'authentification avec ' . ucfirst($provider));
         }
 
-        // Vérifier si l'utilisateur existe déjà
+        // Vérifier si l'utilisateur existe déjà avec cet email
         $user = User::where('email', $socialUser->getEmail())->first();
 
+        // Si l'utilisateur existe déjà, le connecter
         if ($user) {
             // Mettre à jour les informations si nécessaire
             $providerColumn = $provider . '_id';
@@ -136,50 +137,5 @@ class SocialiteController extends Controller
             'success' => true,
             'message' => 'ID de parrain validé.'
         ]);
-    }
-
-    /**
-     * Créer un utilisateur après inscription sociale
-     */
-    public function completeRegistration(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'sponsor_id' => 'required|string',
-            'phone' => 'nullable|string',
-        ]);
-
-        // Vérifier que le parrain existe
-        $sponsor = User::where('id', $request->sponsor_id)
-            ->orWhere('sponsor_id', $request->sponsor_id)
-            ->first();
-
-        if (!$sponsor) {
-            return back()->with('error', 'ID de parrain invalide.');
-        }
-
-        // Créer l'utilisateur
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'sponsor_id' => $sponsor->sponsor_id ?? $sponsor->id,
-            'phone' => $request->phone,
-            'avatar' => session('social_avatar'),
-            $session('social_provider') . '_id' => session('social_provider_id'),
-            'last_provider' => session('social_provider'),
-            'email_verified_at' => now(),
-        ]);
-
-        // Nettoyer la session
-        session()->forget([
-            'sponsor_id', 'social_name', 'social_email', 'social_avatar',
-            'social_provider', 'social_provider_id', 'social_sponsor_id'
-        ]);
-
-        return redirect()->route('login')
-            ->with('success', 'Votre compte a été créé avec succès ! Veuillez vous connecter.');
     }
 }
