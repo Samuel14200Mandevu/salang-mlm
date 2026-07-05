@@ -49,6 +49,9 @@ Route::prefix('auth')->name('social.')->group(function () {
     Route::get('{provider}/callback', [SocialiteController::class, 'callback'])->name('callback');
 });
 
+// Route pour stocker l'ID du parrain en session
+Route::post('/social/store-sponsor', [SocialiteController::class, 'storeSponsor'])->name('social.store-sponsor');
+
 // ============================================================
 // PAGES LEGALES
 // ============================================================
