@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Inscription - Salang MLM')
+@section('title', 'Connexion - Salang MLM')
 
 @push('styles')
 <style>
@@ -53,23 +53,6 @@
         font-size: 0.875rem;
         margin-bottom: 1.5rem;
     }
-    .password-strength {
-        height: 4px;
-        border-radius: var(--radius-full);
-        background: var(--bg-secondary);
-        margin-top: 0.5rem;
-        overflow: hidden;
-    }
-    .password-strength-bar {
-        height: 100%;
-        border-radius: var(--radius-full);
-        transition: width 0.3s ease, background 0.3s ease;
-        width: 0%;
-    }
-    .password-strength-text {
-        font-size: 0.7rem;
-        margin-top: 0.25rem;
-    }
     .auth-divider {
         display: flex;
         align-items: center;
@@ -100,16 +83,11 @@
         font-weight: 500;
         transition: all 0.2s ease;
         text-decoration: none;
-        position: relative;
-        overflow: hidden;
     }
     .social-btn:hover {
         background: var(--bg-hover);
         border-color: var(--primary);
         transform: translateY(-1px);
-    }
-    .social-btn:active {
-        transform: scale(0.98);
     }
     .social-btn svg {
         width: 1.25rem;
@@ -118,8 +96,7 @@
     }
     
     .form-group {
-        margin-bottom: 1rem;
-        position: relative;
+        margin-bottom: 1.25rem;
     }
     .form-group label {
         display: block;
@@ -182,11 +159,6 @@
         width: 1.25rem;
         height: 1.25rem;
     }
-    .form-hint {
-        font-size: 0.75rem;
-        color: var(--text-tertiary);
-        margin-top: 0.25rem;
-    }
     
     /* ===== MODERN TOAST ===== */
     .toast-modern {
@@ -246,33 +218,6 @@
         color: var(--text-primary);
     }
     
-    .social-info-box {
-        background: rgba(99, 102, 241, 0.06);
-        border: 1px solid rgba(99, 102, 241, 0.15);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    .social-info-box .avatar-social {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--primary-500);
-    }
-    .social-info-box .social-label {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-    }
-    .social-info-box .social-email {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-    
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; }
         .auth-logo img { height: 50px; }
@@ -284,8 +229,6 @@
         .social-btn svg { width: 1.125rem; height: 1.125rem; }
         .toast-modern { min-width: auto; max-width: 90vw; padding: 0.75rem 1rem; font-size: 0.813rem; }
         .toast-modern .toast-icon { width: 28px; height: 28px; font-size: 0.875rem; }
-        .social-info-box { flex-direction: column; text-align: center; }
-        .social-info-box .avatar-social { width: 48px; height: 48px; }
     }
     
     @media (max-width: 480px) {
@@ -307,12 +250,12 @@
         <span class="brand-name">Salang MLM</span>
     </div>
 
-    <h2 class="auth-title">Creer un compte</h2>
-    <p class="auth-subtitle">Rejoignez la communaute Salang</p>
+    <h2 class="auth-title">Bienvenue</h2>
+    <p class="auth-subtitle">Connectez-vous a votre compte</p>
 
-    @if (session('success'))
+    @if (session('status'))
         <div class="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm">
-            {{ session('success') }}
+            {{ session('status') }}
         </div>
     @endif
 
@@ -326,47 +269,8 @@
         </div>
     @endif
 
-    <!-- Info connexion sociale -->
-    @if(session('social_data'))
-        @php $socialData = session('social_data'); @endphp
-        <div class="social-info-box">
-            @if(isset($socialData['avatar']))
-                <img src="{{ $socialData['avatar'] }}" alt="Avatar" class="avatar-social">
-            @else
-                <div class="avatar-social" style="background: var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem;">
-                    {{ substr($socialData['name'] ?? 'U', 0, 1) }}
-                </div>
-            @endif
-            <div>
-                <p class="social-label">Inscription avec <strong>{{ ucfirst($socialData['provider'] ?? 'social') }}</strong></p>
-                <p class="social-email">{{ $socialData['email'] ?? '' }}</p>
-            </div>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('register') }}" id="registerForm">
+    <form method="POST" action="{{ route('login') }}">
         @csrf
-
-        <!-- Nom -->
-        <div class="form-group">
-            <label>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                Nom complet <span class="text-red-500">*</span>
-            </label>
-            <input type="text" 
-                   name="name" 
-                   id="name"
-                   value="{{ old('name', session('social_data.name', '')) }}" 
-                   class="input @error('name') input-error @enderror"
-                   placeholder="Entrez votre nom complet"
-                   required 
-                   autofocus>
-            @error('name')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
 
         <!-- Email -->
         <div class="form-group">
@@ -374,55 +278,16 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                Email <span class="text-red-500">*</span>
+                Email
             </label>
             <input type="email" 
                    name="email" 
-                   id="email"
-                   value="{{ old('email', session('social_data.email', '')) }}" 
+                   value="{{ old('email') }}" 
                    class="input @error('email') input-error @enderror"
                    placeholder="Entrez votre email"
-                   required>
+                   required 
+                   autofocus>
             @error('email')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Telephone -->
-        <div class="form-group">
-            <label>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                </svg>
-                Telephone
-            </label>
-            <input type="tel" 
-                   name="phone" 
-                   value="{{ old('phone') }}" 
-                   class="input @error('phone') input-error @enderror"
-                   placeholder="Entrez votre numero de telephone">
-            @error('phone')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Sponsor ID -->
-        <div class="form-group">
-            <label>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                ID du parrain <span class="text-red-500">*</span>
-            </label>
-            <input type="text" 
-                   name="sponsor_id" 
-                   id="sponsor_id"
-                   value="{{ old('sponsor_id', session('social_data.sponsor_id', request()->query('ref', ''))) }}" 
-                   class="input @error('sponsor_id') input-error @enderror"
-                   placeholder="Ex: SALABCDEF"
-                   required>
-            <p class="form-hint">Entrez l'ID de la personne qui vous a invite</p>
-            @error('sponsor_id')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
             @enderror
         </div>
@@ -433,16 +298,14 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                Mot de passe <span class="text-red-500">*</span>
+                Mot de passe
             </label>
             <div class="password-wrapper">
                 <input type="password" 
-                       id="password"
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="8 caracteres minimum"
-                       required
-                       minlength="8">
+                       placeholder="Entrez votre mot de passe"
+                       required>
                 <button type="button" 
                         class="password-toggle"
                         onclick="togglePassword(this)">
@@ -452,69 +315,41 @@
                     </svg>
                 </button>
             </div>
-            <div class="password-strength">
-                <div class="password-strength-bar" id="passwordStrength"></div>
-            </div>
-            <p class="password-strength-text text-[var(--text-tertiary)]" id="passwordStrengthText">
-                Minimum 8 caracteres
-            </p>
             @error('password')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
             @enderror
         </div>
 
-        <!-- Confirm Password -->
-        <div class="form-group">
-            <label>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-                Confirmer le mot de passe <span class="text-red-500">*</span>
-            </label>
-            <input type="password" 
-                   name="password_confirmation" 
-                   class="input"
-                   placeholder="Confirmez votre mot de passe"
-                   required>
-        </div>
-
-        <!-- Terms -->
-        <div class="form-group mb-6">
-            <label class="flex items-start gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+        <!-- Remember & Forgot -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
+            <label class="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                 <input type="checkbox" 
-                       name="terms" 
-                       value="1"
-                       class="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0"
-                       required>
-                <span>
-                    J'accepte les 
-                    <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        conditions generales
-                    </a>
-                    et la 
-                    <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        politique de confidentialite
-                    </a>
-                </span>
+                       name="remember" 
+                       class="w-4 h-4 rounded border-[var(--border-color)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0">
+                Se souvenir de moi
             </label>
-            @error('terms')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-            @enderror
+
+            @if (Route::has('password.request'))
+                <a href="{{ route('password.request') }}" 
+                   class="text-sm text-primary-500 hover:text-primary-600 font-medium transition">
+                    Mot de passe oublie ?
+                </a>
+            @endif
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-full" id="submitBtn">
+        <button type="submit" class="btn btn-primary w-full">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
             </svg>
-            Creer mon compte
+            Se connecter
         </button>
     </form>
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
-        Deja un compte ?
-        <a href="{{ route('login') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
-            Se connecter
+        Pas encore de compte ?
+        <a href="{{ route('register') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
+            Creer un compte
         </a>
     </p>
     <!-- Lien retour accueil -->
@@ -582,102 +417,6 @@ function hideToast() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const passwordInput = document.getElementById('password');
-    const strengthBar = document.getElementById('passwordStrength');
-    const strengthText = document.getElementById('passwordStrengthText');
-
-    if (passwordInput) {
-        passwordInput.addEventListener('input', function() {
-            const value = this.value;
-            let strength = 0;
-            let label = '';
-
-            if (value.length >= 8) strength += 25;
-            if (/[a-z]/.test(value)) strength += 25;
-            if (/[A-Z]/.test(value)) strength += 25;
-            if (/[0-9]/.test(value)) strength += 25;
-
-            strengthBar.style.width = strength + '%';
-
-            if (strength <= 25) {
-                strengthBar.style.background = '#ef4444';
-                label = 'Faible';
-            } else if (strength <= 50) {
-                strengthBar.style.background = '#f59e0b';
-                label = 'Moyen';
-            } else if (strength <= 75) {
-                strengthBar.style.background = '#3b82f6';
-                label = 'Fort';
-            } else {
-                strengthBar.style.background = '#22c55e';
-                label = 'Tres fort';
-            }
-
-            if (value.length > 0) {
-                strengthText.textContent = 'Force: ' + label;
-                strengthText.className = 'password-strength-text mt-0.5';
-            } else {
-                strengthText.textContent = 'Minimum 8 caracteres';
-                strengthText.className = 'password-strength-text text-[var(--text-tertiary)]';
-            }
-        });
-    }
-
-    // Vérification de l'ID du parrain pour l'inscription sociale
-    var sponsorInput = document.getElementById('sponsor_id');
-    if (sponsorInput) {
-        document.querySelectorAll('.social-btn').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                var sponsorId = sponsorInput.value.trim();
-                
-                if (!sponsorId) {
-                    e.preventDefault();
-                    showToast('Veuillez entrer un ID de parrain.', 'error');
-                    sponsorInput.focus();
-                    sponsorInput.classList.add('input-error');
-                    return false;
-                }
-
-                sponsorInput.classList.remove('input-error');
-                btn.style.opacity = '0.7';
-                btn.style.pointerEvents = 'none';
-
-                fetch('{{ route("social.store-sponsor") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ sponsor_id: sponsorId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    
-                    if (!data.success) {
-                        e.preventDefault();
-                        showToast(data.message || 'ID de parrain invalide.', 'error');
-                        sponsorInput.focus();
-                        sponsorInput.classList.add('input-error');
-                        return false;
-                    }
-                })
-                .catch(function() {
-                    e.preventDefault();
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    showToast('Erreur lors de la verification du parrain.', 'error');
-                    return false;
-                });
-            });
-        });
-
-        sponsorInput.addEventListener('input', function() {
-            this.classList.remove('input-error');
-        });
-    }
-
     @if ($errors->any())
         @foreach ($errors->all() as $error)
             showToast('{{ $error }}', 'error');
