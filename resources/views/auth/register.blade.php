@@ -246,6 +246,33 @@
         color: var(--text-primary);
     }
     
+    .social-info-box {
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .social-info-box .avatar-social {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary-500);
+    }
+    .social-info-box .social-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .social-info-box .social-email {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; }
         .auth-logo img { height: 50px; }
@@ -257,6 +284,8 @@
         .social-btn svg { width: 1.125rem; height: 1.125rem; }
         .toast-modern { min-width: auto; max-width: 90vw; padding: 0.75rem 1rem; font-size: 0.813rem; }
         .toast-modern .toast-icon { width: 28px; height: 28px; font-size: 0.875rem; }
+        .social-info-box { flex-direction: column; text-align: center; }
+        .social-info-box .avatar-social { width: 48px; height: 48px; }
     }
     
     @media (max-width: 480px) {
@@ -281,6 +310,12 @@
     <h2 class="auth-title">Creer un compte</h2>
     <p class="auth-subtitle">Rejoignez la communaute Salang</p>
 
+    @if (session('success'))
+        <div class="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm">
+            {{ session('success') }}
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
             <ul class="list-disc list-inside">
@@ -288,6 +323,24 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+        </div>
+    @endif
+
+    <!-- Info connexion sociale -->
+    @if(session('social_data'))
+        @php $socialData = session('social_data'); @endphp
+        <div class="social-info-box">
+            @if(isset($socialData['avatar']))
+                <img src="{{ $socialData['avatar'] }}" alt="Avatar" class="avatar-social">
+            @else
+                <div class="avatar-social" style="background: var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem;">
+                    {{ substr($socialData['name'] ?? 'U', 0, 1) }}
+                </div>
+            @endif
+            <div>
+                <p class="social-label">Inscription avec <strong>{{ ucfirst($socialData['provider'] ?? 'social') }}</strong></p>
+                <p class="social-email">{{ $socialData['email'] ?? '' }}</p>
+            </div>
         </div>
     @endif
 
@@ -300,11 +353,12 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                Nom complet
+                Nom complet <span class="text-red-500">*</span>
             </label>
             <input type="text" 
                    name="name" 
-                   value="{{ old('name') }}" 
+                   id="name"
+                   value="{{ old('name', session('social_data.name', '')) }}" 
                    class="input @error('name') input-error @enderror"
                    placeholder="Entrez votre nom complet"
                    required 
@@ -320,11 +374,12 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                Email
+                Email <span class="text-red-500">*</span>
             </label>
             <input type="email" 
                    name="email" 
-                   value="{{ old('email') }}" 
+                   id="email"
+                   value="{{ old('email', session('social_data.email', '')) }}" 
                    class="input @error('email') input-error @enderror"
                    placeholder="Entrez votre email"
                    required>
@@ -345,14 +400,13 @@
                    name="phone" 
                    value="{{ old('phone') }}" 
                    class="input @error('phone') input-error @enderror"
-                   placeholder="Entrez votre numero de telephone"
-                   required>
+                   placeholder="Entrez votre numero de telephone">
             @error('phone')
                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
             @enderror
         </div>
 
-        <!-- Sponsor ID - Obligatoire pour inscription sociale -->
+        <!-- Sponsor ID - Obligatoire -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +417,7 @@
             <input type="text" 
                    name="sponsor_id" 
                    id="sponsor_id"
-                   value="{{ request()->query('ref') ?? old('sponsor_id') }}" 
+                   value="{{ old('sponsor_id', session('social_data.sponsor_id', request()->query('ref', ''))) }}" 
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Ex: SALABCDEF"
                    required>
@@ -379,7 +433,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                Mot de passe
+                Mot de passe <span class="text-red-500">*</span>
             </label>
             <div class="password-wrapper">
                 <input type="password" 
@@ -415,7 +469,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
-                Confirmer le mot de passe
+                Confirmer le mot de passe <span class="text-red-500">*</span>
             </label>
             <input type="password" 
                    name="password_confirmation" 
@@ -460,7 +514,7 @@
     <div class="auth-divider">ou</div>
 
     <div class="space-y-2">
-        <a href="{{ route('social.redirect', 'google') }}" class="social-btn social-btn-google">
+        <a href="{{ route('social.redirect', 'google') }}" class="social-btn">
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -470,7 +524,7 @@
             Continuer avec Google
         </a>
 
-        <a href="{{ route('social.redirect', 'facebook') }}" class="social-btn social-btn-facebook">
+        <a href="{{ route('social.redirect', 'facebook') }}" class="social-btn">
             <svg viewBox="0 0 24 24" fill="#1877F2">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
@@ -528,11 +582,9 @@ function showToast(message, type = 'error') {
     const icon = document.getElementById('toastIcon');
     const messageEl = document.getElementById('toastMessage');
     
-    // Reset classes
     icon.className = 'toast-icon';
     icon.classList.add(type);
     
-    // Update icon
     if (type === 'error') {
         icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
     } else {
@@ -542,14 +594,12 @@ function showToast(message, type = 'error') {
     messageEl.textContent = message;
     toast.classList.add('show');
     
-    // Auto hide after 5 seconds
     clearTimeout(window.toastTimeout);
     window.toastTimeout = setTimeout(hideToast, 5000);
 }
 
 function hideToast() {
-    const toast = document.getElementById('toastModern');
-    toast.classList.remove('show');
+    document.getElementById('toastModern').classList.remove('show');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -610,8 +660,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 sponsorInput.classList.remove('input-error');
-                e.target.closest('.social-btn').style.opacity = '0.7';
-                e.target.closest('.social-btn').style.pointerEvents = 'none';
+                btn.style.opacity = '0.7';
+                btn.style.pointerEvents = 'none';
 
                 fetch('{{ route("social.store-sponsor") }}', {
                     method: 'POST',
@@ -623,8 +673,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    e.target.closest('.social-btn').style.opacity = '1';
-                    e.target.closest('.social-btn').style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
                     
                     if (!data.success) {
                         e.preventDefault();
@@ -636,26 +686,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(function() {
                     e.preventDefault();
-                    e.target.closest('.social-btn').style.opacity = '1';
-                    e.target.closest('.social-btn').style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
                     showToast('Erreur lors de la verification du parrain.', 'error');
                     return false;
                 });
             });
         });
 
-        // Réinitialiser l'erreur lors de la saisie
         sponsorInput.addEventListener('input', function() {
             this.classList.remove('input-error');
         });
     }
 
-    // Afficher les erreurs de validation Laravel en toast
     @if ($errors->any())
         @foreach ($errors->all() as $error)
             showToast('{{ $error }}', 'error');
         @break
         @endforeach
+    @endif
+
+    @if (session('success'))
+        showToast('{{ session('success') }}', 'success');
     @endif
 });
 </script>
