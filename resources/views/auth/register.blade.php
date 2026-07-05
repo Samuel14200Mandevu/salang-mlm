@@ -11,6 +11,17 @@
         padding: 2rem;
         box-shadow: var(--shadow-lg);
         animation: fadeInUp 0.6s ease forwards;
+        position: relative;
+        overflow: hidden;
+    }
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-primary);
     }
     .auth-logo {
         text-align: center;
@@ -89,11 +100,16 @@
         font-weight: 500;
         transition: all 0.2s ease;
         text-decoration: none;
+        position: relative;
+        overflow: hidden;
     }
     .social-btn:hover {
         background: var(--bg-hover);
         border-color: var(--primary);
         transform: translateY(-1px);
+    }
+    .social-btn:active {
+        transform: scale(0.98);
     }
     .social-btn svg {
         width: 1.25rem;
@@ -103,6 +119,7 @@
     
     .form-group {
         margin-bottom: 1rem;
+        position: relative;
     }
     .form-group label {
         display: block;
@@ -171,6 +188,64 @@
         margin-top: 0.25rem;
     }
     
+    /* ===== MODERN TOAST ===== */
+    .toast-modern {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--border-color);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        min-width: 280px;
+        max-width: 90vw;
+    }
+    .toast-modern.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    .toast-modern .toast-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+    .toast-modern .toast-icon.error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    .toast-modern .toast-icon.success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .toast-modern .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+        margin-left: auto;
+    }
+    .toast-modern .toast-close:hover {
+        color: var(--text-primary);
+    }
+    
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; }
         .auth-logo img { height: 50px; }
@@ -180,6 +255,8 @@
         .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
         .social-btn { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
         .social-btn svg { width: 1.125rem; height: 1.125rem; }
+        .toast-modern { min-width: auto; max-width: 90vw; padding: 0.75rem 1rem; font-size: 0.813rem; }
+        .toast-modern .toast-icon { width: 28px; height: 28px; font-size: 0.875rem; }
     }
     
     @media (max-width: 480px) {
@@ -214,7 +291,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" id="registerForm">
         @csrf
 
         <!-- Nom -->
@@ -281,14 +358,14 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                ID du parrain (obligatoire pour inscription sociale)
+                ID du parrain <span class="text-red-500">*</span>
             </label>
             <input type="text" 
                    name="sponsor_id" 
                    id="sponsor_id"
                    value="{{ request()->query('ref') ?? old('sponsor_id') }}" 
                    class="input @error('sponsor_id') input-error @enderror"
-                   placeholder="Entrez l'ID de votre parrain"
+                   placeholder="Ex: SALABCDEF"
                    required>
             <p class="form-hint">Entrez l'ID de la personne qui vous a invite</p>
             @error('sponsor_id')
@@ -372,7 +449,7 @@
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-full">
+        <button type="submit" class="btn btn-primary w-full" id="submitBtn">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
             </svg>
@@ -383,7 +460,7 @@
     <div class="auth-divider">ou</div>
 
     <div class="space-y-2">
-        <a href="{{ route('social.redirect', 'google') }}" class="social-btn">
+        <a href="{{ route('social.redirect', 'google') }}" class="social-btn social-btn-google">
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -393,7 +470,7 @@
             Continuer avec Google
         </a>
 
-        <a href="{{ route('social.redirect', 'facebook') }}" class="social-btn">
+        <a href="{{ route('social.redirect', 'facebook') }}" class="social-btn social-btn-facebook">
             <svg viewBox="0 0 24 24" fill="#1877F2">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
@@ -417,6 +494,21 @@
     </div>
 </div>
 
+<!-- Modern Toast -->
+<div id="toastModern" class="toast-modern" role="alert" aria-live="polite">
+    <div class="toast-icon error" id="toastIcon">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </div>
+    <span id="toastMessage">Message</span>
+    <button type="button" class="toast-close" onclick="hideToast()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+</div>
+
 @push('scripts')
 <script>
 function togglePassword(btn) {
@@ -429,6 +521,35 @@ function togglePassword(btn) {
         input.type = 'password';
         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
     }
+}
+
+function showToast(message, type = 'error') {
+    const toast = document.getElementById('toastModern');
+    const icon = document.getElementById('toastIcon');
+    const messageEl = document.getElementById('toastMessage');
+    
+    // Reset classes
+    icon.className = 'toast-icon';
+    icon.classList.add(type);
+    
+    // Update icon
+    if (type === 'error') {
+        icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    } else {
+        icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    }
+    
+    messageEl.textContent = message;
+    toast.classList.add('show');
+    
+    // Auto hide after 5 seconds
+    clearTimeout(window.toastTimeout);
+    window.toastTimeout = setTimeout(hideToast, 5000);
+}
+
+function hideToast() {
+    const toast = document.getElementById('toastModern');
+    toast.classList.remove('show');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -482,10 +603,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (!sponsorId) {
                     e.preventDefault();
-                    alert('Veuillez entrer un ID de parrain.');
+                    showToast('Veuillez entrer un ID de parrain.', 'error');
                     sponsorInput.focus();
+                    sponsorInput.classList.add('input-error');
                     return false;
                 }
+
+                sponsorInput.classList.remove('input-error');
+                e.target.closest('.social-btn').style.opacity = '0.7';
+                e.target.closest('.social-btn').style.pointerEvents = 'none';
 
                 fetch('{{ route("social.store-sponsor") }}', {
                     method: 'POST',
@@ -497,21 +623,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    e.target.closest('.social-btn').style.opacity = '1';
+                    e.target.closest('.social-btn').style.pointerEvents = 'auto';
+                    
                     if (!data.success) {
                         e.preventDefault();
-                        alert(data.message || 'ID de parrain invalide.');
+                        showToast(data.message || 'ID de parrain invalide.', 'error');
                         sponsorInput.focus();
+                        sponsorInput.classList.add('input-error');
                         return false;
                     }
                 })
                 .catch(function() {
                     e.preventDefault();
-                    alert('Erreur lors de la verification du parrain.');
+                    e.target.closest('.social-btn').style.opacity = '1';
+                    e.target.closest('.social-btn').style.pointerEvents = 'auto';
+                    showToast('Erreur lors de la verification du parrain.', 'error');
                     return false;
                 });
             });
         });
+
+        // Réinitialiser l'erreur lors de la saisie
+        sponsorInput.addEventListener('input', function() {
+            this.classList.remove('input-error');
+        });
     }
+
+    // Afficher les erreurs de validation Laravel en toast
+    @if ($errors->any())
+        @foreach ($errors->all() as $error)
+            showToast('{{ $error }}', 'error');
+        @break
+        @endforeach
+    @endif
 });
 </script>
 @endpush
