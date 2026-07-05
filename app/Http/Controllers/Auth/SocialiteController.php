@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Auth/SocialiteController.php
 
 namespace App\Http\Controllers\Auth;
 
@@ -7,11 +8,11 @@ use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class SocialiteController extends Controller
 {
-    protected $providers = ['google', 'facebook'];
+    protected $providers = ['google', 'facebook', 'twitter', 'instagram', 'tiktok'];
 
     /**
      * Rediriger vers le provider OAuth
@@ -28,8 +29,8 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'Vous devez avoir un ID de parrain pour vous inscrire via les réseaux sociaux.');
         }
 
-        // Vérifier que le parrain existe
-        $sponsor = User::where('id', $sponsorId)->orWhere('sponsor_id', $sponsorId)->first();
+        // ✅ Vérifier que le parrain existe (par ID ou sponsor_id)
+        $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
         if (!$sponsor) {
             session()->forget('sponsor_id');
             return redirect('/register')->with('error', 'ID de parrain invalide. Veuillez réessayer.');
@@ -50,22 +51,16 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'Provider non supporté.');
         }
 
-        // Vérifier que l'ID du parrain existe encore en session
-        $sponsorId = session('sponsor_id');
-        if (!$sponsorId) {
-            return redirect('/register')->with('error', 'ID de parrain requis pour l\'inscription sociale.');
-        }
-
         try {
             $socialUser = Socialite::driver($provider)->user();
         } catch (\Exception $e) {
+            Log::error('Socialite callback error: ' . $e->getMessage());
             return redirect('/register')->with('error', 'Erreur d\'authentification avec ' . ucfirst($provider));
         }
 
-        // Vérifier si l'utilisateur existe déjà avec cet email
+        // ✅ Vérifier si l'utilisateur existe déjà
         $user = User::where('email', $socialUser->getEmail())->first();
 
-        // Si l'utilisateur existe déjà, le connecter
         if ($user) {
             // Mettre à jour les informations si nécessaire
             $providerColumn = $provider . '_id';
@@ -82,32 +77,36 @@ class SocialiteController extends Controller
             return redirect()->intended('/dashboard');
         }
 
-        // Vérifier que le parrain existe
-        $sponsor = User::where('id', $sponsorId)->orWhere('sponsor_id', $sponsorId)->first();
+        // ✅ Vérifier que le parrain existe encore
+        $sponsorId = session('sponsor_id');
+        if (!$sponsorId) {
+            return redirect('/register')->with('error', 'ID de parrain requis pour l\'inscription sociale.');
+        }
+
+        $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
         if (!$sponsor) {
             session()->forget('sponsor_id');
             session()->forget('social_provider');
             return redirect('/register')->with('error', 'ID de parrain invalide.');
         }
 
-        // Stocker les données sociales en session pour le formulaire d'inscription
+        // ✅ Stocker les données sociales en session
         session([
             'social_name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
             'social_email' => $socialUser->getEmail(),
             'social_avatar' => $socialUser->getAvatar(),
             'social_provider' => $provider,
             'social_provider_id' => $socialUser->getId(),
-            'social_sponsor_id' => $sponsor->sponsor_id ?? $sponsor->id,
+            'social_sponsor_id' => $sponsor->id, // ✅ Stocker l'ID du sponsor
         ]);
 
-        // Rediriger vers le formulaire d'inscription avec les données pré-remplies
         return redirect()->route('register')->with('social_data', [
             'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
             'email' => $socialUser->getEmail(),
             'avatar' => $socialUser->getAvatar(),
             'provider' => $provider,
             'provider_id' => $socialUser->getId(),
-            'sponsor_id' => $sponsor->sponsor_id ?? $sponsor->id,
+            'sponsor_id' => $sponsor->id,
         ]);
     }
 
@@ -120,10 +119,8 @@ class SocialiteController extends Controller
             'sponsor_id' => 'required|string'
         ]);
 
-        // Vérifier que le parrain existe
-        $sponsor = User::where('id', $request->sponsor_id)
-            ->orWhere('sponsor_id', $request->sponsor_id)
-            ->first();
+        // ✅ Vérifier que le parrain existe
+        $sponsor = User::find($request->sponsor_id) ?? User::where('sponsor_id', $request->sponsor_id)->first();
 
         if (!$sponsor) {
             return response()->json([
@@ -132,10 +129,11 @@ class SocialiteController extends Controller
             ], 422);
         }
 
-        session(['sponsor_id' => $request->sponsor_id]);
+        session(['sponsor_id' => $sponsor->id]);
         return response()->json([
             'success' => true,
-            'message' => 'ID de parrain validé.'
+            'message' => 'ID de parrain validé.',
+            'sponsor_name' => $sponsor->name,
         ]);
     }
 }

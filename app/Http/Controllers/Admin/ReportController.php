@@ -69,6 +69,63 @@ class ReportController extends Controller
         ));
     }
 
+     /**
+     * Rapport des gains - ✅ AJOUTÉ
+     */
+    public function earnings(Request $request)
+    {
+        $user = auth()->user();
+        
+        $commissions = Commission::where('user_id', $user->id)
+            ->when($request->filled('date_from'), function($q) use ($request) {
+                return $q->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->filled('date_to'), function($q) use ($request) {
+                return $q->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        $stats = [
+            'total' => Commission::where('user_id', $user->id)->where('status', 'paid')->sum('amount'),
+            'pending' => Commission::where('user_id', $user->id)->where('status', 'pending')->sum('amount'),
+            'paid' => Commission::where('user_id', $user->id)->where('status', 'paid')->sum('amount'),
+            'by_type' => Commission::where('user_id', $user->id)
+                ->select('type', DB::raw('SUM(amount) as total'))
+                ->groupBy('type')
+                ->get(),
+        ];
+        
+        return view('reports.earnings', compact('commissions', 'stats'));
+    }
+
+    /**
+     * Rapport réseau - ✅ AJOUTÉ
+     */
+    public function network(Request $request)
+    {
+        $user = auth()->user();
+        
+        $downlines = User::where('sponsor_id', $user->id)
+            ->when($request->filled('search'), function($q) use ($request) {
+                return $q->where('name', 'like', "%{$request->search}%")
+                    ->orWhere('email', 'like', "%{$request->search}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        $networkStats = [
+            'total' => User::where('sponsor_id', $user->id)->count(),
+            'active' => User::where('sponsor_id', $user->id)->where('is_active', true)->count(),
+            'inactive' => User::where('sponsor_id', $user->id)->where('is_active', false)->count(),
+            'with_package' => User::where('sponsor_id', $user->id)->whereNotNull('package_id')->count(),
+            'without_package' => User::where('sponsor_id', $user->id)->whereNull('package_id')->count(),
+        ];
+        
+        return view('reports.network', compact('downlines', 'networkStats'));
+    }
+
+
     /**
      * Rapport des ventes
      */

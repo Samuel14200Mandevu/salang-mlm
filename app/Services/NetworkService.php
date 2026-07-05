@@ -1,9 +1,9 @@
 <?php
+// app/Services/NetworkService.php
 
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Genealogy;
 use Illuminate\Support\Facades\DB;
 
 class NetworkService
@@ -18,7 +18,7 @@ class NetworkService
             return null;
         }
 
-        $sponsorId = $user->sponsor_id;
+        $sponsorId = $user->id; // ✅ CORRECTION : le sponsor c'est l'utilisateur lui-même
 
         return [
             'total' => User::where('sponsor_id', $sponsorId)->count(),
@@ -39,17 +39,20 @@ class NetworkService
      */
     private function countLevel($sponsorId, $level)
     {
-        if ($level <= 0) {
+        if ($level <= 0 || !$sponsorId) {
             return 0;
         }
 
-        $ids = User::where('sponsor_id', $sponsorId)->pluck('sponsor_id');
+        $currentIds = [$sponsorId];
         
-        for ($i = 1; $i < $level; $i++) {
-            $ids = User::whereIn('sponsor_id', $ids)->pluck('sponsor_id');
+        for ($i = 0; $i < $level; $i++) {
+            $currentIds = User::whereIn('sponsor_id', $currentIds)->pluck('id')->toArray();
+            if (empty($currentIds)) {
+                return 0;
+            }
         }
 
-        return User::whereIn('sponsor_id', $ids)->count();
+        return User::whereIn('sponsor_id', $currentIds)->count();
     }
 
     /**
@@ -74,7 +77,7 @@ class NetworkService
             return null;
         }
 
-        $children = User::where('sponsor_id', $user->sponsor_id)->get();
+        $children = User::where('sponsor_id', $user->id)->get(); // ✅ CORRECTION
         $tree = [
             'user' => $user,
             'level' => $level,
@@ -98,14 +101,16 @@ class NetworkService
             return collect();
         }
 
-        $sponsorId = $user->sponsor_id;
-        $ids = [$sponsorId];
-
+        $currentIds = [$user->id]; // ✅ CORRECTION
+        
         for ($i = 0; $i < $level; $i++) {
-            $ids = User::whereIn('sponsor_id', $ids)->pluck('sponsor_id')->toArray();
+            $currentIds = User::whereIn('sponsor_id', $currentIds)->pluck('id')->toArray();
+            if (empty($currentIds)) {
+                return collect();
+            }
         }
 
-        return User::whereIn('sponsor_id', $ids)->get();
+        return User::whereIn('sponsor_id', $currentIds)->get();
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/UserController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -19,17 +20,11 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    // ============================================================
-    // AFFICHER LES DÉTAILS D'UN UTILISATEUR
-    // ============================================================
     public function show($id)
     {
         $user = User::with(['rank', 'package', 'sponsor'])->findOrFail($id);
         
-        // Compter les downlines (filleuls)
         $downlinesCount = Genealogy::where('sponsor_id', $id)->count();
-        
-        // Compter les commissions
         $commissionsCount = $user->commissions()->count();
         $totalCommissions = $user->commissions()->sum('amount');
         
@@ -40,9 +35,13 @@ class UserController extends Controller
     {
         $ranks = Rank::all();
         $packages = Package::all();
-        return view('admin.users.create', compact('ranks', 'packages'));
+        $users = User::select('id', 'name')->orderBy('name')->get();
+        return view('admin.users.create', compact('ranks', 'packages', 'users'));
     }
 
+    /**
+     * Créer un utilisateur - ✅ CORRIGÉ
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -52,7 +51,14 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'rank_id' => 'nullable|exists:ranks,id',
             'package_id' => 'nullable|exists:packages,id',
+            'sponsor_id' => 'nullable|exists:users,id', // ✅ ID utilisateur valide
         ]);
+
+        // ✅ Générer un code de parrain unique (pour le champ sponsor_id qui est la colonne)
+        $sponsorCode = 'SAL' . strtoupper(substr(uniqid(), -6));
+        while (User::where('sponsor_id', $sponsorCode)->exists()) {
+            $sponsorCode = 'SAL' . strtoupper(substr(uniqid(), -6));
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -61,10 +67,11 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'rank_id' => $request->rank_id,
             'package_id' => $request->package_id,
-            'sponsor_id' => 'SAL' . strtoupper(substr(uniqid(), -6)),
+            'sponsor_id' => $sponsorCode, // ✅ Code de parrain unique
             'is_active' => true,
         ]);
 
+        // Créer le portefeuille
         Wallet::create([
             'user_id' => $user->id,
             'balance' => 0,
@@ -73,14 +80,24 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
+        // Créer la généalogie
         Genealogy::create([
             'user_id' => $user->id,
-            'sponsor_id' => null,
-            'parent_id' => null,
+            'sponsor_id' => $request->sponsor_id, // ✅ ID du sponsor (clé étrangère)
+            'parent_id' => $request->sponsor_id,
             'level' => 0,
         ]);
 
-        return redirect()->route('admin.users')->with('success', 'Utilisateur cree avec succes.');
+        // Mettre à jour le compteur du sponsor
+        if ($request->sponsor_id) {
+            $sponsor = User::find($request->sponsor_id);
+            if ($sponsor) {
+                $sponsor->increment('total_sponsors');
+                $sponsor->increment('total_team');
+            }
+        }
+
+        return redirect()->route('admin.users')->with('success', 'Utilisateur créé avec succès.');
     }
 
     public function edit($id)
@@ -88,7 +105,8 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $ranks = Rank::all();
         $packages = Package::all();
-        return view('admin.users.edit', compact('user', 'ranks', 'packages'));
+        $users = User::select('id', 'name')->orderBy('name')->get();
+        return view('admin.users.edit', compact('user', 'ranks', 'packages', 'users'));
     }
 
     public function update(Request $request, $id)
@@ -101,29 +119,37 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'rank_id' => 'nullable|exists:ranks,id',
             'package_id' => 'nullable|exists:packages,id',
+            'sponsor_id' => 'nullable|exists:users,id',
         ]);
 
-        $user->update([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'rank_id' => $request->rank_id,
             'package_id' => $request->package_id,
             'is_active' => $request->has('is_active'),
-        ]);
+        ];
+
+        // Ne pas toucher au sponsor_id sauf si spécifié
+        if ($request->has('sponsor_id')) {
+            $data['sponsor_id'] = $request->sponsor_id;
+        }
+
+        $user->update($data);
 
         if ($request->filled('password')) {
             $user->update(['password' => Hash::make($request->password)]);
         }
 
-        return redirect()->route('admin.users')->with('success', 'Utilisateur mis a jour.');
+        return redirect()->route('admin.users')->with('success', 'Utilisateur mis à jour.');
     }
 
     public function destroy($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
-        return redirect()->route('admin.users')->with('success', 'Utilisateur supprime.');
+        return redirect()->route('admin.users')->with('success', 'Utilisateur supprimé.');
     }
 
     public function toggleStatus($id)
@@ -132,7 +158,7 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
         
-        $status = $user->is_active ? 'active' : 'desactive';
-        return redirect()->route('admin.users')->with('success', "Utilisateur {$status} avec succes.");
+        $status = $user->is_active ? 'activé' : 'désactivé';
+        return redirect()->route('admin.users')->with('success', "Utilisateur {$status} avec succès.");
     }
 }

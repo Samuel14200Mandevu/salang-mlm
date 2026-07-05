@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/RankController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -155,7 +156,7 @@ class RankController extends Controller
     }
 
     /**
-     * Réaffecter tous les utilisateurs
+     * Réaffecter tous les utilisateurs - ✅ CORRIGÉ
      */
     public function reassignAll(Request $request)
     {
@@ -167,20 +168,24 @@ class RankController extends Controller
         $updated = 0;
 
         foreach ($users as $user) {
+            // ✅ Sauvegarder l'ancien grade avant modification
+            $oldRankId = $user->rank_id;
+            $oldRankName = $user->rank;
+            
             $newRank = Rank::where('min_pv', '<=', $user->pv_balance)
                 ->where('is_active', true)
                 ->orderBy('min_pv', 'desc')
                 ->first();
 
-            if ($newRank && $newRank->id != $user->rank_id) {
-                $oldRankName = $user->rank;
+            if ($newRank && $newRank->id != $oldRankId) {
                 $user->rank = $newRank->name;
                 $user->rank_id = $newRank->id;
                 $user->save();
 
+                // ✅ Utiliser les variables sauvegardées
                 RankHistory::create([
                     'user_id' => $user->id,
-                    'old_rank_id' => $user->getOriginal('rank_id'),
+                    'old_rank_id' => $oldRankId,
                     'new_rank_id' => $newRank->id,
                     'old_rank_name' => $oldRankName,
                     'new_rank_name' => $newRank->name,

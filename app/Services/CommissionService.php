@@ -1,4 +1,5 @@
 <?php
+// app/Services/CommissionService.php
 
 namespace App\Services;
 
@@ -8,6 +9,7 @@ use App\Models\Package;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\RankHistory;
+use App\Models\Rank;
 use App\Notifications\CommissionPaidNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +33,7 @@ class CommissionService
         try {
             // 1. Commission Directe (30%) - Pour le parrain
             if ($user->sponsor_id) {
-                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+                $sponsor = User::find($user->sponsor_id); // ✅ CORRECTION
                 if ($sponsor) {
                     $directAmount = $package->price * 0.30;
                     $this->createCommission(
@@ -49,9 +51,9 @@ class CommissionService
 
             // 2. Commission Indirecte (15%) - Pour le parrain du parrain
             if ($user->sponsor_id) {
-                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+                $sponsor = User::find($user->sponsor_id); // ✅ CORRECTION
                 if ($sponsor && $sponsor->sponsor_id) {
-                    $grandSponsor = User::where('sponsor_id', $sponsor->sponsor_id)->first();
+                    $grandSponsor = User::find($sponsor->sponsor_id); // ✅ CORRECTION
                     if ($grandSponsor) {
                         $indirectAmount = $package->price * 0.15;
                         $this->createCommission(
@@ -77,7 +79,8 @@ class CommissionService
             $user->save();
 
             // 5. Vérifier et mettre à jour le grade
-            $this->updateUserRank($user);
+            $rankService = new RankService();
+            $rankService->updateRank($user->id);
 
             DB::commit();
             return true;
@@ -95,12 +98,12 @@ class CommissionService
     private function calculateLeadershipCommission($user, $package, $orderId)
     {
         $level = 1;
-        $currentSponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+        $currentSponsor = User::find($user->sponsor_id); // ✅ CORRECTION
         
         while ($currentSponsor && $level <= 5) {
             // Vérifier si le sponsor a assez de PV pour être leader
             if ($currentSponsor->pv_balance >= 1000) {
-                $leadershipAmount = $package->price * 0.10 / $level;
+                $leadershipAmount = $package->price * 0.10;
                 $this->createCommission(
                     $currentSponsor->id,
                     $user->id,
@@ -113,7 +116,7 @@ class CommissionService
                 );
             }
             
-            $currentSponsor = User::where('sponsor_id', $currentSponsor->sponsor_id)->first();
+            $currentSponsor = User::find($currentSponsor->sponsor_id); // ✅ CORRECTION
             $level++;
         }
     }
@@ -163,7 +166,7 @@ class CommissionService
 
             // Envoyer la notification par email
             $user = User::find($userId);
-            if ($user) {
+            if ($user && class_exists(CommissionPaidNotification::class)) {
                 try {
                     $user->notify(new CommissionPaidNotification(
                         $amount,
@@ -180,37 +183,12 @@ class CommissionService
     }
 
     /**
-     * Mettre à jour le grade de l'utilisateur
+     * Mettre à jour le grade de l'utilisateur (redirige vers RankService)
      */
     public function updateUserRank($user)
     {
-        $ranks = \App\Models\Rank::orderBy('min_pv', 'asc')->get();
-        $currentRankName = $user->rank ?? 'Distributor';
-        $currentRankId = $user->rank_id;
-        
-        foreach ($ranks as $rank) {
-            if ($user->pv_balance >= $rank->min_pv) {
-                $user->rank = $rank->name;
-                $user->rank_id = $rank->id;
-            }
-        }
-        
-        if ($user->rank !== $currentRankName) {
-            // Enregistrer l'historique
-            RankHistory::create([
-                'user_id' => $user->id,
-                'old_rank_id' => $currentRankId,
-                'new_rank_id' => $user->rank_id,
-                'old_rank_name' => $currentRankName,
-                'new_rank_name' => $user->rank,
-                'pv_at_time' => $user->pv_balance,
-                'bv_at_time' => $user->bv_balance,
-                'notes' => 'Promotion automatique',
-            ]);
-        }
-        
-        $user->save();
-        return $user;
+        $rankService = new RankService();
+        return $rankService->updateRank($user->id);
     }
 
     /**
