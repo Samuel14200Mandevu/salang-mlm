@@ -284,7 +284,7 @@
                             </a>
                         </li>
 
-                        <!-- Boutique -->
+                        <!-- Shop -->
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
@@ -594,7 +594,7 @@
                                     
                                     <div class="px-3 sm:px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
                                         <h4 class="font-semibold text-sm sm:text-base text-[var(--text-primary)]">Notifications</h4>
-                                        <a href="{{ route('message.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
+                                        <a href="#" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
                                     </div>
 
                                     <div class="divide-y divide-[var(--border-color)]" id="notificationList">
