@@ -6,7 +6,12 @@
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
-        cursor: pointer;
+        cursor: default;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        text-align: center;
     }
     .subscription-card::before {
         content: '';
@@ -19,7 +24,9 @@
         opacity: 0;
         transition: opacity 0.4s ease;
     }
-    .subscription-card:hover::before { opacity: 1; }
+    .subscription-card:hover::before {
+        opacity: 1;
+    }
     .subscription-card:hover {
         transform: translateY(-6px);
         box-shadow: var(--shadow-hover);
@@ -27,11 +34,20 @@
     }
     .subscription-card.current {
         border-color: var(--primary-500);
-        box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+        box-shadow: 0 0 0 2px rgba(90, 182, 56, 0.2);
     }
-    .subscription-card.current::before { opacity: 1; }
-    .subscription-card .sub-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; transition: transform 0.4s ease; }
-    .subscription-card:hover .sub-icon { transform: scale(1.1) rotate(-5deg); }
+    .subscription-card.current::before {
+        opacity: 1;
+    }
+    .subscription-card .sub-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 0.5rem;
+        transition: transform 0.4s ease;
+    }
+    .subscription-card:hover .sub-icon {
+        transform: scale(1.1) rotate(-5deg);
+    }
     .subscription-badge {
         position: absolute;
         top: -1px;
@@ -55,25 +71,169 @@
         font-size: 0.75rem;
         color: var(--text-secondary);
     }
-    .benefit-item svg { flex-shrink: 0; color: var(--primary-500); }
+    .benefit-item svg {
+        flex-shrink: 0;
+        color: var(--primary-500);
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .badge-success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        width: 100%;
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    
+    .text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+    .text-xl {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
     
     @media (max-width: 640px) {
-        .subscription-card { padding: 0.75rem; }
-        .subscription-card .sub-icon { font-size: 2rem; }
-        .benefit-item { font-size: 0.65rem; }
-        .text-3xl { font-size: 1.5rem; }
-        .btn { font-size: 0.7rem; padding: 0.25rem 0.5rem; }
-        .btn svg { width: 0.875rem; height: 0.875rem; }
+        .subscription-card {
+            padding: 0.875rem;
+        }
+        .subscription-card .sub-icon {
+            font-size: 2rem;
+        }
+        .benefit-item {
+            font-size: 0.65rem;
+        }
+        .benefit-item svg {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+        .text-3xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+        .btn {
+            font-size: 0.7rem;
+            padding: 0.375rem 0.75rem;
+        }
+        .btn svg {
+            width: 0.875rem;
+            height: 0.875rem;
+        }
+        .card {
+            padding: 0.875rem;
+        }
+        .subscription-badge {
+            font-size: 0.5rem;
+            padding: 0.125rem 0.625rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .subscription-card {
+            padding: 0.75rem;
+        }
+        .subscription-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        .subscription-card .sub-icon {
+            font-size: 1.75rem;
+        }
+        .subscription-card h3 {
+            font-size: 0.875rem;
+        }
+        .subscription-card .text-3xl {
+            font-size: 1.25rem;
+        }
+        .benefit-item {
+            font-size: 0.6rem;
+        }
+        .benefit-item svg {
+            width: 0.625rem;
+            height: 0.625rem;
+        }
+    }
+    
+    @media (max-width: 380px) {
+        .subscription-grid {
+            grid-template-columns: 1fr !important;
+        }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
+    
+    <!-- Header -->
     <div class="animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Packages</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Choisissez l'abonnement qui correspond a vos objectifs</p>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Choose the subscription that fits your goals</p>
     </div>
 
     @if(session('success'))
@@ -88,13 +248,13 @@
         </div>
     @endif
 
-    <!-- Abonnement actuel -->
-    <div class="card animate-fadeInUp delay-1 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
+    <!-- Current Subscription -->
+    <div class="card animate-fadeInUp delay-1 border-l-4 border-primary-500">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Votre abonnement actuel</p>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your current subscription</p>
                 <h2 class="text-xl sm:text-2xl font-bold text-primary-500">
-                    {{ Auth::user()->package ? Auth::user()->package->name : 'Aucun abonnement' }}
+                    {{ Auth::user()->package ? Auth::user()->package->name : 'No subscription' }}
                 </h2>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     {{ Auth::user()->pv_balance ?? 0 }} PV
@@ -102,25 +262,26 @@
             </div>
             <div>
                 <span class="badge {{ Auth::user()->package_id ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                    {{ Auth::user()->package_id ? 'Actif' : 'Inactif' }}
+                    {{ Auth::user()->package_id ? 'Active' : 'Inactive' }}
                 </span>
             </div>
         </div>
     </div>
 
-    <!-- Liste des abonnements -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+    <!-- Packages List -->
+    <div class="subscription-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         @forelse($subscriptions as $package)
             @php
                 $isCurrent = Auth::user()->package_id == $package->id;
                 $isUpgrade = Auth::user()->package_id && Auth::user()->package_id < $package->id;
                 $isLocked = Auth::user()->package_id && Auth::user()->package_id > $package->id;
                 $isPopular = $package->id == 4;
+                $delay = min($loop->index + 2, 7);
             @endphp
 
-            <div class="subscription-card card text-center p-3 sm:p-4 {{ $isCurrent ? 'current' : '' }} animate-fadeInUp delay-{{ $loop->index + 2 }}">
+            <div class="subscription-card animate-fadeInUp delay-{{ $delay }} {{ $isCurrent ? 'current' : '' }}">
                 @if($isPopular)
-                    <span class="subscription-badge subscription-badge-popular text-[8px] sm:text-[10px]">Populaire</span>
+                    <span class="subscription-badge subscription-badge-popular text-[8px] sm:text-[10px]">Popular</span>
                 @endif
                 
                 <span class="sub-icon">
@@ -134,53 +295,53 @@
 
                 <div class="mt-3 sm:mt-4 space-y-0.5 sm:space-y-1 border-t border-[var(--border-color)] pt-3 sm:pt-4 text-left">
                     <div class="benefit-item">
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
-                        Commission jusqu'a {{ $package->commission_rate ?? 30 }}%
+                        Commission up to {{ $package->commission_rate ?? 30 }}%
                     </div>
                     <div class="benefit-item">
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
                         {{ $package->pv_value ?? 0 }} PV
                     </div>
                     <div class="benefit-item">
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
-                        Acces a la boutique
+                        Shop access
                     </div>
                     <div class="benefit-item">
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
-                        Parrainage illimite
+                        Unlimited referrals
                     </div>
                 </div>
 
                 <div class="mt-3 sm:mt-4">
                     @if($isCurrent)
-                        <span class="badge badge-success text-[10px] sm:text-xs">Abonnement actuel</span>
+                        <span class="badge badge-success text-[10px] sm:text-xs">Current subscription</span>
                     @elseif($isLocked)
-                        <span class="badge badge-danger text-[10px] sm:text-xs">Verrouille</span>
+                        <span class="badge badge-danger text-[10px] sm:text-xs">Locked</span>
                     @else
                         <div class="space-y-1.5 sm:space-y-2">
                             <form action="{{ route('subscriptions.buy') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="package_id" value="{{ $package->id }}">
-                                <button type="submit" class="btn btn-primary w-full text-[10px] sm:text-sm py-1.5 sm:py-2">
-                                    {{ $isUpgrade ? 'Mettre a niveau' : 'Souscrire' }}
+                                <button type="submit" class="btn btn-primary text-[10px] sm:text-sm py-1.5 sm:py-2">
+                                    {{ $isUpgrade ? 'Upgrade' : 'Subscribe' }}
                                 </button>
                             </form>
                             <form action="{{ route('cart.add-package') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="package_id" value="{{ $package->id }}">
-                                <button type="submit" class="btn btn-outline w-full text-[10px] sm:text-sm py-1.5 sm:py-2">
+                                <button type="submit" class="btn btn-outline text-[10px] sm:text-sm py-1.5 sm:py-2">
                                     <svg class="w-3 h-3 sm:w-4 sm:h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
-                                    Ajouter au panier
+                                    Add to cart
                                 </button>
                             </form>
                         </div>
@@ -192,8 +353,8 @@
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                 </svg>
-                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun abonnement disponible</h3>
-                <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Revenez plus tard pour decouvrir nos offres</p>
+                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">No packages available</h3>
+                <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Check back later for our offers</p>
             </div>
         @endforelse
     </div>

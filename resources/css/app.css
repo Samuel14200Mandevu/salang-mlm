@@ -436,9 +436,10 @@
     border: 1px solid rgba(59, 130, 246, 0.25);
   }
   
+  /* ✅ CORRECTION */
   .badge-purple {
     background: rgba(139, 92, 246, 0.12);
-    color: #2b9921;
+    color: #8b5cf6; /* ✅ Couleur purple correcte */
     border: 1px solid rgba(139, 92, 246, 0.25);
   }
   
@@ -770,6 +771,10 @@
     box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.2);
   }
   
+  .dark .avatar-ring {
+    box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.15);
+  }
+  
   .avatar-ring-success {
     border: 3px solid #22c55e;
     box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
@@ -851,6 +856,18 @@
   .card-stats:hover .stat-icon {
     transform: rotate(-8deg) scale(1.1);
   }
+  
+  /* ✅ Version mobile */
+  @media (max-width: 640px) {
+    .card-stats:hover .stat-icon {
+      transform: rotate(-4deg) scale(1.05);
+    }
+    .stat-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1rem;
+    }
+  }
 
   /* ============================================================
      GRAPH BARS
@@ -890,6 +907,18 @@
   .graph-bar:hover .tooltip {
     opacity: 1;
     transform: translateX(-50%) translateY(-6px);
+  }
+
+  /* ✅ Version mobile graph-bar */
+  @media (max-width: 640px) {
+    .graph-bar {
+      min-height: 6px;
+      border-radius: 2px 2px 0 0;
+    }
+    .graph-bar .tooltip {
+      font-size: 8px;
+      padding: 2px 6px;
+    }
   }
 
   /* ============================================================
@@ -1095,7 +1124,6 @@
   .btn { padding: 0.5rem 1rem; font-size: 0.75rem; }
   .btn-lg { padding: 0.625rem 1.25rem; font-size: 0.875rem; }
   .table thead th, .table tbody td { padding: 0.5rem 0.625rem; font-size: 0.75rem; }
-  .stat-icon { width: 2.5rem; height: 2.5rem; font-size: 1rem; }
   .avatar-xl { width: 4rem; height: 4rem; font-size: 1.5rem; }
 }
 
@@ -1329,7 +1357,61 @@ a:not(.btn):not(.sidebar-link):hover {
 }
 
 /* ================================================================ */
-/* 8. TABLETTE (≥ 600px) */
+/* 8. DASHBOARD STATS RESPONSIVE */
+/* ================================================================ */
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.dashboard-stats .stat-card {
+    padding: 12px 14px;
+}
+
+.dashboard-stats .stat-card .stat-value {
+    font-size: 18px;
+}
+
+/* ✅ Version très petits écrans */
+@media (max-width: 380px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .dashboard-stats .stat-card {
+        padding: 10px 12px;
+    }
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 16px;
+    }
+}
+
+@media (min-width: 600px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 22px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-stats {
+        gap: 18px;
+    }
+    .dashboard-stats .stat-card {
+        padding: 16px 20px;
+    }
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 26px;
+    }
+}
+
+/* ================================================================ */
+/* 9. TABLETTE (≥ 600px) */
 /* ================================================================ */
 
 @media (min-width: 600px) {
@@ -1363,7 +1445,7 @@ a:not(.btn):not(.sidebar-link):hover {
 }
 
 /* ================================================================ */
-/* 9. PC / GRAND ÉCRAN (≥ 1024px) */
+/* 10. PC / GRAND ÉCRAN (≥ 1024px) */
 /* ================================================================ */
 
 @media (min-width: 1024px) {
@@ -1402,7 +1484,7 @@ a:not(.btn):not(.sidebar-link):hover {
 }
 
 /* ================================================================ */
-/* 10. UTILITAIRES RESPONSIVES */
+/* 11. UTILITAIRES RESPONSIVES */
 /* ================================================================ */
 
 /* Texte responsive */
@@ -1443,7 +1525,7 @@ a:not(.btn):not(.sidebar-link):hover {
 .gap-responsive { gap: clamp(8px, 1.5vw, 20px); }
 
 /* ================================================================ */
-/* 11. FIXES POUR LES VUES EXISTANTES */
+/* 12. FIXES POUR LES VUES EXISTANTES */
 /* ================================================================ */
 
 /* Fix pour les tableaux admin */
@@ -1507,46 +1589,6 @@ a:not(.btn):not(.sidebar-link):hover {
     }
     .user-list-responsive .user-item .user-info .user-rank {
         font-size: 10px;
-    }
-}
-
-/* ================================================================ */
-/* 12. DASHBOARD RESPONSIVE */
-/* ================================================================ */
-
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.dashboard-stats .stat-card {
-    padding: 12px 14px;
-}
-
-.dashboard-stats .stat-card .stat-value {
-    font-size: 18px;
-}
-
-@media (min-width: 600px) {
-    .dashboard-stats {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-    }
-    .dashboard-stats .stat-card .stat-value {
-        font-size: 22px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .dashboard-stats {
-        gap: 18px;
-    }
-    .dashboard-stats .stat-card {
-        padding: 16px 20px;
-    }
-    .dashboard-stats .stat-card .stat-value {
-        font-size: 26px;
     }
 }
 

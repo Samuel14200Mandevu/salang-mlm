@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Mot de passe oublie - Salang MLM')
+@section('title', 'Mot de passe oublié - Salang MLM')
 
 @push('styles')
 <style>
@@ -11,6 +11,9 @@
         padding: 2rem;
         box-shadow: var(--shadow-lg);
         animation: fadeInUp 0.6s ease forwards;
+        max-width: 440px;
+        width: 100%;
+        margin: 0 auto;
     }
     .auth-logo {
         text-align: center;
@@ -45,9 +48,14 @@
     }
     .icon-big {
         text-align: center;
-        font-size: 3rem;
         margin-bottom: 1rem;
         display: block;
+    }
+    .icon-big svg {
+        width: 4rem;
+        height: 4rem;
+        color: var(--primary-500);
+        margin: 0 auto;
     }
     
     .form-group {
@@ -89,27 +97,52 @@
         border-color: #ef4444;
         box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
     }
+    .form-group .error-message {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .form-group .error-message svg {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+    
+    .success-box {
+        padding: 0.75rem 1rem;
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: var(--radius-md);
+        color: #22c55e;
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
+        text-align: center;
+    }
     
     @media (max-width: 640px) {
-        .auth-card { padding: 1.5rem; }
+        .auth-card { padding: 1.5rem; max-width: 100%; }
         .auth-logo img { height: 50px; }
         .auth-logo .brand-name { font-size: 1.25rem; }
         .auth-title { font-size: 1.25rem; }
-        .auth-subtitle { font-size: 0.813rem; }
+        .auth-subtitle { font-size: 0.813rem; padding: 0; }
         .form-group label { font-size: 0.813rem; }
         .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
-        .icon-big { font-size: 2.5rem; }
+        .icon-big svg { width: 3rem; height: 3rem; }
     }
     
     @media (max-width: 480px) {
         .auth-card { padding: 1.25rem; }
-        .auth-subtitle { padding: 0; }
+        .form-group .input { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="auth-card">
+    
     <!-- Logo -->
     <div class="auth-logo">
         <div class="logo-light">
@@ -122,29 +155,25 @@
     </div>
 
     <div class="icon-big animate-float">
-        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
         </svg>
     </div>
     
-    <h2 class="auth-title">Mot de passe oublie</h2>
+    <h2 class="auth-title">Mot de passe oublié</h2>
     <p class="auth-subtitle">
-        Entrez votre email et nous vous enverrons un lien pour reinitialiser votre mot de passe.
+        Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
     </p>
 
     @if (session('status'))
-        <div class="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm">
+        <div class="success-box animate-fadeIn">
             {{ session('status') }}
         </div>
     @endif
 
-    @if ($errors->any())
+    @if (session('error'))
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
-            <ul class="list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            {{ session('error') }}
         </div>
     @endif
 
@@ -156,17 +185,23 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                Email
+                Adresse email
             </label>
             <input type="email" 
                    name="email" 
+                   id="email"
                    value="{{ old('email') }}" 
                    class="input @error('email') input-error @enderror"
-                   placeholder="Entrez votre email"
+                   placeholder="exemple@email.com"
                    required 
                    autofocus>
             @error('email')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
@@ -180,8 +215,52 @@
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
         <a href="{{ route('login') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
-            &larr; Retour a la connexion
+            ← Retour à la connexion
         </a>
     </p>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const emailInput = document.getElementById('email');
+
+    @if ($errors->any())
+        @foreach ($errors->all() as $error)
+            showToast('{{ $error }}', 'error');
+        @break
+        @endforeach
+    @endif
+
+    @if (session('status'))
+        showToast('{{ session('status') }}', 'success');
+    @endif
+
+    @if (session('error'))
+        showToast('{{ session('error') }}', 'error');
+    @endif
+
+    form.addEventListener('submit', function(e) {
+        const email = emailInput.value.trim();
+        
+        if (!email) {
+            e.preventDefault();
+            showToast('Veuillez saisir votre adresse email.', 'error');
+            emailInput.focus();
+            emailInput.classList.add('input-error');
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            e.preventDefault();
+            showToast('Veuillez saisir une adresse email valide.', 'error');
+            emailInput.focus();
+            emailInput.classList.add('input-error');
+        }
+    });
+
+    emailInput.addEventListener('input', function() {
+        this.classList.remove('input-error');
+    });
+});
+</script>
+@endpush
 @endsection

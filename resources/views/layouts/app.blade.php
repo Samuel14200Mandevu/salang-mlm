@@ -10,17 +10,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-touch-fullscreen" content="yes">
-    <meta name="theme-color" content="#6366f1">
+    <meta name="theme-color" content="#5ab638">
     
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="msapplication-TileColor" content="#6366f1">
+    <meta name="msapplication-TileColor" content="#5ab638">
     <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
     
-    {!! PwaKit::head() !!}
+    @if(class_exists('PwaKit'))
+        {!! PwaKit::head() !!}
+    @endif
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
     
@@ -29,7 +31,7 @@
     @stack('styles')
 
     <style>
-        /* ===== SIDEBAR LINKS - CORRECTION ALIGNEMENT ===== */
+        /* ===== SIDEBAR LINKS ===== */
         .sidebar-link {
             display: flex;
             align-items: center;
@@ -67,9 +69,9 @@
         }
 
         .sidebar-link.active {
-            background: var(--gradient-primary, #6366f1);
+            background: var(--gradient-primary, #5ab638);
             color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(90, 182, 56, 0.3);
         }
 
         .sidebar-link.active svg {
@@ -153,6 +155,34 @@
             justify-content: center;
             padding: 0 4px;
             border: 2px solid var(--bg-navbar);
+        }
+
+        /* ===== SCROLLBAR ===== */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* ===== TOAST CUSTOM ===== */
+        .custom-toast {
+            animation: slideUp 0.3s ease forwards;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 767px) {
@@ -258,7 +288,7 @@
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Boutique
+                                Shop
                             </div>
                         </li>
 
@@ -270,7 +300,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Produits
+                                    Products
                                 </span>
                             </a>
                         </li>
@@ -296,7 +326,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Mes Commandes
+                                    My Orders
                                 </span>
                             </a>
                         </li>
@@ -319,16 +349,16 @@
                                 </div>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Panier
+                                    Cart
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Reseau -->
+                        <!-- Network -->
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Reseau
+                                Network
                             </div>
                         </li>
 
@@ -340,7 +370,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Mon Reseau
+                                    My Network
                                 </span>
                             </a>
                         </li>
@@ -353,7 +383,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Mon Grade
+                                    My Rank
                                 </span>
                             </a>
                         </li>
@@ -374,7 +404,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Portefeuille
+                                    Wallet
                                 </span>
                             </a>
                         </li>
@@ -387,7 +417,20 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Mes Commissions
+                                    My Commissions
+                                </span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{{ route('withdrawal.index') }}" 
+                               class="sidebar-link {{ request()->routeIs('withdrawal.*') ? 'active' : '' }}">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Withdrawals
                                 </span>
                             </a>
                         </li>
@@ -400,16 +443,16 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Verification KYC
+                                    KYC Verification
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Rapports -->
+                        <!-- Reports -->
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Rapports
+                                Reports
                             </div>
                         </li>
 
@@ -421,72 +464,49 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Rapports
+                                    Reports
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Services -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Services
-                            </div>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('events.index') }}" 
-                               class="sidebar-link {{ request()->routeIs('events.*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Evenements
-                                </span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('ticket.index') }}" 
-                               class="sidebar-link {{ request()->routeIs('ticket.*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Centre de tickets
-                                </span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('message.index') }}" 
-                               class="sidebar-link {{ request()->routeIs('message.*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Centre de messages
-                                </span>
-                            </a>
-                        </li>
-
+                        <!-- Admin (visible uniquement pour les admins) -->
+                        @auth
+                            @if(Auth::user()->hasRole('admin'))
+                                <li>
+                                    <div class="sidebar-section transition-opacity duration-200" 
+                                         :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                        Administration
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.dashboard') }}" 
+                                       class="sidebar-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        <span class="label transition-opacity duration-200" 
+                                              :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                            Admin Panel
+                                        </span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endauth
                     </ul>
                 </nav>
 
-                <!-- Bas de sidebar -->
+                <!-- Sidebar Footer -->
                 <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
-                                @if(Auth::user()->avatar)
+                                @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                     <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
                                          alt="Avatar" 
                                          class="w-8 h-8 rounded-full object-cover">
                                 @else
-                                    {{ substr(Auth::user()->name, 0, 1) }}
+                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 @endif
                             @endauth
                         </div>
@@ -504,7 +524,7 @@
             </div>
         </aside>
 
-        <!-- Contenu principal -->
+        <!-- Main Content -->
         <div class="flex-1 transition-all duration-300 ease-in-out w-full"
              :style="{
                 'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '5rem' : '0',
@@ -535,7 +555,7 @@
                         
                         <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
                             
-                            <!-- Panier -->
+                            <!-- Cart -->
                             <a href="{{ route('cart.index') }}" 
                                class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors group">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -574,33 +594,33 @@
                                     
                                     <div class="px-3 sm:px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
                                         <h4 class="font-semibold text-sm sm:text-base text-[var(--text-primary)]">Notifications</h4>
-                                        <a href="{{ route('message.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">Voir tout</a>
+                                        <a href="{{ route('message.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
                                     </div>
 
                                     <div class="divide-y divide-[var(--border-color)]" id="notificationList">
                                         <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="1">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">Nouvelle commission</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">Vous avez recu $25.00 de commission directe</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">Il y a 2 heures</p>
+                                            <p class="text-sm font-medium text-[var(--text-primary)]">New Commission</p>
+                                            <p class="text-xs text-[var(--text-secondary)]">You received $25.00 in direct commission</p>
+                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">2 hours ago</p>
                                         </div>
                                         
                                         <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="2">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">Nouveau filleul</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">Jean Dupont s'est inscrit avec votre lien</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">Il y a 5 heures</p>
+                                            <p class="text-sm font-medium text-[var(--text-primary)]">New Downline</p>
+                                            <p class="text-xs text-[var(--text-secondary)]">Jean Dupont registered with your link</p>
+                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">5 hours ago</p>
                                         </div>
                                         
                                         <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="3">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">Promotion de rang</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">Felicitations ! Vous etes maintenant Manager</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">Il y a 1 jour</p>
+                                            <p class="text-sm font-medium text-[var(--text-primary)]">Rank Promotion</p>
+                                            <p class="text-xs text-[var(--text-secondary)]">Congratulations! You are now Manager</p>
+                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">1 day ago</p>
                                         </div>
                                     </div>
 
                                     <div class="px-3 sm:px-4 py-2 border-t border-[var(--border-color)] text-center">
                                         <button @click="markAllAsRead()" 
                                                 class="text-xs text-primary-500 hover:text-primary-600 transition font-medium hover:underline cursor-pointer">
-                                            Marquer tout comme lu
+                                            Mark all as read
                                         </button>
                                     </div>
                                 </div>
@@ -615,7 +635,7 @@
                                 </svg>
                             </button>
 
-                            <!-- Profil -->
+                            <!-- Profile -->
                             @auth
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" 
@@ -624,12 +644,12 @@
                                             {{ Auth::user()->name }}
                                         </span>
                                         <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
-                                            @if(Auth::user()->avatar)
+                                            @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
                                                      alt="Avatar" 
                                                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover">
                                             @else
-                                                {{ substr(Auth::user()->name, 0, 1) }}
+                                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                             @endif
                                         </div>
                                     </button>
@@ -660,7 +680,7 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                                 </svg>
-                                                Profil
+                                                Profile
                                             </span>
                                         </a>
                                         
@@ -694,7 +714,7 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                                     </svg>
-                                                    Deconnexion
+                                                    Logout
                                                 </span>
                                             </button>
                                         </form>
@@ -706,7 +726,7 @@
                 </div>
             </nav>
 
-            <!-- Contenu -->
+            <!-- Content -->
             <main class="p-3 sm:p-4 md:p-6 lg:p-8">
                 @yield('content')
             </main>
@@ -724,52 +744,48 @@
                             </div>
                             <span>&copy; {{ date('Y') }} Salang Group.</span>
                         </div>
-                        <span class="hidden xs:inline">Tous droits reserves.</span>
+                        <span class="hidden xs:inline">All rights reserved.</span>
                     </div>
                 </div>
             </footer>
         </div>
 
-        <!-- ===== MENU MOBILE EN BAS POUR UTILISATEUR ===== -->
+        <!-- Mobile Bottom Nav -->
         <nav class="mobile-bottom-nav" id="mobileBottomNav">
-            <!-- 1: Dashboard -->
             <a href="{{ route('dashboard') }}" 
                class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                 </svg>
-                <span>Accueil</span>
+                <span>Home</span>
             </a>
 
-            <!-- 2: Boutique -->
             <a href="{{ route('products.index') }}" 
                class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
-                <span>Boutique</span>
+                <span>Shop</span>
                 @php $cartCount = session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0; @endphp
                 @if($cartCount > 0)
                     <span class="badge-count">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
                 @endif
             </a>
 
-            <!-- 3: Réseau -->
             <a href="{{ route('network.index') }}" 
                class="nav-item {{ request()->routeIs('network.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                <span>Réseau</span>
+                <span>Network</span>
             </a>
 
-            <!-- 4: Profil -->
             <a href="{{ route('profile.index') }}" 
                class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                <span>Profil</span>
+                <span>Profile</span>
             </a>
         </nav>
 
@@ -778,8 +794,9 @@
     @livewireScripts
     @vite(['resources/js/app.js'])
     
-    <!-- PWA Scripts -->
-    {!! PwaKit::scripts() !!}
+    @if(class_exists('PwaKit'))
+        {!! PwaKit::scripts() !!}
+    @endif
     
     <!-- Cookie Consent -->
     <script>
@@ -806,9 +823,9 @@
             
             banner.innerHTML = `
                 <div style="flex: 1; min-width: 150px; text-align: center; font-size: 0.75rem; color: var(--text-secondary);">
-                    Nous utilisons des cookies.
+                    We use cookies.
                     <a href="{{ route('cookie-policy') }}" style="color: var(--primary-500); text-decoration: underline; white-space: nowrap;">
-                        En savoir plus
+                        Learn more
                     </a>
                 </div>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
@@ -824,7 +841,7 @@
                         transition: all 0.3s ease;
                         white-space: nowrap;
                     ">
-                        Accepter
+                        Accept
                     </button>
                     <button onclick="rejectCookies()" style="
                         padding: 0.375rem 1.25rem;
@@ -838,7 +855,7 @@
                         transition: all 0.3s ease;
                         white-space: nowrap;
                     ">
-                        Refuser
+                        Reject
                     </button>
                 </div>
             `;
@@ -873,14 +890,14 @@
             badge.style.display = 'none';
         }
         
-        showToast('Toutes les notifications ont ete marquees comme lues', 'success');
+        showToast('All notifications marked as read', 'success');
     }
 
     function showToast(message, type = 'success') {
         document.querySelectorAll('.custom-toast').forEach(el => el.remove());
         
         const toast = document.createElement('div');
-        toast.className = `custom-toast fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transform transition-all duration-500 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        toast.className = `custom-toast fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
         toast.style.animation = 'fadeInUp 0.3s ease forwards';
         toast.style.fontSize = '0.875rem';
         toast.textContent = message;
@@ -900,6 +917,30 @@
                 this.style.backgroundColor = 'var(--bg-secondary)';
             });
         });
+
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                document.documentElement.classList.toggle('dark');
+                const icon = document.getElementById('theme-icon');
+                if (document.documentElement.classList.contains('dark')) {
+                    icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+                } else {
+                    icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                }
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+        }
+        
+        // Restore theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+            }
+        }
     });
     </script>
     

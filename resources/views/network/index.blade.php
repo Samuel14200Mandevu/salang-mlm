@@ -18,7 +18,9 @@
         height: 1rem;
         background: var(--border-color);
     }
-    .tree-node:first-child::before { display: none; }
+    .tree-node:first-child::before {
+        display: none;
+    }
     .tree-children {
         display: flex;
         gap: 1rem;
@@ -46,92 +48,276 @@
         background: var(--primary-500);
         color: white;
     }
+    
+    .avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 700;
+        flex-shrink: 0;
+        overflow: hidden;
+        position: relative;
+        color: white;
+    }
+    .avatar-xl { width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
+    .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
+    .avatar-gradient { background: var(--gradient-primary); }
+    .avatar-success { background: #22c55e; }
+    .avatar-danger { background: #ef4444; }
+    .avatar-ring { border: 3px solid var(--primary-500); box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.15); }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    
+    .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
+    .table thead th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .table tbody td {
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
+    
+    .hidden { display: none; }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    
+    .custom-toast {
+        animation: slideUp 0.3s ease forwards;
+        position: fixed;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        background: #22c55e;
+        color: white;
+        font-weight: 500;
+        font-size: 0.875rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 9999;
+    }
+    @media (min-width: 640px) {
+        .custom-toast { left: auto; right: 1rem; max-width: 400px; }
+    }
+    
     @media (max-width: 640px) {
         .tree-children { flex-direction: column; align-items: center; gap: 0.5rem; }
         .tree-children::before { display: none; }
         .tree-node::before { display: none; }
         .avatar-xl { width: 3.5rem; height: 3.5rem; font-size: 1.2rem; }
         .avatar-lg { width: 2.5rem; height: 2.5rem; font-size: 0.8rem; }
+        .card { padding: 0.875rem; }
+        .card-stats { padding: 0.75rem; }
+        .card-stats .text-2xl { font-size: 1.25rem; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+        .btn-sm svg { width: 0.875rem; height: 0.875rem; }
+        .badge { font-size: 0.6rem; padding: 0.125rem 0.5rem; }
+        .stats-grid { grid-template-columns: 1fr 1fr !important; }
+        .tree-header { flex-direction: column; align-items: flex-start !important; }
+        .tree-header .btn-group { margin-left: 0 !important; margin-top: 0.5rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-grid { grid-template-columns: 1fr !important; }
         .card { padding: 0.75rem; }
+        .tree-view { padding: 0.5rem; }
+        .avatar-xl { width: 3rem; height: 3rem; font-size: 1rem; }
+        .avatar-lg { width: 2rem; height: 2rem; font-size: 0.7rem; }
+        .tree-node { padding: 0.25rem; }
+        .tree-children { gap: 0.25rem; }
+        .tree-level-badge { font-size: 0.4rem; padding: 0.05rem 0.3rem; top: -0.3rem; right: -0.3rem; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    
+    <!-- Header -->
+    <div class="tree-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Reseau</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Visualisez votre arbre genealogique</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Network</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Visualize your genealogy tree</p>
         </div>
-        <div class="flex gap-1.5 sm:gap-2">
+        <div class="btn-group flex gap-1.5 sm:gap-2">
             <button class="btn btn-primary btn-sm sm:btn-md" onclick="toggleView('tree')" id="treeViewBtn">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                Arbre
+                Tree
             </button>
             <button class="btn btn-outline btn-sm sm:btn-md" onclick="toggleView('list')" id="listViewBtn">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
-                Liste
+                List
             </button>
         </div>
     </div>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total</p>
+    <!-- Statistics -->
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+        <div class="card-stats border-l-4 border-primary-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">{{ $stats['total'] ?? 0 }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-blue-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 1</p>
+        <div class="card-stats border-l-4 border-blue-500 animate-fadeInUp delay-2">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 1</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">{{ $stats['level_1'] ?? 0 }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 2</p>
+        <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 2</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['level_2'] ?? 0 }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 3</p>
+        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-4">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 3</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">{{ $stats['level_3'] ?? 0 }}</p>
         </div>
     </div>
 
-    <!-- Vue Arbre -->
-    <div id="treeView" class="card animate-fadeInUp delay-5 p-3 sm:p-4 md:p-6">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Arbre genealogique</h3>
+    <!-- Tree View -->
+    <div id="treeView" class="tree-view card animate-fadeInUp delay-5 p-3 sm:p-4 md:p-6">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Genealogy Tree</h3>
         
         <div class="flex justify-center overflow-x-auto py-3 sm:py-4">
             <div class="tree-node">
-                <!-- Moi -->
+                <!-- Me -->
                 <div class="flex flex-col items-center">
                     <div class="avatar avatar-xl avatar-gradient avatar-ring relative">
-                        {{ substr(Auth::user()->name, 0, 2) }}
+                        @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
+                            <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" alt="Avatar">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                        @endif
                         <span class="tree-level-badge">★</span>
                     </div>
                     <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()->name }}</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moi</p>
-                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()->rank ?? 'Distributor' }}</span>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Me</p>
+                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()->rank?->name ?? 'Distributor' }}</span>
                 </div>
 
-                <!-- Enfants -->
+                <!-- Children -->
                 @if(isset($recentDownlines) && $recentDownlines->count() > 0)
                     <div class="tree-children">
                         @foreach($recentDownlines->take(6) as $member)
                             <div class="tree-node">
                                 <div class="flex flex-col items-center">
                                     <div class="avatar avatar-lg {{ $member->is_active ? 'avatar-success' : 'avatar-danger' }} relative">
-                                        {{ substr($member->name, 0, 1) }}
+                                        {{ strtoupper(substr($member->name, 0, 1)) }}
                                         <span class="tree-level-badge">1</span>
                                     </div>
                                     <p class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-0.5 sm:mt-1 truncate max-w-[60px] sm:max-w-[80px]">{{ $member->name }}</p>
-                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 1</p>
+                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Level 1</p>
                                     <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-0.5">
-                                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                                        {{ $member->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </div>
                             </div>
@@ -142,41 +328,41 @@
                         <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        Vous n'avez pas encore de filleuls.<br>
-                        Partagez votre lien de parrainage pour developper votre reseau !
+                        You don't have any downlines yet.<br>
+                        Share your referral link to grow your network!
                     </p>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- Vue Liste -->
+    <!-- List View -->
     <div id="listView" class="card animate-fadeInUp delay-6 hidden p-3 sm:p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Membres de mon reseau</h3>
-            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $recentDownlines->count() ?? 0 }} membres</span>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Network Members</h3>
+            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $recentDownlines->count() ?? 0 }} members</span>
         </div>
 
-        <!-- Recherche -->
+        <!-- Search -->
         <div class="relative mb-3 sm:mb-4">
             <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchMember" placeholder="Rechercher un membre..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="text" id="searchMember" placeholder="Search member..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
 
         <div class="table-wrap">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">Nom</th>
+                        <th class="text-xs sm:text-sm">Name</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Niveau</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Level</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
                         <th class="text-xs sm:text-sm">PV</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
+                        <th class="text-xs sm:text-sm">Status</th>
                     </tr>
                 </thead>
                 <tbody id="memberList">
@@ -185,13 +371,13 @@
                             <td class="font-medium text-sm sm:text-base">{{ $member->name }}</td>
                             <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">{{ $member->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->genealogy?->level ?? 1 }}</span>
+                                <span class="badge badge-info text-[10px] sm:text-xs">Level {{ $member->genealogy?->level ?? 1 }}</span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $member->package?->name ?? 'Starter' }}</td>
                             <td class="text-sm sm:text-base">{{ number_format($member->pv_balance ?? 0) }}</td>
                             <td>
                                 <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                                    {{ $member->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
                         </tr>
@@ -201,7 +387,7 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                Aucun membre dans votre reseau
+                                No members in your network
                             </td>
                         </tr>
                     @endforelse
@@ -216,11 +402,11 @@
         @endif
     </div>
 
-    <!-- Lien de parrainage -->
+    <!-- Referral Link -->
     <div class="card animate-fadeInUp delay-7 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="min-w-0">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Votre lien de parrainage</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Your referral link</p>
                 <p class="text-xs sm:text-sm font-semibold text-primary-500 break-all" id="sponsorLink">
                     {{ url('/register?ref=' . Auth::user()->sponsor_id) }}
                 </p>
@@ -229,7 +415,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
                 </svg>
-                Copier
+                Copy
             </button>
         </div>
     </div>
@@ -261,7 +447,7 @@ function copyLink() {
     
     if (navigator.clipboard) {
         navigator.clipboard.writeText(link).then(function() {
-            showToast('Lien de parrainage copie !');
+            showToast('Referral link copied!');
         }).catch(function() {
             fallbackCopy(link);
         });
@@ -277,13 +463,14 @@ function fallbackCopy(text) {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    showToast('Lien de parrainage copie !');
+    showToast('Referral link copied!');
 }
 
 function showToast(message) {
+    document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
+    
     var toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg bg-green-500 text-white font-medium shadow-lg z-50 transform transition-all duration-500';
-    toast.style.animation = 'fadeInUp 0.3s ease forwards';
+    toast.className = 'custom-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
     

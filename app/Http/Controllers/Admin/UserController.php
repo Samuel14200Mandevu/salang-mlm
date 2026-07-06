@@ -16,15 +16,29 @@ class UserController extends Controller
 {
     public function index()
     {
+        // ✅ Récupérer les utilisateurs avec pagination
         $users = User::with(['rank', 'package'])->orderBy('created_at', 'desc')->paginate(15);
-        return view('admin.users.index', compact('users'));
+        
+        // ✅ Calculer les statistiques
+        $stats = [
+            'active' => User::where('is_active', true)->count(),
+            'inactive' => User::where('is_active', false)->count(),
+            'admins' => User::whereHas('roles', function($q) {
+                $q->where('name', 'admin');
+            })->count(),
+        ];
+        
+        // ✅ Récupérer les packages pour le filtre
+        $packages = Package::all();
+        
+        return view('admin.users.index', compact('users', 'stats', 'packages'));
     }
 
     public function show($id)
     {
         $user = User::with(['rank', 'package', 'sponsor'])->findOrFail($id);
         
-        $downlinesCount = Genealogy::where('sponsor_id', $id)->count();
+        $downlinesCount = User::where('sponsor_id', $user->id)->count();
         $commissionsCount = $user->commissions()->count();
         $totalCommissions = $user->commissions()->sum('amount');
         
@@ -39,9 +53,6 @@ class UserController extends Controller
         return view('admin.users.create', compact('ranks', 'packages', 'users'));
     }
 
-    /**
-     * Créer un utilisateur - ✅ CORRIGÉ
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -51,10 +62,9 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'rank_id' => 'nullable|exists:ranks,id',
             'package_id' => 'nullable|exists:packages,id',
-            'sponsor_id' => 'nullable|exists:users,id', // ✅ ID utilisateur valide
+            'sponsor_id' => 'nullable|exists:users,id',
         ]);
 
-        // ✅ Générer un code de parrain unique (pour le champ sponsor_id qui est la colonne)
         $sponsorCode = 'SAL' . strtoupper(substr(uniqid(), -6));
         while (User::where('sponsor_id', $sponsorCode)->exists()) {
             $sponsorCode = 'SAL' . strtoupper(substr(uniqid(), -6));
@@ -67,7 +77,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'rank_id' => $request->rank_id,
             'package_id' => $request->package_id,
-            'sponsor_id' => $sponsorCode, // ✅ Code de parrain unique
+            'sponsor_id' => $sponsorCode,
             'is_active' => true,
         ]);
 
@@ -83,7 +93,7 @@ class UserController extends Controller
         // Créer la généalogie
         Genealogy::create([
             'user_id' => $user->id,
-            'sponsor_id' => $request->sponsor_id, // ✅ ID du sponsor (clé étrangère)
+            'sponsor_id' => $request->sponsor_id,
             'parent_id' => $request->sponsor_id,
             'level' => 0,
         ]);
@@ -131,7 +141,6 @@ class UserController extends Controller
             'is_active' => $request->has('is_active'),
         ];
 
-        // Ne pas toucher au sponsor_id sauf si spécifié
         if ($request->has('sponsor_id')) {
             $data['sponsor_id'] = $request->sponsor_id;
         }

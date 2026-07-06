@@ -51,6 +51,10 @@
         background: rgba(245, 158, 11, 0.1);
         color: #f59e0b;
     }
+    .modal-icon-success {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
     .modal-title {
         text-align: center;
         font-size: 1.25rem;
@@ -74,6 +78,9 @@
     .modal-text .text-warning {
         color: #f59e0b;
     }
+    .modal-text .text-success {
+        color: #22c55e;
+    }
     .modal-actions {
         display: flex;
         gap: 0.75rem;
@@ -84,10 +91,43 @@
         justify-content: center;
     }
     
+    .info-row {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-row .label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-tertiary);
+    }
+    .info-row .value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 0.125rem;
+    }
+    
     @media (max-width: 640px) {
         .modal-box { padding: 1.5rem; }
         .modal-actions { flex-direction: column; }
         .modal-actions .btn { width: 100%; }
+        .info-row .value { font-size: 0.85rem; }
+        .info-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .info-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
     }
 </style>
 @endpush
@@ -95,17 +135,22 @@
 @section('content')
 <div class="p-4 sm:p-6">
     
-    <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Details Utilisateur</h1>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+                User Details
+            </h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                ID: #{{ $user->id }}
+            </p>
         </div>
         <div class="flex gap-2">
             <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                <span class="hidden xs:inline">Retour</span>
+                <span class="hidden xs:inline">Back</span>
             </a>
         </div>
     </div>
@@ -116,57 +161,97 @@
         </div>
     @endif
 
-    <!-- Informations -->
-    <div class="card p-3 sm:p-4 md:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Nom complet</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->name }}</p>
+    @if(session('error'))
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- User Information -->
+    <div class="card p-3 sm:p-4 md:p-6 animate-fadeInUp delay-1">
+        <div class="info-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
+            
+            <div class="px-0 sm:px-4 py-2 sm:py-0">
+                <div class="info-row">
+                    <span class="label">Full Name</span>
+                    <span class="value">{{ $user->name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Email</span>
+                    <span class="value text-sm">{{ $user->email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Phone</span>
+                    <span class="value">{{ $user->phone ?? 'Not provided' }}</span>
+                </div>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Email</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->email }}</p>
+
+            <div class="px-0 sm:px-4 py-2 sm:py-0">
+                <div class="info-row">
+                    <span class="label">Status</span>
+                    <span class="value">
+                        <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
+                            {{ $user->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Role</span>
+                    <span class="value">
+                        <span class="badge {{ $user->hasRole('admin') ? 'badge-purple' : 'badge-neutral' }}">
+                            {{ $user->hasRole('admin') ? 'Administrator' : 'User' }}
+                        </span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="label">KYC</span>
+                    <span class="value">
+                        <span class="badge {{ $user->kyc_status === 'verified' ? 'badge-success' : ($user->kyc_status === 'pending' ? 'badge-warning' : 'badge-danger') }}">
+                            {{ $user->kyc_status_label ?? 'Not Verified' }}
+                        </span>
+                    </span>
+                </div>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Telephone</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->phone ?? 'Non renseigne' }}</p>
+
+            <div class="px-0 sm:px-4 py-2 sm:py-0">
+                <div class="info-row">
+                    <span class="label">Package</span>
+                    <span class="value">{{ $user->package?->name ?? 'None' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Sponsor</span>
+                    <span class="value">{{ $user->sponsor?->name ?? 'None' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Registered</span>
+                    <span class="value text-sm">{{ $user->created_at->format('d/m/Y H:i') }}</span>
+                </div>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Statut</p>
-                <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                    {{ $user->is_active ? 'Actif' : 'Inactif' }}
-                </span>
+        </div>
+
+        <!-- Statistics -->
+        <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="text-center">
+                <p class="text-2xl font-bold text-primary-500">{{ $downlinesCount ?? 0 }}</p>
+                <p class="text-xs text-[var(--text-secondary)]">Downlines</p>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Package</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->package?->name ?? 'Aucun' }}</p>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-blue-500">{{ $commissionsCount ?? 0 }}</p>
+                <p class="text-xs text-[var(--text-secondary)]">Commissions</p>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Parrain</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->sponsor?->name ?? 'Aucun' }}</p>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-green-500">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                <p class="text-xs text-[var(--text-secondary)]">Total Commissions</p>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Inscrit le</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $user->created_at->format('d/m/Y H:i') }}</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Filleuls</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $downlinesCount ?? 0 }}</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Commissions</p>
-                <p class="font-semibold text-sm sm:text-base">{{ $commissionsCount ?? 0 }}</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Total commissions</p>
-                <p class="font-semibold text-sm sm:text-base">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-purple-500">{{ $user->pv_balance ?? 0 }}</p>
+                <p class="text-xs text-[var(--text-secondary)]">PV</p>
             </div>
         </div>
 
         <!-- Actions -->
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)] flex flex-wrap gap-2 sm:gap-3">
             
-            <!-- Activer / Désactiver -->
             @if($user->is_active)
                 <button type="button" 
                         onclick="openDeactivateModal()" 
@@ -174,7 +259,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                     </svg>
-                    Désactiver
+                    Deactivate
                 </button>
             @else
                 <button type="button" 
@@ -183,7 +268,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Activer
+                    Activate
                 </button>
             @endif
 
@@ -191,24 +276,23 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
-                Modifier
+                Edit
             </a>
 
-            <!-- Bouton Supprimer -->
             <button type="button" 
                     onclick="openDeleteModal()" 
                     class="btn btn-danger btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
-                Supprimer
+                Delete
             </button>
         </div>
     </div>
 </div>
 
 <!-- ============================================================
-MODAL DE CONFIRMATION DE DÉSACTIVATION
+DEACTIVATE MODAL
 ============================================================ -->
 <div id="deactivateModal" class="modal-overlay">
     <div class="modal-box">
@@ -217,58 +301,58 @@ MODAL DE CONFIRMATION DE DÉSACTIVATION
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirmer la désactivation</h3>
+        <h3 class="modal-title">Confirm Deactivation</h3>
         <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong class="text-warning">désactiver</strong> le compte de <strong>{{ $user->name }}</strong> ?
+            Are you sure you want to <strong class="text-warning">deactivate</strong> the account of <strong>{{ $user->name }}</strong> ?
             <br>
-            L'utilisateur ne pourra plus se connecter jusqu'à sa réactivation.
+            The user will not be able to login until reactivated.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeDeactivateModal()" class="btn btn-outline btn-sm">
-                Annuler
+                Cancel
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-warning btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                 </svg>
-                Désactiver
+                Deactivate
             </a>
         </div>
     </div>
 </div>
 
 <!-- ============================================================
-MODAL DE CONFIRMATION D'ACTIVATION
+ACTIVATE MODAL
 ============================================================ -->
 <div id="activateModal" class="modal-overlay">
     <div class="modal-box">
-        <div class="modal-icon modal-icon-success" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+        <div class="modal-icon modal-icon-success">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirmer l'activation</h3>
+        <h3 class="modal-title">Confirm Activation</h3>
         <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong style="color: #22c55e;">activer</strong> le compte de <strong>{{ $user->name }}</strong> ?
+            Are you sure you want to <strong class="text-success">activate</strong> the account of <strong>{{ $user->name }}</strong> ?
             <br>
-            L'utilisateur pourra à nouveau se connecter à la plateforme.
+            The user will be able to login again.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeActivateModal()" class="btn btn-outline btn-sm">
-                Annuler
+                Cancel
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-success btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                Activer
+                Activate
             </a>
         </div>
     </div>
 </div>
 
 <!-- ============================================================
-MODAL DE CONFIRMATION DE SUPPRESSION
+DELETE MODAL
 ============================================================ -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
@@ -277,15 +361,15 @@ MODAL DE CONFIRMATION DE SUPPRESSION
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirmer la suppression</h3>
+        <h3 class="modal-title">Confirm Deletion</h3>
         <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong class="text-danger">supprimer</strong> définitivement <strong>{{ $user->name }}</strong> ?
+            Are you sure you want to <strong class="text-danger">permanently delete</strong> <strong>{{ $user->name }}</strong> ?
             <br>
-            Cette action est <strong class="text-danger">irréversible</strong> et toutes les données liées à cet utilisateur seront perdues.
+            This action is <strong class="text-danger">irreversible</strong> and all data will be lost.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeDeleteModal()" class="btn btn-outline btn-sm">
-                Annuler
+                Cancel
             </button>
             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline">
                 @csrf @method('DELETE')
@@ -293,7 +377,7 @@ MODAL DE CONFIRMATION DE SUPPRESSION
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    Supprimer
+                    Delete
                 </button>
             </form>
         </div>
@@ -302,9 +386,6 @@ MODAL DE CONFIRMATION DE SUPPRESSION
 
 @push('scripts')
 <script>
-// ============================================================
-// DÉSACTIVATION
-// ============================================================
 function openDeactivateModal() {
     document.getElementById('deactivateModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -315,9 +396,6 @@ function closeDeactivateModal() {
     document.body.style.overflow = '';
 }
 
-// ============================================================
-// ACTIVATION
-// ============================================================
 function openActivateModal() {
     document.getElementById('activateModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -328,9 +406,6 @@ function closeActivateModal() {
     document.body.style.overflow = '';
 }
 
-// ============================================================
-// SUPPRESSION
-// ============================================================
 function openDeleteModal() {
     document.getElementById('deleteModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -341,9 +416,6 @@ function closeDeleteModal() {
     document.body.style.overflow = '';
 }
 
-// ============================================================
-// FERMETURE PAR CLIC EXTERNE
-// ============================================================
 document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
@@ -353,9 +425,6 @@ document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     });
 });
 
-// ============================================================
-// FERMETURE PAR TOUCHE ESCAPE
-// ============================================================
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {

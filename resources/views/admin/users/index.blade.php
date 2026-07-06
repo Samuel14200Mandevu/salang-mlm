@@ -31,6 +31,12 @@
             font-size: 0.6rem;
             padding: 0.125rem 0.5rem;
         }
+        .card-stats {
+            padding: 0.625rem;
+        }
+        .card-stats .text-2xl {
+            font-size: 1.25rem;
+        }
     }
 </style>
 @endpush
@@ -55,7 +61,13 @@
 
     @if(session('success'))
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
-            {{ session('success') }}
+            ✅ {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+            ❌ {{ session('error') }}
         </div>
     @endif
 
@@ -73,7 +85,7 @@
                    class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
         <select id="roleFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
-            <option value="">Tous les roles</option>
+            <option value="">Tous les rôles</option>
             <option value="1">Admin</option>
             <option value="0">Utilisateur</option>
         </select>
@@ -95,32 +107,26 @@
     <!-- Statistiques -->
     @php
         $totalUsers = $users->total() ?? 0;
-        $activeUsers = 0;
-        $inactiveUsers = 0;
-        $adminUsers = 0;
-        
-        if(isset($stats)) {
-            $activeUsers = isset($stats['active']) ? $stats['active'] : 0;
-            $inactiveUsers = isset($stats['inactive']) ? $stats['inactive'] : 0;
-            $adminUsers = isset($stats['admins']) ? $stats['admins'] : 0;
-        }
+        $activeUsers = isset($stats['active']) ? $stats['active'] : 0;
+        $inactiveUsers = isset($stats['inactive']) ? $stats['inactive'] : 0;
+        $adminUsers = isset($stats['admins']) ? $stats['admins'] : 0;
     @endphp
     
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
         <div class="card-stats p-3 sm:p-4 border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">{{ $totalUsers }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actifs</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">{{ $activeUsers }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-red-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Inactifs</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-red-500">{{ $inactiveUsers }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Admins</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Admins</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $adminUsers }}</p>
         </div>
     </div>
@@ -134,7 +140,7 @@
                         <th class="text-xs sm:text-sm">ID</th>
                         <th class="text-xs sm:text-sm">Nom</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Role</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Rôle</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
                         <th class="text-xs sm:text-sm hidden xl:table-cell">Inscrit</th>
                         <th class="text-xs sm:text-sm">Statut</th>
@@ -146,7 +152,7 @@
                         <tr class="user-row" 
                             data-name="{{ strtolower($user->name) }}" 
                             data-email="{{ strtolower($user->email) }}"
-                            data-role="{{ $user->is_admin ? '1' : '0' }}"
+                            data-role="{{ $user->hasRole('admin') ? '1' : '0' }}"
                             data-status="{{ $user->is_active ? '1' : '0' }}"
                             data-package="{{ $user->package_id ?? '' }}"
                             onclick="window.location='{{ route('admin.users.show', $user) }}'">
@@ -154,8 +160,8 @@
                             <td class="font-medium text-sm sm:text-base">{{ $user->name }}</td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden sm:table-cell">{{ $user->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge {{ $user->is_admin ? 'badge-purple' : 'badge-neutral' }} text-[10px] sm:text-xs">
-                                    {{ $user->is_admin ? 'Admin' : 'Utilisateur' }}
+                                <span class="badge {{ $user->hasRole('admin') ? 'badge-purple' : 'badge-neutral' }} text-[10px] sm:text-xs">
+                                    {{ $user->hasRole('admin') ? 'Admin' : 'Utilisateur' }}
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $user->package?->name ?? '-' }}</td>
@@ -181,7 +187,8 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                Aucun utilisateur
+                                <p class="text-base sm:text-lg font-medium">Aucun utilisateur</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">Commencez par ajouter votre premier utilisateur</p>
                             </td>
                         </tr>
                     @endforelse

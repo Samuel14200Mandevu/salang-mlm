@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/ReportController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -19,7 +20,9 @@ class ReportController extends Controller
      */
     public function index()
     {
-        // Statistiques globales
+        // ============================================================
+        // STATISTIQUES GLOBALES (Données réelles)
+        // ============================================================
         $stats = [
             'total_users' => User::count(),
             'active_users' => User::where('is_active', true)->count(),
@@ -32,26 +35,53 @@ class ReportController extends Controller
             })->count(),
         ];
 
-        // Ventes mensuelles
-        $monthlySales = $this->getMonthlySales();
+        // ============================================================
+        // VENTES MENSUELLES (12 derniers mois)
+        // ============================================================
+        $monthlySales = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthlySales[] = [
+                'month' => $month->format('M Y'),
+                'sales' => Order::where('status', 'completed')
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->sum('total'),
+                'commissions' => Commission::where('status', 'paid')
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->sum('amount'),
+                'users' => User::whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->count(),
+            ];
+        }
 
-        // Commissions par type
+        // ============================================================
+        // COMMISSIONS PAR TYPE
+        // ============================================================
         $commissionByType = Commission::where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'))
             ->groupBy('type')
             ->get();
 
-        // Utilisateurs par grade
+        // ============================================================
+        // UTILISATEURS PAR GRADE
+        // ============================================================
         $usersByRank = User::select('rank', DB::raw('count(*) as count'))
             ->groupBy('rank')
             ->get();
 
-        // Top parrains
+        // ============================================================
+        // TOP 10 PARRAINS
+        // ============================================================
         $topSponsors = User::orderBy('total_sponsors', 'desc')
             ->limit(10)
             ->get(['id', 'name', 'email', 'total_sponsors']);
 
-        // Revenus par package
+        // ============================================================
+        // REVENUS PAR PACKAGE
+        // ============================================================
         $packageRevenue = Package::withCount('users')
             ->get()
             ->map(function($package) {
@@ -69,63 +99,6 @@ class ReportController extends Controller
         ));
     }
 
-     /**
-     * Rapport des gains - ✅ AJOUTÉ
-     */
-    public function earnings(Request $request)
-    {
-        $user = auth()->user();
-        
-        $commissions = Commission::where('user_id', $user->id)
-            ->when($request->filled('date_from'), function($q) use ($request) {
-                return $q->whereDate('created_at', '>=', $request->date_from);
-            })
-            ->when($request->filled('date_to'), function($q) use ($request) {
-                return $q->whereDate('created_at', '<=', $request->date_to);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-        
-        $stats = [
-            'total' => Commission::where('user_id', $user->id)->where('status', 'paid')->sum('amount'),
-            'pending' => Commission::where('user_id', $user->id)->where('status', 'pending')->sum('amount'),
-            'paid' => Commission::where('user_id', $user->id)->where('status', 'paid')->sum('amount'),
-            'by_type' => Commission::where('user_id', $user->id)
-                ->select('type', DB::raw('SUM(amount) as total'))
-                ->groupBy('type')
-                ->get(),
-        ];
-        
-        return view('reports.earnings', compact('commissions', 'stats'));
-    }
-
-    /**
-     * Rapport réseau - ✅ AJOUTÉ
-     */
-    public function network(Request $request)
-    {
-        $user = auth()->user();
-        
-        $downlines = User::where('sponsor_id', $user->id)
-            ->when($request->filled('search'), function($q) use ($request) {
-                return $q->where('name', 'like', "%{$request->search}%")
-                    ->orWhere('email', 'like', "%{$request->search}%");
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-        
-        $networkStats = [
-            'total' => User::where('sponsor_id', $user->id)->count(),
-            'active' => User::where('sponsor_id', $user->id)->where('is_active', true)->count(),
-            'inactive' => User::where('sponsor_id', $user->id)->where('is_active', false)->count(),
-            'with_package' => User::where('sponsor_id', $user->id)->whereNotNull('package_id')->count(),
-            'without_package' => User::where('sponsor_id', $user->id)->whereNull('package_id')->count(),
-        ];
-        
-        return view('reports.network', compact('downlines', 'networkStats'));
-    }
-
-
     /**
      * Rapport des ventes
      */
@@ -133,7 +106,6 @@ class ReportController extends Controller
     {
         $query = Order::with(['user', 'items']);
 
-        // Filtres
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -148,7 +120,6 @@ class ReportController extends Controller
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Statistiques
         $stats = [
             'total_orders' => $query->count(),
             'total_revenue' => $query->sum('total'),
@@ -189,7 +160,6 @@ class ReportController extends Controller
 
         $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Statistiques
         $stats = [
             'total' => $query->sum('amount'),
             'average' => $query->avg('amount'),
@@ -235,7 +205,6 @@ class ReportController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Statistiques
         $stats = [
             'total' => User::count(),
             'active' => User::where('is_active', true)->count(),
@@ -247,7 +216,7 @@ class ReportController extends Controller
             'without_package' => User::whereNull('package_id')->count(),
         ];
 
-        $ranks = User::distinct()->pluck('rank');
+        $ranks = User::distinct()->pluck('rank')->filter();
         $packages = Package::all();
 
         return view('admin.reports.users', compact('users', 'stats', 'ranks', 'packages'));
@@ -282,7 +251,6 @@ class ReportController extends Controller
                 break;
         }
 
-        // Générer le fichier CSV
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $request->type . '_' . date('Y-m-d') . '.csv"',
@@ -291,11 +259,8 @@ class ReportController extends Controller
         $callback = function() use ($data) {
             $file = fopen('php://output', 'w');
             
-            // En-têtes
             if (!empty($data)) {
                 fputcsv($file, array_keys($data[0]));
-                
-                // Données
                 foreach ($data as $row) {
                     fputcsv($file, $row);
                 }
@@ -305,32 +270,6 @@ class ReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * Données mensuelles pour les graphiques
-     */
-    private function getMonthlySales()
-    {
-        $data = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $data[] = [
-                'month' => $month->format('M Y'),
-                'sales' => Order::where('status', 'completed')
-                    ->whereMonth('created_at', $month->month)
-                    ->whereYear('created_at', $month->year)
-                    ->sum('total'),
-                'commissions' => Commission::where('status', 'paid')
-                    ->whereMonth('created_at', $month->month)
-                    ->whereYear('created_at', $month->year)
-                    ->sum('amount'),
-                'users' => User::whereMonth('created_at', $month->month)
-                    ->whereYear('created_at', $month->year)
-                    ->count(),
-            ];
-        }
-        return $data;
     }
 
     /**
@@ -353,15 +292,16 @@ class ReportController extends Controller
                 'ID' => $user->id,
                 'Nom' => $user->name,
                 'Email' => $user->email,
-                'Téléphone' => $user->phone,
-                'Grade' => $user->rank,
+                'Téléphone' => $user->phone ?? '',
+                'Grade' => $user->rank ?? 'Distributor',
                 'Package' => $user->package->name ?? 'Aucun',
-                'PV' => $user->pv_balance,
-                'BV' => $user->bv_balance,
-                'Gains totaux' => number_format($user->total_earnings, 2),
-                'Parrainages' => $user->total_sponsors,
-                'Équipe' => $user->total_team,
+                'PV' => $user->pv_balance ?? 0,
+                'BV' => $user->bv_balance ?? 0,
+                'Gains totaux' => number_format($user->total_earnings ?? 0, 2),
+                'Parrainages' => $user->total_sponsors ?? 0,
+                'Équipe' => $user->total_team ?? 0,
                 'Statut' => $user->is_active ? 'Actif' : 'Inactif',
+                'KYC' => $user->kyc_status ?? 'not_submitted',
                 'Inscrit le' => $user->created_at->format('Y-m-d'),
             ];
         })->toArray();
@@ -390,8 +330,9 @@ class ReportController extends Controller
                 'Type' => $commission->type,
                 'Montant' => number_format($commission->amount, 2),
                 'Pourcentage' => $commission->percentage . '%',
-                'Description' => $commission->description,
+                'Description' => $commission->description ?? '',
                 'Statut' => $commission->status,
+                'Payé le' => $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'En attente',
                 'Date' => $commission->created_at->format('Y-m-d H:i'),
             ];
         })->toArray();
@@ -418,7 +359,7 @@ class ReportController extends Controller
                 'Numéro' => $order->order_number,
                 'Client' => $order->user->name ?? 'N/A',
                 'Sous-total' => number_format($order->subtotal, 2),
-                'Taxe' => number_format($order->tax, 2),
+                'TVA' => number_format($order->tax, 2),
                 'Livraison' => number_format($order->shipping, 2),
                 'Total' => number_format($order->total, 2),
                 'Statut' => $order->status,
@@ -450,7 +391,7 @@ class ReportController extends Controller
                 'Utilisateur' => $withdrawal->user->name ?? 'N/A',
                 'Email' => $withdrawal->user->email ?? 'N/A',
                 'Montant' => number_format($withdrawal->amount, 2),
-                'Frais' => number_format($withdrawal->fee, 2),
+                'Frais (2.5%)' => number_format($withdrawal->fee, 2),
                 'Net' => number_format($withdrawal->net_amount, 2),
                 'Méthode' => $withdrawal->method,
                 'Statut' => $withdrawal->status,

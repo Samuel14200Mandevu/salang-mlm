@@ -2,8 +2,12 @@
 
 @push('styles')
 <style>
-    .commission-card { transition: all 0.3s ease; }
-    .commission-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+    .commission-row {
+        transition: all 0.2s ease;
+    }
+    .commission-row:hover {
+        background: var(--bg-hover);
+    }
     
     .type-badge {
         display: inline-flex;
@@ -20,30 +24,197 @@
     .type-badge-retail { background: rgba(34,197,94,0.15); color: #22c55e; }
     .type-badge-bonus { background: rgba(236,72,153,0.15); color: #ec4899; }
     
+    .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    
+    .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+    }
+    .table thead th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .table tbody td {
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+    
+    .filters-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    
     @media (max-width: 640px) {
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .type-badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .card-stats { padding: 0.75rem; }
-        .card-stats .text-2xl { font-size: 1.25rem; }
+        .table thead th, .table tbody td {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.65rem;
+        }
+        .type-badge {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.4rem;
+        }
+        .badge {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.4rem;
+        }
+        .card-stats {
+            padding: 0.75rem;
+        }
+        .card-stats .text-2xl {
+            font-size: 1.25rem;
+        }
+        .card {
+            padding: 0.875rem;
+        }
+        .filters-wrapper {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filters-wrapper .input {
+            width: 100% !important;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        .commission-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        .commission-header .btn-group {
+            margin-left: 0 !important;
+            margin-top: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+        .card {
+            padding: 0.75rem;
+        }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    
+    <!-- Header -->
+    <div class="commission-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez tous vos gains en detail</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Commissions</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Track all your earnings in detail</p>
         </div>
-        <div class="flex gap-1.5 sm:gap-2">
+        <div class="btn-group flex gap-1.5 sm:gap-2">
             <a href="{{ route('commissions.export') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Exporter
+                Export
             </a>
             <a href="{{ route('commissions.pdf') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,56 +225,56 @@
         </div>
     </div>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total gagne</p>
+    <!-- Statistics -->
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+        <div class="card-stats border-l-4 border-primary-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Earned</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-yellow-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">En attente</p>
+        <div class="card-stats border-l-4 border-yellow-500 animate-fadeInUp delay-2">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Pending</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Payees</p>
+        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-3">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Paid</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format(($stats['total'] ?? 0) - ($stats['pending'] ?? 0), 2) }}</p>
         </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Nombre total</p>
+        <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-4">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Count</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['total_count'] ?? 0 }}</p>
         </div>
     </div>
 
-    <!-- Filtres -->
-    <div class="flex flex-wrap items-center gap-2 sm:gap-3 animate-fadeInUp delay-5">
+    <!-- Filters -->
+    <div class="filters-wrapper animate-fadeInUp delay-5">
         <div class="relative flex-1 min-w-[120px] sm:min-w-[150px] max-w-xs sm:max-w-sm">
             <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="text" id="searchInput" placeholder="Search..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
         <select id="typeFilter" class="input w-auto min-w-[100px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">Tous les types</option>
+            <option value="">All Types</option>
             <option value="direct">Direct</option>
             <option value="indirect">Indirect</option>
             <option value="leadership">Leadership</option>
             <option value="retail">Retail</option>
         </select>
         <select id="statusFilter" class="input w-auto min-w-[100px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">Tous les statuts</option>
-            <option value="paid">Paye</option>
-            <option value="pending">En attente</option>
+            <option value="">All Status</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
         </select>
-        <input type="date" id="dateFrom" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
-        <input type="date" id="dateTo" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
+        <input type="date" id="dateFrom" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="From">
+        <input type="date" id="dateTo" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="To">
     </div>
 
-    <!-- Liste -->
-    <div class="card animate-fadeInUp delay-6 p-3 sm:p-4 md:p-6">
+    <!-- Commission List -->
+    <div class="card animate-fadeInUp delay-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des commissions</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission History</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $commissions->total() ?? 0 }} commissions</span>
         </div>
 
@@ -113,15 +284,15 @@
                     <tr>
                         <th class="text-xs sm:text-sm">Date</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Type</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">De</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">From</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Description</th>
-                        <th class="text-xs sm:text-sm text-right">Montant</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
+                        <th class="text-xs sm:text-sm text-right">Amount</th>
+                        <th class="text-xs sm:text-sm">Status</th>
                     </tr>
                 </thead>
                 <tbody id="commissionsTable">
                     @forelse($commissions ?? [] as $commission)
-                        <tr class="commission-card" 
+                        <tr class="commission-row" 
                             data-type="{{ $commission->type }}"
                             data-status="{{ $commission->status }}"
                             data-date="{{ $commission->created_at->format('Y-m-d') }}">
@@ -134,7 +305,7 @@
                                 </span>
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
-                                {{ $commission->fromUser?->name ?? 'Systeme' }}
+                                {{ $commission->fromUser?->name ?? 'System' }}
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden lg:table-cell">
                                 {{ Str::limit($commission->description ?? '-', 30) }}
@@ -144,7 +315,7 @@
                             </td>
                             <td>
                                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
-                                    {{ $commission->status == 'paid' ? 'Paye' : 'En attente' }}
+                                    {{ $commission->status == 'paid' ? 'Paid' : 'Pending' }}
                                 </span>
                             </td>
                         </tr>
@@ -154,7 +325,8 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                Aucune commission pour le moment.
+                                <p class="text-base sm:text-lg font-medium">No commissions yet</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">Commissions will appear when you build your network</p>
                             </td>
                         </tr>
                     @endforelse
@@ -169,11 +341,11 @@
         @endif
     </div>
 
-    <!-- Repartition par type -->
+    <!-- Distribution by Type -->
     @if(!empty($stats['by_type']))
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-7">
         @foreach($stats['by_type'] as $type => $data)
-            <div class="card-stats p-3 sm:p-4 border-l-4 border-{{ $data['color'] ?? 'primary' }}-500">
+            <div class="card-stats border-l-4 border-{{ $data['color'] ?? 'primary' }}-500">
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $data['label'] }}</p>
                 <p class="text-lg sm:text-xl md:text-2xl font-bold text-{{ $data['color'] ?? 'primary' }}-500">
                     ${{ number_format($data['total'], 2) }}
@@ -188,27 +360,27 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const typeFilter = document.getElementById('typeFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    const dateFrom = document.getElementById('dateFrom');
-    const dateTo = document.getElementById('dateTo');
-    const rows = document.querySelectorAll('#commissionsTable tr');
+    var searchInput = document.getElementById('searchInput');
+    var typeFilter = document.getElementById('typeFilter');
+    var statusFilter = document.getElementById('statusFilter');
+    var dateFrom = document.getElementById('dateFrom');
+    var dateTo = document.getElementById('dateTo');
+    var rows = document.querySelectorAll('#commissionsTable tr');
 
     function filterRows() {
-        const search = searchInput.value.trim().toLowerCase();
-        const type = typeFilter.value;
-        const status = statusFilter.value;
-        const from = dateFrom.value;
-        const to = dateTo.value;
+        var search = searchInput.value.trim().toLowerCase();
+        var type = typeFilter.value;
+        var status = statusFilter.value;
+        var from = dateFrom.value;
+        var to = dateTo.value;
 
         rows.forEach(function(row) {
-            const text = row.textContent.toLowerCase();
-            const rowType = row.dataset.type || '';
-            const rowStatus = row.dataset.status || '';
-            const rowDate = row.dataset.date || '';
+            var text = row.textContent.toLowerCase();
+            var rowType = row.dataset.type || '';
+            var rowStatus = row.dataset.status || '';
+            var rowDate = row.dataset.date || '';
 
-            let show = true;
+            var show = true;
 
             if (search && !text.includes(search)) show = false;
             if (type && rowType !== type) show = false;

@@ -11,6 +11,7 @@
     @livewireStyles
     
     <style>
+        /* ===== SPLASH SCREEN ===== */
         .splash-screen {
             position: fixed;
             inset: 0;
@@ -18,7 +19,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--splash-bg);
+            background: var(--splash-bg, #ffffff);
             transition: opacity 0.8s ease, visibility 0.8s ease;
         }
         .splash-screen.hidden {
@@ -30,8 +31,8 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 4px solid var(--border-color);
-            border-top-color: var(--primary-500);
+            border: 4px solid var(--border-color, #e5e7eb);
+            border-top-color: var(--primary-500, #5ab638);
             animation: spin 0.8s linear infinite;
             margin-top: 1rem;
         }
@@ -40,6 +41,7 @@
             width: auto;
         }
         
+        /* ===== ONBOARDING ===== */
         .onboarding-slide {
             display: none;
             animation: fadeInUp 0.5s ease forwards;
@@ -51,13 +53,13 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: var(--border-color);
+            background: var(--border-color, #e5e7eb);
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-block;
         }
         .onboarding-dot.active {
-            background: var(--primary-500);
+            background: var(--primary-500, #5ab638);
             width: 28px;
             border-radius: 10px;
         }
@@ -65,48 +67,134 @@
             animation: float 3s ease-in-out infinite;
         }
         
+        /* ===== BUTTONS ===== */
         .btn-primary {
             display: inline-block;
             padding: 0.75rem 1.5rem;
-            background: var(--gradient-primary);
+            background: var(--gradient-primary, #5ab638);
             color: white;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-md, 0.5rem);
             font-weight: 700;
             transition: all 0.3s ease;
             text-decoration: none;
             cursor: pointer;
             border: none;
             width: 100%;
+            text-align: center;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
+            box-shadow: var(--shadow-hover, 0 8px 24px rgba(90, 182, 56, 0.2));
         }
         .btn-secondary {
             display: inline-block;
             padding: 0.75rem 1.5rem;
             background: transparent;
-            color: var(--text-primary);
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
+            color: var(--text-primary, #111827);
+            border: 2px solid var(--border-color, #e5e7eb);
+            border-radius: var(--radius-md, 0.5rem);
             font-weight: 600;
             transition: all 0.3s ease;
             text-decoration: none;
             cursor: pointer;
             width: 100%;
+            text-align: center;
         }
         .btn-secondary:hover {
-            border-color: var(--primary-500);
-            color: var(--primary-500);
+            border-color: var(--primary-500, #5ab638);
+            color: var(--primary-500, #5ab638);
         }
         
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card, #ffffff);
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: var(--radius-lg, 1rem);
+            padding: 1.5rem;
+        }
+        
+        /* ===== KEYFRAMES ===== */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* ===== DARK MODE ===== */
+        .dark .splash-screen {
+            background: var(--splash-bg, #000000);
+        }
+        .dark .btn-secondary {
+            color: var(--text-primary, #f0f4ff);
+            border-color: var(--border-color, #1a1a2e);
+        }
+        .dark .card {
+            background: var(--bg-card, #0a0a0a);
+            border-color: var(--border-color, #1a1a2e);
+        }
+        .dark .onboarding-dot {
+            background: var(--border-color, #1a1a2e);
+        }
+        .dark .onboarding-dot.active {
+            background: var(--primary-500, #5ab638);
+        }
+        
+        /* ===== RESPONSIVE ===== */
         @media (min-width: 640px) {
-            .btn-primary, .btn-secondary { width: auto; }
-            .splash-logo { max-height: 80px; }
+            .btn-primary, .btn-secondary {
+                width: auto;
+            }
+            .splash-logo {
+                max-height: 80px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .card {
+                padding: 1rem;
+            }
+            .btn-primary, .btn-secondary {
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+            }
+            .onboarding-slide .grid-cols-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .onboarding-slide .grid-cols-3 {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card {
+                padding: 0.75rem;
+            }
+            .onboarding-slide .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+            .onboarding-slide .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+            .float-animation svg {
+                width: 4rem;
+                height: 4rem;
+            }
+            .btn-primary, .btn-secondary {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.813rem;
+            }
         }
     </style>
 </head>
-<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen">
+<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen transition-colors duration-200">
+    
     <!-- Splash Screen -->
     <div id="splashScreen" class="splash-screen">
         <div class="flex flex-col items-center text-center px-4">
@@ -136,7 +224,8 @@
 
             <!-- Slides -->
             <div class="relative">
-                <!-- Slide 1 -->
+                
+                <!-- Slide 1: Earn Commissions -->
                 <div class="onboarding-slide active" data-slide="0">
                     <div class="card text-center p-4 sm:p-6 md:p-8">
                         <svg class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto text-primary-500 mb-3 sm:mb-4 float-animation" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +249,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 2 -->
+                <!-- Slide 2: Choose Your Package -->
                 <div class="onboarding-slide" data-slide="1">
                     <div class="card text-center p-4 sm:p-6 md:p-8">
                         <svg class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto text-primary-500 mb-3 sm:mb-4 float-animation" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +277,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 3 -->
+                <!-- Slide 3: Build Your Network -->
                 <div class="onboarding-slide" data-slide="2">
                     <div class="card text-center p-4 sm:p-6 md:p-8">
                         <svg class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto text-primary-500 mb-3 sm:mb-4 float-animation" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +298,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 4 -->
+                <!-- Slide 4: Ready to Start -->
                 <div class="onboarding-slide" data-slide="3">
                     <div class="card text-center p-4 sm:p-6 md:p-8">
                         <svg class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto text-primary-500 mb-3 sm:mb-4 float-animation" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +350,7 @@
                 <!-- Skip button -->
                 <div class="text-center mt-3 sm:mt-4">
                     <a href="{{ route('onboarding.skip') }}" class="text-xs sm:text-sm text-[var(--text-secondary)] hover:text-primary-600 transition">
-                        Skip onboarding &rarr;
+                        Skip onboarding →
                     </a>
                 </div>
             </div>
@@ -273,38 +362,53 @@
             var splashScreen = document.getElementById('splashScreen');
             var onboardingContainer = document.getElementById('onboardingContainer');
 
+            // Hide splash screen after 2.5s
             setTimeout(function() {
                 splashScreen.classList.add('hidden');
                 onboardingContainer.classList.remove('hidden');
                 onboardingContainer.style.display = 'block';
             }, 2500);
 
+            // ============================================================
+            // ONBOARDING NAVIGATION
+            // ============================================================
             var currentSlide = 0;
             var slides = document.querySelectorAll('.onboarding-slide');
             var dots = document.querySelectorAll('.onboarding-dot');
             var totalSlides = slides.length;
 
             function showSlide(index) {
-                slides.forEach(function(slide) { slide.classList.remove('active'); });
-                dots.forEach(function(dot) { dot.classList.remove('active'); });
+                // Validate index
+                if (index < 0) index = 0;
+                if (index >= totalSlides) index = totalSlides - 1;
+                
+                slides.forEach(function(slide) {
+                    slide.classList.remove('active');
+                });
+                dots.forEach(function(dot) {
+                    dot.classList.remove('active');
+                });
                 
                 slides[index].classList.add('active');
                 dots[index].classList.add('active');
                 currentSlide = index;
             }
 
+            // Next button
             document.getElementById('nextSlide').addEventListener('click', function() {
                 if (currentSlide < totalSlides - 1) {
                     showSlide(currentSlide + 1);
                 }
             });
 
+            // Previous button
             document.getElementById('prevSlide').addEventListener('click', function() {
                 if (currentSlide > 0) {
                     showSlide(currentSlide - 1);
                 }
             });
 
+            // Dots
             dots.forEach(function(dot) {
                 dot.addEventListener('click', function() {
                     var index = parseInt(this.dataset.dot);
@@ -312,6 +416,7 @@
                 });
             });
 
+            // Keyboard navigation
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) {
                     showSlide(currentSlide + 1);
@@ -320,7 +425,28 @@
                 }
             });
 
-            // Marquer l'onboarding comme complete
+            // Touch swipe support
+            var touchStartX = 0;
+            var touchEndX = 0;
+            var container = document.querySelector('.onboarding-slide.active');
+
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                var diff = touchStartX - touchEndX;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0 && currentSlide < totalSlides - 1) {
+                        showSlide(currentSlide + 1);
+                    } else if (diff < 0 && currentSlide > 0) {
+                        showSlide(currentSlide - 1);
+                    }
+                }
+            }, { passive: true });
+
+            // Mark onboarding as completed after 30 seconds (in case user doesn't navigate)
             setTimeout(function() {
                 fetch('{{ route('onboarding.complete') }}', {
                     method: 'POST',
@@ -328,6 +454,8 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json'
                     }
+                }).catch(function() {
+                    // Silent fail
                 });
             }, 30000);
         });

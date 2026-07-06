@@ -13,6 +13,9 @@
         animation: fadeInUp 0.6s ease forwards;
         position: relative;
         overflow: hidden;
+        max-width: 480px;
+        width: 100%;
+        margin: 0 auto;
     }
     .auth-card::before {
         content: '';
@@ -105,7 +108,7 @@
     }
     .social-btn:hover {
         background: var(--bg-hover);
-        border-color: var(--primary);
+        border-color: var(--primary-500);
         transform: translateY(-1px);
     }
     .social-btn:active {
@@ -135,6 +138,10 @@
         margin-right: 0.375rem;
         vertical-align: middle;
     }
+    .form-group label .required {
+        color: #ef4444;
+        font-weight: 700;
+    }
     .form-group .input {
         width: 100%;
         padding: 0.625rem 1rem;
@@ -157,6 +164,20 @@
         border-color: #ef4444;
         box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
     }
+    .form-group .error-message {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .form-group .error-message svg {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+    
     .password-wrapper {
         position: relative;
     }
@@ -188,7 +209,7 @@
         margin-top: 0.25rem;
     }
     
-    /* ===== MODERN TOAST ===== */
+    /* Toast */
     .toast-modern {
         position: fixed;
         top: 20px;
@@ -274,7 +295,7 @@
     }
     
     @media (max-width: 640px) {
-        .auth-card { padding: 1.5rem; }
+        .auth-card { padding: 1.5rem; max-width: 100%; }
         .auth-logo img { height: 50px; }
         .auth-logo .brand-name { font-size: 1.25rem; }
         .auth-title { font-size: 1.25rem; }
@@ -290,12 +311,14 @@
     
     @media (max-width: 480px) {
         .auth-card { padding: 1.25rem; }
+        .form-group .input { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="auth-card">
+    
     <!-- Logo -->
     <div class="auth-logo">
         <div class="logo-light">
@@ -307,22 +330,19 @@
         <span class="brand-name">Salang MLM</span>
     </div>
 
-    <h2 class="auth-title">Creer un compte</h2>
-    <p class="auth-subtitle">Rejoignez la communaute Salang</p>
+    <h2 class="auth-title">Créer un compte</h2>
+    <p class="auth-subtitle">Rejoignez la communauté Salang</p>
 
+    <!-- Messages de session -->
     @if (session('success'))
         <div class="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm">
             {{ session('success') }}
         </div>
     @endif
 
-    @if ($errors->any())
+    @if (session('error'))
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
-            <ul class="list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            {{ session('error') }}
         </div>
     @endif
 
@@ -353,7 +373,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                Nom complet <span class="text-red-500">*</span>
+                Nom complet <span class="required">*</span>
             </label>
             <input type="text" 
                    name="name" 
@@ -364,7 +384,12 @@
                    required 
                    autofocus>
             @error('name')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
@@ -374,7 +399,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                Email <span class="text-red-500">*</span>
+                Email <span class="required">*</span>
             </label>
             <input type="email" 
                    name="email" 
@@ -384,25 +409,36 @@
                    placeholder="Entrez votre email"
                    required>
             @error('email')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
-        <!-- Telephone -->
+        <!-- Téléphone -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
-                Telephone
+                Téléphone
             </label>
             <input type="tel" 
                    name="phone" 
+                   id="phone"
                    value="{{ old('phone') }}" 
                    class="input @error('phone') input-error @enderror"
-                   placeholder="Entrez votre numero de telephone">
+                   placeholder="Entrez votre numéro de téléphone">
             @error('phone')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
@@ -412,7 +448,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                ID du parrain <span class="text-red-500">*</span>
+                ID du parrain <span class="required">*</span>
             </label>
             <input type="text" 
                    name="sponsor_id" 
@@ -421,31 +457,37 @@
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Ex: SALABCDEF"
                    required>
-            <p class="form-hint">Entrez l'ID de la personne qui vous a invite</p>
+            <p class="form-hint">Entrez l'ID de la personne qui vous a invité</p>
             @error('sponsor_id')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
-        <!-- Password -->
+        <!-- Mot de passe -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                Mot de passe <span class="text-red-500">*</span>
+                Mot de passe <span class="required">*</span>
             </label>
             <div class="password-wrapper">
                 <input type="password" 
                        id="password"
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="8 caracteres minimum"
+                       placeholder="8 caractères minimum"
                        required
                        minlength="8">
                 <button type="button" 
                         class="password-toggle"
-                        onclick="togglePassword(this)">
+                        onclick="togglePassword(this)"
+                        aria-label="Afficher/masquer le mot de passe">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -456,49 +498,61 @@
                 <div class="password-strength-bar" id="passwordStrength"></div>
             </div>
             <p class="password-strength-text text-[var(--text-tertiary)]" id="passwordStrengthText">
-                Minimum 8 caracteres
+                Minimum 8 caractères
             </p>
             @error('password')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
-        <!-- Confirm Password -->
+        <!-- Confirmer le mot de passe -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
-                Confirmer le mot de passe <span class="text-red-500">*</span>
+                Confirmer le mot de passe <span class="required">*</span>
             </label>
             <input type="password" 
                    name="password_confirmation" 
+                   id="password_confirmation"
                    class="input"
                    placeholder="Confirmez votre mot de passe"
                    required>
         </div>
 
-        <!-- Terms -->
+        <!-- Conditions -->
         <div class="form-group mb-6">
             <label class="flex items-start gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                 <input type="checkbox" 
                        name="terms" 
+                       id="terms"
                        value="1"
                        class="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0"
                        required>
                 <span>
                     J'accepte les 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        conditions generales
+                        conditions générales
                     </a>
                     et la 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        politique de confidentialite
+                        politique de confidentialité
                     </a>
                 </span>
             </label>
             @error('terms')
-                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                <p class="error-message">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ $message }}
+                </p>
             @enderror
         </div>
 
@@ -507,7 +561,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
             </svg>
-            Creer mon compte
+            Créer mon compte
         </button>
     </form>
 
@@ -515,7 +569,7 @@
 
     <!-- Social Login - Google -->
     <div class="space-y-2">
-        <a href="{{ route('social.redirect', 'google') }}" class="social-btn social-btn-google">
+        <a href="{{ route('social.redirect', 'google') }}" class="social-btn social-btn-google" id="googleBtn">
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -527,22 +581,20 @@
     </div>
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
-        Deja un compte ?
+        Déjà un compte ?
         <a href="{{ route('login') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
             Se connecter
         </a>
     </p>
-    <!-- Lien retour accueil -->
-    <div class="mb-4">
-        <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
+    
+    <p class="text-center text-sm text-[var(--text-secondary)] mt-2">
         <a href="{{ route('home') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
-            &larr; Retour a l'accueil
+            ← Retour à l'accueil
         </a>
-    </p>    
-    </div>
+    </p>
 </div>
 
-<!-- Modern Toast -->
+<!-- Toast -->
 <div id="toastModern" class="toast-modern" role="alert" aria-live="polite">
     <div class="toast-icon error" id="toastIcon">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -550,7 +602,7 @@
         </svg>
     </div>
     <span id="toastMessage">Message</span>
-    <button type="button" class="toast-close" onclick="hideToast()">
+    <button type="button" class="toast-close" onclick="hideToast()" aria-label="Fermer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
@@ -596,11 +648,37 @@ function hideToast() {
     document.getElementById('toastModern').classList.remove('show');
 }
 
+// Validation du formulaire
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
     const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('password_confirmation');
+    const sponsorInput = document.getElementById('sponsor_id');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const termsCheckbox = document.getElementById('terms');
+    const submitBtn = document.getElementById('submitBtn');
     const strengthBar = document.getElementById('passwordStrength');
     const strengthText = document.getElementById('passwordStrengthText');
 
+    // Afficher les erreurs Laravel
+    @if ($errors->any())
+        @foreach ($errors->all() as $error)
+            showToast('{{ $error }}', 'error');
+        @break
+        @endforeach
+    @endif
+
+    @if (session('success'))
+        showToast('{{ session('success') }}', 'success');
+    @endif
+
+    @if (session('error'))
+        showToast('{{ session('error') }}', 'error');
+    @endif
+
+    // Force du mot de passe
     if (passwordInput) {
         passwordInput.addEventListener('input', function() {
             const value = this.value;
@@ -625,84 +703,104 @@ document.addEventListener('DOMContentLoaded', function() {
                 label = 'Fort';
             } else {
                 strengthBar.style.background = '#22c55e';
-                label = 'Tres fort';
+                label = 'Très fort';
             }
 
             if (value.length > 0) {
                 strengthText.textContent = 'Force: ' + label;
                 strengthText.className = 'password-strength-text mt-0.5';
             } else {
-                strengthText.textContent = 'Minimum 8 caracteres';
+                strengthText.textContent = 'Minimum 8 caractères';
                 strengthText.className = 'password-strength-text text-[var(--text-tertiary)]';
             }
         });
     }
 
-    // Vérification de l'ID du parrain pour l'inscription sociale
-    var sponsorInput = document.getElementById('sponsor_id');
-    if (sponsorInput) {
-        document.querySelectorAll('.social-btn').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                var sponsorId = sponsorInput.value.trim();
-                
-                if (!sponsorId) {
-                    e.preventDefault();
-                    showToast('Veuillez entrer un ID de parrain.', 'error');
-                    sponsorInput.focus();
-                    sponsorInput.classList.add('input-error');
-                    return false;
-                }
+    // Validation du formulaire
+    form.addEventListener('submit', function(e) {
+        let hasError = false;
+        let errorMessage = '';
 
-                sponsorInput.classList.remove('input-error');
-                btn.style.opacity = '0.7';
-                btn.style.pointerEvents = 'none';
+        // Vérifier le nom
+        const name = nameInput.value.trim();
+        if (!name) {
+            errorMessage = 'Veuillez saisir votre nom complet.';
+            hasError = true;
+        }
 
-                fetch('{{ route("social.store-sponsor") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ sponsor_id: sponsorId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    
-                    if (!data.success) {
-                        e.preventDefault();
-                        showToast(data.message || 'ID de parrain invalide.', 'error');
-                        sponsorInput.focus();
-                        sponsorInput.classList.add('input-error');
-                        return false;
-                    }
-                })
-                .catch(function() {
-                    e.preventDefault();
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    showToast('Erreur lors de la verification du parrain.', 'error');
-                    return false;
-                });
-            });
-        });
+        // Vérifier l'email
+        const email = emailInput.value.trim();
+        if (!hasError && !email) {
+            errorMessage = 'Veuillez saisir votre adresse email.';
+            hasError = true;
+        } else if (!hasError && !isValidEmail(email)) {
+            errorMessage = 'Veuillez saisir une adresse email valide.';
+            hasError = true;
+        }
 
-        sponsorInput.addEventListener('input', function() {
-            this.classList.remove('input-error');
-        });
+        // Vérifier le sponsor
+        const sponsor = sponsorInput.value.trim();
+        if (!hasError && !sponsor) {
+            errorMessage = 'Veuillez saisir l\'ID de votre parrain.';
+            hasError = true;
+        } else if (!hasError && sponsor.length < 3) {
+            errorMessage = 'L\'ID du parrain doit contenir au moins 3 caractères.';
+            hasError = true;
+        }
+
+        // Vérifier le mot de passe
+        const password = passwordInput.value;
+        if (!hasError && !password) {
+            errorMessage = 'Veuillez saisir un mot de passe.';
+            hasError = true;
+        } else if (!hasError && password.length < 8) {
+            errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
+            hasError = true;
+        }
+
+        // Vérifier la confirmation
+        const confirm = confirmInput.value;
+        if (!hasError && confirm !== password) {
+            errorMessage = 'Les mots de passe ne correspondent pas.';
+            hasError = true;
+        }
+
+        // Vérifier les conditions
+        if (!hasError && !termsCheckbox.checked) {
+            errorMessage = 'Vous devez accepter les conditions générales.';
+            hasError = true;
+        }
+
+        if (hasError) {
+            e.preventDefault();
+            showToast(errorMessage, 'error');
+        }
+    });
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
-    @if ($errors->any())
-        @foreach ($errors->all() as $error)
-            showToast('{{ $error }}', 'error');
-        @break
-        @endforeach
-    @endif
+    // Vérification du sponsor pour les réseaux sociaux
+    document.querySelectorAll('.social-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var sponsorId = sponsorInput.value.trim();
+            
+            if (!sponsorId) {
+                e.preventDefault();
+                showToast('Veuillez entrer un ID de parrain.', 'error');
+                sponsorInput.focus();
+                sponsorInput.classList.add('input-error');
+                return false;
+            }
 
-    @if (session('success'))
-        showToast('{{ session('success') }}', 'success');
-    @endif
+            sponsorInput.classList.remove('input-error');
+        });
+    });
+
+    sponsorInput.addEventListener('input', function() {
+        this.classList.remove('input-error');
+    });
 });
 </script>
 @endpush

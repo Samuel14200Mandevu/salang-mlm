@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/DashboardController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -10,6 +11,7 @@ use App\Models\Package;
 use App\Models\Product;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,37 +19,33 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Statistiques globales
+        // ============================================================
+        // STATISTIQUES PRINCIPALES
+        // ============================================================
         $totalUsers = User::count();
         $activeUsers = User::where('is_active', true)->count();
+        
         $totalCommissions = Commission::where('status', 'paid')->sum('amount');
         $pendingCommissions = Commission::where('status', 'pending')->sum('amount');
-        $totalPackages = Package::count();
-        $totalProducts = Product::count();
+        
         $totalWithdrawn = Withdrawal::where('status', 'completed')->sum('amount');
-        $totalWalletBalance = Wallet::sum('balance');
+        $totalWithdrawals = Withdrawal::count();
+        $pendingWithdrawals = Withdrawal::where('status', 'pending')->count();
         
-        // Utilisateurs récents
-        $recentUsers = User::orderBy('created_at', 'desc')->limit(5)->get();
-        
-        // Dernières commissions
-        $recentCommissions = Commission::with(['user', 'fromUser'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-        
-        // Dernières transactions
-        $recentTransactions = Transaction::with('user')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-        
-        // Statistiques par mois (pour le graphique)
+        $totalPackages = Package::count();
+        $soldPackages = Order::whereHas('items', function($q) {
+            $q->whereNotNull('package_id');
+        })->count();
+        $totalProducts = Product::count();
+
+        // ============================================================
+        // DONNÉES MENSUELLES POUR LE GRAPHIQUE
+        // ============================================================
         $monthlyData = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $monthlyData[] = [
-                'month' => $month->format('M'),
+                'month' => $month->format('M Y'),
                 'users' => User::whereMonth('created_at', $month->month)
                     ->whereYear('created_at', $month->year)
                     ->count(),
@@ -57,31 +55,50 @@ class DashboardController extends Controller
                     ->sum('amount'),
             ];
         }
-        
-        // Répartition des packages
+
+        // ============================================================
+        // DISTRIBUTION DES PACKAGES
+        // ============================================================
         $packageDistribution = Package::withCount('users')->get();
+
+        // ============================================================
+        // ACTIVITÉS RÉCENTES
+        // ============================================================
+        $recentUsers = User::orderBy('created_at', 'desc')->limit(5)->get();
         
-        // Répartition des commissions par type
-        $commissionBreakdown = Commission::where('status', 'paid')
-            ->select('type', DB::raw('SUM(amount) as total'))
-            ->groupBy('type')
+        $recentCommissions = Commission::with(['user', 'fromUser'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
             ->get();
-        
+
+        // ============================================================
+        // STATISTIQUES SUPPLÉMENTAIRES (optionnel)
+        // ============================================================
+        $totalWalletBalance = Wallet::sum('balance');
+        $totalOrders = Order::count();
+        $totalRevenue = Order::where('status', 'completed')->sum('total');
+
+        // ============================================================
+        // RENVOYER LA VUE
+        // ============================================================
         return view('admin.dashboard', compact(
             'totalUsers',
             'activeUsers',
             'totalCommissions',
             'pendingCommissions',
-            'totalPackages',
-            'totalProducts',
             'totalWithdrawn',
-            'totalWalletBalance',
-            'recentUsers',
-            'recentCommissions',
-            'recentTransactions',
+            'totalWithdrawals',
+            'pendingWithdrawals',
+            'totalPackages',
+            'soldPackages',
+            'totalProducts',
             'monthlyData',
             'packageDistribution',
-            'commissionBreakdown'
+            'recentUsers',
+            'recentCommissions',
+            'totalWalletBalance',
+            'totalOrders',
+            'totalRevenue'
         ));
     }
 }

@@ -21,35 +21,223 @@
     .profile-avatar-container:hover .avatar-overlay {
         opacity: 1;
     }
+    .profile-avatar-container .avatar-overlay span {
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
     .danger-zone {
         border: 1px solid rgba(239,68,68,0.2);
         background: rgba(239,68,68,0.03);
+        transition: all 0.3s ease;
     }
     .danger-zone:hover {
         border-color: rgba(239,68,68,0.4);
+        background: rgba(239,68,68,0.06);
     }
     
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .stat-icon-primary { background: rgba(90, 182, 56, 0.12); color: var(--primary-500); }
+    .stat-icon-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .stat-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .stat-icon-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    
+    .avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 700;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    .avatar-sm { width: 2rem; height: 2rem; font-size: 0.75rem; }
+    .avatar-md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+    .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
+    .avatar-xl { width: 6rem; height: 6rem; font-size: 2rem; }
+    .avatar-gradient {
+        background: var(--gradient-primary);
+        color: white;
+    }
+    .avatar-info {
+        background: var(--gradient-info);
+        color: white;
+    }
+    .avatar-ring {
+        border: 3px solid var(--primary-500);
+        box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.15);
+    }
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    
+    .input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-sm {
+        padding: 0.375rem 1rem;
+        font-size: 0.75rem;
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+    }
+    .btn-warning {
+        background: var(--gradient-warning);
+        color: white;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
+    }
+    .btn-danger {
+        background: var(--gradient-danger);
+        color: white;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .cursor-not-allowed {
+        cursor: not-allowed;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .animate-fadeInLeft { animation: fadeInLeft 0.6s ease forwards; }
+    .animate-fadeInRight { animation: fadeInRight 0.6s ease forwards; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    
     @media (max-width: 640px) {
+        .card { padding: 0.875rem; }
+        .avatar-xl { width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
+        .btn { font-size: 0.75rem; padding: 0.375rem 0.875rem; }
+        .input { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
+        .stat-icon { width: 2rem; height: 2rem; }
+    }
+    
+    @media (max-width: 480px) {
         .card { padding: 0.75rem; }
-        .avatar-xl { width: 4rem; height: 4rem; font-size: 1.2rem; }
-        .text-5xl { font-size: 2.5rem; }
-        .text-2xl { font-size: 1.25rem; }
-        .btn { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+        .avatar-xl { width: 4rem; height: 4rem; font-size: 1.25rem; }
+        .profile-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
+    
+    <!-- Header -->
     <div class="animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Profil</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Gerez vos informations personnelles</p>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Profile</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Manage your personal information</p>
     </div>
 
     @if(session('success'))
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+            {{ session('error') }}
         </div>
     @endif
 
@@ -63,21 +251,23 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <!-- Avatar -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 profile-grid">
+        
+        <!-- Avatar Section -->
         <div class="lg:col-span-1 space-y-3 sm:space-y-4">
-            <div class="card animate-fadeInLeft p-3 sm:p-4 md:p-6">
+            <div class="card animate-fadeInLeft">
                 <div class="flex flex-col items-center">
+                    <!-- Avatar -->
                     <div class="profile-avatar-container">
                         <div class="avatar avatar-xl avatar-gradient avatar-ring">
-                            @if($user->avatar)
+                            @if($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar)))
                                 <img src="{{ asset('storage/avatars/' . $user->avatar) }}" alt="Avatar">
                             @else
                                 {{ strtoupper(substr($user->name, 0, 2)) }}
                             @endif
                         </div>
                         <label for="avatar_input" class="avatar-overlay">
-                            <span class="text-white text-xs sm:text-sm font-semibold">Changer</span>
+                            <span>Change</span>
                         </label>
                         <input type="file" id="avatar_input" name="avatar" accept="image/*" class="hidden">
                     </div>
@@ -85,7 +275,7 @@
                     <h3 class="mt-3 sm:mt-4 text-lg sm:text-xl font-bold text-[var(--text-primary)]">{{ $user->name }}</h3>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $user->email }}</p>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                        Sponsor: <strong class="text-primary-500">{{ $user->sponsor?->name ?? 'Aucun' }}</strong>
+                        Sponsor: <strong class="text-primary-500">{{ $user->sponsor?->name ?? 'None' }}</strong>
                     </p>
 
                     <div class="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2">
@@ -93,25 +283,26 @@
                             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            Changer
+                            Change
                         </label>
                         @if($user->avatar)
                             <button id="removeAvatarBtn" class="btn btn-danger btn-sm text-xs sm:text-sm">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
-                                Supprimer
+                                Remove
                             </button>
                         @endif
                     </div>
 
+                    <!-- Stats -->
                     <div class="mt-3 sm:mt-4 w-full grid grid-cols-2 gap-1.5 sm:gap-2">
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">ID</p>
                             <p class="font-bold text-[var(--text-primary)] text-sm sm:text-base">#{{ $user->id }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Inscrit</p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Joined</p>
                             <p class="font-bold text-[var(--text-primary)] text-xs sm:text-sm">{{ $user->created_at->format('d M Y') }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
@@ -119,34 +310,39 @@
                             <p class="font-bold text-primary-500 text-xs sm:text-sm">{{ $user->package?->name ?? 'Starter' }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Statut</p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Status</p>
                             <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                {{ $user->is_active ? 'Actif' : 'Inactif' }}
+                                {{ $user->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Parrain -->
-            <div class="card animate-fadeInLeft delay-2 p-3 sm:p-4 md:p-6">
-                <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">Mon Parrain</h4>
+            <!-- Sponsor -->
+            <div class="card animate-fadeInLeft delay-2">
+                <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">My Sponsor</h4>
                 <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="avatar avatar-md avatar-info">
                         {{ substr($user->sponsor?->name ?? 'N/A', 0, 1) }}
                     </div>
                     <div class="min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base truncate">{{ $user->sponsor?->name ?? 'Aucun parrain' }}</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">{{ $user->sponsor?->email ?? '--' }}</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base truncate">
+                            {{ $user->sponsor?->name ?? 'No sponsor' }}
+                        </p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">
+                            {{ $user->sponsor?->email ?? '--' }}
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Formulaires -->
+        <!-- Forms -->
         <div class="lg:col-span-2 space-y-3 sm:space-y-4">
-            <!-- Informations -->
-            <div class="card animate-fadeInRight p-3 sm:p-4 md:p-6">
+            
+            <!-- Personal Information -->
+            <div class="card animate-fadeInRight">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-primary">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,8 +350,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Informations personnelles</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mettez a jour vos informations</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Personal Information</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Update your personal details</p>
                     </div>
                 </div>
 
@@ -164,7 +360,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Full Name</label>
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="input text-sm sm:text-base" required>
                         </div>
                         <div>
@@ -172,23 +368,23 @@
                             <input type="email" value="{{ $user->email }}" class="input text-sm sm:text-base opacity-70 cursor-not-allowed" disabled>
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Telephone</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Phone</label>
                             <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Country</label>
                             <input type="text" name="country" value="{{ old('country', $user->country) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">City</label>
                             <input type="text" name="city" value="{{ old('city', $user->city) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Code postal</label>
-                            <input type="text" name="zip" value="{{ old('zip', $user->zip) }}" class="input text-sm sm:text-base">
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Zip Code</label>
+                            <input type="text" name="zip" value="{{ old('zip', $user->zip ?? '') }}" class="input text-sm sm:text-base">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Address</label>
                             <textarea name="address" rows="2" class="input text-sm sm:text-base">{{ old('address', $user->address) }}</textarea>
                         </div>
                     </div>
@@ -198,14 +394,14 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
-                            Enregistrer
+                            Save Changes
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Mot de passe -->
-            <div class="card animate-fadeInRight delay-2 p-3 sm:p-4 md:p-6">
+            <!-- Change Password -->
+            <div class="card animate-fadeInRight delay-2">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-warning">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,8 +409,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Changer le mot de passe</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Securisez votre compte</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Change Password</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Secure your account</p>
                     </div>
                 </div>
 
@@ -223,16 +419,16 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Mot de passe actuel</label>
-                            <input type="password" name="current_password" class="input text-sm sm:text-base" placeholder="••••••••" required>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Current Password</label>
+                            <input type="password" name="current_password" class="input text-sm sm:text-base" placeholder="Enter current password" required>
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nouveau mot de passe</label>
-                            <input type="password" name="password" class="input text-sm sm:text-base" placeholder="••••••••" required>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">New Password</label>
+                            <input type="password" name="password" class="input text-sm sm:text-base" placeholder="Enter new password" required>
                         </div>
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Confirmer</label>
-                            <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="••••••••" required>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Confirm Password</label>
+                            <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="Confirm new password" required>
                         </div>
                     </div>
 
@@ -241,14 +437,14 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Mettre a jour
+                            Update Password
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Zone de danger -->
-            <div class="card danger-zone animate-fadeInRight delay-3 p-3 sm:p-4 md:p-6">
+            <!-- Danger Zone -->
+            <div class="card danger-zone animate-fadeInRight delay-3">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-danger">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,13 +452,13 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-red-500">Zone de danger</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actions irreversibles</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-red-500">Danger Zone</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Irreversible actions</p>
                     </div>
                 </div>
 
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">
-                    Une fois votre compte supprime, toutes ses donnees seront definitivement perdues.
+                    Once your account is deleted, all associated data will be permanently lost.
                 </p>
 
                 <button x-data="" 
@@ -271,13 +467,13 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    Supprimer mon compte
+                    Delete Account
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de confirmation -->
+    <!-- Delete Account Modal -->
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
         <form method="post" action="{{ route('profile.destroy') }}" class="p-4 sm:p-6">
             @csrf @method('delete')
@@ -286,31 +482,33 @@
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-red-500 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
-                <h2 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Supprimer definitivement mon compte</h2>
+                <h2 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Delete Account</h2>
                 <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-[var(--text-secondary)]">
-                    Cette action est <strong class="text-red-500">irreversible</strong>.<br>
-                    Veuillez entrer votre mot de passe pour confirmer.
+                    This action is <strong class="text-red-500">irreversible</strong>.<br>
+                    Please enter your password to confirm.
                 </p>
             </div>
 
             <div class="mt-4 sm:mt-6">
                 <input type="password" 
                        name="password" 
-                       placeholder="Votre mot de passe"
+                       placeholder="Your password"
                        class="input text-center text-sm sm:text-base"
                        autofocus>
-                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2 text-center" />
+                @error('password', 'userDeletion')
+                    <p class="text-xs text-red-500 text-center mt-2">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                 <button type="button" x-on:click="$dispatch('close')" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
-                    Annuler
+                    Cancel
                 </button>
                 <button type="submit" class="btn btn-danger w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Confirmer
+                    Confirm
                 </button>
             </div>
         </form>
@@ -336,27 +534,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
-                    if (data.success) location.reload();
-                    else alert('Erreur: ' + data.message);
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
                 })
-                ['catch'](function() { alert('Erreur lors de l\'upload'); });
+                .catch(function() { alert('Upload error'); });
             }
         });
     }
 
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
-            if (confirm('Voulez-vous vraiment supprimer votre photo de profil ?')) {
+            if (confirm('Delete your profile picture?')) {
                 fetch('{{ route('profile.delete-avatar') }}', {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
                 })
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
-                    if (data.success) location.reload();
-                    else alert('Erreur: ' + data.message);
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
                 })
-                ['catch'](function() { alert('Erreur lors de la suppression'); });
+                .catch(function() { alert('Delete error'); });
             }
         });
     }
