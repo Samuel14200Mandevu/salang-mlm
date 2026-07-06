@@ -6,7 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin - @yield('title', 'Salang MLM')</title>
     
-    <!-- ✅ Vérifier si PWA est installé -->
     @if(class_exists('PwaKit'))
         {!! PwaKit::head() !!}
     @endif
@@ -66,6 +65,10 @@
             background: var(--gradient-primary, #5ab638);
             color: white;
             box-shadow: 0 4px 12px rgba(90, 182, 56, 0.3);
+        }
+
+        .sidebar-link.active svg {
+            color: white;
         }
 
         .sidebar-section {
@@ -520,32 +523,48 @@
     @stack('scripts')
 
     <script>
-        // Theme toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    document.documentElement.classList.toggle('dark');
-                    const icon = document.getElementById('theme-icon');
-                    if (document.documentElement.classList.contains('dark')) {
-                        icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
-                    } else {
-                        icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
-                    }
-                    // Sauvegarder la préférence
-                    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-                });
-            }
-            
-            // Restaurer le thème
-            if (localStorage.getItem('theme') === 'dark') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // ===== THEME TOGGLE =====
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                const icon = document.getElementById('theme-icon');
-                if (icon) {
-                    icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
-                }
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
             }
-        });
+            updateIcon();
+        }
+
+        function updateIcon() {
+            if (!themeIcon) return;
+            if (document.documentElement.classList.contains('dark')) {
+                themeIcon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+            } else {
+                themeIcon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+            }
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                if (document.documentElement.classList.contains('dark')) {
+                    setTheme('light');
+                } else {
+                    setTheme('dark');
+                }
+            });
+        }
+
+        // Restaurer le thème
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+        updateIcon();
+    });
     </script>
 </body>
 </html>
