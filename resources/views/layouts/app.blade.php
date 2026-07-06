@@ -257,13 +257,6 @@
                                  :class="sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'">
                         </div>
                     </a>
-                    
-                    <button @click="sidebarOpen = false" 
-                            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
-                        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
                 </div>
 
                 <!-- Menu -->
@@ -874,95 +867,73 @@
     }
     </script>
     
-    <!-- Notifications & Theme Script -->
+    @stack('scripts')
+
+    <!-- ===== THEME TOGGLE - FIX DEFINITIF ===== -->
     <script>
-    function markAllAsRead() {
-        const items = document.querySelectorAll('.notification-item');
-        const badge = document.querySelector('[x-show="unreadCount > 0"]');
+    (function() {
+        'use strict';
         
-        items.forEach(item => {
-            item.style.opacity = '0.5';
-            item.style.backgroundColor = 'var(--bg-secondary)';
-        });
-        
-        if (badge) {
-            badge.textContent = '0';
-            badge.style.display = 'none';
+        // Restaurer immédiatement
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
         }
         
-        showToast('All notifications marked as read', 'success');
-    }
-
-    function showToast(message, type) {
-        type = type || 'success';
-        document.querySelectorAll('.custom-toast').forEach(el => el.remove());
-        
-        const toast = document.createElement('div');
-        toast.className = `custom-toast fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-        toast.style.animation = 'fadeInUp 0.3s ease forwards';
-        toast.style.fontSize = '0.875rem';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // ===== NOTIFICATIONS =====
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', function() {
-                this.style.opacity = '0.5';
-                this.style.backgroundColor = 'var(--bg-secondary)';
-            });
-        });
-
-        // ===== THEME TOGGLE =====
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-
-        function setTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
+        function initTheme() {
+            var toggle = document.getElementById('theme-toggle');
+            var icon = document.getElementById('theme-icon');
+            
+            if (!toggle) {
+                console.warn('Theme toggle not found');
+                return;
             }
-            updateIcon();
-        }
-
-        function updateIcon() {
-            if (!themeIcon) return;
-            if (document.documentElement.classList.contains('dark')) {
-                themeIcon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
-            } else {
-                themeIcon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+            
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+                updateIcon();
             }
-        }
-
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function() {
+            
+            function updateIcon() {
+                if (!icon) return;
+                if (document.documentElement.classList.contains('dark')) {
+                    icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+                } else {
+                    icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                }
+            }
+            
+            // Supprimer tous les événements existants
+            var newToggle = toggle.cloneNode(true);
+            toggle.parentNode.replaceChild(newToggle, toggle);
+            
+            // Ajouter l'événement
+            newToggle.addEventListener('click', function(e) {
+                e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
                     setTheme('light');
                 } else {
                     setTheme('dark');
                 }
+                console.log('Theme toggled:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             });
+            
+            // Appliquer le thème sauvegardé
+            setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+            console.log('Theme initialized:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         }
-
-        // Restaurer le thème
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTheme);
+        } else {
+            initTheme();
         }
-        updateIcon();
-    });
+    })();
     </script>
-    
-    @stack('scripts')
 </body>
 </html>

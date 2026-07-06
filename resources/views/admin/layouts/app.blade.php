@@ -191,22 +191,22 @@
             <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 
                 <!-- Logo -->
-                <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
-                        <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang" 
-                             class="transition-all duration-300 h-10 w-auto"
-                             :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'">
-                        <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang" 
-                             class="transition-all duration-300 h-10 w-auto"
-                             :class="sidebarOpen ? 'opacity-100' : 'opacity-0 hidden'">
-                    </a>
-                    <button @click="sidebarOpen = false" 
-                            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
-                        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
+<div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
+    <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
+        <div class="logo-light transition-all duration-300" 
+             :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
+            <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang" 
+                 class="transition-all duration-300" 
+                 :class="sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'">
+        </div>
+        <div class="logo-dark transition-all duration-300" 
+             :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
+            <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang" 
+                 class="transition-all duration-300" 
+                 :class="sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'">
+        </div>
+    </a>
+</div>
 
                 <!-- Menu -->
                 <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
@@ -522,49 +522,71 @@
     @endif
     @stack('scripts')
 
+    <!-- ===== THEME TOGGLE - FIX DEFINITIF ===== -->
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // ===== THEME TOGGLE =====
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-
-        function setTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            }
-            updateIcon();
+    (function() {
+        'use strict';
+        
+        // Restaurer immédiatement
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
         }
-
-        function updateIcon() {
-            if (!themeIcon) return;
-            if (document.documentElement.classList.contains('dark')) {
-                themeIcon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
-            } else {
-                themeIcon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+        
+        function initTheme() {
+            var toggle = document.getElementById('theme-toggle');
+            var icon = document.getElementById('theme-icon');
+            
+            if (!toggle) {
+                console.warn('Theme toggle not found');
+                return;
             }
-        }
-
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function() {
+            
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+                updateIcon();
+            }
+            
+            function updateIcon() {
+                if (!icon) return;
+                if (document.documentElement.classList.contains('dark')) {
+                    icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+                } else {
+                    icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                }
+            }
+            
+            // Supprimer tous les événements existants
+            var newToggle = toggle.cloneNode(true);
+            toggle.parentNode.replaceChild(newToggle, toggle);
+            
+            // Ajouter l'événement
+            newToggle.addEventListener('click', function(e) {
+                e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
                     setTheme('light');
                 } else {
                     setTheme('dark');
                 }
+                console.log('Theme toggled:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             });
+            
+            // Appliquer le thème sauvegardé
+            setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+            console.log('Theme initialized:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         }
-
-        // Restaurer le thème
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTheme);
+        } else {
+            initTheme();
         }
-        updateIcon();
-    });
+    })();
     </script>
 </body>
 </html>
