@@ -33,7 +33,8 @@ class CommissionService
         try {
             // 1. Commission Directe (30%) - Pour le parrain
             if ($user->sponsor_id) {
-                $sponsor = User::find($user->sponsor_id); // ✅ CORRECTION
+                // ✅ CORRECTION : Chercher par sponsor_id (code texte)
+                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
                 if ($sponsor) {
                     $directAmount = $package->price * 0.30;
                     $this->createCommission(
@@ -51,9 +52,11 @@ class CommissionService
 
             // 2. Commission Indirecte (15%) - Pour le parrain du parrain
             if ($user->sponsor_id) {
-                $sponsor = User::find($user->sponsor_id); // ✅ CORRECTION
+                // ✅ CORRECTION : Chercher par sponsor_id (code texte)
+                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
                 if ($sponsor && $sponsor->sponsor_id) {
-                    $grandSponsor = User::find($sponsor->sponsor_id); // ✅ CORRECTION
+                    // ✅ CORRECTION : Chercher par sponsor_id (code texte)
+                    $grandSponsor = User::where('sponsor_id', $sponsor->sponsor_id)->first();
                     if ($grandSponsor) {
                         $indirectAmount = $package->price * 0.15;
                         $this->createCommission(
@@ -98,7 +101,8 @@ class CommissionService
     private function calculateLeadershipCommission($user, $package, $orderId)
     {
         $level = 1;
-        $currentSponsor = User::find($user->sponsor_id); // ✅ CORRECTION
+        // ✅ CORRECTION : Chercher par sponsor_id (code texte)
+        $currentSponsor = User::where('sponsor_id', $user->sponsor_id)->first();
         
         while ($currentSponsor && $level <= 5) {
             // Vérifier si le sponsor a assez de PV pour être leader
@@ -116,7 +120,8 @@ class CommissionService
                 );
             }
             
-            $currentSponsor = User::find($currentSponsor->sponsor_id); // ✅ CORRECTION
+            // ✅ CORRECTION : Chercher par sponsor_id (code texte)
+            $currentSponsor = User::where('sponsor_id', $currentSponsor->sponsor_id)->first();
             $level++;
         }
     }
