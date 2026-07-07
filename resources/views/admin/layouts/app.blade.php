@@ -190,22 +190,20 @@
             
             <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 
-                <!-- Logo -->
+<!-- Logo -->
 <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
     <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
-        <div class="logo-light transition-all duration-300" 
-             :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-            <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang" 
-                 class="transition-all duration-300" 
-                 :class="sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'">
-        </div>
-        <div class="logo-dark transition-all duration-300" 
-             :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-            <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang" 
-                 class="transition-all duration-300" 
-                 :class="sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'">
-        </div>
+        <img src="{{ asset('images/salang_logo.png') }}" 
+             alt="Salang" 
+             class="logo-themeable transition-all duration-300"
+             :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
     </a>
+    <button @click="sidebarOpen = false" 
+            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
 </div>
 
                 <!-- Menu -->

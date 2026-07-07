@@ -209,22 +209,17 @@
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 sm:h-16">
                 
-                <!-- Logo -->
-                <div class="flex items-center">
-                    <a href="/" class="flex items-center gap-2 group">
-                        <div class="logo-light">
-                            <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang" 
-                                 class="h-8 sm:h-10 w-auto transition-transform group-hover:scale-105">
-                        </div>
-                        <div class="logo-dark">
-                            <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang" 
-                                 class="h-8 sm:h-10 w-auto transition-transform group-hover:scale-105">
-                        </div>
-                        <span class="text-lg sm:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hidden xs:inline">
-                            Salang
-                        </span>
-                    </a>
-                </div>
+               <!-- Logo -->
+<div class="flex items-center">
+    <a href="/" class="flex items-center gap-2 group">
+        <img src="{{ asset('images/salang_logo.png') }}" 
+             alt="Salang" 
+             class="logo-themeable h-16 sm:h-19 w-auto transition-transform group-hover:scale-105">
+        <span class="text-lg sm:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hidden xs:inline">
+            Salang
+        </span>
+    </a>
+</div>
                 
                 <!-- Actions -->
                 <div class="flex items-center gap-1.5 sm:gap-3">
@@ -491,13 +486,11 @@
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-4">
                 
+                <!-- Logo dans le footer -->
                 <div class="flex items-center gap-2">
-                    <div class="logo-light">
-                        <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang" class="h-6 sm:h-8 w-auto">
-                    </div>
-                    <div class="logo-dark">
-                        <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang" class="h-6 sm:h-8 w-auto">
-                    </div>
+                    <img src="{{ asset('images/salang_logo.png') }}" 
+                         alt="Salang" 
+                         class="logo-themeable h-10 sm:h-14 w-auto">
                     <span class="font-bold text-[var(--text-primary)] text-sm sm:text-base">Salang Group</span>
                 </div>
                 
@@ -516,6 +509,6 @@
     </footer>
 
     @livewireScripts
-    @vite(['resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </body>
 </html>

@@ -319,16 +319,13 @@
 @section('content')
 <div class="auth-card">
     
-    <!-- Logo -->
-    <div class="auth-logo">
-        <div class="logo-light">
-            <img src="{{ asset('images/light_logo.jpeg') }}" alt="Salang MLM">
-        </div>
-        <div class="logo-dark">
-            <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Salang MLM">
-        </div>
-        <span class="brand-name">Salang MLM</span>
-    </div>
+   <!-- Logo -->
+<div class="auth-logo">
+    <img src="{{ asset('images/salang_logo.png') }}" 
+         alt="Salang MLM" 
+         class="logo-themeable h-12 sm:h-16 w-auto mx-auto">
+    <span class="brand-name block mt-2">Salang Group</span>
+</div>
 
     <h2 class="auth-title">Créer un compte</h2>
     <p class="auth-subtitle">Rejoignez la communauté Salang</p>
