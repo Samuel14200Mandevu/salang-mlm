@@ -142,9 +142,10 @@
     }
     .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
     .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
-    .btn-primary { background: var(--gradient-primary); color: white; }
-    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
     .btn-warning { background: var(--gradient-warning); color: white; }
+    .btn-success { background: var(--gradient-success); color: white; }
     .btn-danger { background: var(--gradient-danger); color: white; }
     .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
     .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
@@ -177,6 +178,16 @@
     }
     .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
     
+    .sponsor-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    .sponsor-card:hover {
+        background: var(--bg-hover);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -194,6 +205,7 @@
         .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
         .card { padding: 0.875rem; }
+        .sponsor-card { padding: 0.5rem 0.75rem; }
     }
     
     @media (min-width: 641px) and (max-width: 1024px) {
@@ -211,7 +223,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                User Details
+                Détails de l'utilisateur
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                 ID: #{{ $user->id }}
@@ -222,7 +234,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                <span class="hidden xs:inline">Back</span>
+                <span class="hidden xs:inline">Retour</span>
             </a>
         </div>
     </div>
@@ -245,7 +257,7 @@
             
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
-                    <span class="label">Full Name</span>
+                    <span class="label">Nom complet</span>
                     <span class="value">{{ $user->name }}</span>
                 </div>
                 <div class="info-row">
@@ -253,25 +265,25 @@
                     <span class="value text-sm">{{ $user->email }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Phone</span>
-                    <span class="value">{{ $user->phone ?? 'Not provided' }}</span>
+                    <span class="label">Téléphone</span>
+                    <span class="value">{{ $user->phone ?? 'Non fourni' }}</span>
                 </div>
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
-                    <span class="label">Status</span>
+                    <span class="label">Statut</span>
                     <span class="value">
                         <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
-                            {{ $user->is_active ? 'Active' : 'Inactive' }}
+                            {{ $user->is_active ? 'Actif' : 'Inactif' }}
                         </span>
                     </span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Role</span>
+                    <span class="label">Rôle</span>
                     <span class="value">
                         <span class="badge {{ $user->hasRole('admin') ? 'badge-purple' : 'badge-neutral' }}">
-                            {{ $user->hasRole('admin') ? 'Administrator' : 'User' }}
+                            {{ $user->hasRole('admin') ? 'Administrateur' : 'Utilisateur' }}
                         </span>
                     </span>
                 </div>
@@ -279,7 +291,7 @@
                     <span class="label">KYC</span>
                     <span class="value">
                         <span class="badge {{ $user->kyc_status === 'verified' ? 'badge-success' : ($user->kyc_status === 'pending' ? 'badge-warning' : 'badge-danger') }}">
-                            {{ $user->kyc_status_label ?? 'Not Verified' }}
+                            {{ $user->kyc_status_label ?? 'Non vérifié' }}
                         </span>
                     </span>
                 </div>
@@ -288,35 +300,40 @@
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
                     <span class="label">Package</span>
-                    <span class="value">{{ $user->package?->name ?? 'None' }}</span>
+                    <span class="value">{{ $user->package?->name ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Referral Code</span>
-                    <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'None' }}</span>
+                    <span class="label">Code de parrain</span>
+                    <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Sponsor (Who invited me)</span>
+                    <span class="label"> Parrain (celui qui m'a invité)</span>
                     <span class="value">
                         @php
-                            $parrain = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
+                            $parrain = App\Models\User::find($user->parrain_id);
                         @endphp
                         @if($parrain)
-                            <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-500 hover:underline">
+                            <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-500 hover:underline font-semibold">
                                 {{ $parrain->name }}
                             </a>
-                            <span class="text-xs text-[var(--text-tertiary)] block font-mono">Code: {{ $user->sponsor_id }}</span>
-                        @elseif($user->sponsor_id)
-                            <span class="text-red-500">Unknown (Code: {{ $user->sponsor_id }})</span>
+                            <span class="text-xs text-[var(--text-tertiary)] block">
+                                Email: {{ $parrain->email }}
+                            </span>
+                            <span class="text-xs text-[var(--text-tertiary)] block font-mono">
+                                Code: {{ $parrain->sponsor_id }}
+                            </span>
+                        @elseif($user->parrain_id)
+                            <span class="text-red-500">Inconnu (ID: {{ $user->parrain_id }})</span>
                         @else
-                            <span class="text-[var(--text-tertiary)]">No sponsor</span>
+                            <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
                         @endif
                     </span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Downlines (People I invited)</span>
+                    <span class="label">👥 Filleuls (ceux que j'ai invités)</span>
                     <span class="value">
                         @php
-                            $filleuls = App\Models\User::where('sponsor_id', $user->sponsor_id)->get();
+                            $filleuls = App\Models\User::where('parrain_id', $user->id)->get();
                         @endphp
                         @if($filleuls->count() > 0)
                             <span class="font-bold text-primary-500">{{ $filleuls->count() }}</span>
@@ -327,16 +344,16 @@
                                     </a>@if(!$loop->last), @endif
                                 @endforeach
                                 @if($filleuls->count() > 5)
-                                    <span class="text-[var(--text-tertiary)]">and {{ $filleuls->count() - 5 }} more</span>
+                                    <span class="text-[var(--text-tertiary)]">et {{ $filleuls->count() - 5 }} autre(s)</span>
                                 @endif
                             </span>
                         @else
-                            <span class="text-[var(--text-tertiary)]">No downlines</span>
+                            <span class="text-[var(--text-tertiary)]">Aucun filleul</span>
                         @endif
                     </span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Registered</span>
+                    <span class="label">Inscrit le</span>
                     <span class="value text-sm">{{ $user->created_at->format('d/m/Y H:i') }}</span>
                 </div>
             </div>
@@ -346,7 +363,7 @@
         <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="text-center">
                 <p class="text-2xl font-bold text-primary-500">{{ $filleuls->count() ?? 0 }}</p>
-                <p class="text-xs text-[var(--text-secondary)]">Downlines</p>
+                <p class="text-xs text-[var(--text-secondary)]">Filleuls</p>
             </div>
             <div class="text-center">
                 <p class="text-2xl font-bold text-blue-500">{{ $commissionsCount ?? 0 }}</p>
@@ -366,17 +383,17 @@
         @if(isset($filleuls) && $filleuls->count() > 0)
         <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
             <h4 class="text-sm font-semibold text-[var(--text-primary)] mb-3">
-                Downlines List ({{ $filleuls->count() }})
+                Liste des filleuls ({{ $filleuls->count() }})
             </h4>
             <div class="table-wrap">
                 <table class="table table-striped">
                     <thead>
                         <tr>
                             <th class="text-xs">ID</th>
-                            <th class="text-xs">Name</th>
+                            <th class="text-xs">Nom</th>
                             <th class="text-xs">Email</th>
                             <th class="text-xs">Code</th>
-                            <th class="text-xs">Status</th>
+                            <th class="text-xs">Statut</th>
                             <th class="text-xs">Action</th>
                         </tr>
                     </thead>
@@ -389,12 +406,12 @@
                             <td class="text-xs font-mono text-primary-500">{{ $filleul->sponsor_id }}</td>
                             <td>
                                 <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
-                                    {{ $filleul->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
                             <td>
                                 <a href="{{ route('admin.users.show', $filleul->id) }}" class="btn btn-sm btn-primary">
-                                    View
+                                    Voir
                                 </a>
                             </td>
                         </tr>
@@ -415,7 +432,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                     </svg>
-                    Deactivate
+                    Désactiver
                 </button>
             @else
                 <button type="button" 
@@ -424,7 +441,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Activate
+                    Activer
                 </button>
             @endif
 
@@ -432,7 +449,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
-                Edit
+                Modifier
             </a>
 
             <button type="button" 
@@ -441,7 +458,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
-                Delete
+                Supprimer
             </button>
         </div>
     </div>
@@ -455,18 +472,18 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirm Deactivation</h3>
+        <h3 class="modal-title">Confirmer la désactivation</h3>
         <p class="modal-text">
-            Are you sure you want to <strong class="text-warning">deactivate</strong> the account of <strong>{{ $user->name }}</strong> ?
+            Êtes-vous sûr de vouloir <strong class="text-warning">désactiver</strong> le compte de <strong>{{ $user->name }}</strong> ?
             <br>
-            The user will not be able to login until reactivated.
+            L'utilisateur ne pourra pas se connecter jusqu'à sa réactivation.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeDeactivateModal()" class="btn btn-outline btn-sm">
-                Cancel
+                Annuler
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-warning btn-sm">
-                Deactivate
+                Désactiver
             </a>
         </div>
     </div>
@@ -480,18 +497,18 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirm Activation</h3>
+        <h3 class="modal-title">Confirmer l'activation</h3>
         <p class="modal-text">
-            Are you sure you want to <strong class="text-success">activate</strong> the account of <strong>{{ $user->name }}</strong> ?
+            Êtes-vous sûr de vouloir <strong class="text-success">activer</strong> le compte de <strong>{{ $user->name }}</strong> ?
             <br>
-            The user will be able to login again.
+            L'utilisateur pourra se connecter à nouveau.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeActivateModal()" class="btn btn-outline btn-sm">
-                Cancel
+                Annuler
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-success btn-sm">
-                Activate
+                Activer
             </a>
         </div>
     </div>
@@ -505,20 +522,20 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
-        <h3 class="modal-title">Confirm Deletion</h3>
+        <h3 class="modal-title">Confirmer la suppression</h3>
         <p class="modal-text">
-            Are you sure you want to <strong class="text-danger">permanently delete</strong> <strong>{{ $user->name }}</strong> ?
+            Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong> <strong>{{ $user->name }}</strong> ?
             <br>
-            This action is <strong class="text-danger">irreversible</strong> and all data will be lost.
+            Cette action est <strong class="text-danger">irréversible</strong> et toutes les données seront perdues.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeDeleteModal()" class="btn btn-outline btn-sm">
-                Cancel
+                Annuler
             </button>
             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-danger btn-sm">
-                    Delete
+                    Supprimer
                 </button>
             </form>
         </div>
