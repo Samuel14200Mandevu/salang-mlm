@@ -206,15 +206,15 @@
     <!-- Header -->
     <div class="commission-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Commissions</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Track all your earnings in detail</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en détail</p>
         </div>
         <div class="btn-group flex gap-1.5 sm:gap-2">
             <a href="{{ route('commissions.export') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Export
+                Exporter
             </a>
             <a href="{{ route('commissions.pdf') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,19 +228,19 @@
     <!-- Statistics -->
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Earned</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total gagné</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-yellow-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Pending</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Paid</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payé</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format(($stats['total'] ?? 0) - ($stats['pending'] ?? 0), 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Count</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['total_count'] ?? 0 }}</p>
         </div>
     </div>
@@ -253,28 +253,28 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Search..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="text" id="searchInput" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
         <select id="typeFilter" class="input w-auto min-w-[100px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">All Types</option>
+            <option value="">Tous les types</option>
             <option value="direct">Direct</option>
             <option value="indirect">Indirect</option>
             <option value="leadership">Leadership</option>
             <option value="retail">Retail</option>
         </select>
         <select id="statusFilter" class="input w-auto min-w-[100px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
+            <option value="">Tous les statuts</option>
+            <option value="paid">Payé</option>
+            <option value="pending">En attente</option>
         </select>
-        <input type="date" id="dateFrom" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="From">
-        <input type="date" id="dateTo" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="To">
+        <input type="date" id="dateFrom" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Du">
+        <input type="date" id="dateTo" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Au">
     </div>
 
     <!-- Commission List -->
     <div class="card animate-fadeInUp delay-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission History</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des commissions</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $commissions->total() ?? 0 }} commissions</span>
         </div>
 
@@ -284,10 +284,10 @@
                     <tr>
                         <th class="text-xs sm:text-sm">Date</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Type</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">From</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">De</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Description</th>
-                        <th class="text-xs sm:text-sm text-right">Amount</th>
-                        <th class="text-xs sm:text-sm">Status</th>
+                        <th class="text-xs sm:text-sm text-right">Montant</th>
+                        <th class="text-xs sm:text-sm">Statut</th>
                     </tr>
                 </thead>
                 <tbody id="commissionsTable">
@@ -305,7 +305,7 @@
                                 </span>
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
-                                {{ $commission->fromUser?->name ?? 'System' }}
+                                {{ $commission->fromUser?->name ?? 'Système' }}
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden lg:table-cell">
                                 {{ Str::limit($commission->description ?? '-', 30) }}
@@ -315,7 +315,7 @@
                             </td>
                             <td>
                                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
-                                    {{ $commission->status == 'paid' ? 'Paid' : 'Pending' }}
+                                    {{ $commission->status == 'paid' ? 'Payé' : 'En attente' }}
                                 </span>
                             </td>
                         </tr>
@@ -325,8 +325,8 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">No commissions yet</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Commissions will appear when you build your network</p>
+                                <p class="text-base sm:text-lg font-medium">Aucune commission</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">Les commissions apparaîtront lorsque vous développerez votre réseau</p>
                             </td>
                         </tr>
                     @endforelse

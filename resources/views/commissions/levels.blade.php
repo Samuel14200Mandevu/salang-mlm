@@ -21,21 +21,76 @@
     .level-number-4 { background: rgba(34,197,94,0.15); color: #22c55e; }
     .level-number-5 { background: rgba(236,72,153,0.15); color: #ec4899; }
     
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    
     @media (max-width: 640px) {
         .card { padding: 0.75rem; }
         .level-number { width: 2rem; height: 2rem; font-size: 0.75rem; }
         .stat-number { font-size: 1.5rem; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+        .levels-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    
+    @media (max-width: 480px) {
+        .levels-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
+    <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Commissions par Niveau</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Detail des commissions par niveau Unilevel</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Détail des commissions par niveau Unilevel</p>
         </div>
         <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +108,7 @@
     </div>
 
     <!-- Niveaux -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 animate-fadeInUp delay-2">
+    <div class="levels-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 animate-fadeInUp delay-2">
         @foreach($levels ?? [] as $level => $data)
             <div class="level-card card text-center p-3 sm:p-4">
                 <div class="level-number level-number-{{ $level }} mx-auto mb-2 sm:mb-3">

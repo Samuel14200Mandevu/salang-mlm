@@ -21,22 +21,138 @@
     .stat-change-up { background: rgba(34,197,94,0.15); color: #22c55e; }
     .stat-change-down { background: rgba(239,68,68,0.15); color: #ef4444; }
     
+    .graph-bar {
+        border-radius: 4px 4px 0 0;
+        min-height: 8px;
+        position: relative;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .graph-bar .tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+    }
+    .graph-bar:hover .tooltip { opacity: 1; }
+    
+    .progress {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-secondary);
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.8s ease;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    
     @media (max-width: 640px) {
         .stat-number { font-size: 1.5rem; }
         .card-stats { padding: 0.75rem; }
         .card { padding: 0.75rem; }
         .btn { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+        .stats-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    <!-- En-tête -->
+    <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Statistiques des Commissions</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse detaillee de vos gains</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse détaillée de vos gains</p>
         </div>
         <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +163,7 @@
     </div>
 
     <!-- Vue d'ensemble -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="stat-card card-stats p-3 sm:p-4 border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total des gains</p>
             <p class="stat-number text-primary-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
@@ -94,7 +210,7 @@
     <!-- Repartition -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-6">
         <div class="card p-3 sm:p-4 md:p-6">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Repartition par type</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Répartition par type</h3>
             <div class="space-y-2 sm:space-y-3">
                 @foreach($stats['by_type'] ?? [] as $type => $data)
                     <div>
@@ -114,13 +230,13 @@
 
         <!-- Dernieres commissions -->
         <div class="card p-3 sm:p-4 md:p-6">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Dernieres commissions</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Dernières commissions</h3>
             <div class="space-y-1.5 sm:space-y-2 max-h-48 sm:max-h-64 overflow-y-auto custom-scrollbar">
                 @forelse($stats['recent'] ?? [] as $commission)
                     <div class="flex items-center justify-between p-1.5 sm:p-2 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-hover)] transition">
                         <div class="min-w-0">
                             <p class="text-xs sm:text-sm font-medium text-[var(--text-primary)] truncate">
-                                {{ $commission->fromUser?->name ?? 'Systeme' }}
+                                {{ $commission->fromUser?->name ?? 'Système' }}
                             </p>
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                                 {{ $commission->type_label ?? $commission->type }}
@@ -130,7 +246,7 @@
                         <span class="font-bold text-green-500 text-xs sm:text-sm flex-shrink-0">+${{ number_format($commission->amount, 2) }}</span>
                     </div>
                 @empty
-                    <p class="text-center text-[var(--text-secondary)] py-4 text-sm">Aucune commission recente</p>
+                    <p class="text-center text-[var(--text-secondary)] py-4 text-sm">Aucune commission récente</p>
                 @endforelse
             </div>
         </div>

@@ -42,7 +42,7 @@ class CommissionController extends Controller
         $pendingCommissions = Commission::where('status', 'pending')->sum('amount');
         $totalCancelled = Commission::where('status', 'cancelled')->sum('amount');
 
-        $users = User::select('id', 'name')->orderBy('name')->get();
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
         $types = Commission::distinct()->pluck('type');
 
         return view('admin.commissions.index', compact(
@@ -55,20 +55,17 @@ class CommissionController extends Controller
         ));
     }
 
-    /**
-     * Détails d'une commission - ✅ AJOUTÉ
-     */
     public function show($id)
     {
         $commission = Commission::with(['user', 'fromUser', 'order', 'package'])
             ->findOrFail($id);
         
-        return view('admin.commissions.show', compact('commission'));
+        // ✅ Récupérer le parrain du bénéficiaire
+        $parrain = User::find($commission->user->parrain_id ?? null);
+        
+        return view('admin.commissions.show', compact('commission', 'parrain'));
     }
 
-    /**
-     * Approuver une commission - ✅ AJOUTÉ
-     */
     public function approve($id)
     {
         $commission = Commission::findOrFail($id);
@@ -84,7 +81,6 @@ class CommissionController extends Controller
             $commission->paid_at = now();
             $commission->save();
             
-            // Créditer le portefeuille
             $wallet = Wallet::where('user_id', $commission->user_id)->first();
             if ($wallet) {
                 $wallet->balance += $commission->amount;
@@ -94,7 +90,7 @@ class CommissionController extends Controller
             DB::commit();
             
             return redirect()->route('admin.commissions')
-                ->with('success', "✅ Commission #{$id} approuvée avec succès.");
+                ->with('success', "Commission #{$id} approuvée avec succès.");
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -102,9 +98,6 @@ class CommissionController extends Controller
         }
     }
 
-    /**
-     * Rejeter une commission - ✅ AJOUTÉ
-     */
     public function reject($id)
     {
         $commission = Commission::findOrFail($id);
@@ -117,12 +110,9 @@ class CommissionController extends Controller
         $commission->save();
         
         return redirect()->route('admin.commissions')
-            ->with('success', "❌ Commission #{$id} rejetée.");
+            ->with('success', "Commission #{$id} rejetée.");
     }
 
-    /**
-     * Exporter les commissions - ✅ AJOUTÉ
-     */
     public function export(Request $request)
     {
         $query = Commission::with(['user', 'fromUser']);
@@ -179,9 +169,6 @@ class CommissionController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Statistiques des commissions - ✅ AJOUTÉ
-     */
     public function stats()
     {
         $stats = [
@@ -200,5 +187,31 @@ class CommissionController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * ✅ NOUVEAU : Voir le réseau de parrainage d'un utilisateur - DONNÉES RÉELLES
+     */
+    public function viewNetwork($userId)
+    {
+        $user = User::findOrFail($userId);
+        
+        // ✅ Récupérer le parrain
+        $parrain = User::find($user->parrain_id);
+        
+        // ✅ Récupérer les filleuls
+        $filleuls = User::where('parrain_id', $user->id)->get();
+        
+        // ✅ Récupérer les commissions du réseau
+        $networkCommissions = Commission::whereIn('user_id', $filleuls->pluck('id'))
+            ->where('status', 'paid')
+            ->sum('amount');
+
+        return view('admin.commissions.network', compact(
+            'user', 
+            'parrain', 
+            'filleuls', 
+            'networkCommissions'
+        ));
     }
 }

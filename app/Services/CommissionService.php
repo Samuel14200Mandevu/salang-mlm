@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 class CommissionService
 {
     /**
-     * Calculer les commissions pour un achat de package
+     * Calculer les commissions pour un achat de package - DONNÉES RÉELLES
      */
     public function calculatePackageCommission($userId, $packageId, $orderId = null)
     {
@@ -31,10 +31,9 @@ class CommissionService
         DB::beginTransaction();
         
         try {
-            // 1. Commission Directe (30%) - Pour le parrain
-            if ($user->sponsor_id) {
-                // ✅ CORRECTION : Chercher par sponsor_id (code texte)
-                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+            // ✅ 1. Commission Directe (30%) - Pour le parrain (celui qui a parrainé l'utilisateur)
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
                 if ($sponsor) {
                     $directAmount = $package->price * 0.30;
                     $this->createCommission(
@@ -43,20 +42,18 @@ class CommissionService
                         'direct',
                         $directAmount,
                         30,
-                        'Commission directe pour achat de ' . $package->name,
+                        'Commission directe pour achat de ' . $package->name . ' par ' . $user->name,
                         $orderId,
                         $packageId
                     );
                 }
             }
 
-            // 2. Commission Indirecte (15%) - Pour le parrain du parrain
-            if ($user->sponsor_id) {
-                // ✅ CORRECTION : Chercher par sponsor_id (code texte)
-                $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
-                if ($sponsor && $sponsor->sponsor_id) {
-                    // ✅ CORRECTION : Chercher par sponsor_id (code texte)
-                    $grandSponsor = User::where('sponsor_id', $sponsor->sponsor_id)->first();
+            // ✅ 2. Commission Indirecte (15%) - Pour le parrain du parrain (niveau 2)
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
+                if ($sponsor && $sponsor->parrain_id) {
+                    $grandSponsor = User::find($sponsor->parrain_id);
                     if ($grandSponsor) {
                         $indirectAmount = $package->price * 0.15;
                         $this->createCommission(
@@ -65,7 +62,7 @@ class CommissionService
                             'indirect',
                             $indirectAmount,
                             15,
-                            'Commission indirecte pour achat de ' . $package->name,
+                            'Commission indirecte (niveau 2) pour achat de ' . $package->name . ' par ' . $user->name,
                             $orderId,
                             $packageId
                         );
@@ -73,7 +70,7 @@ class CommissionService
                 }
             }
 
-            // 3. Commission Leadership (10%) - Pour les leaders 3+ niveaux
+            // ✅ 3. Commission Leadership (10%) - Pour les leaders 3+ niveaux
             $this->calculateLeadershipCommission($user, $package, $orderId);
 
             // 4. Mettre à jour les PV/BV de l'utilisateur
@@ -96,13 +93,13 @@ class CommissionService
     }
 
     /**
-     * Calculer la commission de leadership
+     * ✅ CORRIGÉ : Calculer la commission de leadership - DONNÉES RÉELLES
+     * Parcourt les parrains jusqu'au niveau 5
      */
     private function calculateLeadershipCommission($user, $package, $orderId)
     {
         $level = 1;
-        // ✅ CORRECTION : Chercher par sponsor_id (code texte)
-        $currentSponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+        $currentSponsor = User::find($user->parrain_id);
         
         while ($currentSponsor && $level <= 5) {
             // Vérifier si le sponsor a assez de PV pour être leader
@@ -114,14 +111,14 @@ class CommissionService
                     'leadership',
                     $leadershipAmount,
                     10,
-                    'Commission leadership niveau ' . $level . ' pour achat de ' . $package->name,
+                    'Commission leadership niveau ' . $level . ' pour achat de ' . $package->name . ' par ' . $user->name,
                     $orderId,
                     $package->id
                 );
             }
             
-            // ✅ CORRECTION : Chercher par sponsor_id (code texte)
-            $currentSponsor = User::where('sponsor_id', $currentSponsor->sponsor_id)->first();
+            // ✅ Passer au parrain suivant
+            $currentSponsor = User::find($currentSponsor->parrain_id);
             $level++;
         }
     }
@@ -187,18 +184,12 @@ class CommissionService
         return $commission;
     }
 
-    /**
-     * Mettre à jour le grade de l'utilisateur (redirige vers RankService)
-     */
     public function updateUserRank($user)
     {
         $rankService = new RankService();
         return $rankService->updateRank($user->id);
     }
 
-    /**
-     * Calculer le profit retail (25%)
-     */
     public function calculateRetailProfit($userId, $amount, $productId = null, $orderId = null)
     {
         $user = User::find($userId);
@@ -221,7 +212,7 @@ class CommissionService
     }
 
     /**
-     * Récupérer les statistiques de commissions d'un utilisateur
+     * Récupérer les statistiques de commissions d'un utilisateur - DONNÉES RÉELLES
      */
     public function getUserCommissionStats($userId)
     {
@@ -252,5 +243,45 @@ class CommissionService
             'retail' => $totalRetail,
             'total' => $totalDirect + $totalIndirect + $totalLeadership + $totalRetail,
         ];
+    }
+
+    /**
+     * ✅ NOUVEAU : Calculer toutes les commissions pour un parrainage - DONNÉES RÉELLES
+     */
+    public function calculateAllCommissionsForReferral($newUserId, $packageId, $orderId = null)
+    {
+        $newUser = User::find($newUserId);
+        if (!$newUser) return false;
+
+        $package = Package::find($packageId);
+        if (!$package) return false;
+
+        return $this->calculatePackageCommission($newUserId, $packageId, $orderId);
+    }
+
+    /**
+     * ✅ NOUVEAU : Récupérer les commissions d'un utilisateur - DONNÉES RÉELLES
+     */
+    public function getUserCommissions($userId, $status = null)
+    {
+        $query = Commission::where('user_id', $userId);
+        
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    /**
+     * ✅ NOUVEAU : Récupérer le total des commissions par type - DONNÉES RÉELLES
+     */
+    public function getCommissionsByType($userId)
+    {
+        return Commission::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('type')
+            ->get();
     }
 }

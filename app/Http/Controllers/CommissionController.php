@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/CommissionController.php
 
 namespace App\Http\Controllers;
 
@@ -13,9 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class CommissionController extends Controller
 {
-    /**
-     * @var CommissionService
-     */
     protected $commissionService;
 
     public function __construct(CommissionService $commissionService)
@@ -27,24 +25,23 @@ class CommissionController extends Controller
      * Liste des commissions de l'utilisateur
      */
     public function index(Request $request)
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    $query = Commission::where('user_id', $user->id)
-        ->with(['fromUser', 'order', 'package']);
+        $query = Commission::where('user_id', $user->id)
+            ->with(['fromUser', 'order', 'package']);
 
-    // Filtres...
-    if ($request->filled('type')) {
-        $query->where('type', $request->type);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        $stats = $this->getUserStats($user->id);
+        $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
+
+        return view('commissions.index', compact('commissions', 'stats', 'types'));
     }
-    
-    $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
-
-    $stats = $this->getUserStats($user->id);
-    $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
-
-    return view('commissions.index', compact('commissions', 'stats', 'types'));
-}
 
     /**
      * Statistiques des commissions de l'utilisateur
@@ -89,7 +86,6 @@ class CommissionController extends Controller
                 ->get(),
         ];
 
-        // Par type
         $byType = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
@@ -106,7 +102,6 @@ class CommissionController extends Controller
             ];
         }
 
-        // Mensuel (12 derniers mois)
         for ($i = 11; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $amount = Commission::where('user_id', $userId)
@@ -124,9 +119,6 @@ class CommissionController extends Controller
         return $stats;
     }
 
-    /**
-     * Afficher les détails d'une commission
-     */
     public function show($id)
     {
         $user = Auth::user();
@@ -135,7 +127,6 @@ class CommissionController extends Controller
             ->with(['fromUser', 'order', 'order.items', 'package', 'user'])
             ->findOrFail($id);
 
-        // Vérifier que la commission appartient bien à l'utilisateur
         if ($commission->user_id !== $user->id && !$user->hasRole('admin')) {
             abort(403, 'Accès non autorisé');
         }
@@ -143,9 +134,6 @@ class CommissionController extends Controller
         return view('commissions.show', compact('commission'));
     }
 
-    /**
-     * Exporter les commissions en CSV
-     */
     public function export(Request $request)
     {
         $user = Auth::user();
@@ -179,7 +167,6 @@ class CommissionController extends Controller
         $callback = function() use ($commissions) {
             $file = fopen('php://output', 'w');
 
-            // En-têtes
             fputcsv($file, [
                 'ID',
                 'Type',
@@ -192,7 +179,6 @@ class CommissionController extends Controller
                 'Créé le'
             ]);
 
-            // Données
             foreach ($commissions as $c) {
                 fputcsv($file, [
                     $c->id,
@@ -213,9 +199,6 @@ class CommissionController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * API: Obtenir les commissions en temps réel
-     */
     public function apiIndex(Request $request)
     {
         $user = Auth::user();
@@ -238,9 +221,6 @@ class CommissionController extends Controller
         ]);
     }
 
-    /**
-     * API: Obtenir les statistiques
-     */
     public function apiStats(Request $request)
     {
         $user = Auth::user();
@@ -253,9 +233,6 @@ class CommissionController extends Controller
         ]);
     }
 
-    /**
-     * Obtenir le libellé d'un type de commission
-     */
     private function getTypeLabel($type)
     {
         $labels = [
@@ -270,9 +247,6 @@ class CommissionController extends Controller
         return $labels[$type] ?? ucfirst($type);
     }
 
-    /**
-     * Obtenir l'icône d'un type de commission
-     */
     private function getTypeIcon($type)
     {
         $icons = [
@@ -287,9 +261,6 @@ class CommissionController extends Controller
         return $icons[$type] ?? 'fa-coins';
     }
 
-    /**
-     * Obtenir la couleur d'un type de commission
-     */
     private function getTypeColor($type)
     {
         $colors = [
@@ -305,54 +276,7 @@ class CommissionController extends Controller
     }
 
     /**
-     * Recalculer les commissions pour un utilisateur (Admin)
-     */
-    public function recalculate(Request $request)
-    {
-        if (!auth()->user()->hasRole('admin')) {
-            abort(403, 'Accès non autorisé');
-        }
-
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'from_date' => 'nullable|date',
-        ]);
-
-        $user = User::find($request->user_id);
-
-        // Récupérer les commandes de l'utilisateur
-        $query = Order::where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->where('payment_status', 'completed');
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-
-        $orders = $query->get();
-
-        $processed = 0;
-        foreach ($orders as $order) {
-            foreach ($order->items as $item) {
-                if ($item->package_id) {
-                    $result = $this->commissionService->calculatePackageCommission(
-                        $user->id,
-                        $item->package_id,
-                        $order->id
-                    );
-                    if ($result) {
-                        $processed++;
-                    }
-                }
-            }
-        }
-
-        return redirect()->route('admin.commissions')
-            ->with('success', "Recalcul terminé. {$processed} commissions traitées.");
-    }
-
-    /**
-     * Obtenir les commissions par niveau (Unilevel)
+     * ✅ CORRIGÉ : Obtenir les commissions par niveau (Unilevel) - Données réelles
      */
     public function getLevelCommissions(Request $request)
     {
@@ -360,8 +284,8 @@ class CommissionController extends Controller
 
         $levels = [];
 
-        // Niveau 1 (Direct)
-        $level1Users = User::where('sponsor_id', $user->sponsor_id)->pluck('id');
+        // ✅ Niveau 1 (Direct) - Utiliser parrain_id
+        $level1Users = User::where('parrain_id', $user->id)->pluck('id');
         $level1Commissions = Commission::whereIn('from_user_id', $level1Users)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
@@ -371,11 +295,12 @@ class CommissionController extends Controller
             'label' => 'Niveau 1 - Direct',
             'count' => $level1Users->count(),
             'amount' => $level1Commissions,
-            'percentage' => config('commission.levels.1', 30),
+            'percentage' => 30,
+            'users' => User::where('parrain_id', $user->id)->get(['id', 'name', 'email']),
         ];
 
-        // Niveau 2
-        $level2Users = User::whereIn('sponsor_id', $level1Users)->pluck('id');
+        // ✅ Niveau 2 - Utiliser parrain_id
+        $level2Users = User::whereIn('parrain_id', $level1Users)->pluck('id');
         $level2Commissions = Commission::whereIn('from_user_id', $level2Users)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
@@ -385,11 +310,12 @@ class CommissionController extends Controller
             'label' => 'Niveau 2 - Indirect',
             'count' => $level2Users->count(),
             'amount' => $level2Commissions,
-            'percentage' => config('commission.levels.2', 15),
+            'percentage' => 15,
+            'users' => User::whereIn('parrain_id', $level1Users)->get(['id', 'name', 'email']),
         ];
 
-        // Niveau 3
-        $level3Users = User::whereIn('sponsor_id', $level2Users)->pluck('id');
+        // ✅ Niveau 3
+        $level3Users = User::whereIn('parrain_id', $level2Users)->pluck('id');
         $level3Commissions = Commission::whereIn('from_user_id', $level3Users)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
@@ -399,11 +325,12 @@ class CommissionController extends Controller
             'label' => 'Niveau 3 - Leadership',
             'count' => $level3Users->count(),
             'amount' => $level3Commissions,
-            'percentage' => config('commission.levels.3', 10),
+            'percentage' => 10,
+            'users' => User::whereIn('parrain_id', $level2Users)->get(['id', 'name', 'email']),
         ];
 
-        // Niveau 4
-        $level4Users = User::whereIn('sponsor_id', $level3Users)->pluck('id');
+        // ✅ Niveau 4
+        $level4Users = User::whereIn('parrain_id', $level3Users)->pluck('id');
         $level4Commissions = Commission::whereIn('from_user_id', $level4Users)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
@@ -413,11 +340,12 @@ class CommissionController extends Controller
             'label' => 'Niveau 4',
             'count' => $level4Users->count(),
             'amount' => $level4Commissions,
-            'percentage' => config('commission.levels.4', 5),
+            'percentage' => 5,
+            'users' => User::whereIn('parrain_id', $level3Users)->get(['id', 'name', 'email']),
         ];
 
-        // Niveau 5
-        $level5Users = User::whereIn('sponsor_id', $level4Users)->pluck('id');
+        // ✅ Niveau 5
+        $level5Users = User::whereIn('parrain_id', $level4Users)->pluck('id');
         $level5Commissions = Commission::whereIn('from_user_id', $level5Users)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
@@ -427,7 +355,8 @@ class CommissionController extends Controller
             'label' => 'Niveau 5',
             'count' => $level5Users->count(),
             'amount' => $level5Commissions,
-            'percentage' => config('commission.levels.5', 5),
+            'percentage' => 5,
+            'users' => User::whereIn('parrain_id', $level4Users)->get(['id', 'name', 'email']),
         ];
 
         $total = array_sum(array_column($levels, 'amount'));
@@ -443,9 +372,6 @@ class CommissionController extends Controller
         return view('commissions.levels', compact('levels', 'total'));
     }
 
-    /**
-     * Générer un rapport PDF des commissions
-     */
     public function pdf(Request $request)
     {
         $user = Auth::user();
@@ -469,8 +395,6 @@ class CommissionController extends Controller
         $commissions = $query->get();
         $total = $commissions->sum('amount');
 
-        // Générer le PDF (à adapter selon votre package PDF)
-        // Exemple avec DomPDF
         $pdf = \PDF::loadView('commissions.pdf', compact('commissions', 'total', 'user'));
 
         return $pdf->download('commissions_' . date('Y-m-d') . '.pdf');
