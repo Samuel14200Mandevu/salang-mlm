@@ -286,7 +286,7 @@
         </div>
     </div>
 
-    <!-- ✅ Carte du Parrain -->
+    <!--  Carte du Parrain -->
     <div class="card animate-fadeInUp delay-2 p-3 sm:p-4 border-l-4 border-primary-500">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -302,9 +302,6 @@
                             </p>
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                                 {{ $parrain->email }}
-                            </p>
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                                Code: <span class="font-mono text-primary-500">{{ $parrain->sponsor_id }}</span>
                             </p>
                         </div>
                     </div>
@@ -323,7 +320,7 @@
         </div>
     </div>
 
-    <!-- ✅ Carte des Filleuls -->
+    <!--  Carte des Filleuls -->
     <div class="card animate-fadeInUp delay-3 p-3 sm:p-4">
         <div class="flex items-center justify-between mb-3">
             <div>

@@ -334,11 +334,6 @@
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">
                     {{ $parrain?->email ?? '--' }}
                 </p>
-                @if($parrain)
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                        Code: <span class="font-mono text-primary-500">{{ $parrain->sponsor_id }}</span>
-                    </p>
-                @endif
             </div>
 
             <!-- Downlines and Code -->

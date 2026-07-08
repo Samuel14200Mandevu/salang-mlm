@@ -303,11 +303,11 @@
                     <span class="value">{{ $user->package?->name ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Code de parrain</span>
+                    <span class="label">Code de parrainage</span>
                     <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label"> Parrain (celui qui m'a invité)</span>
+                    <span class="label"> Parrain </span>
                     <span class="value">
                         @php
                             $parrain = App\Models\User::find($user->parrain_id);
@@ -319,9 +319,6 @@
                             <span class="text-xs text-[var(--text-tertiary)] block">
                                 Email: {{ $parrain->email }}
                             </span>
-                            <span class="text-xs text-[var(--text-tertiary)] block font-mono">
-                                Code: {{ $parrain->sponsor_id }}
-                            </span>
                         @elseif($user->parrain_id)
                             <span class="text-red-500">Inconnu (ID: {{ $user->parrain_id }})</span>
                         @else
@@ -330,7 +327,7 @@
                     </span>
                 </div>
                 <div class="info-row">
-                    <span class="label">👥 Filleuls (ceux que j'ai invités)</span>
+                    <span class="label">Filleuls </span>
                     <span class="value">
                         @php
                             $filleuls = App\Models\User::where('parrain_id', $user->id)->get();
