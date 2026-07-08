@@ -256,7 +256,7 @@
                     <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h3>
                     
                     @php
-                        $tax = $total * 0.18;
+                        $tax = $total * 0.16;
                         $shipping = $total > 100 ? 0 : 10;
                         $grandTotal = $total + $tax + $shipping;
                         $balance = Auth::user()->wallet->balance ?? 0;
@@ -269,7 +269,7 @@
                             <span class="font-medium">${{ number_format($total, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-[var(--text-secondary)]">Tax (18%)</span>
+                            <span class="text-[var(--text-secondary)]">Tax (16%)</span>
                             <span class="font-medium">${{ number_format($tax, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
