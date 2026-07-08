@@ -21,6 +21,8 @@
     .tree-node:first-child::before { display: none; }
     .tree-children {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 1rem;
         margin-top: 1rem;
         padding-top: 1rem;
@@ -60,6 +62,8 @@
     }
     .avatar-xl { width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
     .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
+    .avatar-md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+    .avatar-sm { width: 2rem; height: 2rem; font-size: 0.75rem; }
     .avatar-gradient { background: var(--gradient-primary); }
     .avatar-success { background: #22c55e; }
     .avatar-danger { background: #ef4444; }
@@ -185,7 +189,6 @@
     .delay-4 { animation-delay: 0.20s; }
     .delay-5 { animation-delay: 0.25s; }
     .delay-6 { animation-delay: 0.30s; }
-    .delay-7 { animation-delay: 0.35s; }
     
     .custom-toast {
         animation: slideUp 0.3s ease forwards;
@@ -242,75 +245,142 @@
     <!-- Header -->
     <div class="tree-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Network</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Visualize your genealogy tree</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Réseau</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Visualisez votre arbre généalogique</p>
         </div>
         <div class="btn-group flex gap-1.5 sm:gap-2">
             <button class="btn btn-primary btn-sm sm:btn-md" onclick="toggleView('tree')" id="treeViewBtn">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                Tree
+                Arbre
             </button>
             <button class="btn btn-outline btn-sm sm:btn-md" onclick="toggleView('list')" id="listViewBtn">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
-                List
+                Liste
             </button>
         </div>
     </div>
 
-    <!-- Statistics -->
+    <!-- Statistiques -->
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Downlines</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Filleuls</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">
-                {{ App\Models\User::where('sponsor_id', Auth::user()->sponsor_id)->count() }}
+                {{ $filleuls->count() }}
             </p>
         </div>
         <div class="card-stats border-l-4 border-blue-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 1</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 1</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">{{ $stats['level_1'] ?? 0 }}</p>
         </div>
         <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 2</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 2</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['level_2'] ?? 0 }}</p>
         </div>
         <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Level 3</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 3</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">{{ $stats['level_3'] ?? 0 }}</p>
         </div>
     </div>
 
-    <!-- My Sponsor Card -->
-    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
+    <!-- ✅ Carte du Parrain -->
+    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4 border-l-4 border-primary-500">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">My Sponsor</p>
-                @php
-                    $parrain = App\Models\User::where('sponsor_id', Auth::user()->sponsor_id)->first();
-                @endphp
-                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                    {{ $parrain?->name ?? 'No sponsor' }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                    Code: <span class="font-mono text-primary-500">{{ Auth::user()->sponsor_id }}</span>
-                </p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Mon Parrain</p>
+                @if($parrain)
+                    <div class="flex items-center gap-3 mt-1">
+                        <div class="avatar avatar-md avatar-gradient">
+                            {{ strtoupper(substr($parrain->name, 0, 1)) }}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                                {{ $parrain->name }}
+                            </p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                                {{ $parrain->email }}
+                            </p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                                Code: <span class="font-mono text-primary-500">{{ $parrain->sponsor_id }}</span>
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                        Aucun parrain
+                    </p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                        Vous êtes le premier de votre réseau
+                    </p>
+                @endif
             </div>
             @if($parrain)
-                <span class="badge badge-success text-[10px]">Sponsored</span>
+                <span class="badge badge-success text-[10px] sm:text-xs">Parrainé</span>
             @endif
         </div>
     </div>
 
-    <!-- Tree View -->
-    <div id="treeView" class="tree-view card animate-fadeInUp delay-3 p-3 sm:p-4 md:p-6">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Genealogy Tree</h3>
+    <!-- ✅ Carte des Filleuls -->
+    <div class="card animate-fadeInUp delay-3 p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Mes Filleuls</p>
+                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                    {{ $filleuls->count() }} personne(s) invitée(s)
+                </p>
+            </div>
+            <span class="badge badge-info text-[10px] sm:text-xs">
+                {{ $filleuls->count() }} filleuls
+            </span>
+        </div>
+
+        @if($filleuls->count() > 0)
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                @foreach($filleuls as $filleul)
+                    <div class="flex items-center gap-2 p-2 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                        <div class="avatar avatar-sm {{ $filleul->is_active ? 'avatar-success' : 'avatar-danger' }}">
+                            {{ strtoupper(substr($filleul->name, 0, 1)) }}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-medium text-[var(--text-primary)] text-xs sm:text-sm truncate">
+                                {{ $filleul->name }}
+                            </p>
+                            <p class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] truncate">
+                                {{ $filleul->email }}
+                            </p>
+                            <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] font-mono">
+                                Code: {{ $filleul->sponsor_id }}
+                            </p>
+                        </div>
+                        <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }} text-[8px] sm:text-[10px]">
+                            {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-4 text-[var(--text-secondary)] text-sm">
+                <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <p>Vous n'avez pas encore de filleuls</p>
+                <p class="text-[var(--text-tertiary)] text-xs mt-1">
+                    Partagez votre lien de parrainage pour inviter des amis
+                </p>
+            </div>
+        @endif
+    </div>
+
+    <!-- Vue Arbre -->
+    <div id="treeView" class="tree-view card animate-fadeInUp delay-4 p-3 sm:p-4 md:p-6">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Arbre Généalogique</h3>
         
         <div class="flex justify-center overflow-x-auto py-3 sm:py-4">
             <div class="tree-node">
-                <!-- Me -->
+                <!-- Moi -->
                 <div class="flex flex-col items-center">
                     <div class="avatar avatar-xl avatar-gradient avatar-ring relative">
                         @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
@@ -321,17 +391,22 @@
                         <span class="tree-level-badge">★</span>
                     </div>
                     <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()->name }}</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Me</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moi</p>
                     <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()->rank?->name ?? 'Distributor' }}</span>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">
                         Code: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
                     </p>
+                    @if($parrain)
+                        <p class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] mt-0.5">
+                            Parrain: <span class="font-medium text-primary-500">{{ $parrain->name }}</span>
+                        </p>
+                    @endif
                 </div>
 
-                <!-- Children -->
-                @if(isset($recentDownlines) && $recentDownlines->count() > 0)
+                <!-- Enfants -->
+                @if($filleuls->count() > 0)
                     <div class="tree-children">
-                        @foreach($recentDownlines->take(6) as $member)
+                        @foreach($filleuls->take(6) as $member)
                             <div class="tree-node">
                                 <div class="flex flex-col items-center">
                                     <div class="avatar avatar-lg {{ $member->is_active ? 'avatar-success' : 'avatar-danger' }} relative">
@@ -339,9 +414,9 @@
                                         <span class="tree-level-badge">1</span>
                                     </div>
                                     <p class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-0.5 sm:mt-1 truncate max-w-[60px] sm:max-w-[80px]">{{ $member->name }}</p>
-                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Level 1</p>
+                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 1</p>
                                     <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-0.5">
-                                        {{ $member->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
                                     </span>
                                     <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] mt-0.5 font-mono truncate max-w-[60px]">
                                         {{ $member->sponsor_id }}
@@ -349,13 +424,13 @@
                                 </div>
                             </div>
                         @endforeach
-                        @if($recentDownlines->count() > 6)
+                        @if($filleuls->count() > 6)
                             <div class="tree-node">
                                 <div class="flex flex-col items-center justify-center h-full min-h-[80px]">
                                     <div class="avatar avatar-lg bg-primary-500/20 text-primary-500">
-                                        +{{ $recentDownlines->count() - 6 }}
+                                        +{{ $filleuls->count() - 6 }}
                                     </div>
-                                    <p class="text-xs text-[var(--text-secondary)] mt-1">View more</p>
+                                    <p class="text-xs text-[var(--text-secondary)] mt-1">Voir plus</p>
                                 </div>
                             </div>
                         @endif
@@ -365,45 +440,45 @@
                         <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        You don't have any downlines yet.<br>
-                        Share your referral link to grow your network!
+                        Vous n'avez pas encore de filleuls.<br>
+                        Partagez votre lien de parrainage pour développer votre réseau !
                     </p>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- List View -->
-    <div id="listView" class="card animate-fadeInUp delay-4 hidden p-3 sm:p-4 md:p-6">
+    <!-- Vue Liste -->
+    <div id="listView" class="card animate-fadeInUp delay-5 hidden p-3 sm:p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Network Members</h3>
-            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $recentDownlines->count() ?? 0 }} members</span>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Membres de mon réseau</h3>
+            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $filleuls->count() }} membres</span>
         </div>
 
-        <!-- Search -->
+        <!-- Recherche -->
         <div class="relative mb-3 sm:mb-4">
             <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchMember" placeholder="Search member..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="text" id="searchMember" placeholder="Rechercher un membre..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
 
         <div class="table-wrap">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">Name</th>
+                        <th class="text-xs sm:text-sm">Nom</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Level</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Niveau</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
                         <th class="text-xs sm:text-sm">PV</th>
-                        <th class="text-xs sm:text-sm">Status</th>
+                        <th class="text-xs sm:text-sm">Statut</th>
                     </tr>
                 </thead>
                 <tbody id="memberList">
-                    @forelse($recentDownlines ?? [] as $member)
+                    @forelse($filleuls as $member)
                         <tr data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
                             <td class="font-medium text-sm sm:text-base">
                                 {{ $member->name }}
@@ -413,13 +488,13 @@
                             </td>
                             <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">{{ $member->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">Level {{ $member->genealogy?->level ?? 1 }}</span>
+                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->genealogy?->level ?? 1 }}</span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $member->package?->name ?? 'Starter' }}</td>
                             <td class="text-sm sm:text-base">{{ number_format($member->pv_balance ?? 0) }}</td>
                             <td>
                                 <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                    {{ $member->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
                         </tr>
@@ -429,38 +504,32 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                No members in your network
+                                Aucun membre dans votre réseau
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        @if(isset($recentDownlines) && $recentDownlines instanceof \Illuminate\Pagination\LengthAwarePaginator && $recentDownlines->hasPages())
-            <div class="mt-3 sm:mt-4">
-                {{ $recentDownlines->links() }}
-            </div>
-        @endif
     </div>
 
-    <!-- Referral Link -->
-    <div class="card animate-fadeInUp delay-5 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
+    <!-- Lien de parrainage -->
+    <div class="card animate-fadeInUp delay-6 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="min-w-0">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Your referral link</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Votre lien de parrainage</p>
                 <p class="text-xs sm:text-sm font-semibold text-primary-500 break-all" id="sponsorLink">
                     {{ url('/register?ref=' . Auth::user()->sponsor_id) }}
                 </p>
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
-                    Referral Code: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
+                    Code de parrain: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
                 </p>
             </div>
             <button onclick="copyLink()" class="btn btn-primary btn-sm sm:btn-md flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
                 </svg>
-                Copy
+                Copier
             </button>
         </div>
     </div>
@@ -492,7 +561,7 @@ function copyLink() {
     
     if (navigator.clipboard) {
         navigator.clipboard.writeText(link).then(function() {
-            showToast('Referral link copied!');
+            showToast('Lien de parrainage copié !');
         }).catch(function() {
             fallbackCopy(link);
         });
@@ -508,7 +577,7 @@ function fallbackCopy(text) {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    showToast('Referral link copied!');
+    showToast('Lien de parrainage copié !');
 }
 
 function showToast(message) {

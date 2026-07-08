@@ -18,28 +18,41 @@ class NetworkController extends Controller
             return redirect()->route('login');
         }
 
-        // ✅ Récupérer l'arbre généalogique
+        // ✅ Récupérer le parrain (celui qui a parrainé l'utilisateur)
+        $parrain = User::find($user->parrain_id);
+        
+        // ✅ Récupérer les filleuls (ceux qui ont parrain_id = id de l'utilisateur)
+        $filleuls = User::where('parrain_id', $user->id)->get();
+        
+        // ✅ Construire l'arbre généalogique
         $tree = $this->buildTree($user);
         
         // ✅ Statistiques du réseau
         $stats = [
-            'total' => User::where('sponsor_id', $user->sponsor_id)->count(),
-            'level_1' => User::where('sponsor_id', $user->sponsor_id)->count(),
+            'total' => User::where('parrain_id', $user->id)->count(),
+            'level_1' => User::where('parrain_id', $user->id)->count(),
             'level_2' => $this->countLevel2($user),
             'level_3' => $this->countLevel3($user),
-            'active' => User::where('sponsor_id', $user->sponsor_id)
+            'active' => User::where('parrain_id', $user->id)
                 ->where('is_active', true)
                 ->count(),
         ];
         
         // ✅ Derniers membres parrainés
-        $recentDownlines = User::where('sponsor_id', $user->sponsor_id)
+        $recentDownlines = User::where('parrain_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->with(['package', 'rank'])
             ->get();
         
-        return view('network.index', compact('user', 'tree', 'stats', 'recentDownlines'));
+        return view('network.index', compact(
+            'user', 
+            'parrain', 
+            'filleuls',
+            'tree', 
+            'stats', 
+            'recentDownlines'
+        ));
     }
 
     /**
@@ -51,8 +64,8 @@ class NetworkController extends Controller
             return null;
         }
 
-        // ✅ Récupérer les fillules
-        $downlines = User::where('sponsor_id', $user->sponsor_id)->get();
+        // ✅ Récupérer les fillules (parrain_id = id de l'utilisateur)
+        $downlines = User::where('parrain_id', $user->id)->get();
         $children = [];
 
         foreach ($downlines as $child) {
@@ -74,16 +87,14 @@ class NetworkController extends Controller
      */
     private function countLevel2($user)
     {
-        $level1SponsorCodes = User::where('sponsor_id', $user->sponsor_id)
-            ->pluck('sponsor_id')
-            ->filter()
-            ->toArray();
+        // Récupérer les IDs des filleuls directs
+        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
         
-        if (empty($level1SponsorCodes)) {
+        if (empty($level1Ids)) {
             return 0;
         }
         
-        return User::whereIn('sponsor_id', $level1SponsorCodes)->count();
+        return User::whereIn('parrain_id', $level1Ids)->count();
     }
 
     /**
@@ -91,25 +102,21 @@ class NetworkController extends Controller
      */
     private function countLevel3($user)
     {
-        $level1SponsorCodes = User::where('sponsor_id', $user->sponsor_id)
-            ->pluck('sponsor_id')
-            ->filter()
-            ->toArray();
+        // Récupérer les IDs des filleuls directs
+        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
         
-        if (empty($level1SponsorCodes)) {
+        if (empty($level1Ids)) {
             return 0;
         }
         
-        $level2SponsorCodes = User::whereIn('sponsor_id', $level1SponsorCodes)
-            ->pluck('sponsor_id')
-            ->filter()
-            ->toArray();
+        // Récupérer les IDs des filleuls de niveau 2
+        $level2Ids = User::whereIn('parrain_id', $level1Ids)->pluck('id')->toArray();
         
-        if (empty($level2SponsorCodes)) {
+        if (empty($level2Ids)) {
             return 0;
         }
         
-        return User::whereIn('sponsor_id', $level2SponsorCodes)->count();
+        return User::whereIn('parrain_id', $level2Ids)->count();
     }
 
     /**
@@ -129,7 +136,7 @@ class NetworkController extends Controller
     {
         $user = Auth::user();
         
-        $downlines = User::where('sponsor_id', $user->sponsor_id)
+        $downlines = User::where('parrain_id', $user->id)
             ->with(['package', 'rank'])
             ->paginate(20);
         
@@ -144,7 +151,7 @@ class NetworkController extends Controller
         $user = Auth::user();
         $search = $request->get('q');
         
-        $results = User::where('sponsor_id', $user->sponsor_id)
+        $results = User::where('parrain_id', $user->id)
             ->where(function($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%")

@@ -21,7 +21,8 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'sponsor_id',
+        'sponsor_id',    // Code de parrain UNIQUE pour inviter
+        'parrain_id',    // ID de l'utilisateur qui m'a parrainé
         'rank_id',
         'package_id',
         'pv_balance',
@@ -63,114 +64,85 @@ class User extends Authenticatable
     // RELATIONS
     // ============================================================
 
-    /**
-     * Relation avec le rang
-     */
     public function rank()
     {
         return $this->belongsTo(Rank::class);
     }
 
-    /**
-     * Relation avec le package
-     */
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
 
     /**
-     * Relation avec le parrain (celui qui m'a invité)
-     * sponsor_id est le code de parrain unique
+     * ✅ LE PARRAIN - La personne qui m'a invité
+     * Utilise parrain_id (clé étrangère vers id)
      */
     public function parrain()
     {
-        return $this->belongsTo(User::class, 'sponsor_id', 'sponsor_id');
+        return $this->belongsTo(User::class, 'parrain_id');
     }
 
     /**
-     * Alias pour sponsor (compatibilité)
-     */
-    public function sponsor()
-    {
-        return $this->belongsTo(User::class, 'sponsor_id', 'sponsor_id');
-    }
-
-    /**
-     * Relation avec les filleuls (ceux que j'ai invités)
+     * ✅ LES FILLEULS - Les personnes que j'ai invitées
+     * Utilise parrain_id (clé étrangère vers id)
      */
     public function filleuls()
     {
-        return $this->hasMany(User::class, 'sponsor_id', 'sponsor_id');
+        return $this->hasMany(User::class, 'parrain_id');
     }
 
     /**
-     * Alias pour downlines (compatibilité)
+     * Alias pour sponsor() - gardé pour compatibilité
+     */
+    public function sponsor()
+    {
+        return $this->belongsTo(User::class, 'parrain_id');
+    }
+
+    /**
+     * Alias pour downlines() - gardé pour compatibilité
      */
     public function downlines()
     {
-        return $this->hasMany(User::class, 'sponsor_id', 'sponsor_id');
+        return $this->hasMany(User::class, 'parrain_id');
     }
 
-    /**
-     * Relation avec le portefeuille
-     */
     public function wallet()
     {
         return $this->hasOne(Wallet::class);
     }
 
-    /**
-     * Relation avec les commissions
-     */
     public function commissions()
     {
         return $this->hasMany(Commission::class);
     }
 
-    /**
-     * Relation avec les transactions
-     */
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
 
-    /**
-     * Relation avec les retraits
-     */
     public function withdrawals()
     {
         return $this->hasMany(Withdrawal::class);
     }
 
-    /**
-     * Relation avec la généalogie
-     */
     public function genealogy()
     {
         return $this->hasOne(Genealogy::class);
     }
 
-    /**
-     * Relation avec l'historique des rangs
-     */
     public function rankHistory()
     {
         return $this->hasMany(RankHistory::class);
     }
 
-    /**
-     * Relation avec les commandes
-     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    /**
-     * Relation avec les documents KYC
-     */
     public function kycDocuments()
     {
         return $this->hasMany(KycDocument::class);
@@ -211,20 +183,6 @@ class User extends Authenticatable
         }
         
         return 'No package';
-    }
-
-    public function getPackageIconAttribute()
-    {
-        if ($this->relationLoaded('package') && $this->package) {
-            return $this->package->icon;
-        }
-        
-        if ($this->package_id) {
-            $package = Package::find($this->package_id);
-            return $package ? $package->icon : '📦';
-        }
-        
-        return '📦';
     }
 
     public function getWalletBalanceAttribute()
@@ -273,7 +231,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Récupérer le code de parrain
+     * Récupérer le code de parrain (pour inviter)
      */
     public function getReferralCodeAttribute()
     {
