@@ -23,43 +23,43 @@ class PasswordResetLinkController extends Controller
         $request->validate([
             'email' => ['required', 'email'],
         ], [
-            'email.required' => '📧 L\'adresse email est obligatoire.',
-            'email.email' => '📧 Veuillez saisir une adresse email valide.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
         ]);
 
-        // ✅ Vérifier si l'utilisateur existe
+        // Vérifier si l'utilisateur existe
         $user = User::where('email', $request->email)->first();
         
         if (!$user) {
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors([
-                    'email' => '❌ Aucun compte trouvé avec cette adresse email.',
+                    'email' => 'Aucun compte trouvé avec cette adresse email.',
                 ]);
         }
 
-        // ✅ Vérifier si le compte est actif
+        // Vérifier si le compte est actif
         if (!$user->is_active) {
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors([
-                    'email' => '⛔ Votre compte est désactivé. Veuillez contacter l\'administration.',
+                    'email' => 'Votre compte est désactivé. Veuillez contacter l\'administration.',
                 ]);
         }
 
-        // ✅ Envoyer le lien de réinitialisation
+        // Envoyer le lien de réinitialisation
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
         if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', '📧 Un lien de réinitialisation a été envoyé à votre adresse email.');
+            return back()->with('status', 'Un lien de réinitialisation a été envoyé à votre adresse email.');
         }
 
         return back()
             ->withInput($request->only('email'))
             ->withErrors([
-                'email' => '⚠️ Une erreur est survenue. Veuillez réessayer.',
+                'email' => 'Une erreur est survenue. Veuillez réessayer.',
             ]);
     }
 }

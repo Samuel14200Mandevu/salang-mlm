@@ -22,22 +22,22 @@ class ConfirmablePasswordController extends Controller
         $request->validate([
             'password' => ['required', 'string'],
         ], [
-            'password.required' => '🔑 Le mot de passe est obligatoire pour confirmer votre identité.',
+            'password.required' => 'Le mot de passe est obligatoire pour confirmer votre identité.',
         ]);
 
-        // ✅ Vérifier que le mot de passe est correct
+        // Vérifier que le mot de passe est correct
         if (!Auth::guard('web')->validate([
             'email' => $request->user()->email,
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([
-                'password' => '🔑 Le mot de passe saisi est incorrect.',
+                'password' => 'Le mot de passe saisi est incorrect.',
             ]);
         }
 
         $request->session()->put('auth.password_confirmed_at', time());
 
         return redirect()->intended(route('dashboard'))
-            ->with('success', '✅ Identité confirmée avec succès.');
+            ->with('success', 'Identité confirmée avec succès.');
     }
 }

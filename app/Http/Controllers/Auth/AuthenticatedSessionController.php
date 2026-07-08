@@ -26,60 +26,60 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        // ✅ Tentative d'authentification avec messages personnalisés
+        // Tentative d'authentification avec messages personnalisés
         try {
             $credentials = $request->only('email', 'password');
             
-            // ✅ Vérifier si l'utilisateur existe
+            // Vérifier si l'utilisateur existe
             $user = \App\Models\User::where('email', $credentials['email'])->first();
             
             if (!$user) {
                 return back()
                     ->withInput($request->only('email', 'remember'))
                     ->withErrors([
-                        'email' => '❌ Aucun compte trouvé avec cette adresse email.',
+                        'email' => 'Aucun compte trouvé avec cette adresse email.',
                     ]);
             }
 
-            // ✅ Vérifier si le compte est actif
+            // Vérifier si le compte est actif
             if (!$user->is_active) {
                 return back()
                     ->withInput($request->only('email', 'remember'))
                     ->withErrors([
-                        'email' => '⛔ Votre compte a été désactivé. Veuillez contacter l\'administration.',
+                        'email' => 'Votre compte a été désactivé. Veuillez contacter l\'administration.',
                     ]);
             }
 
-            // ✅ Tentative de connexion
+            // Tentative de connexion
             if (!Auth::attempt($credentials, $request->boolean('remember'))) {
                 return back()
                     ->withInput($request->only('email', 'remember'))
                     ->withErrors([
-                        'password' => '🔑 Le mot de passe saisi est incorrect.',
+                        'password' => 'Le mot de passe saisi est incorrect.',
                     ]);
             }
 
-            // ✅ Vérification supplémentaire : email vérifié
+            // Vérification supplémentaire : email vérifié
             if (!Auth::user()->hasVerifiedEmail()) {
                 Auth::logout();
                 return back()
                     ->withInput($request->only('email', 'remember'))
                     ->withErrors([
-                        'email' => '📧 Veuillez vérifier votre adresse email avant de vous connecter.',
+                        'email' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
                     ]);
             }
 
-            // ✅ Régénérer la session
+            // Régénérer la session
             $request->session()->regenerate();
 
-            // ✅ Redirection selon le rôle
+            // Redirection selon le rôle
             if (Auth::user()->hasRole('admin')) {
                 return redirect()->intended(route('admin.dashboard'))
-                    ->with('success', '👋 Bonjour ' . Auth::user()->name . ' ! Bienvenue dans l\'administration.');
+                    ->with('success', 'Bonjour ' . Auth::user()->name . ' ! Bienvenue dans l\'administration.');
             }
 
             return redirect()->intended(route('dashboard'))
-                ->with('success', '👋 Bonjour ' . Auth::user()->name . ' ! Content de vous revoir.');
+                ->with('success', 'Bonjour ' . Auth::user()->name . ' ! Content de vous revoir.');
 
         } catch (\Exception $e) {
             Log::error('Erreur de connexion', [
@@ -90,7 +90,7 @@ class AuthenticatedSessionController extends Controller
             return back()
                 ->withInput($request->only('email', 'remember'))
                 ->withErrors([
-                    'email' => '⚠️ Une erreur est survenue lors de la connexion. Veuillez réessayer.',
+                    'email' => 'Une erreur est survenue lors de la connexion. Veuillez réessayer.',
                 ]);
         }
     }
@@ -110,6 +110,6 @@ class AuthenticatedSessionController extends Controller
         Log::info('Déconnexion', ['user_id' => $user?->id, 'user_email' => $user?->email]);
 
         return redirect('/')
-            ->with('success', '👋 Vous avez été déconnecté avec succès.');
+            ->with('success', 'Vous avez été déconnecté avec succès.');
     }
 }

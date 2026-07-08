@@ -29,26 +29,26 @@ class NewPasswordController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
-            'token.required' => '🔑 Le jeton de réinitialisation est manquant.',
-            'email.required' => '📧 L\'adresse email est obligatoire.',
-            'email.email' => '📧 Veuillez saisir une adresse email valide.',
-            'password.required' => '🔑 Le mot de passe est obligatoire.',
-            'password.confirmed' => '🔑 Les mots de passe ne correspondent pas.',
-            'password.min' => '🔑 Le mot de passe doit contenir au moins 8 caractères.',
+            'token.required' => 'Le jeton de réinitialisation est manquant.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ]);
 
-        // ✅ Vérifier si l'utilisateur existe
+        // Vérifier si l'utilisateur existe
         $user = User::where('email', $request->email)->first();
         
         if (!$user) {
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors([
-                    'email' => '❌ Aucun compte trouvé avec cette adresse email.',
+                    'email' => 'Aucun compte trouvé avec cette adresse email.',
                 ]);
         }
 
-        // ✅ Réinitialiser le mot de passe
+        // Réinitialiser le mot de passe
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user) use ($request) {
@@ -63,13 +63,13 @@ class NewPasswordController extends Controller
 
         if ($status == Password::PASSWORD_RESET) {
             return redirect()->route('login')
-                ->with('status', '✅ Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.');
+                ->with('status', 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.');
         }
 
         return back()
             ->withInput($request->only('email'))
             ->withErrors([
-                'email' => '⚠️ Une erreur est survenue. Veuillez réessayer.',
+                'email' => 'Une erreur est survenue. Veuillez réessayer.',
             ]);
     }
 }
