@@ -1,4 +1,5 @@
 <?php
+// app/Providers/AppServiceProvider.php
 
 namespace App\Providers;
 
@@ -20,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // ✅ Services MLM
+        // Services MLM
         $this->app->singleton(CommissionService::class, function ($app) {
             return new CommissionService();
         });
@@ -33,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
             return new NetworkService();
         });
 
-        // ✅ Services Paiement
+        // Services Paiement
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService();
         });
@@ -46,15 +47,16 @@ class AppServiceProvider extends ServiceProvider
             return new MobileMoneyService();
         });
 
-        // ✅ Services Utilitaires
+        // Services Utilitaires
         $this->app->singleton(ImageUploadService::class, function ($app) {
             return new ImageUploadService();
         });
 
-        // ✅ Pour les environnements de développement
-        if ($this->app->environment('local')) {
-            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
-        }
+        // Pour les environnements de développement
+        // COMMENTÉ CAR TELESCOPE N'EST PAS INSTALLÉ
+        // if ($this->app->environment('local')) {
+        //     $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+        // }
     }
 
     /**
@@ -62,18 +64,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ✅ Forcer HTTPS en production
+        // Forcer HTTPS en production
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
 
-        // ✅ Définir la longueur par défaut des chaînes (compatibilité MySQL)
+        // Définir la longueur par défaut des chaînes (compatibilité MySQL)
         Schema::defaultStringLength(191);
 
-        // ✅ Configurer les timeouts
+        // Configurer les timeouts
         $this->configureTimeouts();
 
-        // ✅ Configurer les middlewares
+        // Configurer les middlewares
         $this->configureMiddleware();
     }
 

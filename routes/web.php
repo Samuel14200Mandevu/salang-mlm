@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\EmailCheckController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\UserPackageController;
-use App\Http\Controllers\TeamController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RankController;
 use App\Http\Controllers\WalletController;
@@ -106,9 +105,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [RankController::class, 'index'])->name('index');
         Route::get('/history', [RankController::class, 'history'])->name('history');
     });
-    
-    // Équipe
-    Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     
     // Finances
     Route::prefix('wallet')->name('wallet.')->group(function () {
@@ -220,7 +216,7 @@ Route::prefix('admin')
         Route::post('/{id}/adjust', [App\Http\Controllers\Admin\WalletController::class, 'adjust'])->name('adjust');
         Route::get('/export', [App\Http\Controllers\Admin\WalletController::class, 'export'])->name('export');
     });
-    
+
     // Withdrawals
     Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\WithdrawalController::class, 'index'])->name('index');
