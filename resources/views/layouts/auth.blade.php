@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-touch-fullscreen" content="yes">
-    <meta name="theme-color" content="#5ab638">
+    <meta name="theme-color" content="#0E2F76">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="msapplication-TileColor" content="#5ab638">
+    <meta name="msapplication-TileColor" content="#0E2F76">
     <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
     
     <!-- PWA -->
@@ -55,7 +55,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #0E2F76, #0038BD);
         }
         
         .auth-logo {
@@ -70,9 +70,10 @@
         .auth-logo .brand-name {
             font-size: 1.5rem;
             font-weight: 800;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #0E2F76, #0038BD);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             display: inline-block;
         }
         
@@ -83,6 +84,13 @@
             color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
+        .auth-title .highlight {
+            background: linear-gradient(135deg, #0E2F76, #0038BD);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
         .auth-subtitle {
             text-align: center;
             color: var(--text-secondary);
@@ -116,8 +124,8 @@
             outline: none;
         }
         .form-group .input:focus {
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 4px var(--border-focus);
+            border-color: #0E2F76;
+            box-shadow: 0 0 0 4px rgba(14, 47, 118, 0.15);
         }
         .form-group .input-error {
             border-color: #ef4444;
@@ -187,13 +195,13 @@
             width: 100%;
         }
         .btn-primary {
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #0E2F76, #0038BD);
             color: white;
-            box-shadow: 0 4px 20px rgba(90, 182, 56, 0.35);
+            box-shadow: 0 4px 20px rgba(14, 47, 118, 0.35);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(90, 182, 56, 0.45);
+            box-shadow: 0 8px 32px rgba(14, 47, 118, 0.45);
         }
         .btn-primary:active {
             transform: scale(0.96);
@@ -204,8 +212,8 @@
             border: 2px solid var(--border-color);
         }
         .btn-outline:hover {
-            border-color: var(--primary-500);
-            color: var(--primary-500);
+            border-color: #0E2F76;
+            color: #0E2F76;
         }
         
         .auth-divider {
@@ -242,13 +250,38 @@
         }
         .social-btn:hover {
             background: var(--bg-hover);
-            border-color: var(--primary-500);
+            border-color: #0E2F76;
             transform: translateY(-1px);
         }
         .social-btn svg {
             width: 1.25rem;
             height: 1.25rem;
             flex-shrink: 0;
+        }
+        
+        /* Lien "Mot de passe oublié" */
+        .forgot-link {
+            color: #0E2F76;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .forgot-link:hover {
+            color: #0038BD;
+            text-decoration: underline;
+        }
+        
+        /* Lien "S'inscrire" / "Se connecter" */
+        .auth-link {
+            color: #0E2F76;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s ease;
+        }
+        .auth-link:hover {
+            color: #0038BD;
+            text-decoration: underline;
         }
         
         @keyframes fadeInUp {
@@ -274,6 +307,7 @@
             .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
             .btn { font-size: 0.813rem; padding: 0.5rem 1rem; }
             .social-btn { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
+            .forgot-link { font-size: 0.75rem; }
         }
         
         @media (max-width: 480px) {
@@ -295,7 +329,7 @@
         <!-- Footer Links -->
         <div class="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-[var(--text-secondary)]">
             <p>
-                &copy; {{ date('Y') }} Salang Group. 
+                &copy; {{ date('Y') }} <span class="font-semibold text-[#0E2F76]">Salang Group</span>. 
                 <span class="hidden xs:inline">All rights reserved.</span>
             </p>
         </div>

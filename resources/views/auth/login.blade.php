@@ -31,17 +31,19 @@
         margin-bottom: 1.5rem;
     }
     .auth-logo img {
-        height: 60px;
+        height: 200px; /* Taille agrandie */
         width: auto;
         margin: 0 auto;
+        display: block;
     }
     .auth-logo .brand-name {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         font-weight: 800;
         background: var(--gradient-primary);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         display: inline-block;
+        margin-top: 0.5rem;
     }
     .auth-title {
         text-align: center;
@@ -215,10 +217,15 @@
         font-size: 0.875rem;
     }
     
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; max-width: 100%; }
-        .auth-logo img { height: 50px; }
-        .auth-logo .brand-name { font-size: 1.25rem; }
+        .auth-logo img { 
+            height: 90px; /* Taille adaptée pour mobile */
+        }
+        .auth-logo .brand-name { 
+            font-size: 1.5rem;
+        }
         .auth-title { font-size: 1.25rem; }
         .form-group label { font-size: 0.813rem; }
         .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
@@ -228,6 +235,12 @@
     
     @media (max-width: 480px) {
         .auth-card { padding: 1.25rem; }
+        .auth-logo img { 
+            height: 80px; /* Taille adaptée pour très petits écrans */
+        }
+        .auth-logo .brand-name {
+            font-size: 1.25rem;
+        }
         .form-group .input { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
     }
 </style>
@@ -236,13 +249,17 @@
 @section('content')
 <div class="auth-card">
     
-    <!-- Logo -->
-<div class="auth-logo">
-    <img src="{{ asset('images/salang_logo.png') }}" 
-         alt="Salang MLM" 
-         class="logo-themeable h-18 sm:h-20 w-auto mx-auto">
-    <span class="brand-name block mt-2">Salang Group</span>
-</div>
+    <!-- Logo - Version agrandie -->
+    <div class="auth-logo">
+        <a href="/" class="block">
+            <img src="{{ asset('images/salang_logo.png') }}" 
+                 alt="Salang" 
+                 class="mx-auto transition-transform hover:scale-105">
+            <span class="brand-name">
+                Salang Group
+            </span>
+        </a>
+    </div>
 
     <h2 class="auth-title">Bienvenue</h2>
     <p class="auth-subtitle">Connectez-vous à votre compte</p>

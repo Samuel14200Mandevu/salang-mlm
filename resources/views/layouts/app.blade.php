@@ -721,24 +721,6 @@
             <main class="p-3 sm:p-4 md:p-6 lg:p-8">
                 @yield('content')
             </main>
-
-            <!-- Footer -->
-            <footer class="bg-[var(--bg-footer)] border-t border-[var(--border-color)] py-3 sm:py-4">
-                <div class="max-w-7xl mx-auto px-3 sm:px-4 text-center text-[var(--text-secondary)] text-xs sm:text-sm">
-                    <div class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2">
-                        <div class="flex items-center gap-2">
-                            <div class="logo-light">
-                                <img src="{{ asset('images/light_logo.jpeg') }}" alt="Logo" class="h-5 sm:h-6 w-auto">
-                            </div>
-                            <div class="logo-dark">
-                                <img src="{{ asset('images/dark_logo.jpeg') }}" alt="Logo" class="h-5 sm:h-6 w-auto">
-                            </div>
-                            <span>&copy; {{ date('Y') }} Salang Group.</span>
-                        </div>
-                        <span class="hidden xs:inline">All rights reserved.</span>
-                    </div>
-                </div>
-            </footer>
         </div>
 
         <!-- Mobile Bottom Nav -->
