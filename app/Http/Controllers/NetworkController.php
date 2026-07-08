@@ -14,21 +14,20 @@ class NetworkController extends Controller
     {
         $user = Auth::user();
         
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         // ✅ Récupérer l'arbre généalogique
         $tree = $this->buildTree($user);
         
-        // ✅ Statistiques du réseau - CORRIGÉ
+        // ✅ Statistiques du réseau
         $stats = [
-            // Total des fillules (ceux qui ont ce user comme sponsor)
-            'total_downlines' => User::where('sponsor_id', $user->sponsor_id)->count(),
-            // Niveau 1 (sponsorisés directement)
+            'total' => User::where('sponsor_id', $user->sponsor_id)->count(),
             'level_1' => User::where('sponsor_id', $user->sponsor_id)->count(),
-            // Niveau 2 (sponsorisés par les fillules)
             'level_2' => $this->countLevel2($user),
-            // Niveau 3
             'level_3' => $this->countLevel3($user),
-            // Membres actifs
-            'active_members' => User::where('sponsor_id', $user->sponsor_id)
+            'active' => User::where('sponsor_id', $user->sponsor_id)
                 ->where('is_active', true)
                 ->count(),
         ];
@@ -37,23 +36,22 @@ class NetworkController extends Controller
         $recentDownlines = User::where('sponsor_id', $user->sponsor_id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->with('package')
+            ->with(['package', 'rank'])
             ->get();
         
-        return view('network.index', compact('tree', 'stats', 'recentDownlines'));
+        return view('network.index', compact('user', 'tree', 'stats', 'recentDownlines'));
     }
 
     /**
      * Construire l'arbre généalogique
-     * Utilise sponsor_id comme code unique
      */
     private function buildTree($user, $level = 0, $maxLevel = 3)
     {
-        if ($level > $maxLevel) {
+        if ($level > $maxLevel || !$user) {
             return null;
         }
 
-        // ✅ Récupérer les fillules (ceux qui ont sponsor_id = code de parrain du user)
+        // ✅ Récupérer les fillules
         $downlines = User::where('sponsor_id', $user->sponsor_id)->get();
         $children = [];
 
@@ -76,11 +74,15 @@ class NetworkController extends Controller
      */
     private function countLevel2($user)
     {
-        // ✅ Récupérer les codes de parrain des fillules directes
         $level1SponsorCodes = User::where('sponsor_id', $user->sponsor_id)
-            ->pluck('sponsor_id');
+            ->pluck('sponsor_id')
+            ->filter()
+            ->toArray();
         
-        // ✅ Compter les utilisateurs qui ont ces codes comme sponsor
+        if (empty($level1SponsorCodes)) {
+            return 0;
+        }
+        
         return User::whereIn('sponsor_id', $level1SponsorCodes)->count();
     }
 
@@ -89,20 +91,29 @@ class NetworkController extends Controller
      */
     private function countLevel3($user)
     {
-        // ✅ Récupérer les codes de parrain des fillules directes
         $level1SponsorCodes = User::where('sponsor_id', $user->sponsor_id)
-            ->pluck('sponsor_id');
+            ->pluck('sponsor_id')
+            ->filter()
+            ->toArray();
         
-        // ✅ Récupérer les codes de parrain des fillules de niveau 2
+        if (empty($level1SponsorCodes)) {
+            return 0;
+        }
+        
         $level2SponsorCodes = User::whereIn('sponsor_id', $level1SponsorCodes)
-            ->pluck('sponsor_id');
+            ->pluck('sponsor_id')
+            ->filter()
+            ->toArray();
         
-        // ✅ Compter les utilisateurs qui ont ces codes comme sponsor
+        if (empty($level2SponsorCodes)) {
+            return 0;
+        }
+        
         return User::whereIn('sponsor_id', $level2SponsorCodes)->count();
     }
 
     /**
-     * Données de l'arbre en JSON (pour les graphiques)
+     * Données de l'arbre en JSON
      */
     public function treeData()
     {
@@ -118,7 +129,6 @@ class NetworkController extends Controller
     {
         $user = Auth::user();
         
-        // ✅ Récupérer les fillules avec leurs relations
         $downlines = User::where('sponsor_id', $user->sponsor_id)
             ->with(['package', 'rank'])
             ->paginate(20);

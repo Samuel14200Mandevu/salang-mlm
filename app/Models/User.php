@@ -1,4 +1,5 @@
 <?php
+// app/Models/User.php
 
 namespace App\Models;
 
@@ -61,68 +62,112 @@ class User extends Authenticatable
         'is_active' => 'boolean',
     ];
 
-    // Relations
+    // ============================================================
+    // RELATIONS CORRIGÉES
+    // ============================================================
+
+    /**
+     * ✅ Relation pour le rank
+     */
     public function rank()
     {
         return $this->belongsTo(Rank::class);
     }
 
+    /**
+     * ✅ Relation pour le package
+     */
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
 
+    /**
+     * ✅ Relation pour le sponsor (celui qui a parrainé cet utilisateur)
+     * sponsor_id est un code VARCHAR unique
+     */
     public function sponsor()
     {
-        return $this->belongsTo(User::class, 'sponsor_id');
+        return $this->belongsTo(User::class, 'sponsor_id', 'sponsor_id');
     }
 
+    /**
+     * ✅ Relation pour les fillules (ceux que cet utilisateur a parrainés)
+     * sponsor_id est un code VARCHAR unique
+     */
     public function downlines()
     {
-        return $this->hasMany(User::class, 'sponsor_id');
+        return $this->hasMany(User::class, 'sponsor_id', 'sponsor_id');
     }
 
+    /**
+     * ✅ Relation pour le portefeuille
+     */
     public function wallet()
     {
         return $this->hasOne(Wallet::class);
     }
 
+    /**
+     * ✅ Relation pour les commissions
+     */
     public function commissions()
     {
         return $this->hasMany(Commission::class);
     }
 
+    /**
+     * ✅ Relation pour les transactions
+     */
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
 
+    /**
+     * ✅ Relation pour les retraits
+     */
     public function withdrawals()
     {
         return $this->hasMany(Withdrawal::class);
     }
 
+    /**
+     * ✅ Relation pour la généalogie
+     */
     public function genealogy()
     {
         return $this->hasOne(Genealogy::class);
     }
 
+    /**
+     * ✅ Relation pour l'historique des rangs
+     */
     public function rankHistory()
     {
         return $this->hasMany(RankHistory::class);
     }
 
+    /**
+     * ✅ Relation pour les commandes
+     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
+    /**
+     * ✅ Relation pour les documents KYC
+     */
     public function kycDocuments()
     {
         return $this->hasMany(KycDocument::class);
     }
 
-    // Accesseurs
+    // ============================================================
+    // ACCESSEURS
+    // ============================================================
+
     public function getFullNameAttribute()
     {
         return $this->name;
@@ -205,6 +250,67 @@ class User extends Authenticatable
     {
         return $this->phone;
     }
+
+    /**
+     * ✅ Récupérer le nom du sponsor
+     */
+    public function getSponsorNameAttribute()
+    {
+        $sponsor = $this->sponsor;
+        return $sponsor ? $sponsor->name : 'None';
+    }
+
+    /**
+     * ✅ Récupérer le code de parrain
+     */
+    public function getReferralCodeAttribute()
+    {
+        return $this->sponsor_id ?? '';
+    }
+
+    /**
+     * ✅ Compter les fillules
+     */
+    public function countDownlines()
+    {
+        return $this->downlines()->count();
+    }
+
+    /**
+     * ✅ Compter les fillules actives
+     */
+    public function countActiveDownlines()
+    {
+        return $this->downlines()->where('is_active', true)->count();
+    }
+
+    /**
+     * ✅ Compter les fillules par niveau
+     */
+    public function countDownlinesByLevel($level = 1)
+    {
+        if ($level == 1) {
+            return $this->downlines()->count();
+        }
+        
+        $sponsorCodes = $this->downlines()->pluck('sponsor_id')->filter()->toArray();
+        
+        for ($i = 2; $i <= $level; $i++) {
+            if (empty($sponsorCodes)) {
+                return 0;
+            }
+            $sponsorCodes = User::whereIn('sponsor_id', $sponsorCodes)
+                ->pluck('sponsor_id')
+                ->filter()
+                ->toArray();
+        }
+        
+        return User::whereIn('sponsor_id', $sponsorCodes)->count();
+    }
+
+    // ============================================================
+    // MÉTHODES UTILITAIRES
+    // ============================================================
 
     public function isAdmin()
     {

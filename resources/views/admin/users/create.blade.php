@@ -124,19 +124,20 @@
                     </select>
                 </div>
 
-                <!-- Sponsor -->
+                <!-- ✅ CORRIGÉ : Sponsor avec code de parrain -->
                 <div class="form-group">
                     <label>Sponsor</label>
                     <select name="sponsor_id" class="input text-sm sm:text-base">
                         <option value="">None</option>
-                        @if(isset($sponsors) && $sponsors->count() > 0)
-                            @foreach($sponsors as $sponsor)
-                                <option value="{{ $sponsor->id }}" {{ old('sponsor_id') == $sponsor->id ? 'selected' : '' }}>
-                                    {{ $sponsor->name }} ({{ $sponsor->email }})
+                        @if(isset($users) && $users->count() > 0)
+                            @foreach($users as $sponsor)
+                                <option value="{{ $sponsor->sponsor_id }}" {{ old('sponsor_id') == $sponsor->sponsor_id ? 'selected' : '' }}>
+                                    {{ $sponsor->name }} ({{ $sponsor->sponsor_id }})
                                 </option>
                             @endforeach
                         @endif
                     </select>
+                    <p class="help-text">Sélectionnez le parrain par son code unique</p>
                 </div>
 
                 <!-- Role -->
@@ -163,6 +164,14 @@
                     <textarea name="address" rows="2" class="input text-sm sm:text-base" 
                               placeholder="Full address...">{{ old('address') }}</textarea>
                 </div>
+            </div>
+
+            <!-- Note sur le code de parrain -->
+            <div class="mt-4 p-3 bg-primary-500/5 border border-primary-500/20 rounded-lg">
+                <p class="text-sm text-[var(--text-secondary)]">
+                    <span class="font-semibold text-primary-500">Note:</span> 
+                    Un code de parrain unique sera généré automatiquement pour ce nouvel utilisateur.
+                </p>
             </div>
 
             <!-- Buttons -->

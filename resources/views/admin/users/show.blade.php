@@ -2,7 +2,6 @@
 
 @push('styles')
 <style>
-    /* Modal styles */
     .modal-overlay {
         position: fixed;
         inset: 0;
@@ -219,8 +218,22 @@
                     <span class="value">{{ $user->package?->name ?? 'None' }}</span>
                 </div>
                 <div class="info-row">
+                    <span class="label">Sponsor Code</span>
+                    <span class="value font-mono text-primary-500">{{ $user->sponsor_id ?? 'None' }}</span>
+                </div>
+                <div class="info-row">
                     <span class="label">Sponsor</span>
-                    <span class="value">{{ $user->sponsor?->name ?? 'None' }}</span>
+                    <span class="value">
+                        <!-- ✅ CORRIGÉ : Recherche du sponsor par code -->
+                        @if($user->sponsor_id)
+                            @php
+                                $sponsor = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
+                            @endphp
+                            {{ $sponsor?->name ?? 'Inconnu (Code: ' . $user->sponsor_id . ')' }}
+                        @else
+                            None
+                        @endif
+                    </span>
                 </div>
                 <div class="info-row">
                     <span class="label">Registered</span>

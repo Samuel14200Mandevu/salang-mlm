@@ -154,17 +154,29 @@
                     </select>
                 </div>
 
-                <!-- Sponsor -->
+                <!-- ✅ CORRIGÉ : Sponsor avec code de parrain -->
                 <div class="form-group">
                     <label>Sponsor</label>
                     <select name="sponsor_id" class="input text-sm sm:text-base">
                         <option value="">None</option>
-                        @foreach($sponsors ?? [] as $sponsor)
-                            <option value="{{ $sponsor->id }}" {{ $user->sponsor_id == $sponsor->id ? 'selected' : '' }}>
-                                {{ $sponsor->name }} ({{ $sponsor->email }})
-                            </option>
+                        @foreach($users ?? [] as $sponsor)
+                            @if($sponsor->id != $user->id)
+                                <option value="{{ $sponsor->sponsor_id }}" 
+                                    {{ $user->sponsor_id == $sponsor->sponsor_id ? 'selected' : '' }}>
+                                    {{ $sponsor->name }} ({{ $sponsor->sponsor_id }})
+                                </option>
+                            @endif
                         @endforeach
                     </select>
+                    <p class="help-text">Sélectionnez le parrain par son code unique</p>
+                </div>
+
+                <!-- Sponsor Code (lecture seule) -->
+                <div class="form-group">
+                    <label>Sponsor Code</label>
+                    <input type="text" value="{{ $user->sponsor_id ?? 'None' }}" 
+                           class="input text-sm sm:text-base bg-[var(--bg-secondary)] cursor-not-allowed" disabled>
+                    <p class="help-text">Code unique de parrain (non modifiable)</p>
                 </div>
 
                 <!-- Role -->

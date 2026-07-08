@@ -125,55 +125,64 @@
     <!-- Header -->
     <div class="downline-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Downlines</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Complete list of your network</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Filleuls</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Liste complète de votre réseau</p>
         </div>
         <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Back to Tree
+            Retour à l'arbre
         </a>
     </div>
 
+    <!-- ✅ Affichage du code de parrain -->
+    <div class="animate-fadeInUp delay-1 p-3 bg-primary-500/5 border border-primary-500/20 rounded-lg">
+        <p class="text-sm text-[var(--text-secondary)]">
+            <span class="font-semibold text-primary-500">Votre code de parrain :</span> 
+            <span class="font-mono text-primary-500 font-bold">{{ Auth::user()->sponsor_id }}</span>
+            <span class="text-[var(--text-tertiary)] ml-2">(Partagez ce code pour parrainer de nouveaux membres)</span>
+        </p>
+    </div>
+
     <!-- Filters -->
-    <div class="filters-wrapper animate-fadeInUp delay-1">
+    <div class="filters-wrapper animate-fadeInUp delay-2">
         <div class="relative flex-1 min-w-[120px] sm:min-w-[180px] max-w-xs sm:max-w-sm">
             <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Search..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="text" id="searchInput" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
         </div>
         <select id="levelFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
-            <option value="">All Levels</option>
-            <option value="1">Level 1</option>
-            <option value="2">Level 2</option>
-            <option value="3">Level 3</option>
-            <option value="4">Level 4+</option>
+            <option value="">Tous les niveaux</option>
+            <option value="1">Niveau 1</option>
+            <option value="2">Niveau 2</option>
+            <option value="3">Niveau 3</option>
+            <option value="4">Niveau 4+</option>
         </select>
         <select id="statusFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
-            <option value="">All Status</option>
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
+            <option value="">Tous les statuts</option>
+            <option value="1">Actif</option>
+            <option value="0">Inactif</option>
         </select>
     </div>
 
     <!-- Table -->
-    <div class="card animate-fadeInUp delay-2">
+    <div class="card animate-fadeInUp delay-3 p-3 sm:p-4 md:p-6">
         <div class="table-wrap">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th class="text-xs sm:text-sm">#</th>
-                        <th class="text-xs sm:text-sm">Name</th>
+                        <th class="text-xs sm:text-sm">Nom</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Level</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Niveau</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
                         <th class="text-xs sm:text-sm">PV</th>
-                        <th class="text-xs sm:text-sm hidden xl:table-cell">Joined</th>
-                        <th class="text-xs sm:text-sm">Status</th>
+                        <th class="text-xs sm:text-sm hidden xl:table-cell">Inscrit</th>
+                        <th class="text-xs sm:text-sm">Statut</th>
                     </tr>
                 </thead>
                 <tbody id="downlinesTable">
@@ -184,10 +193,16 @@
                             data-level="{{ $member->genealogy?->level ?? 1 }}"
                             data-status="{{ $member->is_active ? 1 : 0 }}">
                             <td class="font-mono text-xs sm:text-sm">#{{ $member->id }}</td>
-                            <td class="font-medium text-sm sm:text-base">{{ $member->name }}</td>
+                            <td class="font-medium text-sm sm:text-base">
+                                {{ $member->name }}
+                                <!-- ✅ Affichage du code de parrain du membre -->
+                                <span class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] block font-mono">
+                                    Code: {{ $member->sponsor_id }}
+                                </span>
+                            </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden sm:table-cell">{{ $member->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">Level {{ $member->genealogy?->level ?? 1 }}</span>
+                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->genealogy?->level ?? 1 }}</span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $member->package?->name ?? 'Starter' }}</td>
                             <td class="text-sm sm:text-base">{{ number_format($member->pv_balance ?? 0) }}</td>
@@ -196,7 +211,7 @@
                             </td>
                             <td>
                                 <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                    {{ $member->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
                         </tr>
@@ -206,8 +221,8 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">No members in your network</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Share your referral link to start building your team</p>
+                                <p class="text-base sm:text-lg font-medium">Aucun membre dans votre réseau</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">Partagez votre lien de parrainage pour développer votre équipe</p>
                             </td>
                         </tr>
                     @endforelse
@@ -223,18 +238,18 @@
     </div>
 
     <!-- Export -->
-    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-3">
+    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-4">
         <button onclick="exportCSV()" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
-            Export CSV
+            Exporter CSV
         </button>
         <button onclick="window.print()" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
             </svg>
-            Print
+            Imprimer
         </button>
     </div>
 </div>
@@ -283,30 +298,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function exportCSV() {
     var rows = document.querySelectorAll('#downlinesTable tr');
-    var csv = 'Name,Email,Level,Package,PV,Status,Joined\n';
+    var csv = 'ID,Nom,Email,Niveau,Package,PV,Statut,Inscrit le,Code Parrain\n';
 
     rows.forEach(function(row) {
         if (row.style.display === 'none') return;
         var cells = row.querySelectorAll('td');
         if (cells.length < 7) return;
 
+        // Récupérer le code de parrain depuis le nom
+        var nameCell = cells[1];
+        var code = '';
+        var name = nameCell?.textContent?.trim() || '';
+        var codeSpan = nameCell?.querySelector('.font-mono');
+        if (codeSpan) {
+            code = codeSpan.textContent.trim().replace('Code:', '').trim();
+        }
+
         csv += [
-            cells[1]?.textContent?.trim() || '',
+            cells[0]?.textContent?.trim() || '',
+            name,
             cells[2]?.textContent?.trim() || '',
             cells[3]?.textContent?.trim() || '',
             cells[4]?.textContent?.trim() || '',
             cells[5]?.textContent?.trim() || '',
             cells[7]?.textContent?.trim() || '',
-            cells[6]?.textContent?.trim() || ''
+            cells[6]?.textContent?.trim() || '',
+            code
         ].join(',') + '\n';
     });
 
-    var blob = new Blob([csv], { type: 'text/csv' });
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     var url = window.URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'my_downlines_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.download = 'mes_filleuls_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 }
 </script>
