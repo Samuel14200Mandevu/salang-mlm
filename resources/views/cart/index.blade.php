@@ -45,6 +45,11 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
     }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
     .btn-outline {
         background: transparent;
         color: var(--text-primary);
@@ -77,6 +82,13 @@
     .sticky-top {
         position: sticky;
         top: 1.5rem;
+    }
+    
+    .insufficient-balance {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        text-align: center;
     }
     
     @keyframes fadeInUp {
@@ -135,6 +147,24 @@
     <div class="animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Cart</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Review your items before checkout</p>
+    </div>
+
+    <!-- ✅ Balance Info -->
+    <div class="card animate-fadeInUp delay-1 border-l-4 border-yellow-500">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your Wallet Balance</p>
+                <p class="text-xl sm:text-2xl font-bold text-yellow-500">
+                    ${{ number_format($balance ?? 0, 2) }}
+                </p>
+            </div>
+            <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Funds
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -225,6 +255,14 @@
                 <div class="card sticky-top">
                     <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h3>
                     
+                    @php
+                        $tax = $total * 0.18;
+                        $shipping = $total > 100 ? 0 : 10;
+                        $grandTotal = $total + $tax + $shipping;
+                        $balance = Auth::user()->wallet->balance ?? 0;
+                        $canAfford = $balance >= $grandTotal;
+                    @endphp
+
                     <div class="space-y-2 text-xs sm:text-sm">
                         <div class="flex justify-between">
                             <span class="text-[var(--text-secondary)]">Subtotal</span>
@@ -232,31 +270,49 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-[var(--text-secondary)]">Tax (18%)</span>
-                            <span class="font-medium">${{ number_format($total * 0.18, 2) }}</span>
+                            <span class="font-medium">${{ number_format($tax, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-[var(--text-secondary)]">Shipping</span>
-                            <span class="font-medium">{{ $total > 100 ? 'Free' : '$10.00' }}</span>
+                            <span class="font-medium">{{ $shipping > 0 ? '$' . number_format($shipping, 2) : 'Free' }}</span>
                         </div>
                         <div class="border-t border-[var(--border-color)] pt-3 mt-3">
                             <div class="flex justify-between text-base sm:text-lg font-bold">
                                 <span>Total</span>
                                 <span class="text-primary-500">
-                                    ${{ number_format($total + ($total * 0.18) + ($total > 100 ? 0 : 10), 2) }}
+                                    ${{ number_format($grandTotal, 2) }}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <form action="{{ route('cart.checkout') }}" method="POST" class="mt-3 sm:mt-4">
-                        @csrf
-                        <button type="submit" class="btn btn-primary w-full text-sm sm:text-base py-2 sm:py-2.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            Proceed to Checkout
-                        </button>
-                    </form>
+                    <!-- ✅ Vérification du solde -->
+                    <div class="mt-3">
+                        @if($canAfford)
+                            <form action="{{ route('cart.checkout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-primary w-full text-sm sm:text-base py-2 sm:py-2.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    Proceed to Checkout
+                                </button>
+                            </form>
+                        @else
+                            <button class="btn btn-primary w-full text-sm sm:text-base py-2 sm:py-2.5 cursor-not-allowed opacity-50" disabled>
+                                Insufficient Balance
+                            </button>
+                            <p class="insufficient-balance">
+                                Need ${{ number_format($grandTotal - $balance, 2) }} more to complete this order
+                            </p>
+                            <a href="{{ route('wallet.deposit') }}" class="btn btn-outline w-full mt-2 text-sm sm:text-base py-2 sm:py-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Add Funds
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

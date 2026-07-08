@@ -95,6 +95,10 @@
         background: rgba(239, 68, 68, 0.12);
         color: #ef4444;
     }
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.12);
+        color: #f59e0b;
+    }
     
     .btn {
         display: inline-flex;
@@ -120,6 +124,11 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
     }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
     .btn-outline {
         background: transparent;
         color: var(--text-primary);
@@ -128,6 +137,10 @@
     .btn-outline:hover {
         border-color: var(--primary-500);
         color: var(--primary-500);
+    }
+    .btn-warning {
+        background: var(--gradient-warning);
+        color: white;
     }
     
     .card {
@@ -158,6 +171,12 @@
     .delay-5 { animation-delay: 0.25s; }
     .delay-6 { animation-delay: 0.30s; }
     .delay-7 { animation-delay: 0.35s; }
+    
+    .insufficient-balance {
+        font-size: 0.6rem;
+        color: #ef4444;
+        margin-top: 0.25rem;
+    }
     
     @media (max-width: 640px) {
         .subscription-card {
@@ -248,23 +267,36 @@
         </div>
     @endif
 
-    <!-- Current Subscription -->
-    <div class="card animate-fadeInUp delay-1 border-l-4 border-primary-500">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your current subscription</p>
-                <h2 class="text-xl sm:text-2xl font-bold text-primary-500">
-                    {{ Auth::user()->package ? Auth::user()->package->name : 'No subscription' }}
-                </h2>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    {{ Auth::user()->pv_balance ?? 0 }} PV
-                </p>
-            </div>
-            <div>
-                <span class="badge {{ Auth::user()->package_id ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                    {{ Auth::user()->package_id ? 'Active' : 'Inactive' }}
-                </span>
-            </div>
+    <!-- Current Subscription & Balance -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-1">
+        <div class="card border-l-4 border-primary-500">
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your current subscription</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-primary-500">
+                {{ Auth::user()->package ? Auth::user()->package->name : 'No subscription' }}
+            </h2>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                {{ Auth::user()->pv_balance ?? 0 }} PV
+            </p>
+            <span class="badge {{ Auth::user()->package_id ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-1">
+                {{ Auth::user()->package_id ? 'Active' : 'Inactive' }}
+            </span>
+        </div>
+
+        <!-- ✅ AFFICHAGE DU SOLDE -->
+        <div class="card border-l-4 border-yellow-500">
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your Wallet Balance</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-yellow-500">
+                ${{ number_format(Auth::user()->wallet->balance ?? 0, 2) }}
+            </h2>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                Available for purchases
+            </p>
+            <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm mt-2 inline-flex w-auto">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Deposit
+            </a>
         </div>
     </div>
 
@@ -277,6 +309,8 @@
                 $isLocked = Auth::user()->package_id && Auth::user()->package_id > $package->id;
                 $isPopular = $package->id == 4;
                 $delay = min($loop->index + 2, 7);
+                $balance = Auth::user()->wallet->balance ?? 0;
+                $canAfford = $balance >= $package->price;
             @endphp
 
             <div class="subscription-card animate-fadeInUp delay-{{ $delay }} {{ $isCurrent ? 'current' : '' }}">
@@ -327,17 +361,25 @@
                         <span class="badge badge-danger text-[10px] sm:text-xs">Locked</span>
                     @else
                         <div class="space-y-1.5 sm:space-y-2">
-                            <form action="{{ route('subscriptions.buy') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="package_id" value="{{ $package->id }}">
-                                <button type="submit" class="btn btn-primary text-[10px] sm:text-sm py-1.5 sm:py-2">
-                                    {{ $isUpgrade ? 'Upgrade' : 'Subscribe' }}
+                            @if($canAfford)
+                                <form action="{{ route('subscriptions.buy') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="package_id" value="{{ $package->id }}">
+                                    <button type="submit" class="btn btn-primary text-[10px] sm:text-sm py-1.5 sm:py-2">
+                                        {{ $isUpgrade ? 'Upgrade' : 'Subscribe' }}
+                                    </button>
+                                </form>
+                            @else
+                                <button class="btn btn-primary text-[10px] sm:text-sm py-1.5 sm:py-2 cursor-not-allowed opacity-50" disabled>
+                                    Insufficient Balance
                                 </button>
-                            </form>
+                                <p class="insufficient-balance">Need ${{ number_format($package->price - $balance, 2) }} more</p>
+                            @endif
+                            
                             <form action="{{ route('cart.add-package') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="package_id" value="{{ $package->id }}">
-                                <button type="submit" class="btn btn-outline text-[10px] sm:text-sm py-1.5 sm:py-2">
+                                <button type="submit" class="btn btn-outline text-[10px] sm:text-sm py-1.5 sm:py-2 {{ !$canAfford ? 'opacity-50' : '' }}">
                                     <svg class="w-3 h-3 sm:w-4 sm:h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
