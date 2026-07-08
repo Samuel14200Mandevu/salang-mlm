@@ -113,14 +113,87 @@
         margin-top: 0.125rem;
     }
     
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    .btn-primary { background: var(--gradient-primary); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-warning { background: var(--gradient-warning); color: white; }
+    .btn-danger { background: var(--gradient-danger); color: white; }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
+    .table thead th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .table tbody td {
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    
     @media (max-width: 640px) {
         .modal-box { padding: 1.5rem; }
         .modal-actions { flex-direction: column; }
         .modal-actions .btn { width: 100%; }
         .info-row .value { font-size: 0.85rem; }
-        .info-grid {
-            grid-template-columns: 1fr !important;
-        }
+        .info-grid { grid-template-columns: 1fr !important; }
+        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
+        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+        .card { padding: 0.875rem; }
     }
     
     @media (min-width: 641px) and (max-width: 1024px) {
@@ -218,20 +291,47 @@
                     <span class="value">{{ $user->package?->name ?? 'None' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Sponsor Code</span>
-                    <span class="value font-mono text-primary-500">{{ $user->sponsor_id ?? 'None' }}</span>
+                    <span class="label">Referral Code</span>
+                    <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'None' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Sponsor</span>
+                    <span class="label">Sponsor (Who invited me)</span>
                     <span class="value">
-                        <!-- ✅ CORRIGÉ : Recherche du sponsor par code -->
-                        @if($user->sponsor_id)
-                            @php
-                                $sponsor = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
-                            @endphp
-                            {{ $sponsor?->name ?? 'Inconnu (Code: ' . $user->sponsor_id . ')' }}
+                        @php
+                            $parrain = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
+                        @endphp
+                        @if($parrain)
+                            <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-500 hover:underline">
+                                {{ $parrain->name }}
+                            </a>
+                            <span class="text-xs text-[var(--text-tertiary)] block font-mono">Code: {{ $user->sponsor_id }}</span>
+                        @elseif($user->sponsor_id)
+                            <span class="text-red-500">Unknown (Code: {{ $user->sponsor_id }})</span>
                         @else
-                            None
+                            <span class="text-[var(--text-tertiary)]">No sponsor</span>
+                        @endif
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Downlines (People I invited)</span>
+                    <span class="value">
+                        @php
+                            $filleuls = App\Models\User::where('sponsor_id', $user->sponsor_id)->get();
+                        @endphp
+                        @if($filleuls->count() > 0)
+                            <span class="font-bold text-primary-500">{{ $filleuls->count() }}</span>
+                            <span class="text-xs text-[var(--text-tertiary)] block">
+                                @foreach($filleuls->take(5) as $filleul)
+                                    <a href="{{ route('admin.users.show', $filleul->id) }}" class="text-primary-500 hover:underline">
+                                        {{ $filleul->name }}
+                                    </a>@if(!$loop->last), @endif
+                                @endforeach
+                                @if($filleuls->count() > 5)
+                                    <span class="text-[var(--text-tertiary)]">and {{ $filleuls->count() - 5 }} more</span>
+                                @endif
+                            </span>
+                        @else
+                            <span class="text-[var(--text-tertiary)]">No downlines</span>
                         @endif
                     </span>
                 </div>
@@ -245,7 +345,7 @@
         <!-- Statistics -->
         <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="text-center">
-                <p class="text-2xl font-bold text-primary-500">{{ $downlinesCount ?? 0 }}</p>
+                <p class="text-2xl font-bold text-primary-500">{{ $filleuls->count() ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Downlines</p>
             </div>
             <div class="text-center">
@@ -261,6 +361,49 @@
                 <p class="text-xs text-[var(--text-secondary)]">PV</p>
             </div>
         </div>
+
+        <!-- Downlines List -->
+        @if(isset($filleuls) && $filleuls->count() > 0)
+        <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
+            <h4 class="text-sm font-semibold text-[var(--text-primary)] mb-3">
+                Downlines List ({{ $filleuls->count() }})
+            </h4>
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="text-xs">ID</th>
+                            <th class="text-xs">Name</th>
+                            <th class="text-xs">Email</th>
+                            <th class="text-xs">Code</th>
+                            <th class="text-xs">Status</th>
+                            <th class="text-xs">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($filleuls as $filleul)
+                        <tr>
+                            <td class="text-xs">#{{ $filleul->id }}</td>
+                            <td class="text-sm">{{ $filleul->name }}</td>
+                            <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>
+                            <td class="text-xs font-mono text-primary-500">{{ $filleul->sponsor_id }}</td>
+                            <td>
+                                <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
+                                    {{ $filleul->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ route('admin.users.show', $filleul->id) }}" class="btn btn-sm btn-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
 
         <!-- Actions -->
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)] flex flex-wrap gap-2 sm:gap-3">
@@ -304,9 +447,7 @@
     </div>
 </div>
 
-<!-- ============================================================
-DEACTIVATE MODAL
-============================================================ -->
+<!-- Deactivate Modal -->
 <div id="deactivateModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-warning">
@@ -325,18 +466,13 @@ DEACTIVATE MODAL
                 Cancel
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-warning btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                </svg>
                 Deactivate
             </a>
         </div>
     </div>
 </div>
 
-<!-- ============================================================
-ACTIVATE MODAL
-============================================================ -->
+<!-- Activate Modal -->
 <div id="activateModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-success">
@@ -355,18 +491,13 @@ ACTIVATE MODAL
                 Cancel
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-success btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
                 Activate
             </a>
         </div>
     </div>
 </div>
 
-<!-- ============================================================
-DELETE MODAL
-============================================================ -->
+<!-- Delete Modal -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-danger">
@@ -387,9 +518,6 @@ DELETE MODAL
             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-danger btn-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
                     Delete
                 </button>
             </form>

@@ -14,9 +14,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, Encryptable;
 
-    /**
-     * Champs à chiffrer avec AES-256
-     */
     protected $encryptable = ['phone', 'address'];
 
     protected $fillable = [
@@ -63,11 +60,11 @@ class User extends Authenticatable
     ];
 
     // ============================================================
-    // RELATIONS CORRIGÉES
+    // RELATIONS
     // ============================================================
 
     /**
-     * ✅ Relation pour le rank
+     * Relation avec le rang
      */
     public function rank()
     {
@@ -75,7 +72,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour le package
+     * Relation avec le package
      */
     public function package()
     {
@@ -83,8 +80,16 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour le sponsor (celui qui a parrainé cet utilisateur)
-     * sponsor_id est un code VARCHAR unique
+     * Relation avec le parrain (celui qui m'a invité)
+     * sponsor_id est le code de parrain unique
+     */
+    public function parrain()
+    {
+        return $this->belongsTo(User::class, 'sponsor_id', 'sponsor_id');
+    }
+
+    /**
+     * Alias pour sponsor (compatibilité)
      */
     public function sponsor()
     {
@@ -92,8 +97,15 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les fillules (ceux que cet utilisateur a parrainés)
-     * sponsor_id est un code VARCHAR unique
+     * Relation avec les filleuls (ceux que j'ai invités)
+     */
+    public function filleuls()
+    {
+        return $this->hasMany(User::class, 'sponsor_id', 'sponsor_id');
+    }
+
+    /**
+     * Alias pour downlines (compatibilité)
      */
     public function downlines()
     {
@@ -101,7 +113,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour le portefeuille
+     * Relation avec le portefeuille
      */
     public function wallet()
     {
@@ -109,7 +121,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les commissions
+     * Relation avec les commissions
      */
     public function commissions()
     {
@@ -117,7 +129,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les transactions
+     * Relation avec les transactions
      */
     public function transactions()
     {
@@ -125,7 +137,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les retraits
+     * Relation avec les retraits
      */
     public function withdrawals()
     {
@@ -133,7 +145,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour la généalogie
+     * Relation avec la généalogie
      */
     public function genealogy()
     {
@@ -141,7 +153,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour l'historique des rangs
+     * Relation avec l'historique des rangs
      */
     public function rankHistory()
     {
@@ -149,7 +161,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les commandes
+     * Relation avec les commandes
      */
     public function orders()
     {
@@ -157,7 +169,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Relation pour les documents KYC
+     * Relation avec les documents KYC
      */
     public function kycDocuments()
     {
@@ -195,10 +207,10 @@ class User extends Authenticatable
         
         if ($this->package_id) {
             $package = Package::find($this->package_id);
-            return $package ? $package->name : 'Aucun package';
+            return $package ? $package->name : 'No package';
         }
         
-        return 'Aucun package';
+        return 'No package';
     }
 
     public function getPackageIconAttribute()
@@ -231,17 +243,17 @@ class User extends Authenticatable
 
     public function getStatusLabelAttribute()
     {
-        return $this->is_active ? '✅ Actif' : '❌ Inactif';
+        return $this->is_active ? 'Active' : 'Inactive';
     }
 
     public function getKycStatusLabelAttribute()
     {
         $labels = [
-            'not_submitted' => '📤 Non soumis',
-            'pending' => '⏳ En attente',
-            'partial' => '⚠️ Partiel',
-            'verified' => '✅ Vérifié',
-            'rejected' => '❌ Rejeté',
+            'not_submitted' => 'Not Submitted',
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'verified' => 'Verified',
+            'rejected' => 'Rejected',
         ];
         return $labels[$this->kyc_status] ?? ucfirst($this->kyc_status);
     }
@@ -252,16 +264,16 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Récupérer le nom du sponsor
+     * Récupérer le nom du parrain
      */
-    public function getSponsorNameAttribute()
+    public function getParrainNameAttribute()
     {
-        $sponsor = $this->sponsor;
-        return $sponsor ? $sponsor->name : 'None';
+        $parrain = $this->parrain;
+        return $parrain ? $parrain->name : 'No sponsor';
     }
 
     /**
-     * ✅ Récupérer le code de parrain
+     * Récupérer le code de parrain
      */
     public function getReferralCodeAttribute()
     {
@@ -269,48 +281,20 @@ class User extends Authenticatable
     }
 
     /**
-     * ✅ Compter les fillules
+     * Compter les filleuls
      */
-    public function countDownlines()
+    public function countFilleuls()
     {
-        return $this->downlines()->count();
+        return $this->filleuls()->count();
     }
 
     /**
-     * ✅ Compter les fillules actives
+     * Compter les filleuls actifs
      */
-    public function countActiveDownlines()
+    public function countFilleulsActifs()
     {
-        return $this->downlines()->where('is_active', true)->count();
+        return $this->filleuls()->where('is_active', true)->count();
     }
-
-    /**
-     * ✅ Compter les fillules par niveau
-     */
-    public function countDownlinesByLevel($level = 1)
-    {
-        if ($level == 1) {
-            return $this->downlines()->count();
-        }
-        
-        $sponsorCodes = $this->downlines()->pluck('sponsor_id')->filter()->toArray();
-        
-        for ($i = 2; $i <= $level; $i++) {
-            if (empty($sponsorCodes)) {
-                return 0;
-            }
-            $sponsorCodes = User::whereIn('sponsor_id', $sponsorCodes)
-                ->pluck('sponsor_id')
-                ->filter()
-                ->toArray();
-        }
-        
-        return User::whereIn('sponsor_id', $sponsorCodes)->count();
-    }
-
-    // ============================================================
-    // MÉTHODES UTILITAIRES
-    // ============================================================
 
     public function isAdmin()
     {

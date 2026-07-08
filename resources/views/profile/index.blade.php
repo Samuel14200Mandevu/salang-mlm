@@ -66,6 +66,10 @@
         background: rgba(239, 68, 68, 0.12);
         color: #ef4444;
     }
+    .badge-info {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
     
     .avatar {
         display: flex;
@@ -210,12 +214,12 @@
         .btn { font-size: 0.75rem; padding: 0.375rem 0.875rem; }
         .input { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
         .stat-icon { width: 2rem; height: 2rem; }
+        .profile-grid { grid-template-columns: 1fr !important; }
     }
     
     @media (max-width: 480px) {
         .card { padding: 0.75rem; }
         .avatar-xl { width: 4rem; height: 4rem; font-size: 1.25rem; }
-        .profile-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
@@ -225,8 +229,8 @@
     
     <!-- Header -->
     <div class="animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Profil</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Gérez vos informations personnelles</p>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Profile</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Manage your personal information</p>
     </div>
 
     @if(session('success'))
@@ -267,7 +271,7 @@
                             @endif
                         </div>
                         <label for="avatar_input" class="avatar-overlay">
-                            <span>Changer</span>
+                            <span>Change</span>
                         </label>
                         <input type="file" id="avatar_input" name="avatar" accept="image/*" class="hidden">
                     </div>
@@ -275,18 +279,16 @@
                     <h3 class="mt-3 sm:mt-4 text-lg sm:text-xl font-bold text-[var(--text-primary)]">{{ $user->name }}</h3>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $user->email }}</p>
                     
-                    <!-- ✅ Sponsor corrigé -->
+                    <!-- Sponsor Information -->
+                    @php
+                        $parrain = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
+                    @endphp
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                         Sponsor: 
-                        <strong class="text-primary-500">
-                            @php
-                                $sponsor = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
-                            @endphp
-                            {{ $sponsor?->name ?? 'Aucun' }}
-                        </strong>
+                        <strong class="text-primary-500">{{ $parrain?->name ?? 'None' }}</strong>
                     </p>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                        Code de parrain: <span class="font-mono text-primary-500 font-semibold">{{ $user->sponsor_id ?? 'N/A' }}</span>
+                        Referral Code: <span class="font-mono text-primary-500 font-semibold">{{ $user->sponsor_id ?? 'N/A' }}</span>
                     </p>
 
                     <div class="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2">
@@ -294,14 +296,14 @@
                             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            Changer
+                            Change
                         </label>
                         @if($user->avatar)
                             <button id="removeAvatarBtn" class="btn btn-danger btn-sm text-xs sm:text-sm">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
-                                Supprimer
+                                Remove
                             </button>
                         @endif
                     </div>
@@ -313,7 +315,7 @@
                             <p class="font-bold text-[var(--text-primary)] text-sm sm:text-base">#{{ $user->id }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Inscrit</p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Joined</p>
                             <p class="font-bold text-[var(--text-primary)] text-xs sm:text-sm">{{ $user->created_at->format('d M Y') }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
@@ -321,39 +323,59 @@
                             <p class="font-bold text-primary-500 text-xs sm:text-sm">{{ $user->package?->name ?? 'Starter' }}</p>
                         </div>
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Statut</p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Status</p>
                             <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                {{ $user->is_active ? 'Actif' : 'Inactif' }}
+                                {{ $user->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ✅ Carte Sponsor corrigée -->
+            <!-- Sponsor Card -->
             <div class="card animate-fadeInLeft delay-2">
                 <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">
-                    Mon Sponsor
+                    My Sponsor
                 </h4>
                 @php
-                    $sponsor = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
+                    $parrain = App\Models\User::where('sponsor_id', $user->sponsor_id)->first();
                 @endphp
                 <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="avatar avatar-md avatar-info">
-                        {{ $sponsor ? strtoupper(substr($sponsor->name, 0, 1)) : 'N/A' }}
+                        {{ $parrain ? strtoupper(substr($parrain->name, 0, 1)) : 'N/A' }}
                     </div>
                     <div class="min-w-0">
                         <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base truncate">
-                            {{ $sponsor?->name ?? 'Aucun sponsor' }}
+                            {{ $parrain?->name ?? 'No sponsor' }}
                         </p>
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">
-                            {{ $sponsor?->email ?? '--' }}
+                            {{ $parrain?->email ?? '--' }}
                         </p>
-                        @if($sponsor)
+                        @if($parrain)
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                                 Code: <span class="font-mono text-primary-500">{{ $user->sponsor_id }}</span>
                             </p>
                         @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Downlines Summary -->
+            <div class="card animate-fadeInLeft delay-3">
+                <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">
+                    My Network
+                </h4>
+                @php
+                    $filleulsCount = App\Models\User::where('sponsor_id', Auth::user()->sponsor_id)->count();
+                @endphp
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Downlines</p>
+                        <p class="font-bold text-primary-500 text-lg sm:text-xl">{{ $filleulsCount }}</p>
+                    </div>
+                    <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Referral Code</p>
+                        <p class="font-bold text-primary-500 text-xs sm:text-sm font-mono truncate">{{ Auth::user()->sponsor_id }}</p>
                     </div>
                 </div>
             </div>
@@ -371,8 +393,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Informations Personnelles</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mettez à jour vos informations</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Personal Information</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Update your personal details</p>
                     </div>
                 </div>
 
@@ -381,7 +403,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Full Name</label>
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="input text-sm sm:text-base" required>
                         </div>
                         <div>
@@ -389,23 +411,23 @@
                             <input type="email" value="{{ $user->email }}" class="input text-sm sm:text-base opacity-70 cursor-not-allowed" disabled>
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Téléphone</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Phone</label>
                             <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Country</label>
                             <input type="text" name="country" value="{{ old('country', $user->country) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">City</label>
                             <input type="text" name="city" value="{{ old('city', $user->city) }}" class="input text-sm sm:text-base">
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Code postal</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Zip Code</label>
                             <input type="text" name="zip" value="{{ old('zip', $user->zip ?? '') }}" class="input text-sm sm:text-base">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Address</label>
                             <textarea name="address" rows="2" class="input text-sm sm:text-base">{{ old('address', $user->address) }}</textarea>
                         </div>
                     </div>
@@ -415,7 +437,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
-                            Enregistrer
+                            Save Changes
                         </button>
                     </div>
                 </form>
@@ -430,8 +452,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Changer le mot de passe</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Sécurisez votre compte</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Change Password</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Secure your account</p>
                     </div>
                 </div>
 
@@ -440,16 +462,16 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Mot de passe actuel</label>
-                            <input type="password" name="current_password" class="input text-sm sm:text-base" placeholder="Entrez votre mot de passe actuel" required>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Current Password</label>
+                            <input type="password" name="current_password" class="input text-sm sm:text-base" placeholder="Enter current password" required>
                         </div>
                         <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nouveau mot de passe</label>
-                            <input type="password" name="password" class="input text-sm sm:text-base" placeholder="Entrez un nouveau mot de passe" required>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">New Password</label>
+                            <input type="password" name="password" class="input text-sm sm:text-base" placeholder="Enter new password" required>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Confirmer le mot de passe</label>
-                            <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="Confirmez le nouveau mot de passe" required>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Confirm Password</label>
+                            <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="Confirm new password" required>
                         </div>
                     </div>
 
@@ -458,7 +480,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Mettre à jour
+                            Update Password
                         </button>
                     </div>
                 </form>
@@ -473,13 +495,13 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-red-500">Zone de danger</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actions irréversibles</p>
+                        <h3 class="text-base sm:text-lg font-semibold text-red-500">Danger Zone</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Irreversible actions</p>
                     </div>
                 </div>
 
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">
-                    Une fois votre compte supprimé, toutes les données associées seront définitivement perdues.
+                    Once your account is deleted, all associated data will be permanently lost.
                 </p>
 
                 <button x-data="" 
@@ -488,7 +510,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    Supprimer le compte
+                    Delete Account
                 </button>
             </div>
         </div>
@@ -503,17 +525,17 @@
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-red-500 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
-                <h2 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Supprimer le compte</h2>
+                <h2 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Delete Account</h2>
                 <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-[var(--text-secondary)]">
-                    Cette action est <strong class="text-red-500">irréversible</strong>.<br>
-                    Veuillez entrer votre mot de passe pour confirmer.
+                    This action is <strong class="text-red-500">irreversible</strong>.<br>
+                    Please enter your password to confirm.
                 </p>
             </div>
 
             <div class="mt-4 sm:mt-6">
                 <input type="password" 
                        name="password" 
-                       placeholder="Votre mot de passe"
+                       placeholder="Your password"
                        class="input text-center text-sm sm:text-base"
                        autofocus>
                 @error('password', 'userDeletion')
@@ -523,13 +545,13 @@
 
             <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                 <button type="button" x-on:click="$dispatch('close')" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
-                    Annuler
+                    Cancel
                 </button>
                 <button type="submit" class="btn btn-danger w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Confirmer
+                    Confirm
                 </button>
             </div>
         </form>
@@ -558,17 +580,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Erreur: ' + data.message);
+                        alert('Error: ' + data.message);
                     }
                 })
-                .catch(function() { alert('Erreur de téléchargement'); });
+                .catch(function() { alert('Upload error'); });
             }
         });
     }
 
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
-            if (confirm('Supprimer votre photo de profil ?')) {
+            if (confirm('Delete your profile picture?')) {
                 fetch('{{ route('profile.delete-avatar') }}', {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
@@ -578,10 +600,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Erreur: ' + data.message);
+                        alert('Error: ' + data.message);
                     }
                 })
-                .catch(function() { alert('Erreur de suppression'); });
+                .catch(function() { alert('Delete error'); });
             }
         });
     }
