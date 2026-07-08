@@ -122,11 +122,6 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
     }
-    .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none !important;
-    }
     .btn-outline {
         background: transparent;
         color: var(--text-primary);
@@ -158,13 +153,6 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-    }
-    
-    .insufficient-balance {
-        font-size: 0.55rem;
-        color: #ef4444;
-        margin-top: 0.125rem;
-        text-align: center;
     }
     
     @keyframes fadeInUp {
@@ -259,24 +247,6 @@
         </div>
     </div>
 
-    <!-- ✅ Balance Info -->
-    <div class="card animate-fadeInUp delay-1 border-l-4 border-yellow-500 p-3 sm:p-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Your Wallet Balance</p>
-                <p class="text-lg sm:text-xl font-bold text-yellow-500">
-                    ${{ number_format(Auth::user()->wallet->balance ?? 0, 2) }}
-                </p>
-            </div>
-            <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Add Funds
-            </a>
-        </div>
-    </div>
-
     <!-- Search Results -->
     <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeIn">
         Results: <span id="resultCount" class="font-semibold text-primary-500">0</span> product(s)
@@ -287,10 +257,6 @@
         @if($products->count() > 0)
             <div class="product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
                 @foreach($products as $product)
-                    @php
-                        $balance = Auth::user()->wallet->balance ?? 0;
-                        $canAfford = $balance >= $product->price;
-                    @endphp
                     <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
                          data-name="{{ strtolower($product->name) }}"
                          data-description="{{ strtolower($product->description ?? '') }}">
@@ -357,24 +323,17 @@
                                     View
                                 </a>
                                 @if($product->stock > 0)
-                                    @if($canAfford)
-                                        <form action="{{ route('cart.add') }}" method="POST" class="flex-1" 
-                                              onsubmit="addToCart(event, this, '{{ $product->name }}')">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn btn-primary btn-sm w-full">
-                                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @else
-                                        <button class="flex-1 btn btn-primary btn-sm w-full opacity-50 cursor-not-allowed" disabled>
-                                            Insufficient funds
+                                    <form action="{{ route('cart.add') }}" method="POST" class="flex-1" 
+                                          onsubmit="addToCart(event, this, '{{ $product->name }}')">
+                                        @csrf
+                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm w-full">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                            </svg>
                                         </button>
-                                        <div class="insufficient-balance">Need ${{ number_format($product->price - $balance, 2) }}</div>
-                                    @endif
+                                    </form>
                                 @else
                                     <button class="flex-1 btn btn-danger btn-sm opacity-50 cursor-not-allowed text-[10px] sm:text-xs">
                                         Out of stock
