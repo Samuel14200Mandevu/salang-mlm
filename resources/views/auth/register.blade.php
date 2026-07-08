@@ -164,6 +164,13 @@
         border-color: #ef4444;
         box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
     }
+    .form-group .input-success {
+        border-color: #22c55e;
+    }
+    .form-group .input-success:focus {
+        border-color: #22c55e;
+        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+    }
     .form-group .error-message {
         color: #ef4444;
         font-size: 0.75rem;
@@ -176,6 +183,27 @@
         width: 0.875rem;
         height: 0.875rem;
         flex-shrink: 0;
+    }
+    .form-group .success-message {
+        color: #22c55e;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .form-group .success-message svg {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+    .form-group .checking-message {
+        color: #f59e0b;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
     }
     
     .password-wrapper {
@@ -293,6 +321,31 @@
         font-weight: 600;
         color: var(--text-primary);
     }
+
+    .email-availability-checking {
+        color: #f59e0b;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .email-availability-available {
+        color: #22c55e;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .email-availability-unavailable {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
     
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; max-width: 100%; }
@@ -390,7 +443,7 @@
             @enderror
         </div>
 
-        <!-- Email -->
+        <!-- Email avec vérification AJAX -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +457,12 @@
                    value="{{ old('email', session('social_data.email', '')) }}" 
                    class="input @error('email') input-error @enderror"
                    placeholder="Entrez votre email"
-                   required>
+                   required
+                   autocomplete="email">
+            
+            <!-- Conteneur pour le message de vérification AJAX -->
+            <div id="emailAvailability"></div>
+            
             @error('email')
                 <p class="error-message">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -645,6 +703,10 @@ function hideToast() {
     document.getElementById('toastModern').classList.remove('show');
 }
 
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // Validation du formulaire
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registerForm');
@@ -658,6 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const strengthBar = document.getElementById('passwordStrength');
     const strengthText = document.getElementById('passwordStrengthText');
+    const emailAvailability = document.getElementById('emailAvailability');
 
     // Afficher les erreurs Laravel
     @if ($errors->any())
@@ -674,6 +737,81 @@ document.addEventListener('DOMContentLoaded', function() {
     @if (session('error'))
         showToast('{{ session('error') }}', 'error');
     @endif
+
+    // ✅ Vérification en temps réel de l'email
+    let emailTimeout = null;
+    let emailChecked = false;
+
+    if (emailInput) {
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            emailChecked = false;
+            
+            // Réinitialiser l'état
+            this.classList.remove('input-error', 'input-success');
+            
+            if (emailAvailability) {
+                emailAvailability.innerHTML = '';
+            }
+
+            // Ne vérifier que si l'email est valide
+            if (isValidEmail(email)) {
+                emailAvailability.innerHTML = `
+                    <div class="email-availability-checking">
+                        <svg class="animate-spin h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Vérification de l'email...
+                    </div>
+                `;
+                
+                clearTimeout(emailTimeout);
+                emailTimeout = setTimeout(function() {
+                    fetch(`/check-email?email=${encodeURIComponent(email)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            emailChecked = true;
+                            
+                            if (data.exists) {
+                                emailInput.classList.add('input-error');
+                                emailInput.classList.remove('input-success');
+                                
+                                if (emailAvailability) {
+                                    emailAvailability.innerHTML = `
+                                        <div class="email-availability-unavailable">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            ${data.message}
+                                        </div>
+                                    `;
+                                }
+                            } else {
+                                emailInput.classList.remove('input-error');
+                                emailInput.classList.add('input-success');
+                                
+                                if (emailAvailability) {
+                                    emailAvailability.innerHTML = `
+                                        <div class="email-availability-available">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            ${data.message}
+                                        </div>
+                                    `;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur de vérification:', error);
+                            if (emailAvailability) {
+                                emailAvailability.innerHTML = '';
+                            }
+                        });
+                }, 500);
+            }
+        });
+    }
 
     // Force du mot de passe
     if (passwordInput) {
@@ -733,6 +871,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (!hasError && !isValidEmail(email)) {
             errorMessage = 'Veuillez saisir une adresse email valide.';
             hasError = true;
+        } else if (!hasError && emailChecked === false) {
+            // Vérifier que l'email a été vérifié
+            errorMessage = 'Veuillez attendre la vérification de votre email.';
+            hasError = true;
+        } else if (!hasError && emailInput.classList.contains('input-error')) {
+            errorMessage = 'Cet email est déjà utilisé. Veuillez en utiliser un autre.';
+            hasError = true;
         }
 
         // Vérifier le sponsor
@@ -773,10 +918,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast(errorMessage, 'error');
         }
     });
-
-    function isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
 
     // Vérification du sponsor pour les réseaux sociaux
     document.querySelectorAll('.social-btn').forEach(function(btn) {

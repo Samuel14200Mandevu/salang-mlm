@@ -2,6 +2,7 @@
 // routes/web.php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Auth\EmailCheckController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\UserPackageController;
@@ -28,6 +29,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+Route::get('/check-email', [EmailCheckController::class, 'check'])->name('check.email');
 
 // Onboarding
 Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Illuminate\Database\QueryException;
 
 class RegisteredUserController extends Controller
 {
@@ -27,83 +28,131 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // ✅ Validation avec vérification d'unicité de l'email
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'phone' => ['required', 'string', 'max:20'],
+            'email' => [
+                'required', 
+                'string', 
+                'lowercase', 
+                'email', 
+                'max:255', 
+                'unique:users,email', // ✅ Vérification Laravel (doublon avec la DB)
+            ],
+            'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'sponsor_id' => ['nullable', 'string'], // ✅ Plus besoin de exists car c'est une colonne
+            'sponsor_id' => ['required', 'string'],
+            'terms' => ['required', 'accepted'],
+        ], [
+            'email.unique' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.',
+            'sponsor_id.required' => 'L\'ID du parrain est obligatoire.',
+            'terms.required' => 'Vous devez accepter les conditions générales.',
+            'terms.accepted' => 'Vous devez accepter les conditions générales.',
         ]);
 
-        // ✅ Trouver le sponsor (peut être par ID utilisateur ou sponsor_id)
-        $sponsor = null;
-        if ($request->sponsor_id) {
-            // Chercher d'abord par ID utilisateur
-            $sponsor = User::find($request->sponsor_id);
-            
-            // Si pas trouvé, chercher par sponsor_id
-            if (!$sponsor) {
-                $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
+        try {
+            // ✅ Trouver le sponsor
+            $sponsor = null;
+            if ($request->sponsor_id) {
+                // Chercher d'abord par ID utilisateur
+                $sponsor = User::find($request->sponsor_id);
+                
+                // Si pas trouvé, chercher par sponsor_id
+                if (!$sponsor) {
+                    $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
+                }
             }
-        }
 
-        // ✅ Générer un ID de parrain unique
-        $sponsorCode = $this->generateSponsorId();
+            // ✅ Vérifier que le sponsor existe
+            if (!$sponsor) {
+                return back()
+                    ->withInput($request->except('password', 'password_confirmation'))
+                    ->withErrors([
+                        'sponsor_id' => 'L\'ID du parrain est invalide ou n\'existe pas. Veuillez vérifier et réessayer.'
+                    ]);
+            }
 
-        // ✅ Créer l'utilisateur
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'sponsor_id' => $sponsorCode, // ✅ Le code de parrain unique
-            'rank_id' => Rank::where('slug', 'distributor')->first()?->id,
-            'is_active' => true,
-        ]);
+            // ✅ Vérification supplémentaire : l'email n'existe pas déjà
+            if (User::where('email', $request->email)->exists()) {
+                return back()
+                    ->withInput($request->except('password', 'password_confirmation'))
+                    ->withErrors([
+                        'email' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.'
+                    ]);
+            }
 
-        // ✅ Créer le portefeuille
-        Wallet::create([
-            'user_id' => $user->id,
-            'balance' => 0,
-            'pending_balance' => 0,
-            'currency' => 'USD',
-            'is_active' => true,
-        ]);
+            // ✅ Générer un ID de parrain unique
+            $sponsorCode = $this->generateSponsorId();
 
-        // ✅ Créer l'entrée de généalogie
-        Genealogy::create([
-            'user_id' => $user->id,
-            'sponsor_id' => $sponsor?->id,  // ✅ L'ID du sponsor (clé étrangère)
-            'parent_id' => $sponsor?->id,   // ✅ L'ID du parent
-            'level' => $sponsor ? ($sponsor->genealogy?->level ?? 0) + 1 : 0,
-            'position' => null,
-            'left_count' => 0,
-            'right_count' => 0,
-            'total_children' => 0,
-        ]);
+            // ✅ Créer l'utilisateur
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'sponsor_id' => $sponsorCode,
+                'rank_id' => Rank::where('slug', 'distributor')->first()?->id,
+                'is_active' => true,
+            ]);
 
-        // ✅ Mettre à jour le compteur du sponsor
-        if ($sponsor) {
+            // ✅ Créer le portefeuille
+            Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+                'pending_balance' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
+            ]);
+
+            // ✅ Créer l'entrée de généalogie
+            Genealogy::create([
+                'user_id' => $user->id,
+                'sponsor_id' => $sponsor->id,
+                'parent_id' => $sponsor->id,
+                'level' => ($sponsor->genealogy?->level ?? 0) + 1,
+                'position' => null,
+                'left_count' => 0,
+                'right_count' => 0,
+                'total_children' => 0,
+            ]);
+
+            // ✅ Mettre à jour le compteur du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
             
-            // ✅ Mettre à jour les niveaux supérieurs
             $this->updateTeamCounters($sponsor);
+
+            // ✅ Envoyer la notification de bienvenue
+            try {
+                $user->notify(new WelcomeNotification($sponsor->name));
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi notification bienvenue: ' . $e->getMessage());
+            }
+
+            event(new Registered($user));
+
+            Auth::login($user);
+
+            return redirect(route('dashboard', absolute: false));
+
+        } catch (QueryException $e) {
+            // ✅ Gestion des erreurs de base de données
+            if ($e->getCode() == 23000) { // Erreur de contrainte d'unicité
+                return back()
+                    ->withInput($request->except('password', 'password_confirmation'))
+                    ->withErrors([
+                        'email' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.'
+                    ]);
+            }
+            
+            // Autres erreurs
+            Log::error('Erreur lors de l\'inscription: ' . $e->getMessage());
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors([
+                    'email' => 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.'
+                ]);
         }
-
-        // ✅ Envoyer la notification de bienvenue
-        try {
-            $sponsorName = $sponsor ? $sponsor->name : null;
-            $user->notify(new WelcomeNotification($sponsorName));
-        } catch (\Exception $e) {
-            Log::error('Erreur envoi notification bienvenue: ' . $e->getMessage());
-        }
-
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
     }
 
     /**
@@ -115,7 +164,6 @@ class RegisteredUserController extends Controller
         $random = strtoupper(substr(uniqid(), -6));
         $sponsorCode = $prefix . $random;
         
-        // Vérifier l'unicité
         while (User::where('sponsor_id', $sponsorCode)->exists()) {
             $random = strtoupper(substr(uniqid(), -6));
             $sponsorCode = $prefix . $random;
@@ -129,11 +177,9 @@ class RegisteredUserController extends Controller
      */
     private function updateTeamCounters(User $user)
     {
-        // ✅ Monter dans la hiérarchie des sponsors
         $currentUser = $user;
         
         while ($currentUser->sponsor_id) {
-            // Trouver le sponsor de l'utilisateur actuel
             $sponsor = User::where('sponsor_id', $currentUser->sponsor_id)->first();
             
             if (!$sponsor) {
