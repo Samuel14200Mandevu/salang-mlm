@@ -1,11 +1,13 @@
 <?php
+// app/Notifications/CommissionPaidNotification.php
 
 namespace App\Notifications;
 
+use App\Helpers\NotificationHelper;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class CommissionPaidNotification extends Notification implements ShouldQueue
 {
@@ -29,28 +31,25 @@ class CommissionPaidNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        $typeLabels = [
-            'direct' => 'Directe',
-            'indirect' => 'Indirecte',
-            'leadership' => 'Leadership',
-            'retail' => 'Retail',
-            'bonus' => 'Bonus'
-        ];
-
-        $typeLabel = $typeLabels[$this->type] ?? ucfirst($this->type);
+        $typeLabel = NotificationHelper::getCommissionTypeLabel($this->type);
+        $amount = NotificationHelper::formatAmount($this->amount);
 
         return (new MailMessage)
-            ->subject('💰 Nouvelle commission reçue - Salang MLM')
-            ->greeting('Bonjour ' . $notifiable->name . ' !')
-            ->line("Vous avez reçu une nouvelle commission de type **{$typeLabel}**.")
-            ->line("")
-            ->line("**Montant:** \${$this->amount}")
-            ->line("")
-            ->line('Cette commission a été automatiquement créditée sur votre portefeuille.')
-            ->action('Voir mon portefeuille', url('/wallet'))
+            ->subject(NotificationHelper::getNotificationSubject('commission_paid', [
+                'amount' => $this->amount
+            ]))
+            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->line('Nous vous informons qu\'une nouvelle commission a été créditée sur votre compte.')
             ->line('')
-            ->line('Merci de faire partie de la communauté Salang !')
-            ->salutation('L\'équipe Salang');
+            ->line('Détails de la commission :')
+            ->line("- Type : {$typeLabel}")
+            ->line("- Montant : {$amount}")
+            ->line('')
+            ->line('Cette commission a été automatiquement ajoutée à votre portefeuille.')
+            ->action('Consulter mon portefeuille', url('/wallet'))
+            ->line('')
+            ->line('Cordialement,')
+            ->salutation("L'équipe Salang");
     }
 
     public function toArray($notifiable)
@@ -60,7 +59,11 @@ class CommissionPaidNotification extends Notification implements ShouldQueue
             'amount' => $this->amount,
             'commission_type' => $this->type,
             'commission_id' => $this->commissionId,
-            'message' => "Vous avez reçu \${$this->amount} de commission " . ucfirst($this->type),
+            'message' => NotificationHelper::getNotificationMessage([
+                'type' => 'commission_paid',
+                'amount' => $this->amount,
+                'commission_type' => $this->type,
+            ]),
         ];
     }
 }

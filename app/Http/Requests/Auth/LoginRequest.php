@@ -1,9 +1,9 @@
 <?php
+// app/Http/Requests/Auth/LoginRequest.php
 
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 class LoginRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Déterminer si l'utilisateur est autorisé
      */
     public function authorize(): bool
     {
@@ -21,20 +21,33 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * Règles de validation
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:8'],
+            'remember' => ['sometimes', 'boolean'],
         ];
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Messages d'erreur personnalisés
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => '📧 L\'adresse email est obligatoire.',
+            'email.email' => '📧 Veuillez saisir une adresse email valide (exemple: nom@domaine.com).',
+            'email.max' => '📧 L\'adresse email ne doit pas dépasser 255 caractères.',
+            'password.required' => '🔑 Le mot de passe est obligatoire.',
+            'password.min' => '🔑 Le mot de passe doit contenir au moins 8 caractères.',
+        ];
+    }
+
+    /**
+     * Authentifier l'utilisateur
      *
      * @throws ValidationException
      */
@@ -42,11 +55,28 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // ✅ Vérifier si l'utilisateur existe
+        $user = \App\Models\User::where('email', $this->email)->first();
+        
+        if (!$user) {
             RateLimiter::hit($this->throttleKey());
-
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => '❌ Aucun compte trouvé avec cette adresse email.',
+            ]);
+        }
+
+        // ✅ Vérifier si le compte est actif
+        if (!$user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => '⛔ Votre compte a été désactivé. Veuillez contacter le support.',
+            ]);
+        }
+
+        // ✅ Tentative de connexion
+        if (!Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'password' => '🔑 Le mot de passe saisi est incorrect.',
             ]);
         }
 
@@ -54,13 +84,11 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Ensure the login request is not rate limited.
-     *
-     * @throws ValidationException
+     * Vérifier le rate limiting
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -69,15 +97,12 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => '⏳ Trop de tentatives de connexion. Veuillez réessayer dans ' . ceil($seconds / 60) . ' minute(s).',
         ]);
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * Clé de rate limiting
      */
     public function throttleKey(): string
     {

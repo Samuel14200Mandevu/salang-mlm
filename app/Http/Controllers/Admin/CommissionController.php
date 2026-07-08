@@ -7,11 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Commission;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\Transaction;
+use App\Notifications\CommissionPaidNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CommissionController extends Controller
 {
+    /**
+     * Liste des commissions
+     */
     public function index(Request $request)
     {
         $query = Commission::with(['user', 'fromUser', 'order', 'package']);
@@ -28,6 +34,14 @@ class CommissionController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -38,23 +52,30 @@ class CommissionController extends Controller
 
         $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
         
-        $totalCommissions = Commission::where('status', 'paid')->sum('amount');
-        $pendingCommissions = Commission::where('status', 'pending')->sum('amount');
-        $totalCancelled = Commission::where('status', 'cancelled')->sum('amount');
+        // Statistiques
+        $stats = [
+            'total_paid' => Commission::where('status', 'paid')->sum('amount'),
+            'total_pending' => Commission::where('status', 'pending')->sum('amount'),
+            'total_cancelled' => Commission::where('status', 'cancelled')->sum('amount'),
+            'total_count' => Commission::count(),
+            'pending_count' => Commission::where('status', 'pending')->count(),
+            'paid_count' => Commission::where('status', 'paid')->count(),
+        ];
 
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
         $types = Commission::distinct()->pluck('type');
 
         return view('admin.commissions.index', compact(
             'commissions', 
-            'totalCommissions', 
-            'pendingCommissions',
-            'totalCancelled',
+            'stats',
             'users',
             'types'
         ));
     }
 
+    /**
+     * Détails d'une commission
+     */
     public function show($id)
     {
         $commission = Commission::with(['user', 'fromUser', 'order', 'package'])
@@ -63,9 +84,24 @@ class CommissionController extends Controller
         // ✅ Récupérer le parrain du bénéficiaire
         $parrain = User::find($commission->user->parrain_id ?? null);
         
-        return view('admin.commissions.show', compact('commission', 'parrain'));
+        // ✅ Commissions similaires
+        $similarCommissions = Commission::where('user_id', $commission->user_id)
+            ->where('type', $commission->type)
+            ->where('id', '!=', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('admin.commissions.show', compact(
+            'commission', 
+            'parrain',
+            'similarCommissions'
+        ));
     }
 
+    /**
+     * Approuver une commission
+     */
     public function approve($id)
     {
         $commission = Commission::findOrFail($id);
@@ -81,25 +117,78 @@ class CommissionController extends Controller
             $commission->paid_at = now();
             $commission->save();
             
+            // ✅ Créditer le portefeuille
             $wallet = Wallet::where('user_id', $commission->user_id)->first();
             if ($wallet) {
+                $balanceBefore = $wallet->balance;
                 $wallet->balance += $commission->amount;
                 $wallet->save();
+                
+                // ✅ Créer la transaction
+                Transaction::create([
+                    'user_id' => $commission->user_id,
+                    'wallet_id' => $wallet->id,
+                    'type' => 'commission',
+                    'amount' => $commission->amount,
+                    'fee' => 0,
+                    'net_amount' => $commission->amount,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $wallet->balance,
+                    'status' => 'completed',
+                    'description' => "Commission {$commission->type} approuvée",
+                    'metadata' => json_encode([
+                        'commission_id' => $commission->id,
+                        'admin_id' => auth()->id(),
+                    ]),
+                    'completed_at' => now(),
+                ]);
             }
             
             DB::commit();
+
+            // ✅ Envoyer la notification
+            try {
+                $commission->user->notify(new CommissionPaidNotification(
+                    $commission->amount,
+                    $commission->type,
+                    $commission->id
+                ));
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi notification commission', [
+                    'commission_id' => $commission->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            Log::info('Commission approuvée', [
+                'commission_id' => $commission->id,
+                'user_id' => $commission->user_id,
+                'amount' => $commission->amount,
+                'admin_id' => auth()->id(),
+            ]);
             
             return redirect()->route('admin.commissions')
-                ->with('success', "Commission #{$id} approuvée avec succès.");
+                ->with('success', "✅ Commission #{$id} approuvée avec succès.");
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Erreur approbation commission', [
+                'commission_id' => $id,
+                'error' => $e->getMessage()
+            ]);
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
-    public function reject($id)
+    /**
+     * Rejeter une commission
+     */
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
         $commission = Commission::findOrFail($id);
         
         if ($commission->status !== 'pending') {
@@ -107,12 +196,59 @@ class CommissionController extends Controller
         }
         
         $commission->status = 'cancelled';
+        $commission->notes = $request->reason ?? 'Rejetée par l\'admin';
         $commission->save();
+
+        Log::info('Commission rejetée', [
+            'commission_id' => $commission->id,
+            'user_id' => $commission->user_id,
+            'amount' => $commission->amount,
+            'admin_id' => auth()->id(),
+            'reason' => $request->reason,
+        ]);
         
         return redirect()->route('admin.commissions')
-            ->with('success', "Commission #{$id} rejetée.");
+            ->with('success', "❌ Commission #{$id} rejetée.");
     }
 
+    /**
+     * Approuver plusieurs commissions en lot
+     */
+    public function batchApprove(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:commissions,id',
+        ]);
+
+        $count = 0;
+        $errors = [];
+
+        foreach ($request->ids as $id) {
+            try {
+                $this->approve($id);
+                $count++;
+            } catch (\Exception $e) {
+                $errors[] = "ID {$id}: " . $e->getMessage();
+            }
+        }
+
+        $message = "✅ {$count} commissions approuvées avec succès.";
+        if (!empty($errors)) {
+            $message .= " Erreurs: " . implode(', ', $errors);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'count' => $count,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
+     * Exporter les commissions
+     */
     public function export(Request $request)
     {
         $query = Commission::with(['user', 'fromUser']);
@@ -144,7 +280,7 @@ class CommissionController extends Controller
             $file = fopen('php://output', 'w');
             
             fputcsv($file, [
-                'ID', 'Utilisateur', 'De', 'Type', 'Montant', 'Pourcentage',
+                'ID', 'Utilisateur', 'Email', 'De', 'Type', 'Montant', 'Pourcentage',
                 'Description', 'Statut', 'Payé le', 'Créé le'
             ]);
 
@@ -152,6 +288,7 @@ class CommissionController extends Controller
                 fputcsv($file, [
                     $c->id,
                     $c->user->name ?? 'N/A',
+                    $c->user->email ?? 'N/A',
                     $c->fromUser->name ?? 'N/A',
                     $c->type,
                     number_format($c->amount, 2),
@@ -169,6 +306,9 @@ class CommissionController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
+    /**
+     * Statistiques des commissions
+     */
     public function stats()
     {
         $stats = [
@@ -178,29 +318,55 @@ class CommissionController extends Controller
             'by_type' => Commission::select('type', DB::raw('SUM(amount) as total'))
                 ->where('status', 'paid')
                 ->groupBy('type')
-                ->get(),
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'type' => $item->type,
+                        'total' => (float) $item->total,
+                    ];
+                }),
             'today' => Commission::whereDate('created_at', today())->sum('amount'),
             'this_month' => Commission::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->sum('amount'),
             'total_count' => Commission::count(),
+            'pending_count' => Commission::where('status', 'pending')->count(),
+            'paid_count' => Commission::where('status', 'paid')->count(),
         ];
 
-        return response()->json($stats);
+        // ✅ Top 5 des utilisateurs avec le plus de commissions
+        $topUsers = Commission::where('status', 'paid')
+            ->select('user_id', DB::raw('SUM(amount) as total'))
+            ->with('user')
+            ->groupBy('user_id')
+            ->orderBy('total', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'user_name' => $item->user->name ?? 'N/A',
+                    'total' => (float) $item->total,
+                ];
+            });
+
+        return response()->json([
+            'stats' => $stats,
+            'top_users' => $topUsers,
+        ]);
     }
 
     /**
-     * ✅ NOUVEAU : Voir le réseau de parrainage d'un utilisateur - DONNÉES RÉELLES
+     * Voir le réseau de parrainage d'un utilisateur
      */
     public function viewNetwork($userId)
     {
-        $user = User::findOrFail($userId);
+        $user = User::with(['rank', 'package'])->findOrFail($userId);
         
         // ✅ Récupérer le parrain
         $parrain = User::find($user->parrain_id);
         
         // ✅ Récupérer les filleuls
-        $filleuls = User::where('parrain_id', $user->id)->get();
+        $filleuls = User::where('parrain_id', $user->id)->with(['rank', 'package'])->get();
         
         // ✅ Récupérer les commissions du réseau
         $networkCommissions = Commission::whereIn('user_id', $filleuls->pluck('id'))

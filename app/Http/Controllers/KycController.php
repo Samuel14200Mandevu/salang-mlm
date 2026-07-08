@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/KycController.php - Version Utilisateur
 
 namespace App\Http\Controllers;
 
@@ -6,7 +7,6 @@ use App\Models\KycDocument;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class KycController extends Controller
 {
@@ -14,7 +14,6 @@ class KycController extends Controller
     {
         $user = Auth::user();
         $documents = KycDocument::where('user_id', $user->id)->get();
-
         return view('kyc.index', compact('user', 'documents'));
     }
 
@@ -64,65 +63,9 @@ class KycController extends Controller
             ->with('success', 'Document soumis avec succès. En attente de vérification.');
     }
 
-    public function adminIndex()
-    {
-        $pendingDocs = KycDocument::where('status', 'pending')
-            ->with('user')
-            ->orderBy('created_at', 'asc')
-            ->paginate(15);
-
-        return view('admin.kyc.index', compact('pendingDocs'));
-    }
-
-    public function verify(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:verified,rejected',
-            'rejection_reason' => 'required_if:status,rejected|string|nullable',
-        ]);
-
-        $document = KycDocument::findOrFail($id);
-
-        if ($document->status !== 'pending') {
-            return back()->with('error', 'Ce document a déjà été traité.');
-        }
-
-        $document->status = $request->status;
-        $document->rejection_reason = $request->rejection_reason;
-        $document->verified_by = Auth::id();
-        $document->verified_at = now();
-        $document->save();
-
-        $user = $document->user;
-        if ($request->status === 'verified') {
-            $requiredDocs = ['id_card', 'proof_of_address'];
-            $verifiedDocs = KycDocument::where('user_id', $user->id)
-                ->where('status', 'verified')
-                ->whereIn('document_type', $requiredDocs)
-                ->count();
-
-            if ($verifiedDocs >= count($requiredDocs)) {
-                $user->kyc_status = 'verified';
-                $user->kyc_verified_at = now();
-            } else {
-                $user->kyc_status = 'partial';
-            }
-        } else {
-            $user->kyc_status = 'rejected';
-        }
-        $user->save();
-
-        $message = $request->status === 'verified'
-            ? 'Document vérifié avec succès.'
-            : 'Document rejeté.';
-
-        return back()->with('success', $message);
-    }
-
     public function getStatus()
     {
         $user = Auth::user();
-
         return response()->json([
             'kyc_status' => $user->kyc_status,
             'is_verified' => $user->kyc_status === 'verified',

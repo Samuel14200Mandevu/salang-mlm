@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/SettingController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -22,13 +23,20 @@ class SettingController extends Controller
             'locale' => config('app.locale'),
             'maintenance_mode' => app()->isDownForMaintenance(),
             'debug_mode' => config('app.debug'),
+            'env' => app()->environment(),
+            'version' => app()->version(),
+            'php_version' => phpversion(),
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
+            'max_upload_size' => ini_get('upload_max_filesize'),
+            'memory_limit' => ini_get('memory_limit'),
+            'max_execution_time' => ini_get('max_execution_time'),
         ];
 
         return view('admin.settings.index', compact('settings'));
     }
 
     /**
-     * Mettre à jour les paramètres
+     * Mettre à jour les paramètres généraux
      */
     public function update(Request $request)
     {
@@ -37,11 +45,10 @@ class SettingController extends Controller
             'timezone' => 'required|string|timezone',
             'locale' => 'required|string|in:fr,en',
             'debug_mode' => 'boolean',
-            'maintenance_mode' => 'boolean',
         ]);
 
         try {
-            // Mettre à jour le .env
+            // ✅ Mettre à jour le .env
             $this->updateEnv([
                 'APP_NAME' => $request->site_name,
                 'APP_TIMEZONE' => $request->timezone,
@@ -49,24 +56,57 @@ class SettingController extends Controller
                 'APP_DEBUG' => $request->has('debug_mode') ? 'true' : 'false',
             ]);
 
-            // Mode maintenance
-            if ($request->has('maintenance_mode')) {
-                Artisan::call('down', ['--retry' => 60]);
-            } else {
-                Artisan::call('up');
-            }
+            // ✅ Vider le cache de configuration
+            Artisan::call('config:clear');
 
-            // Vider le cache
-            Cache::flush();
+            Log::info('Paramètres généraux mis à jour', [
+                'admin_id' => auth()->id(),
+                'data' => $request->all(),
+            ]);
 
             return redirect()->route('admin.settings')
-                ->with('success', '⚙️ Paramètres mis à jour avec succès.');
+                ->with('success', '⚙️ Paramètres généraux mis à jour avec succès.');
 
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour paramètres', [
+            Log::error('Erreur mise à jour paramètres généraux', [
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Erreur lors de la mise à jour: ' . $e->getMessage());
+            return back()->with('error', '❌ Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mode maintenance
+     */
+    public function toggleMaintenance(Request $request)
+    {
+        try {
+            if (app()->isDownForMaintenance()) {
+                Artisan::call('up');
+                $message = 'Application remise en ligne.';
+            } else {
+                $secret = $request->secret ?? null;
+                $command = 'down --retry=60';
+                if ($secret) {
+                    $command .= " --secret={$secret}";
+                }
+                Artisan::call($command);
+                $message = 'Application mise en maintenance.';
+            }
+
+            Log::info('Mode maintenance changé', [
+                'admin_id' => auth()->id(),
+                'status' => app()->isDownForMaintenance() ? 'down' : 'up',
+            ]);
+
+            return redirect()->route('admin.settings')
+                ->with('success', "🔧 {$message}");
+
+        } catch (\Exception $e) {
+            Log::error('Erreur mode maintenance', [
+                'error' => $e->getMessage()
+            ]);
+            return back()->with('error', '❌ Erreur: ' . $e->getMessage());
         }
     }
 
@@ -88,6 +128,13 @@ class SettingController extends Controller
             ],
             'withdrawal_fee' => 2.5,
             'min_withdrawal' => 10,
+            'levels' => [
+                1 => 30,
+                2 => 15,
+                3 => 10,
+                4 => 5,
+                5 => 5,
+            ],
         ]);
 
         return view('admin.settings.commission', compact('commissionSettings'));
@@ -107,9 +154,14 @@ class SettingController extends Controller
             'leadership_max_levels' => 'required|integer|min:1|max:10',
             'withdrawal_fee' => 'required|numeric|min:0|max:100',
             'min_withdrawal' => 'required|numeric|min:0',
+            'level1' => 'required|numeric|min:0|max:100',
+            'level2' => 'required|numeric|min:0|max:100',
+            'level3' => 'required|numeric|min:0|max:100',
+            'level4' => 'required|numeric|min:0|max:100',
+            'level5' => 'required|numeric|min:0|max:100',
         ]);
 
-        // Mettre à jour config/commission.php
+        // ✅ Configurer les taux
         $config = [
             'rates' => [
                 'direct' => (float) $request->direct_rate,
@@ -123,11 +175,26 @@ class SettingController extends Controller
             ],
             'withdrawal_fee' => (float) $request->withdrawal_fee,
             'min_withdrawal' => (float) $request->min_withdrawal,
+            'levels' => [
+                1 => (float) $request->level1,
+                2 => (float) $request->level2,
+                3 => (float) $request->level3,
+                4 => (float) $request->level4,
+                5 => (float) $request->level5,
+            ],
         ];
 
+        // ✅ Sauvegarder la configuration
         $this->updateConfigFile('commission.php', $config);
 
+        // ✅ Vider le cache
         Cache::forget('commission_config');
+        Artisan::call('config:clear');
+
+        Log::info('Paramètres des commissions mis à jour', [
+            'admin_id' => auth()->id(),
+            'config' => $config,
+        ]);
 
         return redirect()->route('admin.settings.commission')
             ->with('success', '💰 Paramètres des commissions mis à jour.');
@@ -171,6 +238,7 @@ class SettingController extends Controller
             'mobile_money_providers' => 'nullable|array',
             'crypto_fee' => 'required|numeric|min:0|max:100',
             'mobile_money_fee' => 'required|numeric|min:0|max:100',
+            'bank_transfer_fee' => 'required|numeric|min:0|max:100',
         ]);
 
         $config = [
@@ -187,13 +255,19 @@ class SettingController extends Controller
             'fees' => [
                 'crypto' => (float) $request->crypto_fee,
                 'mobile_money' => (float) $request->mobile_money_fee,
-                'bank_transfer' => (float) $request->bank_transfer_fee ?? 0.5,
+                'bank_transfer' => (float) $request->bank_transfer_fee,
             ],
         ];
 
         $this->updateConfigFile('payment.php', $config);
 
         Cache::forget('payment_config');
+        Artisan::call('config:clear');
+
+        Log::info('Paramètres des paiements mis à jour', [
+            'admin_id' => auth()->id(),
+            'config' => $config,
+        ]);
 
         return redirect()->route('admin.settings.payment')
             ->with('success', '💳 Paramètres des paiements mis à jour.');
@@ -247,6 +321,12 @@ class SettingController extends Controller
         Artisan::call('config:clear');
         Artisan::call('view:clear');
         Artisan::call('route:clear');
+        Artisan::call('event:clear');
+        Artisan::call('optimize:clear');
+
+        Log::info('Cache vidé', [
+            'admin_id' => auth()->id(),
+        ]);
 
         return redirect()->route('admin.settings')
             ->with('success', '🧹 Cache vidé avec succès.');
@@ -259,7 +339,53 @@ class SettingController extends Controller
     {
         Artisan::call('optimize');
 
+        Log::info('Application optimisée', [
+            'admin_id' => auth()->id(),
+        ]);
+
         return redirect()->route('admin.settings')
             ->with('success', '🚀 Application optimisée.');
+    }
+
+    /**
+     * Informations sur le système
+     */
+    public function systemInfo()
+    {
+        $info = [
+            'php_version' => phpversion(),
+            'laravel_version' => app()->version(),
+            'environment' => app()->environment(),
+            'debug_mode' => config('app.debug'),
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
+            'server_ip' => $_SERVER['SERVER_ADDR'] ?? 'N/A',
+            'max_upload_size' => ini_get('upload_max_filesize'),
+            'memory_limit' => ini_get('memory_limit'),
+            'max_execution_time' => ini_get('max_execution_time'),
+            'post_max_size' => ini_get('post_max_size'),
+            'disk_free_space' => $this->formatBytes(disk_free_space('/')),
+            'disk_total_space' => $this->formatBytes(disk_total_space('/')),
+            'database_connection' => config('database.default'),
+            'database_name' => config('database.connections.mysql.database'),
+            'cache_driver' => config('cache.default'),
+            'session_driver' => config('session.driver'),
+        ];
+
+        return response()->json($info);
+    }
+
+    /**
+     * Formater les bytes
+     */
+    private function formatBytes($bytes)
+    {
+        if ($bytes === false) return 'N/A';
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = 0;
+        while ($bytes >= 1024 && $i < 4) {
+            $bytes /= 1024;
+            $i++;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

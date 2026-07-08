@@ -49,4 +49,28 @@ return [
         4 => 5,    // Niveau 4 : 5%
         5 => 5,    // Niveau 5 : 5%
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | Constantes pour les calculs
+    |--------------------------------------------------------------------------
+    */
+    'constants' => [
+        'MAX_UNILEVEL_LEVELS' => 10,
+        'DIRECT_COMMISSION_LABEL' => 'Direct Bonus',
+        'INDIRECT_COMMISSION_LABEL' => 'Indirect Bonus',
+        'LEADERSHIP_COMMISSION_LABEL' => 'Leadership Bonus',
+        'RETAIL_PROFIT_LABEL' => 'Retail Profit',
+    ],
+     /*
+    |--------------------------------------------------------------------------
+    | Limites de sécurité
+    |--------------------------------------------------------------------------
+    */
+    'limits' => [
+        'max_commission_per_transaction' => 10000,
+        'max_commission_per_day' => 50000,
+        'max_withdrawal_per_day' => 5000,
+        'min_withdrawal_amount' => 10,
+        'max_withdrawal_amount' => 10000,
+    ],
 ];

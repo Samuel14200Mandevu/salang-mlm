@@ -9,21 +9,48 @@ use App\Models\Rank;
 use App\Models\Package;
 use App\Models\Wallet;
 use App\Models\Genealogy;
+use App\Notifications\WelcomeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
     /**
      * Liste des utilisateurs
      */
-    public function index()
+    public function index(Request $request)
     {
-        // ✅ Récupérer les utilisateurs avec pagination
-        $users = User::with(['rank', 'package'])->orderBy('created_at', 'desc')->paginate(15);
-        
-        // ✅ Calculer les statistiques
+        $query = User::with(['rank', 'package']);
+
+        // Filtres
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('sponsor_id', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        if ($request->filled('rank')) {
+            $query->where('rank', $request->rank);
+        }
+
+        if ($request->filled('package')) {
+            $query->where('package_id', $request->package);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Statistiques
         $stats = [
             'total' => User::count(),
             'active' => User::where('is_active', true)->count(),
@@ -31,37 +58,62 @@ class UserController extends Controller
             'admins' => User::whereHas('roles', function($q) {
                 $q->where('name', 'admin');
             })->count(),
+            'with_package' => User::whereNotNull('package_id')->count(),
+            'with_kyc' => User::where('kyc_status', 'verified')->count(),
         ];
-        
-        // ✅ Récupérer les packages pour le filtre
+
+        $ranks = Rank::all();
         $packages = Package::all();
-        
-        return view('admin.users.index', compact('users', 'stats', 'packages'));
+
+        return view('admin.users.index', compact('users', 'stats', 'ranks', 'packages'));
     }
 
     /**
-     * Afficher les détails d'un utilisateur
+     * Détails d'un utilisateur
      */
     public function show($id)
     {
-        $user = User::with(['rank', 'package'])->findOrFail($id);
+        $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
         
-        // ✅ Récupérer le sponsor (celui qui a ce code de parrain)
-        $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+        // ✅ Récupérer le parrain (celui qui a invité l'utilisateur)
+        $parrain = User::find($user->parrain_id);
         
-        // ✅ Compter les fillules (ceux qui ont ce code de parrain)
-        $downlinesCount = User::where('sponsor_id', $user->sponsor_id)->count();
+        // ✅ Filleuls (ceux invités par l'utilisateur)
+        $filleuls = User::where('parrain_id', $user->id)->get();
+        $filleulsCount = $filleuls->count();
+        $filleulsActifs = $filleuls->where('is_active', true)->count();
         
         // ✅ Statistiques des commissions
-        $commissionsCount = $user->commissions()->count();
-        $totalCommissions = $user->commissions()->where('status', 'paid')->sum('amount') ?? 0;
-        
+        $commissionsStats = [
+            'total' => $user->commissions()->where('status', 'paid')->sum('amount'),
+            'direct' => $user->commissions()->where('type', 'direct')->where('status', 'paid')->sum('amount'),
+            'indirect' => $user->commissions()->where('type', 'indirect')->where('status', 'paid')->sum('amount'),
+            'leadership' => $user->commissions()->where('type', 'leadership')->where('status', 'paid')->sum('amount'),
+            'retail' => $user->commissions()->where('type', 'retail')->where('status', 'paid')->sum('amount'),
+            'pending' => $user->commissions()->where('status', 'pending')->sum('amount'),
+        ];
+
+        // ✅ Historique des grades
+        $rankHistory = $user->rankHistory()->with(['oldRank', 'newRank'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // ✅ Dernières transactions
+        $recentTransactions = $user->transactions()
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
         return view('admin.users.show', compact(
-            'user', 
-            'sponsor',
-            'downlinesCount', 
-            'commissionsCount', 
-            'totalCommissions'
+            'user',
+            'parrain',
+            'filleuls',
+            'filleulsCount',
+            'filleulsActifs',
+            'commissionsStats',
+            'rankHistory',
+            'recentTransactions'
         ));
     }
 
@@ -73,8 +125,8 @@ class UserController extends Controller
         $ranks = Rank::all();
         $packages = Package::all();
         
-        // ✅ Récupérer tous les utilisateurs avec leur code de parrain
-        $users = User::select('id', 'name', 'sponsor_id')
+        // ✅ Récupérer tous les utilisateurs pour le choix du parrain
+        $users = User::select('id', 'name', 'email', 'sponsor_id')
             ->orderBy('name')
             ->get();
             
@@ -93,70 +145,105 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'rank_id' => 'nullable|exists:ranks,id',
             'package_id' => 'nullable|exists:packages,id',
-            'sponsor_id' => 'nullable|string|max:255', // ✅ Code de parrain (VARCHAR)
+            'parrain_id' => 'nullable|exists:users,id', // ✅ ID du parrain
+            'is_active' => 'boolean',
         ]);
 
-        // ✅ Vérifier si le sponsor existe (si un code est fourni)
-        $sponsor = null;
-        if ($request->sponsor_id) {
-            $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
-            
-            if (!$sponsor) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'sponsor_id' => 'Le code de parrain est invalide. Aucun utilisateur trouvé avec ce code.'
-                    ]);
+        // ✅ Vérifier si le parrain existe
+        $parrain = null;
+        if ($request->filled('parrain_id')) {
+            $parrain = User::find($request->parrain_id);
+            if (!$parrain) {
+                return back()->withInput()->withErrors([
+                    'parrain_id' => 'Le parrain sélectionné n\'existe pas.'
+                ]);
             }
         }
 
-        // ✅ Générer un code de parrain unique pour le nouvel utilisateur
+        // ✅ Générer un code de parrain unique
         $sponsorCode = $this->generateSponsorCode();
         
-        // ✅ Créer l'utilisateur
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'rank_id' => $request->rank_id,
-            'package_id' => $request->package_id,
-            'sponsor_id' => $sponsorCode, // ✅ Son code de parrain unique
-            'is_active' => true,
-        ]);
-
-        // ✅ Créer le portefeuille
-        Wallet::create([
-            'user_id' => $user->id,
-            'balance' => 0,
-            'pending_balance' => 0,
-            'currency' => 'USD',
-            'is_active' => true,
-        ]);
-
-        // ✅ Créer la généalogie
-        Genealogy::create([
-            'user_id' => $user->id,
-            'sponsor_id' => $sponsor?->id, // ✅ L'ID du sponsor (clé étrangère)
-            'parent_id' => $sponsor?->id,   // ✅ L'ID du parent
-            'level' => $sponsor ? ($sponsor->genealogy?->level ?? 0) + 1 : 0,
-            'position' => null,
-            'left_count' => 0,
-            'right_count' => 0,
-            'total_children' => 0,
-        ]);
-
-        // ✅ Mettre à jour le compteur du sponsor (si existe)
-        if ($sponsor) {
-            $sponsor->increment('total_sponsors');
-            $sponsor->increment('total_team');
-            
-            // ✅ Mettre à jour les niveaux supérieurs
-            $this->updateTeamCounters($sponsor);
+        // ✅ Déterminer le grade si non spécifié
+        $rankId = $request->rank_id;
+        if (!$rankId && $request->package_id) {
+            $package = Package::find($request->package_id);
+            if ($package) {
+                $rank = Rank::where('min_pv', '<=', $package->pv_value)
+                    ->orderBy('min_pv', 'desc')
+                    ->first();
+                $rankId = $rank?->id;
+            }
         }
 
-        return redirect()->route('admin.users')
-            ->with('success', 'Utilisateur créé avec succès. Code de parrain : ' . $sponsorCode);
+        DB::beginTransaction();
+
+        try {
+            // ✅ Créer l'utilisateur
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'rank_id' => $rankId,
+                'package_id' => $request->package_id,
+                'parrain_id' => $parrain?->id,
+                'sponsor_id' => $sponsorCode,
+                'is_active' => $request->has('is_active'),
+                'pv_balance' => $request->package_id ? Package::find($request->package_id)?->pv_value ?? 0 : 0,
+                'bv_balance' => $request->package_id ? Package::find($request->package_id)?->bv_value ?? 0 : 0,
+            ]);
+
+            // ✅ Créer le portefeuille
+            Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+                'pending_balance' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
+            ]);
+
+            // ✅ Créer la généalogie
+            Genealogy::create([
+                'user_id' => $user->id,
+                'sponsor_id' => $parrain?->id,
+                'parent_id' => $parrain?->id,
+                'level' => $parrain ? ($parrain->genealogy?->level ?? 0) + 1 : 0,
+                'position' => null,
+                'left_count' => 0,
+                'right_count' => 0,
+                'total_children' => 0,
+            ]);
+
+            // ✅ Mettre à jour les compteurs du parrain
+            if ($parrain) {
+                $parrain->increment('total_sponsors');
+                $parrain->increment('total_team');
+                $this->updateTeamCounters($parrain);
+            }
+
+            DB::commit();
+
+            // ✅ Envoyer la notification de bienvenue
+            try {
+                $user->notify(new WelcomeNotification($parrain?->name));
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi notification bienvenue', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            return redirect()->route('admin.users')
+                ->with('success', "✅ Utilisateur créé avec succès. Code de parrain : {$sponsorCode}");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur création utilisateur', [
+                'error' => $e->getMessage(),
+                'data' => $request->all()
+            ]);
+            return back()->withInput()->with('error', 'Erreur: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -164,12 +251,13 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['rank', 'package'])->findOrFail($id);
         $ranks = Rank::all();
         $packages = Package::all();
         
-        // ✅ Récupérer tous les utilisateurs avec leur code de parrain
-        $users = User::select('id', 'name', 'sponsor_id')
+        // ✅ Récupérer tous les utilisateurs pour le choix du parrain
+        $users = User::select('id', 'name', 'email', 'sponsor_id')
+            ->where('id', '!=', $id)
             ->orderBy('name')
             ->get();
             
@@ -189,50 +277,59 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'rank_id' => 'nullable|exists:ranks,id',
             'package_id' => 'nullable|exists:packages,id',
-            'sponsor_id' => 'nullable|string|max:255', // ✅ Code de parrain (VARCHAR)
+            'parrain_id' => 'nullable|exists:users,id|not_in:' . $id,
+            'is_active' => 'boolean',
+            'kyc_status' => 'nullable|in:not_submitted,pending,partial,verified,rejected',
         ]);
 
-        // ✅ Vérifier si le sponsor existe (si un code est fourni)
-        if ($request->sponsor_id) {
-            $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
-            
-            if (!$sponsor) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'sponsor_id' => 'Le code de parrain est invalide. Aucun utilisateur trouvé avec ce code.'
-                    ]);
+        DB::beginTransaction();
+
+        try {
+            // ✅ Mise à jour des données
+            $data = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'rank_id' => $request->rank_id,
+                'package_id' => $request->package_id,
+                'parrain_id' => $request->parrain_id,
+                'is_active' => $request->has('is_active'),
+                'kyc_status' => $request->kyc_status ?? $user->kyc_status,
+            ];
+
+            // ✅ Mise à jour du mot de passe si fourni
+            if ($request->filled('password')) {
+                $request->validate(['password' => 'min:8|confirmed']);
+                $data['password'] = Hash::make($request->password);
             }
+
+            $user->update($data);
+
+            // ✅ Mettre à jour la généalogie si parrain changé
+            if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
+                $genealogy = Genealogy::where('user_id', $user->id)->first();
+                if ($genealogy) {
+                    $newParrain = User::find($request->parrain_id);
+                    $genealogy->sponsor_id = $newParrain?->id;
+                    $genealogy->parent_id = $newParrain?->id;
+                    $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
+                    $genealogy->save();
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.users')
+                ->with('success', "✅ Utilisateur {$user->name} mis à jour avec succès.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur mise à jour utilisateur', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->withInput()->with('error', 'Erreur: ' . $e->getMessage());
         }
-
-        // ✅ Préparer les données
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'rank_id' => $request->rank_id,
-            'package_id' => $request->package_id,
-            'is_active' => $request->has('is_active'),
-        ];
-
-        // ✅ Mettre à jour le sponsor_id si fourni
-        if ($request->filled('sponsor_id')) {
-            // Ne pas modifier le code de parrain de l'utilisateur
-            // On garde son propre code, on ne change que son sponsor
-            // Le sponsor_id est un code VARCHAR, pas un ID
-            // Pour changer de sponsor, on doit garder le même code
-            // On ne fait rien car le code de parrain est unique et ne change pas
-        }
-
-        $user->update($data);
-
-        // ✅ Mettre à jour le mot de passe si fourni
-        if ($request->filled('password')) {
-            $user->update(['password' => Hash::make($request->password)]);
-        }
-
-        return redirect()->route('admin.users')
-            ->with('success', 'Utilisateur mis à jour avec succès.');
     }
 
     /**
@@ -242,25 +339,55 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         
-        // ✅ Supprimer le wallet
-        if ($user->wallet) {
-            $user->wallet->delete();
+        // ✅ Empêcher la suppression de son propre compte
+        if (auth()->id() == $user->id) {
+            return redirect()->route('admin.users')
+                ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
-        
-        // ✅ Supprimer la généalogie
-        if ($user->genealogy) {
-            $user->genealogy->delete();
+
+        DB::beginTransaction();
+
+        try {
+            // ✅ Supprimer les dépendances
+            if ($user->wallet) {
+                $user->wallet->delete();
+            }
+            
+            if ($user->genealogy) {
+                $user->genealogy->delete();
+            }
+            
+            // ✅ Supprimer l'avatar
+            if ($user->avatar && Storage::disk('public')->exists('avatars/' . $user->avatar)) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            }
+            
+            // ✅ Mettre à jour les compteurs du parrain
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain) {
+                    $parrain->decrement('total_sponsors');
+                }
+            }
+
+            // ✅ Réassigner les filleuls
+            User::where('parrain_id', $user->id)->update(['parrain_id' => null]);
+
+            $user->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.users')
+                ->with('success', "🗑️ Utilisateur {$user->name} supprimé avec succès.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur suppression utilisateur', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
-        
-        // ✅ Supprimer l'avatar
-        if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
-            unlink(public_path('storage/avatars/' . $user->avatar));
-        }
-        
-        $user->delete();
-        
-        return redirect()->route('admin.users')
-            ->with('success', 'Utilisateur supprimé avec succès.');
     }
 
     /**
@@ -281,23 +408,56 @@ class UserController extends Controller
         
         $status = $user->is_active ? 'activé' : 'désactivé';
         return redirect()->route('admin.users')
-            ->with('success', "Utilisateur {$status} avec succès.");
+            ->with('success', "✅ Utilisateur {$status} avec succès.");
     }
 
     /**
-     * Rechercher des utilisateurs (AJAX)
+     * Réinitialiser le mot de passe
      */
-    public function search(Request $request)
+    public function resetPassword($id)
     {
-        $query = $request->get('q', '');
+        $user = User::findOrFail($id);
+        $newPassword = Str::random(10);
         
-        $users = User::where('name', 'LIKE', "%{$query}%")
-            ->orWhere('email', 'LIKE', "%{$query}%")
-            ->orWhere('sponsor_id', 'LIKE', "%{$query}%")
-            ->limit(20)
-            ->get(['id', 'name', 'email', 'sponsor_id']);
+        $user->password = Hash::make($newPassword);
+        $user->save();
         
-        return response()->json($users);
+        // TODO: Envoyer un email avec le nouveau mot de passe
+        // $user->notify(new PasswordResetNotification($newPassword));
+        
+        return redirect()->route('admin.users')
+            ->with('success', "🔑 Mot de passe réinitialisé pour {$user->name}. Nouveau mot de passe : {$newPassword}");
+    }
+
+    /**
+     * Assigner un package à un utilisateur
+     */
+    public function assignPackage(Request $request, $id)
+    {
+        $request->validate([
+            'package_id' => 'required|exists:packages,id',
+        ]);
+
+        $user = User::findOrFail($id);
+        $package = Package::find($request->package_id);
+
+        $user->package_id = $package->id;
+        $user->pv_balance += $package->pv_value;
+        $user->bv_balance += $package->bv_value;
+        $user->save();
+
+        // ✅ Mettre à jour le grade
+        $rank = Rank::where('min_pv', '<=', $user->pv_balance)
+            ->orderBy('min_pv', 'desc')
+            ->first();
+        if ($rank) {
+            $user->rank_id = $rank->id;
+            $user->rank = $rank->name;
+            $user->save();
+        }
+
+        return redirect()->route('admin.users.show', $id)
+            ->with('success', "📦 Package {$package->name} assigné à {$user->name}.");
     }
 
     /**
@@ -306,11 +466,11 @@ class UserController extends Controller
     private function generateSponsorCode(): string
     {
         $prefix = 'SAL';
-        $random = strtoupper(substr(uniqid(), -6));
+        $random = strtoupper(Str::random(6));
         $sponsorCode = $prefix . $random;
         
         while (User::where('sponsor_id', $sponsorCode)->exists()) {
-            $random = strtoupper(substr(uniqid(), -6));
+            $random = strtoupper(Str::random(6));
             $sponsorCode = $prefix . $random;
         }
         
@@ -323,18 +483,35 @@ class UserController extends Controller
     private function updateTeamCounters(User $user)
     {
         $currentUser = $user;
+        $level = 0;
         
-        while ($currentUser->sponsor_id) {
-            // ✅ Chercher le sponsor par son code
-            $sponsor = User::where('sponsor_id', $currentUser->sponsor_id)->first();
+        while ($currentUser && $level < 10) {
+            $parrain = User::find($currentUser->parrain_id);
+            if (!$parrain) break;
             
-            if (!$sponsor) {
-                break;
-            }
-            
-            $sponsor->increment('total_team');
-            $currentUser = $sponsor;
+            $parrain->increment('total_team');
+            $currentUser = $parrain;
+            $level++;
         }
+    }
+
+    /**
+     * Rechercher des utilisateurs (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+        
+        $users = User::where('name', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->orWhere('sponsor_id', 'like', "%{$query}%")
+            ->limit(20)
+            ->get(['id', 'name', 'email', 'sponsor_id', 'avatar']);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
     }
 
     /**
@@ -342,57 +519,58 @@ class UserController extends Controller
      */
     public function export(Request $request)
     {
-        $users = User::with(['rank', 'package'])->get();
-        
-        $filename = 'users_' . date('Y-m-d') . '.csv';
-        $handle = fopen('php://output', 'w');
-        
-        // En-têtes CSV
-        fputcsv($handle, [
-            'ID', 
-            'Nom', 
-            'Email', 
-            'Téléphone', 
-            'Code Parrain', 
-            'Sponsor', 
-            'Grade', 
-            'Package', 
-            'PV', 
-            'BV', 
-            'Statut', 
-            'Date d\'inscription'
-        ]);
-        
-        foreach ($users as $user) {
-            $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
-            
-            fputcsv($handle, [
-                $user->id,
-                $user->name,
-                $user->email,
-                $user->phone ?? '',
-                $user->sponsor_id,
-                $sponsor?->name ?? 'Aucun',
-                $user->rank?->name ?? 'Distributor',
-                $user->package?->name ?? 'Starter',
-                $user->pv_balance ?? 0,
-                $user->bv_balance ?? 0,
-                $user->is_active ? 'Actif' : 'Inactif',
-                $user->created_at?->format('d/m/Y H:i') ?? ''
-            ]);
+        $query = User::with(['rank', 'package']);
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
         }
-        
-        fclose($handle);
-        
-        return response()->stream(
-            function() use ($filename) {
-                // Le contenu est déjà envoyé
-            },
-            200,
-            [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            ]
-        );
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $users = $query->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="users_' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function() use ($users) {
+            $file = fopen('php://output', 'w');
+            
+            fputcsv($file, [
+                'ID', 'Nom', 'Email', 'Téléphone', 'Code Parrain', 'Parrain ID',
+                'Grade', 'Package', 'PV', 'BV', 'Statut', 'KYC', 'Date d\'inscription'
+            ]);
+
+            foreach ($users as $user) {
+                $parrain = User::find($user->parrain_id);
+                
+                fputcsv($file, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->phone ?? '',
+                    $user->sponsor_id,
+                    $parrain?->name ?? 'Aucun',
+                    $user->rank?->name ?? 'Distributor',
+                    $user->package?->name ?? 'Aucun',
+                    $user->pv_balance ?? 0,
+                    $user->bv_balance ?? 0,
+                    $user->is_active ? 'Actif' : 'Inactif',
+                    $user->kyc_status ?? 'Non soumis',
+                    $user->created_at?->format('d/m/Y H:i') ?? ''
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
