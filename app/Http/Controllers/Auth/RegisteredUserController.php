@@ -37,15 +37,15 @@ class RegisteredUserController extends Controller
                 'lowercase', 
                 'email', 
                 'max:255', 
-                'unique:users,email', // ✅ Vérification Laravel (doublon avec la DB)
+                'unique:users,email',
             ],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'sponsor_id' => ['required', 'string'],
             'terms' => ['required', 'accepted'],
         ], [
-            'email.unique' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.',
-            'sponsor_id.required' => 'L\'ID du parrain est obligatoire.',
+            'email.unique' => 'Cette adresse email est déjà utilisée par un autre compte.',
+            'sponsor_id.required' => 'L\'identifiant du parrain est obligatoire.',
             'terms.required' => 'Vous devez accepter les conditions générales.',
             'terms.accepted' => 'Vous devez accepter les conditions générales.',
         ]);
@@ -68,7 +68,7 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'sponsor_id' => 'L\'ID du parrain est invalide ou n\'existe pas. Veuillez vérifier et réessayer.'
+                        'sponsor_id' => 'L\'identifiant du parrain est invalide ou n\'existe pas.'
                     ]);
             }
 
@@ -77,7 +77,7 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.'
+                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
                     ]);
             }
 
@@ -137,15 +137,14 @@ class RegisteredUserController extends Controller
 
         } catch (QueryException $e) {
             // ✅ Gestion des erreurs de base de données
-            if ($e->getCode() == 23000) { // Erreur de contrainte d'unicité
+            if ($e->getCode() == 23000) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cet email est déjà utilisé par un autre compte. Veuillez utiliser un autre email ou vous connecter.'
+                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
                     ]);
             }
             
-            // Autres erreurs
             Log::error('Erreur lors de l\'inscription: ' . $e->getMessage());
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))

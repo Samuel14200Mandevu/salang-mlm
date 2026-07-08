@@ -192,19 +192,6 @@
         align-items: center;
         gap: 0.25rem;
     }
-    .form-group .success-message svg {
-        width: 0.875rem;
-        height: 0.875rem;
-        flex-shrink: 0;
-    }
-    .form-group .checking-message {
-        color: #f59e0b;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
     
     .password-wrapper {
         position: relative;
@@ -237,64 +224,178 @@
         margin-top: 0.25rem;
     }
     
-    /* Toast */
-    .toast-modern {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-100px);
-        padding: 1rem 1.5rem;
-        border-radius: var(--radius-md);
-        background: var(--bg-card);
-        color: var(--text-primary);
-        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
-        border: 1px solid var(--border-color);
-        z-index: 9999;
+    /* Email Status Messages */
+    .email-checking {
         display: flex;
         align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.813rem;
+        margin-top: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        background: #f3f4f6;
+        border-radius: 0.375rem;
+        border-left: 3px solid #9ca3af;
+    }
+    .email-checking-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #e5e7eb;
+        border-top: 2px solid #6366f1;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+    }
+    .email-status-success {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #16a34a;
+        font-size: 0.813rem;
+        margin-top: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        background: #f0fdf4;
+        border-radius: 0.375rem;
+        border-left: 3px solid #22c55e;
+        animation: slideDown 0.3s ease;
+    }
+    .email-status-error {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #dc2626;
+        font-size: 0.813rem;
+        margin-top: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        background: #fef2f2;
+        border-radius: 0.375rem;
+        border-left: 3px solid #ef4444;
+        animation: slideDown 0.3s ease;
+    }
+    .email-status-warning {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #d97706;
+        font-size: 0.813rem;
+        margin-top: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        background: #fffbeb;
+        border-radius: 0.375rem;
+        border-left: 3px solid #f59e0b;
+        animation: slideDown 0.3s ease;
+    }
+    .email-status-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 0.688rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .email-status-success .email-status-icon {
+        background: #22c55e;
+        color: #ffffff;
+    }
+    .email-status-error .email-status-icon {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .email-status-warning .email-status-icon {
+        background: #f59e0b;
+        color: #ffffff;
+    }
+
+    /* Toast Notification */
+    .toast-modern {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        transform: translateX(calc(100% + 40px));
+        padding: 1rem 1.25rem;
+        border-radius: 0.625rem;
+        background: #ffffff;
+        color: #111827;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #6366f1;
+        z-index: 9999;
+        display: flex;
+        align-items: flex-start;
         gap: 0.75rem;
         font-size: 0.875rem;
-        font-weight: 500;
         opacity: 0;
         transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        min-width: 280px;
-        max-width: 90vw;
+        min-width: 320px;
+        max-width: 440px;
+        width: calc(100% - 32px);
     }
     .toast-modern.show {
-        transform: translateX(-50%) translateY(0);
+        transform: translateX(0);
         opacity: 1;
     }
     .toast-modern .toast-icon {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        font-size: 1rem;
-    }
-    .toast-modern .toast-icon.error {
-        background: rgba(239, 68, 68, 0.12);
-        color: #ef4444;
     }
     .toast-modern .toast-icon.success {
-        background: rgba(34, 197, 94, 0.12);
+        background: #dcfce7;
         color: #22c55e;
+    }
+    .toast-modern .toast-icon.error {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+    .toast-modern .toast-icon.warning {
+        background: #fef3c7;
+        color: #f59e0b;
+    }
+    .toast-modern .toast-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    .toast-modern .toast-content {
+        flex: 1;
+        min-width: 0;
+    }
+    .toast-modern .toast-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #111827;
+        margin-bottom: 2px;
+        display: block;
+    }
+    .toast-modern .toast-message {
+        font-size: 0.813rem;
+        color: #6b7280;
+        line-height: 1.4;
+        display: block;
     }
     .toast-modern .toast-close {
         background: none;
         border: none;
-        color: var(--text-tertiary);
+        color: #9ca3af;
         cursor: pointer;
         padding: 0.25rem;
+        font-size: 1.25rem;
+        line-height: 1;
         transition: color 0.2s ease;
-        margin-left: auto;
+        flex-shrink: 0;
+        margin-top: -2px;
     }
     .toast-modern .toast-close:hover {
-        color: var(--text-primary);
+        color: #374151;
     }
-    
+
     .social-info-box {
         background: rgba(99, 102, 241, 0.06);
         border: 1px solid rgba(99, 102, 241, 0.15);
@@ -322,31 +423,21 @@
         color: var(--text-primary);
     }
 
-    .email-availability-checking {
-        color: #f59e0b;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
-    .email-availability-available {
-        color: #22c55e;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    .email-availability-unavailable {
-        color: #ef4444;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
+
     @media (max-width: 640px) {
         .auth-card { padding: 1.5rem; max-width: 100%; }
         .auth-logo img { height: 50px; }
@@ -356,15 +447,59 @@
         .form-group .input { font-size: 0.813rem; padding: 0.5rem 0.875rem; }
         .social-btn { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
         .social-btn svg { width: 1.125rem; height: 1.125rem; }
-        .toast-modern { min-width: auto; max-width: 90vw; padding: 0.75rem 1rem; font-size: 0.813rem; }
-        .toast-modern .toast-icon { width: 28px; height: 28px; font-size: 0.875rem; }
+        .toast-modern {
+            top: 16px;
+            right: 16px;
+            min-width: unset;
+            max-width: calc(100% - 32px);
+            width: calc(100% - 32px);
+            padding: 0.75rem 1rem;
+            font-size: 0.813rem;
+        }
+        .toast-modern .toast-icon {
+            width: 28px;
+            height: 28px;
+        }
+        .toast-modern .toast-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+        .toast-modern .toast-title {
+            font-size: 0.813rem;
+        }
+        .toast-modern .toast-message {
+            font-size: 0.75rem;
+        }
         .social-info-box { flex-direction: column; text-align: center; }
         .social-info-box .avatar-social { width: 48px; height: 48px; }
+        .email-checking,
+        .email-status-success,
+        .email-status-error,
+        .email-status-warning {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
     }
     
     @media (max-width: 480px) {
         .auth-card { padding: 1.25rem; }
         .form-group .input { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
+        .toast-modern {
+            top: 12px;
+            right: 12px;
+            padding: 0.625rem 0.875rem;
+            max-width: calc(100% - 24px);
+            width: calc(100% - 24px);
+            border-radius: 0.5rem;
+        }
+        .toast-modern .toast-icon {
+            width: 24px;
+            height: 24px;
+        }
+        .toast-modern .toast-icon svg {
+            width: 14px;
+            height: 14px;
+        }
     }
 </style>
 @endpush
@@ -512,7 +647,7 @@
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Ex: SALABCDEF"
                    required>
-            <p class="form-hint">Entrez l'ID de la personne qui vous a invité</p>
+            <p class="form-hint">Entrez l'identifiant de la personne qui vous a invité</p>
             @error('sponsor_id')
                 <p class="error-message">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -651,17 +786,16 @@
 
 <!-- Toast -->
 <div id="toastModern" class="toast-modern" role="alert" aria-live="polite">
-    <div class="toast-icon error" id="toastIcon">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    <div class="toast-icon success" id="toastIcon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
     </div>
-    <span id="toastMessage">Message</span>
-    <button type="button" class="toast-close" onclick="hideToast()" aria-label="Fermer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-    </button>
+    <div class="toast-content">
+        <span class="toast-title" id="toastTitle">Succès</span>
+        <span class="toast-message" id="toastMessage">Message</span>
+    </div>
+    <button type="button" class="toast-close" onclick="hideToast()" aria-label="Fermer">×</button>
 </div>
 
 @push('scripts')
@@ -678,21 +812,60 @@ function togglePassword(btn) {
     }
 }
 
-function showToast(message, type = 'error') {
+function showToast(data) {
     const toast = document.getElementById('toastModern');
     const icon = document.getElementById('toastIcon');
+    const titleEl = document.getElementById('toastTitle');
     const messageEl = document.getElementById('toastMessage');
     
-    icon.className = 'toast-icon';
-    icon.classList.add(type);
+    if (!toast) return;
     
-    if (type === 'error') {
-        icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-    } else {
-        icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    // Configurer l'icône
+    icon.className = 'toast-icon';
+    icon.classList.add(data.type || 'success');
+    
+    switch(data.type) {
+        case 'success':
+            icon.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            `;
+            break;
+        case 'error':
+            icon.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            `;
+            break;
+        case 'warning':
+            icon.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                    <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"></path>
+                </svg>
+            `;
+            break;
     }
     
-    messageEl.textContent = message;
+    // Configurer le contenu
+    titleEl.textContent = data.title || 'Notification';
+    messageEl.textContent = data.detail || data.message || '';
+    
+    // Changer la couleur de bordure
+    const colors = {
+        success: '#22c55e',
+        error: '#ef4444',
+        warning: '#f59e0b'
+    };
+    toast.style.borderLeftColor = colors[data.type] || '#6366f1';
+    toast.style.borderLeftWidth = '4px';
+    toast.style.borderLeftStyle = 'solid';
+    
+    // Afficher
     toast.classList.add('show');
     
     clearTimeout(window.toastTimeout);
@@ -725,17 +898,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Afficher les erreurs Laravel
     @if ($errors->any())
         @foreach ($errors->all() as $error)
-            showToast('{{ $error }}', 'error');
+            showToast({
+                type: 'error',
+                title: 'Erreur',
+                message: '{{ $error }}'
+            });
         @break
         @endforeach
     @endif
 
     @if (session('success'))
-        showToast('{{ session('success') }}', 'success');
+        showToast({
+            type: 'success',
+            title: 'Succès',
+            message: '{{ session('success') }}'
+        });
     @endif
 
     @if (session('error'))
-        showToast('{{ session('error') }}', 'error');
+        showToast({
+            type: 'error',
+            title: 'Erreur',
+            message: '{{ session('error') }}'
+        });
     @endif
 
     // ✅ Vérification en temps réel de l'email
@@ -757,11 +942,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ne vérifier que si l'email est valide
             if (isValidEmail(email)) {
                 emailAvailability.innerHTML = `
-                    <div class="email-availability-checking">
-                        <svg class="animate-spin h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        Vérification de l'email...
+                    <div class="email-checking">
+                        <span class="email-checking-spinner"></span>
+                        Vérification en cours...
                     </div>
                 `;
                 
@@ -772,30 +955,46 @@ document.addEventListener('DOMContentLoaded', function() {
                         .then(data => {
                             emailChecked = true;
                             
-                            if (data.exists) {
+                            // Afficher la notification
+                            showToast({
+                                type: data.type,
+                                title: data.title,
+                                message: data.message,
+                                detail: data.detail
+                            });
+                            
+                            // Mettre à jour le champ
+                            if (data.field_status === 'error') {
                                 emailInput.classList.add('input-error');
                                 emailInput.classList.remove('input-success');
                                 
                                 if (emailAvailability) {
                                     emailAvailability.innerHTML = `
-                                        <div class="email-availability-unavailable">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
+                                        <div class="email-status-error">
+                                            <span class="email-status-icon">✕</span>
                                             ${data.message}
                                         </div>
                                     `;
                                 }
-                            } else {
+                            } else if (data.field_status === 'success') {
                                 emailInput.classList.remove('input-error');
                                 emailInput.classList.add('input-success');
                                 
                                 if (emailAvailability) {
                                     emailAvailability.innerHTML = `
-                                        <div class="email-availability-available">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
+                                        <div class="email-status-success">
+                                            <span class="email-status-icon">✓</span>
+                                            ${data.message}
+                                        </div>
+                                    `;
+                                }
+                            } else {
+                                emailInput.classList.add('input-error');
+                                
+                                if (emailAvailability) {
+                                    emailAvailability.innerHTML = `
+                                        <div class="email-status-warning">
+                                            <span class="email-status-icon">!</span>
                                             ${data.message}
                                         </div>
                                     `;
@@ -872,7 +1071,6 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Veuillez saisir une adresse email valide.';
             hasError = true;
         } else if (!hasError && emailChecked === false) {
-            // Vérifier que l'email a été vérifié
             errorMessage = 'Veuillez attendre la vérification de votre email.';
             hasError = true;
         } else if (!hasError && emailInput.classList.contains('input-error')) {
@@ -883,10 +1081,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Vérifier le sponsor
         const sponsor = sponsorInput.value.trim();
         if (!hasError && !sponsor) {
-            errorMessage = 'Veuillez saisir l\'ID de votre parrain.';
+            errorMessage = 'Veuillez saisir l\'identifiant de votre parrain.';
             hasError = true;
         } else if (!hasError && sponsor.length < 3) {
-            errorMessage = 'L\'ID du parrain doit contenir au moins 3 caractères.';
+            errorMessage = 'L\'identifiant du parrain doit contenir au moins 3 caractères.';
             hasError = true;
         }
 
@@ -915,7 +1113,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (hasError) {
             e.preventDefault();
-            showToast(errorMessage, 'error');
+            showToast({
+                type: 'error',
+                title: 'Erreur de validation',
+                message: errorMessage
+            });
         }
     });
 
@@ -926,7 +1128,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!sponsorId) {
                 e.preventDefault();
-                showToast('Veuillez entrer un ID de parrain.', 'error');
+                showToast({
+                    type: 'error',
+                    title: 'ID du parrain requis',
+                    message: 'Veuillez entrer un identifiant de parrain.'
+                });
                 sponsorInput.focus();
                 sponsorInput.classList.add('input-error');
                 return false;
