@@ -30,9 +30,9 @@ class DashboardController extends Controller
             return [
                 'total_users' => User::count(),
                 'active_users' => User::where('is_active', true)->count(),
-                'total_commissions' => Commission::where('status', 'paid')->sum('amount') ?? 0,
-                'pending_commissions' => Commission::where('status', 'pending')->sum('amount') ?? 0,
-                'total_withdrawn' => Withdrawal::where('status', 'completed')->sum('amount') ?? 0,
+                'total_commissions' => Commission::where('status', 'paid')->sum('amount'),
+                'pending_commissions' => Commission::where('status', 'pending')->sum('amount'),
+                'total_withdrawn' => Withdrawal::where('status', 'completed')->sum('amount'),
                 'total_withdrawals' => Withdrawal::count(),
                 'pending_withdrawals' => Withdrawal::where('status', 'pending')->count(),
                 'total_packages' => Package::count(),
@@ -40,26 +40,11 @@ class DashboardController extends Controller
                     $q->whereNotNull('package_id');
                 })->count(),
                 'total_products' => Product::count(),
-                'total_wallet_balance' => Wallet::sum('balance') ?? 0,
+                'total_wallet_balance' => Wallet::sum('balance'),
                 'total_orders' => Order::count(),
-                'total_revenue' => Order::where('status', 'completed')->sum('total') ?? 0,
+                'total_revenue' => Order::where('status', 'completed')->sum('total'),
             ];
         });
-
-        // ✅ Extraire les variables individuelles pour la vue
-        $totalUsers = $stats['total_users'] ?? 0;
-        $activeUsers = $stats['active_users'] ?? 0;
-        $totalCommissions = $stats['total_commissions'] ?? 0;
-        $pendingCommissions = $stats['pending_commissions'] ?? 0;
-        $totalWithdrawn = $stats['total_withdrawn'] ?? 0;
-        $totalWithdrawals = $stats['total_withdrawals'] ?? 0;
-        $pendingWithdrawals = $stats['pending_withdrawals'] ?? 0;
-        $totalPackages = $stats['total_packages'] ?? 0;
-        $soldPackages = $stats['sold_packages'] ?? 0;
-        $totalProducts = $stats['total_products'] ?? 0;
-        $totalWalletBalance = $stats['total_wallet_balance'] ?? 0;
-        $totalOrders = $stats['total_orders'] ?? 0;
-        $totalRevenue = $stats['total_revenue'] ?? 0;
 
         // ============================================================
         // DONNÉES MENSUELLES POUR LE GRAPHIQUE (6 mois)
@@ -91,9 +76,9 @@ class DashboardController extends Controller
         // ============================================================
         $packageDistribution = Package::withCount('users')->get()
             ->map(function($package) {
-                return (object) [
+                return [
                     'name' => $package->name,
-                    'users_count' => $package->users_count,
+                    'count' => $package->users_count,
                     'color' => $this->getPackageColor($package->name),
                 ];
             });
@@ -125,19 +110,7 @@ class DashboardController extends Controller
         ];
 
         return view('admin.dashboard', compact(
-            'totalUsers',
-            'activeUsers',
-            'totalCommissions',
-            'pendingCommissions',
-            'totalWithdrawn',
-            'totalWithdrawals',
-            'pendingWithdrawals',
-            'totalPackages',
-            'soldPackages',
-            'totalProducts',
-            'totalWalletBalance',
-            'totalOrders',
-            'totalRevenue',
+            'stats',
             'monthlyData',
             'packageDistribution',
             'recentUsers',
@@ -185,6 +158,6 @@ class DashboardController extends Controller
         Cache::forget('admin_dashboard_stats');
         Cache::forget('admin_monthly_data');
         return redirect()->route('admin.dashboard')
-            ->with('success', 'Cache du dashboard vidé.');
+            ->with('success', '🧹 Cache du dashboard vidé.');
     }
 }
