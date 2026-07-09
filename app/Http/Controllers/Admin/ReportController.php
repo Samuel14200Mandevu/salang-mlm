@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\Withdrawal;
 use App\Models\Product;
+use App\Models\Rank; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -240,66 +241,75 @@ class ReportController extends Controller
         return view('admin.reports.commissions', compact('commissions', 'stats', 'types', 'statuses', 'users'));
     }
 
-    /**
-     * Rapport des utilisateurs
-     */
-    public function users(Request $request)
-    {
-        $query = User::with(['rank', 'package', 'wallet']);
+   /**
+ * Rapport des utilisateurs
+ */
+public function users(Request $request)
+{
+    $query = User::with(['rank', 'package', 'wallet']);
 
-        if ($request->filled('rank')) {
-            $query->where('rank', $request->rank);
-        }
-
-        if ($request->filled('package_id')) {
-            $query->where('package_id', $request->package_id);
-        }
-
-        if ($request->filled('is_active')) {
-            $query->where('is_active', $request->is_active == '1');
-        }
-
-        if ($request->filled('kyc_status')) {
-            $query->where('kyc_status', $request->kyc_status);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        if ($request->filled('min_pv')) {
-            $query->where('pv_balance', '>=', $request->min_pv);
-        }
-
-        if ($request->filled('max_pv')) {
-            $query->where('pv_balance', '<=', $request->max_pv);
-        }
-
-        $users = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        $stats = [
-            'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'inactive' => User::where('is_active', false)->count(),
-            'avg_pv' => User::avg('pv_balance') ?? 0,
-            'avg_bv' => User::avg('bv_balance') ?? 0,
-            'total_earnings' => User::sum('total_earnings') ?? 0,
-            'with_package' => User::whereNotNull('package_id')->count(),
-            'without_package' => User::whereNull('package_id')->count(),
-            'kyc_verified' => User::where('kyc_status', 'verified')->count(),
-            'kyc_pending' => User::where('kyc_status', 'pending')->count(),
-        ];
-
-        $ranks = User::distinct()->pluck('rank')->filter();
-        $packages = Package::all();
-        $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
-
-        return view('admin.reports.users', compact('users', 'stats', 'ranks', 'packages', 'kycStatuses'));
+    // ✅ Filtres avec rank_id (au lieu de rank)
+    if ($request->filled('rank_id')) {
+        $query->where('rank_id', $request->rank_id);
     }
+
+    if ($request->filled('package_id')) {
+        $query->where('package_id', $request->package_id);
+    }
+
+    if ($request->filled('is_active')) {
+        $query->where('is_active', $request->is_active == '1');
+    }
+
+    if ($request->filled('kyc_status')) {
+        $query->where('kyc_status', $request->kyc_status);
+    }
+
+    if ($request->filled('date_from')) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+
+    if ($request->filled('date_to')) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+
+    if ($request->filled('min_pv')) {
+        $query->where('pv_balance', '>=', $request->min_pv);
+    }
+
+    if ($request->filled('max_pv')) {
+        $query->where('pv_balance', '<=', $request->max_pv);
+    }
+
+    $users = $query->orderBy('created_at', 'desc')->paginate(20);
+
+    // ✅ Statistiques
+    $stats = [
+        'total' => User::count(),
+        'active' => User::where('is_active', true)->count(),
+        'inactive' => User::where('is_active', false)->count(),
+        'avg_pv' => User::avg('pv_balance') ?? 0,
+        'avg_bv' => User::avg('bv_balance') ?? 0,
+        'total_earnings' => User::sum('total_earnings') ?? 0,
+        'with_package' => User::whereNotNull('package_id')->count(),
+        'without_package' => User::whereNull('package_id')->count(),
+        'kyc_verified' => User::where('kyc_status', 'verified')->count(),
+        'kyc_pending' => User::where('kyc_status', 'pending')->count(),
+    ];
+
+    // ✅ Récupérer les grades pour le filtre
+    $ranks = Rank::orderBy('min_pv', 'asc')->get();
+    $packages = Package::where('is_active', true)->get();
+    $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
+
+    return view('admin.reports.users', compact(
+        'users',
+        'stats',
+        'ranks',
+        'packages',
+        'kycStatuses'
+    ));
+}
 
     /**
      * Rapport des retraits
