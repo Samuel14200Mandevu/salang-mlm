@@ -55,43 +55,16 @@
         </div>
     </div>
 
-    <!-- Monthly Chart -->
-    <div class="card animate-fadeInUp delay-5 p-3 sm:p-4 md:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Monthly Evolution</h3>
-            <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Last 12 months</span>
-        </div>
-        <div class="h-40 sm:h-48 md:h-56 flex items-end gap-1 sm:gap-2">
-            @php 
-                $maxSales = max(array_column($monthlySales ?? [], 'sales') ?: [1]);
-                $maxCommissions = max(array_column($monthlySales ?? [], 'commissions') ?: [1]);
-                $max = max($maxSales, $maxCommissions, 1);
-            @endphp
-            @foreach($monthlySales ?? [] as $data)
-                @php 
-                    $salesHeight = ($data['sales'] / $max) * 100;
-                    $commissionsHeight = ($data['commissions'] / $max) * 100;
-                @endphp
-                <div class="flex-1 flex flex-col items-center group">
-                    <div class="flex items-end gap-0.5 sm:gap-1 w-full" style="height: {{ max(8, $salesHeight) }}%">
-                        <div class="w-1/2 bg-primary-500/70 hover:bg-primary-500 transition rounded-t-sm"
-                             style="height: 100%">
-                            <span class="tooltip">Sales: ${{ number_format($data['sales'], 2) }}</span>
-                        </div>
-                        <div class="w-1/2 bg-green-500/70 hover:bg-green-500 transition rounded-t-sm"
-                             style="height: {{ max(8, $commissionsHeight) }}%">
-                            <span class="tooltip">Commissions: ${{ number_format($data['commissions'], 2) }}</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] mt-1">{{ substr($data['month'], 0, 3) }}</span>
-                </div>
-            @endforeach
-        </div>
-        <div class="flex justify-center gap-3 sm:gap-4 mt-3 sm:mt-4 text-[10px] sm:text-xs">
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-primary-500 rounded"></span> Sales</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded"></span> Commissions</span>
-        </div>
+    <!-- Monthly Chart avec Chart.js -->
+<div class="card animate-fadeInUp delay-5 p-3 sm:p-4 md:p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Évolution mensuelle</h3>
+        <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">12 derniers mois</span>
     </div>
+    <div class="h-40 sm:h-48 md:h-56">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+</div>
 
     <!-- Commissions by Type & Users by Rank -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-6">
@@ -118,28 +91,29 @@
             @endforelse
         </div>
 
-        <div class="card p-3 sm:p-4 md:p-6">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Users by Rank</h3>
-            @php 
-                $totalUsersByRank = $usersByRank->sum('count') ?? 1;
-            @endphp
-            @forelse($usersByRank ?? [] as $item)
-                @php 
-                    $percent = ($item->count / max($totalUsersByRank, 1)) * 100;
-                @endphp
-                <div class="mb-2 sm:mb-3">
-                    <div class="flex justify-between text-xs sm:text-sm">
-                        <span class="text-[var(--text-secondary)]">{{ $item->rank ?? 'Not defined' }}</span>
-                        <span class="font-semibold text-primary-500">{{ $item->count }}</span>
-                    </div>
-                    <div class="progress mt-1">
-                        <div class="progress-fill bg-purple-500" style="width: {{ $percent }}%"></div>
-                    </div>
-                </div>
-            @empty
-                <p class="text-center text-[var(--text-secondary)] text-sm py-4">No rank data</p>
-            @endforelse
+        <!-- Users by Rank -->
+<div class="card p-3 sm:p-4 md:p-6">
+    <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Users by Rank</h3>
+    @php 
+        $totalUsersByRank = $usersByRank->sum('count') ?? 1;
+    @endphp
+    @forelse($usersByRank ?? [] as $item)
+        @php 
+            $percent = ($item->count / max($totalUsersByRank, 1)) * 100;
+        @endphp
+        <div class="mb-2 sm:mb-3">
+            <div class="flex justify-between text-xs sm:text-sm">
+                <span class="text-[var(--text-secondary)]">{{ $item->rank ?? 'Non défini' }}</span>
+                <span class="font-semibold text-primary-500">{{ $item->count }}</span>
+            </div>
+            <div class="progress mt-1">
+                <div class="progress-fill bg-purple-500" style="width: {{ $percent }}%"></div>
+            </div>
         </div>
+    @empty
+        <p class="text-center text-[var(--text-secondary)] text-sm py-4">Aucune donnée de grade</p>
+    @endforelse
+</div>
     </div>
 
     <!-- Top Sponsors & Package Revenue -->
@@ -216,3 +190,82 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('monthlyChart');
+    if (!ctx) return;
+    
+    const monthlyData = @json($monthlySales ?? []);
+    const labels = monthlyData.map(item => item.month);
+    const salesData = monthlyData.map(item => item.sales || 0);
+    const commissionsData = monthlyData.map(item => item.commissions || 0);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Ventes',
+                    data: salesData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Commissions',
+                    data: commissionsData,
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 10,
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(0);
+                        },
+                        font: { size: 10 }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 9 },
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush

@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Admin/KycController.php - Version Admin
+// app/Http/Controllers/Admin/KycController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -48,7 +48,6 @@ class KycController extends Controller
         $document->save();
 
         $user = $document->user;
-        
         if ($request->status === 'verified') {
             $requiredDocs = ['id_card', 'proof_of_address'];
             $verifiedDocs = KycDocument::where('user_id', $user->id)
@@ -67,16 +66,26 @@ class KycController extends Controller
         }
         $user->save();
 
-        $message = $request->status === 'verified'
-            ? 'Document vérifié avec succès.'
-            : 'Document rejeté.';
-
-        return back()->with('success', $message);
+        return back()->with('success', 'Document traité avec succès.');
     }
 
-    public function show($id)
+    public function reject(Request $request, $id)
     {
-        $document = KycDocument::with('user')->findOrFail($id);
-        return view('admin.kyc.show', compact('document'));
+        $request->validate([
+            'reason' => 'required|string|min:5',
+        ]);
+
+        $document = KycDocument::findOrFail($id);
+        $document->status = 'rejected';
+        $document->rejection_reason = $request->reason;
+        $document->verified_by = Auth::id();
+        $document->verified_at = now();
+        $document->save();
+
+        $user = $document->user;
+        $user->kyc_status = 'rejected';
+        $user->save();
+
+        return back()->with('success', 'Document rejeté.');
     }
 }

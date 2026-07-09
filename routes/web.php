@@ -226,8 +226,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/ranks/history', [App\Http\Controllers\Admin\RankController::class, 'history'])->name('ranks.history');
     
     // KYC Admin
-    Route::get('/kyc', [KycController::class, 'adminIndex'])->name('kyc');
-    Route::post('/kyc/{id}/verify', [KycController::class, 'verify'])->name('kyc.verify');
+    Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc');
+    Route::post('/kyc/{id}/verify', [App\Http\Controllers\Admin\KycController::class, 'verify'])->name('kyc.verify');
+    Route::post('/kyc/{id}/reject', [App\Http\Controllers\Admin\KycController::class, 'reject'])->name('kyc.reject');
     
     // Reports Admin
     Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports');

@@ -21,83 +21,91 @@ class ReportController extends Controller
      * Dashboard des rapports
      */
     public function index(Request $request)
-    {
-        // ✅ Période
-        $period = $request->period ?? 'month';
-        $dateRange = $this->getDateRange($period);
+{
+    // ✅ Période
+    $period = $request->period ?? 'month';
+    $dateRange = $this->getDateRange($period);
 
-        // ============================================================
-        // STATISTIQUES GLOBALES
-        // ============================================================
-        $stats = [
-            'total_users' => User::count(),
-            'active_users' => User::where('is_active', true)->count(),
-            'total_commissions' => Commission::where('status', 'paid')->sum('amount'),
-            'pending_commissions' => Commission::where('status', 'pending')->sum('amount'),
-            'total_sales' => Order::where('status', 'completed')->sum('total'),
-            'total_withdrawn' => Withdrawal::where('status', 'completed')->sum('amount'),
-            'total_packages_sold' => Order::whereHas('items', function($q) {
-                $q->whereNotNull('package_id');
-            })->count(),
-            'total_products' => Product::count(),
-            'total_orders' => Order::count(),
-            'avg_order_value' => Order::where('status', 'completed')->avg('total') ?? 0,
-        ];
+    // ============================================================
+    // STATISTIQUES GLOBALES
+    // ============================================================
+    $stats = [
+        'total_users' => User::count(),
+        'active_users' => User::where('is_active', true)->count(),
+        'total_commissions' => Commission::where('status', 'paid')->sum('amount') ?? 0,
+        'pending_commissions' => Commission::where('status', 'pending')->sum('amount') ?? 0,
+        'total_sales' => Order::where('status', 'completed')->sum('total') ?? 0,
+        'total_withdrawn' => Withdrawal::where('status', 'completed')->sum('amount') ?? 0,
+        'total_packages_sold' => Order::whereHas('items', function($q) {
+            $q->whereNotNull('package_id');
+        })->count(),
+        'total_products' => Product::count(),
+        'total_orders' => Order::count(),
+        'avg_order_value' => Order::where('status', 'completed')->avg('total') ?? 0,
+    ];
 
-        // ============================================================
-        // ÉVOLUTION MENSUELLE (12 mois)
-        // ============================================================
-        $monthlySales = $this->getMonthlyData();
+    // ============================================================
+    // ÉVOLUTION MENSUELLE (12 mois)
+    // ============================================================
+    $monthlySales = $this->getMonthlyData();
 
-        // ============================================================
-        // COMMISSIONS PAR TYPE
-        // ============================================================
-        $commissionByType = Commission::where('status', 'paid')
-            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
-            ->groupBy('type')
-            ->get();
+    // ============================================================
+    // COMMISSIONS PAR TYPE
+    // ============================================================
+    $commissionByType = Commission::where('status', 'paid')
+        ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+        ->groupBy('type')
+        ->get();
 
-        // ============================================================
-        // TOP PERFORMERS
-        // ============================================================
-        $topSponsors = User::orderBy('total_sponsors', 'desc')
-            ->limit(10)
-            ->get(['id', 'name', 'email', 'total_sponsors', 'total_earnings']);
+    // ============================================================
+    // ✅ UTILISATEURS PAR GRADE - AJOUTÉ
+    // ============================================================
+    $usersByRank = User::select('rank', DB::raw('count(*) as count'))
+        ->groupBy('rank')
+        ->get();
 
-        $topEarners = User::orderBy('total_earnings', 'desc')
-            ->limit(10)
-            ->get(['id', 'name', 'email', 'total_earnings', 'total_sponsors']);
+    // ============================================================
+    // TOP PERFORMERS
+    // ============================================================
+    $topSponsors = User::orderBy('total_sponsors', 'desc')
+        ->limit(10)
+        ->get(['id', 'name', 'email', 'total_sponsors', 'total_earnings']);
 
-        // ============================================================
-        // REVENUS PAR PACKAGE
-        // ============================================================
-        $packageRevenue = Package::withCount('users')
-            ->get()
-            ->map(function($package) {
-                return [
-                    'name' => $package->name,
-                    'users' => $package->users_count,
-                    'revenue' => $package->price * $package->users_count,
-                    'price' => $package->price,
-                ];
-            });
+    $topEarners = User::orderBy('total_earnings', 'desc')
+        ->limit(10)
+        ->get(['id', 'name', 'email', 'total_earnings', 'total_sponsors']);
 
-        // ============================================================
-        // ACTIVITÉ RÉCENTE
-        // ============================================================
-        $recentActivity = $this->getRecentActivity();
+    // ============================================================
+    // REVENUS PAR PACKAGE
+    // ============================================================
+    $packageRevenue = Package::withCount('users')
+        ->get()
+        ->map(function($package) {
+            return (object) [
+                'name' => $package->name,
+                'users_count' => $package->users_count,
+                'revenue' => $package->price * $package->users_count,
+                'price' => $package->price,
+            ];
+        });
 
-        return view('admin.reports.index', compact(
-            'stats',
-            'monthlySales',
-            'commissionByType',
-            'topSponsors',
-            'topEarners',
-            'packageRevenue',
-            'recentActivity',
-            'period'
-        ));
-    }
+    // ============================================================
+    // ACTIVITÉ RÉCENTE
+    // ============================================================
+    $recentActivity = $this->getRecentActivity();
+
+    return view('admin.reports.index', compact(
+        'stats',
+        'monthlySales',
+        'commissionByType',
+        'usersByRank',        // ✅ AJOUTÉ
+        'topSponsors',
+        'topEarners',
+        'packageRevenue',
+        'recentActivity',
+        'period'
+    ));
+}
 
     /**
      * Rapport des ventes
