@@ -9,36 +9,16 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next)
     {
-        // ✅ Vérifier si l'utilisateur est connecté
+        // ✅ Vérifier l'authentification
         if (!Auth::check()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Non authentifié'
-                ], 401);
-            }
-            return redirect()->route('login')->with('error', 'Veuillez vous connecter.');
+            return redirect()->route('login');
         }
 
-        $user = Auth::user();
-
-        // ✅ Vérifier si l'utilisateur a le rôle admin
-        // Utiliser hasRole() de Spatie Permission
-        if (!$user->hasRole('admin')) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Accès non autorisé. Vous devez être administrateur.'
-                ], 403);
-            }
-            
-            return redirect()->route('dashboard')
-                ->with('error', 'Accès non autorisé. Vous devez être administrateur.');
+        // ✅ Vérifier le rôle admin (méthode simple)
+        if (Auth::user()->email !== 'samuelmandevu10@gmail.com') {
+            abort(403, 'Accès non autorisé.');
         }
 
         return $next($request);
