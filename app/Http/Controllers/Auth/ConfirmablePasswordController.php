@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Auth/ConfirmablePasswordController.php
 
 namespace App\Http\Controllers\Auth;
 
@@ -12,32 +11,30 @@ use Illuminate\View\View;
 
 class ConfirmablePasswordController extends Controller
 {
+    /**
+     * Show the confirm password view.
+     */
     public function show(): View
     {
         return view('auth.confirm-password');
     }
 
+    /**
+     * Confirm the user's password.
+     */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'string'],
-        ], [
-            'password.required' => 'Le mot de passe est obligatoire pour confirmer votre identité.',
-        ]);
-
-        // Vérifier que le mot de passe est correct
-        if (!Auth::guard('web')->validate([
+        if (! Auth::guard('web')->validate([
             'email' => $request->user()->email,
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([
-                'password' => 'Le mot de passe saisi est incorrect.',
+                'password' => __('auth.password'),
             ]);
         }
 
         $request->session()->put('auth.password_confirmed_at', time());
 
-        return redirect()->intended(route('dashboard'))
-            ->with('success', 'Identité confirmée avec succès.');
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 }

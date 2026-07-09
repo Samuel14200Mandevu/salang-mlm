@@ -28,7 +28,7 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Validation avec messages personnalisés
+        // ✅ Validation avec vérification d'unicité de l'email
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -44,53 +44,47 @@ class RegisteredUserController extends Controller
             'sponsor_id' => ['required', 'string'],
             'terms' => ['required', 'accepted'],
         ], [
-            // Messages personnalisés
-            'name.required' => 'Le nom complet est obligatoire.',
-            'name.max' => 'Le nom ne doit pas dépasser 255 caractères.',
-            'email.required' => 'L\'adresse email est obligatoire.',
-            'email.email' => 'Veuillez saisir une adresse email valide.',
             'email.unique' => 'Cette adresse email est déjà utilisée par un autre compte.',
-            'email.max' => 'L\'email ne doit pas dépasser 255 caractères.',
-            'password.required' => 'Le mot de passe est obligatoire.',
-            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
-            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'sponsor_id.required' => 'L\'identifiant du parrain est obligatoire.',
             'terms.required' => 'Vous devez accepter les conditions générales.',
             'terms.accepted' => 'Vous devez accepter les conditions générales.',
         ]);
 
         try {
-            // Trouver le sponsor avec messages d'erreur
+            // ✅ Trouver le sponsor
             $sponsor = null;
             if ($request->sponsor_id) {
+                // Chercher d'abord par ID utilisateur
                 $sponsor = User::find($request->sponsor_id);
                 
+                // Si pas trouvé, chercher par sponsor_id
                 if (!$sponsor) {
                     $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
                 }
             }
 
+            // ✅ Vérifier que le sponsor existe
             if (!$sponsor) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'sponsor_id' => 'L\'identifiant du parrain est invalide. Veuillez vérifier le code saisi.',
+                        'sponsor_id' => 'L\'identifiant du parrain est invalide ou n\'existe pas.'
                     ]);
             }
 
-            // Vérifier si l'email existe déjà (double vérification)
+            // ✅ Vérification supplémentaire : l'email n'existe pas déjà
             if (User::where('email', $request->email)->exists()) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.',
+                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
                     ]);
             }
 
-            // Générer un ID de parrain unique
+            // ✅ Générer un ID de parrain unique
             $sponsorCode = $this->generateSponsorId();
 
-            // Créer l'utilisateur
+            // ✅ Créer l'utilisateur
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -101,7 +95,7 @@ class RegisteredUserController extends Controller
                 'is_active' => true,
             ]);
 
-            // Créer le portefeuille
+            // ✅ Créer le portefeuille
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -110,7 +104,7 @@ class RegisteredUserController extends Controller
                 'is_active' => true,
             ]);
 
-            // Créer l'entrée de généalogie
+            // ✅ Créer l'entrée de généalogie
             Genealogy::create([
                 'user_id' => $user->id,
                 'sponsor_id' => $sponsor->id,
@@ -122,12 +116,13 @@ class RegisteredUserController extends Controller
                 'total_children' => 0,
             ]);
 
-            // Mettre à jour les compteurs du sponsor
+            // ✅ Mettre à jour le compteur du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
+            
             $this->updateTeamCounters($sponsor);
 
-            // Envoyer la notification de bienvenue
+            // ✅ Envoyer la notification de bienvenue
             try {
                 $user->notify(new WelcomeNotification($sponsor->name));
             } catch (\Exception $e) {
@@ -138,15 +133,15 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            return redirect(route('dashboard'))
-                ->with('success', 'Bienvenue ' . $user->name . ' ! Votre compte a été créé avec succès.');
+            return redirect(route('dashboard', absolute: false));
 
         } catch (QueryException $e) {
+            // ✅ Gestion des erreurs de base de données
             if ($e->getCode() == 23000) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.',
+                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
                     ]);
             }
             
@@ -154,7 +149,7 @@ class RegisteredUserController extends Controller
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'email' => 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.',
+                    'email' => 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.'
                 ]);
         }
     }
@@ -182,9 +177,8 @@ class RegisteredUserController extends Controller
     private function updateTeamCounters(User $user)
     {
         $currentUser = $user;
-        $level = 0;
         
-        while ($currentUser->sponsor_id && $level < 10) {
+        while ($currentUser->sponsor_id) {
             $sponsor = User::where('sponsor_id', $currentUser->sponsor_id)->first();
             
             if (!$sponsor) {
@@ -193,7 +187,6 @@ class RegisteredUserController extends Controller
             
             $sponsor->increment('total_team');
             $currentUser = $sponsor;
-            $level++;
         }
     }
 }

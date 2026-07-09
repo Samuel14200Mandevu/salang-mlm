@@ -16,13 +16,23 @@ class EmailCheckController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
-        ], [
-            'email.required' => 'L\'adresse email est obligatoire.',
-            'email.email' => 'Veuillez saisir une adresse email valide.',
         ]);
 
         $email = $request->email;
-        
+        $exists = User::where('email', $email)->exists();
+
+        if ($exists) {
+            return response()->json([
+                'exists' => true,
+                'available' => false,
+                'type' => 'error',
+                'title' => 'Email indisponible',
+                'message' => 'Cette adresse email est déjà associée à un compte existant.',
+                'detail' => 'Veuillez utiliser une autre adresse email ou vous connecter.',
+                'field_status' => 'error'
+            ]);
+        }
+
         // Vérification du format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return response()->json([
@@ -36,29 +46,13 @@ class EmailCheckController extends Controller
             ]);
         }
 
-        // Vérification de l'existence
-        $exists = User::where('email', $email)->exists();
-
-        if ($exists) {
-            return response()->json([
-                'exists' => true,
-                'available' => false,
-                'type' => 'error',
-                'title' => 'Email indisponible',
-                'message' => 'Cette adresse email est déjà utilisée.',
-                'detail' => 'Veuillez utiliser une autre adresse ou vous connecter.',
-                'field_status' => 'error',
-                'suggestion' => 'Si vous avez oublié votre mot de passe, cliquez sur "Mot de passe oublié".'
-            ]);
-        }
-
         return response()->json([
             'exists' => false,
             'available' => true,
             'type' => 'success',
             'title' => 'Email disponible',
-            'message' => 'Cette adresse email est disponible.',
-            'detail' => 'Vous pouvez continuer votre inscription.',
+            'message' => 'Cette adresse email est disponible pour votre inscription.',
+            'detail' => 'Vous pouvez continuer le processus d\'inscription.',
             'field_status' => 'success'
         ]);
     }
