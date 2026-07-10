@@ -22,6 +22,7 @@
     .stat-icon-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
     .stat-icon-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .stat-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     
     .card-stats {
         background: var(--bg-card);
@@ -59,6 +60,7 @@
         transition: opacity 0.2s ease;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow-sm);
+        z-index: 10;
     }
     .graph-bar:hover .tooltip {
         opacity: 1;
@@ -120,6 +122,22 @@
         background: var(--bg-secondary);
         color: var(--text-secondary);
     }
+    .badge-primary {
+        background: rgba(90, 182, 56, 0.12);
+        color: var(--primary-500);
+    }
+    .badge-purple {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+    }
+    .badge-gold {
+        background: rgba(234, 179, 8, 0.12);
+        color: #eab308;
+    }
+    .badge-pink {
+        background: rgba(236, 72, 153, 0.12);
+        color: #ec4899;
+    }
     
     .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
@@ -162,6 +180,31 @@
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    
+    /* Progress bar for rank */
+    .rank-progress {
+        width: 100%;
+        height: 8px;
+        background: var(--bg-secondary);
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    .rank-progress .fill {
+        height: 100%;
+        border-radius: 9999px;
+        background: var(--gradient-primary);
+        transition: width 0.8s ease;
     }
     
     @keyframes fadeInUp {
@@ -259,7 +302,7 @@
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Filleuls</p>
                     <p class="text-base sm:text-xl md:text-2xl font-bold text-blue-500 truncate">
-                        {{ App\Models\User::where('parrain_id', Auth::user()->id)->count() }}
+                        {{ $totalDownlines ?? 0 }}
                     </p>
                 </div>
                 <div class="stat-icon stat-icon-info flex-shrink-0">
@@ -270,12 +313,14 @@
             </div>
         </div>
         
+        {{-- ✅ GRADE CORRIGÉ --}}
         <div class="card-stats animate-fadeInUp delay-4">
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Grade</p>
                     <p class="text-base sm:text-xl md:text-2xl font-bold text-purple-500 truncate">
-                        {{ $user->rank?->name ?? 'Distributor' }}
+                        {{-- ✅ Utiliser la colonne rank directement --}}
+                        {{ $user->rank ?? 'Distributor' }}
                     </p>
                 </div>
                 <div class="stat-icon stat-icon-purple flex-shrink-0">
@@ -303,8 +348,9 @@
                 <div class="min-w-0 flex-1">
                     <h3 class="font-bold text-[var(--text-primary)] truncate">{{ Auth::user()->name }}</h3>
                     <p class="text-xs text-[var(--text-secondary)]">Membre</p>
+                    {{-- ✅ GRADE CORRIGÉ --}}
                     <span class="badge badge-success text-[10px] sm:text-xs inline-block mt-0.5">
-                        {{ $user->rank?->name ?? 'Distributor' }}
+                        {{ $user->rank ?? 'Distributor' }}
                     </span>
                 </div>
             </div>
@@ -325,14 +371,11 @@
             <!-- Sponsor Information -->
             <div class="mt-3 sm:mt-4 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Parrain</p>
-                @php
-                    $parrain = App\Models\User::find(Auth::user()->parrain_id);
-                @endphp
                 <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base truncate">
-                    {{ $parrain?->name ?? 'Aucun' }}
+                    {{ $sponsor?->name ?? 'Aucun' }}
                 </p>
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">
-                    {{ $parrain?->email ?? '--' }}
+                    {{ $sponsor?->email ?? '--' }}
                 </p>
             </div>
 
@@ -340,14 +383,23 @@
             <div class="mt-2 grid grid-cols-2 gap-2">
                 <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Filleuls</p>
-                    @php
-                        $filleulsCount = App\Models\User::where('parrain_id', Auth::user()->id)->count();
-                    @endphp
-                    <p class="font-bold text-primary-500 text-sm">{{ $filleulsCount }}</p>
+                    <p class="font-bold text-primary-500 text-sm">{{ $totalDownlines ?? 0 }}</p>
                 </div>
                 <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Code</p>
                     <p class="font-bold text-primary-500 text-xs font-mono truncate">{{ Auth::user()->sponsor_id }}</p>
+                </div>
+            </div>
+            
+            <!-- PV Info -->
+            <div class="mt-2 grid grid-cols-2 gap-2">
+                <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV</p>
+                    <p class="font-bold text-primary-500 text-sm">{{ number_format(Auth::user()->pv_balance ?? 0) }}</p>
+                </div>
+                <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">BV</p>
+                    <p class="font-bold text-primary-500 text-sm">{{ number_format(Auth::user()->bv_balance ?? 0) }}</p>
                 </div>
             </div>
         </div>
@@ -376,7 +428,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Niveau 1</p>
                         <p class="text-lg sm:text-2xl font-bold text-blue-500 truncate">
-                            {{ App\Models\User::where('parrain_id', Auth::user()->id)->count() }}
+                            {{ $level1 ?? 0 }}
                         </p>
                     </div>
                     <div class="stat-icon stat-icon-info flex-shrink-0">
@@ -405,6 +457,46 @@
         </div>
     </div>
 
+    <!-- Rank Progress -->
+    <div class="card animate-fadeInUp delay-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                    Progression vers le prochain grade
+                </h3>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                    Actuel: <span class="font-bold text-primary-500">{{ $rankProgress['current'] ?? 'Distributor' }}</span>
+                    @if(isset($rankProgress['next']) && $rankProgress['next'] != 'Maximum Level')
+                        → Prochain: <span class="font-bold text-purple-500">{{ $rankProgress['next'] }}</span>
+                    @endif
+                </p>
+            </div>
+            <span class="text-sm font-bold text-primary-500">
+                {{ number_format($rankProgress['progress'] ?? 0, 1) }}%
+            </span>
+        </div>
+        
+        <div class="rank-progress">
+            <div class="fill" style="width: {{ $rankProgress['progress'] ?? 0 }}%"></div>
+        </div>
+        
+        <div class="flex justify-between text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
+            <span>{{ number_format($rankProgress['current_pv'] ?? 0) }} PV</span>
+            <span>{{ number_format($rankProgress['next_pv'] ?? 0) }} PV</span>
+        </div>
+        
+        @if(isset($rankProgress['pv_needed']) && $rankProgress['pv_needed'] > 0)
+            <p class="text-xs text-[var(--text-secondary)] mt-2">
+                <span class="text-yellow-500 font-semibold">{{ number_format($rankProgress['pv_needed']) }} PV</span> 
+                nécessaires pour atteindre le grade suivant
+            </p>
+        @elseif(isset($rankProgress['next']) && $rankProgress['next'] == 'Maximum Level')
+            <p class="text-xs text-green-500 mt-2 font-semibold">
+                Vous avez atteint le grade maximum !
+            </p>
+        @endif
+    </div>
+
     <!-- Chart + Activities -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
         
@@ -422,13 +514,13 @@
                     @php 
                         $height = ($data['amount'] / max($max, 1)) * 100; 
                     @endphp
-                    <div class="flex-1 flex flex-col items-center group">
-                        <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500"
-                             style="height: {{ max(8, $height) }}%">
+                    <div class="flex-1 flex flex-col items-center group relative">
+                        <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500 transition-all duration-300"
+                             style="height: {{ max(8, $height) }}%;">
                             <span class="tooltip">${{ number_format($data['amount'], 2) }}</span>
                         </div>
                         <span class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] mt-1">
-                            {{ substr($data['month'], 0, 3) }}
+                            {{ substr($data['month'] ?? '', 0, 3) }}
                         </span>
                     </div>
                 @empty
@@ -441,7 +533,7 @@
 
         <div class="card animate-fadeInRight delay-7">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
-                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Activités</h3>
+                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Activités récentes</h3>
                 <span class="badge badge-neutral text-[10px] sm:text-xs">
                     {{ $recentActivities->count() ?? 0 }}
                 </span>
@@ -451,13 +543,13 @@
                 @forelse($recentActivities ?? [] as $activity)
                     <div class="activity-item p-2 sm:p-3">
                         <div class="avatar avatar-sm avatar-gradient flex-shrink-0">
-                            {{ substr($activity->fromUser->name ?? 'S', 0, 1) }}
+                            {{ substr($activity->fromUser?->name ?? 'S', 0, 1) }}
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs sm:text-sm text-[var(--text-primary)] truncate">
-                                <span class="font-semibold">{{ $activity->fromUser->name ?? 'Système' }}</span>
+                                <span class="font-semibold">{{ $activity->fromUser?->name ?? 'Système' }}</span>
                                 <span class="text-[var(--text-secondary)]">
-                                    {{ $activity->type_label ?? 'action' }}
+                                    {{ $activity->type_label ?? $activity->type ?? 'action' }}
                                 </span>
                             </p>
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">

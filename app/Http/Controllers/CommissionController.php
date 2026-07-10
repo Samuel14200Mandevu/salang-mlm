@@ -5,398 +5,447 @@ namespace App\Http\Controllers;
 
 use App\Models\Commission;
 use App\Models\User;
-use App\Models\Order;
 use App\Models\Package;
-use App\Services\CommissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CommissionController extends Controller
 {
-    protected $commissionService;
-
-    public function __construct(CommissionService $commissionService)
-    {
-        $this->commissionService = $commissionService;
-    }
-
     /**
-     * Liste des commissions de l'utilisateur
+     * Afficher la liste des commissions de l'utilisateur connecté - DONNÉES RÉELLES
      */
     public function index(Request $request)
     {
         $user = Auth::user();
-
+        
+        // ✅ Récupérer les commissions avec toutes les relations
         $query = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'order', 'package']);
-
+            ->with(['fromUser', 'package', 'order']);
+        
+        // ✅ Filtres
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
         
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
         $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
-
+        
+        // ✅ Statistiques depuis la base de données
         $stats = $this->getUserStats($user->id);
-        $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
-
-        return view('commissions.index', compact('commissions', 'stats', 'types'));
+        
+        // ✅ Commissions par type
+        $byType = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $colors = [
+                    'direct' => 'primary',
+                    'indirect' => 'warning',
+                    'leadership' => 'danger',
+                    'retail' => 'success',
+                ];
+                $labels = [
+                    'direct' => 'Directes',
+                    'indirect' => 'Indirectes',
+                    'leadership' => 'Leadership',
+                    'retail' => 'Retail',
+                ];
+                return [
+                    $item->type => [
+                        'total' => $item->total,
+                        'count' => $item->count,
+                        'label' => $labels[$item->type] ?? ucfirst($item->type),
+                        'color' => $colors[$item->type] ?? 'secondary',
+                    ]
+                ];
+            });
+        
+        // ✅ Commissions mensuelles
+        $monthly = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'desc')
+            ->limit(12)
+            ->get();
+        
+        return view('commissions.index', compact(
+            'commissions',
+            'stats',
+            'byType',
+            'monthly'
+        ));
     }
-
+    
     /**
-     * Statistiques des commissions de l'utilisateur
+     * Statistiques détaillées - DONNÉES RÉELLES
      */
-    public function stats(Request $request)
+    public function stats()
     {
         $user = Auth::user();
-
+        
         $stats = $this->getUserStats($user->id);
-
-        if ($request->wantsJson()) {
-            return response()->json($stats);
-        }
-
-        return view('commissions.stats', compact('stats'));
+        
+        // Commissions par type
+        $byType = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $labels = [
+                    'direct' => 'Directes',
+                    'indirect' => 'Indirectes',
+                    'leadership' => 'Leadership',
+                    'retail' => 'Retail',
+                ];
+                return [
+                    $item->type => [
+                        'total' => $item->total,
+                        'count' => $item->count,
+                        'label' => $labels[$item->type] ?? ucfirst($item->type),
+                        'color' => [
+                            'direct' => 'primary',
+                            'indirect' => 'warning',
+                            'leadership' => 'danger',
+                            'retail' => 'success',
+                        ][$item->type] ?? 'secondary',
+                    ]
+                ];
+            });
+        
+        // Commissions mensuelles
+        $monthly = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'desc')
+            ->limit(12)
+            ->get()
+            ->reverse()
+            ->values();
+        
+        // Dernières commissions
+        $recent = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->with(['fromUser', 'package'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('commissions.stats', compact(
+            'stats',
+            'byType',
+            'monthly',
+            'recent'
+        ));
     }
-
+    
     /**
-     * Obtenir les statistiques d'un utilisateur
+     * Afficher le détail d'une commission - DONNÉES RÉELLES
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        
+        // ✅ Récupérer la commission avec toutes les relations
+        $commission = Commission::with(['user', 'fromUser', 'package', 'order'])
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+        
+        return view('commissions.show', compact('commission'));
+    }
+    
+    /**
+     * Commissions par niveau Unilevel - DONNÉES RÉELLES
+     */
+    public function getLevelCommissions()
+    {
+        $user = Auth::user();
+        
+        // ✅ Récupérer les commissions par niveau
+        $levels = [];
+        $total = 0;
+        
+        // Niveau 1 - Direct (30%)
+        $level1 = Commission::where('user_id', $user->id)
+            ->where('type', 'direct')
+            ->where('status', 'paid')
+            ->sum('amount');
+        $levels[1] = [
+            'label' => 'Direct',
+            'amount' => $level1,
+            'percentage' => 30,
+            'count' => Commission::where('user_id', $user->id)
+                ->where('type', 'direct')
+                ->where('status', 'paid')
+                ->count(),
+        ];
+        $total += $level1;
+        
+        // Niveau 2 - Indirect (15%)
+        $level2 = Commission::where('user_id', $user->id)
+            ->where('type', 'indirect')
+            ->where('status', 'paid')
+            ->sum('amount');
+        $levels[2] = [
+            'label' => 'Indirect',
+            'amount' => $level2,
+            'percentage' => 15,
+            'count' => Commission::where('user_id', $user->id)
+                ->where('type', 'indirect')
+                ->where('status', 'paid')
+                ->count(),
+        ];
+        $total += $level2;
+        
+        // Niveau 3-5 - Leadership (10%)
+        $level3 = Commission::where('user_id', $user->id)
+            ->where('type', 'leadership')
+            ->where('status', 'paid')
+            ->sum('amount');
+        $levels[3] = [
+            'label' => 'Leadership',
+            'amount' => $level3,
+            'percentage' => 10,
+            'count' => Commission::where('user_id', $user->id)
+                ->where('type', 'leadership')
+                ->where('status', 'paid')
+                ->count(),
+        ];
+        $total += $level3;
+        
+        return view('commissions.levels', compact('levels', 'total'));
+    }
+    
+    /**
+     * Exporter les commissions en CSV - DONNÉES RÉELLES
+     */
+    public function export(Request $request)
+    {
+        $user = Auth::user();
+        
+        $commissions = Commission::where('user_id', $user->id)
+            ->with(['fromUser', 'package'])
+            ->when($request->filled('status'), function ($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->when($request->filled('type'), function ($query) use ($request) {
+                return $query->where('type', $request->type);
+            })
+            ->when($request->filled('date_from'), function ($query) use ($request) {
+                return $query->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->filled('date_to'), function ($query) use ($request) {
+                return $query->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $filename = 'commissions_' . date('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ];
+        
+        $callback = function() use ($commissions) {
+            $file = fopen('php://output', 'w');
+            
+            // En-têtes UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            fputcsv($file, [
+                'ID', 'Type', 'Montant', 'Taux (%)', 'Statut',
+                'Description', 'Parrain', 'Package', 'Date'
+            ]);
+            
+            foreach ($commissions as $commission) {
+                fputcsv($file, [
+                    $commission->id,
+                    ucfirst($commission->type),
+                    number_format($commission->amount, 2),
+                    $commission->percentage,
+                    ucfirst($commission->status),
+                    $commission->description ?? '',
+                    $commission->fromUser?->name ?? 'N/A',
+                    $commission->package?->name ?? 'N/A',
+                    $commission->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Générer un PDF des commissions (utilise DomPDF)
+     */
+    public function pdf(Request $request)
+    {
+        $user = Auth::user();
+        
+        $commissions = Commission::where('user_id', $user->id)
+            ->with(['fromUser', 'package'])
+            ->when($request->filled('status'), function ($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $stats = $this->getUserStats($user->id);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('commissions.pdf', compact(
+            'commissions',
+            'stats',
+            'user'
+        ));
+        
+        return $pdf->download('commissions_' . date('Y-m-d') . '.pdf');
+    }
+    
+    /**
+     * API - Récupérer les commissions pour AJAX
+     */
+    public function apiIndex(Request $request)
+    {
+        $user = Auth::user();
+        
+        $commissions = Commission::where('user_id', $user->id)
+            ->with(['fromUser', 'package'])
+            ->when($request->filled('type'), function ($query) use ($request) {
+                return $query->where('type', $request->type);
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit($request->input('limit', 50))
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $commissions,
+            'total' => Commission::where('user_id', $user->id)->count(),
+        ]);
+    }
+    
+    /**
+     * API - Statistiques pour AJAX
+     */
+    public function apiStats(Request $request)
+    {
+        $user = Auth::user();
+        
+        return response()->json([
+            'success' => true,
+            'stats' => $this->getUserStats($user->id),
+        ]);
+    }
+    
+    /**
+     * Récupérer les statistiques d'un utilisateur - DONNÉES RÉELLES
      */
     private function getUserStats($userId)
     {
-        $stats = [
-            'total' => Commission::where('user_id', $userId)
-                ->where('status', 'paid')
-                ->sum('amount'),
-            'pending' => Commission::where('user_id', $userId)
-                ->where('status', 'pending')
-                ->sum('amount'),
-            'total_count' => Commission::where('user_id', $userId)
-                ->where('status', 'paid')
-                ->count(),
-            'pending_count' => Commission::where('user_id', $userId)
-                ->where('status', 'pending')
-                ->count(),
-            'by_type' => [],
-            'monthly' => [],
-            'recent' => Commission::where('user_id', $userId)
-                ->with(['fromUser', 'order', 'package'])
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get(),
-        ];
-
+        $stats = Commission::where('user_id', $userId)
+            ->select(
+                DB::raw('SUM(amount) as total'),
+                DB::raw('SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END) as pending'),
+                DB::raw('SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END) as paid'),
+                DB::raw('COUNT(*) as total_count'),
+                DB::raw('COUNT(CASE WHEN status = "pending" THEN 1 END) as pending_count'),
+                DB::raw('COUNT(CASE WHEN status = "paid" THEN 1 END) as paid_count')
+            )
+            ->first();
+        
+        // Statistiques par type
         $byType = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $labels = [
+                    'direct' => 'Directes',
+                    'indirect' => 'Indirectes',
+                    'leadership' => 'Leadership',
+                    'retail' => 'Retail',
+                ];
+                return [
+                    $item->type => [
+                        'total' => $item->total,
+                        'count' => $item->count,
+                        'label' => $labels[$item->type] ?? ucfirst($item->type),
+                        'color' => [
+                            'direct' => 'primary',
+                            'indirect' => 'warning',
+                            'leadership' => 'danger',
+                            'retail' => 'success',
+                        ][$item->type] ?? 'secondary',
+                    ]
+                ];
+            });
+        
+        // Commissions mensuelles
+        $monthly = Commission::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'desc')
+            ->limit(12)
+            ->get()
+            ->reverse()
+            ->values()
+            ->toArray();
+        
+        // Dernières commissions
+        $recent = Commission::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->with(['fromUser', 'package'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
             ->get();
-
-        foreach ($byType as $item) {
-            $stats['by_type'][$item->type] = [
-                'total' => $item->total,
-                'count' => $item->count,
-                'label' => $this->getTypeLabel($item->type),
-                'icon' => $this->getTypeIcon($item->type),
-                'color' => $this->getTypeColor($item->type),
-            ];
-        }
-
-        for ($i = 11; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $amount = Commission::where('user_id', $userId)
-                ->where('status', 'paid')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->sum('amount');
-
-            $stats['monthly'][] = [
-                'month' => $month->format('M Y'),
-                'amount' => $amount,
-            ];
-        }
-
-        return $stats;
-    }
-
-    public function show($id)
-    {
-        $user = Auth::user();
-
-        $commission = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'order', 'order.items', 'package', 'user'])
-            ->findOrFail($id);
-
-        if ($commission->user_id !== $user->id && !$user->hasRole('admin')) {
-            abort(403, 'Accès non autorisé');
-        }
-
-        return view('commissions.show', compact('commission'));
-    }
-
-    public function export(Request $request)
-    {
-        $user = Auth::user();
-
-        $query = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'order', 'package']);
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $commissions = $query->orderBy('created_at', 'desc')->get();
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="commissions_' . date('Y-m-d') . '.csv"',
+        
+        return [
+            'total' => $stats->total ?? 0,
+            'pending' => $stats->pending ?? 0,
+            'paid' => $stats->paid ?? 0,
+            'total_count' => $stats->total_count ?? 0,
+            'pending_count' => $stats->pending_count ?? 0,
+            'paid_count' => $stats->paid_count ?? 0,
+            'by_type' => $byType,
+            'monthly' => $monthly,
+            'recent' => $recent,
         ];
-
-        $callback = function() use ($commissions) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'ID',
-                'Type',
-                'De',
-                'Montant',
-                'Pourcentage',
-                'Description',
-                'Statut',
-                'Payé le',
-                'Créé le'
-            ]);
-
-            foreach ($commissions as $c) {
-                fputcsv($file, [
-                    $c->id,
-                    $this->getTypeLabel($c->type),
-                    $c->fromUser->name ?? 'N/A',
-                    number_format($c->amount, 2),
-                    $c->percentage . '%',
-                    $c->description ?? 'N/A',
-                    $c->status,
-                    $c->paid_at ? $c->paid_at->format('Y-m-d H:i') : 'En attente',
-                    $c->created_at->format('Y-m-d H:i'),
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-
-    public function apiIndex(Request $request)
-    {
-        $user = Auth::user();
-
-        $query = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'order', 'package'])
-            ->orderBy('created_at', 'desc');
-
-        if ($request->filled('limit')) {
-            $query->limit($request->limit);
-        }
-
-        $commissions = $query->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $commissions,
-            'total' => $commissions->count(),
-            'total_amount' => $commissions->sum('amount'),
-        ]);
-    }
-
-    public function apiStats(Request $request)
-    {
-        $user = Auth::user();
-
-        $stats = $this->getUserStats($user->id);
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
-    }
-
-    private function getTypeLabel($type)
-    {
-        $labels = [
-            'direct' => 'Commission Directe',
-            'indirect' => 'Commission Indirecte',
-            'leadership' => 'Commission Leadership',
-            'retail' => 'Profit Retail',
-            'bonus' => 'Bonus',
-            'level' => 'Commission Niveau',
-        ];
-
-        return $labels[$type] ?? ucfirst($type);
-    }
-
-    private function getTypeIcon($type)
-    {
-        $icons = [
-            'direct' => 'fa-user-plus',
-            'indirect' => 'fa-users',
-            'leadership' => 'fa-crown',
-            'retail' => 'fa-shopping-cart',
-            'bonus' => 'fa-gift',
-            'level' => 'fa-layer-group',
-        ];
-
-        return $icons[$type] ?? 'fa-coins';
-    }
-
-    private function getTypeColor($type)
-    {
-        $colors = [
-            'direct' => 'primary',
-            'indirect' => 'info',
-            'leadership' => 'warning',
-            'retail' => 'success',
-            'bonus' => 'danger',
-            'level' => 'secondary',
-        ];
-
-        return $colors[$type] ?? 'primary';
-    }
-
-    /**
-     * ✅ CORRIGÉ : Obtenir les commissions par niveau (Unilevel) - Données réelles
-     */
-    public function getLevelCommissions(Request $request)
-    {
-        $user = Auth::user();
-
-        $levels = [];
-
-        // ✅ Niveau 1 (Direct) - Utiliser parrain_id
-        $level1Users = User::where('parrain_id', $user->id)->pluck('id');
-        $level1Commissions = Commission::whereIn('from_user_id', $level1Users)
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $levels[1] = [
-            'label' => 'Niveau 1 - Direct',
-            'count' => $level1Users->count(),
-            'amount' => $level1Commissions,
-            'percentage' => 30,
-            'users' => User::where('parrain_id', $user->id)->get(['id', 'name', 'email']),
-        ];
-
-        // ✅ Niveau 2 - Utiliser parrain_id
-        $level2Users = User::whereIn('parrain_id', $level1Users)->pluck('id');
-        $level2Commissions = Commission::whereIn('from_user_id', $level2Users)
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $levels[2] = [
-            'label' => 'Niveau 2 - Indirect',
-            'count' => $level2Users->count(),
-            'amount' => $level2Commissions,
-            'percentage' => 15,
-            'users' => User::whereIn('parrain_id', $level1Users)->get(['id', 'name', 'email']),
-        ];
-
-        // ✅ Niveau 3
-        $level3Users = User::whereIn('parrain_id', $level2Users)->pluck('id');
-        $level3Commissions = Commission::whereIn('from_user_id', $level3Users)
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $levels[3] = [
-            'label' => 'Niveau 3 - Leadership',
-            'count' => $level3Users->count(),
-            'amount' => $level3Commissions,
-            'percentage' => 10,
-            'users' => User::whereIn('parrain_id', $level2Users)->get(['id', 'name', 'email']),
-        ];
-
-        // ✅ Niveau 4
-        $level4Users = User::whereIn('parrain_id', $level3Users)->pluck('id');
-        $level4Commissions = Commission::whereIn('from_user_id', $level4Users)
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $levels[4] = [
-            'label' => 'Niveau 4',
-            'count' => $level4Users->count(),
-            'amount' => $level4Commissions,
-            'percentage' => 5,
-            'users' => User::whereIn('parrain_id', $level3Users)->get(['id', 'name', 'email']),
-        ];
-
-        // ✅ Niveau 5
-        $level5Users = User::whereIn('parrain_id', $level4Users)->pluck('id');
-        $level5Commissions = Commission::whereIn('from_user_id', $level5Users)
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $levels[5] = [
-            'label' => 'Niveau 5',
-            'count' => $level5Users->count(),
-            'amount' => $level5Commissions,
-            'percentage' => 5,
-            'users' => User::whereIn('parrain_id', $level4Users)->get(['id', 'name', 'email']),
-        ];
-
-        $total = array_sum(array_column($levels, 'amount'));
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'data' => $levels,
-                'total' => $total,
-            ]);
-        }
-
-        return view('commissions.levels', compact('levels', 'total'));
-    }
-
-    public function pdf(Request $request)
-    {
-        $user = Auth::user();
-
-        $query = Commission::where('user_id', $user->id)
-            ->with(['fromUser'])
-            ->orderBy('created_at', 'desc');
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $commissions = $query->get();
-        $total = $commissions->sum('amount');
-
-        $pdf = \PDF::loadView('commissions.pdf', compact('commissions', 'total', 'user'));
-
-        return $pdf->download('commissions_' . date('Y-m-d') . '.pdf');
     }
 }

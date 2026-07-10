@@ -147,6 +147,122 @@
             background: var(--border-color);
             border-radius: 4px;
         }
+
+        /* ===== CONFIRMATION DIALOG ===== */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .confirm-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .confirm-dialog {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+        .confirm-overlay.active .confirm-dialog {
+            transform: scale(1) translateY(0);
+        }
+        .confirm-dialog .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.75rem;
+        }
+        .confirm-dialog .icon.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        .confirm-dialog h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .confirm-dialog p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .confirm-dialog .actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .confirm-dialog .actions .btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 100px;
+        }
+        .confirm-dialog .actions .btn-cancel {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .confirm-dialog .actions .btn-cancel:hover {
+            background: var(--bg-hover);
+        }
+        .confirm-dialog .actions .btn-confirm {
+            background: #ef4444;
+            color: white;
+        }
+        .confirm-dialog .actions .btn-confirm:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        @media (max-width: 640px) {
+            .confirm-dialog {
+                padding: 1.5rem;
+                max-width: 95%;
+            }
+            .confirm-dialog .icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
+            }
+            .confirm-dialog h3 {
+                font-size: 1rem;
+            }
+            .confirm-dialog p {
+                font-size: 0.813rem;
+            }
+            .confirm-dialog .actions .btn {
+                padding: 0.375rem 1rem;
+                font-size: 0.813rem;
+                min-width: 80px;
+            }
+        }
     </style>
 </head>
 <body class="h-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200 antialiased">
@@ -192,7 +308,7 @@
                 
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
-                    <a href="/admin" class="flex items-center justify-center flex-1">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
                         <img src="{{ asset('images/salang_logo.png') }}" 
                              alt="Salang" 
                              class="logo-themeable transition-all duration-300"
@@ -211,8 +327,8 @@
                     <ul class="space-y-0.5">
                         <!-- Dashboard -->
                         <li>
-                            <a href="/admin" 
-                               class="sidebar-link {{ request()->is('admin') ? 'active' : '' }}">
+                            <a href="{{ route('admin.dashboard') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                 </svg>
@@ -225,8 +341,8 @@
                         <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Gestion</div></li>
 
                         <li>
-                            <a href="/admin/users" 
-                               class="sidebar-link {{ request()->is('admin/users*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.users') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
@@ -235,8 +351,8 @@
                         </li>
 
                         <li>
-                            <a href="/admin/packages" 
-                               class="sidebar-link {{ request()->is('admin/packages*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.packages') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.packages*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                                 </svg>
@@ -245,8 +361,8 @@
                         </li>
 
                         <li>
-                            <a href="/admin/products" 
-                               class="sidebar-link {{ request()->is('admin/products*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.products') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>
@@ -255,8 +371,8 @@
                         </li>
 
                         <li>
-                            <a href="/admin/kyc" 
-                               class="sidebar-link {{ request()->is('admin/kyc*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.kyc') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.kyc*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
@@ -268,8 +384,8 @@
                         <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Finances</div></li>
 
                         <li>
-                            <a href="/admin/commissions" 
-                               class="sidebar-link {{ request()->is('admin/commissions*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.commissions') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.commissions') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -278,8 +394,8 @@
                         </li>
 
                         <li>
-                            <a href="/admin/wallets" 
-                               class="sidebar-link {{ request()->is('admin/wallets*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.wallets') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.wallets') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
@@ -288,8 +404,8 @@
                         </li>
 
                         <li>
-                            <a href="/admin/withdrawals" 
-                               class="sidebar-link {{ request()->is('admin/withdrawals*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.withdrawals') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -301,8 +417,8 @@
                         <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Rangs</div></li>
 
                         <li>
-                            <a href="/admin/ranks" 
-                               class="sidebar-link {{ request()->is('admin/ranks*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.ranks') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.ranks*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                                 </svg>
@@ -314,8 +430,8 @@
                         <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Rapports</div></li>
 
                         <li>
-                            <a href="/admin/reports" 
-                               class="sidebar-link {{ request()->is('admin/reports*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
@@ -327,8 +443,8 @@
                         <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Administration</div></li>
 
                         <li>
-                            <a href="/admin/settings" 
-                               class="sidebar-link {{ request()->is('admin/settings*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.settings') }}" 
+                               class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -339,7 +455,7 @@
 
                         <!-- Retour -->
                         <li class="pt-4 mt-4 border-t border-[var(--border-color)]">
-                            <a href="/dashboard" class="sidebar-link">
+                            <a href="{{ route('dashboard') }}" class="sidebar-link">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                 </svg>
@@ -446,14 +562,25 @@
                                             <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()->email }}</p>
                                         </div>
                                         
-                                        <a href="/admin" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Dashboard Admin</a>
-                                        <a href="/dashboard" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Voir le site</a>
+                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Dashboard Admin</a>
+                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Voir le site</a>
                                         <hr class="border-[var(--border-color)]">
-                                        <a href="/profile" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Mon Profil</a>
+                                        <a href="{{ route('profile.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Mon Profil</a>
                                         <hr class="border-[var(--border-color)]">
-                                        <form method="POST" action="{{ route('logout') }}">
+                                        
+                                        <!-- ✅ FORMULAIRE DE DÉCONNEXION AVEC CONFIRMATION -->
+                                        <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
                                             @csrf
-                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500">Déconnexion</button>
+                                            <button type="button" 
+                                                    onclick="confirmLogout(event)"
+                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
+                                                <span class="flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                                    </svg>
+                                                    Déconnexion
+                                                </span>
+                                            </button>
                                         </form>
                                     </div>
                                 </div>
@@ -480,32 +607,32 @@
 
         <!-- Mobile Bottom Nav -->
         <nav class="mobile-bottom-nav" id="mobileBottomNav">
-            <a href="/admin" 
-               class="nav-item {{ request()->is('admin') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" 
+               class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                 </svg>
                 <span>Dashboard</span>
             </a>
 
-            <a href="/admin/users" 
-               class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+            <a href="{{ route('admin.users') }}" 
+               class="nav-item {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
                 <span>Utilisateurs</span>
             </a>
 
-            <a href="/admin/commissions" 
-               class="nav-item {{ request()->is('admin/commissions*') ? 'active' : '' }}">
+            <a href="{{ route('admin.commissions') }}" 
+               class="nav-item {{ request()->routeIs('admin.commissions') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>Commissions</span>
             </a>
 
-            <a href="/profile" 
-               class="nav-item {{ request()->is('profile*') ? 'active' : '' }}">
+            <a href="{{ route('profile.index') }}" 
+               class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
@@ -514,11 +641,153 @@
         </nav>
     </div>
 
+    <!-- ===== CONFIRMATION DIALOG ===== -->
+    <div id="confirmDialog" class="confirm-overlay">
+        <div class="confirm-dialog">
+            <div class="icon danger">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"/>
+                    <path d="M12 17h.01"/>
+                    <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                </svg>
+            </div>
+            <h3>Confirmation de déconnexion</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.</p>
+            <div class="actions">
+                <button type="button" class="btn btn-cancel" onclick="closeConfirmDialog()">Annuler</button>
+                <button type="button" class="btn btn-confirm" id="confirmLogoutBtn">Se déconnecter</button>
+            </div>
+        </div>
+    </div>
+
     @livewireScripts
     @if(class_exists('PwaKit'))
         {!! PwaKit::scripts() !!}
     @endif
     @stack('scripts')
+
+    <!-- ===== CONFIRMATION LOGOUT SCRIPT ===== -->
+    <script>
+    // Variables globales pour le dialogue
+    let confirmCallback = null;
+    let confirmForm = null;
+
+    /**
+     * Afficher le dialogue de confirmation
+     */
+    function showConfirmDialog(options) {
+        const dialog = document.getElementById('confirmDialog');
+        const icon = dialog.querySelector('.icon');
+        const title = dialog.querySelector('h3');
+        const message = dialog.querySelector('p');
+        const confirmBtn = document.getElementById('confirmLogoutBtn');
+        const cancelBtn = dialog.querySelector('.btn-cancel');
+        
+        // Configurer le dialogue
+        icon.className = 'icon';
+        icon.classList.add(options.type || 'danger');
+        
+        if (options.type === 'success') {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            `;
+        } else if (options.type === 'warning') {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"/>
+                    <path d="M12 17h.01"/>
+                    <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                </svg>
+            `;
+        } else {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            `;
+        }
+        
+        title.textContent = options.title || 'Confirmation';
+        message.textContent = options.message || 'Êtes-vous sûr de vouloir continuer ?';
+        confirmBtn.textContent = options.confirmText || 'Confirmer';
+        confirmBtn.className = 'btn btn-confirm';
+        
+        if (options.type === 'success') {
+            confirmBtn.classList.add('success');
+        }
+        
+        // Sauvegarder les callbacks
+        confirmCallback = options.onConfirm || null;
+        confirmForm = options.form || null;
+        
+        // Afficher le dialogue
+        dialog.classList.add('active');
+    }
+
+    /**
+     * Fermer le dialogue de confirmation
+     */
+    function closeConfirmDialog() {
+        document.getElementById('confirmDialog').classList.remove('active');
+        confirmCallback = null;
+        confirmForm = null;
+    }
+
+    /**
+     * Confirmer la déconnexion
+     */
+    function confirmLogout(event) {
+        event.preventDefault();
+        
+        const form = event.target.closest('form');
+        
+        showConfirmDialog({
+            type: 'danger',
+            title: 'Confirmation de déconnexion',
+            message: 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
+            confirmText: 'Se déconnecter',
+            onConfirm: function() {
+                if (form) {
+                    form.submit();
+                }
+                closeConfirmDialog();
+            },
+            form: form
+        });
+    }
+
+    // Gestionnaire pour le bouton de confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmBtn = document.getElementById('confirmLogoutBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                if (typeof confirmCallback === 'function') {
+                    confirmCallback();
+                } else if (confirmForm) {
+                    confirmForm.submit();
+                }
+                closeConfirmDialog();
+            });
+        }
+
+        // Fermer le dialogue avec la touche Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeConfirmDialog();
+            }
+        });
+
+        // Fermer le dialogue en cliquant sur l'overlay
+        document.getElementById('confirmDialog').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmDialog();
+            }
+        });
+    });
+    </script>
 
     <!-- ===== THEME TOGGLE ===== -->
     <script>

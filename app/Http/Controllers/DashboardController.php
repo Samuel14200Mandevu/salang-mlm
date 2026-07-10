@@ -18,7 +18,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        // ✅ Charger les relations avec le user
+        $user = Auth::user()->load(['rank', 'package', 'wallet']);
         
         if (!$user) {
             return redirect()->route('login');
@@ -72,13 +73,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // ✅ Progression des grades
+        // ✅ Progression des grades (utilise rank_id au lieu de rank)
         $nextRank = Rank::where('min_pv', '>', $user->pv_balance)
             ->orderBy('min_pv', 'asc')
             ->first();
         
+        // ✅ Récupérer le nom du grade actuel
+        $currentRankName = $user->rank?->name ?? $user->rank ?? 'Distributor';
+        
         $rankProgress = [
-            'current' => $user->rank ? $user->rank->name : 'Distributor',
+            'current' => $currentRankName,
             'next' => $nextRank ? $nextRank->name : 'Maximum Level',
             'progress' => $nextRank ? min(100, ($user->pv_balance / max($nextRank->min_pv, 1)) * 100) : 100,
             'pv_needed' => $nextRank ? max(0, $nextRank->min_pv - $user->pv_balance) : 0,

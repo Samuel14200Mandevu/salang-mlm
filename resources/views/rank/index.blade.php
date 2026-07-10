@@ -239,25 +239,27 @@
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Track your progress and unlock new ranks</p>
     </div>
 
-    <!-- Current Rank -->
-    <div class="rank-header card animate-fadeInUp delay-1 border-l-4 border-primary-500">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your current rank</p>
-                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-primary-500">
-                    {{ Auth::user()->rank?->name ?? 'Distributor' }}
-                </h2>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    {{ number_format(Auth::user()->pv_balance ?? 0) }} PV • {{ number_format(Auth::user()->bv_balance ?? 0) }} BV
-                </p>
-            </div>
-            <div class="rank-status">
-                <span class="rank-badge rank-badge-{{ Auth::user()->rank_id ?? 1 }} text-base sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2">
-                    {{ Auth::user()->rank?->name ?? 'Distributor' }}
-                </span>
-            </div>
+  <!-- Current Rank -->
+<div class="rank-header card animate-fadeInUp delay-1 border-l-4 border-primary-500">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your current rank</p>
+            <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-primary-500">
+                {{-- Utiliser la colonne rank directement --}}
+                {{ Auth::user()->rank ?? 'Distributor' }}
+            </h2>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                {{ number_format(Auth::user()->pv_balance ?? 0) }} PV • {{ number_format(Auth::user()->bv_balance ?? 0) }} BV
+            </p>
+        </div>
+        <div class="rank-status">
+            <span class="rank-badge rank-badge-{{ Auth::user()->rank_id ?? 1 }} text-base sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2">
+                {{-- Utiliser la colonne rank directement --}}
+                {{ Auth::user()->rank ?? 'Distributor' }}
+            </span>
         </div>
     </div>
+</div>
 
     <!-- Progress -->
     <div class="card animate-fadeInUp delay-2">

@@ -185,6 +185,114 @@
             }
         }
 
+        /* ===== CONFIRMATION DIALOG ===== */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .confirm-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .confirm-dialog {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+        .confirm-overlay.active .confirm-dialog {
+            transform: scale(1) translateY(0);
+        }
+        .confirm-dialog .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.75rem;
+        }
+        .confirm-dialog .icon.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        .confirm-dialog .icon.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        .confirm-dialog .icon.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        .confirm-dialog h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .confirm-dialog p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .confirm-dialog .actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .confirm-dialog .actions .btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 100px;
+        }
+        .confirm-dialog .actions .btn-cancel {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .confirm-dialog .actions .btn-cancel:hover {
+            background: var(--bg-hover);
+        }
+        .confirm-dialog .actions .btn-confirm {
+            background: #ef4444;
+            color: white;
+        }
+        .confirm-dialog .actions .btn-confirm:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .confirm-dialog .actions .btn-confirm.success {
+            background: #22c55e;
+        }
+        .confirm-dialog .actions .btn-confirm.success:hover {
+            background: #16a34a;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
         @media (max-width: 767px) {
             .mobile-bottom-nav {
                 display: flex;
@@ -194,6 +302,26 @@
             }
             footer {
                 padding-bottom: 80px !important;
+            }
+            .confirm-dialog {
+                padding: 1.5rem;
+                max-width: 95%;
+            }
+            .confirm-dialog .icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
+            }
+            .confirm-dialog h3 {
+                font-size: 1rem;
+            }
+            .confirm-dialog p {
+                font-size: 0.813rem;
+            }
+            .confirm-dialog .actions .btn {
+                padding: 0.375rem 1rem;
+                font-size: 0.813rem;
+                min-width: 80px;
             }
         }
     </style>
@@ -698,9 +826,12 @@
                                         @endif
                                         
                                         <hr class="border-[var(--border-color)]">
-                                        <form method="POST" action="{{ route('logout') }}">
+                                        <!-- ✅ FORMULAIRE DE DÉCONNEXION AVEC CONFIRMATION -->
+                                        <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
                                             @csrf
-                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
+                                            <button type="button" 
+                                                    onclick="confirmLogout(event)"
+                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -762,6 +893,25 @@
             </a>
         </nav>
 
+    </div>
+
+    <!-- ===== CONFIRMATION DIALOG ===== -->
+    <div id="confirmDialog" class="confirm-overlay">
+        <div class="confirm-dialog">
+            <div class="icon danger">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"/>
+                    <path d="M12 17h.01"/>
+                    <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                </svg>
+            </div>
+            <h3>Confirmation de déconnexion</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.</p>
+            <div class="actions">
+                <button type="button" class="btn btn-cancel" onclick="closeConfirmDialog()">Annuler</button>
+                <button type="button" class="btn btn-confirm" id="confirmLogoutBtn">Se déconnecter</button>
+            </div>
+        </div>
     </div>
 
     @livewireScripts
@@ -849,12 +999,135 @@
     
     @stack('scripts')
 
-    <!-- ===== THEME TOGGLE - FIX DEFINITIF ===== -->
+    <!-- ===== CONFIRMATION LOGOUT SCRIPT ===== -->
+    <script>
+    // Variables globales pour le dialogue
+    let confirmCallback = null;
+    let confirmForm = null;
+
+    /**
+     * Afficher le dialogue de confirmation
+     */
+    function showConfirmDialog(options) {
+        const dialog = document.getElementById('confirmDialog');
+        const icon = dialog.querySelector('.icon');
+        const title = dialog.querySelector('h3');
+        const message = dialog.querySelector('p');
+        const confirmBtn = document.getElementById('confirmLogoutBtn');
+        const cancelBtn = dialog.querySelector('.btn-cancel');
+        
+        // Configurer le dialogue
+        icon.className = 'icon';
+        icon.classList.add(options.type || 'danger');
+        
+        if (options.type === 'success') {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            `;
+        } else if (options.type === 'warning') {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"/>
+                    <path d="M12 17h.01"/>
+                    <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                </svg>
+            `;
+        } else {
+            icon.innerHTML = `
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            `;
+        }
+        
+        title.textContent = options.title || 'Confirmation';
+        message.textContent = options.message || 'Êtes-vous sûr de vouloir continuer ?';
+        confirmBtn.textContent = options.confirmText || 'Confirmer';
+        confirmBtn.className = 'btn btn-confirm';
+        
+        if (options.type === 'success') {
+            confirmBtn.classList.add('success');
+        }
+        
+        // Sauvegarder les callbacks
+        confirmCallback = options.onConfirm || null;
+        confirmForm = options.form || null;
+        
+        // Afficher le dialogue
+        dialog.classList.add('active');
+    }
+
+    /**
+     * Fermer le dialogue de confirmation
+     */
+    function closeConfirmDialog() {
+        document.getElementById('confirmDialog').classList.remove('active');
+        confirmCallback = null;
+        confirmForm = null;
+    }
+
+    /**
+     * Confirmer la déconnexion
+     */
+    function confirmLogout(event) {
+        event.preventDefault();
+        
+        const form = event.target.closest('form');
+        
+        showConfirmDialog({
+            type: 'danger',
+            title: 'Confirmation de déconnexion',
+            message: 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
+            confirmText: 'Se déconnecter',
+            onConfirm: function() {
+                // Soumettre le formulaire
+                if (form) {
+                    form.submit();
+                }
+                closeConfirmDialog();
+            },
+            form: form
+        });
+    }
+
+    // Gestionnaire pour le bouton de confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmBtn = document.getElementById('confirmLogoutBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                if (typeof confirmCallback === 'function') {
+                    confirmCallback();
+                } else if (confirmForm) {
+                    confirmForm.submit();
+                }
+                closeConfirmDialog();
+            });
+        }
+
+        // Fermer le dialogue avec la touche Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeConfirmDialog();
+            }
+        });
+
+        // Fermer le dialogue en cliquant sur l'overlay
+        document.getElementById('confirmDialog').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmDialog();
+            }
+        });
+    });
+    </script>
+
+    <!-- ===== THEME TOGGLE ===== -->
     <script>
     (function() {
         'use strict';
         
-        // Restaurer immédiatement
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         }
@@ -863,10 +1136,7 @@
             var toggle = document.getElementById('theme-toggle');
             var icon = document.getElementById('theme-icon');
             
-            if (!toggle) {
-                console.warn('Theme toggle not found');
-                return;
-            }
+            if (!toggle) return;
             
             function setTheme(theme) {
                 if (theme === 'dark') {
@@ -888,11 +1158,9 @@
                 }
             }
             
-            // Supprimer tous les événements existants
             var newToggle = toggle.cloneNode(true);
             toggle.parentNode.replaceChild(newToggle, toggle);
             
-            // Ajouter l'événement
             newToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
@@ -900,12 +1168,9 @@
                 } else {
                     setTheme('dark');
                 }
-                console.log('Theme toggled:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             });
             
-            // Appliquer le thème sauvegardé
             setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
-            console.log('Theme initialized:', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         }
         
         if (document.readyState === 'loading') {

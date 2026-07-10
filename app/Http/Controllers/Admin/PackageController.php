@@ -61,11 +61,11 @@ class PackageController extends Controller
             'commission_rate' => $request->commission_rate,
             'description' => $request->description,
             'benefits' => $request->benefits ?? [],
-            'is_active' => $request->has('is_active'),
+            'is_active' => $request->has('is_active') ? 1 : 0, // CORRIGÉ
         ]);
 
         return redirect()->route('admin.packages')
-            ->with('success', "📦 Package '{$package->name}' créé avec succès.");
+            ->with('success', "Package '{$package->name}' créé avec succès.");
     }
 
     /**
@@ -96,7 +96,8 @@ class PackageController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $package->update([
+        // CORRIGÉ : Gérer le statut correctement
+        $data = [
             'name' => $request->name,
             'slug' => $request->slug,
             'price' => $request->price,
@@ -105,11 +106,13 @@ class PackageController extends Controller
             'commission_rate' => $request->commission_rate,
             'description' => $request->description,
             'benefits' => $request->benefits ?? [],
-            'is_active' => $request->has('is_active'),
-        ]);
+            'is_active' => $request->has('is_active') ? 1 : 0, // CORRIGÉ
+        ];
+
+        $package->update($data);
 
         return redirect()->route('admin.packages')
-            ->with('success', "📦 Package '{$package->name}' mis à jour.");
+            ->with('success', "Package '{$package->name}' mis à jour.");
     }
 
     /**
@@ -119,17 +122,17 @@ class PackageController extends Controller
     {
         $package = Package::findOrFail($id);
         
-        // ✅ Vérifier si des utilisateurs utilisent ce package
+        // Vérifier si des utilisateurs utilisent ce package
         $usersCount = $package->users()->count();
         if ($usersCount > 0) {
-            return back()->with('error', "❌ Impossible de supprimer. {$usersCount} utilisateur(s) utilisent ce package.");
+            return back()->with('error', "Impossible de supprimer. {$usersCount} utilisateur(s) utilisent ce package.");
         }
         
         $name = $package->name;
         $package->delete();
         
         return redirect()->route('admin.packages')
-            ->with('success', "🗑️ Package '{$name}' supprimé.");
+            ->with('success', "Package '{$name}' supprimé.");
     }
 
     /**
@@ -143,7 +146,7 @@ class PackageController extends Controller
         
         $status = $package->is_active ? 'activé' : 'désactivé';
         return redirect()->route('admin.packages')
-            ->with('success', "📦 Package '{$package->name}' {$status}.");
+            ->with('success', "Package '{$package->name}' {$status}.");
     }
 
     /**
@@ -160,6 +163,6 @@ class PackageController extends Controller
         $newPackage->save();
         
         return redirect()->route('admin.packages')
-            ->with('success', "📦 Package '{$newPackage->name}' dupliqué avec succès.");
+            ->with('success', "Package '{$newPackage->name}' dupliqué avec succès.");
     }
 }
