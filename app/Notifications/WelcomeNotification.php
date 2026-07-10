@@ -28,7 +28,7 @@ class WelcomeNotification extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         $mail = (new MailMessage)
-            ->subject('Bienvenue sur Salang MLM')
+            ->subject('Bienvenue sur Salang Group')
             ->greeting('Bonjour ' . $notifiable->name . ',')
             ->line('Nous sommes ravis de vous accueillir au sein de la communauté Salang.')
             ->line('');

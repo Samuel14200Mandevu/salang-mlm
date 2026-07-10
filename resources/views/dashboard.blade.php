@@ -319,8 +319,8 @@
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Grade</p>
                     <p class="text-base sm:text-xl md:text-2xl font-bold text-purple-500 truncate">
-                        {{-- ✅ Utiliser la colonne rank directement --}}
-                        {{ $user->rank ?? 'Distributor' }}
+                        {{-- ✅ Utiliser getOriginal pour la colonne string --}}
+                        {{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}
                     </p>
                 </div>
                 <div class="stat-icon stat-icon-purple flex-shrink-0">
@@ -350,7 +350,7 @@
                     <p class="text-xs text-[var(--text-secondary)]">Membre</p>
                     {{-- ✅ GRADE CORRIGÉ --}}
                     <span class="badge badge-success text-[10px] sm:text-xs inline-block mt-0.5">
-                        {{ $user->rank ?? 'Distributor' }}
+                        {{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}
                     </span>
                 </div>
             </div>
@@ -465,7 +465,8 @@
                     Progression vers le prochain grade
                 </h3>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    Actuel: <span class="font-bold text-primary-500">{{ $rankProgress['current'] ?? 'Distributor' }}</span>
+                    {{-- ✅ GRADE CORRIGÉ --}}
+                    Actuel: <span class="font-bold text-primary-500">{{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}</span>
                     @if(isset($rankProgress['next']) && $rankProgress['next'] != 'Maximum Level')
                         → Prochain: <span class="font-bold text-purple-500">{{ $rankProgress['next'] }}</span>
                     @endif
@@ -492,7 +493,7 @@
             </p>
         @elseif(isset($rankProgress['next']) && $rankProgress['next'] == 'Maximum Level')
             <p class="text-xs text-green-500 mt-2 font-semibold">
-                Vous avez atteint le grade maximum !
+                🏆 Vous avez atteint le grade maximum !
             </p>
         @endif
     </div>
