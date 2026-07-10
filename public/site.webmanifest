@@ -1,6 +1,6 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "Salang App",
+  "short_name": "SL",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
