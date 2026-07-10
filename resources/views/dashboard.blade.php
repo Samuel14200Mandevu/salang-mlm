@@ -368,16 +368,39 @@
                 </div>
             </div>
             
-            <!-- Sponsor Information -->
-            <div class="mt-3 sm:mt-4 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Parrain</p>
-                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base truncate">
-                    {{ $sponsor?->name ?? 'Aucun' }}
+           <!-- Sponsor Information -->
+<div class="mt-3 sm:mt-4 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Parrain</p>
+    @php
+        use App\Models\User;
+        $parrainData = null;
+        if (Auth::user()->parrain_id) {
+            $parrainData = User::find(Auth::user()->parrain_id);
+        }
+    @endphp
+    @if($parrainData)
+        <div class="flex items-center gap-3 mt-1">
+            <div class="avatar avatar-md avatar-gradient">
+                {{ strtoupper(substr($parrainData->name, 0, 1)) }}
+            </div>
+            <div>
+                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                    {{ $parrainData->name }}
                 </p>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">
-                    {{ $sponsor?->email ?? '--' }}
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                    {{ $parrainData->email }}
                 </p>
             </div>
+        </div>
+    @else
+        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+            Aucun parrain
+        </p>
+        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+            Vous êtes le premier de votre réseau
+        </p>
+    @endif
+</div>
 
             <!-- Downlines and Code -->
             <div class="mt-2 grid grid-cols-2 gap-2">
