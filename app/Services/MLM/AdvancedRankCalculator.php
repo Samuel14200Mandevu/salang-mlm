@@ -39,32 +39,182 @@ class AdvancedRankCalculator
      */
     public function isEligibleForRank(User $user, Rank $rank): bool
     {
-        // Vérification du PV et BV minimum
-        if ($user->pv_balance < ($rank->pv_required ?? 0)) {
+        // Vérification du PV minimum
+        if ($user->pv_balance < $rank->min_pv) {
             return false;
         }
 
-        if ($user->bv_balance < ($rank->bv_required ?? 0)) {
+        // Vérification du BV minimum
+        if ($user->bv_balance < $rank->min_bv) {
             return false;
         }
 
-        // Vérification du PV mensuel requis pour toucher les commissions
-        $monthlyPv = $this->getMonthlyPV($user);
-        if ($monthlyPv < ($rank->pv_payment_required ?? 0)) {
-            return false;
+        // Pour les niveaux 1 à 3, c'est simple
+        if ($rank->level <= 3) {
+            return true;
         }
 
-        // Vérification des conditions spécifiques selon le niveau
-        $conditions = $this->getRankConditions($rank);
-        if (!$this->checkConditions($user, $rank->level, $conditions)) {
-            return false;
-        }
-
-        return true;
+        // Pour les niveaux 4 à 9, vérifier les conditions complexes
+        return $this->checkRankConditions($user, $rank);
     }
 
     /**
-     * Récupère les conditions du grade depuis la base de données ou les données par défaut
+     * Vérifie les conditions complexes d'un grade (Niveaux 4 à 9)
+     */
+    protected function checkRankConditions(User $user, Rank $rank): bool
+    {
+        $conditions = $this->getRankConditions($rank);
+
+        if (empty($conditions) || !is_array($conditions)) {
+            return true;
+        }
+
+        $directChildren = $user->filleuls()->with('rank')->get();
+
+        // Parcourir toutes les conditions
+        foreach ($conditions as $condition) {
+            if ($this->checkSingleCondition($condition, $directChildren, $user)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifie une condition simple
+     */
+    protected function checkSingleCondition(array $condition, $directChildren, User $user): bool
+    {
+        // ============================================================
+        // TYPE 1: PERSONNAL PV (Condition la plus simple)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'personal_pv') {
+            $requiredPV = $condition['value'] ?? 0;
+            return $user->pv_balance >= $requiredPV;
+        }
+
+        // ============================================================
+        // TYPE 2: BRANCHES (Ex: 3 branches niveau X avec Y PV)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'branches') {
+            $branchLevel = $condition['rank_level'] ?? 0;
+            $minBranches = $condition['branches'] ?? 1;
+            $minBranchPV = $condition['group_pv'] ?? 0;
+
+            $count = $directChildren->filter(function ($child) use ($branchLevel, $minBranchPV) {
+                $childRank = $this->getUserRankObject($child);
+                $childRankLevel = $childRank?->level ?? 0;
+                return $childRankLevel >= $branchLevel
+                    && $child->pv_balance >= $minBranchPV;
+            })->count();
+
+            return $count >= $minBranches;
+        }
+
+        // ============================================================
+        // TYPE 3: BRANCHES MIXED (Ex: 2 branches niveau X + 4 branches niveau Y)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'branches_mixed') {
+            $branchRequirements = $condition['branches'] ?? [];
+            $minGroupPV = $condition['group_pv'] ?? 0;
+
+            foreach ($branchRequirements as $count => $level) {
+                $actualCount = $directChildren->filter(function ($child) use ($level) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $level;
+                })->count();
+
+                if ($actualCount < $count) {
+                    return false;
+                }
+            }
+
+            $totalGroupPV = $directChildren->sum('pv_balance');
+
+            return $totalGroupPV >= $minGroupPV;
+        }
+
+        // ============================================================
+        // TYPE 4: OPTIONS (Pour la rétrocompatibilité)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'option') {
+            return $this->checkOptionCondition($user, $condition);
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifie les conditions d'option (Option 1, 2, 3)
+     */
+    private function checkOptionCondition(User $user, array $condition): bool
+    {
+        $optionNumber = $condition['option'] ?? 1;
+        $directChildren = $user->filleuls()->with('rank')->get();
+
+        switch ($optionNumber) {
+            case 1:
+                // Option 1: 2 branches niveau X avec Y PV
+                $targetLevel = $condition['target_level'] ?? 0;
+                $requiredPV = $condition['required_pv'] ?? 0;
+                $minBranches = $condition['branches'] ?? 2;
+
+                $count = $directChildren->filter(function ($child) use ($targetLevel, $requiredPV) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $targetLevel
+                        && $child->pv_balance >= $requiredPV;
+                })->count();
+
+                return $count >= $minBranches;
+
+            case 2:
+                // Option 2: 2 branches niveau X + 4 branches niveau Y
+                $targetLevel = $condition['target_level'] ?? 0;
+                $secondaryLevel = $condition['secondary_level'] ?? 0;
+                $requiredPV = $condition['required_pv'] ?? 0;
+
+                $targetCount = $directChildren->filter(function ($child) use ($targetLevel, $requiredPV) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $targetLevel
+                        && $child->pv_balance >= $requiredPV;
+                })->count();
+
+                $secondaryCount = $directChildren->filter(function ($child) use ($secondaryLevel, $requiredPV) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $secondaryLevel
+                        && $child->pv_balance >= $requiredPV;
+                })->count();
+
+                return $targetCount >= 2 && $secondaryCount >= 4;
+
+            case 3:
+                // Option 3: 1 branche niveau X + 6 branches niveau Y
+                $targetLevel = $condition['target_level'] ?? 0;
+                $secondaryLevel = $condition['secondary_level'] ?? 0;
+                $requiredPV = $condition['required_pv'] ?? 0;
+
+                $targetCount = $directChildren->filter(function ($child) use ($targetLevel, $requiredPV) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $targetLevel
+                        && $child->pv_balance >= $requiredPV;
+                })->count();
+
+                $secondaryCount = $directChildren->filter(function ($child) use ($secondaryLevel, $requiredPV) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $secondaryLevel
+                        && $child->pv_balance >= $requiredPV;
+                })->count();
+
+                return $targetCount >= 1 && $secondaryCount >= 6;
+
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Récupère les conditions du grade depuis la base de données
      */
     private function getRankConditions(Rank $rank): array
     {
@@ -85,54 +235,114 @@ class AdvancedRankCalculator
     private function getDefaultConditions(int $level): array
     {
         $conditions = [
+            // ============================================================
+            // NIVEAU 1: Simple inscription
+            // ============================================================
             1 => [
-                ['label' => 'Inscription', 'value' => 'Validée', 'type' => 'simple']
+                ['type' => 'personal_pv', 'label' => 'Inscription validée', 'value' => 0]
             ],
+
+            // ============================================================
+            // NIVEAU 2: Qualification (PV ≥ 100)
+            // ============================================================
             2 => [
-                ['label' => 'PV Personnel', 'value' => '≥ 100 PV', 'type' => 'simple'],
-                ['label' => 'PV Mensuel', 'value' => '≥ 20 PV', 'type' => 'monthly_pv']
+                ['type' => 'personal_pv', 'label' => 'PV Personnel ≥ 100', 'value' => 100]
             ],
+
+            // ============================================================
+            // NIVEAU 3: Cumul Directeur (PV ≥ 200)
+            // ============================================================
             3 => [
-                ['label' => 'PV Personnel', 'value' => '≥ 200 PV', 'type' => 'simple'],
-                ['label' => 'PV Mensuel', 'value' => '≥ 20 PV', 'type' => 'monthly_pv']
+                ['type' => 'personal_pv', 'label' => 'PV Personnel ≥ 200', 'value' => 200]
             ],
+
+            // ============================================================
+            // NIVEAU 4: Directeur (26%)
+            // ============================================================
             4 => [
-                ['label' => 'Être niveau 4', 'value' => 'Avoir ≥ 1000 PV personnel', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 3 filleuls directs de niveau 4 avec ≥ 1000 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 3 avec un total ≥ 2200 PV', 'type' => 'option', 'option' => 2]
+                // Option 1: PV ≥ 1000
+                ['type' => 'personal_pv', 'label' => 'PV ≥ 1000', 'value' => 1000],
+                // Option 2: 3 branches Niveau 3 avec ≥ 1000 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 3 avec ≥ 1000 PV', 'rank_level' => 3, 'branches' => 3, 'group_pv' => 1000],
+                // Option 3: 2 branches Niveau 3 avec ≥ 2200 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 3 avec ≥ 2200 PV', 'rank_level' => 3, 'branches' => 2, 'group_pv' => 2200]
             ],
+
+            // ============================================================
+            // NIVEAU 5: Manager Senior (30%)
+            // ============================================================
             5 => [
-                ['label' => 'Être niveau 5', 'value' => 'Avoir 3 filleuls directs de niveau 4 avec ≥ 3800 PV', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 4 avec ≥ 7800 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 4 et 4 filleuls de niveau 3 avec ≥ 3800 PV', 'type' => 'option', 'option' => 2],
-                ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 4 et 6 filleuls de niveau 3 avec ≥ 3800 PV', 'type' => 'option', 'option' => 3]
+                // Option 1: 3 branches Niveau 4 avec ≥ 3800 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 4 avec ≥ 3800 PV', 'rank_level' => 4, 'branches' => 3, 'group_pv' => 3800],
+                // Option 2: 2 branches Niveau 4 avec ≥ 7800 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 4 avec ≥ 7800 PV', 'rank_level' => 4, 'branches' => 2, 'group_pv' => 7800],
+                // Option 3: 2 branches Niveau 4 + 4 branches Niveau 3 avec ≥ 3800 PV
+                ['type' => 'branches_mixed', 'label' => '2 branches Niveau 4 + 4 branches Niveau 3 avec ≥ 3800 PV', 'branches' => [2 => 4, 4 => 3], 'group_pv' => 3800],
+                // Option 4: 1 branche Niveau 4 + 6 branches Niveau 3 avec ≥ 3800 PV
+                ['type' => 'branches_mixed', 'label' => '1 branche Niveau 4 + 6 branches Niveau 3 avec ≥ 3800 PV', 'branches' => [1 => 4, 6 => 3], 'group_pv' => 3800]
             ],
+
+            // ============================================================
+            // NIVEAU 6: Directeur Envolée (34%)
+            // ============================================================
             6 => [
-                ['label' => 'Être niveau 6', 'value' => 'Avoir 3 filleuls directs de niveau 5 avec ≥ 16000 PV', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 5 avec ≥ 35000 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 5 et 4 filleuls de niveau 4 avec ≥ 16000 PV', 'type' => 'option', 'option' => 2],
-                ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 5 et 6 filleuls de niveau 4 avec ≥ 16000 PV', 'type' => 'option', 'option' => 3]
+                // Option 1: 3 branches Niveau 5 avec ≥ 16000 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 5 avec ≥ 16000 PV', 'rank_level' => 5, 'branches' => 3, 'group_pv' => 16000],
+                // Option 2: 2 branches Niveau 5 avec ≥ 35000 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 5 avec ≥ 35000 PV', 'rank_level' => 5, 'branches' => 2, 'group_pv' => 35000],
+                // Option 3: 2 branches Niveau 5 + 4 branches Niveau 4 avec ≥ 16000 PV
+                ['type' => 'branches_mixed', 'label' => '2 branches Niveau 5 + 4 branches Niveau 4 avec ≥ 16000 PV', 'branches' => [2 => 5, 4 => 4], 'group_pv' => 16000],
+                // Option 4: 1 branche Niveau 5 + 6 branches Niveau 4 avec ≥ 16000 PV
+                ['type' => 'branches_mixed', 'label' => '1 branche Niveau 5 + 6 branches Niveau 4 avec ≥ 16000 PV', 'branches' => [1 => 5, 6 => 4], 'group_pv' => 16000]
             ],
+
+            // ============================================================
+            // NIVEAU 7: Saphire Manager (40%)
+            // ============================================================
             7 => [
-                ['label' => 'Être niveau 7', 'value' => 'Avoir 3 filleuls directs de niveau 6 avec ≥ 73000 PV', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 6 avec ≥ 145000 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 6 et 4 filleuls de niveau 5 avec ≥ 73000 PV', 'type' => 'option', 'option' => 2],
-                ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 6 et 6 filleuls de niveau 5 avec ≥ 73000 PV', 'type' => 'option', 'option' => 3]
+                // Option 1: 3 branches Niveau 6 avec ≥ 73000 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 6 avec ≥ 73000 PV', 'rank_level' => 6, 'branches' => 3, 'group_pv' => 73000],
+                // Option 2: 2 branches Niveau 6 avec ≥ 145000 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 6 avec ≥ 145000 PV', 'rank_level' => 6, 'branches' => 2, 'group_pv' => 145000],
+                // Option 3: 2 branches Niveau 6 + 4 branches Niveau 5 avec ≥ 73000 PV
+                ['type' => 'branches_mixed', 'label' => '2 branches Niveau 6 + 4 branches Niveau 5 avec ≥ 73000 PV', 'branches' => [2 => 6, 4 => 5], 'group_pv' => 73000],
+                // Option 4: 1 branche Niveau 6 + 6 branches Niveau 5 avec ≥ 73000 PV
+                ['type' => 'branches_mixed', 'label' => '1 branche Niveau 6 + 6 branches Niveau 5 avec ≥ 73000 PV', 'branches' => [1 => 6, 6 => 5], 'group_pv' => 73000]
             ],
+
+            // ============================================================
+            // NIVEAU 8: Diamant Bleu (43%)
+            // ============================================================
             8 => [
-                ['label' => 'Être niveau 8', 'value' => 'Avoir 3 filleuls directs de niveau 7 avec ≥ 280000 PV', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 7 avec ≥ 580000 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 7 et 4 filleuls de niveau 6 avec ≥ 280000 PV', 'type' => 'option', 'option' => 2],
-                ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 7 et 6 filleuls de niveau 6 avec ≥ 280000 PV', 'type' => 'option', 'option' => 3]
+                // Option 1: 3 branches Niveau 7 avec ≥ 280000 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 7 avec ≥ 280000 PV', 'rank_level' => 7, 'branches' => 3, 'group_pv' => 280000],
+                // Option 2: 2 branches Niveau 7 avec ≥ 580000 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 7 avec ≥ 580000 PV', 'rank_level' => 7, 'branches' => 2, 'group_pv' => 580000],
+                // Option 3: 2 branches Niveau 7 + 4 branches Niveau 6 avec ≥ 280000 PV
+                ['type' => 'branches_mixed', 'label' => '2 branches Niveau 7 + 4 branches Niveau 6 avec ≥ 280000 PV', 'branches' => [2 => 7, 4 => 6], 'group_pv' => 280000],
+                // Option 4: 1 branche Niveau 7 + 6 branches Niveau 6 avec ≥ 280000 PV
+                ['type' => 'branches_mixed', 'label' => '1 branche Niveau 7 + 6 branches Niveau 6 avec ≥ 280000 PV', 'branches' => [1 => 7, 6 => 6], 'group_pv' => 280000]
             ],
+
+            // ============================================================
+            // NIVEAU 9: Perle Diamant (45%)
+            // ============================================================
             9 => [
-                ['label' => 'Être niveau 9', 'value' => 'Avoir 3 filleuls directs de niveau 8 avec ≥ 400000 PV', 'type' => 'simple'],
-                ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 8 avec ≥ 780000 PV', 'type' => 'option', 'option' => 1],
-                ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 8 et 4 filleuls de niveau 7 avec ≥ 400000 PV', 'type' => 'option', 'option' => 2],
-                ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 8 et 6 filleuls de niveau 7 avec ≥ 400000 PV', 'type' => 'option', 'option' => 3]
+                // Option 1: 3 branches Niveau 8 avec ≥ 400000 PV
+                ['type' => 'branches', 'label' => '3 branches Niveau 8 avec ≥ 400000 PV', 'rank_level' => 8, 'branches' => 3, 'group_pv' => 400000],
+                // Option 2: 2 branches Niveau 8 avec ≥ 780000 PV
+                ['type' => 'branches', 'label' => '2 branches Niveau 8 avec ≥ 780000 PV', 'rank_level' => 8, 'branches' => 2, 'group_pv' => 780000],
+                // Option 3: 2 branches Niveau 8 + 4 branches Niveau 7 avec ≥ 400000 PV
+                ['type' => 'branches_mixed', 'label' => '2 branches Niveau 8 + 4 branches Niveau 7 avec ≥ 400000 PV', 'branches' => [2 => 8, 4 => 7], 'group_pv' => 400000],
+                // Option 4: 1 branche Niveau 8 + 6 branches Niveau 7 avec ≥ 400000 PV
+                ['type' => 'branches_mixed', 'label' => '1 branche Niveau 8 + 6 branches Niveau 7 avec ≥ 400000 PV', 'branches' => [1 => 8, 6 => 7], 'group_pv' => 400000]
             ],
+
+            // ============================================================
+            // NIVEAU 10: Pearl (Bonus supplémentaire)
+            // ============================================================
             10 => [
-                ['label' => 'Être niveau 10', 'value' => 'Avoir les conditions requises pour Pearl', 'type' => 'simple']
+                ['type' => 'personal_pv', 'label' => 'PV ≥ 50000', 'value' => 50000]
             ]
         ];
 
@@ -140,462 +350,190 @@ class AdvancedRankCalculator
     }
 
     /**
-     * Vérifie toutes les conditions pour un grade
+     * Obtient l'objet Rank d'un utilisateur
      */
-    private function checkConditions(User $user, int $level, array $conditions): bool
+    private function getUserRankObject(User $user): ?Rank
     {
-        // Séparer les conditions principales des options
-        $mainConditions = [];
-        $options = [];
+        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
+            return $user->rank;
+        }
 
-        foreach ($conditions as $condition) {
-            if (isset($condition['type']) && $condition['type'] === 'option') {
-                $options[] = $condition;
-            } else {
-                $mainConditions[] = $condition;
+        if ($user->rank_id) {
+            return Rank::find($user->rank_id);
+        }
+
+        if (is_string($user->rank)) {
+            $rank = Rank::where('name', $user->rank)->first();
+            if ($rank) {
+                return $rank;
+            }
+            $rank = Rank::where('slug', $user->rank)->first();
+            if ($rank) {
+                return $rank;
             }
         }
 
-        // Vérifier toutes les conditions principales
-        foreach ($mainConditions as $condition) {
-            if (!$this->checkCondition($user, $level, $condition)) {
-                return false;
-            }
-        }
-
-        // Si pas d'options, c'est validé
-        if (empty($options)) {
-            return true;
-        }
-
-        // Vérifier qu'au moins une option est validée
-        foreach ($options as $option) {
-            if ($this->checkCondition($user, $level, $option)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Rank::where('level', 1)->first();
     }
 
     /**
-     * Vérifie une condition spécifique
+     * Obtient la progression vers le prochain grade
      */
-    private function checkCondition(User $user, int $level, array $condition): bool
+    public function getProgress(User $user): array
     {
-        $type = $condition['type'] ?? 'simple';
-        $label = $condition['label'] ?? 'Condition';
-        $value = $condition['value'] ?? '';
+        $currentRank = $this->getUserRankObject($user);
+        $nextRank = $currentRank ? $currentRank->getNextRank() : Rank::where('level', 1)->first();
 
-        switch ($type) {
-            case 'simple':
-                return $this->checkSimpleCondition($user, $level, $value);
-            
-            case 'monthly_pv':
-                return $this->checkMonthlyPVCondition($user, $value);
-            
-            case 'option':
-                return $this->checkOptionCondition($user, $level, $value, $condition['option'] ?? 1);
-            
-            default:
-                return true;
-        }
-    }
-
-    /**
-     * Vérifie une condition simple
-     */
-    private function checkSimpleCondition(User $user, int $level, string $value): bool
-    {
-        // Extraire le nombre de PV de la condition
-        if (preg_match('/(\d+)\s*PV/', $value, $matches)) {
-            $requiredPV = (int) $matches[1];
-            return ($user->pv_balance ?? 0) >= $requiredPV;
-        }
-
-        // Vérifier le nombre de filleuls
-        if (preg_match('/(\d+)\s*filleuls?/', $value, $matches)) {
-            $requiredCount = (int) $matches[1];
-            $downlines = $this->getDirectDownlines($user);
-            return count($downlines) >= $requiredCount;
-        }
-
-        // Vérifier le niveau des filleuls
-        if (preg_match('/niveau\s*(\d+)/i', $value, $matches)) {
-            $requiredLevel = (int) $matches[1];
-            $downlines = $this->getDirectDownlines($user);
-            
-            // Compter les filleuls directs avec ce niveau
-            $count = 0;
-            foreach ($downlines as $downline) {
-                if (($downline->rank?->level ?? 0) >= $requiredLevel) {
-                    $count++;
-                }
-            }
-            
-            // Extraire le nombre requis
-            if (preg_match('/(\d+)\s*filleuls?/', $value, $countMatches)) {
-                $requiredCount = (int) $countMatches[1];
-                return $count >= $requiredCount;
-            }
-            
-            return $count > 0;
-        }
-
-        // Si on ne peut pas analyser la condition, on la considère comme validée
-        return true;
-    }
-
-    /**
-     * Vérifie la condition de PV mensuel
-     */
-    private function checkMonthlyPVCondition(User $user, string $value): bool
-    {
-        if (preg_match('/(\d+)\s*PV/', $value, $matches)) {
-            $requiredPV = (int) $matches[1];
-            $monthlyPV = $this->getMonthlyPV($user);
-            return $monthlyPV >= $requiredPV;
-        }
-        return true;
-    }
-
-    /**
-     * Vérifie une condition optionnelle (Option 1, 2, 3)
-     */
-    private function checkOptionCondition(User $user, int $level, string $value, int $optionNumber): bool
-    {
-        // Extraire les informations de la condition
-        $result = $this->parseOptionCondition($level, $optionNumber, $value);
-        
-        if (!$result) {
-            return false;
-        }
-
-        $downlines = $this->getDirectDownlines($user);
-        
-        // Vérifier les différents cas selon l'option
-        switch ($optionNumber) {
-            case 1: // 2 filleuls de niveau X avec Y PV
-                return $this->checkOption1($user, $level, $result['target_level'], $result['required_pv']);
-            
-            case 2: // 2 filleuls niveau X et 4 filleuls niveau Y avec Z PV
-                return $this->checkOption2($user, $level, $result['target_level'], $result['secondary_level'], $result['required_pv']);
-            
-            case 3: // 1 filleul niveau X et 6 filleuls niveau Y avec Z PV
-                return $this->checkOption3($user, $level, $result['target_level'], $result['secondary_level'], $result['required_pv']);
-            
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * Parse une condition optionnelle pour extraire les informations
-     */
-    private function parseOptionCondition(int $level, int $optionNumber, string $value): ?array
-    {
-        $result = [
-            'target_level' => 0,
-            'secondary_level' => 0,
-            'required_pv' => 0
-        ];
-
-        // Extraire le niveau cible
-        if (preg_match('/niveau\s*(\d+)/i', $value, $matches)) {
-            $result['target_level'] = (int) $matches[1];
-        }
-
-        // Extraire le niveau secondaire (pour options 2 et 3)
-        if (preg_match('/niveau\s*(\d+).*?niveau\s*(\d+)/i', $value, $matches)) {
-            $result['target_level'] = (int) $matches[1];
-            $result['secondary_level'] = (int) $matches[2];
-        }
-
-        // Extraire le PV requis
-        if (preg_match('/(\d+)\s*PV/', $value, $matches)) {
-            $result['required_pv'] = (int) $matches[1];
-        }
-
-        // Définir les valeurs par défaut en fonction du niveau
-        if ($result['target_level'] == 0) {
-            $result['target_level'] = $level - 1;
-        }
-
-        if ($result['secondary_level'] == 0) {
-            $result['secondary_level'] = $level - 2;
-        }
-
-        if ($result['required_pv'] == 0) {
-            // Utiliser les PV requis du niveau cible
-            $targetRank = Rank::where('level', $result['target_level'])->first();
-            if ($targetRank) {
-                $result['required_pv'] = $targetRank->pv_required ?? 0;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Vérifie l'option 1: 2 filleuls de niveau X avec Y PV
-     */
-    private function checkOption1(User $user, int $level, int $targetLevel, int $requiredPV): bool
-    {
-        $downlines = $this->getDirectDownlines($user);
-        $qualified = 0;
-
-        foreach ($downlines as $downline) {
-            if (($downline->rank?->level ?? 0) >= $targetLevel && 
-                ($downline->pv_balance ?? 0) >= $requiredPV) {
-                $qualified++;
-            }
-        }
-
-        return $qualified >= 2;
-    }
-
-    /**
-     * Vérifie l'option 2: 2 filleuls niveau X et 4 filleuls niveau Y avec Z PV
-     */
-    private function checkOption2(User $user, int $level, int $targetLevel, int $secondaryLevel, int $requiredPV): bool
-    {
-        $downlines = $this->getDirectDownlines($user);
-        $qualifiedTarget = 0;
-        $qualifiedSecondary = 0;
-
-        foreach ($downlines as $downline) {
-            $downlineLevel = $downline->rank?->level ?? 0;
-            $downlinePV = $downline->pv_balance ?? 0;
-
-            if ($downlineLevel >= $targetLevel && $downlinePV >= $requiredPV) {
-                $qualifiedTarget++;
-            }
-
-            if ($downlineLevel >= $secondaryLevel && $downlinePV >= $requiredPV) {
-                $qualifiedSecondary++;
-            }
-        }
-
-        return $qualifiedTarget >= 2 && $qualifiedSecondary >= 4;
-    }
-
-    /**
-     * Vérifie l'option 3: 1 filleul niveau X et 6 filleuls niveau Y avec Z PV
-     */
-    private function checkOption3(User $user, int $level, int $targetLevel, int $secondaryLevel, int $requiredPV): bool
-    {
-        $downlines = $this->getDirectDownlines($user);
-        $qualifiedTarget = 0;
-        $qualifiedSecondary = 0;
-
-        foreach ($downlines as $downline) {
-            $downlineLevel = $downline->rank?->level ?? 0;
-            $downlinePV = $downline->pv_balance ?? 0;
-
-            if ($downlineLevel >= $targetLevel && $downlinePV >= $requiredPV) {
-                $qualifiedTarget++;
-            }
-
-            if ($downlineLevel >= $secondaryLevel && $downlinePV >= $requiredPV) {
-                $qualifiedSecondary++;
-            }
-        }
-
-        return $qualifiedTarget >= 1 && $qualifiedSecondary >= 6;
-    }
-
-    /**
-     * Récupère le PV mensuel de l'utilisateur
-     */
-    public function getMonthlyPV(User $user): float
-    {
-        // Implémentez la logique pour récupérer le PV mensuel
-        // Exemple: somme des ventes du mois en cours
-        $monthlyPV = DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('type', 'sale')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('pv_amount');
-            
-        return $monthlyPV ?? 0;
-    }
-
-    /**
-     * Récupère les filleuls directs
-     */
-    public function getDirectDownlines(User $user): array
-    {
-        return User::where('parrain_id', $user->id)
-            ->where('is_active', true)
-            ->with('rank')
-            ->get()
-            ->toArray();
-    }
-
-    /**
-     * Récupère tous les filleuls (tous niveaux)
-     */
-    public function getAllDownlines(User $user): array
-    {
-        $downlines = [];
-        $this->getDownlinesRecursive($user, $downlines);
-        return $downlines;
-    }
-
-    /**
-     * Récupère récursivement tous les filleuls
-     */
-    private function getDownlinesRecursive(User $user, array &$downlines): void
-    {
-        $directs = User::where('parrain_id', $user->id)
-            ->where('is_active', true)
-            ->with('rank')
-            ->get();
-
-        foreach ($directs as $direct) {
-            $downlines[] = $direct;
-            $this->getDownlinesRecursive($direct, $downlines);
-        }
-    }
-
-    /**
-     * Récupère le PV total du réseau
-     */
-    public function getTeamPV(User $user): float
-    {
-        $totalPV = 0;
-        $downlines = $this->getAllDownlines($user);
-        
-        foreach ($downlines as $downline) {
-            $totalPV += $downline->pv_balance ?? 0;
-        }
-        
-        return $totalPV;
-    }
-
-    /**
-     * Récupère le PV d'une branche spécifique
-     */
-    public function getBranchPV(User $user, User $branchUser): float
-    {
-        $branchPV = $branchUser->pv_balance ?? 0;
-        $downlines = $this->getAllDownlines($branchUser);
-        
-        foreach ($downlines as $downline) {
-            $branchPV += $downline->pv_balance ?? 0;
-        }
-        
-        return $branchPV;
-    }
-
-    /**
-     * Compte les branches qualifiées par niveau
-     */
-    public function countQualifiedBranches(User $user, int $level, int $minPV): int
-    {
-        $count = 0;
-        $directs = $this->getDirectDownlines($user);
-        
-        foreach ($directs as $direct) {
-            $branchPV = $this->getBranchPV($user, $direct);
-            if ($branchPV >= $minPV && ($direct['rank']['level'] ?? 0) >= $level) {
-                $count++;
-            }
-        }
-        
-        return $count;
-    }
-
-    /**
-     * Vérifie si l'utilisateur a les branches requises
-     */
-    public function hasRequiredBranches(User $user, int $requiredBranches, int $minLevel, int $minPV): bool
-    {
-        $qualifiedBranches = $this->countQualifiedBranches($user, $minLevel, $minPV);
-        return $qualifiedBranches >= $requiredBranches;
-    }
-
-    /**
-     * Calcule la progression vers le prochain grade
-     */
-    public function getRankProgress(User $user): array
-    {
-        $currentRank = $this->calculateAdvancedRank($user);
-        $currentLevel = $currentRank?->level ?? 0;
-        
-        $nextRank = Rank::where('level', '>', $currentLevel)
-            ->where('is_active', true)
-            ->orderBy('level', 'asc')
-            ->first();
-        
         if (!$nextRank) {
             return [
                 'current_rank' => $currentRank?->name ?? 'Distributeur',
-                'current_level' => $currentLevel,
-                'next_rank' => 'Maximum Level',
-                'next_level' => $currentLevel,
+                'current_level' => $currentRank?->level ?? 1,
+                'next_rank' => null,
+                'next_level' => null,
+                'progress_pv' => 100,
+                'progress_percentage' => 100,
+                'pv_needed' => 0,
+                'total_pv_needed' => 0,
                 'current_pv' => $user->pv_balance ?? 0,
-                'next_pv' => 0,
-                'progress' => 100,
-                'pv_needed' => 0
+                'current_min_pv' => $currentRank?->min_pv ?? 0,
+                'next_min_pv' => 0,
             ];
         }
 
         $currentPV = $user->pv_balance ?? 0;
-        $nextPV = $nextRank->pv_required ?? 0;
-        $progress = $nextPV > 0 ? min(100, ($currentPV / $nextPV) * 100) : 0;
-        $pvNeeded = max(0, $nextPV - $currentPV);
+        $currentMinPV = $currentRank ? $currentRank->min_pv : 0;
+        $nextMinPV = $nextRank->min_pv;
+
+        $pvNeeded = max(0, $nextMinPV - $currentPV);
+        $totalPVNeeded = max(1, $nextMinPV - $currentMinPV);
+
+        $progressPercentage = min(100, (($currentPV - $currentMinPV) / $totalPVNeeded) * 100);
 
         return [
-            'current_rank' => $currentRank?->name ?? 'Distributeur',
-            'current_level' => $currentLevel,
-            'next_rank' => $nextRank->name,
-            'next_level' => $nextRank->level,
-            'current_pv' => $currentPV,
-            'next_pv' => $nextPV,
-            'progress' => $progress,
-            'pv_needed' => $pvNeeded
-        ];
-    }
-
-    /**
-     * Récupère les statistiques des grades de l'utilisateur
-     */
-    public function getRankStats(User $user): array
-    {
-        $rankHistory = DB::table('rank_history')
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $totalPromotions = $rankHistory->where('type', 'promotion')->count();
-        $currentRank = $this->calculateAdvancedRank($user);
-
-        return [
-            'total_promotions' => $totalPromotions,
             'current_rank' => $currentRank?->name ?? 'Distributeur',
             'current_level' => $currentRank?->level ?? 1,
-            'history_count' => $rankHistory->count(),
-            'last_promotion' => $rankHistory->where('type', 'promotion')->first()
+            'next_rank' => $nextRank->name,
+            'next_level' => $nextRank->level,
+            'progress_pv' => max(0, $currentPV - $currentMinPV),
+            'progress_percentage' => round(max(0, $progressPercentage), 2),
+            'pv_needed' => $pvNeeded,
+            'total_pv_needed' => $totalPVNeeded,
+            'current_pv' => $currentPV,
+            'current_min_pv' => $currentMinPV,
+            'next_min_pv' => $nextMinPV,
         ];
     }
 
     /**
-     * Récupère la distribution des grades
+     * Calcule les branches qualifiées pour un utilisateur
      */
-    public function getRankDistribution(): array
+    public function calculateQualifiedBranches(User $user, string $period): array
     {
-        $distribution = [];
-        $ranks = Rank::where('is_active', true)->orderBy('level', 'asc')->get();
-        
-        foreach ($ranks as $rank) {
-            $count = User::where('rank_id', $rank->id)
-                ->where('is_active', true)
-                ->count();
-            $distribution[$rank->name] = $count;
+        $qualifiedBranches = [];
+
+        $directChildren = $user->filleuls()->with('rank')->get();
+
+        foreach ($directChildren as $child) {
+            $childRank = $this->getUserRankObject($child);
+            $childRankLevel = $childRank?->level ?? 0;
+
+            if ($childRankLevel >= 3) {
+                $branchPV = $this->calculateBranchPV($child);
+
+                QualifiedBranch::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'branch_user_id' => $child->id,
+                        'period' => $period,
+                    ],
+                    [
+                        'branch_rank_level' => $childRankLevel,
+                        'branch_pv' => $branchPV,
+                    ]
+                );
+
+                $qualifiedBranches[] = [
+                    'user_id' => $child->id,
+                    'name' => $child->name,
+                    'rank_level' => $childRankLevel,
+                    'pv' => $branchPV,
+                ];
+            }
         }
-        
-        return $distribution;
+
+        return $qualifiedBranches;
+    }
+
+    /**
+     * Calcule le PV d'une branche (sous-arbre)
+     */
+    protected function calculateBranchPV(User $branchRoot): int
+    {
+        $totalPV = $branchRoot->pv_balance;
+
+        $children = $branchRoot->filleuls()->get();
+        foreach ($children as $child) {
+            $totalPV += $this->calculateBranchPV($child);
+        }
+
+        return $totalPV;
+    }
+
+    /**
+     * Vérifie si un utilisateur est éligible à un grade supérieur
+     */
+    public function checkHigherRankEligibility(User $user, string $period): array
+    {
+        $eligibleRanks = [];
+
+        $higherRanks = \App\Models\HigherRank::where('is_active', true)
+            ->orderBy('level', 'asc')
+            ->get();
+
+        foreach ($higherRanks as $higherRank) {
+            if ($higherRank->isEligible($user, $period)) {
+                $eligibleRanks[] = [
+                    'id' => $higherRank->id,
+                    'name' => $higherRank->name,
+                    'slug' => $higherRank->slug,
+                    'level' => $higherRank->level,
+                    'global_bonus_percentage' => $higherRank->global_bonus_percentage,
+                ];
+            }
+        }
+
+        return $eligibleRanks;
+    }
+
+    /**
+     * Obtient le grade supérieur actuel d'un utilisateur
+     */
+    public function getCurrentHigherRank(User $user): ?\App\Models\HigherRank
+    {
+        return $user->higherRanks()
+            ->orderBy('level', 'desc')
+            ->first();
+    }
+
+    /**
+     * Compte les branches au niveau 9
+     */
+    public function countLevel9Branches(User $user, string $period): int
+    {
+        return QualifiedBranch::where('user_id', $user->id)
+            ->where('period', $period)
+            ->where('branch_rank_level', 9)
+            ->count();
+    }
+
+    /**
+     * Compte les branches Diamant
+     */
+    public function countDiamondBranches(User $user, string $period): int
+    {
+        return QualifiedBranch::where('user_id', $user->id)
+            ->where('period', $period)
+            ->where('branch_rank_level', '>=', 9)
+            ->count();
     }
 }
