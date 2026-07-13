@@ -1,3 +1,4 @@
+{{-- resources/views/errors/429.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -68,6 +69,12 @@
         color: var(--primary-500);
     }
     
+    .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
     @media (max-width: 640px) {
         .error-icon { width: 4rem; height: 4rem; }
         .text-6xl { font-size: 3rem; }
@@ -108,7 +115,7 @@
         </div>
         
         <div class="error-actions mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
-            <button onclick="location.reload()" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base" id="retryBtn" disabled>
+            <button onclick="location.reload()" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base btn-disabled" id="retryBtn" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
@@ -139,7 +146,8 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(interval);
             timerElement.textContent = '0';
             retryBtn.disabled = false;
-            retryBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            retryBtn.classList.remove('btn-disabled');
+            retryBtn.textContent = 'Try Again';
         }
     }, 1000);
 });

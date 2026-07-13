@@ -72,10 +72,15 @@
             font-weight: 800;
             color: #8b5cf6;
         }
+        .rank-box .rank-level {
+            font-size: 13px;
+            color: #6b7a94;
+            margin-top: 4px;
+        }
         .rank-box .pv-info {
             font-size: 13px;
             color: #6b7a94;
-            margin-top: 8px;
+            margin-top: 4px;
         }
         .btn {
             display: inline-block;
@@ -129,6 +134,7 @@
                 <span class="old-rank">{{ $oldRank }}</span>
                 <span class="arrow">→</span>
                 <span class="new-rank">{{ $newRank }}</span>
+                <div class="rank-level">Level {{ $rankLevel }}</div>
                 <div class="pv-info">{{ number_format($pvBalance) }} PV achieved</div>
             </div>
 
@@ -146,7 +152,7 @@
             <p>
                 &copy; {{ date('Y') }} Salang Group. All rights reserved.
                 <br>
-                <a href="{{ route('home') }}">Visit our website</a> • 
+                <a href="{{ route('home') }}">Visit our website</a> &bull; 
                 <a href="{{ route('privacy-policy') }}">Privacy Policy</a>
             </p>
         </div>

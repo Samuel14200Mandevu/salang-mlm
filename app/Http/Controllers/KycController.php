@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/KycController.php - Version Utilisateur
+// app/Http/Controllers/KycController.php
 
 namespace App\Http\Controllers;
 
@@ -7,6 +7,8 @@ use App\Models\KycDocument;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class KycController extends Controller
 {
@@ -38,7 +40,7 @@ class KycController extends Controller
             ->first();
 
         if ($existing) {
-            return back()->with('error', 'Vous avez déjà soumis ce type de document.');
+            return back()->with('error', 'You have already submitted this document type.');
         }
 
         $file = $request->file('file');
@@ -59,8 +61,13 @@ class KycController extends Controller
         $user->kyc_status = 'pending';
         $user->save();
 
+        Log::info('KYC document submitted', [
+            'user_id' => $user->id,
+            'document_type' => $request->document_type,
+        ]);
+
         return redirect()->route('kyc.index')
-            ->with('success', 'Document soumis avec succès. En attente de vérification.');
+            ->with('success', 'Document submitted successfully. Awaiting verification.');
     }
 
     public function getStatus()

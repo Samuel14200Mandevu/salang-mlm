@@ -7,7 +7,7 @@ use App\Models\Package;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
-use App\Services\CommissionService;
+use App\Services\MLM\MonthlyCommissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,28 +15,30 @@ use Illuminate\Support\Facades\Log;
 
 class UserPackageController extends Controller
 {
-    /**
-     * Afficher la liste des abonnements
-     */
+    protected MonthlyCommissionService $commissionService;
+
+    public function __construct(MonthlyCommissionService $commissionService)
+    {
+        $this->commissionService = $commissionService;
+    }
+
     public function index()
     {
-        // Récupérer tous les packages actifs
         $subscriptions = Package::where('is_active', true)->get();
-        
-        // Si aucun package n'existe dans la base, créer des données par défaut
+
         if ($subscriptions->isEmpty()) {
             $this->createDefaultPackages();
             $subscriptions = Package::where('is_active', true)->get();
         }
-        
+
         $user = Auth::user();
-        
-        return view('subscriptions.index', compact('subscriptions', 'user'));
+
+        $totalPV = ($user->pv_balance ?? 0) + ($user->package?->pv_value ?? 0);
+        $totalBV = ($user->bv_balance ?? 0) + ($user->package?->bv_value ?? 0);
+
+        return view('subscriptions.index', compact('subscriptions', 'user', 'totalPV', 'totalBV'));
     }
 
-    /**
-     * Acheter un abonnement - PAIEMENT RÉEL
-     */
     public function buy(Request $request)
     {
         $request->validate([
@@ -46,20 +48,17 @@ class UserPackageController extends Controller
         $user = Auth::user();
         $package = Package::findOrFail($request->package_id);
 
-        // Vérifier si l'utilisateur a déjà ce package
         if ($user->package_id == $package->id) {
-            return back()->with('error', 'Vous avez déjà ce package.');
+            return back()->with('error', 'You already have this package.');
         }
 
-        // Vérifier si l'utilisateur a un package supérieur
         if ($user->package_id && $user->package_id > $package->id) {
-            return back()->with('error', 'Vous ne pouvez pas acheter un package inférieur à votre package actuel.');
+            return back()->with('error', 'You cannot downgrade to a lower package.');
         }
 
         DB::beginTransaction();
 
         try {
-            // 1. Récupérer ou créer le wallet
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -72,17 +71,14 @@ class UserPackageController extends Controller
                 ]
             );
 
-            // 2. Vérifier le solde
             if ($wallet->balance < $package->price) {
-                return back()->with('error', 'Solde insuffisant. Vous avez $' . number_format($wallet->balance, 2) . ' et le package coûte $' . number_format($package->price, 2) . '.');
+                return back()->with('error', 'Insufficient balance. You have $' . number_format($wallet->balance, 2) . ' and the package costs $' . number_format($package->price, 2) . '.');
             }
 
-            // 3. DÉBITER LE PORTEFEUILLE (PAIEMENT RÉEL)
             $balanceBefore = $wallet->balance;
             $wallet->balance -= $package->price;
             $wallet->save();
 
-            // 4. CRÉER LA TRANSACTION
             Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
@@ -93,26 +89,21 @@ class UserPackageController extends Controller
                 'balance_before' => $balanceBefore,
                 'balance_after' => $wallet->balance,
                 'status' => 'completed',
-                'description' => 'Achat du package ' . $package->name,
+                'description' => 'Purchase of package ' . $package->name,
                 'metadata' => json_encode(['package_id' => $package->id]),
                 'completed_at' => now(),
             ]);
 
-            // 5. METTRE À JOUR L'UTILISATEUR
             $user->package_id = $package->id;
             $user->pv_balance = ($user->pv_balance ?? 0) + $package->pv_value;
             $user->bv_balance = ($user->bv_balance ?? 0) + $package->bv_value;
             $user->save();
 
-            // 6. CALCULER LES COMMISSIONS
-            $commissionService = new CommissionService();
-            $commissionService->calculatePackageCommission($user->id, $package->id);
-
             DB::commit();
 
-            $message = "Package '{$package->name}' acheté avec succès !";
+            $message = "Package '{$package->name}' purchased successfully!";
             if ($package->pv_value > 0) {
-                $message .= " Vous avez gagné {$package->pv_value} PV.";
+                $message .= " You earned {$package->pv_value} PV and {$package->bv_value} BV.";
             }
 
             return redirect()->route('subscriptions.index')
@@ -120,18 +111,14 @@ class UserPackageController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur achat package: ' . $e->getMessage(), [
+            Log::error('Error purchasing package: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'package_id' => $package->id,
-                'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Erreur lors de l\'achat: ' . $e->getMessage());
+            return back()->with('error', 'Error purchasing package: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Mettre à niveau l'abonnement - PAIEMENT RÉEL
-     */
     public function upgrade(Request $request)
     {
         $request->validate([
@@ -141,44 +128,38 @@ class UserPackageController extends Controller
         $user = Auth::user();
         $newPackage = Package::findOrFail($request->package_id);
 
-        // Vérifier que l'utilisateur a un package
         if (!$user->package_id) {
-            return back()->with('error', 'Vous devez d\'abord acheter un package.');
+            return back()->with('error', 'You must first purchase a package.');
         }
 
-        // Vérifier que le nouveau package est supérieur
         if ($user->package_id >= $newPackage->id) {
-            return back()->with('error', 'Vous ne pouvez pas passer à un package inférieur ou égal.');
+            return back()->with('error', 'You cannot upgrade to a lower or equal package.');
         }
 
         DB::beginTransaction();
 
         try {
-            // Récupérer le package actuel
             $currentPackage = Package::find($user->package_id);
             $upgradePrice = $newPackage->price - ($currentPackage ? $currentPackage->price : 0);
 
             if ($upgradePrice <= 0) {
-                return back()->with('error', 'Le prix de mise à niveau est invalide.');
+                return back()->with('error', 'Invalid upgrade price.');
             }
 
-            // Récupérer le wallet
             $wallet = Wallet::where('user_id', $user->id)->first();
 
             if (!$wallet) {
-                return back()->with('error', 'Portefeuille introuvable.');
+                return back()->with('error', 'Wallet not found.');
             }
 
             if ($wallet->balance < $upgradePrice) {
-                return back()->with('error', 'Solde insuffisant pour la mise à niveau.');
+                return back()->with('error', 'Insufficient balance for upgrade.');
             }
 
-            // DÉBITER LE PORTEFEUILLE (PAIEMENT RÉEL)
             $balanceBefore = $wallet->balance;
             $wallet->balance -= $upgradePrice;
             $wallet->save();
 
-            // CRÉER LA TRANSACTION
             Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
@@ -189,7 +170,7 @@ class UserPackageController extends Controller
                 'balance_before' => $balanceBefore,
                 'balance_after' => $wallet->balance,
                 'status' => 'completed',
-                'description' => "Upgrade vers {$newPackage->name}",
+                'description' => "Upgrade to {$newPackage->name}",
                 'metadata' => json_encode([
                     'old_package' => $currentPackage?->name,
                     'new_package' => $newPackage->name,
@@ -197,35 +178,29 @@ class UserPackageController extends Controller
                 'completed_at' => now(),
             ]);
 
-            // METTRE À JOUR L'UTILISATEUR
-            $user->package_id = $newPackage->id;
-            $user->pv_balance = ($user->pv_balance ?? 0) + $newPackage->pv_value - ($currentPackage ? $currentPackage->pv_value : 0);
-            $user->bv_balance = ($user->bv_balance ?? 0) + $newPackage->bv_value - ($currentPackage ? $currentPackage->bv_value : 0);
-            $user->save();
+            $pvDiff = $newPackage->pv_value - ($currentPackage ? $currentPackage->pv_value : 0);
+            $bvDiff = $newPackage->bv_value - ($currentPackage ? $currentPackage->bv_value : 0);
 
-            // CALCULER LES COMMISSIONS
-            $commissionService = new CommissionService();
-            $commissionService->calculatePackageCommission($user->id, $newPackage->id);
+            $user->package_id = $newPackage->id;
+            $user->pv_balance = ($user->pv_balance ?? 0) + $pvDiff;
+            $user->bv_balance = ($user->bv_balance ?? 0) + $bvDiff;
+            $user->save();
 
             DB::commit();
 
             return redirect()->route('subscriptions.index')
-                ->with('success', "Package mis à niveau vers '{$newPackage->name}' avec succès !");
+                ->with('success', "Package upgraded to '{$newPackage->name}' successfully! PV earned: {$pvDiff}");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur upgrade package: ' . $e->getMessage(), [
+            Log::error('Error upgrading package: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'new_package_id' => $newPackage->id,
-                'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Erreur lors de la mise à niveau: ' . $e->getMessage());
+            return back()->with('error', 'Error upgrading package: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Créer des abonnements par défaut
-     */
     private function createDefaultPackages()
     {
         $packages = [
@@ -236,7 +211,7 @@ class UserPackageController extends Controller
                 'pv_value' => 0,
                 'bv_value' => 0,
                 'commission_rate' => 30,
-                'description' => 'Package idéal pour débuter',
+                'description' => 'Ideal package to start',
                 'is_active' => true,
             ],
             [
@@ -246,7 +221,7 @@ class UserPackageController extends Controller
                 'pv_value' => 50,
                 'bv_value' => 30,
                 'commission_rate' => 30,
-                'description' => 'Package argent pour les ambassadeurs',
+                'description' => 'Silver package for ambassadors',
                 'is_active' => true,
             ],
             [
@@ -256,7 +231,7 @@ class UserPackageController extends Controller
                 'pv_value' => 200,
                 'bv_value' => 150,
                 'commission_rate' => 30,
-                'description' => 'Package bronze pour les leaders',
+                'description' => 'Bronze package for leaders',
                 'is_active' => true,
             ],
             [
@@ -266,7 +241,7 @@ class UserPackageController extends Controller
                 'pv_value' => 1000,
                 'bv_value' => 800,
                 'commission_rate' => 30,
-                'description' => 'Package gold pour les élites',
+                'description' => 'Gold package for elites',
                 'is_active' => true,
             ],
             [
@@ -276,7 +251,7 @@ class UserPackageController extends Controller
                 'pv_value' => 3800,
                 'bv_value' => 3000,
                 'commission_rate' => 30,
-                'description' => 'Package emerald pour les légendes',
+                'description' => 'Emerald package for legends',
                 'is_active' => true,
             ],
         ];

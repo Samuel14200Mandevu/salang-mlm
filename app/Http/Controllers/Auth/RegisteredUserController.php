@@ -30,15 +30,14 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // ✅ Validation
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required', 
-                'string', 
-                'lowercase', 
-                'email', 
-                'max:255', 
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
                 'unique:users,email',
             ],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -46,78 +45,81 @@ class RegisteredUserController extends Controller
             'sponsor_id' => ['required', 'string'],
             'terms' => ['required', 'accepted'],
         ], [
-            'email.unique' => 'Cette adresse email est déjà utilisée par un autre compte.',
-            'sponsor_id.required' => 'L\'identifiant du parrain est obligatoire.',
-            'terms.required' => 'Vous devez accepter les conditions générales.',
-            'terms.accepted' => 'Vous devez accepter les conditions générales.',
+            'email.unique' => 'This email address is already used by another account.',
+            'sponsor_id.required' => 'Sponsor ID is required.',
+            'terms.required' => 'You must accept the terms and conditions.',
+            'terms.accepted' => 'You must accept the terms and conditions.',
         ]);
 
         try {
-            // ✅ LOG : Voir ce qui est reçu
-            Log::info('Tentative d\'inscription', [
+            Log::info('Registration attempt', [
                 'email' => $request->email,
                 'sponsor_id_input' => $request->sponsor_id,
             ]);
 
-            // ✅ Trouver le sponsor
             $sponsor = $this->findSponsor($request->sponsor_id);
 
-            // ✅ LOG : Résultat de la recherche
-            Log::info('Résultat recherche sponsor', [
+            Log::info('Sponsor search result', [
                 'sponsor_id_input' => $request->sponsor_id,
-                'sponsor_trouve' => $sponsor ? 'OUI' : 'NON',
+                'sponsor_found' => $sponsor ? 'YES' : 'NO',
                 'sponsor_id' => $sponsor ? $sponsor->id : 'N/A',
                 'sponsor_name' => $sponsor ? $sponsor->name : 'N/A',
-                'sponsor_sponsor_id' => $sponsor ? $sponsor->sponsor_id : 'N/A',
             ]);
 
             if (!$sponsor) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'sponsor_id' => 'L\'identifiant du parrain est invalide ou n\'existe pas. Vérifiez que le code est correct (ex: SALDEBF71).'
+                        'sponsor_id' => 'Invalid sponsor ID. Please check the code.'
                     ]);
             }
 
-            // ✅ Vérifier que l'email n'existe pas déjà
             if (User::where('email', $request->email)->exists()) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
+                        'email' => 'This email address is already used by another account.'
                     ]);
             }
 
             DB::beginTransaction();
 
-            // ✅ Générer un ID de parrain unique
             $sponsorCode = $this->generateSponsorId();
 
-            // ✅ Créer l'utilisateur
+            $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
+
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
                 'sponsor_id' => $sponsorCode,
-                'parrain_id' => $sponsor->id, // ✅ Le vrai parrain (ID de l'utilisateur)
-                'rank_id' => Rank::where('slug', 'distributor')->first()?->id,
+                'parrain_id' => $sponsor->id,
+                'rank_id' => $rankId,
                 'rank' => 'Distributor',
                 'is_active' => true,
                 'pv_balance' => 0,
                 'bv_balance' => 0,
+                'monthly_pv' => 0,
+                'monthly_bv' => 0,
+                'team_pv' => 0,
+                'team_bv' => 0,
                 'total_sponsors' => 0,
                 'total_team' => 0,
+                'qualified_branches' => 0,
+                'direct_sponsors_count' => 0,
+                'commission_balance' => 0,
+                'total_earnings' => 0,
+                'kyc_status' => 'not_submitted',
             ]);
 
-            Log::info('Utilisateur créé avec succès', [
+            Log::info('User created successfully', [
                 'user_id' => $user->id,
-                'user_sponsor_id' => $user->sponsor_id,
-                'user_parrain_id' => $user->parrain_id,
-                'parrain_name' => $sponsor->name,
+                'sponsor_id' => $user->sponsor_id,
+                'parrain_id' => $user->parrain_id,
+                'sponsor_name' => $sponsor->name,
             ]);
 
-            // ✅ Créer le portefeuille
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -126,7 +128,6 @@ class RegisteredUserController extends Controller
                 'is_active' => true,
             ]);
 
-            // ✅ Créer l'entrée de généalogie
             $level = ($sponsor->genealogy?->level ?? 0) + 1;
 
             Genealogy::create([
@@ -140,132 +141,113 @@ class RegisteredUserController extends Controller
                 'total_children' => 0,
             ]);
 
-            // ✅ Mettre à jour les compteurs du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
             $sponsor->save();
 
-            // ✅ Mettre à jour les compteurs d'équipe (limité à 5 niveaux)
             $this->updateTeamCountersOptimized($sponsor, 1);
 
             DB::commit();
 
-            // ✅ Envoyer la notification
             try {
                 $user->notify(new WelcomeNotification($sponsor->name));
             } catch (\Exception $e) {
-                Log::error('Erreur envoi notification: ' . $e->getMessage());
+                Log::error('Error sending welcome notification: ' . $e->getMessage());
             }
 
             event(new Registered($user));
             Auth::login($user);
 
-            // ✅ Redirection vers le dashboard
-            return redirect()->intended(route('dashboard', absolute: false))
-                ->with('success', 'Bienvenue ' . $user->name . ' ! Vous êtes maintenant membre de Salang Group.');
+            return redirect()->intended(route('dashboard'))
+                ->with('success', 'Welcome ' . $user->name . '! You are now a member of Salang Group.');
 
         } catch (QueryException $e) {
             DB::rollBack();
-            Log::error('Erreur SQL inscription: ' . $e->getMessage(), [
+            Log::error('SQL error during registration: ' . $e->getMessage(), [
                 'sql' => $e->getSql(),
                 'bindings' => $e->getBindings(),
             ]);
-            
+
             if ($e->getCode() == 23000) {
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'Cette adresse email est déjà utilisée par un autre compte.'
+                        'email' => 'This email address is already used by another account.'
                     ]);
             }
-            
+
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'email' => 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.'
+                    'email' => 'An error occurred during registration. Please try again.'
                 ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur inscription: ' . $e->getMessage(), [
+            Log::error('Registration error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'email' => 'Une erreur est survenue. Veuillez réessayer plus tard.'
+                    'email' => 'An error occurred. Please try again later.'
                 ]);
         }
     }
 
-    /**
-     * Trouver le sponsor - Version améliorée
-     */
     private function findSponsor(string $sponsorId): ?User
     {
-        // ✅ 1. Si c'est un nombre, chercher par ID utilisateur
         if (is_numeric($sponsorId)) {
             $sponsor = User::find((int)$sponsorId);
             if ($sponsor) {
-                Log::info('Sponsor trouvé par ID utilisateur', ['id' => $sponsorId, 'name' => $sponsor->name]);
+                Log::info('Sponsor found by user ID', ['id' => $sponsorId, 'name' => $sponsor->name]);
                 return $sponsor;
             }
         }
-        
-        // ✅ 2. Chercher par sponsor_id (code unique comme "SALDEBF71") - C'est le plus courant
+
         $sponsor = User::where('sponsor_id', $sponsorId)->first();
         if ($sponsor) {
-            Log::info('Sponsor trouvé par sponsor_id', ['sponsor_id' => $sponsorId, 'name' => $sponsor->name]);
+            Log::info('Sponsor found by sponsor_id', ['sponsor_id' => $sponsorId, 'name' => $sponsor->name]);
             return $sponsor;
         }
-        
-        // ✅ 3. Chercher par email (cas où l'utilisateur entre l'email du parrain)
+
         $sponsor = User::where('email', $sponsorId)->first();
         if ($sponsor) {
-            Log::info('Sponsor trouvé par email', ['email' => $sponsorId, 'name' => $sponsor->name]);
+            Log::info('Sponsor found by email', ['email' => $sponsorId, 'name' => $sponsor->name]);
             return $sponsor;
         }
-        
-        // ✅ 4. Chercher par nom (cas où l'utilisateur entre le nom du parrain)
+
         $sponsor = User::where('name', $sponsorId)->first();
         if ($sponsor) {
-            Log::info('Sponsor trouvé par nom', ['name' => $sponsorId, 'id' => $sponsor->id]);
+            Log::info('Sponsor found by name', ['name' => $sponsorId, 'id' => $sponsor->id]);
             return $sponsor;
         }
-        
-        Log::warning('Sponsor NON trouvé', ['sponsor_id' => $sponsorId]);
+
+        Log::warning('Sponsor NOT found', ['sponsor_id' => $sponsorId]);
         return null;
     }
 
-    /**
-     * Générer un ID de parrain unique
-     */
     private function generateSponsorId(): string
     {
         $prefix = 'SAL';
         $maxAttempts = 10;
         $attempts = 0;
-        
+
         do {
             $random = strtoupper(substr(uniqid(), -6));
             $sponsorCode = $prefix . $random;
             $attempts++;
         } while (User::where('sponsor_id', $sponsorCode)->exists() && $attempts < $maxAttempts);
-        
+
         if ($attempts >= $maxAttempts) {
-            // Fallback avec timestamp
             $sponsorCode = $prefix . strtoupper(substr(md5(time() . rand()), -6));
         }
-        
+
         return $sponsorCode;
     }
 
-    /**
-     * Mettre à jour les compteurs d'équipe (limité à 5 niveaux)
-     */
     private function updateTeamCountersOptimized(User $user, int $level): void
     {
-        // ✅ Limiter à 5 niveaux maximum
         if ($level > 5) {
             return;
         }
@@ -276,17 +258,19 @@ class RegisteredUserController extends Controller
         while ($currentUser->parrain_id && $currentLevel <= 5) {
             try {
                 $sponsor = User::find($currentUser->parrain_id);
-                
+
                 if (!$sponsor) {
                     break;
                 }
 
                 $sponsor->increment('total_team');
+                $sponsor->save();
+
                 $currentUser = $sponsor;
                 $currentLevel++;
 
             } catch (\Exception $e) {
-                Log::warning('Erreur update compteurs équipe', [
+                Log::warning('Error updating team counters', [
                     'user_id' => $currentUser->id,
                     'level' => $currentLevel,
                     'error' => $e->getMessage()

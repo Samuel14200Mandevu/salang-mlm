@@ -1,4 +1,5 @@
 <?php
+// app/Models/Product.php
 
 namespace App\Models;
 
@@ -14,6 +15,8 @@ class Product extends Model
         'slug',
         'description',
         'price',
+        'pv_value',
+        'bv_value',
         'cost',
         'stock',
         'sku',
@@ -27,6 +30,8 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'pv_value' => 'integer',
+        'bv_value' => 'integer',
         'cost' => 'decimal:2',
         'stock' => 'integer',
         'is_active' => 'boolean',
@@ -55,6 +60,11 @@ class Product extends Model
         return $query->where('category', $category);
     }
 
+    public function scopeInStock($query)
+    {
+        return $query->where('stock', '>', 0);
+    }
+
     public function getFormattedPriceAttribute()
     {
         return '$' . number_format($this->price, 2);
@@ -63,15 +73,41 @@ class Product extends Model
     public function getStockLabelAttribute()
     {
         if ($this->stock > 10) {
-            return '<span class="text-green-600">En stock</span>';
+            return 'In Stock';
         } elseif ($this->stock > 0) {
-            return '<span class="text-yellow-600">Stock faible</span>';
+            return 'Low Stock';
         }
-        return '<span class="text-red-600">Rupture</span>';
+        return 'Out of Stock';
+    }
+
+    public function getStockStatusClassAttribute()
+    {
+        if ($this->stock > 10) {
+            return 'text-green-600';
+        } elseif ($this->stock > 0) {
+            return 'text-yellow-600';
+        }
+        return 'text-red-600';
     }
 
     public function isInStock()
     {
         return $this->stock > 0;
+    }
+
+    public function getProfitAttribute()
+    {
+        if ($this->cost) {
+            return $this->price - $this->cost;
+        }
+        return null;
+    }
+
+    public function getProfitMarginAttribute()
+    {
+        if ($this->cost && $this->cost > 0) {
+            return (($this->price - $this->cost) / $this->price) * 100;
+        }
+        return null;
     }
 }

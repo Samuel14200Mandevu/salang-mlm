@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Auth;
 
 class KycController extends Controller
 {
+    private function getRequiredKycDocuments(): array
+    {
+        return config('kyc.required_documents', ['id_card', 'proof_of_address']);
+    }
+
     public function index()
     {
         $pendingDocs = KycDocument::where('status', 'pending')
@@ -38,7 +43,7 @@ class KycController extends Controller
         $document = KycDocument::findOrFail($id);
 
         if ($document->status !== 'pending') {
-            return back()->with('error', 'Ce document a déjà été traité.');
+            return back()->with('error', 'This document has already been processed.');
         }
 
         $document->status = $request->status;
@@ -48,8 +53,9 @@ class KycController extends Controller
         $document->save();
 
         $user = $document->user;
+        $requiredDocs = $this->getRequiredKycDocuments();
+
         if ($request->status === 'verified') {
-            $requiredDocs = ['id_card', 'proof_of_address'];
             $verifiedDocs = KycDocument::where('user_id', $user->id)
                 ->where('status', 'verified')
                 ->whereIn('document_type', $requiredDocs)
@@ -66,7 +72,7 @@ class KycController extends Controller
         }
         $user->save();
 
-        return back()->with('success', 'Document traité avec succès.');
+        return back()->with('success', 'Document processed successfully.');
     }
 
     public function reject(Request $request, $id)
@@ -86,6 +92,6 @@ class KycController extends Controller
         $user->kyc_status = 'rejected';
         $user->save();
 
-        return back()->with('success', 'Document rejeté.');
+        return back()->with('success', 'Document rejected.');
     }
 }

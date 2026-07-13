@@ -9,22 +9,15 @@ use Illuminate\Http\Request;
 // OPTIMISATIONS POUR LARAVEL CLOUD / PRODUCTION
 // ============================================================
 
-// ✅ Forcer les logs vers null (évite les fichiers de log en production)
 putenv('LOG_CHANNEL=null');
 
-// ✅ Désactiver le debug en production (à activer via .env)
-// L'APP_DEBUG est géré par .env, pas besoin de le forcer ici
-
-// ✅ Désactiver DebugBar en production
 if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') {
     putenv('DEBUGBAR_ENABLED=false');
 }
 
-// ✅ Rediriger le cache vers /tmp/ (pour Laravel Cloud)
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
 putenv('LOG_STREAM_PATH=/tmp/storage/logs/laravel.log');
 
-// ✅ Forcer HTTPS en production
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     if (isset($_SERVER['HTTP_HOST'])) {
         putenv('APP_URL=https://' . $_SERVER['HTTP_HOST']);
@@ -48,11 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
     
     // ✅ MIDDLEWARES
     ->withMiddleware(function (Middleware $middleware) {
-        // Enregistrer les alias de middlewares
+        // ✅ Enregistrer TOUS les alias de middlewares
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'json' => \App\Http\Middleware\ForceJsonResponse::class,
             'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
+            'active' => \App\Http\Middleware\EnsureUserActive::class,  // <-- AJOUTER ICI
+            'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class, // Optionnel
         ]);
         
         // ✅ Exceptions CSRF pour les webhooks
@@ -68,12 +63,10 @@ return Application::configure(basePath: dirname(__DIR__))
     
     // ✅ EXCEPTIONS
     ->withExceptions(function (Exceptions $exceptions) {
-        // ✅ Personnaliser les réponses d'erreur API
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is('api/*') || $request->expectsJson() || $request->ajax();
         });
         
-        // ✅ Gérer les erreurs 404 pour l'API
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;

@@ -1,3 +1,4 @@
+{{-- resources/views/admin/dashboard.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -533,13 +534,14 @@
                 
                 @forelse($monthlyData ?? [] as $data)
                     @php 
-                        $height = ($data['users'] / max($max, 1)) * 100; 
+                        // ✅ Correction : utiliser $data->users (objet) au lieu de $data['users'] (tableau)
+                        $height = ($data->users / max($max, 1)) * 100; 
                     @endphp
                     <div class="graph-bar-wrapper">
                         <div class="graph-bar" style="height: {{ max(8, $height) }}%;">
-                            <span class="tooltip">{{ $data['users'] }} inscriptions</span>
+                            <span class="tooltip">{{ $data->users }} inscriptions</span>
                         </div>
-                        <span class="graph-label">{{ substr($data['month'], 0, 3) }}</span>
+                        <span class="graph-label">{{ substr($data->month, 0, 3) }}</span>
                     </div>
                 @empty
                     <div class="w-full text-center text-[var(--text-secondary)] py-8">

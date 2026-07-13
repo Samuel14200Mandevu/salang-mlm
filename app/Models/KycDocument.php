@@ -1,4 +1,5 @@
 <?php
+// app/Models/KycDocument.php
 
 namespace App\Models;
 
@@ -41,10 +42,10 @@ class KycDocument extends Model
     public function getStatusLabelAttribute()
     {
         $labels = [
-            'pending' => '⏳ En attente',
-            'verified' => '✅ Vérifié',
-            'rejected' => '❌ Rejeté',
-            'not_submitted' => '📤 Non soumis',
+            'pending' => 'Pending',
+            'verified' => 'Verified',
+            'rejected' => 'Rejected',
+            'not_submitted' => 'Not Submitted',
         ];
         return $labels[$this->status] ?? ucfirst($this->status);
     }
@@ -52,10 +53,10 @@ class KycDocument extends Model
     public function getDocumentTypeLabelAttribute()
     {
         $labels = [
-            'id_card' => 'Carte d\'identité',
-            'passport' => 'Passeport',
-            'proof_of_address' => 'Justificatif de domicile',
-            'selfie' => 'Selfie avec pièce d\'identité',
+            'id_card' => 'ID Card',
+            'passport' => 'Passport',
+            'proof_of_address' => 'Proof of Address',
+            'selfie' => 'Selfie with ID',
         ];
         return $labels[$this->document_type] ?? ucfirst($this->document_type);
     }
@@ -63,5 +64,32 @@ class KycDocument extends Model
     public function getFileUrlAttribute()
     {
         return asset('storage/kyc/' . $this->file_path);
+    }
+
+    public function getFormattedFileSizeAttribute()
+    {
+        $bytes = $this->file_size;
+        if ($bytes < 1024) {
+            return $bytes . ' B';
+        } elseif ($bytes < 1048576) {
+            return round($bytes / 1024, 2) . ' KB';
+        } else {
+            return round($bytes / 1048576, 2) . ' MB';
+        }
+    }
+
+    public function isVerified()
+    {
+        return $this->status === 'verified';
+    }
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isRejected()
+    {
+        return $this->status === 'rejected';
     }
 }

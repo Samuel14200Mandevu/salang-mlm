@@ -9,9 +9,6 @@ use Illuminate\Http\Request;
 
 class EmailCheckController extends Controller
 {
-    /**
-     * Vérifier si un email existe déjà
-     */
     public function check(Request $request)
     {
         $request->validate([
@@ -26,22 +23,21 @@ class EmailCheckController extends Controller
                 'exists' => true,
                 'available' => false,
                 'type' => 'error',
-                'title' => 'Email indisponible',
-                'message' => 'Cette adresse email est déjà associée à un compte existant.',
-                'detail' => 'Veuillez utiliser une autre adresse email ou vous connecter.',
+                'title' => 'Email unavailable',
+                'message' => 'This email address is already associated with an existing account.',
+                'detail' => 'Please use another email address or log in.',
                 'field_status' => 'error'
             ]);
         }
 
-        // Vérification du format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return response()->json([
                 'exists' => false,
                 'available' => false,
                 'type' => 'warning',
-                'title' => 'Format invalide',
-                'message' => 'L\'adresse email saisie n\'est pas valide.',
-                'detail' => 'Format attendu : nom@domaine.com',
+                'title' => 'Invalid format',
+                'message' => 'The email address entered is not valid.',
+                'detail' => 'Expected format: name@domain.com',
                 'field_status' => 'warning'
             ]);
         }
@@ -50,9 +46,9 @@ class EmailCheckController extends Controller
             'exists' => false,
             'available' => true,
             'type' => 'success',
-            'title' => 'Email disponible',
-            'message' => 'Cette adresse email est disponible pour votre inscription.',
-            'detail' => 'Vous pouvez continuer le processus d\'inscription.',
+            'title' => 'Email available',
+            'message' => 'This email address is available for registration.',
+            'detail' => 'You can continue the registration process.',
             'field_status' => 'success'
         ]);
     }

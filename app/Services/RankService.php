@@ -1,15 +1,23 @@
 <?php
+// app/Services/RankService.php
 
 namespace App\Services;
 
 use App\Models\User;
 use App\Models\Rank;
 use App\Models\RankHistory;
-use App\Notifications\RankUpgradedNotification;
+use App\Services\MLM\AdvancedRankCalculator;
 use Illuminate\Support\Facades\Log;
 
 class RankService
 {
+    protected $rankCalculator;
+
+    public function __construct(AdvancedRankCalculator $rankCalculator)
+    {
+        $this->rankCalculator = $rankCalculator;
+    }
+
     /**
      * Mettre à jour le grade d'un utilisateur
      */
@@ -21,24 +29,19 @@ class RankService
         }
 
         $oldRankId = $user->rank_id;
-        $oldRankName = $user->rank;
+        $oldRankName = $user->rank_name;
 
-        $ranks = Rank::orderBy('min_pv', 'asc')->get();
-        $newRank = null;
-
-        foreach ($ranks as $rank) {
-            if ($user->pv_balance >= $rank->min_pv) {
-                $newRank = $rank;
-            }
-        }
+        // Utiliser le calculateur avancé
+        $newRank = $this->rankCalculator->calculateAdvancedRank($user);
 
         if (!$newRank) {
-            $newRank = $ranks->first();
+            return false;
         }
 
         if ($newRank->id != $oldRankId) {
-            $user->rank = $newRank->name;
             $user->rank_id = $newRank->id;
+            $user->rank = $newRank->name;
+            $user->last_rank_update = now();
             $user->save();
 
             RankHistory::create([
@@ -57,17 +60,6 @@ class RankService
                 'old_rank' => $oldRankName,
                 'new_rank' => $newRank->name,
             ]);
-
-            // Envoyer la notification de promotion
-            try {
-                $user->notify(new RankUpgradedNotification(
-                    $oldRankName,
-                    $newRank->name,
-                    $user->pv_balance
-                ));
-            } catch (\Exception $e) {
-                Log::error('Erreur envoi notification grade: ' . $e->getMessage());
-            }
 
             return true;
         }
@@ -121,7 +113,7 @@ class RankService
 
         if (!$nextRank) {
             return [
-                'current' => $user->rank,
+                'current' => $user->rank_name,
                 'next' => 'Maximum Level',
                 'progress' => 100,
                 'pv_needed' => 0,
@@ -133,7 +125,7 @@ class RankService
         $progress = min(100, ($user->pv_balance / $nextRank->min_pv) * 100);
 
         return [
-            'current' => $user->rank,
+            'current' => $user->rank_name,
             'next' => $nextRank->name,
             'progress' => $progress,
             'pv_needed' => max(0, $nextRank->min_pv - $user->pv_balance),

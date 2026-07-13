@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 use App\Models\Commission;
 use App\Models\User;
 use App\Models\Package;
+use App\Models\CommissionPeriod;
+use App\Services\MLM\MonthlyCommissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,69 +15,76 @@ use Illuminate\Support\Facades\Log;
 
 class CommissionController extends Controller
 {
-    /**
-     * Afficher la liste des commissions de l'utilisateur connecté - DONNÉES RÉELLES
-     */
+    protected MonthlyCommissionService $commissionService;
+
+    public function __construct(MonthlyCommissionService $commissionService)
+    {
+        $this->commissionService = $commissionService;
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // ✅ Récupérer les commissions avec toutes les relations
+
         $query = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'package', 'order']);
-        
-        // ✅ Filtres
+            ->with(['fromUser', 'package', 'order', 'period']);
+
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
-        
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
+
+        if ($request->filled('period')) {
+            $query->where('period', $request->period);
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        
+
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
-        
+
         $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
-        
-        // ✅ Statistiques depuis la base de données
+
         $stats = $this->getUserStats($user->id);
-        
-        // ✅ Commissions par type
+
         $byType = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
             ->get()
             ->mapWithKeys(function ($item) {
+                $labels = [
+                    'direct' => 'Direct',
+                    'indirect' => 'Indirect',
+                    'leadership' => 'Leadership',
+                    'retail' => 'Retail',
+                    'global' => 'Global',
+                    'consumer' => 'Consumer',
+                ];
                 $colors = [
                     'direct' => 'primary',
                     'indirect' => 'warning',
                     'leadership' => 'danger',
                     'retail' => 'success',
-                ];
-                $labels = [
-                    'direct' => 'Directes',
-                    'indirect' => 'Indirectes',
-                    'leadership' => 'Leadership',
-                    'retail' => 'Retail',
+                    'global' => 'info',
+                    'consumer' => 'teal',
                 ];
                 return [
                     $item->type => [
-                        'total' => $item->total,
+                        'total' => (float) $item->total,
                         'count' => $item->count,
                         'label' => $labels[$item->type] ?? ucfirst($item->type),
                         'color' => $colors[$item->type] ?? 'secondary',
                     ]
                 ];
             });
-        
-        // ✅ Commissions mensuelles
+
         $monthly = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select(
@@ -86,25 +95,25 @@ class CommissionController extends Controller
             ->orderBy('month', 'desc')
             ->limit(12)
             ->get();
-        
+
+        $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+        $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
+
         return view('commissions.index', compact(
             'commissions',
             'stats',
             'byType',
-            'monthly'
+            'monthly',
+            'periods',
+            'types'
         ));
     }
-    
-    /**
-     * Statistiques détaillées - DONNÉES RÉELLES
-     */
+
     public function stats()
     {
         $user = Auth::user();
-        
         $stats = $this->getUserStats($user->id);
-        
-        // Commissions par type
+
         $byType = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
@@ -112,14 +121,16 @@ class CommissionController extends Controller
             ->get()
             ->mapWithKeys(function ($item) {
                 $labels = [
-                    'direct' => 'Directes',
-                    'indirect' => 'Indirectes',
+                    'direct' => 'Direct',
+                    'indirect' => 'Indirect',
                     'leadership' => 'Leadership',
                     'retail' => 'Retail',
+                    'global' => 'Global',
+                    'consumer' => 'Consumer',
                 ];
                 return [
                     $item->type => [
-                        'total' => $item->total,
+                        'total' => (float) $item->total,
                         'count' => $item->count,
                         'label' => $labels[$item->type] ?? ucfirst($item->type),
                         'color' => [
@@ -127,12 +138,13 @@ class CommissionController extends Controller
                             'indirect' => 'warning',
                             'leadership' => 'danger',
                             'retail' => 'success',
+                            'global' => 'info',
+                            'consumer' => 'teal',
                         ][$item->type] ?? 'secondary',
                     ]
                 ];
             });
-        
-        // Commissions mensuelles
+
         $monthly = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select(
@@ -145,115 +157,165 @@ class CommissionController extends Controller
             ->get()
             ->reverse()
             ->values();
-        
-        // Dernières commissions
+
         $recent = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->with(['fromUser', 'package'])
             ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->limit(10)
             ->get();
-        
+
+        $topSponsors = Commission::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->select('from_user_id', DB::raw('SUM(amount) as total'))
+            ->with('fromUser')
+            ->groupBy('from_user_id')
+            ->orderBy('total', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'name' => $item->fromUser?->name ?? 'Unknown',
+                    'total' => (float) $item->total,
+                ];
+            });
+
         return view('commissions.stats', compact(
             'stats',
             'byType',
             'monthly',
-            'recent'
+            'recent',
+            'topSponsors'
         ));
     }
-    
-    /**
-     * Afficher le détail d'une commission - DONNÉES RÉELLES
-     */
+
     public function show($id)
     {
         $user = Auth::user();
-        
-        // ✅ Récupérer la commission avec toutes les relations
-        $commission = Commission::with(['user', 'fromUser', 'package', 'order'])
+
+        $commission = Commission::with(['user', 'fromUser', 'package', 'order', 'period'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
-        
-        return view('commissions.show', compact('commission'));
+
+        $similar = Commission::where('user_id', $user->id)
+            ->where('type', $commission->type)
+            ->where('id', '!=', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('commissions.show', compact('commission', 'similar'));
     }
-    
-    /**
-     * Commissions par niveau Unilevel - DONNÉES RÉELLES
-     */
+
     public function getLevelCommissions()
     {
         $user = Auth::user();
-        
-        // ✅ Récupérer les commissions par niveau
+
         $levels = [];
         $total = 0;
-        
-        // Niveau 1 - Direct (30%)
+
         $level1 = Commission::where('user_id', $user->id)
             ->where('type', 'direct')
             ->where('status', 'paid')
             ->sum('amount');
         $levels[1] = [
-            'label' => 'Direct',
-            'amount' => $level1,
-            'percentage' => 30,
+            'label' => 'Direct (Level 1)',
+            'amount' => (float) $level1,
+            'percentage' => $this->getCommissionRate($user, 1),
             'count' => Commission::where('user_id', $user->id)
                 ->where('type', 'direct')
                 ->where('status', 'paid')
                 ->count(),
+            'color' => 'primary',
         ];
         $total += $level1;
-        
-        // Niveau 2 - Indirect (15%)
+
         $level2 = Commission::where('user_id', $user->id)
             ->where('type', 'indirect')
             ->where('status', 'paid')
             ->sum('amount');
         $levels[2] = [
-            'label' => 'Indirect',
-            'amount' => $level2,
-            'percentage' => 15,
+            'label' => 'Indirect (Level 2)',
+            'amount' => (float) $level2,
+            'percentage' => $this->getCommissionRate($user, 2),
             'count' => Commission::where('user_id', $user->id)
                 ->where('type', 'indirect')
                 ->where('status', 'paid')
                 ->count(),
+            'color' => 'warning',
         ];
         $total += $level2;
-        
-        // Niveau 3-5 - Leadership (10%)
+
         $level3 = Commission::where('user_id', $user->id)
             ->where('type', 'leadership')
             ->where('status', 'paid')
             ->sum('amount');
         $levels[3] = [
-            'label' => 'Leadership',
-            'amount' => $level3,
-            'percentage' => 10,
+            'label' => 'Leadership (Level 3+)',
+            'amount' => (float) $level3,
+            'percentage' => $this->getCommissionRate($user, 3),
             'count' => Commission::where('user_id', $user->id)
                 ->where('type', 'leadership')
                 ->where('status', 'paid')
                 ->count(),
+            'color' => 'danger',
         ];
         $total += $level3;
-        
+
+        $level4 = Commission::where('user_id', $user->id)
+            ->where('type', 'global')
+            ->where('status', 'paid')
+            ->sum('amount');
+        if ($level4 > 0) {
+            $levels[4] = [
+                'label' => 'Global Bonus',
+                'amount' => (float) $level4,
+                'percentage' => $this->getCommissionRate($user, 4),
+                'count' => Commission::where('user_id', $user->id)
+                    ->where('type', 'global')
+                    ->where('status', 'paid')
+                    ->count(),
+                'color' => 'info',
+            ];
+            $total += $level4;
+        }
+
         return view('commissions.levels', compact('levels', 'total'));
     }
-    
-    /**
-     * Exporter les commissions en CSV - DONNÉES RÉELLES
-     */
+
+    private function getCommissionRate($user, $level)
+    {
+        $rates = [
+            1 => 30,
+            2 => 15,
+            3 => 10,
+            4 => 5,
+        ];
+
+        $rankLevel = $user->rank_level ?? 1;
+
+        if ($rankLevel >= 5 && $level == 1) {
+            $rates[1] = 30 + ($rankLevel - 5) * 2;
+        }
+
+        return min($rates[$level] ?? 0, 45);
+    }
+
     public function export(Request $request)
     {
         $user = Auth::user();
-        
+
         $commissions = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'package'])
+            ->with(['fromUser', 'package', 'period'])
             ->when($request->filled('status'), function ($query) use ($request) {
                 return $query->where('status', $request->status);
             })
             ->when($request->filled('type'), function ($query) use ($request) {
                 return $query->where('type', $request->type);
+            })
+            ->when($request->filled('period'), function ($query) use ($request) {
+                return $query->where('period', $request->period);
             })
             ->when($request->filled('date_from'), function ($query) use ($request) {
                 return $query->whereDate('created_at', '>=', $request->date_from);
@@ -263,27 +325,23 @@ class CommissionController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         $filename = 'commissions_' . date('Y-m-d') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
         ];
-        
+
         $callback = function() use ($commissions) {
             $file = fopen('php://output', 'w');
-            
-            // En-têtes UTF-8
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             fputcsv($file, [
-                'ID', 'Type', 'Montant', 'Taux (%)', 'Statut',
-                'Description', 'Parrain', 'Package', 'Date'
+                'ID', 'Type', 'Amount', 'Rate (%)', 'Status',
+                'Period', 'Description', 'From', 'Package', 'Date'
             ]);
-            
+
             foreach ($commissions as $commission) {
                 fputcsv($file, [
                     $commission->id,
@@ -291,87 +349,56 @@ class CommissionController extends Controller
                     number_format($commission->amount, 2),
                     $commission->percentage,
                     ucfirst($commission->status),
+                    $commission->period ?? 'N/A',
                     $commission->description ?? '',
                     $commission->fromUser?->name ?? 'N/A',
                     $commission->package?->name ?? 'N/A',
                     $commission->created_at->format('Y-m-d H:i:s')
                 ]);
             }
-            
+
             fclose($file);
         };
-        
+
         return response()->stream($callback, 200, $headers);
     }
-    
-    /**
-     * Générer un PDF des commissions (utilise DomPDF)
-     */
-    public function pdf(Request $request)
-    {
-        $user = Auth::user();
-        
-        $commissions = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'package'])
-            ->when($request->filled('status'), function ($query) use ($request) {
-                return $query->where('status', $request->status);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        $stats = $this->getUserStats($user->id);
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('commissions.pdf', compact(
-            'commissions',
-            'stats',
-            'user'
-        ));
-        
-        return $pdf->download('commissions_' . date('Y-m-d') . '.pdf');
-    }
-    
-    /**
-     * API - Récupérer les commissions pour AJAX
-     */
+
     public function apiIndex(Request $request)
     {
         $user = Auth::user();
-        
+
         $commissions = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'package'])
+            ->with(['fromUser', 'package', 'period'])
             ->when($request->filled('type'), function ($query) use ($request) {
                 return $query->where('type', $request->type);
             })
             ->when($request->filled('status'), function ($query) use ($request) {
                 return $query->where('status', $request->status);
             })
+            ->when($request->filled('period'), function ($query) use ($request) {
+                return $query->where('period', $request->period);
+            })
             ->orderBy('created_at', 'desc')
             ->limit($request->input('limit', 50))
             ->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $commissions,
             'total' => Commission::where('user_id', $user->id)->count(),
         ]);
     }
-    
-    /**
-     * API - Statistiques pour AJAX
-     */
-    public function apiStats(Request $request)
+
+    public function apiStats()
     {
         $user = Auth::user();
-        
+
         return response()->json([
             'success' => true,
             'stats' => $this->getUserStats($user->id),
         ]);
     }
-    
-    /**
-     * Récupérer les statistiques d'un utilisateur - DONNÉES RÉELLES
-     */
+
     private function getUserStats($userId)
     {
         $stats = Commission::where('user_id', $userId)
@@ -384,8 +411,7 @@ class CommissionController extends Controller
                 DB::raw('COUNT(CASE WHEN status = "paid" THEN 1 END) as paid_count')
             )
             ->first();
-        
-        // Statistiques par type
+
         $byType = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
@@ -393,14 +419,16 @@ class CommissionController extends Controller
             ->get()
             ->mapWithKeys(function ($item) {
                 $labels = [
-                    'direct' => 'Directes',
-                    'indirect' => 'Indirectes',
+                    'direct' => 'Direct',
+                    'indirect' => 'Indirect',
                     'leadership' => 'Leadership',
                     'retail' => 'Retail',
+                    'global' => 'Global',
+                    'consumer' => 'Consumer',
                 ];
                 return [
                     $item->type => [
-                        'total' => $item->total,
+                        'total' => (float) $item->total,
                         'count' => $item->count,
                         'label' => $labels[$item->type] ?? ucfirst($item->type),
                         'color' => [
@@ -408,12 +436,13 @@ class CommissionController extends Controller
                             'indirect' => 'warning',
                             'leadership' => 'danger',
                             'retail' => 'success',
+                            'global' => 'info',
+                            'consumer' => 'teal',
                         ][$item->type] ?? 'secondary',
                     ]
                 ];
             });
-        
-        // Commissions mensuelles
+
         $monthly = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->select(
@@ -427,22 +456,21 @@ class CommissionController extends Controller
             ->reverse()
             ->values()
             ->toArray();
-        
-        // Dernières commissions
+
         $recent = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->with(['fromUser', 'package'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
-        
+
         return [
-            'total' => $stats->total ?? 0,
-            'pending' => $stats->pending ?? 0,
-            'paid' => $stats->paid ?? 0,
-            'total_count' => $stats->total_count ?? 0,
-            'pending_count' => $stats->pending_count ?? 0,
-            'paid_count' => $stats->paid_count ?? 0,
+            'total' => (float) ($stats->total ?? 0),
+            'pending' => (float) ($stats->pending ?? 0),
+            'paid' => (float) ($stats->paid ?? 0),
+            'total_count' => (int) ($stats->total_count ?? 0),
+            'pending_count' => (int) ($stats->pending_count ?? 0),
+            'paid_count' => (int) ($stats->paid_count ?? 0),
             'by_type' => $byType,
             'monthly' => $monthly,
             'recent' => $recent,

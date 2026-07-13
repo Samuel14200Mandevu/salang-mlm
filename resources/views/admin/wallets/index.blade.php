@@ -1,3 +1,4 @@
+{{-- resources/views/admin/wallets/index.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -47,22 +48,31 @@
     </div>
 
     <!-- Statistics -->
+    @php
+        $stats = [
+            'total_wallets' => $wallets->total(),
+            'total_balance' => $wallets->sum('balance'),
+            'pending_balance' => $wallets->sum('pending_balance'),
+            'active_wallets' => $wallets->where('is_active', true)->count(),
+        ];
+    @endphp
+    
     <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats p-3 sm:p-4 border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Wallets</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">{{ $totalWallets ?? 0 }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">{{ $stats['total_wallets'] ?? 0 }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-2">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Balance</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($totalBalance ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($stats['total_balance'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-yellow-500 animate-fadeInUp delay-3">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Pending Balance</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($pendingBalance ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending_balance'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Active Wallets</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $activeWallets ?? 0 }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['active_wallets'] ?? 0 }}</p>
         </div>
     </div>
 

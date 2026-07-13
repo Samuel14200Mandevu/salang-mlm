@@ -1,4 +1,5 @@
 <?php
+// app/Models/Package.php
 
 namespace App\Models;
 
@@ -56,28 +57,27 @@ class Package extends Model
             return is_array($this->benefits) ? implode(', ', $this->benefits) : $this->benefits;
         }
         
-        // Bénéfices par défaut selon le package
         $defaultBenefits = [
-            1 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité'],
-            2 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage'],
-            3 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse'],
-            4 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse', 'Support prioritaire'],
-            5 => ['Commission jusqu\'à 30%', 'Accès à la boutique', 'Parrainage illimité', 'Bonus de parrainage', 'Formation incluse', 'Support prioritaire', 'Événements exclusifs'],
+            1 => ['Commission up to 30%', 'Shop access', 'Unlimited referrals'],
+            2 => ['Commission up to 30%', 'Shop access', 'Unlimited referrals', 'Referral bonus'],
+            3 => ['Commission up to 30%', 'Shop access', 'Unlimited referrals', 'Referral bonus', 'Training included'],
+            4 => ['Commission up to 30%', 'Shop access', 'Unlimited referrals', 'Referral bonus', 'Training included', 'Priority support'],
+            5 => ['Commission up to 30%', 'Shop access', 'Unlimited referrals', 'Referral bonus', 'Training included', 'Priority support', 'Exclusive events'],
         ];
         
-        return implode(', ', $defaultBenefits[$this->id] ?? ['Commission jusqu\'à 30%', 'Accès à la boutique']);
+        return implode(', ', $defaultBenefits[$this->id] ?? ['Commission up to 30%', 'Shop access']);
     }
 
     public function getIconAttribute()
     {
         $icons = [
-            1 => '🚀',
-            2 => '🥈',
-            3 => '🥉',
-            4 => '🥇',
-            5 => '💎',
+            1 => 'rocket',
+            2 => 'silver',
+            3 => 'bronze',
+            4 => 'gold',
+            5 => 'diamond',
         ];
-        return $icons[$this->id] ?? '📦';
+        return $icons[$this->id] ?? 'package';
     }
 
     public function getColorAttribute()

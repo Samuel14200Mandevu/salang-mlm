@@ -12,30 +12,20 @@ use Illuminate\Support\Facades\DB;
 
 class CommissionDashboardController extends Controller
 {
-    /**
-     * Tableau de bord des commissions - DONNÉES RÉELLES
-     */
     public function index()
     {
         $user = Auth::user();
-        
-        // ✅ 1. STATISTIQUES GÉNÉRALES
+
         $stats = $this->getGlobalStats($user->id);
-        
-        // ✅ 2. RÉPARTITION PAR TYPE
         $byType = $this->getCommissionsByType($user->id);
-        
-        // ✅ 3. ÉVOLUTION MENSUELLE (12 derniers mois)
         $monthly = $this->getMonthlyCommissions($user->id);
-        
-        // ✅ 4. DERNIÈRES COMMISSIONS
+
         $recent = Commission::where('user_id', $user->id)
             ->with(['fromUser', 'package'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
-        
-        // ✅ 5. TOP PARRAINS (qui ont généré le plus de commissions)
+
         $topReferrals = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select('from_user_id', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
@@ -44,15 +34,13 @@ class CommissionDashboardController extends Controller
             ->orderBy('total', 'desc')
             ->limit(10)
             ->get();
-        
-        // ✅ 6. COMMISSIONS EN ATTENTE
+
         $pending = Commission::where('user_id', $user->id)
             ->where('status', 'pending')
             ->with(['fromUser', 'package'])
             ->orderBy('created_at', 'desc')
             ->get();
-        
-        // ✅ 7. STATISTIQUES PAR PACKAGE
+
         $byPackage = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->whereNotNull('package_id')
@@ -61,8 +49,7 @@ class CommissionDashboardController extends Controller
             ->with('package')
             ->orderBy('total', 'desc')
             ->get();
-        
-        // ✅ 8. MEILLEUR MOIS
+
         $bestMonth = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->select(
@@ -72,13 +59,11 @@ class CommissionDashboardController extends Controller
             ->groupBy('month')
             ->orderBy('total', 'desc')
             ->first();
-        
-        // ✅ 9. MOYENNE PAR COMMISSION
+
         $avgCommission = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->avg('amount');
-        
-        // ✅ 10. COMMISSIONS PAR JOUR (30 derniers jours)
+
         $daily = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->where('created_at', '>=', now()->subDays(30))
@@ -90,7 +75,7 @@ class CommissionDashboardController extends Controller
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
-        
+
         return view('commissions.dashboard', compact(
             'stats',
             'byType',
@@ -105,10 +90,7 @@ class CommissionDashboardController extends Controller
             'user'
         ));
     }
-    
-    /**
-     * Statistiques globales
-     */
+
     private function getGlobalStats($userId)
     {
         $stats = Commission::where('user_id', $userId)
@@ -125,10 +107,9 @@ class CommissionDashboardController extends Controller
                 DB::raw('SUM(CASE WHEN type = "retail" THEN amount ELSE 0 END) as retail_total')
             )
             ->first();
-        
-        // Calculer les pourcentages
+
         $total = $stats->total_amount ?? 0;
-        
+
         return [
             'total_count' => $stats->total_count ?? 0,
             'total_amount' => $total,
@@ -146,43 +127,37 @@ class CommissionDashboardController extends Controller
             'retail_percent' => $total > 0 ? round(($stats->retail_total ?? 0) / $total * 100, 1) : 0,
         ];
     }
-    
-    /**
-     * Commissions par type
-     */
+
     private function getCommissionsByType($userId)
     {
         $types = [
-            'direct' => ['label' => 'Directes', 'color' => 'primary', 'icon' => 'user-friends'],
-            'indirect' => ['label' => 'Indirectes', 'color' => 'warning', 'icon' => 'users'],
-            'leadership' => ['label' => 'Leadership', 'color' => 'danger', 'icon' => 'crown'],
-            'retail' => ['label' => 'Retail', 'color' => 'success', 'icon' => 'shopping-bag'],
+            'direct' => ['label' => 'Direct', 'color' => 'primary'],
+            'indirect' => ['label' => 'Indirect', 'color' => 'warning'],
+            'leadership' => ['label' => 'Leadership', 'color' => 'danger'],
+            'retail' => ['label' => 'Retail', 'color' => 'success'],
+            'global' => ['label' => 'Global', 'color' => 'info'],
         ];
-        
+
         $data = Commission::where('user_id', $userId)
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
             ->get()
             ->keyBy('type');
-        
+
         $result = [];
         foreach ($types as $key => $info) {
             $result[$key] = [
                 'label' => $info['label'],
                 'color' => $info['color'],
-                'icon' => $info['icon'],
                 'total' => $data->has($key) ? $data[$key]->total : 0,
                 'count' => $data->has($key) ? $data[$key]->count : 0,
             ];
         }
-        
+
         return $result;
     }
-    
-    /**
-     * Commissions mensuelles (12 derniers mois)
-     */
+
     private function getMonthlyCommissions($userId)
     {
         $data = Commission::where('user_id', $userId)
@@ -196,14 +171,13 @@ class CommissionDashboardController extends Controller
             ->groupBy('month')
             ->orderBy('month', 'asc')
             ->get();
-        
-        // Compléter les mois manquants
+
         $months = [];
         for ($i = 11; $i >= 0; $i--) {
             $month = now()->subMonths($i)->format('Y-m');
             $monthLabel = now()->subMonths($i)->format('M Y');
             $existing = $data->firstWhere('month', $month);
-            
+
             $months[] = [
                 'month' => $month,
                 'label' => $monthLabel,
@@ -211,7 +185,7 @@ class CommissionDashboardController extends Controller
                 'count' => $existing ? $existing->count : 0,
             ];
         }
-        
+
         return $months;
     }
-}   
+}

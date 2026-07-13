@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
 {
-    /**
-     * Liste des portefeuilles
-     */
     public function index(Request $request)
     {
         $query = Wallet::with('user');
@@ -41,7 +38,7 @@ class WalletController extends Controller
         }
 
         $wallets = $query->orderBy('balance', 'desc')->paginate(20);
-            
+
         $stats = [
             'total_balance' => Wallet::sum('balance'),
             'total_wallets' => Wallet::count(),
@@ -53,22 +50,19 @@ class WalletController extends Controller
             'min_balance' => Wallet::min('balance'),
             'zero_balance' => Wallet::where('balance', 0)->count(),
         ];
-        
+
         return view('admin.wallets.index', compact('wallets', 'stats'));
     }
 
-    /**
-     * Détails d'un portefeuille
-     */
     public function show($id)
     {
         $wallet = Wallet::with(['user', 'user.rank', 'user.package'])
             ->findOrFail($id);
-        
+
         $transactions = Transaction::where('wallet_id', $id)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
-        
+
         $stats = [
             'total_deposited' => Transaction::where('wallet_id', $id)
                 ->where('type', 'deposit')
@@ -88,13 +82,10 @@ class WalletController extends Controller
                 ->sum('amount'),
             'transaction_count' => Transaction::where('wallet_id', $id)->count(),
         ];
-        
+
         return view('admin.wallets.show', compact('wallet', 'transactions', 'stats'));
     }
 
-    /**
-     * Ajuster un solde
-     */
     public function adjust(Request $request, $id)
     {
         $request->validate([
@@ -102,25 +93,25 @@ class WalletController extends Controller
             'reason' => 'required|string|min:5|max:500',
             'type' => 'required|in:credit,debit',
         ]);
-        
+
         $wallet = Wallet::findOrFail($id);
-        
+
         DB::beginTransaction();
-        
+
         try {
             $amount = $request->amount;
             $balanceBefore = $wallet->balance;
-            
+
             if ($request->type === 'debit') {
                 $amount = -$amount;
                 if ($balanceBefore + $amount < 0) {
-                    return back()->with('error', '❌ Solde insuffisant pour ce débit.');
+                    return back()->with('error', 'Insufficient balance for this debit.');
                 }
             }
-            
+
             $wallet->balance += $amount;
             $wallet->save();
-            
+
             Transaction::create([
                 'user_id' => $wallet->user_id,
                 'wallet_id' => $wallet->id,
@@ -139,54 +130,48 @@ class WalletController extends Controller
                 'completed_at' => now(),
             ]);
 
-            Log::info('Ajustement de solde', [
+            Log::info('Balance adjustment', [
                 'wallet_id' => $wallet->id,
                 'user_id' => $wallet->user_id,
                 'amount' => $amount,
                 'reason' => $request->reason,
                 'admin_id' => auth()->id(),
             ]);
-            
+
             DB::commit();
-            
-            $action = $request->type === 'credit' ? 'crédité' : 'débité';
+
+            $action = $request->type === 'credit' ? 'credited' : 'debited';
             return redirect()->route('admin.wallets')
-                ->with('success', "💰 Solde {$action} de $" . number_format(abs($amount), 2) . " avec succès.");
-                
+                ->with('success', "Balance {$action} of $" . number_format(abs($amount), 2) . " successfully.");
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur ajustement solde', [
+            Log::error('Error adjusting balance', [
                 'wallet_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', '❌ Erreur: ' . $e->getMessage());
+            return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Geler/Dégeler un portefeuille
-     */
     public function toggleStatus($id)
     {
         $wallet = Wallet::findOrFail($id);
         $wallet->is_active = !$wallet->is_active;
         $wallet->save();
-        
-        $status = $wallet->is_active ? 'dégelé' : 'gelé';
-        
-        Log::info('Portefeuille ' . $status, [
+
+        $status = $wallet->is_active ? 'unfrozen' : 'frozen';
+
+        Log::info('Wallet ' . $status, [
             'wallet_id' => $wallet->id,
             'user_id' => $wallet->user_id,
             'admin_id' => auth()->id(),
         ]);
-        
+
         return redirect()->route('admin.wallets')
-            ->with('success', "💳 Portefeuille {$status} avec succès.");
+            ->with('success', "Wallet {$status} successfully.");
     }
 
-    /**
-     * Exporter les portefeuilles
-     */
     public function export(Request $request)
     {
         $query = Wallet::with('user');
@@ -208,10 +193,11 @@ class WalletController extends Controller
 
         $callback = function() use ($wallets) {
             $file = fopen('php://output', 'w');
-            
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
             fputcsv($file, [
-                'ID', 'Utilisateur', 'Email', 'Solde', 'Solde en attente',
-                'Total retiré', 'Total déposé', 'Devise', 'Statut', 'Créé le'
+                'ID', 'User', 'Email', 'Balance', 'Pending Balance',
+                'Total Withdrawn', 'Total Deposited', 'Currency', 'Status', 'Created At'
             ]);
 
             foreach ($wallets as $w) {
@@ -224,7 +210,7 @@ class WalletController extends Controller
                     number_format($w->total_withdrawn, 2),
                     number_format($w->total_deposited, 2),
                     $w->currency,
-                    $w->is_active ? 'Actif' : 'Inactif',
+                    $w->is_active ? 'Active' : 'Inactive',
                     $w->created_at->format('Y-m-d H:i'),
                 ]);
             }
@@ -235,9 +221,6 @@ class WalletController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Statistiques des portefeuilles
-     */
     public function stats()
     {
         $stats = [
@@ -262,6 +245,7 @@ class WalletController extends Controller
             });
 
         return response()->json([
+            'success' => true,
             'stats' => $stats,
             'top_wallets' => $topWallets,
         ]);

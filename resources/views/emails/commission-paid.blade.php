@@ -145,7 +145,7 @@
             <div class="commission-details">
                 <div class="detail">
                     <div class="label">Type</div>
-                    <div class="value">{{ ucfirst($type) }}</div>
+                    <div class="value">{{ $type === 'consumer' ? 'Consumer Bonus' : ucfirst($type) }}</div>
                 </div>
                 <div class="detail">
                     <div class="label">Commission ID</div>
@@ -170,7 +170,7 @@
             <p>
                 &copy; {{ date('Y') }} Salang Group. All rights reserved.
                 <br>
-                <a href="{{ route('home') }}">Visit our website</a> • 
+                <a href="{{ route('home') }}">Visit our website</a> &bull; 
                 <a href="{{ route('privacy-policy') }}">Privacy Policy</a>
             </p>
         </div>

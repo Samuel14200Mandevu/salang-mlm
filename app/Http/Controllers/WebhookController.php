@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/WebhookController.php
 
 namespace App\Http\Controllers;
 
@@ -6,60 +7,50 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\User;
-use App\Services\CommissionService;
+use App\Services\MLM\MonthlyCommissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
-    /**
-     * Webhook pour les paiements crypto
-     */
+    protected MonthlyCommissionService $commissionService;
+
+    public function __construct(MonthlyCommissionService $commissionService)
+    {
+        $this->commissionService = $commissionService;
+    }
+
     public function crypto(Request $request)
     {
-        Log::info('Webhook Crypto reçu', $request->all());
+        Log::info('Crypto webhook received', $request->all());
 
-        // Validation de la signature (à adapter selon votre fournisseur)
-        // if (!$this->verifySignature($request)) {
-        //     return response()->json(['error' => 'Invalid signature'], 401);
-        // }
-
-        $data = $request->validate([
-            'transaction_id' => 'required|string',
-            'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric',
-            'currency' => 'required|string',
-            'network' => 'required|string',
-            'status' => 'required|string|in:confirmed,pending,failed',
-            'tx_hash' => 'nullable|string',
-            'order_id' => 'nullable|string',
-        ]);
+        $data = $this->validateCryptoRequest($request);
 
         try {
             DB::beginTransaction();
 
             $user = User::find($data['user_id']);
-            $wallet = $user->wallet;
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
 
+            $wallet = $user->wallet;
             if (!$wallet) {
                 return response()->json(['error' => 'Wallet not found'], 404);
             }
 
-            // Vérifier si la transaction existe déjà
             $existing = Transaction::where('reference', $data['transaction_id'])->first();
             if ($existing) {
                 return response()->json(['message' => 'Transaction already processed'], 200);
             }
 
-            if ($data['status'] === 'confirmed') {
-                // Créditer le portefeuille
+            if ($data['status'] === 'confirmed' || $data['status'] === 'completed') {
                 $balanceBefore = $wallet->balance;
                 $wallet->balance += $data['amount'];
                 $wallet->total_deposited += $data['amount'];
                 $wallet->save();
 
-                // Créer la transaction
                 Transaction::create([
                     'user_id' => $user->id,
                     'wallet_id' => $wallet->id,
@@ -71,7 +62,7 @@ class WebhookController extends Controller
                     'balance_after' => $wallet->balance,
                     'status' => 'completed',
                     'reference' => $data['transaction_id'],
-                    'description' => "Dépôt crypto {$data['currency']} sur {$data['network']}",
+                    'description' => "Crypto deposit {$data['currency']} on {$data['network']}",
                     'metadata' => json_encode([
                         'tx_hash' => $data['tx_hash'] ?? null,
                         'network' => $data['network'],
@@ -80,28 +71,8 @@ class WebhookController extends Controller
                     'completed_at' => now(),
                 ]);
 
-                // Si c'est pour une commande
                 if (isset($data['order_id'])) {
-                    $order = Order::where('order_number', $data['order_id'])->first();
-                    if ($order) {
-                        $order->payment_status = 'completed';
-                        $order->paid_at = now();
-                        $order->save();
-
-                        // Traiter les commissions si c'est un package
-                        if ($order->items()->whereNotNull('package_id')->exists()) {
-                            $commissionService = new CommissionService();
-                            foreach ($order->items as $item) {
-                                if ($item->package_id) {
-                                    $commissionService->calculatePackageCommission(
-                                        $user->id,
-                                        $item->package_id,
-                                        $order->id
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    $this->processOrderPayment($user, $data['order_id']);
                 }
             }
 
@@ -109,12 +80,12 @@ class WebhookController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Webhook crypto traité avec succès'
+                'message' => 'Crypto webhook processed successfully'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur webhook crypto', [
+            Log::error('Error processing crypto webhook', [
                 'error' => $e->getMessage(),
                 'data' => $request->all()
             ]);
@@ -126,39 +97,25 @@ class WebhookController extends Controller
         }
     }
 
-    /**
-     * Webhook pour les paiements Mobile Money
-     */
     public function mobileMoney(Request $request)
     {
-        Log::info('Webhook Mobile Money reçu', $request->all());
+        Log::info('Mobile Money webhook received', $request->all());
 
-        // Validation de la signature (à adapter selon votre fournisseur)
-        // if (!$this->verifyMobileMoneySignature($request)) {
-        //     return response()->json(['error' => 'Invalid signature'], 401);
-        // }
-
-        $data = $request->validate([
-            'transaction_id' => 'required|string',
-            'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric',
-            'provider' => 'required|string|in:Airtel,Orange,M-Pesa',
-            'phone_number' => 'required|string',
-            'status' => 'required|string|in:success,pending,failed',
-            'order_id' => 'nullable|string',
-        ]);
+        $data = $this->validateMobileMoneyRequest($request);
 
         try {
             DB::beginTransaction();
 
             $user = User::find($data['user_id']);
-            $wallet = $user->wallet;
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
 
+            $wallet = $user->wallet;
             if (!$wallet) {
                 return response()->json(['error' => 'Wallet not found'], 404);
             }
 
-            // Vérifier si la transaction existe déjà
             $existing = Transaction::where('reference', $data['transaction_id'])->first();
             if ($existing) {
                 return response()->json(['message' => 'Transaction already processed'], 200);
@@ -181,7 +138,7 @@ class WebhookController extends Controller
                     'balance_after' => $wallet->balance,
                     'status' => 'completed',
                     'reference' => $data['transaction_id'],
-                    'description' => "Dépôt Mobile Money {$data['provider']}",
+                    'description' => "Mobile Money deposit {$data['provider']}",
                     'metadata' => json_encode([
                         'provider' => $data['provider'],
                         'phone_number' => $data['phone_number'],
@@ -189,28 +146,8 @@ class WebhookController extends Controller
                     'completed_at' => now(),
                 ]);
 
-                // Si c'est pour une commande
                 if (isset($data['order_id'])) {
-                    $order = Order::where('order_number', $data['order_id'])->first();
-                    if ($order) {
-                        $order->payment_status = 'completed';
-                        $order->paid_at = now();
-                        $order->save();
-
-                        // Traiter les commissions si c'est un package
-                        if ($order->items()->whereNotNull('package_id')->exists()) {
-                            $commissionService = new CommissionService();
-                            foreach ($order->items as $item) {
-                                if ($item->package_id) {
-                                    $commissionService->calculatePackageCommission(
-                                        $user->id,
-                                        $item->package_id,
-                                        $order->id
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    $this->processOrderPayment($user, $data['order_id']);
                 }
             }
 
@@ -218,12 +155,12 @@ class WebhookController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Webhook Mobile Money traité avec succès'
+                'message' => 'Mobile Money webhook processed successfully'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur webhook mobile money', [
+            Log::error('Error processing mobile money webhook', [
                 'error' => $e->getMessage(),
                 'data' => $request->all()
             ]);
@@ -235,18 +172,15 @@ class WebhookController extends Controller
         }
     }
 
-    /**
-     * Webhook générique pour les paiements
-     */
     public function payment(Request $request)
     {
-        Log::info('Webhook Payment reçu', $request->all());
+        Log::info('Payment webhook received', $request->all());
 
         $data = $request->validate([
             'transaction_id' => 'required|string',
             'user_id' => 'required|exists:users,id',
             'amount' => 'required|numeric',
-            'status' => 'required|string|in:completed,pending,failed',
+            'status' => 'required|in:completed,pending,failed',
             'payment_method' => 'required|string',
             'order_id' => 'nullable|string',
             'metadata' => 'nullable|array',
@@ -284,18 +218,13 @@ class WebhookController extends Controller
                     'balance_after' => $wallet->balance,
                     'status' => 'completed',
                     'reference' => $data['transaction_id'],
-                    'description' => "Dépôt via {$data['payment_method']}",
+                    'description' => "Deposit via {$data['payment_method']}",
                     'metadata' => json_encode($data['metadata'] ?? []),
                     'completed_at' => now(),
                 ]);
 
                 if (isset($data['order_id'])) {
-                    $order = Order::where('order_number', $data['order_id'])->first();
-                    if ($order) {
-                        $order->payment_status = 'completed';
-                        $order->paid_at = now();
-                        $order->save();
-                    }
+                    $this->processOrderPayment($user, $data['order_id']);
                 }
             }
 
@@ -303,12 +232,12 @@ class WebhookController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Webhook payment traité avec succès'
+                'message' => 'Payment webhook processed successfully'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur webhook payment', [
+            Log::error('Error processing payment webhook', [
                 'error' => $e->getMessage(),
                 'data' => $request->all()
             ]);
@@ -320,30 +249,50 @@ class WebhookController extends Controller
         }
     }
 
-    /**
-     * Vérifier la signature du webhook crypto
-     */
-    private function verifySignature($request)
+    private function validateCryptoRequest($request)
     {
-        // À implémenter selon votre fournisseur crypto
-        // Exemple: Coinbase, Stripe, etc.
-        $signature = $request->header('X-Signature');
-        $payload = $request->getContent();
-        $secret = config('services.crypto.webhook_secret');
-
-        // $computed = hash_hmac('sha256', $payload, $secret);
-        // return hash_equals($computed, $signature);
-
-        return true; // À remplacer par une vraie vérification
+        return $request->validate([
+            'transaction_id' => 'required|string',
+            'user_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric',
+            'currency' => 'required|string',
+            'network' => 'required|string',
+            'status' => 'required|string|in:confirmed,pending,failed',
+            'tx_hash' => 'nullable|string',
+            'order_id' => 'nullable|string',
+        ]);
     }
 
-    /**
-     * Vérifier la signature du webhook Mobile Money
-     */
-    private function verifyMobileMoneySignature($request)
+    private function validateMobileMoneyRequest($request)
     {
-        // À implémenter selon votre fournisseur Mobile Money
-        // Exemple: Airtel, Orange, etc.
-        return true; // À remplacer par une vraie vérification
+        return $request->validate([
+            'transaction_id' => 'required|string',
+            'user_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric',
+            'provider' => 'required|string|in:Airtel,Orange,M-Pesa',
+            'phone_number' => 'required|string',
+            'status' => 'required|string|in:success,pending,failed',
+            'order_id' => 'nullable|string',
+        ]);
+    }
+
+    private function processOrderPayment($user, $orderId)
+    {
+        $order = Order::where('order_number', $orderId)->first();
+
+        if (!$order) {
+            Log::warning('Order not found', ['order_id' => $orderId]);
+            return;
+        }
+
+        $order->payment_status = 'completed';
+        $order->paid_at = now();
+        $order->save();
+
+        Log::info('Order paid', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'user_id' => $user->id,
+        ]);
     }
 }

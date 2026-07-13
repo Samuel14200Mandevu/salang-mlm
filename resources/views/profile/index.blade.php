@@ -575,17 +575,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Erreur: ' + data.message);
+                        alert('Error: ' + data.message);
                     }
                 })
-                .catch(function() { alert('Erreur de téléchargement'); });
+                .catch(function() { alert('Upload error'); });
             }
         });
     }
 
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
-            if (confirm('Supprimer votre photo de profil ?')) {
+            if (confirm('Delete your profile picture?')) {
                 fetch('{{ route('profile.delete-avatar') }}', {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
@@ -595,10 +595,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Erreur: ' + data.message);
+                        alert('Error: ' + data.message);
                     }
                 })
-                .catch(function() { alert('Erreur de suppression'); });
+                .catch(function() { alert('Delete error'); });
             }
         });
     }

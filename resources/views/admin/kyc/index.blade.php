@@ -1,3 +1,4 @@
+{{-- resources/views/admin/kyc/index.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')

@@ -408,23 +408,10 @@ function copyLink() {
     }
 }
 
-function showToast(message) {
-    var toast = document.createElement('div');
-    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg bg-green-500 text-white font-medium shadow-lg z-50';
-    toast.style.animation = 'slideUp 0.3s ease forwards';
-    toast.style.fontSize = '0.875rem';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(function() {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        setTimeout(function() { toast.remove(); }, 500);
-    }, 3000);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     var qtyInput = document.getElementById('qty');
+    var form = qtyInput ? qtyInput.closest('form') : null;
+    
     if (qtyInput) {
         qtyInput.addEventListener('change', function() {
             var val = parseInt(this.value);
@@ -434,7 +421,47 @@ document.addEventListener('DOMContentLoaded', function() {
             if (val > max) this.value = max;
         });
     }
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            var qty = parseInt(qtyInput.value);
+            var max = parseInt(qtyInput.max);
+            if (qty > max) {
+                e.preventDefault();
+                showToast('Maximum quantity is ' + max, 'warning');
+            }
+        });
+    }
 });
+
+function showToast(message, type) {
+    type = type || 'success';
+    document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
+    
+    var toast = document.createElement('div');
+    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50';
+    toast.style.animation = 'slideUp 0.3s ease forwards';
+    toast.style.fontSize = '0.875rem';
+    
+    if (type === 'success') {
+        toast.style.background = '#22c55e';
+    } else if (type === 'error') {
+        toast.style.background = '#ef4444';
+    } else if (type === 'warning') {
+        toast.style.background = '#f59e0b';
+    } else {
+        toast.style.background = '#6366f1';
+    }
+    
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(function() { toast.remove(); }, 500);
+    }, 3000);
+}
 </script>
 @endpush
 @endsection

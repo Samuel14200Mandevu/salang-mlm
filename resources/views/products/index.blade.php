@@ -468,9 +468,20 @@ function showToast(message, type) {
     document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
     
     var toast = document.createElement('div');
-    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transform transition-all duration-500 ' + (type === 'success' ? 'bg-green-500' : 'bg-red-500');
-    toast.style.animation = 'fadeInUp 0.3s ease forwards';
+    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transform transition-all duration-500';
+    toast.style.animation = 'slideUp 0.3s ease forwards';
     toast.style.fontSize = '0.875rem';
+    
+    if (type === 'success') {
+        toast.style.background = '#22c55e';
+    } else if (type === 'error') {
+        toast.style.background = '#ef4444';
+    } else if (type === 'warning') {
+        toast.style.background = '#f59e0b';
+    } else {
+        toast.style.background = '#6366f1';
+    }
+    
     toast.textContent = message;
     document.body.appendChild(toast);
     

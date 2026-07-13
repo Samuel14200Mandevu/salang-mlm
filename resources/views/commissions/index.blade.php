@@ -1,3 +1,4 @@
+{{-- resources/views/commissions/index.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -24,6 +25,17 @@
     .type-badge-retail { background: rgba(34,197,94,0.15); color: #22c55e; }
     .type-badge-bonus { background: rgba(236,72,153,0.15); color: #ec4899; }
     
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    
     .card-stats {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
@@ -35,17 +47,6 @@
         transform: translateY(-2px);
         box-shadow: var(--shadow-hover);
     }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
     
     .btn {
         display: inline-flex;
@@ -61,17 +62,9 @@
         border: none;
         text-decoration: none;
     }
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-    }
-    .btn-outline:hover {
-        border-color: var(--primary-500);
-        color: var(--primary-500);
-    }
     .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
-    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
     
     .card {
         background: var(--bg-card);
@@ -96,10 +89,7 @@
         box-shadow: 0 0 0 4px var(--border-focus);
     }
     
-    .table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
+    .table-wrap { overflow-x: auto; }
     .table {
         width: 100%;
         border-collapse: separate;
@@ -123,9 +113,7 @@
         vertical-align: middle;
         border-bottom: 1px solid var(--border-light);
     }
-    .table-striped tbody tr:nth-child(even) {
-        background: var(--bg-secondary);
-    }
+    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
     
     .filters-wrapper {
         display: flex;
@@ -152,50 +140,18 @@
             padding: 0.375rem 0.5rem;
             font-size: 0.65rem;
         }
-        .type-badge {
-            font-size: 0.55rem;
-            padding: 0.1rem 0.4rem;
-        }
-        .badge {
-            font-size: 0.55rem;
-            padding: 0.1rem 0.4rem;
-        }
-        .card-stats {
-            padding: 0.75rem;
-        }
-        .card-stats .text-2xl {
-            font-size: 1.25rem;
-        }
-        .card {
-            padding: 0.875rem;
-        }
-        .filters-wrapper {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .filters-wrapper .input {
-            width: 100% !important;
-        }
-        .stats-grid {
-            grid-template-columns: 1fr 1fr !important;
-        }
-        .commission-header {
-            flex-direction: column;
-            align-items: flex-start !important;
-        }
-        .commission-header .btn-group {
-            margin-left: 0 !important;
-            margin-top: 0.5rem;
-        }
+        .type-badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
+        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
+        .card-stats { padding: 0.75rem; }
+        .card-stats .text-2xl { font-size: 1.25rem; }
+        .card { padding: 0.875rem; }
+        .filters-wrapper { flex-direction: column; align-items: stretch; }
+        .filters-wrapper .input { width: 100% !important; }
+        .stats-grid { grid-template-columns: 1fr 1fr !important; }
     }
     
     @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr !important;
-        }
-        .card {
-            padding: 0.75rem;
-        }
+        .stats-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
@@ -204,12 +160,24 @@
 <div class="space-y-4 sm:space-y-6">
     
     <!-- Header -->
-    <div class="commission-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en détail</p>
         </div>
-        <div class="btn-group flex gap-1.5 sm:gap-2">
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+            <a href="{{ route('commissions.dashboard') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Tableau de bord
+            </a>
+            <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                </svg>
+                Par niveau
+            </a>
             <a href="{{ route('commissions.export') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -355,6 +323,22 @@
         @endforeach
     </div>
     @endif
+
+    <!-- Quick Navigation -->
+    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-7">
+        <a href="{{ route('commissions.dashboard') }}" class="btn btn-primary btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            Tableau de bord
+        </a>
+        <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            Commissions par niveau
+        </a>
+    </div>
 </div>
 
 @push('scripts')

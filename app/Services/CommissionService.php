@@ -9,15 +9,31 @@ use App\Models\Package;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\RankHistory;
-use App\Models\Rank;
-use App\Notifications\CommissionPaidNotification;
+use App\Models\CommissionPeriod;
+use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\RankConditionChecker;
+use App\Services\MLM\CommissionDistributor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CommissionService
 {
+    protected $rankCalculator;
+    protected $rankChecker;
+    protected $commissionDistributor;
+
+    public function __construct(
+        AdvancedRankCalculator $rankCalculator,
+        RankConditionChecker $rankChecker,
+        CommissionDistributor $commissionDistributor
+    ) {
+        $this->rankCalculator = $rankCalculator;
+        $this->rankChecker = $rankChecker;
+        $this->commissionDistributor = $commissionDistributor;
+    }
+
     /**
-     * Calculer les commissions pour un achat de package - DONNÉES RÉELLES
+     * Calculer les commissions pour un achat de package
      */
     public function calculatePackageCommission($userId, $packageId, $orderId = null)
     {
@@ -25,194 +41,193 @@ class CommissionService
         $package = Package::find($packageId);
         
         if (!$user || !$package) {
+            Log::error('User ou Package non trouvé', [
+                'user_id' => $userId,
+                'package_id' => $packageId
+            ]);
             return false;
+        }
+
+        // Récupérer la période en cours
+        $period = CommissionPeriod::where('period', date('Y-m'))->first();
+        if (!$period) {
+            $period = $this->createCurrentPeriod();
         }
 
         DB::beginTransaction();
         
         try {
-            // ✅ 1. Commission Directe (30%) - Pour le parrain (celui qui a parrainé l'utilisateur)
-            if ($user->parrain_id) {
-                $sponsor = User::find($user->parrain_id);
-                if ($sponsor) {
-                    $directAmount = $package->price * 0.30;
-                    $this->createCommission(
-                        $sponsor->id,
-                        $user->id,
-                        'direct',
-                        $directAmount,
-                        30,
-                        'Commission directe pour achat de ' . $package->name . ' par ' . $user->name,
-                        $orderId,
-                        $packageId
-                    );
+            // 1. Mettre à jour les PV/BV
+            $this->updateUserPVBV($user, $package);
+
+            // 2. Calculer les commissions
+            $commissions = $this->commissionDistributor->distributeCommissions(
+                $user,
+                $package,
+                $orderId,
+                $period
+            );
+
+            // 3. Créditer les wallets immédiatement
+            foreach ($commissions as $commission) {
+                $wallet = Wallet::where('user_id', $commission->user_id)->first();
+                if ($wallet) {
+                    $wallet->balance += $commission->amount;
+                    $wallet->save();
+                    
+                    $commission->status = 'paid';
+                    $commission->paid_at = now();
+                    $commission->save();
                 }
             }
 
-            // ✅ 2. Commission Indirecte (15%) - Pour le parrain du parrain (niveau 2)
-            if ($user->parrain_id) {
-                $sponsor = User::find($user->parrain_id);
-                if ($sponsor && $sponsor->parrain_id) {
-                    $grandSponsor = User::find($sponsor->parrain_id);
-                    if ($grandSponsor) {
-                        $indirectAmount = $package->price * 0.15;
-                        $this->createCommission(
-                            $grandSponsor->id,
-                            $user->id,
-                            'indirect',
-                            $indirectAmount,
-                            15,
-                            'Commission indirecte (niveau 2) pour achat de ' . $package->name . ' par ' . $user->name,
-                            $orderId,
-                            $packageId
-                        );
-                    }
-                }
-            }
-
-            // ✅ 3. Commission Leadership (10%) - Pour les leaders 3+ niveaux
-            $this->calculateLeadershipCommission($user, $package, $orderId);
-
-            // 4. Mettre à jour les PV/BV de l'utilisateur
-            $user->pv_balance += $package->pv_value;
-            $user->bv_balance += $package->bv_value;
-            $user->save();
-
-            // 5. Vérifier et mettre à jour le grade
-            $rankService = new RankService();
-            $rankService->updateRank($user->id);
+            // 4. Mettre à jour les grades
+            $this->updateRanks($user);
 
             DB::commit();
+            
+            Log::info('Commissions calculées avec succès', [
+                'user_id' => $userId,
+                'package_id' => $packageId,
+                'total_commissions' => collect($commissions)->sum('amount')
+            ]);
+            
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Commission calculation error: ' . $e->getMessage());
+            Log::error('Erreur calcul commissions: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'package_id' => $packageId,
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
 
     /**
-     * ✅ CORRIGÉ : Calculer la commission de leadership - DONNÉES RÉELLES
-     * Parcourt les parrains jusqu'au niveau 5
+     * Mettre à jour les PV/BV d'un utilisateur
      */
-    private function calculateLeadershipCommission($user, $package, $orderId)
+    private function updateUserPVBV(User $user, Package $package)
     {
+        $user->pv_balance += $package->pv_value;
+        $user->bv_balance += $package->bv_value;
+        $user->monthly_pv += $package->pv_value;
+        $user->monthly_bv += $package->bv_value;
+        $user->save();
+
+        $this->updateNetworkPVBV($user, $package);
+    }
+
+    /**
+     * Mettre à jour les PV/BV du réseau (parrains)
+     */
+    private function updateNetworkPVBV(User $user, Package $package)
+    {
+        $current = $user->parrain;
         $level = 1;
-        $currentSponsor = User::find($user->parrain_id);
-        
-        while ($currentSponsor && $level <= 5) {
-            // Vérifier si le sponsor a assez de PV pour être leader
-            if ($currentSponsor->pv_balance >= 1000) {
-                $leadershipAmount = $package->price * 0.10;
-                $this->createCommission(
-                    $currentSponsor->id,
-                    $user->id,
-                    'leadership',
-                    $leadershipAmount,
-                    10,
-                    'Commission leadership niveau ' . $level . ' pour achat de ' . $package->name . ' par ' . $user->name,
-                    $orderId,
-                    $package->id
-                );
-            }
+
+        while ($current && $level <= 9) {
+            $current->team_pv += $package->pv_value;
+            $current->team_bv += $package->bv_value;
+            $current->save();
             
-            // ✅ Passer au parrain suivant
-            $currentSponsor = User::find($currentSponsor->parrain_id);
+            $current = $current->parrain;
             $level++;
         }
     }
 
     /**
-     * Créer une commission
+     * Mettre à jour les grades
      */
-    private function createCommission($userId, $fromUserId, $type, $amount, $percentage, $description, $orderId = null, $packageId = null)
+    private function updateRanks(User $user)
     {
-        $commission = Commission::create([
-            'user_id' => $userId,
-            'from_user_id' => $fromUserId,
-            'type' => $type,
-            'amount' => $amount,
-            'percentage' => $percentage,
-            'description' => $description,
-            'order_id' => $orderId,
-            'package_id' => $packageId,
-            'status' => 'pending',
-        ]);
-
-        // Créditer le portefeuille
-        $wallet = Wallet::where('user_id', $userId)->first();
-        if ($wallet) {
-            $wallet->balance += $amount;
-            $wallet->save();
-            
-            // Créer une transaction
-            Transaction::create([
-                'user_id' => $userId,
-                'wallet_id' => $wallet->id,
-                'type' => 'commission',
-                'amount' => $amount,
-                'fee' => 0,
-                'net_amount' => $amount,
-                'balance_before' => $wallet->balance - $amount,
-                'balance_after' => $wallet->balance,
-                'status' => 'completed',
-                'description' => $description,
-                'completed_at' => now(),
-            ]);
-
-            // Marquer la commission comme payée
-            $commission->status = 'paid';
-            $commission->paid_at = now();
-            $commission->save();
-
-            // Envoyer la notification par email
-            $user = User::find($userId);
-            if ($user && class_exists(CommissionPaidNotification::class)) {
-                try {
-                    $user->notify(new CommissionPaidNotification(
-                        $amount,
-                        $type,
-                        $commission->id
-                    ));
-                } catch (\Exception $e) {
-                    Log::error('Erreur envoi notification commission: ' . $e->getMessage());
-                }
-            }
+        $newRank = $this->rankCalculator->calculateAdvancedRank($user);
+        if ($newRank && $newRank->id != $user->rank_id) {
+            $this->updateUserRankInternal($user, $newRank);
         }
 
-        return $commission;
-    }
-
-    public function updateUserRank($user)
-    {
-        $rankService = new RankService();
-        return $rankService->updateRank($user->id);
-    }
-
-    public function calculateRetailProfit($userId, $amount, $productId = null, $orderId = null)
-    {
-        $user = User::find($userId);
-        if (!$user) return false;
-
-        $profitAmount = $amount * 0.25;
-        
-        $this->createCommission(
-            $user->id,
-            null,
-            'retail',
-            $profitAmount,
-            25,
-            'Profit retail sur vente de produit',
-            $orderId,
-            null
-        );
-
-        return true;
+        $current = $user->parrain;
+        while ($current) {
+            $newRank = $this->rankCalculator->calculateAdvancedRank($current);
+            if ($newRank && $newRank->id != $current->rank_id) {
+                $this->updateUserRankInternal($current, $newRank);
+            }
+            $current = $current->parrain;
+        }
     }
 
     /**
-     * Récupérer les statistiques de commissions d'un utilisateur - DONNÉES RÉELLES
+     * Mettre à jour le grade d'un utilisateur (interne)
+     */
+    private function updateUserRankInternal(User $user, $newRank)
+    {
+        $oldRankId = $user->rank_id;
+        $oldRankName = $user->rank_name;
+
+        $user->rank_id = $newRank->id;
+        $user->rank = $newRank->name;
+        $user->last_rank_update = now();
+        $user->save();
+
+        RankHistory::create([
+            'user_id' => $user->id,
+            'old_rank_id' => $oldRankId,
+            'new_rank_id' => $newRank->id,
+            'old_rank_name' => $oldRankName,
+            'new_rank_name' => $newRank->name,
+            'pv_at_time' => $user->pv_balance,
+            'bv_at_time' => $user->bv_balance,
+            'notes' => 'Mise à jour automatique',
+        ]);
+
+        Log::info('Grade mis à jour', [
+            'user_id' => $user->id,
+            'old_rank' => $oldRankName,
+            'new_rank' => $newRank->name,
+        ]);
+    }
+
+    /**
+     * Créer la période en cours
+     */
+    private function createCurrentPeriod()
+    {
+        $now = now();
+        $period = $now->format('Y-m');
+        
+        return CommissionPeriod::create([
+            'period' => $period,
+            'start_date' => $now->copy()->startOfMonth(),
+            'end_date' => $now->copy()->endOfMonth(),
+            'status' => 'pending',
+        ]);
+    }
+
+    /**
+     * Mettre à jour le grade d'un utilisateur (méthode publique)
+     */
+    public function updateUserRank($user)
+    {
+        if (is_numeric($user)) {
+            $user = User::find($user);
+        }
+        
+        if (!$user) {
+            return false;
+        }
+        
+        $newRank = $this->rankCalculator->calculateAdvancedRank($user);
+        if ($newRank && $newRank->id != $user->rank_id) {
+            $this->updateUserRankInternal($user, $newRank);
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Récupérer les statistiques de commissions
      */
     public function getUserCommissionStats($userId)
     {
@@ -246,21 +261,7 @@ class CommissionService
     }
 
     /**
-     * ✅ NOUVEAU : Calculer toutes les commissions pour un parrainage - DONNÉES RÉELLES
-     */
-    public function calculateAllCommissionsForReferral($newUserId, $packageId, $orderId = null)
-    {
-        $newUser = User::find($newUserId);
-        if (!$newUser) return false;
-
-        $package = Package::find($packageId);
-        if (!$package) return false;
-
-        return $this->calculatePackageCommission($newUserId, $packageId, $orderId);
-    }
-
-    /**
-     * ✅ NOUVEAU : Récupérer les commissions d'un utilisateur - DONNÉES RÉELLES
+     * Récupérer les commissions d'un utilisateur
      */
     public function getUserCommissions($userId, $status = null)
     {
@@ -274,7 +275,7 @@ class CommissionService
     }
 
     /**
-     * ✅ NOUVEAU : Récupérer le total des commissions par type - DONNÉES RÉELLES
+     * Récupérer le total des commissions par type
      */
     public function getCommissionsByType($userId)
     {
@@ -283,5 +284,37 @@ class CommissionService
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
             ->get();
+    }
+
+    /**
+     * Calculer le profit retail
+     */
+    public function calculateRetailProfit($userId, $amount, $productId = null, $orderId = null)
+    {
+        $user = User::find($userId);
+        if (!$user) return false;
+
+        $profitAmount = $amount * 0.25;
+        
+        Commission::create([
+            'user_id' => $user->id,
+            'from_user_id' => null,
+            'type' => 'retail',
+            'amount' => $profitAmount,
+            'percentage' => 25,
+            'description' => 'Profit retail sur vente de produit',
+            'order_id' => $orderId,
+            'package_id' => null,
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        if ($wallet) {
+            $wallet->balance += $profitAmount;
+            $wallet->save();
+        }
+
+        return true;
     }
 }

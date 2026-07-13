@@ -10,24 +10,17 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\Withdrawal;
 use App\Models\Product;
-use App\Models\Rank; 
+use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
-    /**
-     * Dashboard des rapports
-     */
     public function index(Request $request)
     {
         try {
-            // Période
             $period = $request->period ?? 'month';
-            
-            // ============================================================
-            // STATISTIQUES GLOBALES
-            // ============================================================
+
             $stats = [
                 'total_users' => User::count(),
                 'active_users' => User::where('is_active', true)->count(),
@@ -43,22 +36,13 @@ class ReportController extends Controller
                 'avg_order_value' => Order::where('status', 'completed')->avg('total') ?? 0,
             ];
 
-            // ============================================================
-            // ÉVOLUTION MENSUELLE (12 mois)
-            // ============================================================
             $monthlySales = $this->getMonthlyData();
 
-            // ============================================================
-            // COMMISSIONS PAR TYPE
-            // ============================================================
             $commissionByType = Commission::where('status', 'paid')
                 ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
                 ->groupBy('type')
                 ->get();
 
-            // ============================================================
-            // UTILISATEURS PAR GRADE - Version avec rank_id et relation
-            // ============================================================
             $usersByRank = User::select('rank_id', DB::raw('count(*) as count'))
                 ->whereNotNull('rank_id')
                 ->with('rank')
@@ -66,14 +50,11 @@ class ReportController extends Controller
                 ->get()
                 ->map(function($item) {
                     return (object) [
-                        'rank' => $item->rank ? $item->rank->name : 'Non défini',
+                        'rank' => $item->rank ? $item->rank->name : 'Not defined',
                         'count' => $item->count,
                     ];
                 });
 
-            // ============================================================
-            // TOP PERFORMERS
-            // ============================================================
             $topSponsors = User::orderBy('total_sponsors', 'desc')
                 ->limit(10)
                 ->get(['id', 'name', 'email', 'total_sponsors', 'total_earnings']);
@@ -82,9 +63,6 @@ class ReportController extends Controller
                 ->limit(10)
                 ->get(['id', 'name', 'email', 'total_earnings', 'total_sponsors']);
 
-            // ============================================================
-            // REVENUS PAR PACKAGE
-            // ============================================================
             $packageRevenue = Package::withCount('users')
                 ->get()
                 ->map(function($package) {
@@ -96,31 +74,28 @@ class ReportController extends Controller
                     ];
                 });
 
-            // ============================================================
-            // ACTIVITÉ RÉCENTE
-            // ============================================================
             $recentActivity = $this->getRecentActivity();
 
             return view('admin.reports.index', compact(
                 'stats',
                 'monthlySales',
                 'commissionByType',
-                'usersByRank',       
+                'usersByRank',
                 'topSponsors',
                 'topEarners',
                 'packageRevenue',
                 'recentActivity',
                 'period'
             ));
-            
+
         } catch (\Exception $e) {
-            \Log::error('Erreur rapports: ' . $e->getMessage(), [
+            \Log::error('Reports error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            
+
             return view('admin.reports.index', [
-                'error' => 'Erreur: ' . $e->getMessage(),
+                'error' => 'Error: ' . $e->getMessage(),
                 'stats' => [],
                 'monthlySales' => [],
                 'commissionByType' => collect(),
@@ -134,9 +109,6 @@ class ReportController extends Controller
         }
     }
 
-    /**
-     * Rapport des ventes
-     */
     public function sales(Request $request)
     {
         $query = Order::with(['user', 'items']);
@@ -184,9 +156,6 @@ class ReportController extends Controller
         return view('admin.reports.sales', compact('orders', 'stats', 'statuses', 'paymentStatuses'));
     }
 
-    /**
-     * Rapport des commissions
-     */
     public function commissions(Request $request)
     {
         $query = Commission::with(['user', 'fromUser']);
@@ -241,79 +210,110 @@ class ReportController extends Controller
         return view('admin.reports.commissions', compact('commissions', 'stats', 'types', 'statuses', 'users'));
     }
 
-   /**
- * Rapport des utilisateurs
- */
-public function users(Request $request)
-{
-    $query = User::with(['rank', 'package', 'wallet']);
+    public function users(Request $request)
+    {
+        $query = User::with(['rank', 'package', 'wallet']);
 
-    // ✅ Filtres avec rank_id (au lieu de rank)
-    if ($request->filled('rank_id')) {
-        $query->where('rank_id', $request->rank_id);
+        if ($request->filled('rank_id')) {
+            $query->where('rank_id', $request->rank_id);
+        }
+
+        if ($request->filled('package_id')) {
+            $query->where('package_id', $request->package_id);
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active == '1');
+        }
+
+        if ($request->filled('kyc_status')) {
+            $query->where('kyc_status', $request->kyc_status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('min_pv')) {
+            $query->where('pv_balance', '>=', $request->min_pv);
+        }
+
+        if ($request->filled('max_pv')) {
+            $query->where('pv_balance', '<=', $request->max_pv);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        $stats = [
+            'total' => User::count(),
+            'active' => User::where('is_active', true)->count(),
+            'inactive' => User::where('is_active', false)->count(),
+            'avg_pv' => User::avg('pv_balance') ?? 0,
+            'avg_bv' => User::avg('bv_balance') ?? 0,
+            'total_pv' => User::sum('pv_balance') ?? 0,
+            'total_bv' => User::sum('bv_balance') ?? 0,
+            'total_earnings' => User::sum('total_earnings') ?? 0,
+            'with_package' => User::whereNotNull('package_id')->count(),
+            'without_package' => User::whereNull('package_id')->count(),
+            'kyc_verified' => User::where('kyc_status', 'verified')->count(),
+            'kyc_pending' => User::where('kyc_status', 'pending')->count(),
+        ];
+
+        $ranks = Rank::orderBy('min_pv', 'asc')->get();
+        $packages = Package::where('is_active', true)->get();
+        $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
+
+        return view('admin.reports.users', compact(
+            'users',
+            'stats',
+            'ranks',
+            'packages',
+            'kycStatuses'
+        ));
     }
 
-    if ($request->filled('package_id')) {
-        $query->where('package_id', $request->package_id);
+    public function exportUsers($request)
+    {
+        $query = User::with(['rank', 'package']);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        return $query->get()->map(function($user) {
+            return [
+                'ID' => $user->id,
+                'Name' => $user->name,
+                'Email' => $user->email,
+                'Phone' => $user->phone ?? '',
+                'Referral Code' => $user->sponsor_id,
+                'Rank' => $user->rank?->name ?? 'Distributor',
+                'Package' => $user->package?->name ?? 'None',
+                'PV' => $user->pv_balance ?? 0,
+                'BV' => $user->bv_balance ?? 0,
+                'Monthly PV' => $user->monthly_pv ?? 0,
+                'Monthly BV' => $user->monthly_bv ?? 0,
+                'Team PV' => $user->team_pv ?? 0,
+                'Team BV' => $user->team_bv ?? 0,
+                'Total Earnings' => number_format($user->total_earnings ?? 0, 2),
+                'Referrals' => $user->total_sponsors ?? 0,
+                'Team' => $user->total_team ?? 0,
+                'Wallet Balance' => number_format($user->wallet?->balance ?? 0, 2),
+                'Status' => $user->is_active ? 'Active' : 'Inactive',
+                'KYC' => $user->kyc_status ?? 'Not submitted',
+                'Registered' => $user->created_at->format('Y-m-d'),
+            ];
+        })->toArray();
     }
 
-    if ($request->filled('is_active')) {
-        $query->where('is_active', $request->is_active == '1');
-    }
-
-    if ($request->filled('kyc_status')) {
-        $query->where('kyc_status', $request->kyc_status);
-    }
-
-    if ($request->filled('date_from')) {
-        $query->whereDate('created_at', '>=', $request->date_from);
-    }
-
-    if ($request->filled('date_to')) {
-        $query->whereDate('created_at', '<=', $request->date_to);
-    }
-
-    if ($request->filled('min_pv')) {
-        $query->where('pv_balance', '>=', $request->min_pv);
-    }
-
-    if ($request->filled('max_pv')) {
-        $query->where('pv_balance', '<=', $request->max_pv);
-    }
-
-    $users = $query->orderBy('created_at', 'desc')->paginate(20);
-
-    // ✅ Statistiques
-    $stats = [
-        'total' => User::count(),
-        'active' => User::where('is_active', true)->count(),
-        'inactive' => User::where('is_active', false)->count(),
-        'avg_pv' => User::avg('pv_balance') ?? 0,
-        'avg_bv' => User::avg('bv_balance') ?? 0,
-        'total_earnings' => User::sum('total_earnings') ?? 0,
-        'with_package' => User::whereNotNull('package_id')->count(),
-        'without_package' => User::whereNull('package_id')->count(),
-        'kyc_verified' => User::where('kyc_status', 'verified')->count(),
-        'kyc_pending' => User::where('kyc_status', 'pending')->count(),
-    ];
-
-    // ✅ Récupérer les grades pour le filtre
-    $ranks = Rank::orderBy('min_pv', 'asc')->get();
-    $packages = Package::where('is_active', true)->get();
-    $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
-
-    return view('admin.reports.users', compact(
-        'users',
-        'stats',
-        'ranks',
-        'packages',
-        'kycStatuses'
-    ));
-}
-
-    /**
-     * Rapport des retraits
-     */
     public function withdrawals(Request $request)
     {
         $query = Withdrawal::with(['user']);
@@ -362,9 +362,6 @@ public function users(Request $request)
         return view('admin.reports.withdrawals', compact('withdrawals', 'stats', 'statuses', 'methods'));
     }
 
-    /**
-     * Exporter un rapport
-     */
     public function export(Request $request)
     {
         $request->validate([
@@ -398,61 +395,21 @@ public function users(Request $request)
 
         $callback = function() use ($data) {
             $file = fopen('php://output', 'w');
-            
+
             if (!empty($data)) {
                 fputcsv($file, array_keys($data[0]));
                 foreach ($data as $row) {
                     fputcsv($file, array_values($row));
                 }
             }
-            
+
             fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Exporter les utilisateurs
-     */
-    private function exportUsers($request)
-    {
-        $query = User::with(['rank', 'package']);
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        return $query->get()->map(function($user) {
-            return [
-                'ID' => $user->id,
-                'Nom' => $user->name,
-                'Email' => $user->email,
-                'Téléphone' => $user->phone ?? '',
-                'Code Parrain' => $user->sponsor_id,
-                'Grade' => $user->rank ?? 'Distributor',
-                'Package' => $user->package->name ?? 'Aucun',
-                'PV' => $user->pv_balance ?? 0,
-                'BV' => $user->bv_balance ?? 0,
-                'Gains Totaux' => number_format($user->total_earnings ?? 0, 2),
-                'Parrainages' => $user->total_sponsors ?? 0,
-                'Équipe' => $user->total_team ?? 0,
-                'Solde Wallet' => number_format($user->wallet->balance ?? 0, 2),
-                'Statut' => $user->is_active ? 'Actif' : 'Inactif',
-                'KYC' => $user->kyc_status ?? 'Non soumis',
-                'Inscrit le' => $user->created_at->format('Y-m-d'),
-            ];
-        })->toArray();
-    }
-
-    /**
-     * Exporter les commissions
-     */
-    private function exportCommissions($request)
+    public function exportCommissions($request)
     {
         $query = Commission::with(['user', 'fromUser']);
 
@@ -467,23 +424,20 @@ public function users(Request $request)
         return $query->get()->map(function($commission) {
             return [
                 'ID' => $commission->id,
-                'Utilisateur' => $commission->user->name ?? 'N/A',
-                'De' => $commission->fromUser->name ?? 'N/A',
+                'User' => $commission->user->name ?? 'N/A',
+                'From' => $commission->fromUser->name ?? 'N/A',
                 'Type' => $commission->type,
-                'Montant' => number_format($commission->amount, 2),
-                'Pourcentage' => $commission->percentage . '%',
+                'Amount' => number_format($commission->amount, 2),
+                'Percentage' => $commission->percentage . '%',
                 'Description' => $commission->description ?? '',
-                'Statut' => $commission->status,
-                'Payé le' => $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'En attente',
+                'Status' => $commission->status,
+                'Paid At' => $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'Pending',
                 'Date' => $commission->created_at->format('Y-m-d H:i'),
             ];
         })->toArray();
     }
 
-    /**
-     * Exporter les commandes
-     */
-    private function exportOrders($request)
+    public function exportOrders($request)
     {
         $query = Order::with(['user']);
 
@@ -498,25 +452,22 @@ public function users(Request $request)
         return $query->get()->map(function($order) {
             return [
                 'ID' => $order->id,
-                'Numéro' => $order->order_number,
-                'Client' => $order->user->name ?? 'N/A',
+                'Order Number' => $order->order_number,
+                'Customer' => $order->user->name ?? 'N/A',
                 'Email' => $order->user->email ?? 'N/A',
-                'Sous-total' => number_format($order->subtotal, 2),
-                'TVA' => number_format($order->tax, 2),
-                'Livraison' => number_format($order->shipping, 2),
+                'Subtotal' => number_format($order->subtotal, 2),
+                'Tax' => number_format($order->tax, 2),
+                'Shipping' => number_format($order->shipping, 2),
                 'Total' => number_format($order->total, 2),
-                'Statut Commande' => $order->status,
-                'Statut Paiement' => $order->payment_status,
-                'Méthode Paiement' => $order->payment_method ?? 'N/A',
+                'Order Status' => $order->status,
+                'Payment Status' => $order->payment_status,
+                'Payment Method' => $order->payment_method ?? 'N/A',
                 'Date' => $order->created_at->format('Y-m-d H:i'),
             ];
         })->toArray();
     }
 
-    /**
-     * Exporter les retraits
-     */
-    private function exportWithdrawals($request)
+    public function exportWithdrawals($request)
     {
         $query = Withdrawal::with(['user']);
 
@@ -531,22 +482,19 @@ public function users(Request $request)
         return $query->get()->map(function($withdrawal) {
             return [
                 'ID' => $withdrawal->id,
-                'Utilisateur' => $withdrawal->user->name ?? 'N/A',
+                'User' => $withdrawal->user->name ?? 'N/A',
                 'Email' => $withdrawal->user->email ?? 'N/A',
-                'Montant Demandé' => number_format($withdrawal->amount, 2),
-                'Frais (2.5%)' => number_format($withdrawal->fee, 2),
+                'Requested Amount' => number_format($withdrawal->amount, 2),
+                'Fee (2.5%)' => number_format($withdrawal->fee, 2),
                 'Net' => number_format($withdrawal->net_amount, 2),
-                'Méthode' => $withdrawal->method,
-                'Statut' => $withdrawal->status,
+                'Method' => $withdrawal->method,
+                'Status' => $withdrawal->status,
                 'Date' => $withdrawal->created_at->format('Y-m-d H:i'),
-                'Complété le' => $withdrawal->completed_at ? $withdrawal->completed_at->format('Y-m-d H:i') : 'En attente',
+                'Completed At' => $withdrawal->completed_at ? $withdrawal->completed_at->format('Y-m-d H:i') : 'Pending',
             ];
         })->toArray();
     }
 
-    /**
-     * Obtenir la plage de dates
-     */
     private function getDateRange($period)
     {
         switch ($period) {
@@ -565,9 +513,6 @@ public function users(Request $request)
         }
     }
 
-    /**
-     * Obtenir les données mensuelles
-     */
     private function getMonthlyData()
     {
         $data = [];
@@ -595,27 +540,22 @@ public function users(Request $request)
         return $data;
     }
 
-    /**
-     * Obtenir l'activité récente
-     */
     private function getRecentActivity()
     {
         $activities = [];
 
-        // Dernières inscriptions
         $users = User::orderBy('created_at', 'desc')->limit(3)->get();
         foreach ($users as $user) {
             $activities[] = [
                 'type' => 'user_registered',
                 'user' => $user->name,
-                'description' => "Nouvel utilisateur inscrit : {$user->name}",
+                'description' => "New user registered: {$user->name}",
                 'time' => $user->created_at,
                 'icon' => 'user-plus',
                 'color' => 'success',
             ];
         }
 
-        // Dernières commissions
         $commissions = Commission::where('status', 'paid')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -624,14 +564,13 @@ public function users(Request $request)
             $activities[] = [
                 'type' => 'commission_paid',
                 'user' => $commission->user->name ?? 'N/A',
-                'description' => "Commission de $" . number_format($commission->amount, 2) . " payée à {$commission->user->name}",
+                'description' => "Commission of $" . number_format($commission->amount, 2) . " paid to {$commission->user->name}",
                 'time' => $commission->created_at,
                 'icon' => 'coins',
                 'color' => 'warning',
             ];
         }
 
-        // Derniers retraits
         $withdrawals = Withdrawal::where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -640,14 +579,13 @@ public function users(Request $request)
             $activities[] = [
                 'type' => 'withdrawal_processed',
                 'user' => $withdrawal->user->name ?? 'N/A',
-                'description' => "Retrait de $" . number_format($withdrawal->amount, 2) . " traité pour {$withdrawal->user->name}",
+                'description' => "Withdrawal of $" . number_format($withdrawal->amount, 2) . " processed for {$withdrawal->user->name}",
                 'time' => $withdrawal->created_at,
-                'icon' => 'arrow-up-right-from-square',
+                'icon' => 'credit-card',
                 'color' => 'info',
             ];
         }
 
-        // Dernières commandes
         $orders = Order::where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -656,19 +594,17 @@ public function users(Request $request)
             $activities[] = [
                 'type' => 'order_completed',
                 'user' => $order->user->name ?? 'N/A',
-                'description' => "Commande #{$order->order_number} de $" . number_format($order->total, 2) . " complétée",
+                'description' => "Order #{$order->order_number} of $" . number_format($order->total, 2) . " completed",
                 'time' => $order->created_at,
                 'icon' => 'shopping-cart',
                 'color' => 'primary',
             ];
         }
 
-        // Trier par date
         usort($activities, function($a, $b) {
             return $b['time'] <=> $a['time'];
         });
 
-        // Limiter à 10 activités
         return array_slice($activities, 0, 10);
     }
 }

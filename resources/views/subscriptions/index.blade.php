@@ -1,3 +1,4 @@
+{{-- resources/views/subscriptions/index.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -138,25 +139,12 @@
         border-color: var(--primary-500);
         color: var(--primary-500);
     }
-    .btn-warning {
-        background: var(--gradient-warning);
-        color: white;
-    }
     
     .card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-lg);
         padding: 1.25rem;
-    }
-    
-    .text-3xl {
-        font-size: 1.875rem;
-        line-height: 2.25rem;
-    }
-    .text-xl {
-        font-size: 1.25rem;
-        line-height: 1.75rem;
     }
     
     @keyframes fadeInUp {
@@ -179,69 +167,27 @@
     }
     
     @media (max-width: 640px) {
-        .subscription-card {
-            padding: 0.875rem;
-        }
-        .subscription-card .sub-icon {
-            font-size: 2rem;
-        }
-        .benefit-item {
-            font-size: 0.65rem;
-        }
-        .benefit-item svg {
-            width: 0.75rem;
-            height: 0.75rem;
-        }
-        .text-3xl {
-            font-size: 1.5rem;
-            line-height: 2rem;
-        }
-        .btn {
-            font-size: 0.7rem;
-            padding: 0.375rem 0.75rem;
-        }
-        .btn svg {
-            width: 0.875rem;
-            height: 0.875rem;
-        }
-        .card {
-            padding: 0.875rem;
-        }
-        .subscription-badge {
-            font-size: 0.5rem;
-            padding: 0.125rem 0.625rem;
-        }
+        .subscription-card { padding: 0.875rem; }
+        .subscription-card .sub-icon { font-size: 2rem; }
+        .benefit-item { font-size: 0.65rem; }
+        .benefit-item svg { width: 0.75rem; height: 0.75rem; }
+        .btn { font-size: 0.7rem; padding: 0.375rem 0.75rem; }
+        .btn svg { width: 0.875rem; height: 0.875rem; }
+        .card { padding: 0.875rem; }
+        .subscription-badge { font-size: 0.5rem; padding: 0.125rem 0.625rem; }
     }
     
     @media (max-width: 480px) {
-        .subscription-card {
-            padding: 0.75rem;
-        }
-        .subscription-grid {
-            grid-template-columns: 1fr 1fr !important;
-        }
-        .subscription-card .sub-icon {
-            font-size: 1.75rem;
-        }
-        .subscription-card h3 {
-            font-size: 0.875rem;
-        }
-        .subscription-card .text-3xl {
-            font-size: 1.25rem;
-        }
-        .benefit-item {
-            font-size: 0.6rem;
-        }
-        .benefit-item svg {
-            width: 0.625rem;
-            height: 0.625rem;
-        }
+        .subscription-card { padding: 0.75rem; }
+        .subscription-grid { grid-template-columns: 1fr 1fr !important; }
+        .subscription-card .sub-icon { font-size: 1.75rem; }
+        .subscription-card h3 { font-size: 0.875rem; }
+        .benefit-item { font-size: 0.6rem; }
+        .benefit-item svg { width: 0.625rem; height: 0.625rem; }
     }
     
     @media (max-width: 380px) {
-        .subscription-grid {
-            grid-template-columns: 1fr !important;
-        }
+        .subscription-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
@@ -282,11 +228,10 @@
             </span>
         </div>
 
-        <!-- ✅ AFFICHAGE DU SOLDE -->
         <div class="card border-l-4 border-yellow-500">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your Wallet Balance</p>
             <h2 class="text-xl sm:text-2xl font-bold text-yellow-500">
-                ${{ number_format(Auth::user()->wallet->balance ?? 0, 2) }}
+                ${{ number_format(Auth::user()->wallet?->balance ?? 0, 2) }}
             </h2>
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                 Available for purchases
@@ -309,7 +254,7 @@
                 $isLocked = Auth::user()->package_id && Auth::user()->package_id > $package->id;
                 $isPopular = $package->id == 4;
                 $delay = min($loop->index + 2, 7);
-                $balance = Auth::user()->wallet->balance ?? 0;
+                $balance = Auth::user()->wallet?->balance ?? 0;
                 $canAfford = $balance >= $package->price;
             @endphp
 

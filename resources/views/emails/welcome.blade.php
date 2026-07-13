@@ -139,7 +139,7 @@
             <div class="welcome-box">
                 <p>
                     <strong>Your journey starts now!</strong>
-                    @if($sponsorName)
+                    @if(isset($sponsorName) && $sponsorName)
                         You were sponsored by <strong>{{ $sponsorName }}</strong>.
                     @endif
                 </p>
@@ -169,7 +169,7 @@
             <p>
                 &copy; {{ date('Y') }} Salang Group. All rights reserved.
                 <br>
-                <a href="{{ route('home') }}">Visit our website</a> • 
+                <a href="{{ route('home') }}">Visit our website</a> &bull; 
                 <a href="{{ route('privacy-policy') }}">Privacy Policy</a>
             </p>
         </div>

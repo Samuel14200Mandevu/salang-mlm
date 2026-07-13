@@ -1,3 +1,4 @@
+{{-- resources/views/wallet/index.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -137,15 +138,15 @@
     <div class="stats-grid grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
         <div class="card-stats animate-fadeInUp delay-1 border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">Available Balance</p>
-            <p class="text-2xl sm:text-3xl font-bold text-primary-500">${{ number_format($balance ?? 0, 2) }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-primary-500">${{ number_format(Auth::user()->wallet?->balance ?? 0, 2) }}</p>
         </div>
         <div class="card-stats animate-fadeInUp delay-2 border-l-4 border-yellow-500">
             <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">Pending</p>
-            <p class="text-2xl sm:text-3xl font-bold text-yellow-500">${{ number_format($pendingBalance ?? 0, 2) }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-yellow-500">${{ number_format(Auth::user()->wallet?->pending_balance ?? 0, 2) }}</p>
         </div>
         <div class="card-stats animate-fadeInUp delay-3 border-l-4 border-blue-500">
             <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">Total Withdrawn</p>
-            <p class="text-2xl sm:text-3xl font-bold text-blue-500">${{ number_format($totalWithdrawn ?? 0, 2) }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-blue-500">${{ number_format(Auth::user()->wallet?->total_withdrawn ?? 0, 2) }}</p>
         </div>
     </div>
 

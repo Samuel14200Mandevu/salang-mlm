@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Auth/AuthenticatedSessionController.php
 
 namespace App\Http\Controllers\Auth;
 
@@ -22,7 +23,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Rediriger les admins vers /admin
         if (Auth::user()->hasRole('admin')) {
             return redirect()->intended(route('admin.dashboard'));
         }

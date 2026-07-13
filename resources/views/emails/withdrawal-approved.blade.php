@@ -146,7 +146,7 @@
                 <div class="label">Amount Withdrawn</div>
                 <div class="amount">${{ number_format($amount, 2) }}</div>
                 <div class="fee-info">
-                    Fee: ${{ number_format($fee, 2) }} • Net: ${{ number_format($netAmount, 2) }}
+                    Fee: ${{ number_format($fee ?? 0, 2) }} &bull; Net: ${{ number_format($netAmount, 2) }}
                 </div>
             </div>
 
@@ -166,7 +166,7 @@
             </div>
 
             <p>
-                The funds have been sent to your {{ $method }} account.
+                The funds have been sent to your {{ ucfirst($method) }} account.
             </p>
 
             <a href="{{ route('withdrawal.index') }}" class="btn">
@@ -178,7 +178,7 @@
             <p>
                 &copy; {{ date('Y') }} Salang Group. All rights reserved.
                 <br>
-                <a href="{{ route('home') }}">Visit our website</a> • 
+                <a href="{{ route('home') }}">Visit our website</a> &bull; 
                 <a href="{{ route('privacy-policy') }}">Privacy Policy</a>
             </p>
         </div>

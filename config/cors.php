@@ -1,4 +1,5 @@
 <?php
+// config/cors.php
 
 return [
     /*
@@ -14,26 +15,41 @@ return [
         'logout',
         'register',
         'webhook/*',
+        'admin/*',
     ],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
     'allowed_origins' => [
+        env('APP_URL'),
+        env('FRONTEND_URL', 'http://localhost:3000'),
         'http://localhost:3000',
         'http://localhost:5173',
         'http://127.0.0.1:8000',
-        'https://votre-domaine.com',
         'https://*.salang.com',
     ],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => [
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Origin',
+        'Authorization',
+        'X-CSRF-TOKEN',
+        'X-API-Key',
+        'X-Request-Id',
+    ],
 
-    'exposed_headers' => [],
+    'exposed_headers' => [
+        'X-Request-Id',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
+    ],
 
-    'max_age' => 0,
+    'max_age' => 86400,
 
     'supports_credentials' => true,
-
 ];

@@ -1,17 +1,11 @@
 <?php
+// config/services.php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
     */
 
     'postmark' => [
@@ -35,38 +29,52 @@ return [
         ],
     ],
 
-    // ============================================================
-    // RÉSEAUX SOCIAUX (Laravel Socialite)
-    // ============================================================
+    /*
+    |--------------------------------------------------------------------------
+    | Social Authentication
+    |--------------------------------------------------------------------------
+    */
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
     ],
 
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('FACEBOOK_REDIRECT_URI'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', '/auth/facebook/callback'),
     ],
 
     'twitter' => [
         'client_id' => env('TWITTER_CLIENT_ID'),
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
-        'redirect' => env('TWITTER_REDIRECT_URI'),
+        'redirect' => env('TWITTER_REDIRECT_URI', '/auth/twitter/callback'),
     ],
 
     'instagram' => [
         'client_id' => env('INSTAGRAM_CLIENT_ID'),
         'client_secret' => env('INSTAGRAM_CLIENT_SECRET'),
-        'redirect' => env('INSTAGRAM_REDIRECT_URI'),
+        'redirect' => env('INSTAGRAM_REDIRECT_URI', '/auth/instagram/callback'),
     ],
 
     'tiktok' => [
         'client_id' => env('TIKTOK_CLIENT_ID'),
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
-        'redirect' => env('TIKTOK_REDIRECT_URI'),
+        'redirect' => env('TIKTOK_REDIRECT_URI', '/auth/tiktok/callback'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Services
+    |--------------------------------------------------------------------------
+    */
+
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
 ];

@@ -1,4 +1,5 @@
 <?php
+// app/Console/Commands/CalculateCommissions.php
 
 namespace App\Console\Commands;
 
@@ -10,7 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class CalculateCommissions extends Command
 {
-    protected $signature = 'commissions:calculate {--user=} {--all}';
+    protected $signature = 'commissions:calculate 
+                            {--user= : ID de l\'utilisateur spécifique}
+                            {--all : Calculer pour tous les utilisateurs}
+                            {--period= : Période au format YYYY-MM}';
+    
     protected $description = 'Calculer les commissions pour les utilisateurs';
 
     protected $commissionService;
@@ -46,7 +51,7 @@ class CalculateCommissions extends Command
         })->get();
 
         if ($users->isEmpty()) {
-            $this->info('✅ Aucune commission en attente');
+            $this->info('Aucune commission en attente');
             return 0;
         }
 
@@ -60,7 +65,7 @@ class CalculateCommissions extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info('✅ Calcul terminé');
+        $this->info('Calcul terminé');
     }
 
     private function calculateForUser($user)
@@ -107,5 +112,6 @@ class CalculateCommissions extends Command
 
         $bar->finish();
         $this->newLine();
+        $this->info('Calcul terminé pour tous les utilisateurs');
     }
 }

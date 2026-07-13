@@ -1,4 +1,5 @@
 <?php
+// app/Models/Order.php
 
 namespace App\Models;
 
@@ -41,7 +42,6 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    // ⚠️ AJOUTER CETTE RELATION ⚠️
     public function items()
     {
         return $this->hasMany(OrderItem::class);
@@ -55,10 +55,10 @@ class Order extends Model
     public function getStatusLabelAttribute()
     {
         $labels = [
-            'pending' => 'En attente',
-            'processing' => 'En traitement',
-            'completed' => 'Terminée',
-            'cancelled' => 'Annulée',
+            'pending' => 'Pending',
+            'processing' => 'Processing',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
         ];
         return $labels[$this->status] ?? ucfirst($this->status);
     }
@@ -66,10 +66,45 @@ class Order extends Model
     public function getPaymentStatusLabelAttribute()
     {
         $labels = [
-            'pending' => 'En attente',
-            'completed' => 'Payé',
-            'failed' => 'Échoué',
+            'pending' => 'Pending',
+            'completed' => 'Paid',
+            'failed' => 'Failed',
         ];
         return $labels[$this->payment_status] ?? ucfirst($this->payment_status);
+    }
+
+    public function getTotalPVAttribute(): int
+    {
+        return $this->items()->sum('pv_value') ?? 0;
+    }
+
+    public function getTotalBVAttribute(): int
+    {
+        return $this->items()->sum('bv_value') ?? 0;
+    }
+
+    public function getFormattedSubtotalAttribute()
+    {
+        return '$' . number_format($this->subtotal, 2);
+    }
+
+    public function getFormattedTotalAttribute()
+    {
+        return '$' . number_format($this->total, 2);
+    }
+
+    public function isPaid()
+    {
+        return $this->payment_status === 'completed';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
     }
 }

@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/ReportController.php
 
 namespace App\Http\Controllers;
 
@@ -15,22 +16,21 @@ class ReportController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        // Statistiques
+
         $totalEarnings = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->sum('amount');
-            
+
         $totalWithdrawn = Withdrawal::where('user_id', $user->id)
             ->where('status', 'completed')
             ->sum('amount');
-            
+
         $transactionsCount = Transaction::where('user_id', $user->id)->count();
         $packagesCount = Package::where('is_active', true)->count();
-        
+
         return view('report.index', compact(
-            'totalEarnings', 
-            'totalWithdrawn', 
+            'totalEarnings',
+            'totalWithdrawn',
             'transactionsCount',
             'packagesCount'
         ));

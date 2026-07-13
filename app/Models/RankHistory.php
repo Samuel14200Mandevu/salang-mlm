@@ -1,4 +1,5 @@
 <?php
+// app/Models/RankHistory.php
 
 namespace App\Models;
 
@@ -9,9 +10,6 @@ class RankHistory extends Model
 {
     use HasFactory;
 
-    /**
-     * ⚠️ IMPORTANT : Spécifier le nom correct de la table
-     */
     protected $table = 'rank_history';
 
     protected $fillable = [
@@ -43,5 +41,46 @@ class RankHistory extends Model
     public function newRank()
     {
         return $this->belongsTo(Rank::class, 'new_rank_id');
+    }
+
+    public function getTypeAttribute()
+    {
+        $oldLevel = $this->oldRank ? $this->oldRank->level : 0;
+        $newLevel = $this->newRank ? $this->newRank->level : 0;
+        
+        if ($newLevel > $oldLevel) {
+            return 'Promotion';
+        } elseif ($newLevel < $oldLevel) {
+            return 'Demotion';
+        }
+        return 'Update';
+    }
+
+    public function getColorAttribute()
+    {
+        $oldLevel = $this->oldRank ? $this->oldRank->level : 0;
+        $newLevel = $this->newRank ? $this->newRank->level : 0;
+        
+        if ($newLevel > $oldLevel) {
+            return 'green';
+        } elseif ($newLevel < $oldLevel) {
+            return 'red';
+        }
+        return 'yellow';
+    }
+
+    public function getTypeIconAttribute()
+    {
+        $types = [
+            'Promotion' => 'arrow-up',
+            'Demotion' => 'arrow-down',
+            'Update' => 'refresh',
+        ];
+        return $types[$this->type] ?? 'circle';
+    }
+
+    public function getFormattedDateAttribute()
+    {
+        return $this->created_at ? $this->created_at->format('d M Y H:i') : '-';
     }
 }

@@ -12,22 +12,14 @@ use Illuminate\Validation\Rules;
 
 class ProfileController extends Controller
 {
-    /**
-     * Afficher le profil
-     */
     public function index()
     {
         $user = Auth::user();
-        
-        // ✅ Récupérer le sponsor
         $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
-        
+
         return view('profile.index', compact('user', 'sponsor'));
     }
 
-    /**
-     * Mettre à jour le profil
-     */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -38,18 +30,14 @@ class ProfileController extends Controller
             'country' => ['nullable', 'string', 'max:100'],
             'city' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
-            'zip' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $user->update($request->only(['name', 'phone', 'country', 'city', 'address', 'zip']));
+        $user->update($request->only(['name', 'phone', 'country', 'city', 'address']));
 
         return redirect()->route('profile.index')
-            ->with('success', 'Profil mis à jour avec succès !');
+            ->with('success', 'Profile updated successfully!');
     }
 
-    /**
-     * Mettre à jour l'avatar
-     */
     public function updateAvatar(Request $request)
     {
         $user = Auth::user();
@@ -58,12 +46,10 @@ class ProfileController extends Controller
             'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ]);
 
-        // Supprimer l'ancien avatar
         if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
             unlink(public_path('storage/avatars/' . $user->avatar));
         }
 
-        // Sauvegarder le nouvel avatar
         $image = $request->file('avatar');
         $filename = 'avatar_' . $user->id . '_' . time() . '.' . $image->getClientOriginalExtension();
         $image->move(public_path('storage/avatars'), $filename);
@@ -73,14 +59,11 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar mis à jour avec succès !',
+            'message' => 'Avatar updated successfully!',
             'avatar_url' => asset('storage/avatars/' . $filename)
         ]);
     }
 
-    /**
-     * Mettre à jour le mot de passe
-     */
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
@@ -92,7 +75,7 @@ class ProfileController extends Controller
 
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors([
-                'current_password' => 'Le mot de passe actuel est incorrect.'
+                'current_password' => 'The current password is incorrect.'
             ]);
         }
 
@@ -100,12 +83,9 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.index')
-            ->with('success', 'Mot de passe mis à jour avec succès !');
+            ->with('success', 'Password updated successfully!');
     }
 
-    /**
-     * Supprimer l'avatar
-     */
     public function deleteAvatar()
     {
         $user = Auth::user();
@@ -119,13 +99,10 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar supprimé avec succès !'
+            'message' => 'Avatar deleted successfully!'
         ]);
     }
 
-    /**
-     * Supprimer le compte
-     */
     public function destroy(Request $request)
     {
         $user = Auth::user();
@@ -136,24 +113,21 @@ class ProfileController extends Controller
 
         if (!Hash::check($request->password, $user->password)) {
             return back()->withErrors([
-                'password' => 'Le mot de passe est incorrect.'
+                'password' => 'The password is incorrect.'
             ], 'userDeletion');
         }
 
-        // Supprimer l'avatar
         if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
             unlink(public_path('storage/avatars/' . $user->avatar));
         }
 
-        // Supprimer le wallet
         if ($user->wallet) {
             $user->wallet->delete();
         }
 
-        // Supprimer l'utilisateur
         $user->delete();
         Auth::logout();
 
-        return redirect('/')->with('success', 'Votre compte a été supprimé.');
+        return redirect('/')->with('success', 'Your account has been deleted.');
     }
 }

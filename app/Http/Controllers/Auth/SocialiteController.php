@@ -19,27 +19,22 @@ class SocialiteController extends Controller
 {
     protected $providers = ['google', 'facebook', 'twitter', 'instagram', 'tiktok'];
 
-    /**
-     * Rediriger vers le provider OAuth
-     */
     public function redirect($provider)
     {
         if (!in_array($provider, $this->providers)) {
-            return redirect('/login')->with('error', 'Ce fournisseur n\'est pas supporté.');
+            return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
-        // ✅ Vérifier l'ID du parrain (session, paramètre GET ou POST)
         $sponsorId = session('sponsor_id') ?? request()->query('ref') ?? request()->input('sponsor_id');
-        
+
         if (!$sponsorId) {
-            return redirect('/register')->with('error', 'Vous devez avoir un ID de parrain pour vous inscrire.');
+            return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
         }
 
-        // ✅ Vérifier que le parrain existe
         $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
         if (!$sponsor) {
             session()->forget('sponsor_id');
-            return redirect('/register')->with('error', 'ID de parrain invalide. Veuillez réessayer.');
+            return redirect('/register')->with('error', 'Invalid sponsor ID. Please try again.');
         }
 
         session(['sponsor_id' => $sponsor->id]);
@@ -49,36 +44,30 @@ class SocialiteController extends Controller
             return Socialite::driver($provider)->redirect();
         } catch (\Exception $e) {
             Log::error('Socialite redirect error: ' . $e->getMessage());
-            return redirect('/login')->with('error', 'Erreur de connexion avec Google. Veuillez réessayer.');
+            return redirect('/login')->with('error', 'Connection error with ' . ucfirst($provider) . '. Please try again.');
         }
     }
 
-    /**
-     * Callback du provider OAuth
-     */
     public function callback($provider)
     {
         if (!in_array($provider, $this->providers)) {
-            return redirect('/login')->with('error', 'Ce fournisseur n\'est pas supporté.');
+            return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
         try {
             $socialUser = Socialite::driver($provider)->user();
         } catch (\Exception $e) {
             Log::error('Socialite callback error: ' . $e->getMessage());
-            return redirect('/login')->with('error', 'Erreur d\'authentification avec ' . ucfirst($provider) . '. Veuillez réessayer.');
+            return redirect('/login')->with('error', 'Authentication error with ' . ucfirst($provider) . '. Please try again.');
         }
 
-        // ✅ Vérifier l'email
         if (!$socialUser->getEmail()) {
-            return redirect('/register')->with('error', 'Aucune adresse email trouvée avec ce compte.');
+            return redirect('/register')->with('error', 'No email address found with this account.');
         }
 
-        // ✅ Vérifier si l'utilisateur existe déjà (par email OU provider_id)
         $user = User::where('email', $socialUser->getEmail())->first();
 
         if ($user) {
-            // ✅ Mettre à jour les informations
             $providerColumn = $provider . '_id';
             if (empty($user->$providerColumn)) {
                 $user->$providerColumn = $socialUser->getId();
@@ -86,38 +75,37 @@ class SocialiteController extends Controller
                 $user->last_provider = $provider;
                 $user->save();
             }
-            
+
             session()->forget('sponsor_id');
             session()->forget('social_provider');
             Auth::login($user);
-            
+
             if ($user->hasRole('admin')) {
                 return redirect()->route('admin.dashboard')
-                    ->with('success', 'Bonjour ' . $user->name . ' ! Connexion réussie.');
+                    ->with('success', 'Welcome back ' . $user->name . '!');
             }
-            
+
             return redirect()->route('dashboard')
-                ->with('success', 'Bonjour ' . $user->name . ' ! Connexion réussie.');
+                ->with('success', 'Welcome back ' . $user->name . '!');
         }
 
-        // ✅ Vérifier que le parrain existe encore
         $sponsorId = session('sponsor_id');
         if (!$sponsorId) {
-            return redirect('/register')->with('error', 'ID de parrain requis pour l\'inscription.');
+            return redirect('/register')->with('error', 'Sponsor ID required for registration.');
         }
 
         $sponsor = User::find($sponsorId);
         if (!$sponsor) {
             session()->forget('sponsor_id');
             session()->forget('social_provider');
-            return redirect('/register')->with('error', 'ID de parrain invalide.');
+            return redirect('/register')->with('error', 'Invalid sponsor ID.');
         }
 
-        // ✅ Générer un code de parrain unique
         $sponsorCode = $this->generateSponsorId();
 
-        // ✅ Créer le nouvel utilisateur
         try {
+            $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
+
             $user = User::create([
                 'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
                 'email' => $socialUser->getEmail(),
@@ -125,13 +113,29 @@ class SocialiteController extends Controller
                 'sponsor_id' => $sponsorCode,
                 'parrain_id' => $sponsor->id,
                 'avatar' => $socialUser->getAvatar(),
-                $provider . '_id' => $socialUser->getId(),
-                'last_provider' => $provider,
-                'rank_id' => Rank::where('slug', 'distributor')->first()?->id ?? 1,
+                'rank_id' => $rankId,
+                'rank' => 'Distributor',
                 'is_active' => true,
+                'pv_balance' => 0,
+                'bv_balance' => 0,
+                'monthly_pv' => 0,
+                'monthly_bv' => 0,
+                'team_pv' => 0,
+                'team_bv' => 0,
+                'total_sponsors' => 0,
+                'total_team' => 0,
+                'qualified_branches' => 0,
+                'direct_sponsors_count' => 0,
+                'commission_balance' => 0,
+                'total_earnings' => 0,
+                'kyc_status' => 'not_submitted',
             ]);
 
-            // ✅ Créer le portefeuille
+            $providerColumn = $provider . '_id';
+            $user->$providerColumn = $socialUser->getId();
+            $user->last_provider = $provider;
+            $user->save();
+
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -140,7 +144,6 @@ class SocialiteController extends Controller
                 'is_active' => true,
             ]);
 
-            // ✅ Créer la généalogie
             Genealogy::create([
                 'user_id' => $user->id,
                 'sponsor_id' => $sponsor->id,
@@ -152,9 +155,9 @@ class SocialiteController extends Controller
                 'total_children' => 0,
             ]);
 
-            // ✅ Mettre à jour les compteurs du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
+            $sponsor->save();
 
             session()->forget('sponsor_id');
             session()->forget('social_provider');
@@ -162,40 +165,34 @@ class SocialiteController extends Controller
             Auth::login($user);
 
             return redirect()->route('dashboard')
-                ->with('success', 'Bienvenue ' . $user->name . ' ! Votre compte a été créé avec Google.');
+                ->with('success', 'Welcome ' . $user->name . '! Your account has been created with ' . ucfirst($provider) . '.');
 
         } catch (\Exception $e) {
-            Log::error('Erreur création utilisateur social: ' . $e->getMessage());
-            return redirect('/register')->with('error', 'Erreur lors de la création du compte. Veuillez réessayer.');
+            Log::error('Social registration error: ' . $e->getMessage());
+            return redirect('/register')->with('error', 'Error creating account. Please try again.');
         }
     }
 
-    /**
-     * Générer un ID de parrain unique
-     */
     private function generateSponsorId(): string
     {
         $prefix = 'SAL';
         $random = strtoupper(Str::random(6));
         $sponsorCode = $prefix . $random;
-        
+
         while (User::where('sponsor_id', $sponsorCode)->exists()) {
             $random = strtoupper(Str::random(6));
             $sponsorCode = $prefix . $random;
         }
-        
+
         return $sponsorCode;
     }
 
-    /**
-     * Stocker l'ID du parrain en session
-     */
     public function storeSponsor(Request $request)
     {
         $request->validate([
             'sponsor_id' => 'required|string'
         ], [
-            'sponsor_id.required' => 'L\'ID du parrain est obligatoire.',
+            'sponsor_id.required' => 'Sponsor ID is required.',
         ]);
 
         $sponsor = User::find($request->sponsor_id) ?? User::where('sponsor_id', $request->sponsor_id)->first();
@@ -203,15 +200,15 @@ class SocialiteController extends Controller
         if (!$sponsor) {
             return response()->json([
                 'success' => false,
-                'message' => 'ID de parrain invalide. Aucun utilisateur trouvé.'
+                'message' => 'Invalid sponsor ID. No user found.'
             ], 422);
         }
 
         session(['sponsor_id' => $sponsor->id]);
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'ID de parrain validé.',
+            'message' => 'Sponsor ID validated.',
             'sponsor_name' => $sponsor->name,
             'sponsor_email' => $sponsor->email,
         ]);

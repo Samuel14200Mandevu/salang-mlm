@@ -1,5 +1,4 @@
 {{-- resources/views/commissions/dashboard.blade.php --}}
-
 @extends('layouts.app')
 
 @push('styles')
@@ -21,7 +20,7 @@
         position: absolute;
         right: 1rem;
         top: 1rem;
-        opacity: 0.15;
+        opacity: 0.12;
         font-size: 2.5rem;
     }
     .stat-card .stat-number {
@@ -36,12 +35,6 @@
         color: var(--text-secondary);
         font-weight: 600;
     }
-    .stat-card .stat-change {
-        font-size: 0.7rem;
-        font-weight: 600;
-    }
-    .stat-card .stat-change.up { color: #22c55e; }
-    .stat-card .stat-change.down { color: #ef4444; }
     
     .type-badge {
         display: inline-flex;
@@ -56,6 +49,7 @@
     .type-badge-indirect { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .type-badge-leadership { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .type-badge-retail { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .type-badge-bonus { background: rgba(236,72,153,0.15); color: #ec4899; }
     
     .badge {
         display: inline-block;
@@ -67,11 +61,10 @@
     .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
     
     .progress-bar {
         width: 100%;
-        height: 8px;
+        height: 6px;
         background: var(--bg-secondary);
         border-radius: 9999px;
         overflow: hidden;
@@ -102,21 +95,27 @@
         color: var(--text-primary);
         margin: 0;
     }
-    .card-header .count {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-    }
     
-    .table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
     }
-    .table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: 0.8rem;
-    }
+    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
+    
+    .table-wrap { overflow-x: auto; }
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
     .table thead th {
         padding: 0.5rem 0.75rem;
         text-align: left;
@@ -134,9 +133,7 @@
         vertical-align: middle;
         border-bottom: 1px solid var(--border-light);
     }
-    .table tbody tr:hover {
-        background: var(--bg-hover);
-    }
+    .table tbody tr:hover { background: var(--bg-hover); }
     
     .avatar {
         display: flex;
@@ -155,19 +152,6 @@
         color: white;
     }
     
-    .rank-pill {
-        display: inline-block;
-        padding: 0.1rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.6rem;
-        font-weight: 600;
-    }
-    .rank-pill-1 { background: rgba(156,163,175,0.2); color: #9ca3af; }
-    .rank-pill-2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
-    .rank-pill-3 { background: rgba(16,185,129,0.15); color: #10b981; }
-    .rank-pill-4 { background: rgba(245,158,11,0.15); color: #f59e0b; }
-    .rank-pill-5 { background: rgba(99,102,241,0.15); color: #6366f1; }
-    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -185,6 +169,7 @@
         .stat-grid { grid-template-columns: 1fr 1fr !important; }
         .card { padding: 0.875rem; }
         .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
+        .btn { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
     }
     
     @media (max-width: 480px) {
@@ -199,19 +184,21 @@
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                📊 Tableau de bord des commissions
-            </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Vue d'ensemble de vos gains et commissions
-            </p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Tableau de bord des commissions</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vue d'ensemble de vos gains</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
             <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
-                Voir tout
+                Toutes les commissions
+            </a>
+            <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                </svg>
+                Par niveau
             </a>
         </div>
     </div>
@@ -219,41 +206,56 @@
     <!-- Stats Cards -->
     <div class="stat-grid grid grid-cols-2 md:grid-cols-4 gap-3 animate-fadeInUp delay-1">
         <div class="stat-card border-l-4 border-primary-500">
-            <div class="stat-icon">💰</div>
+            <div class="stat-icon">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
             <p class="stat-label">Total gagné</p>
             <p class="stat-number text-primary-500">${{ number_format($stats['total_amount'] ?? 0, 2) }}</p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">{{ $stats['total_count'] ?? 0 }} commissions</p>
         </div>
         
         <div class="stat-card border-l-4 border-success-500">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
             <p class="stat-label">Payé</p>
             <p class="stat-number text-success-500">${{ number_format($stats['paid_amount'] ?? 0, 2) }}</p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">{{ $stats['paid_count'] ?? 0 }} commissions</p>
         </div>
         
         <div class="stat-card border-l-4 border-warning-500">
-            <div class="stat-icon">⏳</div>
+            <div class="stat-icon">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
             <p class="stat-label">En attente</p>
             <p class="stat-number text-warning-500">${{ number_format($stats['pending_amount'] ?? 0, 2) }}</p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">{{ $stats['pending_count'] ?? 0 }} commissions</p>
         </div>
         
         <div class="stat-card border-l-4 border-purple-500">
-            <div class="stat-icon">📈</div>
-            <p class="stat-label">Moyenne par commission</p>
+            <div class="stat-icon">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <p class="stat-label">Moyenne</p>
             <p class="stat-number text-purple-500">${{ number_format($avgCommission ?? 0, 2) }}</p>
-            <p class="text-xs text-[var(--text-secondary)] mt-1">Commission moyenne</p>
+            <p class="text-xs text-[var(--text-secondary)] mt-1">par commission</p>
         </div>
     </div>
 
-    <!-- Répartition par type + Meilleur mois -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 animate-fadeInUp delay-2">
-        <!-- Répartition par type -->
-        <div class="card md:col-span-2">
+    <!-- Répartition par type -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 animate-fadeInUp delay-2">
+        <div class="card lg:col-span-2">
             <div class="card-header">
                 <h5>Répartition par type</h5>
-                <span class="count">{{ $stats['total_count'] ?? 0 }} commissions</span>
+                <span class="text-xs text-[var(--text-secondary)]">{{ $stats['total_count'] ?? 0 }} commissions</span>
             </div>
             <div class="space-y-3">
                 @foreach($byType as $key => $data)
@@ -282,10 +284,10 @@
             </div>
         </div>
 
-        <!-- Meilleur mois + infos -->
+        <!-- Meilleur mois -->
         <div class="card">
             <div class="card-header">
-                <h5>📅 Meilleur mois</h5>
+                <h5>Meilleur mois</h5>
             </div>
             @if($bestMonth)
                 <div class="text-center py-4">
@@ -296,7 +298,7 @@
                         {{ \Carbon\Carbon::createFromFormat('Y-m', $bestMonth->month)->format('F Y') }}
                     </p>
                     <div class="mt-2 inline-block px-3 py-1 bg-primary-500/10 rounded-full text-xs text-primary-500">
-                        🏆 Meilleur mois
+                        Meilleur mois
                     </div>
                 </div>
             @else
@@ -325,8 +327,8 @@
     <!-- Évolution mensuelle -->
     <div class="card animate-fadeInUp delay-3">
         <div class="card-header">
-            <h5>📈 Évolution mensuelle (12 derniers mois)</h5>
-            <span class="count">Total: ${{ number_format($stats['total_amount'] ?? 0, 2) }}</span>
+            <h5>Évolution mensuelle</h5>
+            <span class="text-xs text-[var(--text-secondary)]">12 derniers mois</span>
         </div>
         <div class="h-48 sm:h-56 flex items-end gap-1 sm:gap-2">
             @php 
@@ -361,10 +363,9 @@
 
     <!-- Dernières commissions + Top parrains -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fadeInUp delay-4">
-        <!-- Dernières commissions -->
         <div class="card">
             <div class="card-header">
-                <h5>🕐 Dernières commissions</h5>
+                <h5>Dernières commissions</h5>
                 <a href="{{ route('commissions.index') }}" class="text-xs text-primary-500 hover:underline">
                     Voir tout
                 </a>
@@ -412,8 +413,8 @@
         <!-- Top parrains -->
         <div class="card">
             <div class="card-header">
-                <h5>🏆 Meilleurs parrains</h5>
-                <span class="count">Top 10</span>
+                <h5>Meilleurs parrains</h5>
+                <span class="text-xs text-[var(--text-secondary)]">Top 10</span>
             </div>
             <div class="table-wrap">
                 <table class="table">
@@ -429,9 +430,9 @@
                         @forelse($topReferrals as $index => $referral)
                             <tr>
                                 <td>
-                                    @if($index == 0) 🥇
-                                    @elseif($index == 1) 🥈
-                                    @elseif($index == 2) 🥉
+                                    @if($index == 0) 1
+                                    @elseif($index == 1) 2
+                                    @elseif($index == 2) 3
                                     @else {{ $index + 1 }}
                                     @endif
                                 </td>
@@ -465,8 +466,8 @@
     @if($pending->count() > 0)
     <div class="card animate-fadeInUp delay-5 border-l-4 border-warning-500">
         <div class="card-header">
-            <h5>⏳ Commissions en attente ({{ $pending->count() }})</h5>
-            <span class="count">Total: ${{ number_format($pending->sum('amount'), 2) }}</span>
+            <h5>Commissions en attente ({{ $pending->count() }})</h5>
+            <span class="text-xs text-[var(--text-secondary)]">Total: ${{ number_format($pending->sum('amount'), 2) }}</span>
         </div>
         <div class="table-wrap">
             <table class="table">
@@ -505,29 +506,20 @@
     </div>
     @endif
 
-    <!-- Commissions par package -->
-    @if($byPackage->count() > 0)
-    <div class="card animate-fadeInUp delay-5">
-        <div class="card-header">
-            <h5>📦 Commissions par package</h5>
-            <span class="count">{{ $byPackage->count() }} packages</span>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            @foreach($byPackage as $data)
-                <div class="p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
-                    <p class="font-semibold text-[var(--text-primary)] text-sm">
-                        {{ $data->package?->name ?? 'N/A' }}
-                    </p>
-                    <p class="text-lg font-bold text-primary-500">
-                        ${{ number_format($data->total, 2) }}
-                    </p>
-                    <p class="text-xs text-[var(--text-secondary)]">
-                        {{ $data->count }} commissions
-                    </p>
-                </div>
-            @endforeach
-        </div>
+    <!-- Quick Navigation -->
+    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-5">
+        <a href="{{ route('commissions.index') }}" class="btn btn-primary btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Voir toutes les commissions
+        </a>
+        <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            Commissions par niveau
+        </a>
     </div>
-    @endif
 </div>
 @endsection

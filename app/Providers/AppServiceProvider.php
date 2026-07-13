@@ -13,6 +13,9 @@ use App\Services\NetworkService;
 use App\Services\CryptoPaymentService;
 use App\Services\MobileMoneyService;
 use App\Services\ImageUploadService;
+use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\RankConditionChecker;
+use App\Services\MLM\CommissionDistributor;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,20 +24,41 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Services MLM
-        $this->app->singleton(CommissionService::class, function ($app) {
-            return new CommissionService();
+        // ✅ SERVICES MLM AVEC DÉPENDANCES
+        $this->app->singleton(RankConditionChecker::class, function ($app) {
+            return new RankConditionChecker();
         });
 
+        $this->app->singleton(AdvancedRankCalculator::class, function ($app) {
+            return new AdvancedRankCalculator(
+                $app->make(RankConditionChecker::class)
+            );
+        });
+
+        $this->app->singleton(CommissionDistributor::class, function ($app) {
+            return new CommissionDistributor();
+        });
+
+        // ✅ CommissionService AVEC SES 3 DÉPENDANCES
+        $this->app->singleton(CommissionService::class, function ($app) {
+            return new CommissionService(
+                $app->make(AdvancedRankCalculator::class),
+                $app->make(RankConditionChecker::class),
+                $app->make(CommissionDistributor::class)
+            );
+        });
+
+        // ✅ RankService (à garder pour compatibilité)
         $this->app->singleton(RankService::class, function ($app) {
             return new RankService();
         });
 
+        // ✅ NetworkService
         $this->app->singleton(NetworkService::class, function ($app) {
             return new NetworkService();
         });
 
-        // Services Paiement
+        // ✅ Services Paiement
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService();
         });
@@ -47,16 +71,10 @@ class AppServiceProvider extends ServiceProvider
             return new MobileMoneyService();
         });
 
-        // Services Utilitaires
+        // ✅ Services Utilitaires
         $this->app->singleton(ImageUploadService::class, function ($app) {
             return new ImageUploadService();
         });
-
-        // Pour les environnements de développement
-        // COMMENTÉ CAR TELESCOPE N'EST PAS INSTALLÉ
-        // if ($this->app->environment('local')) {
-        //     $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
-        // }
     }
 
     /**
@@ -84,7 +102,6 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureTimeouts(): void
     {
-        // Pour les requêtes longues (commissions, rapports)
         config(['app.request_timeout' => 120]);
     }
 
@@ -94,6 +111,5 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMiddleware(): void
     {
         // Ajouter des middlewares personnalisés si nécessaire
-        // $this->app['router']->pushMiddlewareToGroup('api', \App\Http\Middleware\ApiLogger::class);
     }
 }

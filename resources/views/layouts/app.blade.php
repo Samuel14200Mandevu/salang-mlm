@@ -370,20 +370,20 @@
             <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 
                <!-- Logo -->
-<div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
-    <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1">
-        <img src="{{ asset('images/salang_logo.png') }}" 
-             alt="Salang" 
-             class="logo-themeable transition-all duration-300"
-             :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
-    </a>
-    <button @click="sidebarOpen = false" 
-            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
-        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-    </button>
-</div>
+                <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
+                    <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1">
+                        <img src="{{ asset('images/salang_logo.png') }}" 
+                             alt="Salang" 
+                             class="logo-themeable transition-all duration-300"
+                             :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
+                    </a>
+                    <button @click="sidebarOpen = false" 
+                            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
 
                 <!-- Menu -->
                 <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
@@ -664,7 +664,7 @@
                             </button>
                             
                             <div class="min-w-0 flex-1">
-                                @if(isset($header))
+                                @if(isset($header) && $header)
                                     <div class="truncate">{{ $header }}</div>
                                 @else
                                     <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Dashboard</h1>
@@ -691,7 +691,7 @@
                             </a>
 
                             <!-- Notifications -->
-                            <div class="relative" x-data="{ open: false, unreadCount: 3 }">
+                            <div class="relative" x-data="{ open: false, unreadCount: {{ auth()->user()->unreadNotifications()->count() }} }">
                                 <button @click="open = !open" 
                                         class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -713,27 +713,21 @@
                                     
                                     <div class="px-3 sm:px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
                                         <h4 class="font-semibold text-sm sm:text-base text-[var(--text-primary)]">Notifications</h4>
-                                        <a href="#" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
+                                        <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
                                     </div>
 
                                     <div class="divide-y divide-[var(--border-color)]" id="notificationList">
-                                        <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="1">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">New Commission</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">You received $25.00 in direct commission</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">2 hours ago</p>
-                                        </div>
-                                        
-                                        <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="2">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">New Downline</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">Jean Dupont registered with your link</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">5 hours ago</p>
-                                        </div>
-                                        
-                                        <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="3">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">Rank Promotion</p>
-                                            <p class="text-xs text-[var(--text-secondary)]">Congratulations! You are now Manager</p>
-                                            <p class="text-xs text-[var(--text-tertiary)] mt-1">1 day ago</p>
-                                        </div>
+                                        @forelse(auth()->user()->notifications()->limit(5)->get() as $notification)
+                                            <div class="px-3 sm:px-4 py-3 hover:bg-[var(--bg-secondary)] transition cursor-pointer notification-item" data-id="{{ $notification->id }}">
+                                                <p class="text-sm font-medium text-[var(--text-primary)]">{{ $notification->data['title'] ?? 'Notification' }}</p>
+                                                <p class="text-xs text-[var(--text-secondary)]">{{ $notification->data['message'] ?? '' }}</p>
+                                                <p class="text-xs text-[var(--text-tertiary)] mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                            </div>
+                                        @empty
+                                            <div class="px-3 sm:px-4 py-4 text-center text-[var(--text-secondary)] text-sm">
+                                                No notifications
+                                            </div>
+                                        @endforelse
                                     </div>
 
                                     <div class="px-3 sm:px-4 py-2 border-t border-[var(--border-color)] text-center">

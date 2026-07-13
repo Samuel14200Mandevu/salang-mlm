@@ -1,4 +1,5 @@
 <?php
+// app/Models/Wallet.php
 
 namespace App\Models;
 
@@ -45,10 +46,10 @@ class Wallet extends Model
     public function credit($amount, $description = null)
     {
         $this->balance += $amount;
+        $this->total_deposited += $amount;
         $this->save();
 
-        // Créer la transaction
-        return $this->createTransaction($amount, 'credit', $description);
+        return $this->createTransaction($amount, 'deposit', $description);
     }
 
     public function debit($amount, $description = null)
@@ -58,10 +59,10 @@ class Wallet extends Model
         }
 
         $this->balance -= $amount;
+        $this->total_withdrawn += $amount;
         $this->save();
 
-        // Créer la transaction
-        return $this->createTransaction($amount, 'debit', $description);
+        return $this->createTransaction($amount, 'withdrawal', $description);
     }
 
     public function createTransaction($amount, $type, $description = null)
@@ -73,7 +74,7 @@ class Wallet extends Model
             'amount' => $amount,
             'fee' => 0,
             'net_amount' => $amount,
-            'balance_before' => $this->balance + ($type === 'credit' ? -$amount : $amount),
+            'balance_before' => $this->balance + ($type === 'deposit' ? -$amount : $amount),
             'balance_after' => $this->balance,
             'status' => 'completed',
             'description' => $description,
@@ -84,5 +85,37 @@ class Wallet extends Model
     public function getFormattedBalanceAttribute()
     {
         return $this->currency . ' ' . number_format($this->balance, 2);
+    }
+
+    public function getFormattedPendingBalanceAttribute()
+    {
+        return $this->currency . ' ' . number_format($this->pending_balance, 2);
+    }
+
+    public function getFormattedTotalWithdrawnAttribute()
+    {
+        return $this->currency . ' ' . number_format($this->total_withdrawn, 2);
+    }
+
+    public function getFormattedTotalDepositedAttribute()
+    {
+        return $this->currency . ' ' . number_format($this->total_deposited, 2);
+    }
+
+    public function canWithdraw($amount)
+    {
+        return $this->balance >= $amount;
+    }
+
+    public function addPending($amount)
+    {
+        $this->pending_balance += $amount;
+        $this->save();
+    }
+
+    public function clearPending($amount)
+    {
+        $this->pending_balance -= $amount;
+        $this->save();
     }
 }

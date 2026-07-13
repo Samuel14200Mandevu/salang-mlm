@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Log;
 
 class SettingController extends Controller
 {
-    /**
-     * Page des paramètres généraux
-     */
     public function index()
     {
         $settings = [
@@ -35,9 +32,6 @@ class SettingController extends Controller
         return view('admin.settings.index', compact('settings'));
     }
 
-    /**
-     * Mettre à jour les paramètres généraux
-     */
     public function update(Request $request)
     {
         $request->validate([
@@ -48,7 +42,6 @@ class SettingController extends Controller
         ]);
 
         try {
-            // ✅ Mettre à jour le .env
             $this->updateEnv([
                 'APP_NAME' => $request->site_name,
                 'APP_TIMEZONE' => $request->timezone,
@@ -56,34 +49,30 @@ class SettingController extends Controller
                 'APP_DEBUG' => $request->has('debug_mode') ? 'true' : 'false',
             ]);
 
-            // ✅ Vider le cache de configuration
             Artisan::call('config:clear');
 
-            Log::info('Paramètres généraux mis à jour', [
+            Log::info('General settings updated', [
                 'admin_id' => auth()->id(),
                 'data' => $request->all(),
             ]);
 
             return redirect()->route('admin.settings')
-                ->with('success', '⚙️ Paramètres généraux mis à jour avec succès.');
+                ->with('success', 'General settings updated successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour paramètres généraux', [
+            Log::error('Error updating general settings', [
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', '❌ Erreur: ' . $e->getMessage());
+            return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Mode maintenance
-     */
     public function toggleMaintenance(Request $request)
     {
         try {
             if (app()->isDownForMaintenance()) {
                 Artisan::call('up');
-                $message = 'Application remise en ligne.';
+                $message = 'Application is back online.';
             } else {
                 $secret = $request->secret ?? null;
                 $command = 'down --retry=60';
@@ -91,28 +80,25 @@ class SettingController extends Controller
                     $command .= " --secret={$secret}";
                 }
                 Artisan::call($command);
-                $message = 'Application mise en maintenance.';
+                $message = 'Application is in maintenance mode.';
             }
 
-            Log::info('Mode maintenance changé', [
+            Log::info('Maintenance mode changed', [
                 'admin_id' => auth()->id(),
                 'status' => app()->isDownForMaintenance() ? 'down' : 'up',
             ]);
 
             return redirect()->route('admin.settings')
-                ->with('success', "🔧 {$message}");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
-            Log::error('Erreur mode maintenance', [
+            Log::error('Error toggling maintenance mode', [
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', '❌ Erreur: ' . $e->getMessage());
+            return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Paramètres des commissions
-     */
     public function commission()
     {
         $commissionSettings = config('commission', [
@@ -140,9 +126,6 @@ class SettingController extends Controller
         return view('admin.settings.commission', compact('commissionSettings'));
     }
 
-    /**
-     * Mettre à jour les paramètres des commissions
-     */
     public function updateCommission(Request $request)
     {
         $request->validate([
@@ -161,7 +144,6 @@ class SettingController extends Controller
             'level5' => 'required|numeric|min:0|max:100',
         ]);
 
-        // ✅ Configurer les taux
         $config = [
             'rates' => [
                 'direct' => (float) $request->direct_rate,
@@ -184,25 +166,20 @@ class SettingController extends Controller
             ],
         ];
 
-        // ✅ Sauvegarder la configuration
         $this->updateConfigFile('commission.php', $config);
 
-        // ✅ Vider le cache
         Cache::forget('commission_config');
         Artisan::call('config:clear');
 
-        Log::info('Paramètres des commissions mis à jour', [
+        Log::info('Commission settings updated', [
             'admin_id' => auth()->id(),
             'config' => $config,
         ]);
 
         return redirect()->route('admin.settings.commission')
-            ->with('success', '💰 Paramètres des commissions mis à jour.');
+            ->with('success', 'Commission settings updated.');
     }
 
-    /**
-     * Paramètres des paiements
-     */
     public function payment()
     {
         $paymentSettings = config('payment', [
@@ -226,9 +203,6 @@ class SettingController extends Controller
         return view('admin.settings.payment', compact('paymentSettings'));
     }
 
-    /**
-     * Mettre à jour les paramètres des paiements
-     */
     public function updatePayment(Request $request)
     {
         $request->validate([
@@ -264,18 +238,15 @@ class SettingController extends Controller
         Cache::forget('payment_config');
         Artisan::call('config:clear');
 
-        Log::info('Paramètres des paiements mis à jour', [
+        Log::info('Payment settings updated', [
             'admin_id' => auth()->id(),
             'config' => $config,
         ]);
 
         return redirect()->route('admin.settings.payment')
-            ->with('success', '💳 Paramètres des paiements mis à jour.');
+            ->with('success', 'Payment settings updated.');
     }
 
-    /**
-     * Mettre à jour le fichier .env
-     */
     private function updateEnv($data)
     {
         $path = base_path('.env');
@@ -287,6 +258,10 @@ class SettingController extends Controller
         $content = file_get_contents($path);
 
         foreach ($data as $key => $value) {
+            if (strpos($value, ' ') !== false || strpos($value, '#') !== false) {
+                $value = '"' . $value . '"';
+            }
+
             $pattern = "/^{$key}=.*/m";
             $replacement = "{$key}={$value}";
 
@@ -300,9 +275,6 @@ class SettingController extends Controller
         file_put_contents($path, $content);
     }
 
-    /**
-     * Mettre à jour un fichier de configuration
-     */
     private function updateConfigFile($filename, $data)
     {
         $path = config_path($filename);
@@ -312,9 +284,6 @@ class SettingController extends Controller
         file_put_contents($path, $content);
     }
 
-    /**
-     * Vider le cache
-     */
     public function clearCache()
     {
         Artisan::call('cache:clear');
@@ -324,32 +293,26 @@ class SettingController extends Controller
         Artisan::call('event:clear');
         Artisan::call('optimize:clear');
 
-        Log::info('Cache vidé', [
+        Log::info('Cache cleared', [
             'admin_id' => auth()->id(),
         ]);
 
         return redirect()->route('admin.settings')
-            ->with('success', '🧹 Cache vidé avec succès.');
+            ->with('success', 'Cache cleared successfully.');
     }
 
-    /**
-     * Optimiser l'application
-     */
     public function optimize()
     {
         Artisan::call('optimize');
 
-        Log::info('Application optimisée', [
+        Log::info('Application optimized', [
             'admin_id' => auth()->id(),
         ]);
 
         return redirect()->route('admin.settings')
-            ->with('success', '🚀 Application optimisée.');
+            ->with('success', 'Application optimized.');
     }
 
-    /**
-     * Informations sur le système
-     */
     public function systemInfo()
     {
         $info = [
@@ -374,9 +337,6 @@ class SettingController extends Controller
         return response()->json($info);
     }
 
-    /**
-     * Formater les bytes
-     */
     private function formatBytes($bytes)
     {
         if ($bytes === false) return 'N/A';

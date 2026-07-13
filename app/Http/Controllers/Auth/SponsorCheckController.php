@@ -22,12 +22,13 @@ class SponsorCheckController extends Controller
                 'exists' => true,
                 'name' => $sponsor->name,
                 'email' => $sponsor->email,
+                'sponsor_id' => $sponsor->sponsor_id,
             ]);
         }
 
         return response()->json([
             'exists' => false,
-            'message' => 'Aucun utilisateur trouvé avec ce code.'
+            'message' => 'No user found with this code.'
         ]);
     }
 }

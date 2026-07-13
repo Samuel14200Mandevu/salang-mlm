@@ -2,33 +2,89 @@
 
 namespace Database\Seeders;
 
-use App\Models\Rank;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RankSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table('ranks')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        
         $ranks = [
-            ['name' => 'Distributor', 'slug' => 'distributor', 'min_pv' => 0, 'bonus_percentage' => 0],
-            ['name' => 'Supervisor', 'slug' => 'supervisor', 'min_pv' => 100, 'bonus_percentage' => 5],
-            ['name' => 'Assistant Manager', 'slug' => 'assistant-manager', 'min_pv' => 200, 'bonus_percentage' => 10],
-            ['name' => 'Manager', 'slug' => 'manager', 'min_pv' => 500, 'bonus_percentage' => 15],
-            ['name' => 'Senior Manager', 'slug' => 'senior-manager', 'min_pv' => 1000, 'bonus_percentage' => 20],
-            ['name' => 'Soaring Manager', 'slug' => 'soaring-manager', 'min_pv' => 2000, 'bonus_percentage' => 25],
-            ['name' => 'Sapphire Manager', 'slug' => 'sapphire-manager', 'min_pv' => 5000, 'bonus_percentage' => 30],
-            ['name' => 'Blue Diamond', 'slug' => 'blue-diamond', 'min_pv' => 10000, 'bonus_percentage' => 35],
-            ['name' => 'Diamond', 'slug' => 'diamond', 'min_pv' => 20000, 'bonus_percentage' => 40],
-            ['name' => 'Pearl', 'slug' => 'pearl', 'min_pv' => 50000, 'bonus_percentage' => 50],
+            [
+                'level' => 1,
+                'name' => 'Distributeur',
+                'slug' => 'distributor',
+                'min_pv' => 0,
+                'min_bv' => 0,
+                'monthly_pv_required' => 0,
+                'team_pv_required' => 0,
+                'bonus_percentage' => 6,
+                'is_active' => 1,
+                'conditions' => json_encode([['label' => 'Inscription', 'value' => 'Validée']]),
+                'commission_types' => json_encode(['Bonus Consommateur (6%)']),
+            ],
+            [
+                'level' => 2,
+                'name' => 'Qualification',
+                'slug' => 'supervisor',
+                'min_pv' => 100,
+                'min_bv' => 100,
+                'monthly_pv_required' => 20,
+                'team_pv_required' => 0,
+                'bonus_percentage' => 6,
+                'is_active' => 1,
+                'conditions' => json_encode([
+                    ['label' => 'PV Personnel', 'value' => '≥ 100 PV'],
+                    ['label' => 'PV Mensuel', 'value' => '≥ 20 PV']
+                ]),
+                'commission_types' => json_encode(['Bonus Direct (6%)', 'Bonus Consommateur (6%)']),
+            ],
+            [
+                'level' => 3,
+                'name' => 'Cumul Directeur',
+                'slug' => 'assistant-manager',
+                'min_pv' => 200,
+                'min_bv' => 200,
+                'monthly_pv_required' => 20,
+                'team_pv_required' => 0,
+                'bonus_percentage' => 22,
+                'is_active' => 1,
+                'conditions' => json_encode([
+                    ['label' => 'PV Personnel', 'value' => '≥ 200 PV'],
+                    ['label' => 'PV Mensuel', 'value' => '≥ 20 PV']
+                ]),
+                'commission_types' => json_encode(['Bonus Direct (22%)', 'Bonus Indirect', 'Bonus Consommateur (6%)']),
+            ],
+            [
+                'level' => 4,
+                'name' => 'Directeur',
+                'slug' => 'manager',
+                'min_pv' => 1000,
+                'min_bv' => 1000,
+                'monthly_pv_required' => 25,
+                'team_pv_required' => 0,
+                'bonus_percentage' => 26,
+                'is_active' => 1,
+            ],
+            [
+                'level' => 5,
+                'name' => 'Manager Senior',
+                'slug' => 'senior-manager',
+                'min_pv' => 3800,
+                'min_bv' => 3800,
+                'monthly_pv_required' => 30,
+                'team_pv_required' => 500,
+                'bonus_percentage' => 30,
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($ranks as $rank) {
-            Rank::updateOrCreate(
-                ['slug' => $rank['slug']],
-                $rank
-            );
+            DB::table('ranks')->insert($rank);
         }
-        
-        $this->command->info('✅ Rangs créés/mis à jour');
     }
 }

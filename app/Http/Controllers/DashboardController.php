@@ -18,79 +18,74 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ✅ Charger les relations avec le user
         $user = Auth::user()->load(['rank', 'package', 'wallet']);
-        
+
         if (!$user) {
             return redirect()->route('login');
         }
 
-        // ✅ Récupérer le sponsor
-        $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+        $sponsor = User::find($user->parrain_id);
 
-        // ✅ Statistiques
         $totalCommission = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
             ->sum('amount') ?? 0;
-            
+
         $pendingCommission = Commission::where('user_id', $user->id)
             ->where('status', 'pending')
             ->sum('amount') ?? 0;
-            
+
         $totalWithdrawn = Withdrawal::where('user_id', $user->id)
             ->where('status', 'completed')
             ->sum('amount') ?? 0;
-            
-        $totalDownlines = User::where('sponsor_id', $user->sponsor_id)->count();
-        $walletBalance = $user->wallet ? $user->wallet->balance : 0;
-        
-        // ✅ Niveaux du réseau
-        $level1 = User::where('sponsor_id', $user->sponsor_id)->count();
-        
-        $level1SponsorCodes = User::where('sponsor_id', $user->sponsor_id)
-            ->pluck('sponsor_id')
-            ->filter()
-            ->toArray();
-        $level2 = User::whereIn('sponsor_id', $level1SponsorCodes)->count();
-        
-        $level2SponsorCodes = User::whereIn('sponsor_id', $level1SponsorCodes)
-            ->pluck('sponsor_id')
-            ->filter()
-            ->toArray();
-        $level3 = User::whereIn('sponsor_id', $level2SponsorCodes)->count();
 
-        // ✅ Derniers membres
+        $totalDownlines = User::where('parrain_id', $user->id)->count();
+        $walletBalance = $user->wallet ? $user->wallet->balance : 0;
+
+        $level1 = User::where('parrain_id', $user->id)->count();
+
+        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
+        $level2 = User::whereIn('parrain_id', $level1Ids)->count();
+
+        $level2Ids = User::whereIn('parrain_id', $level1Ids)->pluck('id')->toArray();
+        $level3 = User::whereIn('parrain_id', $level2Ids)->count();
+
         $recentMembers = User::where('id', '!=', $user->id)
             ->with(['package', 'rank'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // ✅ Activités récentes
         $recentActivities = Commission::where('user_id', $user->id)
             ->with('fromUser')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // ✅ Progression des grades (utilise rank_id au lieu de rank)
-        $nextRank = Rank::where('min_pv', '>', $user->pv_balance)
+        $currentRank = $user->rank;
+
+        if (is_string($currentRank)) {
+            $currentRank = Rank::where('name', $currentRank)->first();
+        }
+
+        $currentRankName = $currentRank && !is_string($currentRank) ? $currentRank->name : ($user->rank ?? 'Distributor');
+        $currentRankLevel = $currentRank && !is_string($currentRank) ? $currentRank->level : 1;
+
+        $nextRank = Rank::where('min_pv', '>', ($user->pv_balance ?? 0))
+            ->where('is_active', true)
             ->orderBy('min_pv', 'asc')
             ->first();
-        
-        // ✅ Récupérer le nom du grade actuel
-        $currentRankName = $user->rank?->name ?? $user->rank ?? 'Distributor';
-        
+
         $rankProgress = [
             'current' => $currentRankName,
+            'current_level' => $currentRankLevel,
             'next' => $nextRank ? $nextRank->name : 'Maximum Level',
-            'progress' => $nextRank ? min(100, ($user->pv_balance / max($nextRank->min_pv, 1)) * 100) : 100,
-            'pv_needed' => $nextRank ? max(0, $nextRank->min_pv - $user->pv_balance) : 0,
+            'next_level' => $nextRank ? $nextRank->level : $currentRankLevel,
+            'progress' => $nextRank ? min(100, (($user->pv_balance ?? 0) / max($nextRank->min_pv, 1)) * 100) : 100,
+            'pv_needed' => $nextRank ? max(0, $nextRank->min_pv - ($user->pv_balance ?? 0)) : 0,
             'current_pv' => $user->pv_balance ?? 0,
-            'next_pv' => $nextRank ? $nextRank->min_pv : $user->pv_balance ?? 0,
+            'next_pv' => $nextRank ? $nextRank->min_pv : ($user->pv_balance ?? 0),
         ];
 
-        // ✅ Stats du jour
         $stats = [
             'today_earnings' => Commission::where('user_id', $user->id)
                 ->where('status', 'paid')
@@ -98,7 +93,6 @@ class DashboardController extends Controller
                 ->sum('amount') ?? 0,
         ];
 
-        // ✅ Données mensuelles pour le graphique
         $monthlyData = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
@@ -106,7 +100,7 @@ class DashboardController extends Controller
                 ->where('status', 'paid')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
-                ->sum('amount');
+                ->sum('amount') ?? 0;
             $monthlyData[] = [
                 'month' => $month->format('M'),
                 'amount' => $amount,
@@ -130,5 +124,92 @@ class DashboardController extends Controller
             'stats',
             'monthlyData'
         ));
+    }
+
+    public function apiStats()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $stats = [
+            'total_commission' => Commission::where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->sum('amount') ?? 0,
+            'pending_commission' => Commission::where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->sum('amount') ?? 0,
+            'total_withdrawn' => Withdrawal::where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->sum('amount') ?? 0,
+            'total_downlines' => User::where('parrain_id', $user->id)->count(),
+            'wallet_balance' => $user->wallet ? $user->wallet->balance : 0,
+            'rank' => $this->getUserRankName($user),
+            'pv_balance' => $user->pv_balance ?? 0,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    public function chartData(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $months = $request->input('months', 6);
+        $data = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $amount = Commission::where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->whereMonth('created_at', $month->month)
+                ->whereYear('created_at', $month->year)
+                ->sum('amount') ?? 0;
+
+            $data[] = [
+                'month' => $month->format('M Y'),
+                'amount' => $amount,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
+    private function getUserRankName($user): string
+    {
+        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
+            return $user->rank->name;
+        }
+
+        if (is_string($user->rank)) {
+            return $user->rank;
+        }
+
+        if ($user->rank_id) {
+            $rank = Rank::find($user->rank_id);
+            if ($rank) {
+                return $rank->name;
+            }
+        }
+
+        return 'Distributor';
     }
 }

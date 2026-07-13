@@ -1,4 +1,5 @@
 <?php
+// app/Console/Commands/ProcessCommissions.php
 
 namespace App\Console\Commands;
 
@@ -9,7 +10,7 @@ use Illuminate\Console\Command;
 
 class ProcessCommissions extends Command
 {
-    protected $signature = 'commissions:process';
+    protected $signature = 'commissions:process {--period=}';
     protected $description = 'Traiter toutes les commissions en attente';
 
     protected $commissionService;
@@ -24,8 +25,13 @@ class ProcessCommissions extends Command
     {
         $this->info('Traitement des commissions en attente...');
 
-        // Récupérer les commissions en attente
-        $pendingCommissions = Commission::where('status', 'pending')->get();
+        $query = Commission::where('status', 'pending');
+        
+        if ($this->option('period')) {
+            $query->where('period', $this->option('period'));
+        }
+
+        $pendingCommissions = $query->get();
         
         if ($pendingCommissions->count() === 0) {
             $this->info('Aucune commission en attente.');
@@ -34,7 +40,6 @@ class ProcessCommissions extends Command
 
         $processed = 0;
         foreach ($pendingCommissions as $commission) {
-            // Vérifier si l'utilisateur existe toujours
             if ($commission->user) {
                 $wallet = $commission->user->wallet;
                 if ($wallet) {

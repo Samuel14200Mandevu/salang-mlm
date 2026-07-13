@@ -1,3 +1,4 @@
+{{-- resources/views/commissions/stats.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -119,6 +120,15 @@
         border-radius: 4px;
     }
     
+    .color-map {
+        --color-primary: #6366f1;
+        --color-success: #22c55e;
+        --color-warning: #f59e0b;
+        --color-danger: #ef4444;
+        --color-purple: #8b5cf6;
+        --color-info: #3b82f6;
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -154,12 +164,20 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Statistiques des Commissions</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse détaillée de vos gains</p>
         </div>
-        <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Retour aux commissions
-        </a>
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+            <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour aux commissions
+            </a>
+            <a href="{{ route('commissions.export') }}" class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Exporter CSV
+            </a>
+        </div>
     </div>
 
     <!-- Vue d'ensemble -->
@@ -171,7 +189,9 @@
         </div>
         <div class="stat-card card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-2">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moyenne par commission</p>
-            <p class="stat-number text-green-500">${{ number_format(($stats['total_count'] ?? 1) > 0 ? ($stats['total'] ?? 0) / ($stats['total_count'] ?? 1) : 0, 2) }}</p>
+            <p class="stat-number text-green-500">
+                ${{ number_format(($stats['total_count'] ?? 1) > 0 ? ($stats['total'] ?? 0) / max(($stats['total_count'] ?? 1), 1) : 0, 2) }}
+            </p>
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Sur {{ $stats['total_count'] ?? 0 }} commissions</p>
         </div>
         <div class="stat-card card-stats p-3 sm:p-4 border-l-4 border-yellow-500 animate-fadeInUp delay-3">
@@ -181,7 +201,9 @@
         </div>
         <div class="stat-card card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Commissions ce mois</p>
-            <p class="stat-number text-purple-500">${{ number_format($stats['monthly'] ? end($stats['monthly'])['amount'] ?? 0 : 0, 2) }}</p>
+            <p class="stat-number text-purple-500">
+                ${{ number_format((!empty($stats['monthly']) ? collect($stats['monthly'])->last()['amount'] ?? 0 : 0), 2) }}
+            </p>
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ now()->format('F Y') }}</p>
         </div>
     </div>
@@ -193,12 +215,18 @@
             <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">12 derniers mois</span>
         </div>
         <div class="h-40 sm:h-48 md:h-56 flex items-end gap-1 sm:gap-2">
-            @php $max = max(array_column($stats['monthly'] ?? [], 'amount') ?: [1]); @endphp
-            @foreach($stats['monthly'] ?? [] as $data)
-                @php $height = ($data['amount'] / max($max, 1)) * 100; @endphp
-                <div class="flex-1 flex flex-col items-center group">
-                    <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500 transition"
-                         style="height: {{ max(8, $height) }}%">
+            @php 
+                $monthlyData = $stats['monthly'] ?? [];
+                $max = max(array_column($monthlyData, 'amount') ?: [1]); 
+            @endphp
+            @foreach($monthlyData as $data)
+                @php 
+                    $height = $max > 0 ? ($data['amount'] / $max) * 100 : 0;
+                    $height = max(8, min(100, $height));
+                @endphp
+                <div class="flex-1 flex flex-col items-center group relative">
+                    <div class="graph-bar w-full bg-primary-500/30 hover:bg-primary-500 transition-all duration-300"
+                         style="height: {{ $height }}%;">
                         <span class="tooltip">${{ number_format($data['amount'], 2) }}</span>
                     </div>
                     <span class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] mt-1">{{ substr($data['month'], 0, 3) }}</span>
@@ -212,15 +240,31 @@
         <div class="card p-3 sm:p-4 md:p-6">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Répartition par type</h3>
             <div class="space-y-2 sm:space-y-3">
+                @php
+                    $totalAmount = $stats['total'] ?? 1;
+                    $colorMap = [
+                        'primary' => '#6366f1',
+                        'success' => '#22c55e',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'purple' => '#8b5cf6',
+                        'info' => '#3b82f6'
+                    ];
+                @endphp
                 @foreach($stats['by_type'] ?? [] as $type => $data)
+                    @php
+                        $percent = $totalAmount > 0 ? ($data['total'] / $totalAmount) * 100 : 0;
+                        $color = $colorMap[$data['color']] ?? '#6366f1';
+                    @endphp
                     <div>
                         <div class="flex justify-between text-xs sm:text-sm">
                             <span class="text-[var(--text-secondary)]">{{ $data['label'] }}</span>
-                            <span class="font-semibold text-{{ $data['color'] }}-500">${{ number_format($data['total'], 2) }}</span>
+                            <span class="font-semibold" style="color: {{ $color }};">
+                                ${{ number_format($data['total'], 2) }}
+                            </span>
                         </div>
                         <div class="progress mt-1">
-                            @php $percent = ($stats['total'] ?? 1) > 0 ? ($data['total'] / ($stats['total'] ?? 1)) * 100 : 0; @endphp
-                            <div class="progress-fill bg-{{ $data['color'] }}-500" style="width: {{ $percent }}%"></div>
+                            <div class="progress-fill" style="background: {{ $color }}; width: {{ $percent }}%;"></div>
                         </div>
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">{{ $data['count'] }} commission(s)</p>
                     </div>

@@ -1,3 +1,4 @@
+{{-- resources/views/admin/withdrawals/show.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -181,6 +182,17 @@
                 @if($withdrawal->status == 'pending' || $withdrawal->status == 'processing')
                 <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
                     <div class="action-buttons flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        @if($withdrawal->status == 'pending')
+                        <form action="{{ route('admin.withdrawals.process', $withdrawal->id) }}" method="POST" class="w-full sm:flex-1">
+                            @csrf
+                            <button type="submit" class="btn btn-info w-full text-sm sm:text-base py-2 sm:py-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Mettre en traitement
+                            </button>
+                        </form>
+                        @endif
                         <form action="{{ route('admin.withdrawals.approve', $withdrawal->id) }}" method="POST" class="w-full sm:flex-1">
                             @csrf
                             <button type="submit" class="btn btn-success w-full text-sm sm:text-base py-2 sm:py-2.5" 
