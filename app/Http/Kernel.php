@@ -48,6 +48,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\EnsureUserActive::class,
+            \App\Http\Middleware\EnsureRankIsUpToDate::class, // ✅ AJOUTÉ
         ],
 
         'api' => [
@@ -62,8 +63,6 @@ class Kernel extends HttpKernel
 
     /**
      * The application's middleware aliases.
-     *
-     * Aliases may be used instead of class names to conveniently assign middleware to routes and groups.
      *
      * @var array<string, class-string|string>
      */
@@ -85,49 +84,28 @@ class Kernel extends HttpKernel
         // CUSTOM MIDDLEWARES - SALANG MLM
         // ============================================================
 
-        // Admin middleware - Restrict access to admin only
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
-
-        // API authentication middleware
         'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
-
-        // Ensure user is active
         'active' => \App\Http\Middleware\EnsureUserActive::class,
-
-        // Force JSON response for API requests
         'json' => \App\Http\Middleware\ForceJsonResponse::class,
-
-        // Ensure KYC is verified
         'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
-
-        // Maintenance mode
         'maintenance' => \App\Http\Middleware\MaintenanceMode::class,
-
-        // Rate limiting
         'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
-
-        // Sanitize input
         'sanitize' => \App\Http\Middleware\SanitizeInput::class,
-
-        // Log requests (for debugging)
         'log.request' => \App\Http\Middleware\LogRequest::class,
-
-        // Cache response
         'cache.response' => \App\Http\Middleware\CacheResponse::class,
-
-        // Security headers
         'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+        
+        // ✅ NOUVEAU MIDDLEWARE
+        'rank.update' => \App\Http\Middleware\EnsureRankIsUpToDate::class,
     ];
 
     /**
      * The priority-sorted list of middleware.
      *
-     * This forces non-global middleware to always be in the given order.
-     *
      * @var array<int, class-string|string>
      */
     protected $middlewarePriority = [
-        // Laravel Default
         \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
@@ -136,7 +114,6 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\VerifyCsrfToken::class,
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
 
-        // Custom Priority
         \App\Http\Middleware\SecurityHeaders::class,
         \App\Http\Middleware\MaintenanceMode::class,
         \App\Http\Middleware\ApiAuthenticate::class,
@@ -145,5 +122,6 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\EnsureKycVerified::class,
         \App\Http\Middleware\RateLimitMiddleware::class,
         \App\Http\Middleware\LogRequest::class,
+        \App\Http\Middleware\EnsureRankIsUpToDate::class, // ✅ AJOUTÉ
     ];
 }

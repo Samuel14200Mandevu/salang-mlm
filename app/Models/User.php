@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Services\MLM\AdvancedRankCalculator;
 
 class User extends Authenticatable
 {
@@ -471,4 +474,73 @@ class User extends Authenticatable
             ->orderBy('level', 'desc')
             ->first();
     }
+
+    /**
+ * Calculer et mettre à jour le grade de l'utilisateur
+ */
+public function calculateAndUpdateRank(): bool
+{
+    try {
+        $calculator = app(AdvancedRankCalculator::class);
+        $newRank = $calculator->calculateAdvancedRank($this);
+        
+        if (!$newRank) {
+            return false;
+        }
+        
+        // Si le grade a changé
+        if ($newRank->id != $this->rank_id) {
+            $oldRankId = $this->rank_id;
+            $oldRankName = $this->rank ?? 'Distributor';
+            
+            DB::beginTransaction();
+            
+            // Mettre à jour l'utilisateur
+            $this->rank_id = $newRank->id;
+            $this->rank = $newRank->name;
+            $this->last_rank_update = now();
+            $this->save();
+            
+            // Enregistrer dans l'historique
+            RankHistory::create([
+                'user_id' => $this->id,
+                'old_rank_id' => $oldRankId,
+                'new_rank_id' => $newRank->id,
+                'old_rank_name' => $oldRankName,
+                'new_rank_name' => $newRank->name,
+                'pv_at_time' => $this->pv_balance,
+                'bv_at_time' => $this->bv_balance,
+                'notes' => 'Automatic rank update',
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Grade automatique mis à jour', [
+                'user_id' => $this->id,
+                'user_name' => $this->name,
+                'old_rank' => $oldRankName,
+                'new_rank' => $newRank->name,
+            ]);
+            
+            return true;
+        }
+        
+        return false;
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur lors de la mise à jour du grade', [
+            'user_id' => $this->id,
+            'error' => $e->getMessage()
+        ]);
+        return false;
+    }
+}
+
+/**
+ * Forcer le recalcul du grade (pour admin)
+ */
+public function forceRankUpdate(): bool
+{
+    return $this->calculateAndUpdateRank();
+}
 }

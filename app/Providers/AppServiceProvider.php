@@ -16,6 +16,12 @@ use App\Services\ImageUploadService;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
 use App\Services\MLM\CommissionDistributor;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Genealogy;
+use App\Observers\UserObserver;
+use App\Observers\OrderObserver;
+use App\Observers\GenealogyObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -95,6 +101,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Configurer les middlewares
         $this->configureMiddleware();
+
+        // ✅ ENREGISTRER LES OBSERVERS (CORRIGÉ)
+        User::observe(UserObserver::class);
+        Order::observe(OrderObserver::class);
+        Genealogy::observe(GenealogyObserver::class);
     }
 
     /**
