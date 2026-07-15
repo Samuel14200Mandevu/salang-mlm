@@ -497,11 +497,12 @@ Route::prefix('admin')
         // ✅ ADMIN ACTIVATIONS
         // ============================================================
         Route::prefix('activations')->name('activations.')->group(function () {
-            Route::get('/', [AdminActivationController::class, 'index'])->name('index');
-            Route::post('/{id}/generate-code', [AdminActivationController::class, 'generateCode'])->name('generate-code');
-            Route::post('/{id}/activate', [AdminActivationController::class, 'activateManually'])->name('activate');
-            Route::post('/{id}/send-code', [AdminActivationController::class, 'sendCode'])->name('send-code');
-        });
+        Route::get('/', [AdminActivationController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminActivationController::class, 'show'])->name('show');
+        Route::post('/{id}/generate-code', [AdminActivationController::class, 'generateCodeWithPackage'])->name('generate-code');
+        Route::post('/{id}/activate', [AdminActivationController::class, 'activateManually'])->name('activate');
+        Route::post('/{id}/send-code', [AdminActivationController::class, 'sendCode'])->name('send-code');
+});
 
 }); // ⭐ FERMETURE DU GROUPE ADMIN
 

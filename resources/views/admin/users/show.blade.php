@@ -262,7 +262,6 @@
                 <span class="hidden xs:inline">Retour</span>
             </a>
             
-            <!-- BOUTON GÉNÉRER CODE D'ACTIVATION (UNIQUEMENT SI INACTIF) -->
             @if(!$user->is_active)
             <button type="button" 
                     onclick="openGenerateCodeModal()" 
@@ -401,6 +400,30 @@
                     <span class="label">Inscrit le</span>
                     <span class="value text-sm">{{ $user->created_at->format('d/m/Y H:i') }}</span>
                 </div>
+
+                <!-- ✅ PACKAGE D'ACTIVATION -->
+                <div class="info-row">
+                    <span class="label">Package d'activation</span>
+                    <span class="value">
+                        @if($user->activation_package_id)
+                            @php
+                                $activationPackage = App\Models\Package::find($user->activation_package_id);
+                            @endphp
+                            @if($activationPackage)
+                                <span class="badge badge-info">
+                                    {{ $activationPackage->name }}
+                                </span>
+                                <span class="text-xs text-[var(--text-tertiary)] block">
+                                    PV: {{ $activationPackage->pv_value }} | BV: {{ $activationPackage->bv_value }}
+                                </span>
+                            @else
+                                <span class="text-[var(--text-tertiary)]">Package non trouvé</span>
+                            @endif
+                        @else
+                            <span class="text-[var(--text-tertiary)]">Aucun package associé</span>
+                        @endif
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -489,7 +512,6 @@
                     Activer
                 </button>
                 
-                <!-- BOUTON GÉNÉRER CODE D'ACTIVATION -->
                 <button type="button" 
                         onclick="openGenerateCodeModal()" 
                         class="btn btn-info btn-sm sm:btn-md">
@@ -520,7 +542,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL GÉNÉRER CODE D'ACTIVATION AVEC ENVOI AUTOMATIQUE -->
+<!-- MODAL GÉNÉRER CODE D'ACTIVATION AVEC CHOIX DU PACKAGE -->
 <!-- ============================================================ -->
 <div id="generateCodeModal" class="modal-overlay">
     <div class="modal-box">
@@ -531,38 +553,47 @@
         </div>
         <h3 class="modal-title">Générer un code d'activation</h3>
         <p class="modal-text">
-            Vous êtes sur le point de générer un nouveau code d'activation pour 
+            Choisissez le package à associer au code d'activation pour 
             <strong>{{ $user->name }}</strong>.
-            <br><br>
-            Un email contenant le code sera automatiquement envoyé à 
-            <strong>{{ $user->email }}</strong>.
             <br>
-            <span class="text-warning text-sm">L'ancien code sera remplacé.</span>
+            L'utilisateur recevra ce package lors de l'activation.
         </p>
         
-        @if($user->activation_code)
-        <div class="code-display">
-            {{ $user->activation_code }}
-        </div>
-        <p class="text-xs text-center text-[var(--text-tertiary)] -mt-2 mb-3">
-            Code actuel (valable jusqu'au {{ \Carbon\Carbon::parse($user->activation_code_expires_at)->format('d/m/Y') }})
-        </p>
-        @endif
-        
-        <div class="modal-actions">
-            <button type="button" onclick="closeGenerateCodeModal()" class="btn btn-outline btn-sm">
-                Annuler
-            </button>
-            <form action="{{ route('admin.activations.generate-code', $user->id) }}" method="POST" class="inline">
-                @csrf
+        <form action="{{ route('admin.activations.generate-code', $user->id) }}" method="POST" class="space-y-4">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium mb-1">Package</label>
+                <select name="package_id" class="input w-full" required>
+                    <option value="">Sélectionner un package</option>
+                    @foreach($packages as $package)
+                        <option value="{{ $package->id }}">
+                            {{ $package->name }} - ${{ number_format($package->price, 2) }} ({{ $package->pv_value }} PV)
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if($user->activation_code)
+            <div class="code-display">
+                {{ $user->activation_code }}
+            </div>
+            <p class="text-xs text-center text-[var(--text-tertiary)] -mt-2 mb-3">
+                Code actuel (valable jusqu'au {{ \Carbon\Carbon::parse($user->activation_code_expires_at)->format('d/m/Y') }})
+            </p>
+            @endif
+            
+            <div class="modal-actions">
+                <button type="button" onclick="closeGenerateCodeModal()" class="btn btn-outline btn-sm">
+                    Annuler
+                </button>
                 <button type="submit" class="btn btn-info btn-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     Générer et envoyer
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
 
