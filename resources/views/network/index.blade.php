@@ -47,6 +47,7 @@
         border-radius: var(--radius-full);
         background: var(--primary-500);
         color: white;
+        font-weight: 700;
     }
     
     .avatar {
@@ -67,6 +68,11 @@
     .avatar-gradient { background: var(--gradient-primary); }
     .avatar-success { background: #22c55e; }
     .avatar-danger { background: #ef4444; }
+    .avatar-info { background: #3b82f6; }
+    .avatar-purple { background: #8b5cf6; }
+    .avatar-warning { background: #f59e0b; }
+    .avatar-gold { background: #eab308; }
+    .avatar-neutral { background: #6b7280; }
     .avatar-ring { border: 3px solid var(--primary-500); box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.15); }
     .avatar img { width: 100%; height: 100%; object-fit: cover; }
     
@@ -80,7 +86,21 @@
     .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-gold { background: rgba(234, 179, 8, 0.12); color: #eab308; }
     .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    .badge-primary { background: rgba(90, 182, 56, 0.12); color: var(--primary-500); }
+    
+    .rank-level-1 { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+    .rank-level-2 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .rank-level-3 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .rank-level-4 { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .rank-level-5 { background: rgba(234, 179, 8, 0.12); color: #eab308; }
+    .rank-level-6 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .rank-level-7 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .rank-level-8 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .rank-level-9 { background: rgba(234, 179, 8, 0.12); color: #eab308; }
     
     .card {
         background: var(--bg-card);
@@ -264,34 +284,51 @@
         </div>
     </div>
 
-    <!-- Statistiques -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    <!-- Statistiques par niveau de grade -->
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Filleuls</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">
                 {{ $filleuls->count() }}
             </p>
         </div>
-        <div class="card-stats border-l-4 border-blue-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 1</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">{{ $stats['level_1'] ?? 0 }}</p>
+        <div class="card-stats border-l-4 border-neutral-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 1</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-neutral-500">
+                {{ $filleuls->filter(fn($u) => ($controller->getUserRankInfo($u)['level'] ?? 1) == 1)->count() }}
+            </p>
         </div>
-        <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 2</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['level_2'] ?? 0 }}</p>
+        <div class="card-stats border-l-4 border-purple-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 2-3</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">
+                {{ $filleuls->filter(fn($u) => in_array($controller->getUserRankInfo($u)['level'] ?? 1, [2,3]))->count() }}
+            </p>
         </div>
-        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau 3</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">{{ $stats['level_3'] ?? 0 }}</p>
+        <div class="card-stats border-l-4 border-success-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 4-6</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-success-500">
+                {{ $filleuls->filter(fn($u) => in_array($controller->getUserRankInfo($u)['level'] ?? 1, [4,5,6]))->count() }}
+            </p>
+        </div>
+        <div class="card-stats border-l-4 border-gold-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 7+</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-gold-500">
+                {{ $filleuls->filter(fn($u) => ($controller->getUserRankInfo($u)['level'] ?? 1) >= 7)->count() }}
+            </p>
         </div>
     </div>
 
-    <!--  Carte du Parrain -->
+    <!-- Carte du Parrain -->
     <div class="card animate-fadeInUp delay-2 p-3 sm:p-4 border-l-4 border-primary-500">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Mon Parrain</p>
                 @if($parrain)
+                    @php
+                        $parrainRank = $controller->getUserRankInfo($parrain);
+                        $parrainRankName = $parrainRank['name'];
+                        $parrainRankLevel = $parrainRank['level'];
+                    @endphp
                     <div class="flex items-center gap-3 mt-1">
                         <div class="avatar avatar-md avatar-gradient">
                             {{ strtoupper(substr($parrain->name, 0, 1)) }}
@@ -303,6 +340,12 @@
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                                 {{ $parrain->email }}
                             </p>
+                            <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] font-mono">
+                                Code: {{ $parrain->sponsor_id }}
+                            </p>
+                            <span class="badge {{ $controller->getRankColor($parrainRankLevel) }} text-[10px] sm:text-xs mt-0.5">
+                                {{ $parrainRankName }} (Niv. {{ $parrainRankLevel }})
+                            </span>
                         </div>
                     </div>
                 @else
@@ -320,57 +363,6 @@
         </div>
     </div>
 
-    <!--  Carte des Filleuls -->
-    <div class="card animate-fadeInUp delay-3 p-3 sm:p-4">
-        <div class="flex items-center justify-between mb-3">
-            <div>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Mes Filleuls</p>
-                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                    {{ $filleuls->count() }} personne(s) invitée(s)
-                </p>
-            </div>
-            <span class="badge badge-info text-[10px] sm:text-xs">
-                {{ $filleuls->count() }} filleuls
-            </span>
-        </div>
-
-        @if($filleuls->count() > 0)
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-                @foreach($filleuls as $filleul)
-                    <div class="flex items-center gap-2 p-2 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                        <div class="avatar avatar-sm {{ $filleul->is_active ? 'avatar-success' : 'avatar-danger' }}">
-                            {{ strtoupper(substr($filleul->name, 0, 1)) }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="font-medium text-[var(--text-primary)] text-xs sm:text-sm truncate">
-                                {{ $filleul->name }}
-                            </p>
-                            <p class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] truncate">
-                                {{ $filleul->email }}
-                            </p>
-                            <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] font-mono">
-                                Code: {{ $filleul->sponsor_id }}
-                            </p>
-                        </div>
-                        <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }} text-[8px] sm:text-[10px]">
-                            {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="text-center py-4 text-[var(--text-secondary)] text-sm">
-                <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <p>Vous n'avez pas encore de filleuls</p>
-                <p class="text-[var(--text-tertiary)] text-xs mt-1">
-                    Partagez votre lien de parrainage pour inviter des amis
-                </p>
-            </div>
-        @endif
-    </div>
-
     <!-- Vue Arbre -->
     <div id="treeView" class="tree-view card animate-fadeInUp delay-4 p-3 sm:p-4 md:p-6">
         <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Arbre Généalogique</h3>
@@ -378,6 +370,11 @@
         <div class="flex justify-center overflow-x-auto py-3 sm:py-4">
             <div class="tree-node">
                 <!-- Moi -->
+                @php
+                    $myRankInfo = $controller->getUserRankInfo(Auth::user());
+                    $myRankName = $myRankInfo['name'];
+                    $myRankLevel = $myRankInfo['level'];
+                @endphp
                 <div class="flex flex-col items-center">
                     <div class="avatar avatar-xl avatar-gradient avatar-ring relative">
                         @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
@@ -385,11 +382,11 @@
                         @else
                             {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
                         @endif
-                        <span class="tree-level-badge">★</span>
+                        <span class="tree-level-badge">{{ $myRankLevel }}</span>
                     </div>
                     <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()->name }}</p>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moi</p>
-                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()->rank?->name ?? 'Distributor' }}</span>
+                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ $myRankName }}</span>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">
                         Code: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
                     </p>
@@ -404,14 +401,20 @@
                 @if($filleuls->count() > 0)
                     <div class="tree-children">
                         @foreach($filleuls->take(6) as $member)
+                            @php
+                                $rankInfo = $controller->getUserRankInfo($member);
+                                $rankName = $rankInfo['name'];
+                                $rankLevel = $rankInfo['level'];
+                                $avatarColor = $controller->getAvatarColor($member);
+                            @endphp
                             <div class="tree-node">
                                 <div class="flex flex-col items-center">
-                                    <div class="avatar avatar-lg {{ $member->is_active ? 'avatar-success' : 'avatar-danger' }} relative">
+                                    <div class="avatar avatar-lg {{ $avatarColor }} relative">
                                         {{ strtoupper(substr($member->name, 0, 1)) }}
-                                        <span class="tree-level-badge">1</span>
+                                        <span class="tree-level-badge">{{ $rankLevel }}</span>
                                     </div>
                                     <p class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-0.5 sm:mt-1 truncate max-w-[60px] sm:max-w-[80px]">{{ $member->name }}</p>
-                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 1</p>
+                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $rankName }}</p>
                                     <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-0.5">
                                         {{ $member->is_active ? 'Actif' : 'Inactif' }}
                                     </span>
@@ -446,70 +449,119 @@
     </div>
 
     <!-- Vue Liste -->
-    <div id="listView" class="card animate-fadeInUp delay-5 hidden p-3 sm:p-4 md:p-6">
-        <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Membres de mon réseau</h3>
-            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $filleuls->count() }} membres</span>
-        </div>
-
-        <!-- Recherche -->
-        <div class="relative mb-3 sm:mb-4">
-            <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </span>
-            <input type="text" id="searchMember" placeholder="Rechercher un membre..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
-        </div>
-
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="text-xs sm:text-sm">Nom</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Niveau</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
-                        <th class="text-xs sm:text-sm">PV</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="memberList">
-                    @forelse($filleuls as $member)
-                        <tr data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
-                            <td class="font-medium text-sm sm:text-base">
-                                {{ $member->name }}
-                                <span class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] block font-mono">
-                                    Code: {{ $member->sponsor_id }}
-                                </span>
-                            </td>
-                            <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">{{ $member->email }}</td>
-                            <td class="hidden md:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->genealogy?->level ?? 1 }}</span>
-                            </td>
-                            <td class="hidden lg:table-cell text-sm sm:text-base">{{ $member->package?->name ?? 'Starter' }}</td>
-                            <td class="text-sm sm:text-base">{{ number_format($member->pv_balance ?? 0) }}</td>
-                            <td>
-                                <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                Aucun membre dans votre réseau
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+<div id="listView" class="card animate-fadeInUp delay-5 hidden p-3 sm:p-4 md:p-6">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Membres de mon réseau</h3>
+        <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $filleuls->count() }} membres</span>
     </div>
 
+    <!-- Recherche -->
+    <div class="relative mb-3 sm:mb-4">
+        <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </span>
+        <input type="text" id="searchMember" placeholder="Rechercher un membre..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+    </div>
+
+    <div class="table-wrap">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="text-xs sm:text-sm">#</th>
+                    <th class="text-xs sm:text-sm">Nom</th>
+                    <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
+                    <th class="text-xs sm:text-sm hidden md:table-cell">Code</th>
+                    <th class="text-xs sm:text-sm">Grade</th>
+                    <th class="text-xs sm:text-sm">Niveau</th>
+                    <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
+                    <th class="text-xs sm:text-sm">PV</th>
+                    <th class="text-xs sm:text-sm">Statut</th>
+                </tr>
+            </thead>
+            <tbody id="memberList">
+                @forelse($filleuls as $index => $member)
+                    @php
+                        $rankInfo = $controller->getUserRankInfo($member);
+                        $rankName = $rankInfo['name'];
+                        $rankLevel = $rankInfo['level'];
+                        $rankColor = $controller->getRankColor($rankLevel);
+                        $genealogyLevel = $member->genealogy?->level ?? 1;
+                    @endphp
+                    <tr data-name="{{ strtolower($member->name) }}" 
+                        data-email="{{ strtolower($member->email) }}"
+                        data-sponsor="{{ strtolower($member->sponsor_id) }}">
+                        <td class="text-xs sm:text-sm text-[var(--text-tertiary)] font-mono">
+                            #{{ $member->id }}
+                        </td>
+                        <td class="font-medium text-sm sm:text-base">
+                            <div class="flex items-center gap-2">
+                                <div class="avatar avatar-sm {{ $member->is_active ? 'avatar-success' : 'avatar-danger' }}">
+                                    {{ strtoupper(substr($member->name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    {{ $member->name }}
+                                    <span class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] block sm:hidden">
+                                        {{ $member->email }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
+                            {{ $member->email }}
+                        </td>
+                        <td class="hidden md:table-cell text-[10px] sm:text-xs font-mono text-primary-500 font-semibold">
+                            {{ $member->sponsor_id }}
+                        </td>
+                        <td>
+                            <span class="badge {{ $rankColor }} text-[10px] sm:text-xs">
+                                {{ $rankName }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ $controller->getRankColor($genealogyLevel) }} text-[10px] sm:text-xs">
+                                Niv. {{ $genealogyLevel }}
+                            </span>
+                        </td>
+                        <td class="hidden lg:table-cell text-sm sm:text-base">
+                            {{ $member->package?->name ?? 'Starter' }}
+                        </td>
+                        <td class="text-sm sm:text-base font-semibold text-primary-500">
+                            {{ number_format($member->pv_balance ?? 0) }}
+                        </td>
+                        <td>
+                            <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
+                                {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                            </span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="9" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
+                            <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            Aucun membre dans votre réseau
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Résumé -->
+    @if($filleuls->count() > 0)
+        <div class="mt-3 sm:mt-4 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-[var(--text-secondary)]">
+            <span>
+                Affichage de <strong class="text-[var(--text-primary)]">{{ $filleuls->count() }}</strong> membre(s)
+            </span>
+            <span>
+                Total PV: <strong class="text-primary-500">{{ number_format($filleuls->sum('pv_balance')) }}</strong>
+            </span>
+        </div>
+    @endif
+</div>
     <!-- Lien de parrainage -->
     <div class="card animate-fadeInUp delay-6 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">

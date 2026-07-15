@@ -331,7 +331,49 @@ return [
     'min_withdrawal' => 10,
     'max_withdrawal_per_day' => 5000,
     'max_commission_per_transaction' => 10000,
-    'tax_rate' => 5,
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✅ NOUVEAU: Tax Rate
+    |--------------------------------------------------------------------------
+    */
+
+    'tax_rate' => env('COMMISSION_TAX_RATE', 5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✅ NOUVEAU: Minimum Payment Threshold
+    |--------------------------------------------------------------------------
+    */
+
+    'min_payment' => env('COMMISSION_MIN_PAYMENT', 1),
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✅ NOUVEAU: Payment Validation Rules
+    |--------------------------------------------------------------------------
+    */
+
+    'payment_validation' => [
+        'require_kyc' => env('COMMISSION_REQUIRE_KYC', true),
+        'require_monthly_pv' => env('COMMISSION_REQUIRE_MONTHLY_PV', true),
+        'require_active_account' => env('COMMISSION_REQUIRE_ACTIVE_ACCOUNT', true),
+        'require_rank' => env('COMMISSION_REQUIRE_RANK', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✅ NOUVEAU: Payment Status Messages
+    |--------------------------------------------------------------------------
+    */
+
+    'payment_status_messages' => [
+        'kyc_pending' => 'KYC non vérifié - paiement en attente de vérification',
+        'monthly_pv_insufficient' => 'PV mensuel insuffisant ({pv} PV requis: {required} PV)',
+        'amount_too_small' => 'Montant inférieur au minimum de paiement ({amount} < {min})',
+        'account_inactive' => 'Compte inactif - paiement ignoré',
+        'no_rank' => 'Aucun grade trouvé - paiement ignoré',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -373,5 +415,50 @@ return [
         'retail' => 'Retail Profit',
         'consumer' => 'Consumer Bonus',
         'global' => 'Global Bonus',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | ✅ NOUVEAU: Commission Types Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'commission_types' => [
+        'direct' => [
+            'label' => 'Direct Bonus',
+            'description' => 'Commission directe du parrain',
+            'icon' => 'user-plus',
+            'color' => 'primary',
+        ],
+        'indirect' => [
+            'label' => 'Indirect Bonus',
+            'description' => 'Commission indirecte des parrains supérieurs',
+            'icon' => 'users',
+            'color' => 'warning',
+        ],
+        'leadership' => [
+            'label' => 'Leadership Bonus',
+            'description' => 'Bonus de leadership pour les niveaux 5+',
+            'icon' => 'crown',
+            'color' => 'danger',
+        ],
+        'retail' => [
+            'label' => 'Retail Profit',
+            'description' => 'Profit sur la revente directe (25%)',
+            'icon' => 'shopping-bag',
+            'color' => 'success',
+        ],
+        'consumer' => [
+            'label' => 'Consumer Bonus',
+            'description' => 'Bonus consommateur sur les achats personnels (6%)',
+            'icon' => 'gift',
+            'color' => 'teal',
+        ],
+        'global' => [
+            'label' => 'Global Bonus',
+            'description' => 'Bonus mondial pour les grades supérieurs',
+            'icon' => 'globe',
+            'color' => 'info',
+        ],
     ],
 ];

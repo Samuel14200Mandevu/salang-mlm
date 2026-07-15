@@ -38,11 +38,11 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => '📧 L\'adresse email est obligatoire.',
-            'email.email' => '📧 Veuillez saisir une adresse email valide (exemple: nom@domaine.com).',
-            'email.max' => '📧 L\'adresse email ne doit pas dépasser 255 caractères.',
-            'password.required' => '🔑 Le mot de passe est obligatoire.',
-            'password.min' => '🔑 Le mot de passe doit contenir au moins 8 caractères.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'Veuillez saisir une adresse email valide (exemple: nom@domaine.com).',
+            'email.max' => 'L\'adresse email ne doit pas dépasser 255 caractères.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ];
     }
 
@@ -55,28 +55,33 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // ✅ Vérifier si l'utilisateur existe
+        // Vérifier si l'utilisateur existe
         $user = \App\Models\User::where('email', $this->email)->first();
         
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'email' => '❌ Aucun compte trouvé avec cette adresse email.',
+                'email' => 'Aucun compte trouvé avec cette adresse email.',
             ]);
         }
 
-        // ✅ Vérifier si le compte est actif
+        // Vérifier si le compte est actif - NE PLUS BLOQUER
         if (!$user->is_active) {
+            // Connecter l'utilisateur même si inactif
+            Auth::login($user);
+            RateLimiter::clear($this->throttleKey());
+            
+            // Rediriger vers la page d'activation
             throw ValidationException::withMessages([
-                'email' => '⛔ Votre compte a été désactivé. Veuillez contacter le support.',
+                'email' => 'Votre compte est inactif. Veuillez l\'activer pour recevoir des commissions.',
             ]);
         }
 
-        // ✅ Tentative de connexion
+        // Tentative de connexion
         if (!Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'password' => '🔑 Le mot de passe saisi est incorrect.',
+                'password' => 'Le mot de passe saisi est incorrect.',
             ]);
         }
 
@@ -97,7 +102,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => '⏳ Trop de tentatives de connexion. Veuillez réessayer dans ' . ceil($seconds / 60) . ' minute(s).',
+            'email' => 'Trop de tentatives de connexion. Veuillez réessayer dans ' . ceil($seconds / 60) . ' minute(s).',
         ]);
     }
 

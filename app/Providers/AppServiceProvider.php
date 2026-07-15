@@ -16,6 +16,7 @@ use App\Services\ImageUploadService;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\MLM\MonthlyCommissionService;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Genealogy;
@@ -43,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(CommissionDistributor::class, function ($app) {
             return new CommissionDistributor();
+        });
+
+        // ✅ MonthlyCommissionService avec ses dépendances
+        $this->app->singleton(MonthlyCommissionService::class, function ($app) {
+            return new MonthlyCommissionService(
+                $app->make(AdvancedRankCalculator::class),
+                $app->make(CommissionDistributor::class)
+            );
         });
 
         // ✅ CommissionService AVEC SES 3 DÉPENDANCES
@@ -81,6 +90,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ImageUploadService::class, function ($app) {
             return new ImageUploadService();
         });
+
+        // ✅ Enregistrement des commandes Artisan personnalisées
+        $this->commands([
+            \App\Console\Commands\ProcessMonthlyCommissions::class,
+            \App\Console\Commands\UpdateRanks::class,
+            \App\Console\Commands\CalculateCommissions::class,
+            \App\Console\Commands\ProcessPendingWithdrawals::class,
+            \App\Console\Commands\RecalculateAllRanks::class,
+        ]);
     }
 
     /**
@@ -102,7 +120,7 @@ class AppServiceProvider extends ServiceProvider
         // Configurer les middlewares
         $this->configureMiddleware();
 
-        // ✅ ENREGISTRER LES OBSERVERS (CORRIGÉ)
+        // ✅ ENREGISTRER LES OBSERVERS
         User::observe(UserObserver::class);
         Order::observe(OrderObserver::class);
         Genealogy::observe(GenealogyObserver::class);

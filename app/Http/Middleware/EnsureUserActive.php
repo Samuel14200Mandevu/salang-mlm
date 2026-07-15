@@ -11,6 +11,15 @@ class EnsureUserActive
 {
     public function handle(Request $request, Closure $next)
     {
+        // Routes publiques d'authentification
+        $routeName = $request->route()?->getName();
+        
+        $publicRoutes = ['login', 'register', 'password.request', 'password.email', 'password.reset', 'password.store', 'logout'];
+        
+        if (in_array($routeName, $publicRoutes)) {
+            return $next($request);
+        }
+
         if (!Auth::check()) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
@@ -23,22 +32,24 @@ class EnsureUserActive
 
         $user = Auth::user();
 
-        if (!$user->is_active) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        // ✅ Supprimer les anciens messages d'erreur
+        $request->session()->forget('error');
 
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your account has been deactivated.'
-                ], 403);
-            }
-
-            return redirect()->route('login')
-                ->with('error', 'Your account has been deactivated. Please contact the administrator.');
+        // ✅ Si le compte est actif, tout est autorisé
+        if ($user->is_active) {
+            return $next($request);
         }
 
+        // ✅ COMPTE INACTIF : ON NE BLOQUE PAS L'ACCÈS
+        // ✅ Ajouter une variable pour la vue (bannière)
+        view()->share('account_inactive', true);
+        
+        // ✅ Ajouter un message flash (non bloquant) si pas déjà présent
+        if (!$request->session()->has('warning')) {
+            session()->flash('warning', 'Votre compte est inactif. Activez-le pour recevoir des commissions.');
+        }
+
+        // ✅ PERMETTRE L'ACCÈS À TOUTES LES ROUTES
         return $next($request);
     }
 }

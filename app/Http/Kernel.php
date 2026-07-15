@@ -32,6 +32,12 @@ class Kernel extends HttpKernel
         
         // Convert empty strings to null
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        
+        // ✅ Security Headers - Ajoutés globalement
+        \App\Http\Middleware\SecurityHeaders::class,
+        
+        // ✅ Sanitize Input - Ajouté globalement
+        \App\Http\Middleware\SanitizeInput::class,
     ];
 
     /**
@@ -47,27 +53,43 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            
+            // ✅ SALANG MLM MIDDLEWARES
             \App\Http\Middleware\EnsureUserActive::class,
-            \App\Http\Middleware\EnsureRankIsUpToDate::class, // ✅ AJOUTÉ
+            \App\Http\Middleware\EnsureRankIsUpToDate::class,
+            \App\Http\Middleware\MaintenanceMode::class,
         ],
 
         'api' => [
+            // Laravel Sanctum
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            
+            // Rate Limiting
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
+            
+            // Route Binding
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            
+            // ✅ SALANG API MIDDLEWARES
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\ApiAuthenticate::class,
             \App\Http\Middleware\EnsureUserActive::class,
+            \App\Http\Middleware\LogRequest::class,
+            \App\Http\Middleware\RateLimitMiddleware::class . ':100,1',
         ],
     ];
 
     /**
      * The application's middleware aliases.
      *
+     * Aliases may be used instead of class names to conveniently assign middleware to routes and groups.
+     *
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
-        // Laravel Default
+        // ============================================================
+        // LARAVEL DEFAULT MIDDLEWARES
+        // ============================================================
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
@@ -81,31 +103,41 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         // ============================================================
-        // CUSTOM MIDDLEWARES - SALANG MLM
+        // SALANG MLM CUSTOM MIDDLEWARES
         // ============================================================
 
+        // 🔐 AUTHENTICATION & SECURITY
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
         'active' => \App\Http\Middleware\EnsureUserActive::class,
-        'json' => \App\Http\Middleware\ForceJsonResponse::class,
         'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
-        'maintenance' => \App\Http\Middleware\MaintenanceMode::class,
-        'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
-        'sanitize' => \App\Http\Middleware\SanitizeInput::class,
-        'log.request' => \App\Http\Middleware\LogRequest::class,
-        'cache.response' => \App\Http\Middleware\CacheResponse::class,
-        'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
-        
-        // ✅ NOUVEAU MIDDLEWARE
         'rank.update' => \App\Http\Middleware\EnsureRankIsUpToDate::class,
+
+        // 🛡️ SECURITY & PROTECTION
+        'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+        'sanitize' => \App\Http\Middleware\SanitizeInput::class,
+        'maintenance' => \App\Http\Middleware\MaintenanceMode::class,
+
+        // 📊 PERFORMANCE & CACHE
+        'cache.response' => \App\Http\Middleware\CacheResponse::class,
+        'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
+
+        // 📝 LOGGING & DEBUG
+        'log.request' => \App\Http\Middleware\LogRequest::class,
+        'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
     ];
 
     /**
      * The priority-sorted list of middleware.
      *
+     * This forces non-global middleware to always be in the given order.
+     *
      * @var array<int, class-string|string>
      */
     protected $middlewarePriority = [
+        // ============================================================
+        // LARAVEL DEFAULT - PRIORITY
+        // ============================================================
         \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
@@ -114,14 +146,42 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\VerifyCsrfToken::class,
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
 
+        // ============================================================
+        // SALANG MLM - PRIORITY ORDER
+        // ============================================================
+        
+        // 1. SECURITY (Highest Priority)
         \App\Http\Middleware\SecurityHeaders::class,
         \App\Http\Middleware\MaintenanceMode::class,
+        
+        // 2. AUTHENTICATION
         \App\Http\Middleware\ApiAuthenticate::class,
         \App\Http\Middleware\AdminMiddleware::class,
+        
+        // 3. USER VALIDATION
         \App\Http\Middleware\EnsureUserActive::class,
         \App\Http\Middleware\EnsureKycVerified::class,
+        \App\Http\Middleware\EnsureRankIsUpToDate::class,
+        
+        // 4. PERFORMANCE
         \App\Http\Middleware\RateLimitMiddleware::class,
+        \App\Http\Middleware\CacheResponse::class,
+        
+        // 5. LOGGING
         \App\Http\Middleware\LogRequest::class,
-        \App\Http\Middleware\EnsureRankIsUpToDate::class, // ✅ AJOUTÉ
+        \App\Http\Middleware\ForceJsonResponse::class,
+        
+        // 6. INPUT PROCESSING
+        \App\Http\Middleware\SanitizeInput::class,
     ];
+
+    /**
+     * Register the commands for the application.
+     */
+    protected function commands(): void
+    {
+        $this->load(__DIR__.'/Commands');
+
+        require base_path('routes/console.php');
+    }
 }

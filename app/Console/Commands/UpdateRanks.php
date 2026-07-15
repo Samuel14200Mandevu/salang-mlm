@@ -8,6 +8,7 @@ use App\Models\Rank;
 use App\Models\RankHistory;
 use App\Services\MLM\AdvancedRankCalculator;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class UpdateRanks extends Command
@@ -19,7 +20,7 @@ class UpdateRanks extends Command
     
     protected $description = 'Mettre à jour les grades des utilisateurs';
 
-    protected $rankCalculator;
+    protected AdvancedRankCalculator $rankCalculator;
 
     public function __construct(AdvancedRankCalculator $rankCalculator)
     {
@@ -27,50 +28,62 @@ class UpdateRanks extends Command
         $this->rankCalculator = $rankCalculator;
     }
 
-    public function handle()
+    /**
+     * Execute the console command.
+     */
+    public function handle(): int
     {
-        $this->info('Mise à jour des grades...');
+        $this->info('🔄 Mise à jour des grades...');
 
         $period = $this->option('period') ?? date('Y-m');
 
+        // Cas 1: Utilisateur spécifique
         if ($this->option('user')) {
             $user = User::find($this->option('user'));
             if (!$user) {
-                $this->error('Utilisateur non trouvé');
+                $this->error('❌ Utilisateur non trouvé');
                 return 1;
             }
             $this->updateUserRank($user, $period);
             return 0;
         }
 
+        // Cas 2: Tous les utilisateurs
         if ($this->option('all')) {
             $this->updateAllRanks($period);
             return 0;
         }
 
-        // Par défaut, mettre à jour les utilisateurs actifs
+        // Cas 3: Par défaut, utilisateurs actifs
         $this->updateActiveRanks($period);
         return 0;
     }
 
-    private function updateUserRank($user, $period)
+    /**
+     * Mettre à jour le grade d'un utilisateur spécifique
+     */
+    private function updateUserRank(User $user, string $period): void
     {
         try {
             $oldRankId = $user->rank_id;
-            $oldRankName = $user->rank_name;
+            $oldRankName = $user->rank_name ?? 'Distributor';
 
             $newRank = $this->rankCalculator->calculateAdvancedRank($user);
 
             if (!$newRank) {
-                $this->warn("Aucun grade trouvé pour {$user->name}");
+                $this->warn("⚠️ Aucun grade trouvé pour {$user->name}");
                 return;
             }
 
             if ($newRank->id != $oldRankId) {
+                DB::beginTransaction();
+
                 $user->rank_id = $newRank->id;
                 $user->rank = $newRank->name;
+                $user->rank_name = $newRank->name;
+                $user->rank_level = $newRank->level;
                 $user->last_rank_update = now();
-                $user->save();
+                $user->saveQuietly(); // ✅ Évite les événements
 
                 RankHistory::create([
                     'user_id' => $user->id,
@@ -80,26 +93,41 @@ class UpdateRanks extends Command
                     'new_rank_name' => $newRank->name,
                     'pv_at_time' => $user->pv_balance,
                     'bv_at_time' => $user->bv_balance,
+                    'monthly_pv_at_time' => $user->monthly_pv,
                     'notes' => "Mise à jour mensuelle {$period}",
                 ]);
 
-                $this->info(" {$user->name}: {$oldRankName} → {$newRank->name}");
+                DB::commit();
+
+                $this->info("✅ {$user->name}: {$oldRankName} → {$newRank->name}");
             } else {
-                $this->line(" {$user->name}: Grade inchangé ({$newRank->name})");
+                $this->line("⏸️ {$user->name}: Grade inchangé ({$newRank->name})");
             }
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Erreur mise à jour grade', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            $this->error("Erreur pour {$user->name}: {$e->getMessage()}");
+            $this->error("❌ Erreur pour {$user->name}: {$e->getMessage()}");
         }
     }
 
-    private function updateAllRanks($period)
+    /**
+     * Mettre à jour tous les utilisateurs
+     */
+    private function updateAllRanks(string $period): void
     {
-        $users = User::all();
+        $users = User::where('is_active', true)->get();
+        
+        if ($users->isEmpty()) {
+            $this->info('Aucun utilisateur actif');
+            return;
+        }
+
+        $this->info("📊 Mise à jour de {$users->count()} utilisateurs...");
+        
         $bar = $this->output->createProgressBar($users->count());
         $bar->start();
 
@@ -121,23 +149,32 @@ class UpdateRanks extends Command
 
         $bar->finish();
         $this->newLine(2);
-        $this->info("{$updated} utilisateurs promus");
-        $this->info(" {$unchanged} utilisateurs inchangés");
+        
+        $this->info("📊 RÉSULTATS:");
+        $this->line("   ✅ Promus: {$updated}");
+        $this->line("   ⏸️ Inchangés: {$unchanged}");
+        $this->line("   📊 Total: " . ($updated + $unchanged));
     }
 
-    private function updateActiveRanks($period)
+    /**
+     * Mettre à jour les utilisateurs actifs uniquement
+     */
+    private function updateActiveRanks(string $period): void
     {
-        // Utilisateurs avec des commandes récentes
+        // Utilisateurs avec des commandes récentes (30 jours)
         $users = User::whereHas('orders', function($query) {
-            $query->where('payment_status', 'completed');
-        })->take(100)->get();
+            $query->where('payment_status', 'completed')
+                  ->where('created_at', '>=', now()->subDays(30));
+        })->where('is_active', true)
+          ->limit(100)
+          ->get();
 
         if ($users->isEmpty()) {
-            $this->info('Aucun utilisateur actif');
+            $this->info('Aucun utilisateur actif avec commandes récentes');
             return;
         }
 
-        $this->info(" {$users->count()} utilisateurs actifs");
+        $this->info("📊 {$users->count()} utilisateurs actifs trouvés");
         $this->updateAllRanks($period);
     }
 }

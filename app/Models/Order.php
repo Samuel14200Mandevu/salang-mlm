@@ -3,8 +3,10 @@
 
 namespace App\Models;
 
+use App\Jobs\UpdateTeamPV;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Order extends Model
 {
@@ -37,6 +39,80 @@ class Order extends Model
         'metadata' => 'array',
     ];
 
+    // ============================================================
+    // BOOTED - TRIGGERS AUTOMATIQUES
+    // ============================================================
+
+    protected static function booted(): void
+    {
+        // ✅ Après création d'une commande
+        static::created(function ($order) {
+            // Mettre à jour le PV mensuel de l'utilisateur
+            if ($order->user_id) {
+                $user = User::find($order->user_id);
+                if ($user) {
+                    $user->updateMonthlyPV();
+                    // Mettre à jour le team_pv et les ancêtres
+                    dispatch(new UpdateTeamPV($user->id, true));
+                }
+            }
+        });
+
+        // ✅ Après mise à jour d'une commande
+        static::updated(function ($order) {
+            // Si la commande devient "completed" ou "paid"
+            if ($order->wasChanged('status') || $order->wasChanged('payment_status')) {
+                if ($order->status === 'completed' || $order->payment_status === 'completed') {
+                    if ($order->user_id) {
+                        $user = User::find($order->user_id);
+                        if ($user) {
+                            // Mettre à jour le PV mensuel
+                            $user->updateMonthlyPV();
+                            
+                            // Mettre à jour le team_pv et les ancêtres
+                            dispatch(new UpdateTeamPV($user->id, true));
+                            
+                            // Recalculer le grade
+                            $user->calculateAndUpdateRank();
+                            
+                            Log::info('Order: Mise à jour des PV après commande', [
+                                'order_id' => $order->id,
+                                'user_id' => $user->id,
+                                'status' => $order->status,
+                            ]);
+                        }
+                    }
+                }
+            }
+            
+            // Si le statut de paiement change
+            if ($order->wasChanged('payment_status') && $order->payment_status === 'completed') {
+                if ($order->user_id) {
+                    $user = User::find($order->user_id);
+                    if ($user) {
+                        $user->updateMonthlyPV();
+                        dispatch(new UpdateTeamPV($user->id, true));
+                    }
+                }
+            }
+        });
+
+        // ✅ Après suppression d'une commande
+        static::deleted(function ($order) {
+            if ($order->user_id) {
+                $user = User::find($order->user_id);
+                if ($user) {
+                    $user->updateMonthlyPV();
+                    dispatch(new UpdateTeamPV($user->id, true));
+                }
+            }
+        });
+    }
+
+    // ============================================================
+    // RELATIONS
+    // ============================================================
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -51,6 +127,10 @@ class Order extends Model
     {
         return $this->hasMany(Commission::class);
     }
+
+    // ============================================================
+    // ACCESSEURS
+    // ============================================================
 
     public function getStatusLabelAttribute()
     {
@@ -93,6 +173,10 @@ class Order extends Model
         return '$' . number_format($this->total, 2);
     }
 
+    // ============================================================
+    // MÉTHODES UTILITAIRES
+    // ============================================================
+
     public function isPaid()
     {
         return $this->payment_status === 'completed';
@@ -106,5 +190,21 @@ class Order extends Model
     public function isPending()
     {
         return $this->status === 'pending';
+    }
+
+    /**
+     * Met à jour les PV de l'utilisateur après la commande
+     */
+    public function updateUserPV(): void
+    {
+        if ($this->user_id) {
+            $user = User::find($this->user_id);
+            if ($user) {
+                $user->updateMonthlyPV();
+                $user->updateTeamPV();
+                $user->updateAllAncestors();
+                $user->calculateAndUpdateRank();
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 <?php
+// app/Providers/RouteServiceProvider.php
 
 namespace App\Providers;
 
@@ -32,17 +33,14 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            // ✅ Routes Admin (préfixe admin)
-            Route::middleware(['web', 'auth', 'admin'])
-                ->prefix('admin')
-                ->as('admin.')
-                ->group(base_path('routes/admin.php'));
+            // ✅ Routes Auth (incluses dans web.php via require)
+            // require base_path('routes/auth.php');
 
-            // ✅ Routes Webhook (sans CSRF, avec rate limiting spécifique)
-            Route::middleware(['webhook'])
-                ->prefix('webhook')
-                ->as('webhook.')
-                ->group(base_path('routes/webhook.php'));
+            // ✅ Routes Admin (déjà incluses dans web.php)
+            // Pas besoin de charger séparément car elles sont dans web.php
+
+            // ✅ Routes Webhook (dans web.php avec withoutMiddleware)
+            // Pas besoin de fichier séparé
         });
     }
 

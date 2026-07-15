@@ -254,6 +254,57 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
+    <!-- ============================================================ -->
+<!-- ✅ BANNIÈRE POUR COMPTE INACTIF - STYLE MODERNE -->
+<!-- ============================================================ -->
+@if(Auth::user() && !Auth::user()->is_active)
+<div class="relative overflow-hidden rounded-xl p-4 sm:p-5 animate-fadeInUp"
+     style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04)); border: 1px solid rgba(245, 158, 11, 0.25);">
+    
+    <!-- Effet de fond animé -->
+    <div class="absolute inset-0 opacity-10"
+         style="background: radial-gradient(circle at 20% 50%, rgba(245, 158, 11, 0.3) 0%, transparent 70%);">
+    </div>
+    
+    <div class="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        <!-- Icône -->
+        <div class="flex-shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full"
+             style="background: rgba(245, 158, 11, 0.15);">
+            <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        
+        <!-- Texte -->
+        <div class="flex-1 min-w-0">
+            <p class="text-sm sm:text-base font-bold text-yellow-700 dark:text-yellow-300">
+                Compte inactif
+            </p>
+            <p class="text-sm text-yellow-600 dark:text-yellow-400/80 mt-0.5">
+                Activez votre compte pour recevoir des commissions
+            </p>
+        </div>
+        
+        <!-- Bouton -->
+        <a href="{{ route('activate.index') }}" 
+           class="flex-shrink-0 inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+           style="background: linear-gradient(135deg, #1e24a1, #144ea6); box-shadow: 0 4px 16px rgba(177, 159, 128, 0.35);">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Activer maintenant
+        </a>
+    </div>
+    
+    <!-- Petit indicateur de statut -->
+    <div class="relative mt-3 flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400/70">
+        <span class="inline-block w-2 h-2 rounded-full animate-pulse" style="background: #1b48c3;"></span>
+        En attente d'activation
+    </div>
+</div>
+@endif
+<!-- ============================================================ -->
+
     <!-- Header -->
     <div class="animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Tableau de bord</h1>
@@ -313,13 +364,11 @@
             </div>
         </div>
         
-        {{-- ✅ GRADE CORRIGÉ --}}
         <div class="card-stats animate-fadeInUp delay-4">
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Grade</p>
                     <p class="text-base sm:text-xl md:text-2xl font-bold text-purple-500 truncate">
-                        {{-- ✅ Utiliser getOriginal pour la colonne string --}}
                         {{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}
                     </p>
                 </div>
@@ -348,7 +397,6 @@
                 <div class="min-w-0 flex-1">
                     <h3 class="font-bold text-[var(--text-primary)] truncate">{{ Auth::user()->name }}</h3>
                     <p class="text-xs text-[var(--text-secondary)]">Membre</p>
-                    {{-- ✅ GRADE CORRIGÉ --}}
                     <span class="badge badge-success text-[10px] sm:text-xs inline-block mt-0.5">
                         {{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}
                     </span>
@@ -369,38 +417,38 @@
             </div>
             
            <!-- Sponsor Information -->
-<div class="mt-3 sm:mt-4 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Parrain</p>
-    @php
-        use App\Models\User;
-        $parrainData = null;
-        if (Auth::user()->parrain_id) {
-            $parrainData = User::find(Auth::user()->parrain_id);
-        }
-    @endphp
-    @if($parrainData)
-        <div class="flex items-center gap-3 mt-1">
-            <div class="avatar avatar-md avatar-gradient">
-                {{ strtoupper(substr($parrainData->name, 0, 1)) }}
+            <div class="mt-3 sm:mt-4 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Parrain</p>
+                @php
+                    use App\Models\User;
+                    $parrainData = null;
+                    if (Auth::user()->parrain_id) {
+                        $parrainData = User::find(Auth::user()->parrain_id);
+                    }
+                @endphp
+                @if($parrainData)
+                    <div class="flex items-center gap-3 mt-1">
+                        <div class="avatar avatar-md avatar-gradient">
+                            {{ strtoupper(substr($parrainData->name, 0, 1)) }}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                                {{ $parrainData->name }}
+                            </p>
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                                {{ $parrainData->email }}
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                        Aucun parrain
+                    </p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                        Vous êtes le premier de votre réseau
+                    </p>
+                @endif
             </div>
-            <div>
-                <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                    {{ $parrainData->name }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                    {{ $parrainData->email }}
-                </p>
-            </div>
-        </div>
-    @else
-        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-            Aucun parrain
-        </p>
-        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-            Vous êtes le premier de votre réseau
-        </p>
-    @endif
-</div>
 
             <!-- Downlines and Code -->
             <div class="mt-2 grid grid-cols-2 gap-2">
@@ -488,7 +536,6 @@
                     Progression vers le prochain grade
                 </h3>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    {{-- ✅ GRADE CORRIGÉ --}}
                     Actuel: <span class="font-bold text-primary-500">{{ Auth::user()->getOriginal('rank') ?? 'Distributor' }}</span>
                     @if(isset($rankProgress['next']) && $rankProgress['next'] != 'Maximum Level')
                         → Prochain: <span class="font-bold text-purple-500">{{ $rankProgress['next'] }}</span>
@@ -516,7 +563,7 @@
             </p>
         @elseif(isset($rankProgress['next']) && $rankProgress['next'] == 'Maximum Level')
             <p class="text-xs text-green-500 mt-2 font-semibold">
-                🏆 Vous avez atteint le grade maximum !
+                Vous avez atteint le grade maximum !
             </p>
         @endif
     </div>

@@ -13,24 +13,22 @@ class Kernel extends ConsoleKernel
      *
      * @var array
      */
-    protected $commands = [
-        // Commandes existantes
-        \App\Console\Commands\CalculateCommissions::class,
-        \App\Console\Commands\ProcessCommissions::class,
-        \App\Console\Commands\ProcessPendingWithdrawals::class,
-        \App\Console\Commands\ProcessMonthlyCommissions::class,
-        \App\Console\Commands\RecalculateAllRanks::class,
-        \App\Console\Commands\UpdateRanks::class,
-        
-        // ✅ NOUVELLES COMMANDES - AJOUTER CES LIGNES
-        \App\Console\Commands\UpdateMonthlyPV::class,
-        \App\Console\Commands\GenerateReport::class,
-        \App\Console\Commands\CleanLogs::class,
-        \App\Console\Commands\SyncHigherRanks::class,
-        \App\Console\Commands\CheckPackageExpiry::class,
-        \App\Console\Commands\SendPendingNotifications::class,
-        \App\Console\Commands\BackupRun::class,
-    ];
+protected $commands = [
+    \App\Console\Commands\CalculateCommissions::class,
+    \App\Console\Commands\ProcessCommissions::class,
+    \App\Console\Commands\ProcessPendingWithdrawals::class,
+    \App\Console\Commands\ProcessMonthlyCommissions::class,  // Une seule fois
+    \App\Console\Commands\RecalculateAllRanks::class,
+    \App\Console\Commands\UpdateRanks::class,
+    \App\Console\Commands\UpdateMonthlyPV::class,
+    \App\Console\Commands\GenerateReport::class,
+    \App\Console\Commands\CleanLogs::class,
+    \App\Console\Commands\SyncHigherRanks::class,
+    \App\Console\Commands\CheckPackageExpiry::class,
+    \App\Console\Commands\SendPendingNotifications::class,
+    \App\Console\Commands\BackupRun::class,
+    \App\Console\Commands\StatusCommand::class,
+];
 
     /**
      * Define the application's command schedule.
@@ -126,6 +124,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/notifications.log'));
+
+        $schedule->command('mlm:status')->hourly()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/status.log'));
     }
 
     /**

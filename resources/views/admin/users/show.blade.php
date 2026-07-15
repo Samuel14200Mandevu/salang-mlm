@@ -54,6 +54,10 @@
         background: rgba(34, 197, 94, 0.1);
         color: #22c55e;
     }
+    .modal-icon-info {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
     .modal-title {
         text-align: center;
         font-size: 1.25rem;
@@ -80,6 +84,9 @@
     .modal-text .text-success {
         color: #22c55e;
     }
+    .modal-text .text-info {
+        color: #3b82f6;
+    }
     .modal-actions {
         display: flex;
         gap: 0.75rem;
@@ -88,6 +95,21 @@
     .modal-actions .btn {
         min-width: 100px;
         justify-content: center;
+    }
+    
+    .code-display {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        text-align: center;
+        font-family: monospace;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-500);
+        letter-spacing: 2px;
+        border: 2px dashed var(--border-color);
+        margin: 1rem 0;
+        word-break: break-all;
     }
     
     .info-row {
@@ -125,6 +147,7 @@
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
     .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     
     .btn {
         display: inline-flex;
@@ -147,6 +170,7 @@
     .btn-warning { background: var(--gradient-warning); color: white; }
     .btn-success { background: var(--gradient-success); color: white; }
     .btn-danger { background: var(--gradient-danger); color: white; }
+    .btn-info { background: var(--gradient-info); color: white; }
     .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
     .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
     
@@ -206,6 +230,7 @@
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
         .card { padding: 0.875rem; }
         .sponsor-card { padding: 0.5rem 0.75rem; }
+        .code-display { font-size: 1rem; padding: 0.5rem 0.75rem; }
     }
     
     @media (min-width: 641px) and (max-width: 1024px) {
@@ -229,13 +254,25 @@
                 ID: #{{ $user->id }}
             </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
             <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 <span class="hidden xs:inline">Retour</span>
             </a>
+            
+            <!-- BOUTON GÉNÉRER CODE D'ACTIVATION (UNIQUEMENT SI INACTIF) -->
+            @if(!$user->is_active)
+            <button type="button" 
+                    onclick="openGenerateCodeModal()" 
+                    class="btn btn-info btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+                Générer code d'activation
+            </button>
+            @endif
         </div>
     </div>
 
@@ -248,6 +285,12 @@
     @if(session('error'))
         <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             {{ session('error') }}
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-600 text-sm sm:text-base animate-fadeIn">
+            {{ session('warning') }}
         </div>
     @endif
 
@@ -277,6 +320,11 @@
                         <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
                             {{ $user->is_active ? 'Actif' : 'Inactif' }}
                         </span>
+                        @if(!$user->is_active && $user->activation_code)
+                            <span class="text-xs text-[var(--text-tertiary)] block mt-1">
+                                Code: <span class="font-mono text-primary-500">{{ $user->activation_code }}</span>
+                            </span>
+                        @endif
                     </span>
                 </div>
                 <div class="info-row">
@@ -307,7 +355,7 @@
                     <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label"> Parrain </span>
+                    <span class="label">Parrain</span>
                     <span class="value">
                         @php
                             $parrain = App\Models\User::find($user->parrain_id);
@@ -327,7 +375,7 @@
                     </span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Filleuls </span>
+                    <span class="label">Filleuls</span>
                     <span class="value">
                         @php
                             $filleuls = App\Models\User::where('parrain_id', $user->id)->get();
@@ -440,6 +488,16 @@
                     </svg>
                     Activer
                 </button>
+                
+                <!-- BOUTON GÉNÉRER CODE D'ACTIVATION -->
+                <button type="button" 
+                        onclick="openGenerateCodeModal()" 
+                        class="btn btn-info btn-sm sm:btn-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                    Générer code
+                </button>
             @endif
 
             <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm sm:btn-md">
@@ -457,6 +515,53 @@
                 </svg>
                 Supprimer
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL GÉNÉRER CODE D'ACTIVATION AVEC ENVOI AUTOMATIQUE -->
+<!-- ============================================================ -->
+<div id="generateCodeModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-info">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+        </div>
+        <h3 class="modal-title">Générer un code d'activation</h3>
+        <p class="modal-text">
+            Vous êtes sur le point de générer un nouveau code d'activation pour 
+            <strong>{{ $user->name }}</strong>.
+            <br><br>
+            Un email contenant le code sera automatiquement envoyé à 
+            <strong>{{ $user->email }}</strong>.
+            <br>
+            <span class="text-warning text-sm">L'ancien code sera remplacé.</span>
+        </p>
+        
+        @if($user->activation_code)
+        <div class="code-display">
+            {{ $user->activation_code }}
+        </div>
+        <p class="text-xs text-center text-[var(--text-tertiary)] -mt-2 mb-3">
+            Code actuel (valable jusqu'au {{ \Carbon\Carbon::parse($user->activation_code_expires_at)->format('d/m/Y') }})
+        </p>
+        @endif
+        
+        <div class="modal-actions">
+            <button type="button" onclick="closeGenerateCodeModal()" class="btn btn-outline btn-sm">
+                Annuler
+            </button>
+            <form action="{{ route('admin.activations.generate-code', $user->id) }}" method="POST" class="inline">
+                @csrf
+                <button type="submit" class="btn btn-info btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Générer et envoyer
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -541,6 +646,22 @@
 
 @push('scripts')
 <script>
+// ============================================================
+// MODAL GÉNÉRER CODE
+// ============================================================
+function openGenerateCodeModal() {
+    document.getElementById('generateCodeModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeGenerateCodeModal() {
+    document.getElementById('generateCodeModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// ============================================================
+// MODAL DÉSACTIVER
+// ============================================================
 function openDeactivateModal() {
     document.getElementById('deactivateModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -551,6 +672,9 @@ function closeDeactivateModal() {
     document.body.style.overflow = '';
 }
 
+// ============================================================
+// MODAL ACTIVER
+// ============================================================
 function openActivateModal() {
     document.getElementById('activateModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -561,6 +685,9 @@ function closeActivateModal() {
     document.body.style.overflow = '';
 }
 
+// ============================================================
+// MODAL SUPPRIMER
+// ============================================================
 function openDeleteModal() {
     document.getElementById('deleteModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -571,6 +698,9 @@ function closeDeleteModal() {
     document.body.style.overflow = '';
 }
 
+// ============================================================
+// FERMER LES MODALS EN CLIQUANT À L'EXTÉRIEUR
+// ============================================================
 document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
@@ -580,6 +710,9 @@ document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     });
 });
 
+// ============================================================
+// FERMER LES MODALS AVEC LA TOUCHE ESCAPE
+// ============================================================
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {

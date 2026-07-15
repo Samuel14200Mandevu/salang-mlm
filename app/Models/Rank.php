@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Rank extends Model
 {
@@ -43,6 +44,10 @@ class Rank extends Model
         'commission_types' => 'array',
     ];
 
+    // ============================================================
+    // RELATIONS
+    // ============================================================
+
     public function users()
     {
         return $this->hasMany(User::class);
@@ -57,6 +62,10 @@ class Rank extends Model
     {
         return $this->hasMany(UserMonthlyRank::class);
     }
+
+    // ============================================================
+    // MÉTHODES DE NAVIGATION
+    // ============================================================
 
     public function getNextRank()
     {
@@ -73,6 +82,10 @@ class Rank extends Model
             ->orderBy('level', 'desc')
             ->first();
     }
+
+    // ============================================================
+    // ACCESSEURS
+    // ============================================================
 
     public function getLevelNameAttribute()
     {
@@ -130,68 +143,6 @@ class Rank extends Model
         return number_format($this->bonus_percentage, 2) . '%';
     }
 
-    public function isEligible(User $user): bool
-    {
-        if ($user->pv_balance < $this->min_pv) {
-            return false;
-        }
-
-        if ($this->level >= 4 && $this->conditions) {
-            return $this->checkConditions($user);
-        }
-
-        return true;
-    }
-
-    public function checkConditions(User $user): bool
-    {
-        $conditions = $this->conditions;
-        
-        if (empty($conditions) || !is_array($conditions)) {
-            return true;
-        }
-
-        $directChildren = $user->filleuls()->with('rank')->get();
-        
-        foreach ($conditions as $condition) {
-            if ($this->checkSingleCondition($condition, $directChildren)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function checkSingleCondition(array $condition, $directChildren): bool
-    {
-        if (isset($condition['branch_level'])) {
-            $count = $directChildren->filter(function ($child) use ($condition) {
-                $rankLevel = $child->rank->level ?? 0;
-                return $rankLevel >= $condition['branch_level'] 
-                    && $child->pv_balance >= ($condition['min_branch_pv'] ?? 0);
-            })->count();
-
-            return $count >= ($condition['min_branches'] ?? 1);
-        }
-
-        if (isset($condition['branches']) && is_array($condition['branches'])) {
-            foreach ($condition['branches'] as $branchCondition) {
-                $count = $directChildren->filter(function ($child) use ($branchCondition) {
-                    $rankLevel = $child->rank->level ?? 0;
-                    return $rankLevel >= $branchCondition['branch_level'] 
-                        && $child->pv_balance >= ($branchCondition['min_branch_pv'] ?? 0);
-                })->count();
-
-                if ($count < ($branchCondition['min_branches'] ?? 1)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        return false;
-    }
-
     public function getCommissionTypesListAttribute()
     {
         if ($this->commission_types) {
@@ -210,5 +161,241 @@ class Rank extends Model
             return implode(' | ', $list);
         }
         return 'No specific conditions';
+    }
+
+    // ============================================================
+    // MÉTHODES D'ÉLIGIBILITÉ (CORRIGÉES)
+    // ============================================================
+
+    /**
+     * Vérifie si l'utilisateur est éligible pour ce grade
+     */
+    public function isEligible(User $user): bool
+    {
+        // Vérification du PV minimum
+        if ($user->pv_balance < $this->min_pv) {
+            return false;
+        }
+
+        // Vérification du BV minimum
+        if ($user->bv_balance < $this->min_bv) {
+            return false;
+        }
+
+        // Pour les niveaux 1 à 3, c'est simple
+        if ($this->level <= 3) {
+            return true;
+        }
+
+        // Pour les niveaux 4 à 9, vérifier les conditions complexes
+        return $this->checkConditions($user);
+    }
+
+    /**
+     * Vérifie les conditions complexes du grade
+     */
+    public function checkConditions(User $user): bool
+    {
+        $conditions = $this->conditions;
+        
+        if (empty($conditions) || !is_array($conditions)) {
+            // Si pas de conditions, utiliser la règle par défaut
+            return $user->pv_balance >= $this->min_pv;
+        }
+
+        $directChildren = $user->filleuls()->with('rank')->get();
+        
+        // Parcourir toutes les conditions (une suffit)
+        foreach ($conditions as $condition) {
+            if ($this->checkSingleCondition($condition, $directChildren, $user)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifie une condition simple
+     */
+    private function checkSingleCondition(array $condition, $directChildren, User $user): bool
+    {
+        // ============================================================
+        // TYPE 1: PERSONAL PV
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'personal_pv') {
+            $requiredPV = $condition['value'] ?? 0;
+            $result = $user->pv_balance >= $requiredPV;
+            
+            Log::debug('Vérification personal_pv', [
+                'user_id' => $user->id,
+                'pv_balance' => $user->pv_balance,
+                'required_pv' => $requiredPV,
+                'result' => $result
+            ]);
+            
+            return $result;
+        }
+
+        // ============================================================
+        // TYPE 2: BRANCHES (Ex: 3 branches niveau X avec Y PV)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'branches') {
+            $branchLevel = $condition['rank_level'] ?? 0;
+            $minBranches = $condition['branches'] ?? 1;
+            $minBranchPV = $condition['group_pv'] ?? 0;
+
+            $count = $directChildren->filter(function ($child) use ($branchLevel, $minBranchPV) {
+                $childRank = $this->getUserRankObject($child);
+                $childRankLevel = $childRank?->level ?? 0;
+                return $childRankLevel >= $branchLevel
+                    && $child->pv_balance >= $minBranchPV;
+            })->count();
+
+            $result = $count >= $minBranches;
+            
+            Log::debug('Vérification branches', [
+                'user_id' => $user->id,
+                'branch_level' => $branchLevel,
+                'min_branches' => $minBranches,
+                'min_branch_pv' => $minBranchPV,
+                'count' => $count,
+                'result' => $result
+            ]);
+
+            return $result;
+        }
+
+        // ============================================================
+        // TYPE 3: BRANCHES MIXED (Ex: 2 branches X + 4 branches Y)
+        // ============================================================
+        if (isset($condition['type']) && $condition['type'] === 'branches_mixed') {
+            $branchRequirements = $condition['branches'] ?? [];
+            $minGroupPV = $condition['group_pv'] ?? 0;
+
+            foreach ($branchRequirements as $count => $level) {
+                $actualCount = $directChildren->filter(function ($child) use ($level) {
+                    $childRank = $this->getUserRankObject($child);
+                    return ($childRank?->level ?? 0) >= $level;
+                })->count();
+
+                if ($actualCount < $count) {
+                    return false;
+                }
+            }
+
+            // Calculer le PV total des branches
+            $totalGroupPV = $directChildren->sum('pv_balance');
+            $result = $totalGroupPV >= $minGroupPV;
+            
+            Log::debug('Vérification branches_mixed', [
+                'user_id' => $user->id,
+                'requirements' => $branchRequirements,
+                'min_group_pv' => $minGroupPV,
+                'total_group_pv' => $totalGroupPV,
+                'result' => $result
+            ]);
+
+            return $result;
+        }
+
+        // ============================================================
+        // RÉTROCOMPATIBILITÉ (ancien format)
+        // ============================================================
+        if (isset($condition['branch_level'])) {
+            $count = $directChildren->filter(function ($child) use ($condition) {
+                $childRank = $this->getUserRankObject($child);
+                $rankLevel = $childRank?->level ?? 0;
+                return $rankLevel >= ($condition['branch_level'] ?? 0)
+                    && $child->pv_balance >= ($condition['min_branch_pv'] ?? 0);
+            })->count();
+
+            return $count >= ($condition['min_branches'] ?? 1);
+        }
+
+        if (isset($condition['branches']) && is_array($condition['branches'])) {
+            foreach ($condition['branches'] as $branchCondition) {
+                $count = $directChildren->filter(function ($child) use ($branchCondition) {
+                    $childRank = $this->getUserRankObject($child);
+                    $rankLevel = $childRank?->level ?? 0;
+                    return $rankLevel >= ($branchCondition['branch_level'] ?? 0)
+                        && $child->pv_balance >= ($branchCondition['min_branch_pv'] ?? 0);
+                })->count();
+
+                if ($count < ($branchCondition['min_branches'] ?? 1)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Obtient l'objet Rank d'un utilisateur
+     */
+    private function getUserRankObject(User $user): ?Rank
+    {
+        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
+            return $user->rank;
+        }
+
+        if ($user->rank_id) {
+            return Rank::find($user->rank_id);
+        }
+
+        if (is_string($user->rank)) {
+            $rank = Rank::where('name', $user->rank)->first();
+            if ($rank) {
+                return $rank;
+            }
+            $rank = Rank::where('slug', $user->rank)->first();
+            if ($rank) {
+                return $rank;
+            }
+        }
+
+        return Rank::where('level', 1)->first();
+    }
+
+    /**
+     * Calcule le PV total d'une branche (chef + descendants)
+     */
+    private function getBranchTotalPV(User $branchRoot): int
+    {
+        $totalPV = $branchRoot->pv_balance;
+        
+        $descendants = $this->getAllDescendants($branchRoot);
+        foreach ($descendants as $descendant) {
+            $totalPV += $descendant->pv_balance;
+        }
+        
+        return $totalPV;
+    }
+
+    /**
+     * Récupère tous les descendants d'un utilisateur
+     */
+    private function getAllDescendants(User $user): array
+    {
+        $descendants = [];
+        $this->getDescendantsRecursive($user, $descendants);
+        return $descendants;
+    }
+
+    /**
+     * Récupère récursivement les descendants
+     */
+    private function getDescendantsRecursive($user, array &$descendants): void
+    {
+        $children = User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($children as $child) {
+            $descendants[] = $child;
+            $this->getDescendantsRecursive($child, $descendants);
+        }
     }
 }

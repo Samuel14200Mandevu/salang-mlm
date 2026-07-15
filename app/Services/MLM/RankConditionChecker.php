@@ -6,6 +6,7 @@ namespace App\Services\MLM;
 use App\Models\User;
 use App\Models\Rank;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RankConditionChecker
 {
@@ -262,9 +263,20 @@ class RankConditionChecker
 
     /**
      * Vérifier si un utilisateur ou ses descendants ont un niveau donné
+     * ✅ CORRIGÉ - Avec protection contre les boucles infinies
      */
-    private function hasRankLevel(User $user, int $rankLevel): bool
+    private function hasRankLevel(User $user, int $rankLevel, int $maxDepth = 20, int $currentDepth = 0): bool
     {
+        // ✅ Protection contre les boucles infinies
+        if ($currentDepth >= $maxDepth) {
+            Log::warning('Max depth reached in hasRankLevel', [
+                'user_id' => $user->id,
+                'depth' => $currentDepth,
+                'rank_level' => $rankLevel
+            ]);
+            return false;
+        }
+
         $userLevel = $this->getRankLevel($user->rank);
 
         // L'utilisateur lui-même a le niveau requis
@@ -272,9 +284,9 @@ class RankConditionChecker
             return true;
         }
 
-        // Vérifier récursivement les descendants
+        // ✅ Vérifier récursivement les descendants avec limite de profondeur
         foreach ($user->filleuls as $filleul) {
-            if ($this->hasRankLevel($filleul, $rankLevel)) {
+            if ($this->hasRankLevel($filleul, $rankLevel, $maxDepth, $currentDepth + 1)) {
                 return true;
             }
         }
@@ -288,7 +300,21 @@ class RankConditionChecker
     private function getRankLevel($rank): int
     {
         if (!$rank) return 1;
-        return $rank->level ?? 1;
+        
+        // Si c'est un objet Rank
+        if (!is_string($rank) && method_exists($rank, 'getAttribute')) {
+            return $rank->level ?? 1;
+        }
+        
+        // Si c'est une string (nom du grade)
+        if (is_string($rank)) {
+            $rankModel = Rank::where('name', $rank)->first();
+            if ($rankModel) {
+                return $rankModel->level;
+            }
+        }
+        
+        return 1;
     }
 
     /**
@@ -308,16 +334,41 @@ class RankConditionChecker
 
     /**
      * Récupérer tous les descendants (récursif)
+     * ✅ CORRIGÉ - Avec protection contre les boucles infinies
      */
-    private function getAllDescendants(User $user): array
+    private function getAllDescendants(User $user, int $maxDepth = 20, int $currentDepth = 0): array
     {
+        // ✅ Protection contre les boucles infinies
+        if ($currentDepth >= $maxDepth) {
+            Log::warning('Max depth reached in getAllDescendants', [
+                'user_id' => $user->id,
+                'depth' => $currentDepth
+            ]);
+            return [];
+        }
+        
         $descendants = [];
+        $processed = [$user->id];
 
         foreach ($user->filleuls as $filleul) {
+            // ✅ Éviter les boucles infinies
+            if (in_array($filleul->id, $processed)) {
+                continue;
+            }
+            $processed[] = $filleul->id;
             $descendants[] = $filleul;
-            $descendants = array_merge($descendants, $this->getAllDescendants($filleul));
+            $descendants = array_merge($descendants, $this->getAllDescendants($filleul, $maxDepth, $currentDepth + 1));
         }
 
         return $descendants;
+    }
+
+    /**
+     *  Vider le cache interne si nécessaire
+     */
+    public function clearCache(): void
+    {
+        // Si vous utilisez un cache, vous pouvez le vider ici
+         Cache::forget('rank_conditions_cache');
     }
 }

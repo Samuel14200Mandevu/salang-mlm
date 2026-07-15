@@ -7,7 +7,11 @@ use App\Models\Package;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
+use App\Services\MLM\CommissionDistributor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +20,14 @@ use Illuminate\Support\Facades\Log;
 class UserPackageController extends Controller
 {
     protected MonthlyCommissionService $commissionService;
+    protected CommissionDistributor $commissionDistributor;
 
-    public function __construct(MonthlyCommissionService $commissionService)
-    {
+    public function __construct(
+        MonthlyCommissionService $commissionService,
+        CommissionDistributor $commissionDistributor
+    ) {
         $this->commissionService = $commissionService;
+        $this->commissionDistributor = $commissionDistributor;
     }
 
     public function index()
@@ -99,12 +107,21 @@ class UserPackageController extends Controller
             $user->bv_balance = ($user->bv_balance ?? 0) + $package->bv_value;
             $user->save();
 
+            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS ===
+            $this->calculateCommissionsForPackage($user, $package);
+
             DB::commit();
 
             $message = "Package '{$package->name}' purchased successfully!";
             if ($package->pv_value > 0) {
                 $message .= " You earned {$package->pv_value} PV and {$package->bv_value} BV.";
             }
+
+            Log::info('Package purchase completed with commissions', [
+                'user_id' => $user->id,
+                'package_id' => $package->id,
+                'package_name' => $package->name,
+            ]);
 
             return redirect()->route('subscriptions.index')
                 ->with('success', $message);
@@ -114,8 +131,86 @@ class UserPackageController extends Controller
             Log::error('Error purchasing package: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'package_id' => $package->id,
+                'trace' => $e->getTraceAsString(),
             ]);
             return back()->with('error', 'Error purchasing package: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Calculer les commissions pour un package
+     */
+    private function calculateCommissionsForPackage(User $buyer, Package $package): void
+    {
+        try {
+            // Récupérer ou créer la période en cours
+            $period = CommissionPeriod::firstOrCreate(
+                ['period' => date('Y-m')],
+                [
+                    'start_date' => now()->startOfMonth(),
+                    'end_date' => now()->endOfMonth(),
+                    'status' => 'pending',
+                ]
+            );
+
+            // Créer un ordre fictif pour lier les commissions
+            $order = Order::create([
+                'user_id' => $buyer->id,
+                'order_number' => 'PKG-' . strtoupper(uniqid()),
+                'subtotal' => $package->price,
+                'tax' => 0,
+                'shipping' => 0,
+                'discount' => 0,
+                'total' => $package->price,
+                'status' => 'completed',
+                'payment_status' => 'completed',
+                'paid_at' => now(),
+            ]);
+
+            // Ajouter l'item de commande
+            OrderItem::create([
+                'order_id' => $order->id,
+                'package_id' => $package->id,
+                'name' => $package->name,
+                'sku' => 'PKG-' . $package->slug,
+                'quantity' => 1,
+                'price' => $package->price,
+                'total' => $package->price,
+                'pv_value' => $package->pv_value,
+                'bv_value' => $package->bv_value,
+                'options' => json_encode([
+                    'package_id' => $package->id,
+                    'package_name' => $package->name,
+                ]),
+            ]);
+
+            // Distribuer les commissions
+            $commissions = $this->commissionDistributor->distributeCommissions(
+                $buyer,
+                $package,
+                $order->id,
+                $period
+            );
+
+            $totalAmount = collect($commissions)->sum('amount');
+
+            Log::info('Commissions calculées pour l\'achat de package', [
+                'buyer_id' => $buyer->id,
+                'buyer_name' => $buyer->name,
+                'package_id' => $package->id,
+                'package_name' => $package->name,
+                'commissions_count' => count($commissions),
+                'total_amount' => $totalAmount,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du calcul des commissions pour le package', [
+                'buyer_id' => $buyer->id,
+                'package_id' => $package->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
     }
 
@@ -186,6 +281,9 @@ class UserPackageController extends Controller
             $user->bv_balance = ($user->bv_balance ?? 0) + $bvDiff;
             $user->save();
 
+            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS POUR L'UPGRADE ===
+            $this->calculateCommissionsForPackage($user, $newPackage);
+
             DB::commit();
 
             return redirect()->route('subscriptions.index')
@@ -196,6 +294,7 @@ class UserPackageController extends Controller
             Log::error('Error upgrading package: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'new_package_id' => $newPackage->id,
+                'trace' => $e->getTraceAsString(),
             ]);
             return back()->with('error', 'Error upgrading package: ' . $e->getMessage());
         }

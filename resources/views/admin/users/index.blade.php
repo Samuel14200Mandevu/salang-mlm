@@ -14,6 +14,12 @@
         transition: all 0.3s ease;
     }
     
+    /* ✅ Badge inactif */
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    
     @media (max-width: 640px) {
         .table thead th, .table tbody td {
             padding: 0.375rem 0.5rem;
@@ -61,13 +67,13 @@
 
     @if(session('success'))
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
-            ✅ {{ session('success') }}
+             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
         <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
-            ❌ {{ session('error') }}
+             {{ session('error') }}
         </div>
     @endif
 

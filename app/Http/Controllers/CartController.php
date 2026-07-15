@@ -8,7 +8,9 @@ use App\Models\Package;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Transaction;
+use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
+use App\Services\MLM\CommissionDistributor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -18,10 +20,14 @@ use Illuminate\Support\Facades\Log;
 class CartController extends Controller
 {
     protected MonthlyCommissionService $commissionService;
+    protected CommissionDistributor $commissionDistributor;
 
-    public function __construct(MonthlyCommissionService $commissionService)
-    {
+    public function __construct(
+        MonthlyCommissionService $commissionService,
+        CommissionDistributor $commissionDistributor
+    ) {
         $this->commissionService = $commissionService;
+        $this->commissionDistributor = $commissionDistributor;
     }
 
     public function index()
@@ -209,6 +215,7 @@ class CartController extends Controller
 
             $totalPV = 0;
             $totalBV = 0;
+            $hasPackage = false;
 
             foreach ($cart as $key => $item) {
                 $pvValue = $item['pv_value'] ?? 0;
@@ -219,15 +226,25 @@ class CartController extends Controller
                     'product_id' => $item['type'] == 'product' ? $item['id'] : null,
                     'package_id' => $item['type'] == 'package' ? $item['id'] : null,
                     'name' => $item['name'],
+                    'sku' => $item['type'] == 'product' ? 'PROD-' . $item['id'] : 'PKG-' . $item['id'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'total' => $item['price'] * $item['quantity'],
                     'pv_value' => $pvValue,
                     'bv_value' => $bvValue,
+                    'options' => json_encode([
+                        'type' => $item['type'],
+                        'pv_value' => $pvValue,
+                        'bv_value' => $bvValue,
+                    ]),
                 ]);
 
                 $totalPV += $pvValue * $item['quantity'];
                 $totalBV += $bvValue * $item['quantity'];
+
+                if ($item['type'] == 'package') {
+                    $hasPackage = true;
+                }
 
                 if ($item['type'] == 'product') {
                     $product = Product::find($item['id']);
@@ -261,16 +278,93 @@ class CartController extends Controller
                 ]);
             }
 
+            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS POUR LA COMMANDE ===
+            if ($hasPackage) {
+                $this->calculateCommissionsForOrder($order, $user);
+            }
+
+            // Mettre à jour le statut de la commande
+            $order->status = 'completed';
+            $order->payment_status = 'completed';
+            $order->paid_at = now();
+            $order->save();
+
             Session::forget('cart');
             DB::commit();
+
+            Log::info('Order completed with commissions', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'user_id' => $user->id,
+                'total' => $total,
+                'has_package' => $hasPackage,
+            ]);
 
             return redirect()->route('orders.show', $order)
                 ->with('success', 'Order placed successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Checkout error: ' . $e->getMessage());
+            Log::error('Checkout error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'Error placing order: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Calculer les commissions pour une commande
+     */
+    private function calculateCommissionsForOrder($order, $user): void
+    {
+        try {
+            // Récupérer ou créer la période en cours
+            $period = CommissionPeriod::firstOrCreate(
+                ['period' => date('Y-m')],
+                [
+                    'start_date' => now()->startOfMonth(),
+                    'end_date' => now()->endOfMonth(),
+                    'status' => 'pending',
+                ]
+            );
+
+            $totalCommissions = 0;
+            $commissionCount = 0;
+
+            foreach ($order->items as $item) {
+                if ($item->package_id) {
+                    $package = Package::find($item->package_id);
+                    if ($package) {
+                        $commissions = $this->commissionDistributor->distributeCommissions(
+                            $user,
+                            $package,
+                            $order->id,
+                            $period
+                        );
+
+                        $commissionCount += count($commissions);
+                        $totalCommissions += collect($commissions)->sum('amount');
+                    }
+                }
+            }
+
+            Log::info('Commissions calculées pour la commande', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'commissions_count' => $commissionCount,
+                'total_amount' => $totalCommissions,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du calcul des commissions pour la commande', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
     }
 }
