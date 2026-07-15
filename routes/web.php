@@ -67,7 +67,7 @@ Route::get('/payment/success', [PaymentController::class, 'success'])->name('pay
 Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
 
 // ============================================================
-// ✅ ACTIVATION DE COMPTE (PUBLIC)
+// ACTIVATION DE COMPTE (PUBLIC)
 // ============================================================
 Route::get('/activate/{code}', [ActivationController::class, 'activateWithLink'])->name('activate.account');
 
@@ -254,7 +254,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     // ============================================================
-    // ✅ ACTIVATION DE COMPTE (AUTHENTIFIÉ)
+    // ACTIVATION DE COMPTE (AUTHENTIFIÉ)
     // ============================================================
     Route::prefix('activate')->name('activate.')->group(function () {
         Route::get('/', [ActivationController::class, 'index'])->name('index');
@@ -297,7 +297,7 @@ Route::prefix('admin')
             Route::post('/import', [AdminUserController::class, 'import'])->name('import');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
 
         // ============================================================
@@ -314,7 +314,7 @@ Route::prefix('admin')
             Route::post('/{id}/duplicate', [AdminPackageController::class, 'duplicate'])->name('duplicate');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/packages', [AdminPackageController::class, 'index'])->name('packages');
 
         // ============================================================
@@ -332,7 +332,7 @@ Route::prefix('admin')
             Route::delete('/{id}/gallery', [AdminProductController::class, 'removeGalleryImage'])->name('remove-gallery');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
 
         // ============================================================
@@ -370,7 +370,7 @@ Route::prefix('admin')
             Route::post('/periods/{periodId}/step', [CommissionTriggerController::class, 'processPeriodStep'])->name('periods.step');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/commissions', [AdminCommissionController::class, 'index'])->name('commissions');
 
         // ============================================================
@@ -385,7 +385,7 @@ Route::prefix('admin')
             Route::get('/stats', [AdminWalletController::class, 'stats'])->name('stats');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/wallets', [AdminWalletController::class, 'index'])->name('wallets');
 
         // ============================================================
@@ -402,7 +402,7 @@ Route::prefix('admin')
             Route::get('/stats', [AdminWithdrawalController::class, 'stats'])->name('stats');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])->name('withdrawals');
 
         // ============================================================
@@ -425,11 +425,11 @@ Route::prefix('admin')
                 Route::get('/export', [AdminRankController::class, 'exportHistory'])->name('export');
             });
 
-            // ✅ ALIAS
+            // ALIAS
             Route::get('/history', [AdminRankController::class, 'history'])->name('history');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/ranks', [AdminRankController::class, 'index'])->name('ranks');
 
         // ============================================================
@@ -442,7 +442,7 @@ Route::prefix('admin')
             Route::get('/export', [AdminKycController::class, 'export'])->name('export');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/kyc', [AdminKycController::class, 'index'])->name('kyc');
 
         // ============================================================
@@ -457,7 +457,7 @@ Route::prefix('admin')
             Route::get('/export', [AdminReportController::class, 'export'])->name('export');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
 
         // ============================================================
@@ -479,7 +479,7 @@ Route::prefix('admin')
                 Route::put('/', [AdminSettingController::class, 'updatePayment'])->name('update');
             });
 
-            // ✅ ALIAS RAPIDES
+            // ALIAS RAPIDES
             Route::get('/commission', [AdminSettingController::class, 'commission'])->name('commission');
             Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
 
@@ -490,11 +490,11 @@ Route::prefix('admin')
             Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
         });
 
-        // ✅ ALIAS
+        // ALIAS
         Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
 
         // ============================================================
-        // ✅ ADMIN ACTIVATIONS
+        // ADMIN ACTIVATIONS
         // ============================================================
         Route::prefix('activations')->name('activations.')->group(function () {
         Route::get('/', [AdminActivationController::class, 'index'])->name('index');
@@ -504,7 +504,7 @@ Route::prefix('admin')
         Route::post('/{id}/send-code', [AdminActivationController::class, 'sendCode'])->name('send-code');
 });
 
-}); // ⭐ FERMETURE DU GROUPE ADMIN
+}); // FERMETURE DU GROUPE ADMIN
 
 // ============================================================
 // AUTHENTIFICATION

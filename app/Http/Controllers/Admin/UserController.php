@@ -90,57 +90,61 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
+    $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
 
-        $parrain = User::find($user->parrain_id);
+    $parrain = User::find($user->parrain_id);
 
-        $filleuls = User::where('parrain_id', $user->id)->get();
-        $filleulsCount = $filleuls->count();
-        $filleulsActifs = $filleuls->where('is_active', true)->count();
+    $filleuls = User::where('parrain_id', $user->id)->get();
+    $filleulsCount = $filleuls->count();
+    $filleulsActifs = $filleuls->where('is_active', true)->count();
 
-        $commissionsStats = [
-            'total' => $user->commissions()->where('status', 'paid')->sum('amount'),
-            'direct' => $user->commissions()->where('type', 'direct')->where('status', 'paid')->sum('amount'),
-            'indirect' => $user->commissions()->where('type', 'indirect')->where('status', 'paid')->sum('amount'),
-            'leadership' => $user->commissions()->where('type', 'leadership')->where('status', 'paid')->sum('amount'),
-            'retail' => $user->commissions()->where('type', 'retail')->where('status', 'paid')->sum('amount'),
-            'pending' => $user->commissions()->where('status', 'pending')->sum('amount'),
-            'count' => $user->commissions()->where('status', 'paid')->count(),
-        ];
+    $commissionsStats = [
+        'total' => $user->commissions()->where('status', 'paid')->sum('amount'),
+        'direct' => $user->commissions()->where('type', 'direct')->where('status', 'paid')->sum('amount'),
+        'indirect' => $user->commissions()->where('type', 'indirect')->where('status', 'paid')->sum('amount'),
+        'leadership' => $user->commissions()->where('type', 'leadership')->where('status', 'paid')->sum('amount'),
+        'retail' => $user->commissions()->where('type', 'retail')->where('status', 'paid')->sum('amount'),
+        'pending' => $user->commissions()->where('status', 'pending')->sum('amount'),
+        'count' => $user->commissions()->where('status', 'paid')->count(),
+    ];
 
-        $rankProgress = $this->rankCalculator->getProgress($user);
+    $rankProgress = $this->rankCalculator->getProgress($user);
 
-        $rankHistory = $user->rankHistory()->with(['oldRank', 'newRank'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+    $rankHistory = $user->rankHistory()->with(['oldRank', 'newRank'])
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
 
-        $recentTransactions = $user->transactions()
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+    $recentTransactions = $user->transactions()
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
 
-        $recentCommissions = $user->commissions()
-            ->with(['fromUser', 'package', 'period'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+    $recentCommissions = $user->commissions()
+        ->with(['fromUser', 'package', 'period'])
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
 
-        $tree = $this->buildTree($user, 0, 3);
+    $tree = $this->buildTree($user, 0, 3);
 
-        return view('admin.users.show', compact(
-            'user',
-            'parrain',
-            'filleuls',
-            'filleulsCount',
-            'filleulsActifs',
-            'commissionsStats',
-            'rankProgress',
-            'rankHistory',
-            'recentTransactions',
-            'recentCommissions',
-            'tree'
-        ));
+    // ✅ Récupérer les packages pour le modal d'activation
+    $packages = Package::where('is_active', true)->get();
+
+    return view('admin.users.show', compact(
+        'user',
+        'parrain',
+        'filleuls',
+        'filleulsCount',
+        'filleulsActifs',
+        'commissionsStats',
+        'rankProgress',
+        'rankHistory',
+        'recentTransactions',
+        'recentCommissions',
+        'tree',
+        'packages'
+    ));
     }
 
     private function buildTree($user, $level, $maxLevel)
