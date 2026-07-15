@@ -75,15 +75,25 @@ class DashboardController extends Controller
             ->orderBy('min_pv', 'asc')
             ->first();
 
+        // ✅ CALCUL DES PV
+        $pvPersonnel = $user->pv_balance ?? 0;
+        $pvEquipe = $user->team_pv ?? 0;
+        $pvCumul = $pvPersonnel + $pvEquipe;
+        $monthlyPv = $user->monthly_pv ?? 0;
+
         $rankProgress = [
             'current' => $currentRankName,
             'current_level' => $currentRankLevel,
             'next' => $nextRank ? $nextRank->name : 'Maximum Level',
             'next_level' => $nextRank ? $nextRank->level : $currentRankLevel,
-            'progress' => $nextRank ? min(100, (($user->pv_balance ?? 0) / max($nextRank->min_pv, 1)) * 100) : 100,
-            'pv_needed' => $nextRank ? max(0, $nextRank->min_pv - ($user->pv_balance ?? 0)) : 0,
-            'current_pv' => $user->pv_balance ?? 0,
-            'next_pv' => $nextRank ? $nextRank->min_pv : ($user->pv_balance ?? 0),
+            'progress' => $nextRank ? min(100, (($pvCumul) / max($nextRank->min_pv, 1)) * 100) : 100,
+            'pv_needed' => $nextRank ? max(0, $nextRank->min_pv - $pvCumul) : 0,
+            'current_pv' => $pvCumul,
+            'next_pv' => $nextRank ? $nextRank->min_pv : $pvCumul,
+            'pv_personnel' => $pvPersonnel,
+            'pv_equipe' => $pvEquipe,
+            'pv_cumul' => $pvCumul,
+            'monthly_pv' => $monthlyPv,
         ];
 
         $stats = [
@@ -137,6 +147,10 @@ class DashboardController extends Controller
             ], 401);
         }
 
+        $pvPersonnel = $user->pv_balance ?? 0;
+        $pvEquipe = $user->team_pv ?? 0;
+        $pvCumul = $pvPersonnel + $pvEquipe;
+
         $stats = [
             'total_commission' => Commission::where('user_id', $user->id)
                 ->where('status', 'paid')
@@ -150,7 +164,10 @@ class DashboardController extends Controller
             'total_downlines' => User::where('parrain_id', $user->id)->count(),
             'wallet_balance' => $user->wallet ? $user->wallet->balance : 0,
             'rank' => $this->getUserRankName($user),
-            'pv_balance' => $user->pv_balance ?? 0,
+            'pv_personnel' => $pvPersonnel,
+            'pv_equipe' => $pvEquipe,
+            'pv_cumul' => $pvCumul,
+            'monthly_pv' => $user->monthly_pv ?? 0,
         ];
 
         return response()->json([

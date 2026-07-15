@@ -255,55 +255,55 @@
 <div class="space-y-4 sm:space-y-6">
     
     <!-- ============================================================ -->
-<!-- ✅ BANNIÈRE POUR COMPTE INACTIF - STYLE MODERNE -->
-<!-- ============================================================ -->
-@if(Auth::user() && !Auth::user()->is_active)
-<div class="relative overflow-hidden rounded-xl p-4 sm:p-5 animate-fadeInUp"
-     style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04)); border: 1px solid rgba(245, 158, 11, 0.25);">
-    
-    <!-- Effet de fond animé -->
-    <div class="absolute inset-0 opacity-10"
-         style="background: radial-gradient(circle at 20% 50%, rgba(245, 158, 11, 0.3) 0%, transparent 70%);">
-    </div>
-    
-    <div class="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-        <!-- Icône -->
-        <div class="flex-shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full"
-             style="background: rgba(245, 158, 11, 0.15);">
-            <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
+    <!-- BANNIÈRE POUR COMPTE INACTIF - STYLE MODERNE -->
+    <!-- ============================================================ -->
+    @if(Auth::user() && !Auth::user()->is_active)
+    <div class="relative overflow-hidden rounded-xl p-4 sm:p-5 animate-fadeInUp"
+         style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04)); border: 1px solid rgba(245, 158, 11, 0.25);">
+        
+        <!-- Effet de fond animé -->
+        <div class="absolute inset-0 opacity-10"
+             style="background: radial-gradient(circle at 20% 50%, rgba(245, 158, 11, 0.3) 0%, transparent 70%);">
         </div>
         
-        <!-- Texte -->
-        <div class="flex-1 min-w-0">
-            <p class="text-sm sm:text-base font-bold text-yellow-700 dark:text-yellow-300">
-                Compte inactif
-            </p>
-            <p class="text-sm text-yellow-600 dark:text-yellow-400/80 mt-0.5">
-                Activez votre compte pour recevoir des commissions
-            </p>
+        <div class="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <!-- Icône -->
+            <div class="flex-shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full"
+                 style="background: rgba(245, 158, 11, 0.15);">
+                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            
+            <!-- Texte -->
+            <div class="flex-1 min-w-0">
+                <p class="text-sm sm:text-base font-bold text-yellow-700 dark:text-yellow-300">
+                    Compte inactif
+                </p>
+                <p class="text-sm text-yellow-600 dark:text-yellow-400/80 mt-0.5">
+                    Activez votre compte pour recevoir des commissions
+                </p>
+            </div>
+            
+            <!-- Bouton -->
+            <a href="{{ route('activate.index') }}" 
+               class="flex-shrink-0 inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+               style="background: linear-gradient(135deg, #1e24a1, #144ea6); box-shadow: 0 4px 16px rgba(177, 159, 128, 0.35);">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Activer maintenant
+            </a>
         </div>
         
-        <!-- Bouton -->
-        <a href="{{ route('activate.index') }}" 
-           class="flex-shrink-0 inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
-           style="background: linear-gradient(135deg, #1e24a1, #144ea6); box-shadow: 0 4px 16px rgba(177, 159, 128, 0.35);">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Activer maintenant
-        </a>
+        <!-- Petit indicateur de statut -->
+        <div class="relative mt-3 flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400/70">
+            <span class="inline-block w-2 h-2 rounded-full animate-pulse" style="background: #1b48c3;"></span>
+            En attente d'activation
+        </div>
     </div>
-    
-    <!-- Petit indicateur de statut -->
-    <div class="relative mt-3 flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400/70">
-        <span class="inline-block w-2 h-2 rounded-full animate-pulse" style="background: #1b48c3;"></span>
-        En attente d'activation
-    </div>
-</div>
-@endif
-<!-- ============================================================ -->
+    @endif
+    <!-- ============================================================ -->
 
     <!-- Header -->
     <div class="animate-fadeInUp">
@@ -465,30 +465,30 @@
             <!-- PV Info -->
             <div class="mt-2 grid grid-cols-2 gap-2">
                 <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV</p>
-                    <p class="font-bold text-primary-500 text-sm">{{ number_format(Auth::user()->pv_balance ?? 0) }}</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV Personnel</p>
+                    <p class="font-bold text-primary-500 text-sm">{{ number_format($rankProgress['pv_personnel'] ?? 0) }}</p>
                 </div>
                 <div class="p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">BV</p>
-                    <p class="font-bold text-primary-500 text-sm">{{ number_format(Auth::user()->bv_balance ?? 0) }}</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV Mensuel</p>
+                    <p class="font-bold text-primary-500 text-sm">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- 3 Additional Stats -->
-        <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+        <!-- 3 Additional Stats avec PV -->
+        <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             
             <div class="card-stats animate-fadeInUp delay-3">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">PV Total</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">PV Personnel</p>
                         <p class="text-lg sm:text-2xl font-bold text-primary-500 truncate">
-                            {{ number_format(Auth::user()->pv_balance ?? 0) }}
+                            {{ number_format($rankProgress['pv_personnel'] ?? 0) }}
                         </p>
                     </div>
                     <div class="stat-icon stat-icon-primary flex-shrink-0">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                     </div>
                 </div>
@@ -497,14 +497,14 @@
             <div class="card-stats animate-fadeInUp delay-4">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Niveau 1</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">PV Équipe</p>
                         <p class="text-lg sm:text-2xl font-bold text-blue-500 truncate">
-                            {{ $level1 ?? 0 }}
+                            {{ number_format($rankProgress['pv_equipe'] ?? 0) }}
                         </p>
                     </div>
                     <div class="stat-icon stat-icon-info flex-shrink-0">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                     </div>
                 </div>
@@ -513,14 +513,30 @@
             <div class="card-stats animate-fadeInUp delay-5">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">Package</p>
-                        <p class="text-sm sm:text-2xl font-bold text-green-500 truncate">
-                            {{ Auth::user()->package?->name ?? 'Starter' }}
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">PV Cumulé</p>
+                        <p class="text-lg sm:text-2xl font-bold text-purple-500 truncate">
+                            {{ number_format($rankProgress['pv_cumul'] ?? 0) }}
+                        </p>
+                    </div>
+                    <div class="stat-icon stat-icon-purple flex-shrink-0">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-stats animate-fadeInUp delay-6">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider truncate">PV Mensuel</p>
+                        <p class="text-lg sm:text-2xl font-bold text-green-500 truncate">
+                            {{ number_format($rankProgress['monthly_pv'] ?? 0) }}
                         </p>
                     </div>
                     <div class="stat-icon stat-icon-success flex-shrink-0">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                     </div>
                 </div>
@@ -563,7 +579,7 @@
             </p>
         @elseif(isset($rankProgress['next']) && $rankProgress['next'] == 'Maximum Level')
             <p class="text-xs text-green-500 mt-2 font-semibold">
-                Vous avez atteint le grade maximum !
+                🏆 Vous avez atteint le grade maximum !
             </p>
         @endif
     </div>
