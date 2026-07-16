@@ -105,6 +105,7 @@
         text-decoration: none;
         position: relative;
         overflow: hidden;
+        cursor: pointer;
     }
     .social-btn:hover {
         background: var(--bg-hover);
@@ -184,14 +185,6 @@
         height: 0.875rem;
         flex-shrink: 0;
     }
-    .form-group .success-message {
-        color: #22c55e;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
     
     .password-wrapper {
         position: relative;
@@ -224,7 +217,6 @@
         margin-top: 0.25rem;
     }
     
-    /* Sponsor Status */
     .sponsor-status {
         font-size: 0.75rem;
         margin-top: 0.25rem;
@@ -263,7 +255,6 @@
         flex-shrink: 0;
     }
     
-    /* Email Status Messages */
     .email-checking {
         display: flex;
         align-items: center;
@@ -349,7 +340,6 @@
         color: #ffffff;
     }
 
-    /* Toast Notification */
     .toast-modern {
         position: fixed;
         top: 24px;
@@ -586,8 +576,8 @@
         <span class="brand-name block mt-2">Salang Group</span>
     </div>
 
-    <h2 class="auth-title">Créer un compte</h2>
-    <p class="auth-subtitle">Rejoignez la communauté Salang</p>
+    <h2 class="auth-title">Creer un compte</h2>
+    <p class="auth-subtitle">Rejoignez la communaute Salang</p>
 
     <!-- Messages de session -->
     @if (session('success'))
@@ -661,7 +651,6 @@
                    required
                    autocomplete="email">
             
-            <!-- Conteneur pour le message de vérification AJAX -->
             <div id="emailAvailability"></div>
             
             @error('email')
@@ -669,20 +658,20 @@
             @enderror
         </div>
 
-        <!-- Téléphone -->
+        <!-- Telephone -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
-                Téléphone
+                Telephone
             </label>
             <input type="tel" 
                    name="phone" 
                    id="phone"
                    value="{{ old('phone') }}" 
                    class="input @error('phone') input-error @enderror"
-                   placeholder="Entrez votre numéro de téléphone">
+                   placeholder="Entrez votre numero de telephone">
             @error('phone')
                 <p class="error-message">{{ $message }}</p>
             @enderror
@@ -703,9 +692,8 @@
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Ex: SALADMIN ou SALDEBF71"
                    required>
-            <p class="form-hint">Entrez le code de parrain (ex: SALDEBF71) ou l'email de votre parrain</p>
+            <p class="form-hint">Entrez le code de parrain (ex: SALADMIN, SAL1028AD, SAL72E2CB)</p>
             
-            <!-- Sponsor Status -->
             <div id="sponsorStatus" class="sponsor-status"></div>
             
             @error('sponsor_id')
@@ -726,7 +714,7 @@
                        id="password"
                        name="password" 
                        class="input @error('password') input-error @enderror"
-                       placeholder="8 caractères minimum"
+                       placeholder="8 caracteres minimum"
                        required
                        minlength="8">
                 <button type="button" 
@@ -743,7 +731,7 @@
                 <div class="password-strength-bar" id="passwordStrength"></div>
             </div>
             <p class="password-strength-text" id="passwordStrengthText">
-                Minimum 8 caractères
+                Minimum 8 caracteres
             </p>
             @error('password')
                 <p class="error-message">{{ $message }}</p>
@@ -778,11 +766,11 @@
                 <span>
                     J'accepte les 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        conditions générales
+                        conditions generales
                     </a>
                     et la 
                     <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        politique de confidentialité
+                        politique de confidentialite
                     </a>
                 </span>
             </label>
@@ -796,18 +784,15 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
             </svg>
-            Créer mon compte
+            Creer mon compte
         </button>
     </form>
 
     <div class="auth-divider">ou</div>
 
-    <!-- Social Login - Google -->
-    <!--  Lien direct vers Google avec le sponsor_id -->
+    <!-- Google Login - Bouton avec JavaScript -->
     <div class="space-y-2">
-        <a href="{{ route('social.redirect', 'google') }}?sponsor_id={{ old('sponsor_id', session('sponsor_id', request()->query('ref', ''))) }}" 
-           class="social-btn" 
-           id="googleBtn">
+        <button type="button" class="social-btn" id="googleBtn">
             <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -815,11 +800,11 @@
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
             Continuer avec Google
-        </a>
+        </button>
     </div>
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
-        Déjà un compte ?
+        Deja un compte ?
         <a href="{{ route('login') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
             Se connecter
         </a>
@@ -827,7 +812,7 @@
     
     <p class="text-center text-sm text-[var(--text-secondary)] mt-2">
         <a href="{{ route('home') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
-            ← Retour à l'accueil
+            Retour a l'accueil
         </a>
     </p>
 </div>
@@ -840,7 +825,7 @@
         </svg>
     </div>
     <div class="toast-content">
-        <span class="toast-title" id="toastTitle">Succès</span>
+        <span class="toast-title" id="toastTitle">Succes</span>
         <span class="toast-message" id="toastMessage">Message</span>
     </div>
     <button type="button" class="toast-close" onclick="hideToast()" aria-label="Fermer">×</button>
@@ -924,7 +909,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Vérification du sponsor en temps réel
+// Verification du sponsor en temps reel
 document.addEventListener('DOMContentLoaded', function() {
     const sponsorInput = document.getElementById('sponsor_id');
     const sponsorStatus = document.getElementById('sponsorStatus');
@@ -934,7 +919,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sponsorInput.addEventListener('input', function() {
             const value = this.value.trim();
             
-            // Réinitialiser
             sponsorStatus.className = 'sponsor-status';
             sponsorStatus.textContent = '';
             this.classList.remove('input-success', 'input-error');
@@ -943,9 +927,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Afficher le chargement
             sponsorStatus.className = 'sponsor-status visible loading';
-            sponsorStatus.innerHTML = '<span class="spinner"></span> Vérification du parrain...';
+            sponsorStatus.innerHTML = '<span class="spinner"></span> Verification du parrain...';
             
             clearTimeout(sponsorTimeout);
             sponsorTimeout = setTimeout(function() {
@@ -954,12 +937,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.exists) {
                             sponsorStatus.className = 'sponsor-status visible success';
-                            sponsorStatus.innerHTML = 'Parrain trouvé: <strong>' + data.name + '</strong> (' + data.email + ')';
+                            sponsorStatus.innerHTML = 'Parrain trouve: <strong>' + data.name + '</strong> (' + data.email + ')';
                             sponsorInput.classList.add('input-success');
                             sponsorInput.classList.remove('input-error');
                         } else {
                             sponsorStatus.className = 'sponsor-status visible error';
-                            sponsorStatus.innerHTML = '' + data.message;
+                            sponsorStatus.innerHTML = data.message;
                             sponsorInput.classList.add('input-error');
                             sponsorInput.classList.remove('input-success');
                         }
@@ -969,6 +952,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         sponsorStatus.textContent = '';
                     });
             }, 500);
+        });
+    }
+
+    // Gestion du bouton Google
+    const googleBtn = document.getElementById('googleBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', function() {
+            const sponsorId = document.getElementById('sponsor_id').value.trim();
+            
+            if (!sponsorId) {
+                showToast({
+                    type: 'error',
+                    title: 'Erreur',
+                    message: 'Veuillez entrer un code de parrain.'
+                });
+                document.getElementById('sponsor_id').focus();
+                return;
+            }
+
+            if (document.getElementById('sponsor_id').classList.contains('input-error')) {
+                showToast({
+                    type: 'error',
+                    title: 'Erreur',
+                    message: 'Le code du parrain est invalide.'
+                });
+                document.getElementById('sponsor_id').focus();
+                return;
+            }
+
+            // Rediriger vers Google avec le sponsor_id
+            var url = '{{ route("social.redirect", "google") }}' + '?sponsor_id=' + encodeURIComponent(sponsorId);
+            window.location.href = url;
         });
     }
 });
@@ -982,9 +997,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sponsorStatus = document.getElementById('sponsorStatus');
     const nameInput = document.getElementById('name');
     const emailInput = document.getElementById('email');
-    const phoneInput = document.getElementById('phone');
     const termsCheckbox = document.getElementById('terms');
-    const submitBtn = document.getElementById('submitBtn');
     const strengthBar = document.getElementById('passwordStrength');
     const strengthText = document.getElementById('passwordStrengthText');
     const emailAvailability = document.getElementById('emailAvailability');
@@ -1003,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
     @if (session('success'))
         showToast({
             type: 'success',
-            title: 'Succès',
+            title: 'Succes',
             message: '{{ session('success') }}'
         });
     @endif
@@ -1016,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endif
 
-    // Vérification de l'email
+    // Verification de l'email
     let emailTimeout = null;
     let emailChecked = false;
 
@@ -1034,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 emailAvailability.innerHTML = `
                     <div class="email-checking">
                         <span class="email-checking-spinner"></span>
-                        Vérification en cours...
+                        Verification en cours...
                     </div>
                 `;
                 
@@ -1052,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (emailAvailability) {
                                     emailAvailability.innerHTML = `
                                         <div class="email-status-error">
-                                            <span class="email-status-icon">✕</span>
+                                            <span class="email-status-icon">X</span>
                                             ${data.message}
                                         </div>
                                     `;
@@ -1064,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (emailAvailability) {
                                     emailAvailability.innerHTML = `
                                         <div class="email-status-success">
-                                            <span class="email-status-icon">✓</span>
+                                            <span class="email-status-icon">V</span>
                                             ${data.message}
                                         </div>
                                     `;
@@ -1083,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         })
                         .catch(error => {
-                            console.error('Erreur de vérification:', error);
+                            console.error('Erreur de verification:', error);
                             if (emailAvailability) {
                                 emailAvailability.innerHTML = '';
                             }
@@ -1118,14 +1131,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 label = 'Fort';
             } else {
                 strengthBar.style.background = '#22c55e';
-                label = 'Très fort';
+                label = 'Tres fort';
             }
 
             if (value.length > 0) {
                 strengthText.textContent = 'Force: ' + label;
                 strengthText.className = 'password-strength-text mt-0.5';
             } else {
-                strengthText.textContent = 'Minimum 8 caractères';
+                strengthText.textContent = 'Minimum 8 caracteres';
                 strengthText.className = 'password-strength-text text-[var(--text-tertiary)]';
             }
         });
@@ -1150,10 +1163,10 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Veuillez saisir une adresse email valide.';
             hasError = true;
         } else if (!hasError && emailChecked === false && email.length > 0) {
-            errorMessage = 'Veuillez attendre la vérification de votre email.';
+            errorMessage = 'Veuillez attendre la verification de votre email.';
             hasError = true;
         } else if (!hasError && emailInput.classList.contains('input-error')) {
-            errorMessage = 'Cet email est déjà utilisé. Veuillez en utiliser un autre.';
+            errorMessage = 'Cet email est deja utilise. Veuillez en utiliser un autre.';
             hasError = true;
         }
 
@@ -1162,13 +1175,13 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Veuillez saisir le code de votre parrain.';
             hasError = true;
         } else if (!hasError && sponsor.length < 3) {
-            errorMessage = 'Le code du parrain doit contenir au moins 3 caractères.';
+            errorMessage = 'Le code du parrain doit contenir au moins 3 caracteres.';
             hasError = true;
         } else if (!hasError && sponsorInput.classList.contains('input-error')) {
-            errorMessage = 'Le code du parrain est invalide. Veuillez vérifier.';
+            errorMessage = 'Le code du parrain est invalide. Veuillez verifier.';
             hasError = true;
         } else if (!hasError && sponsorStatus.classList.contains('loading')) {
-            errorMessage = 'Veuillez attendre la vérification du parrain.';
+            errorMessage = 'Veuillez attendre la verification du parrain.';
             hasError = true;
         }
 
@@ -1177,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Veuillez saisir un mot de passe.';
             hasError = true;
         } else if (!hasError && password.length < 8) {
-            errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
+            errorMessage = 'Le mot de passe doit contenir au moins 8 caracteres.';
             hasError = true;
         }
 
@@ -1188,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!hasError && !termsCheckbox.checked) {
-            errorMessage = 'Vous devez accepter les conditions générales.';
+            errorMessage = 'Vous devez accepter les conditions generales.';
             hasError = true;
         }
 
@@ -1200,7 +1213,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 message: errorMessage
             });
             
-            // Scroll vers le premier champ en erreur
             const firstError = form.querySelector('.input-error, .form-group .error-message');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1209,9 +1221,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Gestion des erreurs de validation (quand le formulaire est soumis avec erreur)
+// Gestion des erreurs de validation
 document.addEventListener('DOMContentLoaded', function() {
-    // Si des erreurs de validation existent, afficher une notification
     if (document.querySelector('.error-message')) {
         const firstError = document.querySelector('.error-message');
         if (firstError) {

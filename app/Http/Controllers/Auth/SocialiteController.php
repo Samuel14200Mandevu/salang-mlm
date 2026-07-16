@@ -1,6 +1,4 @@
 <?php
-// app/Http/Controllers/Auth/SocialiteController.php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
@@ -25,17 +23,37 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
-        $sponsorId = session('sponsor_id') ?? request()->query('ref') ?? request()->input('sponsor_id');
+        // Récupérer le sponsor_id de plusieurs sources
+        $sponsorId = session('sponsor_id') 
+            ?? request()->query('sponsor_id')
+            ?? request()->query('ref')
+            ?? request()->input('sponsor_id');
+
+        // Debug
+        Log::info('=== SOCIALITE REDIRECT DEBUG ===');
+        Log::info('Session sponsor_id: ' . session('sponsor_id'));
+        Log::info('Query sponsor_id: ' . request()->query('sponsor_id'));
+        Log::info('Query ref: ' . request()->query('ref'));
+        Log::info('Final sponsor_id: ' . $sponsorId);
 
         if (!$sponsorId) {
             return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
         }
 
-        $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
+        // Rechercher par ID ou par code sponsor
+        $sponsor = User::find($sponsorId);
+        
         if (!$sponsor) {
-            session()->forget('sponsor_id');
-            return redirect('/register')->with('error', 'Invalid sponsor ID. Please try again.');
+            $sponsor = User::where('sponsor_id', $sponsorId)->first();
         }
+        
+        if (!$sponsor) {
+            Log::error('Sponsor not found for: ' . $sponsorId);
+            session()->forget('sponsor_id');
+            return redirect('/register')->with('error', 'Invalid sponsor ID: ' . $sponsorId . '. Please try again.');
+        }
+
+        Log::info('Sponsor found: ' . $sponsor->name . ' (ID: ' . $sponsor->id . ')');
 
         session(['sponsor_id' => $sponsor->id]);
         session(['social_provider' => $provider]);
@@ -195,7 +213,8 @@ class SocialiteController extends Controller
             'sponsor_id.required' => 'Sponsor ID is required.',
         ]);
 
-        $sponsor = User::find($request->sponsor_id) ?? User::where('sponsor_id', $request->sponsor_id)->first();
+        $sponsor = User::find($request->sponsor_id) 
+            ?? User::where('sponsor_id', $request->sponsor_id)->first();
 
         if (!$sponsor) {
             return response()->json([

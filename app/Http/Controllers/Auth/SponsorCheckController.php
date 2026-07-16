@@ -1,6 +1,4 @@
 <?php
-// app/Http/Controllers/Auth/SponsorCheckController.php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -15,7 +13,9 @@ class SponsorCheckController extends Controller
             'sponsor_id' => 'required|string'
         ]);
 
-        $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
+        // Rechercher par ID ou par code sponsor
+        $sponsor = User::find($request->sponsor_id) 
+            ?? User::where('sponsor_id', $request->sponsor_id)->first();
 
         if ($sponsor) {
             return response()->json([
@@ -28,7 +28,7 @@ class SponsorCheckController extends Controller
 
         return response()->json([
             'exists' => false,
-            'message' => 'No user found with this code.'
+            'message' => 'Aucun parrain trouve avec ce code.'
         ]);
     }
 }
