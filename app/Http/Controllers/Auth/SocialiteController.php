@@ -1,4 +1,6 @@
 <?php
+// app/Http/Controllers/Auth/SocialiteController.php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
@@ -23,37 +25,28 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
-        // Récupérer le sponsor_id de plusieurs sources
         $sponsorId = session('sponsor_id') 
             ?? request()->query('sponsor_id')
             ?? request()->query('ref')
             ?? request()->input('sponsor_id');
 
-        // Debug
-        Log::info('=== SOCIALITE REDIRECT DEBUG ===');
-        Log::info('Session sponsor_id: ' . session('sponsor_id'));
-        Log::info('Query sponsor_id: ' . request()->query('sponsor_id'));
-        Log::info('Query ref: ' . request()->query('ref'));
-        Log::info('Final sponsor_id: ' . $sponsorId);
+        Log::info('=== SOCIALITE REDIRECT ===');
+        Log::info('Provider: ' . $provider);
+        Log::info('Sponsor ID: ' . $sponsorId);
 
         if (!$sponsorId) {
             return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
         }
 
-        // Rechercher par ID ou par code sponsor
-        $sponsor = User::find($sponsorId);
+        $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
         
         if (!$sponsor) {
-            $sponsor = User::where('sponsor_id', $sponsorId)->first();
-        }
-        
-        if (!$sponsor) {
-            Log::error('Sponsor not found for: ' . $sponsorId);
+            Log::error('Sponsor not found: ' . $sponsorId);
             session()->forget('sponsor_id');
-            return redirect('/register')->with('error', 'Invalid sponsor ID: ' . $sponsorId . '. Please try again.');
+            return redirect('/register')->with('error', 'Invalid sponsor ID: ' . $sponsorId);
         }
 
-        Log::info('Sponsor found: ' . $sponsor->name . ' (ID: ' . $sponsor->id . ')');
+        Log::info('Sponsor found: ' . $sponsor->name);
 
         session(['sponsor_id' => $sponsor->id]);
         session(['social_provider' => $provider]);
@@ -62,7 +55,7 @@ class SocialiteController extends Controller
             return Socialite::driver($provider)->redirect();
         } catch (\Exception $e) {
             Log::error('Socialite redirect error: ' . $e->getMessage());
-            return redirect('/login')->with('error', 'Connection error with ' . ucfirst($provider) . '. Please try again.');
+            return redirect('/register')->with('error', 'Erreur de connexion: ' . $e->getMessage());
         }
     }
 
@@ -83,14 +76,15 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'No email address found with this account.');
         }
 
+        // ✅ Vérifier si l'utilisateur existe déjà
         $user = User::where('email', $socialUser->getEmail())->first();
 
         if ($user) {
-            $providerColumn = $provider . '_id';
-            if (empty($user->$providerColumn)) {
-                $user->$providerColumn = $socialUser->getId();
+            // ✅ Mettre à jour les informations sociales (utiliser provider et provider_id)
+            if (empty($user->provider_id) || $user->provider != $provider) {
+                $user->provider = $provider;
+                $user->provider_id = $socialUser->getId();
                 $user->avatar = $socialUser->getAvatar() ?? $user->avatar;
-                $user->last_provider = $provider;
                 $user->save();
             }
 
@@ -107,6 +101,7 @@ class SocialiteController extends Controller
                 ->with('success', 'Welcome back ' . $user->name . '!');
         }
 
+        // ✅ Nouvel utilisateur - vérifier le sponsor
         $sponsorId = session('sponsor_id');
         if (!$sponsorId) {
             return redirect('/register')->with('error', 'Sponsor ID required for registration.');
@@ -119,11 +114,13 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'Invalid sponsor ID.');
         }
 
+        // Générer le code sponsor unique
         $sponsorCode = $this->generateSponsorId();
 
         try {
             $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
 
+            // ✅ Créer l'utilisateur avec provider et provider_id
             $user = User::create([
                 'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
                 'email' => $socialUser->getEmail(),
@@ -134,6 +131,8 @@ class SocialiteController extends Controller
                 'rank_id' => $rankId,
                 'rank' => 'Distributor',
                 'is_active' => true,
+                'provider' => $provider,
+                'provider_id' => $socialUser->getId(),
                 'pv_balance' => 0,
                 'bv_balance' => 0,
                 'monthly_pv' => 0,
@@ -149,11 +148,7 @@ class SocialiteController extends Controller
                 'kyc_status' => 'not_submitted',
             ]);
 
-            $providerColumn = $provider . '_id';
-            $user->$providerColumn = $socialUser->getId();
-            $user->last_provider = $provider;
-            $user->save();
-
+            // Créer le portefeuille
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -162,6 +157,7 @@ class SocialiteController extends Controller
                 'is_active' => true,
             ]);
 
+            // Créer la généalogie
             Genealogy::create([
                 'user_id' => $user->id,
                 'sponsor_id' => $sponsor->id,
@@ -173,13 +169,16 @@ class SocialiteController extends Controller
                 'total_children' => 0,
             ]);
 
+            // Mettre à jour les statistiques du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
             $sponsor->save();
 
+            // Nettoyer la session
             session()->forget('sponsor_id');
             session()->forget('social_provider');
 
+            // Connecter l'utilisateur
             Auth::login($user);
 
             return redirect()->route('dashboard')
@@ -187,7 +186,8 @@ class SocialiteController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Social registration error: ' . $e->getMessage());
-            return redirect('/register')->with('error', 'Error creating account. Please try again.');
+            Log::error('Trace: ' . $e->getTraceAsString());
+            return redirect('/register')->with('error', 'Error creating account: ' . $e->getMessage());
         }
     }
 
