@@ -48,6 +48,9 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// ✅ Route Contact - AJOUTÉE POUR CORRIGER L'ERREUR
+Route::view('/contact', 'pages.contact')->name('contact');
+
 // Sponsor & Email check (AJAX)
 Route::get('/check-email', [EmailCheckController::class, 'check'])->name('check.email');
 Route::get('/check-sponsor', [SponsorCheckController::class, 'check'])->name('check.sponsor');
@@ -496,13 +499,13 @@ Route::prefix('admin')
         // ============================================================
         // ADMIN ACTIVATIONS
         // ============================================================
-       Route::prefix('activations')->name('activations.')->group(function () {
+        Route::prefix('activations')->name('activations.')->group(function () {
             Route::get('/', [AdminActivationController::class, 'index'])->name('index');
             Route::get('/{id}', [AdminActivationController::class, 'show'])->name('show');
             Route::post('/{id}/generate-code', [AdminActivationController::class, 'generateCodeWithPackage'])->name('generate-code');
             Route::post('/{id}/activate', [AdminActivationController::class, 'activateManually'])->name('activate');
             Route::post('/{id}/send-code', [AdminActivationController::class, 'sendCode'])->name('send-code');
-});
+        });
 
 }); // FERMETURE DU GROUPE ADMIN
 
