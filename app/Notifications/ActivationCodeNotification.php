@@ -37,9 +37,8 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
             ->line('**Code :** ' . $this->activationCode)
             ->line('');
 
-        // Afficher le package associé
         if ($this->package) {
-            $message->line('Package associé : **' . $this->package->name . '**')
+            $message->line('Package associe : **' . $this->package->name . '**')
                     ->line('Valeur : **$' . number_format($this->package->price, 2) . '**')
                     ->line('PV : ' . $this->package->pv_value . ' | BV : ' . $this->package->bv_value)
                     ->line('');

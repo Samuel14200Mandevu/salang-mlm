@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Package;
 use App\Notifications\ActivationCodeNotification;
+use App\Services\SmsService;
 use App\Services\MLM\CommissionDistributor;
 use App\Models\CommissionPeriod;
 use App\Models\Order;
@@ -13,6 +14,7 @@ use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class ActivationController extends Controller
 {
@@ -37,7 +39,7 @@ class ActivationController extends Controller
     }
 
     /**
-     * Activer avec un code (le code = package)
+     * Activer avec un code
      */
     public function activateWithCode(Request $request)
     {
@@ -63,13 +65,11 @@ class ActivationController extends Controller
             return back()->with('error', 'Code d\'activation expiré. Veuillez contacter l\'administrateur.');
         }
 
-        // ✅ Récupérer le package associé au code
         $package = null;
         if ($user->activation_package_id) {
             $package = Package::find($user->activation_package_id);
         }
 
-        // ✅ Mettre à jour l'utilisateur
         $updateData = [
             'is_active' => true,
             'activated_at' => now(),
@@ -78,7 +78,6 @@ class ActivationController extends Controller
             'activation_code_expires_at' => null,
         ];
 
-        // ✅ Si un package est associé, l'assigner
         if ($package) {
             $updateData['package_id'] = $package->id;
             $updateData['pv_balance'] = ($user->pv_balance ?? 0) + $package->pv_value;
@@ -87,7 +86,6 @@ class ActivationController extends Controller
 
         $user->update($updateData);
 
-        // ✅ Calculer les commissions si package
         if ($package) {
             $this->calculateCommissionsForPackage($user, $package);
         }
@@ -135,7 +133,6 @@ class ActivationController extends Controller
             'activation_code_expires_at' => null,
         ]);
 
-        // ✅ Calculer les commissions
         $this->calculateCommissionsForPackage($user, $package);
 
         Log::info('User activated with package', [
@@ -148,7 +145,7 @@ class ActivationController extends Controller
     }
 
     /**
-     * Activer via un lien direct (avec code dans l'URL)
+     * Activer via un lien direct
      */
     public function activateWithLink($code)
     {
@@ -166,7 +163,6 @@ class ActivationController extends Controller
             return redirect()->route('login')->with('error', 'Code d\'activation expiré. Veuillez contacter l\'administrateur.');
         }
 
-        // ✅ Récupérer le package associé
         $package = null;
         if ($user->activation_package_id) {
             $package = Package::find($user->activation_package_id);
@@ -202,7 +198,7 @@ class ActivationController extends Controller
     }
 
     /**
-     * Renvoyer le code d'activation
+     * Renvoyer le code d'activation (EMAIL ou SMS)
      */
     public function resendCode(Request $request)
     {
@@ -216,29 +212,71 @@ class ActivationController extends Controller
             return redirect()->route('dashboard')->with('info', 'Votre compte est déjà actif.');
         }
 
-        // Générer un nouveau code
+        $method = $request->input('method', 'email');
+
+        $cacheKey = "resend_code_{$user->id}_{$method}_" . date('Y-m-d');
+        $resendCount = Cache::get($cacheKey, 0);
+
+        if ($resendCount >= 3) {
+            return back()->with('error', "Vous avez déjà demandé 3 codes par {$method} aujourd'hui.");
+        }
+
         $newCode = 'ACT-' . strtoupper(substr(md5(uniqid() . time()), 0, 12));
         
-        // ✅ Conserver le package associé
         $user->update([
             'activation_code' => $newCode,
             'activation_code_expires_at' => now()->addDays(7),
         ]);
 
-        // ✅ Envoyer la notification avec le package
         $package = null;
         if ($user->activation_package_id) {
             $package = Package::find($user->activation_package_id);
         }
 
+        $success = false;
+
         try {
-            $user->notify(new ActivationCodeNotification($newCode, $package));
+            if ($method === 'email') {
+                $user->notify(new ActivationCodeNotification($newCode, $package));
+                $success = true;
+                $message = 'Un nouveau code a été envoyé à votre adresse email.';
+            } 
+            elseif ($method === 'sms') {
+                $request->validate([
+                    'phone' => 'required|string|max:20',
+                ]);
+
+                $user->phone = $request->phone;
+                $user->save();
+
+                $smsService = app(SmsService::class);
+                $provider = $smsService->detectProvider($request->phone);
+                
+                $smsSent = $smsService->sendActivationCode($request->phone, $newCode, $provider);
+
+                if ($smsSent) {
+                    $success = true;
+                    $providerName = ucfirst($provider);
+                    $message = "Un nouveau code a été envoyé par SMS via {$providerName} à votre numéro de téléphone.";
+                } else {
+                    throw new \Exception('Erreur lors de l\'envoi du SMS.');
+                }
+            }
+
+            if ($success) {
+                Cache::put($cacheKey, $resendCount + 1, now()->addDay());
+                return back()->with('success', $message);
+            }
+
         } catch (\Exception $e) {
-            Log::error('Error resending activation code: ' . $e->getMessage());
+            Log::error('Error resending activation code: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'method' => $method,
+            ]);
             return back()->with('error', 'Erreur lors de l\'envoi du code. Veuillez réessayer.');
         }
 
-        return back()->with('success', 'Un nouveau code d\'activation a été envoyé à votre adresse email.');
+        return back()->with('error', 'Méthode non supportée.');
     }
 
     /**
@@ -295,7 +333,7 @@ class ActivationController extends Controller
 
             $totalAmount = collect($commissions)->sum('amount');
 
-            Log::info('Commissions calculées pour l\'activation', [
+            Log::info('Commissions calculees pour l\'activation', [
                 'user_id' => $user->id,
                 'package_id' => $package->id,
                 'package_name' => $package->name,

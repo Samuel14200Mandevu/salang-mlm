@@ -79,7 +79,7 @@
         margin-bottom: 1.5rem;
     }
     
-    /* ===== BANNIÈRE ===== */
+    /* ===== BANNIERE ===== */
     .banner-info {
         background: rgba(245, 158, 11, 0.08);
         border: 1px solid rgba(245, 158, 11, 0.2);
@@ -282,7 +282,7 @@
         padding: 0 0.5rem;
     }
     
-    /* ===== RESEND BUTTON ===== */
+    /* ===== BOUTON RENVOI ===== */
     .btn-resend {
         background: none;
         border: none;
@@ -296,6 +296,48 @@
     .btn-resend:hover {
         color: var(--primary-500);
         text-decoration: none;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        white-space: nowrap;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
     }
     
     /* ===== SPINNER ===== */
@@ -322,8 +364,10 @@
         .form-section { padding: 0.875rem; }
         .btn-activate { padding: 0.625rem 1rem; font-size: 0.813rem; }
         .btn-packages { padding: 0.75rem 1rem; font-size: 0.875rem; }
+        .btn-outline, .btn-primary { font-size: 0.7rem; padding: 0.375rem 0.75rem; }
         .banner-info { padding: 0.75rem; }
         .banner-info .banner-icon { font-size: 1rem; }
+        .flex-col-sm { flex-direction: column; }
     }
     
     @media (max-width: 480px) {
@@ -342,10 +386,10 @@
 @section('content')
 <div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
     
-    <!-- ===== CARD PRINCIPAL ===== -->
+    <!-- CARD PRINCIPAL -->
     <div class="activate-card animate-fadeInScale">
         
-        <!-- ===== TITRE ===== -->
+        <!-- TITRE -->
         <div class="animate-fadeInUp delay-1">
             <h1 class="activate-title">
                 <span class="highlight">Activation du compte</span>
@@ -355,7 +399,7 @@
             </p>
         </div>
         
-        <!-- ===== BANNIÈRE INFO ===== -->
+        <!-- BANNIERE INFO -->
         <div class="banner-info animate-fadeInUp delay-2">
             <div class="flex items-start gap-3">
                 <span class="banner-icon">⚠</span>
@@ -374,7 +418,7 @@
             </div>
         </div>
         
-        <!-- ===== ACTIVATION PAR CODE ===== -->
+        <!-- ACTIVATION PAR CODE -->
         <div class="form-section animate-fadeInUp delay-3">
             <div class="section-title">
                 J'ai déjà payé mon package au guichet
@@ -405,22 +449,56 @@
                 </button>
             </form>
             
-            <div class="mt-3 text-center">
-                <form action="{{ route('activate.resend') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn-resend">
-                        Renvoyer le code d'activation
-                    </button>
-                </form>
+            <!-- ✅ OPTIONS DE RENVOI DU CODE -->
+            <div class="mt-4 pt-3 border-t border-[var(--border-color)]">
+                <p class="text-xs text-[var(--text-secondary)] text-center mb-2">
+                    Vous n'avez pas reçu votre code ?
+                </p>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    
+                    <!-- Renvoi par EMAIL -->
+                    <form action="{{ route('activate.resend') }}" method="POST" class="flex-1">
+                        @csrf
+                        <input type="hidden" name="method" value="email">
+                        <button type="submit" class="w-full btn-outline text-xs py-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Renvoyer par email
+                        </button>
+                    </form>
+                    
+                    <!-- Renvoi par SMS -->
+                    <form action="{{ route('activate.resend') }}" method="POST" class="flex-1">
+                        @csrf
+                        <input type="hidden" name="method" value="sms">
+                        <div class="flex gap-2">
+                            <input type="text" 
+                                   name="phone" 
+                                   placeholder="Numéro de téléphone"
+                                   class="input-activate text-sm flex-1"
+                                   required>
+                            <button type="submit" class="btn-primary text-xs py-2 whitespace-nowrap">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                                SMS
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-[var(--text-tertiary)] text-center mt-1">
+                            Provider (Orange, Airtel, Vodacom) détecté automatiquement
+                        </p>
+                    </form>
+                </div>
             </div>
         </div>
         
-        <!-- ===== DIVISEUR ===== -->
+        <!-- DIVISEUR -->
         <div class="divider animate-fadeInUp delay-4">
             <span>ou</span>
         </div>
         
-        <!-- ===== LIEN VERS LES PACKAGES ===== -->
+        <!-- LIEN VERS LES PACKAGES -->
         <div class="animate-fadeInUp delay-5">
             <div class="text-center">
                 <p class="text-center text-sm text-[var(--text-secondary)] mt-2">
@@ -434,7 +512,7 @@
             </div>
         </div>
         
-        <!-- ===== FOOTER ===== -->
+        <!-- FOOTER -->
         <div class="text-center mt-6 pt-4 border-t border-[var(--border-color)] animate-fadeInUp delay-6">
             <p class="text-xs text-[var(--text-tertiary)]">
                 Une question ? Contactez le support à 
@@ -450,7 +528,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Validation du formulaire
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function(e) {
             const btn = this.querySelector('button[type="submit"]');
@@ -463,4 +540,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-@endsection
+@endsections

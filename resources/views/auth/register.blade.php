@@ -224,7 +224,7 @@
         margin-top: 0.25rem;
     }
     
-    /* ✅ Sponsor Status - CORRIGÉ */
+    /* Sponsor Status */
     .sponsor-status {
         font-size: 0.75rem;
         margin-top: 0.25rem;
@@ -688,7 +688,7 @@
             @enderror
         </div>
 
-        <!-- ✅ SPONSOR ID - CORRIGÉ AVEC VÉRIFICATION -->
+        <!-- Sponsor ID -->
         <div class="form-group">
             <label>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -699,13 +699,13 @@
             <input type="text" 
                    name="sponsor_id" 
                    id="sponsor_id"
-                   value="{{ old('sponsor_id', session('social_data.sponsor_id', request()->query('ref', ''))) }}" 
+                   value="{{ old('sponsor_id', session('sponsor_id', request()->query('ref', ''))) }}" 
                    class="input @error('sponsor_id') input-error @enderror"
                    placeholder="Ex: SALADMIN ou SALDEBF71"
                    required>
             <p class="form-hint">Entrez le code de parrain (ex: SALDEBF71) ou l'email de votre parrain</p>
             
-            <!-- ✅ Sponsor Status -->
+            <!-- Sponsor Status -->
             <div id="sponsorStatus" class="sponsor-status"></div>
             
             @error('sponsor_id')
@@ -803,8 +803,11 @@
     <div class="auth-divider">ou</div>
 
     <!-- Social Login - Google -->
+    <!--  Lien direct vers Google avec le sponsor_id -->
     <div class="space-y-2">
-        <button type="button" class="social-btn social-btn-google" id="googleBtn">
+        <a href="{{ route('social.redirect', 'google') }}?sponsor_id={{ old('sponsor_id', session('sponsor_id', request()->query('ref', ''))) }}" 
+           class="social-btn" 
+           id="googleBtn">
             <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -812,7 +815,7 @@
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
             Continuer avec Google
-        </button>
+        </a>
     </div>
 
     <p class="text-center text-sm text-[var(--text-secondary)] mt-6">
@@ -921,7 +924,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ✅ VÉRIFICATION DU SPONSOR EN TEMPS RÉEL - CORRIGÉ
+// Vérification du sponsor en temps réel
 document.addEventListener('DOMContentLoaded', function() {
     const sponsorInput = document.getElementById('sponsor_id');
     const sponsorStatus = document.getElementById('sponsorStatus');
@@ -951,12 +954,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.exists) {
                             sponsorStatus.className = 'sponsor-status visible success';
-                            sponsorStatus.innerHTML = '✅ Parrain trouvé: <strong>' + data.name + '</strong> (' + data.email + ')';
+                            sponsorStatus.innerHTML = 'Parrain trouvé: <strong>' + data.name + '</strong> (' + data.email + ')';
                             sponsorInput.classList.add('input-success');
                             sponsorInput.classList.remove('input-error');
                         } else {
                             sponsorStatus.className = 'sponsor-status visible error';
-                            sponsorStatus.innerHTML = '❌ ' + data.message;
+                            sponsorStatus.innerHTML = '' + data.message;
                             sponsorInput.classList.add('input-error');
                             sponsorInput.classList.remove('input-success');
                         }
@@ -1013,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endif
 
-    // ✅ Vérification de l'email
+    // Vérification de l'email
     let emailTimeout = null;
     let emailChecked = false;
 
@@ -1128,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ✅ Validation du formulaire - CORRIGÉE
+    // Validation du formulaire
     form.addEventListener('submit', function(e) {
         let hasError = false;
         let errorMessage = '';
@@ -1203,75 +1206,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-    });
-
-    // ✅ Gestion du bouton Google - CORRIGÉE
-    document.getElementById('googleBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        const sponsorId = document.getElementById('sponsor_id').value.trim();
-        const sponsorStatus = document.getElementById('sponsorStatus');
-        
-        if (!sponsorId) {
-            showToast({
-                type: 'error',
-                title: 'Code du parrain requis',
-                message: 'Veuillez entrer un code de parrain avant de continuer.'
-            });
-            document.getElementById('sponsor_id').focus();
-            document.getElementById('sponsor_id').classList.add('input-error');
-            return;
-        }
-
-        if (document.getElementById('sponsor_id').classList.contains('input-error')) {
-            showToast({
-                type: 'error',
-                title: 'Parrain invalide',
-                message: 'Le code du parrain est invalide. Veuillez vérifier.'
-            });
-            document.getElementById('sponsor_id').focus();
-            return;
-        }
-
-        if (sponsorStatus.classList.contains('loading')) {
-            showToast({
-                type: 'warning',
-                title: 'Vérification en cours',
-                message: 'Veuillez attendre la fin de la vérification du parrain.'
-            });
-            return;
-        }
-
-        // Stocker le sponsor en session avant la redirection
-        fetch('{{ route('social.store-sponsor') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ sponsor_id: sponsorId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = '{{ route('social.redirect', 'google') }}';
-            } else {
-                showToast({
-                    type: 'error',
-                    title: 'Erreur',
-                    message: data.message || 'Erreur lors de la validation du parrain.'
-                });
-                document.getElementById('sponsor_id').classList.add('input-error');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showToast({
-                type: 'error',
-                title: 'Erreur',
-                message: 'Erreur lors de la validation du parrain. Veuillez réessayer.'
-            });
-        });
     });
 });
 
