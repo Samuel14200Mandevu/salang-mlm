@@ -43,14 +43,14 @@ class UpdateCumulativePV implements ShouldQueue
             $updated = 0;
             $errors = [];
 
-            // ✅ Réinitialiser les PV cumulés à 0 pour recalculer
+            // Réinitialiser les PV cumulés à 0 pour recalculer
             // Ne pas réinitialiser si on veut juste ajouter les nouveaux achats
             $query->chunk(100, function ($users) use (&$updated, &$errors) {
                 foreach ($users as $user) {
                     try {
                         DB::beginTransaction();
 
-                        // ✅ Calculer le PV total depuis toutes les commandes
+                        // Calculer le PV total depuis toutes les commandes
                         $totalPV = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
                             ->where('orders.user_id', $user->id)
                             ->where('orders.payment_status', 'completed')
@@ -61,12 +61,12 @@ class UpdateCumulativePV implements ShouldQueue
                             ->where('orders.payment_status', 'completed')
                             ->sum('order_items.bv_value');
 
-                        // ✅ Mettre à jour les PV cumulés
+                        // Mettre à jour les PV cumulés
                         $user->pv_balance = (int) $totalPV;
                         $user->bv_balance = (int) $totalBV;
                         $user->save();
 
-                        // ✅ Mettre à jour les PV d'équipe pour tous les parrains
+                        // Mettre à jour les PV d'équipe pour tous les parrains
                         $this->updateTeamPV($user);
 
                         DB::commit();
@@ -102,10 +102,10 @@ class UpdateCumulativePV implements ShouldQueue
      */
     private function updateTeamPV(User $user): void
     {
-        // ✅ Récupérer tous les descendants
+        // Récupérer tous les descendants
         $descendants = $this->getAllDescendants($user);
         
-        // ✅ Calculer le PV total de l'équipe
+        // Calculer le PV total de l'équipe
         $teamPV = 0;
         $teamBV = 0;
         
@@ -114,13 +114,13 @@ class UpdateCumulativePV implements ShouldQueue
             $teamBV += $descendant->bv_balance;
         }
 
-        // ✅ Mettre à jour l'utilisateur
+        // Mettre à jour l'utilisateur
         $user->team_pv = $teamPV;
         $user->team_bv = $teamBV;
         $user->total_team = count($descendants);
         $user->save();
 
-        // ✅ Mettre à jour récursivement les ancêtres
+        // Mettre à jour récursivement les ancêtres
         $current = $user->parrain;
         $level = 1;
         $maxLevel = 9;
@@ -149,8 +149,8 @@ class UpdateCumulativePV implements ShouldQueue
     /**
      * Récupère tous les descendants d'un utilisateur
      */
-private function getAllDescendants(User $user): array
-{
+    private function getAllDescendants(User $user): array
+    {
     $cacheKey = "descendants_{$user->id}";
     
     return Cache::remember($cacheKey, 3600, function () use ($user) {
@@ -178,6 +178,6 @@ private function getAllDescendants(User $user): array
         }
         
         return $descendants;
-    });
-}
+        });
+    }
 }

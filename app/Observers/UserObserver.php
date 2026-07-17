@@ -13,7 +13,11 @@ class UserObserver
      */
     public function created(User $user): void
     {
-        // Calculer le grade initial
+        // Mettre à jour les PV d'équipe
+        $user->updateTeamPVWithoutEvents();
+        $user->updateAllAncestorsWithoutEvents();
+        
+        // Calculer le grade
         $user->calculateAndUpdateRank();
     }
 
@@ -25,11 +29,16 @@ class UserObserver
         $fieldsToWatch = [
             'pv_balance', 'bv_balance', 'monthly_pv', 'monthly_bv',
             'team_pv', 'team_bv', 'qualified_branches', 'direct_sponsors_count',
-            'is_active'
+            'is_active', 'rank_id', 'parrain_id'
         ];
 
         foreach ($fieldsToWatch as $field) {
             if ($user->wasChanged($field)) {
+                // Mettre à jour les PV d'équipe
+                $user->updateTeamPVWithoutEvents();
+                $user->updateAllAncestorsWithoutEvents();
+                
+                // Calculer le grade
                 $user->calculateAndUpdateRank();
                 break;
             }
@@ -44,6 +53,21 @@ class UserObserver
         // Vérifier si le grade doit être mis à jour
         if (!$user->rank_id || $user->rank_id == 1) {
             $user->calculateAndUpdateRank();
+        }
+    }
+
+    /**
+     * Après la suppression d'un utilisateur
+     */
+    public function deleted(User $user): void
+    {
+        if ($user->parrain_id) {
+            $parrain = User::find($user->parrain_id);
+            if ($parrain) {
+                $parrain->updateTeamPVWithoutEvents();
+                $parrain->updateAllAncestorsWithoutEvents();
+                $parrain->calculateAndUpdateRank();
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ class CommissionDistributor
     {
         $commissions = [];
 
-        // ✅ Vérifier si l'acheteur est actif
+        // Vérifier si l'acheteur est actif
         if (!$buyer->is_active) {
             Log::info('Commissions non distribuées - compte inactif', [
                 'buyer_id' => $buyer->id,
@@ -27,7 +27,7 @@ class CommissionDistributor
                 'package_id' => $package->id,
                 'package_name' => $package->name,
             ]);
-            return $commissions; // ⛔ Aucune commission
+            return $commissions; // Aucune commission
         }
 
         // 1. Commission Directe (pour le parrain)
@@ -55,7 +55,7 @@ class CommissionDistributor
         $sponsor = $buyer->parrain;
         if (!$sponsor) return null;
 
-        // ✅ Vérifier que le sponsor est actif
+        // Vérifier que le sponsor est actif
         if (!$sponsor->is_active) {
             Log::info('Commission directe non distribuée - sponsor inactif', [
                 'sponsor_id' => $sponsor->id,
@@ -93,7 +93,7 @@ class CommissionDistributor
     {
         $commissions = [];
 
-        // ✅ Le pourcentage de l'acheteur
+        // Le pourcentage de l'acheteur
         $buyerRank = $buyer->rankObject;
         $buyerPercentage = $buyerRank ? $buyerRank->bonus_percentage : 0;
 
@@ -103,13 +103,13 @@ class CommissionDistributor
         $processed = [];
 
         while ($current && $generation <= 9) {
-            // ✅ Éviter les boucles infinies
+            // Éviter les boucles infinies
             if (in_array($current->id, $processed)) {
                 break;
             }
             $processed[] = $current->id;
 
-            // ✅ Vérifier que le parrain est actif
+            // Vérifier que le parrain est actif
             if (!$current->is_active) {
                 $current = $current->parrain;
                 $generation++;
@@ -119,7 +119,7 @@ class CommissionDistributor
             $currentRank = $current->rankObject;
             $currentPercentage = $currentRank ? $currentRank->bonus_percentage : 0;
 
-            // ✅ Différence entre le pourcentage actuel et le précédent
+            // Différence entre le pourcentage actuel et le précédent
             $difference = max(0, $currentPercentage - $previousPercentage);
 
             if ($difference > 0) {
@@ -170,7 +170,7 @@ class CommissionDistributor
             }
             $processed[] = $current->id;
 
-            // ✅ Vérifier que le parrain est actif
+            // Vérifier que le parrain est actif
             if (!$current->is_active) {
                 $current = $current->parrain;
                 $generation++;

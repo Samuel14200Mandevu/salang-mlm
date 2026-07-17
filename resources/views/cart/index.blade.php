@@ -91,6 +91,18 @@
         text-align: center;
     }
     
+    .balance-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .balance-card:hover {
+        border-color: rgba(245, 158, 11, 0.4);
+        transform: translateX(4px);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -103,9 +115,15 @@
         from { opacity: 0; transform: translateX(20px); }
         to { opacity: 1; transform: translateX(0); }
     }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
     .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
     .animate-fadeInLeft { animation: fadeInLeft 0.6s ease forwards; }
     .animate-fadeInRight { animation: fadeInRight 0.6s ease forwards; }
+    .animate-fadeIn { animation: fadeIn 0.4s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
     
     @media (max-width: 640px) {
         .card { padding: 0.875rem; }
@@ -120,6 +138,7 @@
             align-items: flex-end;
             gap: 0.25rem;
         }
+        .balance-card { padding: 0.75rem; }
     }
     
     @media (max-width: 480px) {
@@ -145,24 +164,24 @@
     
     <!-- Header -->
     <div class="animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Cart</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Review your items before checkout</p>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Panier</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez vos articles avant de passer la commande</p>
     </div>
 
-    <!-- ✅ Balance Info -->
-    <div class="card animate-fadeInUp delay-1 border-l-4 border-yellow-500">
+    <!-- ✅ Balance Info - CORRIGÉ -->
+    <div class="balance-card animate-fadeInUp delay-1">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Your Wallet Balance</p>
-                <p class="text-xl sm:text-2xl font-bold text-yellow-500">
-                    ${{ number_format($balance ?? 0, 2) }}
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Solde de votre portefeuille</p>
+                <p class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    ${{ number_format($walletBalance ?? 0, 2) }}
                 </p>
             </div>
-            <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm">
+            <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Add Funds
+                Gérer mon portefeuille
             </a>
         </div>
     </div>
@@ -180,23 +199,23 @@
     @endif
 
     @if(empty($cart))
-        <!-- Empty Cart -->
+        <!-- Panier Vide -->
         <div class="card text-center py-8 sm:py-12 animate-fadeIn">
             <svg class="w-16 h-16 sm:w-24 sm:h-24 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Your cart is empty</h3>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Discover our products and subscriptions</p>
+            <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Votre panier est vide</h3>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Découvrez nos produits et abonnements</p>
             <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-                <a href="{{ route('products.index') }}" class="btn btn-primary text-sm sm:text-base">View Products</a>
-                <a href="{{ route('subscriptions.index') }}" class="btn btn-outline text-sm sm:text-base">View Subscriptions</a>
+                <a href="{{ route('products.index') }}" class="btn btn-primary text-sm sm:text-base">Voir les produits</a>
+                <a href="{{ route('subscriptions.index') }}" class="btn btn-outline text-sm sm:text-base">Voir les abonnements</a>
             </div>
         </div>
     @else
-        <!-- Cart Content -->
+        <!-- Contenu du Panier -->
         <div class="cart-grid grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             
-            <!-- Items -->
+            <!-- Articles -->
             <div class="lg:col-span-2 animate-fadeInLeft">
                 <div class="card">
                     <div class="divide-y divide-[var(--border-color)]">
@@ -212,9 +231,12 @@
                                         {{ $item['name'] }}
                                     </h4>
                                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                                        {{ $item['type'] == 'package' ? 'Subscription' : 'Product' }}
+                                        {{ $item['type'] == 'package' ? 'Abonnement' : 'Produit' }}
                                         <span class="mx-1">•</span>
-                                        Qty: {{ $item['quantity'] }}
+                                        Qté: {{ $item['quantity'] }}
+                                        @if(isset($item['pv_value']) && $item['pv_value'] > 0)
+                                            <span class="ml-2 text-green-500">{{ $item['pv_value'] }} PV</span>
+                                        @endif
                                     </p>
                                 </div>
                                 <div class="item-actions text-right flex items-center gap-3 sm:gap-4">
@@ -224,7 +246,7 @@
                                     <form action="{{ route('cart.remove', $key) }}" method="POST" class="inline">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-red-500 hover:text-red-700 text-xs sm:text-sm transition font-medium">
-                                            Remove
+                                            Supprimer
                                         </button>
                                     </form>
                                 </div>
@@ -239,42 +261,42 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
-                        Continue Shopping
+                        Continuer mes achats
                     </a>
                     <form action="{{ route('cart.clear') }}" method="POST" class="inline">
                         @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Clear your cart?')">
-                            Clear Cart
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Vider votre panier ?')">
+                            Vider le panier
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- Summary -->
+            <!-- Résumé -->
             <div class="lg:col-span-1 animate-fadeInRight">
                 <div class="card sticky-top">
-                    <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h3>
+                    <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Résumé de la commande</h3>
                     
                     @php
                         $tax = $total * 0.16;
                         $shipping = $total > 100 ? 0 : 10;
                         $grandTotal = $total + $tax + $shipping;
-                        $balance = Auth::user()->wallet->balance ?? 0;
+                        $balance = $walletBalance ?? 0;
                         $canAfford = $balance >= $grandTotal;
                     @endphp
 
                     <div class="space-y-2 text-xs sm:text-sm">
                         <div class="flex justify-between">
-                            <span class="text-[var(--text-secondary)]">Subtotal</span>
+                            <span class="text-[var(--text-secondary)]">Sous-total</span>
                             <span class="font-medium">${{ number_format($total, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-[var(--text-secondary)]">Tax (16%)</span>
+                            <span class="text-[var(--text-secondary)]">Taxes (16%)</span>
                             <span class="font-medium">${{ number_format($tax, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-[var(--text-secondary)]">Shipping</span>
-                            <span class="font-medium">{{ $shipping > 0 ? '$' . number_format($shipping, 2) : 'Free' }}</span>
+                            <span class="text-[var(--text-secondary)]">Livraison</span>
+                            <span class="font-medium">{{ $shipping > 0 ? '$' . number_format($shipping, 2) : 'Gratuite' }}</span>
                         </div>
                         <div class="border-t border-[var(--border-color)] pt-3 mt-3">
                             <div class="flex justify-between text-base sm:text-lg font-bold">
@@ -295,24 +317,38 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                     </svg>
-                                    Proceed to Checkout
+                                    Passer la commande
                                 </button>
                             </form>
                         @else
                             <button class="btn btn-primary w-full text-sm sm:text-base py-2 sm:py-2.5 cursor-not-allowed opacity-50" disabled>
-                                Insufficient Balance
+                                Solde insuffisant
                             </button>
                             <p class="insufficient-balance">
-                                Need ${{ number_format($grandTotal - $balance, 2) }} more to complete this order
+                                Il vous manque ${{ number_format($grandTotal - $balance, 2) }} pour finaliser cette commande
                             </p>
-                            <a href="{{ route('wallet.deposit') }}" class="btn btn-outline w-full mt-2 text-sm sm:text-base py-2 sm:py-2.5">
+                            <a href="{{ route('wallet.index') }}" class="btn btn-outline w-full mt-2 text-sm sm:text-base py-2 sm:py-2.5">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
-                                Add Funds
+                                Alimenter mon portefeuille
                             </a>
                         @endif
                     </div>
+                    
+                    <!-- ✅ PV Total -->
+                    @php
+                        $totalPV = array_sum(array_map(function($item) {
+                            return ($item['pv_value'] ?? 0) * ($item['quantity'] ?? 1);
+                        }, $cart));
+                    @endphp
+                    @if($totalPV > 0)
+                        <div class="mt-3 pt-3 border-t border-[var(--border-color)] text-center">
+                            <p class="text-xs text-[var(--text-secondary)]">
+                                Vous gagnerez <span class="font-bold text-green-500">{{ $totalPV }} PV</span> avec cette commande
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

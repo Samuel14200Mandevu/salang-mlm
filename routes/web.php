@@ -458,6 +458,7 @@ Route::prefix('admin')
             Route::get('/users', [AdminReportController::class, 'users'])->name('users');
             Route::get('/withdrawals', [AdminReportController::class, 'withdrawals'])->name('withdrawals');
             Route::get('/export', [AdminReportController::class, 'export'])->name('export');
+            Route::get('/pdf/{type}', [AdminReportController::class, 'exportPdf'])->name('pdf');
         });
 
         // ALIAS

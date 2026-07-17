@@ -20,15 +20,33 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+    @keyframes slideDown {
+        from { opacity: 0; max-height: 0; transform: translateY(-10px); }
+        to { opacity: 1; max-height: 400px; transform: translateY(0); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
     
     .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
     .animate-fadeInScale { animation: fadeInScale 0.5s ease forwards; }
+    .animate-slideDown { animation: slideDown 0.4s ease forwards; }
     .delay-1 { animation-delay: 0.05s; }
     .delay-2 { animation-delay: 0.10s; }
     .delay-3 { animation-delay: 0.15s; }
     .delay-4 { animation-delay: 0.20s; }
     .delay-5 { animation-delay: 0.25s; }
     .delay-6 { animation-delay: 0.30s; }
+    
+    /* ===== PAGE D'ACTIVATION ===== */
+    .activate-page {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
     
     /* ===== CARD PRINCIPAL ===== */
     .activate-card {
@@ -40,6 +58,7 @@
         position: relative;
         overflow: hidden;
         max-width: 500px;
+        width: 100%;
         margin: 0 auto;
     }
     .activate-card::before {
@@ -143,6 +162,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-wrap: wrap;
     }
     .form-section .section-title .badge {
         font-size: 0.65rem;
@@ -150,6 +170,209 @@
         border-radius: var(--radius-full);
         background: rgba(var(--primary-500-rgb), 0.12);
         color: var(--primary-500);
+        font-weight: 600;
+    }
+    
+    /* ===== LIEN RENVOI CODE ===== */
+    .resend-trigger {
+        display: block;
+        text-align: center;
+        color: var(--primary-500);
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        padding: 0.5rem;
+        border-radius: var(--radius-sm);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        letter-spacing: 0.02em;
+    }
+    .resend-trigger:hover {
+        color: var(--primary-600);
+        background: rgba(var(--primary-500-rgb), 0.05);
+        text-decoration: none;
+    }
+    .resend-trigger .icon {
+        display: inline-block;
+        transition: transform 0.3s ease;
+        margin-right: 0.3rem;
+    }
+    .resend-trigger .icon.open {
+        transform: rotate(180deg);
+    }
+    
+    .resend-options {
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.4s ease;
+    }
+    .resend-options.open {
+        max-height: 400px;
+        opacity: 1;
+        margin-top: 0.75rem;
+    }
+    
+    /* ===== OPTIONS DE RENVOI - DESIGN AMÉLIORÉ ===== */
+    .resend-options .options-header {
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px dashed var(--border-color);
+    }
+    
+    .resend-options .option-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    .resend-options .option-card:hover {
+        border-color: var(--primary-500);
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-2px);
+    }
+    .resend-options .option-card .option-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .resend-options .option-card .option-label .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .resend-options .option-card .option-label .dot.email-dot { background: #3b82f6; }
+    .resend-options .option-card .option-label .dot.sms-dot { background: #22c55e; }
+    
+    .resend-options .option-card .input-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .resend-options .option-card .input-group .input-activate {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.813rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        outline: none;
+    }
+    .resend-options .option-card .input-group .input-activate:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .resend-options .option-card .input-group .input-activate::placeholder {
+        color: var(--text-tertiary);
+        font-size: 0.7rem;
+    }
+    
+    .resend-options .option-card .btn-send {
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-sm);
+        border: none;
+        font-weight: 600;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        white-space: nowrap;
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 2px 12px rgba(var(--primary-500-rgb), 0.25);
+    }
+    .resend-options .option-card .btn-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(var(--primary-500-rgb), 0.35);
+    }
+    .resend-options .option-card .btn-send svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .resend-options .option-card .btn-send-email {
+        background: #3b82f6;
+        box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
+    }
+    .resend-options .option-card .btn-send-email:hover {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+    }
+    
+    .resend-options .option-card .btn-send-sms {
+        background: #22c55e;
+        box-shadow: 0 2px 12px rgba(34, 197, 94, 0.25);
+    }
+    .resend-options .option-card .btn-send-sms:hover {
+        box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
+    }
+    
+    .resend-options .provider-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        background: rgba(59, 130, 246, 0.06);
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+    }
+    .resend-options .provider-info .provider-icon {
+        display: flex;
+        gap: 0.3rem;
+    }
+    .resend-options .provider-info .provider-icon span {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+    }
+    .resend-options .provider-info .provider-icon .orange { background: #ff6600; }
+    .resend-options .provider-info .provider-icon .airtel { background: #ff0000; }
+    .resend-options .provider-info .provider-icon .vodacom { background: #00a651; }
+    
+    .resend-options .option-divider {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.5rem 0;
+    }
+    .resend-options .option-divider::before,
+    .resend-options .option-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+    }
+    .resend-options .option-divider span {
+        font-size: 0.6rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
         font-weight: 600;
     }
     
@@ -282,64 +505,6 @@
         padding: 0 0.5rem;
     }
     
-    /* ===== BOUTON RENVOI ===== */
-    .btn-resend {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        font-size: 0.813rem;
-        cursor: pointer;
-        transition: all var(--transition-base);
-        text-decoration: underline;
-        text-underline-offset: 2px;
-    }
-    .btn-resend:hover {
-        color: var(--primary-500);
-        text-decoration: none;
-    }
-    
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.75rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-    }
-    .btn-outline:hover {
-        border-color: var(--primary-500);
-        color: var(--primary-500);
-    }
-    
-    .btn-primary {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.75rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        border: none;
-        white-space: nowrap;
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
-    }
-    
     /* ===== SPINNER ===== */
     .spinner {
         display: inline-block;
@@ -356,6 +521,7 @@
         .activate-card { padding: 1.25rem; }
         .activate-title { font-size: 1.25rem; }
         .form-section { padding: 1rem; }
+        .activate-page { padding: 1rem; }
     }
     
     @media (max-width: 640px) {
@@ -364,10 +530,13 @@
         .form-section { padding: 0.875rem; }
         .btn-activate { padding: 0.625rem 1rem; font-size: 0.813rem; }
         .btn-packages { padding: 0.75rem 1rem; font-size: 0.875rem; }
-        .btn-outline, .btn-primary { font-size: 0.7rem; padding: 0.375rem 0.75rem; }
         .banner-info { padding: 0.75rem; }
         .banner-info .banner-icon { font-size: 1rem; }
         .flex-col-sm { flex-direction: column; }
+        .activate-page { padding: 0.75rem; min-height: 70vh; }
+        .resend-options .option-card .input-group { flex-direction: column; }
+        .resend-options .option-card .input-group .input-activate { width: 100%; min-width: unset; }
+        .resend-options .option-card .input-group .btn-send { width: 100%; justify-content: center; }
     }
     
     @media (max-width: 480px) {
@@ -379,12 +548,17 @@
         .btn-packages { padding: 0.625rem 0.875rem; font-size: 0.813rem; }
         .divider { margin: 0.75rem 0; }
         .divider span { font-size: 0.65rem; }
+        .activate-page { padding: 0.5rem; min-height: 60vh; }
+        .resend-options .option-card { padding: 0.5rem; }
+        .resend-options .option-card .option-label { font-size: 0.6rem; }
+        .resend-options .option-card .input-group .input-activate { font-size: 0.7rem; padding: 0.4rem 0.6rem; }
+        .resend-options .option-card .btn-send { font-size: 0.65rem; padding: 0.4rem 0.6rem; }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+<div class="activate-page">
     
     <!-- CARD PRINCIPAL -->
     <div class="activate-card animate-fadeInScale">
@@ -449,46 +623,76 @@
                 </button>
             </form>
             
-            <!-- ✅ OPTIONS DE RENVOI DU CODE -->
-            <div class="mt-4 pt-3 border-t border-[var(--border-color)]">
-                <p class="text-xs text-[var(--text-secondary)] text-center mb-2">
+            <!-- ✅ LIEN RENVOI CODE - DESIGN AMÉLIORÉ -->
+            <div class="mt-3">
+                <span class="resend-trigger" onclick="toggleResendOptions()">
+                    <span class="icon" id="resendIcon">▼</span>
                     Vous n'avez pas reçu votre code ?
-                </p>
-                <div class="flex flex-col sm:flex-row gap-2">
+                </span>
+                
+                <!-- Options de renvoi -->
+                <div id="resendOptions" class="resend-options">
+                    <div class="options-header">
+                        Choisissez comment recevoir votre code
+                    </div>
                     
-                    <!-- Renvoi par EMAIL -->
-                    <form action="{{ route('activate.resend') }}" method="POST" class="flex-1">
-                        @csrf
-                        <input type="hidden" name="method" value="email">
-                        <button type="submit" class="w-full btn-outline text-xs py-2">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            Renvoyer par email
-                        </button>
-                    </form>
-                    
-                    <!-- Renvoi par SMS -->
-                    <form action="{{ route('activate.resend') }}" method="POST" class="flex-1">
-                        @csrf
-                        <input type="hidden" name="method" value="sms">
-                        <div class="flex gap-2">
-                            <input type="text" 
-                                   name="phone" 
-                                   placeholder="Numéro de téléphone"
-                                   class="input-activate text-sm flex-1"
-                                   required>
-                            <button type="submit" class="btn-primary text-xs py-2 whitespace-nowrap">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                </svg>
-                                SMS
-                            </button>
+                    <!-- Option Email -->
+                    <div class="option-card">
+                        <div class="option-label">
+                            <span class="dot email-dot"></span>
+                            Par email
                         </div>
-                        <p class="text-[10px] text-[var(--text-tertiary)] text-center mt-1">
-                            Provider (Orange, Airtel, Vodacom) détecté automatiquement
-                        </p>
-                    </form>
+                        <form action="{{ route('activate.resend') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="method" value="email">
+                            <button type="submit" class="btn-send btn-send-email w-full">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                Renvoyer par email
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="option-divider">
+                        <span>ou</span>
+                    </div>
+                    
+                    <!-- Option SMS -->
+                    <div class="option-card">
+                        <div class="option-label">
+                            <span class="dot sms-dot"></span>
+                            Par SMS
+                        </div>
+                        <form action="{{ route('activate.resend') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="method" value="sms">
+                            <div class="input-group">
+                                <input type="text" 
+                                       name="phone" 
+                                       placeholder="Numéro de téléphone"
+                                       class="input-activate"
+                                       required>
+                                <button type="submit" class="btn-send btn-send-sms">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                    </svg>
+                                    SMS
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Provider Info -->
+                    <div class="provider-info">
+                        <span>Provider détecté automatiquement</span>
+                        <span class="provider-icon">
+                            <span class="orange"></span>
+                            <span class="airtel"></span>
+                            <span class="vodacom"></span>
+                        </span>
+                        <span>(Orange, Airtel, Vodacom)</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -505,9 +709,6 @@
                     <a href="{{ route('subscriptions.index') }}" class="text-primary-500 hover:text-primary-600 font-semibold transition">
                         Acheter un package pour activer mon compte
                     </a>
-                </p>
-                <p class="text-xs text-[var(--text-tertiary)] mt-2">
-                    L'achat d'un package active instantanément votre compte
                 </p>
             </div>
         </div>
@@ -527,10 +728,25 @@
 
 @push('scripts')
 <script>
+function toggleResendOptions() {
+    var options = document.getElementById('resendOptions');
+    var icon = document.getElementById('resendIcon');
+    
+    if (options.classList.contains('open')) {
+        options.classList.remove('open');
+        icon.classList.remove('open');
+        icon.textContent = '▼';
+    } else {
+        options.classList.add('open');
+        icon.classList.add('open');
+        icon.textContent = '▲';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('form').forEach(form => {
+    document.querySelectorAll('form').forEach(function(form) {
         form.addEventListener('submit', function(e) {
-            const btn = this.querySelector('button[type="submit"]');
+            var btn = this.querySelector('button[type="submit"]');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner"></span> Chargement...';
@@ -540,4 +756,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-@endsections
+@endsection

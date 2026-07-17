@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class UserPackageController extends Controller
 {
@@ -102,13 +103,42 @@ class UserPackageController extends Controller
                 'completed_at' => now(),
             ]);
 
+            // Mise à jour du package et des PV
             $user->package_id = $package->id;
             $user->pv_balance = ($user->pv_balance ?? 0) + $package->pv_value;
             $user->bv_balance = ($user->bv_balance ?? 0) + $package->bv_value;
+            
+            // ACTIVER LE COMPTE SI INACTIF
+            $wasInactive = false;
+            if (!$user->is_active) {
+                $wasInactive = true;
+                $user->is_active = true;
+                $user->activated_at = now();
+                $user->activation_method = 'package';
+                $user->activation_code = null;
+                $user->activation_code_expires_at = null;
+            }
+            
             $user->save();
 
-            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS ===
+            // Mettre à jour le Team PV
+            $user->updateTeamPVWithoutEvents();
+            $user->updateAllAncestorsWithoutEvents();
+
+            // Calculer les commissions
             $this->calculateCommissionsForPackage($user, $package);
+
+            // Mettre à jour le grade
+            $user->calculateAndUpdateRank();
+
+            // Vider le cache du user pour le dashboard
+            Cache::forget("user_rank_{$user->id}");
+            Cache::forget("user_{$user->id}");
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+
+            // Rafraîchir l'utilisateur dans la session
+            Auth::setUser($user->fresh());
 
             DB::commit();
 
@@ -116,11 +146,15 @@ class UserPackageController extends Controller
             if ($package->pv_value > 0) {
                 $message .= " You earned {$package->pv_value} PV and {$package->bv_value} BV.";
             }
+            if ($wasInactive) {
+                $message .= " Your account has been activated!";
+            }
 
-            Log::info('Package purchase completed with commissions', [
+            Log::info('Package purchase completed with activation', [
                 'user_id' => $user->id,
                 'package_id' => $package->id,
                 'package_name' => $package->name,
+                'was_inactive' => $wasInactive,
             ]);
 
             return redirect()->route('subscriptions.index')
@@ -138,7 +172,7 @@ class UserPackageController extends Controller
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Calculer les commissions pour un package
+     * CALCUL DES COMMISSIONS POUR UN PACKAGE
      */
     private function calculateCommissionsForPackage(User $buyer, Package $package): void
     {
@@ -210,7 +244,7 @@ class UserPackageController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw $e;
+            // ⚠️ Ne pas relancer l'exception pour ne pas bloquer l'achat
         }
     }
 
@@ -279,15 +313,48 @@ class UserPackageController extends Controller
             $user->package_id = $newPackage->id;
             $user->pv_balance = ($user->pv_balance ?? 0) + $pvDiff;
             $user->bv_balance = ($user->bv_balance ?? 0) + $bvDiff;
+            
+            // Activer le compte si inactif
+            $wasInactive = false;
+            if (!$user->is_active) {
+                $wasInactive = true;
+                $user->is_active = true;
+                $user->activated_at = now();
+                $user->activation_method = 'upgrade';
+                $user->activation_code = null;
+                $user->activation_code_expires_at = null;
+            }
+            
             $user->save();
 
-            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS POUR L'UPGRADE ===
+            // Mettre à jour le Team PV
+            $user->updateTeamPVWithoutEvents();
+            $user->updateAllAncestorsWithoutEvents();
+
+            // Calculer les commissions
             $this->calculateCommissionsForPackage($user, $newPackage);
+
+            // Mettre à jour le grade
+            $user->calculateAndUpdateRank();
+
+            // Vider le cache
+            Cache::forget("user_rank_{$user->id}");
+            Cache::forget("user_{$user->id}");
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+
+            // Rafraîchir l'utilisateur dans la session
+            Auth::setUser($user->fresh());
 
             DB::commit();
 
+            $message = "Package upgraded to '{$newPackage->name}' successfully! PV earned: {$pvDiff}";
+            if ($wasInactive) {
+                $message .= " Your account has been activated!";
+            }
+
             return redirect()->route('subscriptions.index')
-                ->with('success', "Package upgraded to '{$newPackage->name}' successfully! PV earned: {$pvDiff}");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();

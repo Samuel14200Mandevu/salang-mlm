@@ -33,10 +33,10 @@ class Kernel extends HttpKernel
         // Convert empty strings to null
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         
-        // ✅ Security Headers - Ajoutés globalement
+        // Security Headers - Ajoutés globalement
         \App\Http\Middleware\SecurityHeaders::class,
         
-        // ✅ Sanitize Input - Ajouté globalement
+        // Sanitize Input - Ajouté globalement
         \App\Http\Middleware\SanitizeInput::class,
     ];
 
@@ -54,7 +54,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             
-            // ✅ SALANG MLM MIDDLEWARES
+            // SALANG MLM MIDDLEWARES
             \App\Http\Middleware\EnsureUserActive::class,
             \App\Http\Middleware\EnsureRankIsUpToDate::class,
             \App\Http\Middleware\MaintenanceMode::class,
@@ -70,7 +70,7 @@ class Kernel extends HttpKernel
             // Route Binding
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             
-            // ✅ SALANG API MIDDLEWARES
+            // SALANG API MIDDLEWARES
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\ApiAuthenticate::class,
             \App\Http\Middleware\EnsureUserActive::class,
@@ -106,23 +106,23 @@ class Kernel extends HttpKernel
         // SALANG MLM CUSTOM MIDDLEWARES
         // ============================================================
 
-        // 🔐 AUTHENTICATION & SECURITY
+        // AUTHENTICATION & SECURITY
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
         'active' => \App\Http\Middleware\EnsureUserActive::class,
         'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
         'rank.update' => \App\Http\Middleware\EnsureRankIsUpToDate::class,
 
-        // 🛡️ SECURITY & PROTECTION
+        // SECURITY & PROTECTION
         'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
         'sanitize' => \App\Http\Middleware\SanitizeInput::class,
         'maintenance' => \App\Http\Middleware\MaintenanceMode::class,
 
-        // 📊 PERFORMANCE & CACHE
+        // PERFORMANCE & CACHE
         'cache.response' => \App\Http\Middleware\CacheResponse::class,
         'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
 
-        // 📝 LOGGING & DEBUG
+        // LOGGING & DEBUG
         'log.request' => \App\Http\Middleware\LogRequest::class,
         'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
     ];

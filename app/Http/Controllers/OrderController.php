@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Wallet;
+use App\Models\Transaction;
 use App\Services\MLM\MonthlyCommissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,16 +67,41 @@ class OrderController extends Controller
             abort(403);
         }
 
-        if ($order->status !== 'pending') {
+        if ($order->status !== 'pending' && $order->status !== 'completed') {
             return back()->with('error', 'This order cannot be cancelled.');
         }
 
         DB::beginTransaction();
 
         try {
+            // ✅ REMBOURSER LE WALLET SI LA COMMANDE ÉTAIT PAYÉE
+            if ($order->payment_status === 'completed' && $order->paid_at) {
+                $wallet = Wallet::where('user_id', $order->user_id)->first();
+                if ($wallet) {
+                    $balanceBefore = $wallet->balance;
+                    $wallet->balance += $order->total;
+                    $wallet->save();
+
+                    Transaction::create([
+                        'user_id' => $order->user_id,
+                        'wallet_id' => $wallet->id,
+                        'type' => 'refund',
+                        'amount' => $order->total,
+                        'fee' => 0,
+                        'net_amount' => $order->total,
+                        'balance_before' => $balanceBefore,
+                        'balance_after' => $wallet->balance,
+                        'status' => 'completed',
+                        'description' => 'Refund for order #' . $order->order_number,
+                        'completed_at' => now(),
+                    ]);
+                }
+            }
+
             $order->status = 'cancelled';
             $order->save();
 
+            // ✅ REMETTRE LES PRODUITS EN STOCK
             foreach ($order->items as $item) {
                 if ($item->product_id) {
                     $product = Product::find($item->product_id);
@@ -91,6 +118,7 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
                 'order_number' => $order->order_number,
+                'refunded' => $order->payment_status === 'completed',
             ]);
 
             return redirect()->route('orders.index')

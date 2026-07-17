@@ -43,11 +43,11 @@ class UpdateRanks implements ShouldQueue
             $updated = 0;
             $errors = [];
 
-            // ✅ Utilisation de chunk pour éviter les problèmes de mémoire
+            // Utilisation de chunk pour éviter les problèmes de mémoire
             $query->chunk(50, function ($users) use ($rankCalculator, &$updated, &$errors) {
                 foreach ($users as $user) {
                     try {
-                        // ✅ Clear cache pour ce user spécifique
+                        // Clear cache pour ce user spécifique
                         Cache::forget("rank_calculated_{$user->id}");
 
                         $newRank = $rankCalculator->calculateAdvancedRank($user);
@@ -58,7 +58,7 @@ class UpdateRanks implements ShouldQueue
 
                             DB::beginTransaction();
 
-                            // ✅ Mise à jour avec gestion des champs
+                            // Mise à jour avec gestion des champs
                             $user->rank_id = $newRank->id;
                             $user->rank = $newRank->name;
                             $user->rank_name = $newRank->name;
@@ -66,7 +66,7 @@ class UpdateRanks implements ShouldQueue
                             $user->last_rank_update = now();
                             $user->save();
 
-                            // ✅ Enregistrement de l'historique
+                            // Enregistrement de l'historique
                             RankHistory::create([
                                 'user_id' => $user->id,
                                 'old_rank_id' => $oldRankId,
@@ -89,7 +89,7 @@ class UpdateRanks implements ShouldQueue
                                 'new_rank' => $newRank->name,
                             ]);
 
-                            // ✅ Vider le cache pour ce user
+                            // Vider le cache pour ce user
                             Cache::forget("user_rank_{$user->id}");
                         }
                     } catch (\Exception $e) {

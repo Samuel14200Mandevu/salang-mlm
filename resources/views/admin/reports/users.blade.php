@@ -21,14 +21,22 @@
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Rapport des utilisateurs</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse détaillée des utilisateurs</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse detaillee des utilisateurs</p>
         </div>
-        <div class="flex gap-2">
-            <a href="{{ route('admin.reports.export', ['type' => 'users']) }}" class="btn btn-primary btn-sm sm:btn-md">
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.reports.pdf', ['type' => 'users']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
+               class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
+                </svg>
+                PDF
+            </a>
+            <a href="{{ route('admin.reports.export', ['type' => 'users']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
+               class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Exporter
+                CSV
             </a>
             <a href="{{ route('admin.reports') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +87,7 @@
         </div>
     </div>
 
-    <!-- ✅ FILTRES AJOUTÉS -->
+    <!-- Filtres -->
     <div class="card p-3 sm:p-4 animate-fadeInUp delay-6">
         <form method="GET" class="filter-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             <div>
@@ -186,8 +194,7 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun utilisateur</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Aucun utilisateur enregistré</p>
+                                Aucun utilisateur
                             </td>
                         </tr>
                     @endforelse

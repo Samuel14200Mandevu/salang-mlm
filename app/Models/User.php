@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\MLM\AdvancedRankCalculator;
-use App\Jobs\UpdateTeamPV;
 
 class User extends Authenticatable
 {
@@ -25,6 +24,7 @@ class User extends Authenticatable
         'phone',
         'sponsor_id',
         'parrain_id',
+        'position',
         'rank_id',
         'rank',
         'package_id',
@@ -51,7 +51,6 @@ class User extends Authenticatable
         'city',
         'address',
         'last_rank_update',
-        // ✅ AJOUT POUR L'ACTIVATION
         'activation_code',
         'activation_code_expires_at',
         'activated_at',
@@ -86,27 +85,19 @@ class User extends Authenticatable
         'activated_at' => 'datetime',
     ];
 
-    // ============================================================
-    // BOOTED - TRIGGERS AUTOMATIQUES (CORRIGÉ SANS BOUCLE)
-    // ============================================================
-
+    /**
+     * BOOTED - TRIGGERS AUTOMATIQUES
+     */
     protected static function booted(): void
     {
-        // Après création d'un utilisateur
         static::created(function ($user) {
+            $user->updateTeamPVWithoutEvents();
+            $user->updateAllAncestorsWithoutEvents();
             $user->calculateAndUpdateRank();
-            
-            if ($user->parrain_id) {
-                $parrain = User::find($user->parrain_id);
-                if ($parrain) {
-                    $parrain->updateTeamPVWithoutEvents();
-                    $parrain->updateAllAncestorsWithoutEvents();
-                }
-            }
         });
 
         static::updated(function ($user) {
-            $fieldsToWatch = ['pv_balance', 'monthly_pv', 'parrain_id'];
+            $fieldsToWatch = ['pv_balance', 'monthly_pv', 'parrain_id', 'is_active', 'rank_id'];
             $hasChange = false;
             
             foreach ($fieldsToWatch as $field) {
@@ -176,7 +167,6 @@ class User extends Authenticatable
         return $this->belongsTo(Package::class);
     }
 
-    // ✅ RELATION POUR LE PACKAGE D'ACTIVATION
     public function activationPackage()
     {
         return $this->belongsTo(Package::class, 'activation_package_id');
@@ -189,7 +179,7 @@ class User extends Authenticatable
 
     public function filleuls()
     {
-        return $this->hasMany(User::class, 'parrain_id');
+        return $this->hasMany(User::class, 'parrain_id')->where('is_active', true);
     }
 
     public function wallet()
@@ -275,7 +265,7 @@ class User extends Authenticatable
             }
         }
         
-        return 'Distributor';
+        return 'Distributeur';
     }
 
     public function getRankLevelAttribute()
@@ -291,7 +281,7 @@ class User extends Authenticatable
                 'Cumul Directeur' => 3, 'Assistant Manager' => 3,
                 'Directeur' => 4, 'Manager' => 4,
                 'Manager Senior' => 5, 'Senior Manager' => 5,
-                'Directeur Envolée' => 6, 'Soaring Manager' => 6,
+                'Directeur Envolee' => 6, 'Soaring Manager' => 6,
                 'Saphire Manager' => 7,
                 'Blue Diamond' => 8,
                 'Diamond Pearl' => 9,
@@ -338,24 +328,24 @@ class User extends Authenticatable
 
     public function getStatusLabelAttribute()
     {
-        return $this->is_active ? 'Active' : 'Inactive';
+        return $this->is_active ? 'Actif' : 'Inactif';
     }
 
     public function getKycStatusLabelAttribute()
     {
         $labels = [
-            'not_submitted' => 'Not Submitted',
-            'pending' => 'Pending',
-            'partial' => 'Partial',
-            'verified' => 'Verified',
-            'rejected' => 'Rejected',
+            'not_submitted' => 'Non soumis',
+            'pending' => 'En attente',
+            'partial' => 'Partiel',
+            'verified' => 'Verifie',
+            'rejected' => 'Rejete',
         ];
         return $labels[$this->kyc_status] ?? ucfirst($this->kyc_status);
     }
 
     public function getParrainNameAttribute()
     {
-        return $this->parrain ? $this->parrain->name : 'No sponsor';
+        return $this->parrain ? $this->parrain->name : 'Aucun parrain';
     }
 
     public function getReferralCodeAttribute()
@@ -382,6 +372,11 @@ class User extends Authenticatable
     public function getFormattedTotalEarningsAttribute()
     {
         return '$' . number_format($this->total_earnings, 2);
+    }
+
+    public function getCumulPVAttribute()
+    {
+        return $this->team_pv ?? 0;
     }
 
     // ============================================================
@@ -423,6 +418,9 @@ class User extends Authenticatable
     // MÉTHODES DE CUMUL DES PV
     // ============================================================
 
+    /**
+     * Récupère tous les descendants d'un utilisateur
+     */
     public function getAllDescendants(): \Illuminate\Support\Collection
     {
         $cacheKey = "descendants_{$this->id}";
@@ -447,34 +445,32 @@ class User extends Authenticatable
         });
     }
 
-    private function getDescendantsRecursive($user, array &$descendants): void
-    {
-        $children = User::where('parrain_id', $user->id)
-            ->where('is_active', true)
-            ->get();
-
-        foreach ($children as $child) {
-            $descendants[] = $child;
-            $this->getDescendantsRecursive($child, $descendants);
-        }
-    }
-
+    /**
+     * Met à jour le Team PV (sans déclencher d'événements)
+     * team_pv = PV Personnel + team_pv de tous les filleuls
+     * SANS double comptage
+     */
     public function updateTeamPVWithoutEvents(): void
     {
-        $total = 0;
+        // ✅ CORRECTION : team_pv = PV Personnel + team_pv de tous les filleuls
+        // team_pv du filleul contient déjà son PV + ses descendants
+        $totalPV = $this->pv_balance ?? 0;
+        $totalBV = $this->bv_balance ?? 0;
         $count = 0;
         
-        $filleuls = $this->filleuls()->with(['filleuls'])->get();
+        $filleuls = $this->filleuls()->get();
         
         foreach ($filleuls as $filleul) {
-            $total += $filleul->pv_balance;
-            $total += $filleul->team_pv;
-            $count += 1 + $filleul->total_team;
+            // ✅ Ajouter uniquement team_pv (qui contient déjà tout)
+            $totalPV += $filleul->team_pv;
+            $totalBV += $filleul->team_bv;
+            $count += 1 + ($filleul->total_team ?? 0);
         }
         
-        DB::transaction(function () use ($total, $count) {
-            User::withoutEvents(function () use ($total, $count) {
-                $this->team_pv = $total;
+        DB::transaction(function () use ($totalPV, $totalBV, $count) {
+            User::withoutEvents(function () use ($totalPV, $totalBV, $count) {
+                $this->team_pv = $totalPV;
+                $this->team_bv = $totalBV;
                 $this->total_team = $count;
                 $this->saveQuietly();
             });
@@ -484,6 +480,9 @@ class User extends Authenticatable
         Cache::forget("descendants_count_{$this->id}");
     }
 
+    /**
+     * Met à jour tous les ancêtres (sans déclencher d'événements)
+     */
     public function updateAllAncestorsWithoutEvents(): void
     {
         $cacheKey = "ancestor_update_{$this->id}";
@@ -522,16 +521,26 @@ class User extends Authenticatable
         }
     }
 
+    /**
+     * Met à jour le Team PV (avec événements)
+     */
     public function updateTeamPV(): void
     {
         $this->updateTeamPVWithoutEvents();
+        $this->updateAllAncestorsWithoutEvents();
     }
 
+    /**
+     * Met à jour tous les ancêtres (avec événements)
+     */
     public function updateAllAncestors(): void
     {
         $this->updateAllAncestorsWithoutEvents();
     }
 
+    /**
+     * Récupère le Team PV mensuel
+     */
     public function getTeamMonthlyPV(): int
     {
         $total = 0;
@@ -544,6 +553,9 @@ class User extends Authenticatable
         return $total;
     }
 
+    /**
+     * Récupère les descendants
+     */
     public function getDescendants()
     {
         $descendants = [];
@@ -554,22 +566,202 @@ class User extends Authenticatable
         return $descendants;
     }
 
-    public function getTeamPV()
+    /**
+     * Compte les descendants
+     */
+    public function countDescendants(): int
     {
-        $total = 0;
-        foreach ($this->getDescendants() as $descendant) {
-            $total += $descendant->pv_balance;
+        if ($this->total_team > 0) {
+            return $this->total_team;
         }
-        return $total;
+        
+        $cacheKey = "descendants_count_{$this->id}";
+        
+        return Cache::remember($cacheKey, 3600, function () {
+            $count = 0;
+            $filleuls = $this->filleuls()->with(['filleuls'])->get();
+            
+            foreach ($filleuls as $filleul) {
+                $count += 1 + ($filleul->total_team ?? 0);
+            }
+            
+            return $count;
+        });
     }
 
-    public function getMonthlyTeamPV()
+    /**
+     * Calculer le CUMUL (team_pv)
+     */
+    public function getCumulPV(): int
     {
-        $total = 0;
-        foreach ($this->getDescendants() as $descendant) {
-            $total += $descendant->monthly_pv;
+        return $this->team_pv ?? 0;
+    }
+
+    // ============================================================
+    // MÉTHODES DE GRADE
+    // ============================================================
+
+    /**
+     * Calcule et met à jour le grade
+     */
+    public function calculateAndUpdateRank(): bool
+    {
+        try {
+            $calculator = app(AdvancedRankCalculator::class);
+            $newRank = $calculator->calculateAdvancedRank($this);
+            
+            if (!$newRank) {
+                return false;
+            }
+            
+            if ($newRank->id != $this->rank_id) {
+                $oldRankId = $this->rank_id;
+                $oldRankName = $this->rank ?? 'Distributeur';
+                
+                DB::beginTransaction();
+                
+                $this->rank_id = $newRank->id;
+                $this->rank = $newRank->name;
+                $this->last_rank_update = now();
+                $this->saveQuietly();
+                $this->clearRankCache();
+                
+                RankHistory::create([
+                    'user_id' => $this->id,
+                    'old_rank_id' => $oldRankId,
+                    'new_rank_id' => $newRank->id,
+                    'old_rank_name' => $oldRankName,
+                    'new_rank_name' => $newRank->name,
+                    'pv_at_time' => $this->pv_balance,
+                    'bv_at_time' => $this->bv_balance,
+                    'monthly_pv_at_time' => $this->monthly_pv,
+                    'notes' => 'Automatic rank update',
+                ]);
+                
+                DB::commit();
+                
+                Log::info('Grade mis a jour', [
+                    'user_id' => $this->id,
+                    'old_rank' => $oldRankName,
+                    'new_rank' => $newRank->name,
+                ]);
+                
+                return true;
+            }
+            return false;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur mise a jour grade', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
         }
-        return $total;
+    }
+
+    /**
+     * Force la mise à jour du grade
+     */
+    public function forceRankUpdate(): bool
+    {
+        return $this->calculateAndUpdateRank();
+    }
+
+    /**
+     * Récupère le grade en cache
+     */
+    public function getCachedRankAttribute()
+    {
+        return Cache::remember("user_rank_{$this->id}", 300, function () {
+            return $this->rankObject;
+        });
+    }
+
+    /**
+     * Vide le cache du grade
+     */
+    public function clearRankCache(): void
+    {
+        Cache::forget("user_rank_{$this->id}");
+    }
+
+    /**
+ * Met à jour les PV mensuels
+ * - Mois d'activation → monthly_pv = pv_balance (tout le mois)
+ * - Mois suivants → monthly_pv = achats du mois en cours uniquement
+ */
+public function updateMonthlyPV(): void
+{
+    $monthStart = now()->startOfMonth();
+    $monthEnd = now()->endOfMonth();
+    
+    // ✅ 1. Vérifier si l'utilisateur a été activé ce mois-ci
+    $activatedThisMonth = false;
+    if ($this->activated_at) {
+        $activatedThisMonth = $this->activated_at->between($monthStart, $monthEnd);
+    }
+    
+    // ✅ 2. Si activé ce mois-ci → monthly_pv = pv_balance
+    //    pv_balance contient déjà : package d'activation + tous les achats du mois
+    if ($activatedThisMonth) {
+        $this->monthly_pv = $this->pv_balance;
+        $this->monthly_bv = $this->bv_balance;
+        $this->saveQuietly();
+        $this->clearRankCache();
+        return;
+    }
+    
+    // ✅ 3. Mois suivants → Calculer uniquement les achats du mois en cours
+    $totalPV = DB::table('order_items')
+        ->join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->where('orders.user_id', $this->id)
+        ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
+        ->where('orders.payment_status', 'completed')
+        ->sum('order_items.pv_value');
+    
+    $totalBV = DB::table('order_items')
+        ->join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->where('orders.user_id', $this->id)
+        ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
+        ->where('orders.payment_status', 'completed')
+        ->sum('order_items.bv_value');
+    
+    $this->monthly_pv = (int) $totalPV;
+    $this->monthly_bv = (int) $totalBV;
+    $this->saveQuietly();
+    $this->clearRankCache();
+}
+
+    /**
+     * Vérifie si l'utilisateur est qualifié pour le paiement
+     */
+    public function isQualifiedForPayment(): bool
+    {
+        if (!$this->rank) {
+            return false;
+        }
+
+        $monthlyPvRequired = $this->rank->monthly_pv_required ?? 0;
+        
+        return $this->monthly_pv >= $monthlyPvRequired;
+    }
+
+    /**
+     * Vérifie si l'utilisateur a un grade supérieur
+     */
+    public function isHigherRank(string $slug): bool
+    {
+        return $this->higherRanks()->where('slug', $slug)->exists();
+    }
+
+    /**
+     * Récupère le grade supérieur actuel
+     */
+    public function getCurrentHigherRank()
+    {
+        return $this->higherRanks()
+            ->orderBy('level', 'desc')
+            ->first();
     }
 
     // ============================================================
@@ -594,37 +786,6 @@ class User extends Authenticatable
     public function countFilleulsActifs()
     {
         return $this->filleuls()->where('is_active', true)->count();
-    }
-
-    public function countDescendants(): int
-    {
-        if ($this->total_team > 0) {
-            return $this->total_team;
-        }
-        
-        $cacheKey = "descendants_count_{$this->id}";
-        
-        return Cache::remember($cacheKey, 3600, function () {
-            $count = 0;
-            $filleuls = $this->filleuls()->with(['filleuls'])->get();
-            
-            foreach ($filleuls as $filleul) {
-                $count += 1 + $filleul->total_team;
-            }
-            
-            return $count;
-        });
-    }
-
-    public function isQualifiedForPayment(): bool
-    {
-        if (!$this->rank) {
-            return false;
-        }
-
-        $monthlyPvRequired = $this->rank->monthly_pv_required ?? 0;
-        
-        return $this->monthly_pv >= $monthlyPvRequired;
     }
 
     public function getQualifiedBranchesForPeriod(string $period)
@@ -653,122 +814,8 @@ class User extends Authenticatable
             ->first();
     }
 
-    public function updateMonthlyPV(): void
-    {
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
-        
-        $totalPV = OrderItem::whereHas('order', function ($query) use ($monthStart, $monthEnd) {
-            $query->where('user_id', $this->id)
-                ->whereBetween('created_at', [$monthStart, $monthEnd])
-                ->where('payment_status', 'completed');
-        })->sum('pv_value');
-        
-        $this->monthly_pv = $totalPV;
-        $this->saveQuietly();
-        $this->clearRankCache();
-    }
-
-    public function isHigherRank(string $slug): bool
-    {
-        return $this->higherRanks()->where('slug', $slug)->exists();
-    }
-
-    public function getCurrentHigherRank()
-    {
-        return $this->higherRanks()
-            ->orderBy('level', 'desc')
-            ->first();
-    }
-
     public function recalculateAllAncestors(): void
     {
-        $maxDepth = 20;
-        $depth = 0;
-        $current = $this;
-        
-        while ($current->parrain_id && $depth < $maxDepth) {
-            $parrain = User::find($current->parrain_id);
-            if (!$parrain) break;
-            
-            $parrain->updateTeamPVWithoutEvents();
-            $current = $parrain;
-            $depth++;
-        }
-    }
-
-    // ============================================================
-    // MÉTHODES DE GRADE
-    // ============================================================
-
-    public function calculateAndUpdateRank(): bool
-    {
-        try {
-            $calculator = app(AdvancedRankCalculator::class);
-            $newRank = $calculator->calculateAdvancedRank($this);
-            
-            if (!$newRank) {
-                return false;
-            }
-            
-            if ($newRank->id != $this->rank_id) {
-                $oldRankId = $this->rank_id;
-                $oldRankName = $this->rank ?? 'Distributor';
-                
-                DB::beginTransaction();
-                
-                $this->rank_id = $newRank->id;
-                $this->rank = $newRank->name;
-                $this->last_rank_update = now();
-                $this->saveQuietly();
-                $this->clearRankCache();
-                
-                RankHistory::create([
-                    'user_id' => $this->id,
-                    'old_rank_id' => $oldRankId,
-                    'new_rank_id' => $newRank->id,
-                    'old_rank_name' => $oldRankName,
-                    'new_rank_name' => $newRank->name,
-                    'pv_at_time' => $this->pv_balance,
-                    'bv_at_time' => $this->bv_balance,
-                    'notes' => 'Automatic rank update',
-                ]);
-                
-                DB::commit();
-                
-                Log::info('Grade automatique mis à jour', [
-                    'user_id' => $this->id,
-                    'old_rank' => $oldRankName,
-                    'new_rank' => $newRank->name,
-                ]);
-                
-                return true;
-            }
-            return false;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erreur lors de la mise à jour du grade', [
-                'user_id' => $this->id,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    public function forceRankUpdate(): bool
-    {
-        return $this->calculateAndUpdateRank();
-    }
-
-    public function getCachedRankAttribute()
-    {
-        return Cache::remember("user_rank_{$this->id}", 300, function () {
-            return $this->rankObject;
-        });
-    }
-
-    public function clearRankCache(): void
-    {
-        Cache::forget("user_rank_{$this->id}");
+        $this->updateAllAncestorsWithoutEvents();
     }
 }

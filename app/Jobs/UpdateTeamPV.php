@@ -1,4 +1,5 @@
 <?php
+// app/Jobs/UpdateTeamPV.php
 
 namespace App\Jobs;
 
@@ -10,17 +11,18 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class UpdateTeamPV implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected int $userId;
+    protected ?int $userId;
     protected bool $recursive;
     public int $timeout = 3600;
     public int $tries = 3;
 
-    public function __construct(int $userId, bool $recursive = true)
+    public function __construct(?int $userId = null, bool $recursive = true)
     {
         $this->userId = $userId;
         $this->recursive = $recursive;
@@ -29,74 +31,80 @@ class UpdateTeamPV implements ShouldQueue
     public function handle(): void
     {
         Log::info('UpdateTeamPV started', [
-            'user_id' => $this->userId,
+            'user_id' => $this->userId ?? 'all',
             'recursive' => $this->recursive
         ]);
 
-        $user = User::find($this->userId);
+        $query = User::where('is_active', true);
 
-        if (!$user) {
-            Log::warning('UpdateTeamPV: Utilisateur non trouvé', ['user_id' => $this->userId]);
-            return;
+        if ($this->userId) {
+            $query->where('id', $this->userId);
         }
 
-        try {
-            DB::beginTransaction();
+        $query->chunk(100, function ($users) {
+            foreach ($users as $user) {
+                try {
+                    DB::beginTransaction();
 
-            // ✅ Mise à jour du team_pv de l'utilisateur
-            $this->calculateAndUpdateTeamPV($user);
+                    // Mise à jour du Team PV
+                    $this->calculateAndUpdateTeamPV($user);
 
-            Log::info('UpdateTeamPV: TeamPV mis à jour', [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'team_pv' => $user->team_pv,
-                'total_team' => $user->total_team ?? 0,
-            ]);
+                    Log::debug('TeamPV mis à jour', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'team_pv' => $user->team_pv,
+                    ]);
 
-            // ✅ Si récursif, mettre à jour les ancêtres
-            if ($this->recursive) {
-                $this->updateAncestorsTeamPV($user);
+                    // Mettre à jour les ancêtres
+                    if ($this->recursive) {
+                        $this->updateAncestorsTeamPV($user);
+                    }
+
+                    // Calculer le grade
+                    $user->calculateAndUpdateRank();
+
+                    DB::commit();
+
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Log::error('UpdateTeamPV error', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
+        });
 
-            DB::commit();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('UpdateTeamPV failed', [
-                'user_id' => $this->userId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
+        Log::info('UpdateTeamPV completed');
     }
 
     /**
-     * Calcule et met à jour le team_pv d'un utilisateur
+     * Calcule et met à jour le Team PV d'un utilisateur
      */
-private function calculateAndUpdateTeamPV(User $user): void
-{
-    $teamPV = $this->calculateTeamPVRecursive($user);
-    $teamBV = $this->calculateTeamBVRecursive($user);
+    private function calculateAndUpdateTeamPV(User $user): void
+    {
+        $teamPV = $this->calculateTeamPVRecursive($user);
+        $teamBV = $this->calculateTeamBVRecursive($user);
+        $totalTeam = $this->countDescendants($user);
 
-    $user->team_pv = $teamPV;
-    $user->team_bv = $teamBV;
-    $user->total_team = $this->countDescendants($user);
-    
-    // ✅ Utiliser saveQuietly() pour éviter les événements
-    $user->saveQuietly();
-}
+        $user->team_pv = $teamPV;
+        $user->team_bv = $teamBV;
+        $user->total_team = $totalTeam;
+        $user->saveQuietly();
+
+        Cache::forget("descendants_{$user->id}");
+        Cache::forget("descendants_count_{$user->id}");
+    }
 
     /**
      * Calcule le PV total de l'équipe (récursif)
      */
     private function calculateTeamPVRecursive(User $user): int
     {
-        $totalPV = 0;
+        $totalPV = $user->pv_balance ?? 0;
         $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
 
         foreach ($children as $child) {
-            $totalPV += $child->pv_balance;
             $totalPV += $this->calculateTeamPVRecursive($child);
         }
 
@@ -108,11 +116,10 @@ private function calculateAndUpdateTeamPV(User $user): void
      */
     private function calculateTeamBVRecursive(User $user): int
     {
-        $totalBV = 0;
+        $totalBV = $user->bv_balance ?? 0;
         $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
 
         foreach ($children as $child) {
-            $totalBV += $child->bv_balance;
             $totalBV += $this->calculateTeamBVRecursive($child);
         }
 
@@ -138,42 +145,35 @@ private function calculateAndUpdateTeamPV(User $user): void
     /**
      * Met à jour les PV d'équipe de tous les ancêtres
      */
-private function updateAncestorsTeamPV(User $user): void
-{
-    $lockKey = "ancestor_update_{$user->id}";
-    
-    if (Cache::get($lockKey, false)) {
-        Log::debug('Ancestor update already in progress', ['user_id' => $user->id]);
-        return;
-    }
-    
-    Cache::put($lockKey, true, 60);
-    
-    try {
-        $current = $user->parrain;
-        $level = 1;
-        $maxLevel = 9;
-        $processed = [];
-
-        while ($current && $level <= $maxLevel) {
-            if (in_array($current->id, $processed)) {
-                break;
-            }
-            
-            $processed[] = $current->id;
-            $this->calculateAndUpdateTeamPV($current);
-            
-            Log::debug('Ancestor team PV updated', [
-                'ancestor_id' => $current->id,
-                'level' => $level,
-                'team_pv' => $current->team_pv
-            ]);
-            
-            $current = $current->parrain;
-            $level++;
+    private function updateAncestorsTeamPV(User $user): void
+    {
+        $lockKey = "ancestor_update_{$user->id}";
+        
+        if (Cache::get($lockKey, false)) {
+            return;
         }
-    } finally {
-        Cache::forget($lockKey);
+        
+        Cache::put($lockKey, true, 60);
+        
+        try {
+            $current = $user->parrain;
+            $level = 1;
+            $maxLevel = 20;
+            $processed = [];
+
+            while ($current && $level <= $maxLevel) {
+                if (in_array($current->id, $processed)) {
+                    break;
+                }
+                
+                $processed[] = $current->id;
+                $this->calculateAndUpdateTeamPV($current);
+                
+                $current = $current->parrain;
+                $level++;
+            }
+        } finally {
+            Cache::forget($lockKey);
+        }
     }
-}
 }

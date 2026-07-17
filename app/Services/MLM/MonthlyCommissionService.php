@@ -403,7 +403,7 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ VÉRIFICATION KYC
+                // VÉRIFICATION KYC
                 if ($user->kyc_status !== 'verified') {
                     Log::info('KYC non vérifié, paiement en attente', [
                         'user_id' => $user->id,
@@ -427,7 +427,7 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ Vérification compte actif
+                // Vérification compte actif
                 if (!$user->is_active) {
                     Log::info('Utilisateur inactif, paiement ignoré', [
                         'user_id' => $user->id,
@@ -436,7 +436,7 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ Vérification grade
+                // Vérification grade
                 $userRank = $user->rankObject;
                 if (!$userRank) {
                     Log::warning('Aucun grade trouvé pour l\'utilisateur', [
@@ -446,7 +446,7 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ Vérification PV mensuel requis
+                // Vérification PV mensuel requis
                 $monthlyPvRequired = $userRank->monthly_pv_required ?? 0;
                 if ($user->monthly_pv < $monthlyPvRequired) {
                     Log::info('PV mensuel insuffisant pour le paiement', [
@@ -469,7 +469,7 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ Vérification montant minimum
+                // Vérification montant minimum
                 $minPayment = config('commission.min_payment', 1);
                 if ($item->total < $minPayment) {
                     Log::info('Montant inférieur au minimum de paiement', [
@@ -492,12 +492,12 @@ class MonthlyCommissionService
                     continue;
                 }
 
-                // ✅ Calcul des taxes
+                // Calcul des taxes
                 $taxRate = config('commission.tax_rate', 5);
                 $taxAmount = $item->total * ($taxRate / 100);
                 $netAmount = $item->total - $taxAmount;
 
-                // ✅ Créer le paiement
+                // Créer le paiement
                 $payment = CommissionPayment::create([
                     'user_id' => $user->id,
                     'commission_period_id' => $period->id,
@@ -508,7 +508,7 @@ class MonthlyCommissionService
                     'notes' => "Paiement automatique pour la période {$period->period}",
                 ]);
 
-                // ✅ Créditer le wallet
+                // Créditer le wallet
                 $wallet = Wallet::where('user_id', $user->id)->first();
 
                 if (!$wallet) {

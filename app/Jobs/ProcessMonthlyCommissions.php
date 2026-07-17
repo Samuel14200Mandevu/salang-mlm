@@ -41,7 +41,7 @@ class ProcessMonthlyCommissions implements ShouldQueue
             $year = substr($this->period, 0, 4);
             $month = substr($this->period, 5, 2);
 
-            // ✅ Vérifier que la période est valide
+            // Vérifier que la période est valide
             if ((int)$year < 2020 || (int)$month < 1 || (int)$month > 12) {
                 Log::error('Invalid period format', ['period' => $this->period]);
                 throw new \InvalidArgumentException("Invalid period format: {$this->period}");
@@ -64,7 +64,7 @@ class ProcessMonthlyCommissions implements ShouldQueue
             // Create or get period
             $period = $existing ?? $commissionService->createMonthlyPeriod((int)$year, (int)$month);
 
-            // ✅ Vérifier que la période n'est pas déjà en cours
+            // Vérifier que la période n'est pas déjà en cours
             if ($period->status === 'calculating' || $period->status === 'paying') {
                 Log::warning('Period already being processed', [
                     'period' => $period->period,
@@ -122,7 +122,7 @@ class ProcessMonthlyCommissions implements ShouldQueue
                 'trace' => $e->getTraceAsString(),
             ]);
             
-            // ✅ Marquer la période comme en erreur
+            // Marquer la période comme en erreur
             if (isset($period)) {
                 $period->status = 'pending';
                 $period->notes = 'Erreur: ' . $e->getMessage();
@@ -137,7 +137,7 @@ class ProcessMonthlyCommissions implements ShouldQueue
                 'trace' => $e->getTraceAsString(),
             ]);
             
-            // ✅ Marquer la période comme en erreur
+            // Marquer la période comme en erreur
             if (isset($period)) {
                 $period->status = 'pending';
                 $period->notes = 'Erreur inattendue: ' . $e->getMessage();
@@ -177,7 +177,7 @@ class ProcessMonthlyCommissions implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
         ]);
 
-        // ✅ Nettoyer la période en cas d'échec
+        // Nettoyer la période en cas d'échec
         try {
             $period = CommissionPeriod::where('period', $this->period)->first();
             if ($period && in_array($period->status, ['calculating', 'paying'])) {

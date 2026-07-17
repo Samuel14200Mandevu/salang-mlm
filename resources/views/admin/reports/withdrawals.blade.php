@@ -1,39 +1,20 @@
-{{-- resources/views/admin/reports/withdrawals.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')
 <style>
-    .withdrawal-row:hover {
-        background: var(--bg-hover);
-    }
+    .withdrawal-row:hover { background: var(--bg-hover); }
     
     @media (max-width: 640px) {
-        .table thead th, .table tbody td {
-            padding: 0.375rem 0.5rem;
-            font-size: 0.7rem;
-        }
-        .badge {
-            font-size: 0.6rem;
-            padding: 0.125rem 0.5rem;
-        }
-        .card-stats {
-            padding: 0.75rem;
-        }
-        .card-stats .text-2xl {
-            font-size: 1.25rem;
-        }
-        .stats-grid {
-            grid-template-columns: 1fr 1fr !important;
-        }
-        .filter-grid {
-            grid-template-columns: 1fr !important;
-        }
+        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.7rem; }
+        .badge { font-size: 0.6rem; padding: 0.125rem 0.5rem; }
+        .card-stats { padding: 0.75rem; }
+        .card-stats .text-2xl { font-size: 1.25rem; }
+        .stats-grid { grid-template-columns: 1fr 1fr !important; }
+        .filter-grid { grid-template-columns: 1fr !important; }
     }
     
     @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr !important;
-        }
+        .stats-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 @endpush
@@ -47,36 +28,32 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Rapport des retraits</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse detaillee des retraits</p>
         </div>
-        <a href="{{ route('admin.reports') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Retour
-        </a>
-    </div>
-
-    <!-- Statistics -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-yellow-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
-        </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payés</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($stats['completed'] ?? 0, 2) }}</p>
-        </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-red-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Échoués</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-red-500">${{ number_format($stats['failed'] ?? 0, 2) }}</p>
-        </div>
-        <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.reports.pdf', ['type' => 'withdrawals']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
+               class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
+                </svg>
+                PDF
+            </a>
+            <a href="{{ route('admin.reports.export', ['type' => 'withdrawals']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
+               class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                CSV
+            </a>
+            <a href="{{ route('admin.reports') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour
+            </a>
         </div>
     </div>
 
     <!-- Filters -->
-    <div class="card animate-fadeInUp delay-5 p-3 sm:p-4">
+    <div class="card animate-fadeInUp delay-1 p-3 sm:p-4">
         <form method="GET" class="filter-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             <div>
                 <label class="text-xs text-[var(--text-secondary)]">Statut</label>
@@ -119,6 +96,26 @@
         </form>
     </div>
 
+    <!-- Statistics -->
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
+        <div class="card-stats p-3 sm:p-4 border-l-4 border-yellow-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
+        </div>
+        <div class="card-stats p-3 sm:p-4 border-l-4 border-green-500 animate-fadeInUp delay-3">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payés</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($stats['completed'] ?? 0, 2) }}</p>
+        </div>
+        <div class="card-stats p-3 sm:p-4 border-l-4 border-red-500 animate-fadeInUp delay-4">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Échoués</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-red-500">${{ number_format($stats['failed'] ?? 0, 2) }}</p>
+        </div>
+        <div class="card-stats p-3 sm:p-4 border-l-4 border-purple-500 animate-fadeInUp delay-5">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
+        </div>
+    </div>
+
     <!-- Tableau -->
     <div class="card animate-fadeInUp delay-6 p-3 sm:p-4 md:p-6">
         <div class="table-wrap">
@@ -159,8 +156,7 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun retrait</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Les retraits apparaîtront ici</p>
+                                Aucun retrait
                             </td>
                         </tr>
                     @endforelse

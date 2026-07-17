@@ -5,6 +5,11 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Jobs\UpdateRanks;
+use App\Jobs\UpdateTeamPV;
+use App\Jobs\CalculatePVBV;
+use App\Jobs\ProcessMonthlyCommissions;
+use App\Jobs\UpdateCumulativePV;
 
 class Kernel extends ConsoleKernel
 {
@@ -13,22 +18,40 @@ class Kernel extends ConsoleKernel
      *
      * @var array
      */
-protected $commands = [
-    \App\Console\Commands\CalculateCommissions::class,
-    \App\Console\Commands\ProcessCommissions::class,
-    \App\Console\Commands\ProcessPendingWithdrawals::class,
-    \App\Console\Commands\ProcessMonthlyCommissions::class,  // Une seule fois
-    \App\Console\Commands\RecalculateAllRanks::class,
-    \App\Console\Commands\UpdateRanks::class,
-    \App\Console\Commands\UpdateMonthlyPV::class,
-    \App\Console\Commands\GenerateReport::class,
-    \App\Console\Commands\CleanLogs::class,
-    \App\Console\Commands\SyncHigherRanks::class,
-    \App\Console\Commands\CheckPackageExpiry::class,
-    \App\Console\Commands\SendPendingNotifications::class,
-    \App\Console\Commands\BackupRun::class,
-    \App\Console\Commands\StatusCommand::class,
-];
+    protected $commands = [
+        // ============================================================
+        // COMMISSIONS
+        // ============================================================
+        \App\Console\Commands\CalculateCommissions::class,
+        \App\Console\Commands\ProcessCommissions::class,
+        \App\Console\Commands\ProcessPendingWithdrawals::class,
+        \App\Console\Commands\ProcessMonthlyCommissions::class,
+        
+        // ============================================================
+        // GRADES (RANKS) - AJOUTÉS
+        // ============================================================
+        \App\Console\Commands\UpdateRanks::class,
+        \App\Console\Commands\RecalculateAllRanks::class,
+        \App\Console\Commands\FixAllRanks::class,        // ← NOUVEAU
+        \App\Console\Commands\ForceUpdateRanks::class,    // ← NOUVEAU
+        \App\Console\Commands\RecalculateTeamPV::class,   // ← NOUVEAU
+        
+        // ============================================================
+        // PV & MISE À JOUR
+        // ============================================================
+        \App\Console\Commands\UpdateMonthlyPV::class,
+        
+        // ============================================================
+        // RAPPORTS & MAINTENANCE
+        // ============================================================
+        \App\Console\Commands\GenerateReport::class,
+        \App\Console\Commands\CleanLogs::class,
+        \App\Console\Commands\SyncHigherRanks::class,
+        \App\Console\Commands\CheckPackageExpiry::class,
+        \App\Console\Commands\SendPendingNotifications::class,
+        \App\Console\Commands\BackupRun::class,
+        \App\Console\Commands\StatusCommand::class,
+    ];
 
     /**
      * Define the application's command schedule.
@@ -36,7 +59,55 @@ protected $commands = [
     protected function schedule(Schedule $schedule): void
     {
         // ============================================================
-        // COMMISSIONS
+        // GRADES (RANKS) - PRIORITAIRE
+        // ============================================================
+
+        // Toutes les 5 minutes - Mettre à jour les grades en temps réel
+        $schedule->job(new UpdateRanks())->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/ranks-realtime.log'));
+
+        // Toutes les 5 minutes - Mettre à jour les Team PV
+        $schedule->job(new UpdateTeamPV())->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/team-pv.log'));
+
+        // Toutes les 15 minutes - Calculer les PV/BV
+        $schedule->job(new CalculatePVBV())->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/pv-calculate.log'));
+
+        // Toutes les heures - Mettre à jour les PV cumulés
+        $schedule->job(new UpdateCumulativePV())->hourly()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/pv-cumulative.log'));
+
+        // Chaque jour à 00:00 - Forcer la mise à jour de tous les grades
+        $schedule->command('ranks:update --all')->dailyAt('00:00')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/ranks-daily.log'));
+
+        // Chaque jour à 00:30 - Corriger tous les grades
+        $schedule->command('ranks:fix-all')->dailyAt('00:30')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/ranks-fix.log'));
+
+        // Chaque jour à 01:00 - Recalculer tous les Team PV
+        $schedule->command('team:recalculate')->dailyAt('01:00')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/team-recalculate.log'));
+
+        // Chaque jour à 03:00 - Mettre à jour les PV mensuels
+        $schedule->command('pv:update-monthly')->dailyAt('03:00')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/pv-monthly.log'));
+
+        // ============================================================
+        //  COMMISSIONS
         // ============================================================
 
         // Toutes les 5 minutes - Traiter les commissions en attente
@@ -54,26 +125,6 @@ protected $commands = [
         $schedule->command('mlm:process-monthly --steps=all')->monthlyOn(1, '02:00')
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/mlm-monthly.log'));
-
-        // ============================================================
-        // GRADES (RANKS)
-        // ============================================================
-
-        // Toutes les 5 minutes - Recalculer les grades (temps réel)
-        $schedule->command('ranks:recalculate')->everyFiveMinutes()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->appendOutputTo(storage_path('logs/ranks-realtime.log'));
-
-        // Chaque jour à 00:00 - Mettre à jour tous les grades
-        $schedule->command('ranks:update --all')->dailyAt('00:00')
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/ranks-daily.log'));
-
-        // Chaque jour à 03:00 - Mettre à jour les PV mensuels
-        $schedule->command('pv:update-monthly')->dailyAt('03:00')
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/pv-update.log'));
 
         // ============================================================
         // RETRAITS (WITHDRAWALS)
@@ -125,6 +176,7 @@ protected $commands = [
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/notifications.log'));
 
+        // Chaque heure - Statut du système
         $schedule->command('mlm:status')->hourly()
             ->withoutOverlapping()
             ->runInBackground()

@@ -8,6 +8,7 @@ use App\Models\Package;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\CommissionDistributor;
@@ -32,6 +33,7 @@ class CartController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
         $cart = Session::get('cart', []);
         $total = 0;
 
@@ -39,7 +41,11 @@ class CartController extends Controller
             $total += $item['price'] * $item['quantity'];
         }
 
-        return view('cart.index', compact('cart', 'total'));
+        // ✅ RÉCUPÉRER LE WALLET DE L'UTILISATEUR
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        $walletBalance = $wallet ? $wallet->balance : 0;
+
+        return view('cart.index', compact('cart', 'total', 'walletBalance'));
     }
 
     public function count()
@@ -196,9 +202,27 @@ class CartController extends Controller
         $shipping = $subtotal > 100 ? 0 : 10;
         $total = $subtotal + $tax + $shipping;
 
+        // ✅ RÉCUPÉRER LE WALLET
+        $wallet = Wallet::where('user_id', $user->id)->first();
+
+        if (!$wallet) {
+            return back()->with('error', 'Wallet not found. Please contact support.');
+        }
+
+        // ✅ VÉRIFIER LE SOLDE
+        if ($wallet->balance < $total) {
+            return back()->with('error', 'Insufficient balance. You have $' . number_format($wallet->balance, 2) . ' and the total is $' . number_format($total, 2) . '.');
+        }
+
         DB::beginTransaction();
 
         try {
+            // ✅ 1. DÉDUIRE L'ARGENT DU WALLET
+            $balanceBefore = $wallet->balance;
+            $wallet->balance -= $total;
+            $wallet->save();
+
+            // ✅ 2. CRÉER LA COMMANDE
             $order = Order::create([
                 'user_id' => $user->id,
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
@@ -207,8 +231,9 @@ class CartController extends Controller
                 'shipping' => $shipping,
                 'discount' => 0,
                 'total' => $total,
-                'status' => 'pending',
-                'payment_status' => 'pending',
+                'status' => 'completed',
+                'payment_status' => 'completed',
+                'paid_at' => now(),
                 'shipping_address' => $request->shipping_address,
                 'billing_address' => $request->billing_address,
             ]);
@@ -216,10 +241,13 @@ class CartController extends Controller
             $totalPV = 0;
             $totalBV = 0;
             $hasPackage = false;
+            $packageForCommission = null;
 
+            // ✅ 3. CRÉER LES ITEMS
             foreach ($cart as $key => $item) {
                 $pvValue = $item['pv_value'] ?? 0;
                 $bvValue = $item['bv_value'] ?? 0;
+                $itemTotal = $item['price'] * $item['quantity'];
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -229,9 +257,9 @@ class CartController extends Controller
                     'sku' => $item['type'] == 'product' ? 'PROD-' . $item['id'] : 'PKG-' . $item['id'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
-                    'total' => $item['price'] * $item['quantity'],
-                    'pv_value' => $pvValue,
-                    'bv_value' => $bvValue,
+                    'total' => $itemTotal,
+                    'pv_value' => $pvValue * $item['quantity'],
+                    'bv_value' => $bvValue * $item['quantity'],
                     'options' => json_encode([
                         'type' => $item['type'],
                         'pv_value' => $pvValue,
@@ -244,6 +272,7 @@ class CartController extends Controller
 
                 if ($item['type'] == 'package') {
                     $hasPackage = true;
+                    $packageForCommission = Package::find($item['id']);
                 }
 
                 if ($item['type'] == 'product') {
@@ -255,53 +284,58 @@ class CartController extends Controller
                 }
             }
 
-            // Mettre à jour les PV/BV de l'utilisateur
+            // ✅ 4. METTRE À JOUR LES PV
             $user->pv_balance += $totalPV;
             $user->bv_balance += $totalBV;
             $user->monthly_pv += $totalPV;
             $user->monthly_bv += $totalBV;
             $user->save();
 
-            // Créer une transaction
-            if ($user->wallet) {
-                Transaction::create([
-                    'user_id' => $user->id,
-                    'wallet_id' => $user->wallet->id,
-                    'type' => 'purchase',
-                    'amount' => -$total,
-                    'fee' => 0,
-                    'net_amount' => -$total,
-                    'balance_before' => $user->wallet->balance,
-                    'balance_after' => $user->wallet->balance,
-                    'status' => 'pending',
-                    'description' => 'Order #' . $order->order_number,
-                ]);
+            // ✅ 5. TRANSACTION DE PAIEMENT
+            Transaction::create([
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'type' => 'purchase',
+                'amount' => -$total,
+                'fee' => 0,
+                'net_amount' => -$total,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $wallet->balance,
+                'status' => 'completed',
+                'description' => 'Order #' . $order->order_number,
+                'metadata' => json_encode([
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'items_count' => count($cart),
+                ]),
+                'completed_at' => now(),
+            ]);
+
+            // ✅ 6. METTRE À JOUR L'ÉQUIPE
+            $user->updateTeamPVWithoutEvents();
+            $user->updateAllAncestorsWithoutEvents();
+            $user->calculateAndUpdateRank();
+
+            // ✅ 7. CALCULER LES COMMISSIONS
+            if ($hasPackage && $packageForCommission) {
+                $this->calculateCommissionsForOrder($order, $user, $packageForCommission);
             }
 
-            // ✅ === NOUVEAU : CALCUL DES COMMISSIONS POUR LA COMMANDE ===
-            if ($hasPackage) {
-                $this->calculateCommissionsForOrder($order, $user);
-            }
-
-            // Mettre à jour le statut de la commande
-            $order->status = 'completed';
-            $order->payment_status = 'completed';
-            $order->paid_at = now();
-            $order->save();
-
+            // ✅ 8. VIDER LE PANIER
             Session::forget('cart');
             DB::commit();
 
-            Log::info('Order completed with commissions', [
+            Log::info('Order completed with payment', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
                 'total' => $total,
+                'wallet_balance_after' => $wallet->balance,
                 'has_package' => $hasPackage,
             ]);
 
             return redirect()->route('orders.show', $order)
-                ->with('success', 'Order placed successfully!');
+                ->with('success', 'Order placed successfully! $' . number_format($total, 2) . ' deducted from your wallet.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -314,12 +348,11 @@ class CartController extends Controller
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Calculer les commissions pour une commande
+     * Calculer les commissions pour une commande
      */
-    private function calculateCommissionsForOrder($order, $user): void
+    private function calculateCommissionsForOrder($order, $user, $package): void
     {
         try {
-            // Récupérer ou créer la période en cours
             $period = CommissionPeriod::firstOrCreate(
                 ['period' => date('Y-m')],
                 [
@@ -329,42 +362,32 @@ class CartController extends Controller
                 ]
             );
 
-            $totalCommissions = 0;
-            $commissionCount = 0;
+            $commissions = $this->commissionDistributor->distributeCommissions(
+                $user,
+                $package,
+                $order->id,
+                $period
+            );
 
-            foreach ($order->items as $item) {
-                if ($item->package_id) {
-                    $package = Package::find($item->package_id);
-                    if ($package) {
-                        $commissions = $this->commissionDistributor->distributeCommissions(
-                            $user,
-                            $package,
-                            $order->id,
-                            $period
-                        );
-
-                        $commissionCount += count($commissions);
-                        $totalCommissions += collect($commissions)->sum('amount');
-                    }
-                }
-            }
+            $totalAmount = collect($commissions)->sum('amount');
 
             Log::info('Commissions calculées pour la commande', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'commissions_count' => $commissionCount,
-                'total_amount' => $totalCommissions,
+                'package_id' => $package->id,
+                'package_name' => $package->name,
+                'commissions_count' => count($commissions),
+                'total_amount' => $totalAmount,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erreur lors du calcul des commissions pour la commande', [
+            Log::error('Erreur lors du calcul des commissions', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw $e;
         }
     }
 }

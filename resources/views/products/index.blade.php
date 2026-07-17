@@ -9,6 +9,9 @@
         border: 1px solid var(--border-color);
         border-radius: var(--radius-lg);
         overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
     .product-card:hover {
         transform: translateY(-6px);
@@ -21,6 +24,7 @@
         background: var(--bg-secondary);
         cursor: pointer;
         aspect-ratio: 1 / 1;
+        flex-shrink: 0;
     }
     .product-card .image-container img {
         transition: transform 0.5s ease;
@@ -154,22 +158,179 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
+    .product-grid {
+        display: grid;
+        gap: 1rem;
+    }
+    
+    /* ============================================================
+       RESPONSIVE GRID
+    ============================================================ */
+    @media (min-width: 1280px) {
+        .product-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.25rem;
+        }
+    }
+    @media (min-width: 1024px) and (max-width: 1279px) {
+        .product-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+        }
+    }
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+    }
+    @media (min-width: 480px) and (max-width: 767px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+    }
+    @media (max-width: 479px) {
+        .product-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        .product-card {
+            flex-direction: row;
+            height: auto;
+        }
+        .product-card .image-container {
+            aspect-ratio: 1 / 1;
+            width: 40%;
+            flex-shrink: 0;
+        }
+        .product-card .product-content {
+            flex: 1;
+            padding: 0.75rem;
+        }
+        .product-card .product-name {
+            font-size: 0.8rem;
+        }
+        .product-card .product-price {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* ============================================================
+       PAGINATION - NEXT / PREVIOUS
+    ============================================================ */
+    .pagination-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .pagination-container .pagination-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        text-decoration: none;
+        min-width: 100px;
+    }
+    .pagination-container .pagination-btn:hover:not(.disabled) {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    .pagination-container .pagination-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .pagination-container .pagination-btn .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+    }
+    .pagination-container .pagination-info {
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+        padding: 0 0.5rem;
+    }
+    .pagination-container .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+    .pagination-container .page-numbers .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+        background: transparent;
+        color: var(--text-secondary);
+        text-decoration: none;
+    }
+    .pagination-container .page-numbers .page-link:hover:not(.active) {
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+    .pagination-container .page-numbers .page-link.active {
+        border-color: var(--primary-500);
+        background: var(--primary-500);
+        color: white;
+    }
+    .pagination-container .page-numbers .page-link.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+        .pagination-container .pagination-btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            min-width: 70px;
+        }
+        .pagination-container .pagination-btn .icon {
+            width: 1rem;
+            height: 1rem;
+        }
+        .pagination-container .page-numbers .page-link {
+            width: 2rem;
+            height: 2rem;
+            font-size: 0.75rem;
+        }
+        .pagination-container .pagination-info {
+            font-size: 0.7rem;
+        }
+        .pagination-container {
+            gap: 0.25rem;
+        }
+    }
     
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes fadeInLeft {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes fadeInRight {
-        from { opacity: 0; transform: translateX(20px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
     .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .animate-fadeInLeft { animation: fadeInLeft 0.6s ease forwards; }
-    .animate-fadeInRight { animation: fadeInRight 0.6s ease forwards; }
     .delay-1 { animation-delay: 0.05s; }
     .delay-2 { animation-delay: 0.10s; }
     .delay-3 { animation-delay: 0.15s; }
@@ -180,47 +341,11 @@
     
     .custom-toast {
         animation: slideUp 0.3s ease forwards;
+        max-width: 400px;
     }
     @keyframes slideUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @media (max-width: 640px) {
-        .product-card .overlay span {
-            font-size: 0.6rem;
-            padding: 0.3rem 0.6rem;
-        }
-        .product-card .text-lg {
-            font-size: 1rem;
-        }
-        .product-card .btn-sm {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-        }
-        .product-card .btn-sm svg {
-            width: 0.875rem;
-            height: 0.875rem;
-        }
-        .input {
-            font-size: 0.813rem;
-            padding: 0.5rem 0.75rem;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .product-grid {
-            grid-template-columns: 1fr 1fr !important;
-        }
-        .product-card .product-name {
-            font-size: 0.7rem;
-        }
-        .product-card .product-price {
-            font-size: 0.8rem;
-        }
-        .product-card .product-stock {
-            font-size: 0.55rem;
-        }
     }
 </style>
 @endpush
@@ -231,96 +356,106 @@
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Products</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Discover our catalog</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Produits</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Découvrez notre catalogue</p>
         </div>
-        <div class="relative">
-            <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        <div class="header-actions flex flex-wrap items-center gap-2 sm:gap-3">
+            <div class="search-wrapper relative">
+                <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input type="text" 
+                       id="searchInput"
+                       placeholder="Rechercher..."
+                       class="input pl-7 sm:pl-9 search-input text-sm sm:text-base"
+                       style="width: 200px;">
+            </div>
+            <a href="{{ route('cart.index') }}" class="btn btn-outline btn-sm relative">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-            </span>
-            <input type="text" 
-                   id="searchInput"
-                   placeholder="Search..."
-                   class="input pl-7 sm:pl-9 w-36 sm:w-48 md:w-64 text-sm sm:text-base">
+                Panier
+                <span id="cartCount" class="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full hidden">
+                    0
+                </span>
+            </a>
         </div>
     </div>
 
     <!-- Search Results -->
-    <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeIn">
-        Results: <span id="resultCount" class="font-semibold text-primary-500">0</span> product(s)
+    <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeInUp">
+        Résultats: <span id="resultCount" class="font-semibold text-primary-500">0</span> produit(s)
     </div>
 
     <!-- Product Grid -->
     <div id="productsContainer">
         @if($products->count() > 0)
-            <div class="product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+            <div class="product-grid">
                 @foreach($products as $product)
                     <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
                          data-name="{{ strtolower($product->name) }}"
                          data-description="{{ strtolower($product->description ?? '') }}">
                         
-                        <a href="{{ route('products.show', $product->slug) }}" class="block">
-                            <div class="image-container">
-                                @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
-                                    <img src="{{ asset('storage/products/' . $product->image) }}" 
-                                         alt="{{ $product->name }}"
-                                         loading="lazy"
-                                         onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}'">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--text-tertiary)]">
-                                        <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
-                                        </svg>
-                                    </div>
-                                @endif
-                                <div class="overlay">
-                                    <span>View details</span>
+                        <a href="{{ route('products.show', $product->slug) }}" class="block image-container">
+                            @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
+                                <img src="{{ asset('storage/products/' . $product->image) }}" 
+                                     alt="{{ $product->name }}"
+                                     loading="lazy"
+                                     onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}'">
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--text-tertiary)]">
+                                    <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                                    </svg>
                                 </div>
-                                
-                                @if($product->is_featured)
-                                    <span class="absolute top-1 sm:top-2 left-1 sm:left-2 badge badge-warning text-[8px] sm:text-[10px]">
-                                        Featured
-                                    </span>
-                                @endif
-                                @if($product->stock < 5 && $product->stock > 0)
-                                    <span class="absolute top-1 sm:top-2 right-1 sm:right-2 badge badge-warning text-[8px] sm:text-[10px]">
-                                        Low stock
-                                    </span>
-                                @endif
-                                @if($product->stock == 0)
-                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                        <span class="badge badge-danger text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-4 transform -rotate-12">
-                                            Out of stock
-                                        </span>
-                                    </div>
-                                @endif
+                            @endif
+                            <div class="overlay">
+                                <span>Voir détails</span>
                             </div>
+                            
+                            @if($product->is_featured)
+                                <span class="absolute top-1 sm:top-2 left-1 sm:left-2 badge badge-warning text-[8px] sm:text-[10px]">
+                                    En vedette
+                                </span>
+                            @endif
+                            @if($product->stock < 5 && $product->stock > 0)
+                                <span class="absolute top-1 sm:top-2 right-1 sm:right-2 badge badge-warning text-[8px] sm:text-[10px]">
+                                    Stock faible
+                                </span>
+                            @endif
+                            @if($product->stock == 0)
+                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <span class="badge badge-danger text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-4 transform -rotate-12">
+                                        Rupture de stock
+                                    </span>
+                                </div>
+                            @endif
                         </a>
 
-                        <div class="p-2 sm:p-3">
+                        <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
                             <a href="{{ route('products.show', $product->slug) }}" class="block">
                                 <h3 class="product-name font-semibold text-[var(--text-primary)] hover:text-primary-500 transition text-xs sm:text-sm truncate">
                                     {{ $product->name }}
                                 </h3>
                             </a>
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8">
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
                                 {{ Str::limit($product->description ?? '', 40) }}
                             </p>
                             <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
                                 <span class="product-price text-sm sm:text-lg font-bold text-primary-500">${{ number_format($product->price, 2) }}</span>
                                 <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-green-500' : ($product->stock > 0 ? 'text-orange-500' : 'text-red-500') }}">
-                                    @if($product->stock > 10) In stock
-                                    @elseif($product->stock > 0) {{ $product->stock }} left
-                                    @else Out of stock
+                                    @if($product->stock > 10) En stock
+                                    @elseif($product->stock > 0) {{ $product->stock }} restants
+                                    @else Rupture
                                     @endif
                                 </span>
                             </div>
                             <div class="mt-1 sm:mt-2 flex gap-1 sm:gap-2">
                                 <a href="{{ route('products.show', $product->slug) }}" 
                                    class="flex-1 btn btn-outline btn-sm text-center text-[10px] sm:text-xs">
-                                    View
+                                    Voir
                                 </a>
                                 @if($product->stock > 0)
                                     <form action="{{ route('cart.add') }}" method="POST" class="flex-1" 
@@ -336,7 +471,7 @@
                                     </form>
                                 @else
                                     <button class="flex-1 btn btn-danger btn-sm opacity-50 cursor-not-allowed text-[10px] sm:text-xs">
-                                        Out of stock
+                                        Rupture
                                     </button>
                                 @endif
                             </div>
@@ -345,9 +480,74 @@
                 @endforeach
             </div>
 
+            <!-- ✅ PAGINATION AVEC NEXT / PREVIOUS -->
             @if($products->hasPages())
-                <div class="mt-4 sm:mt-6" id="paginationContainer">
-                    {{ $products->appends(request()->query())->links() }}
+                <div class="pagination-container" id="paginationContainer">
+                    <!-- Previous Button -->
+                    @if($products->onFirstPage())
+                        <span class="pagination-btn disabled">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            Précédent
+                        </span>
+                    @else
+                        <a href="{{ $products->previousPageUrl() }}" class="pagination-btn">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            Précédent
+                        </a>
+                    @endif
+
+                    <!-- Page Numbers -->
+                    <div class="page-numbers">
+                        @php
+                            $currentPage = $products->currentPage();
+                            $lastPage = $products->lastPage();
+                            $start = max(1, $currentPage - 2);
+                            $end = min($lastPage, $currentPage + 2);
+                            
+                            if ($start > 1) {
+                                echo '<a href="' . $products->url(1) . '" class="page-link">1</a>';
+                                if ($start > 2) {
+                                    echo '<span class="page-link disabled">...</span>';
+                                }
+                            }
+                            
+                            for ($i = $start; $i <= $end; $i++) {
+                                if ($i == $currentPage) {
+                                    echo '<span class="page-link active">' . $i . '</span>';
+                                } else {
+                                    echo '<a href="' . $products->url($i) . '" class="page-link">' . $i . '</a>';
+                                }
+                            }
+                            
+                            if ($end < $lastPage) {
+                                if ($end < $lastPage - 1) {
+                                    echo '<span class="page-link disabled">...</span>';
+                                }
+                                echo '<a href="' . $products->url($lastPage) . '" class="page-link">' . $lastPage . '</a>';
+                            }
+                        @endphp
+                    </div>
+
+                    <!-- Next Button -->
+                    @if($products->hasMorePages())
+                        <a href="{{ $products->nextPageUrl() }}" class="pagination-btn">
+                            Suivant
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @else
+                        <span class="pagination-btn disabled">
+                            Suivant
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    @endif
                 </div>
             @endif
         @else
@@ -355,8 +555,8 @@
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                 </svg>
-                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">No products available</h3>
-                <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Check back later for new products</p>
+                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun produit disponible</h3>
+                <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1 sm:mt-2">Revenez plus tard pour découvrir de nouveaux produits</p>
             </div>
         @endif
     </div>
@@ -365,6 +565,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Mettre à jour le compteur du panier
+    updateCartCount();
+    
     var searchInput = document.getElementById('searchInput');
     var productCards = document.querySelectorAll('.product-card');
     var searchResult = document.getElementById('searchResult');
@@ -406,6 +609,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function updateCartCount() {
+    fetch('{{ route("cart.count") }}')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            var cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                if (data.count > 0) {
+                    cartCount.textContent = data.count > 99 ? '99+' : data.count;
+                    cartCount.classList.remove('hidden');
+                } else {
+                    cartCount.classList.add('hidden');
+                }
+            }
+        })
+        .catch(function(error) {
+            console.log('Error updating cart count:', error);
+        });
+}
+
 function addToCart(event, form, productName) {
     event.preventDefault();
     
@@ -428,24 +650,9 @@ function addToCart(event, form, productName) {
         submitBtn.disabled = false;
         
         if (data.success) {
-            var cartCount = document.getElementById('cartCount');
-            if (data.count > 0) {
-                if (cartCount) {
-                    cartCount.textContent = data.count > 99 ? '99+' : data.count;
-                    cartCount.classList.remove('hidden');
-                } else {
-                    var cartIcon = document.querySelector('a[href="{{ route("cart.index") }}"]');
-                    if (cartIcon) {
-                        var badge = document.createElement('span');
-                        badge.id = 'cartCount';
-                        badge.className = 'absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full';
-                        badge.textContent = data.count > 99 ? '99+' : data.count;
-                        cartIcon.appendChild(badge);
-                    }
-                }
-            }
+            updateCartCount();
             
-            submitBtn.innerHTML = 'Added';
+            submitBtn.innerHTML = 'Ajouté';
             setTimeout(function() {
                 submitBtn.innerHTML = originalText;
             }, 1500);
@@ -458,7 +665,7 @@ function addToCart(event, form, productName) {
     .catch(function(error) {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        showToast('Error adding to cart', 'error');
+        showToast('Erreur lors de l\'ajout au panier', 'error');
         console.log('Error:', error);
     });
 }
@@ -468,7 +675,7 @@ function showToast(message, type) {
     document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
     
     var toast = document.createElement('div');
-    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transform transition-all duration-500';
+    toast.className = 'custom-toast fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 px-4 sm:px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50';
     toast.style.animation = 'slideUp 0.3s ease forwards';
     toast.style.fontSize = '0.875rem';
     

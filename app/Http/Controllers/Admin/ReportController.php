@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -50,7 +51,7 @@ class ReportController extends Controller
                 ->get()
                 ->map(function($item) {
                     return (object) [
-                        'rank' => $item->rank ? $item->rank->name : 'Not defined',
+                        'rank' => $item->rank ? $item->rank->name : 'Non défini',
                         'count' => $item->count,
                     ];
                 });
@@ -89,13 +90,13 @@ class ReportController extends Controller
             ));
 
         } catch (\Exception $e) {
-            \Log::error('Reports error: ' . $e->getMessage(), [
+            Log::error('Reports error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
 
             return view('admin.reports.index', [
-                'error' => 'Error: ' . $e->getMessage(),
+                'error' => 'Erreur: ' . $e->getMessage(),
                 'stats' => [],
                 'monthlySales' => [],
                 'commissionByType' => collect(),
@@ -276,6 +277,213 @@ class ReportController extends Controller
         ));
     }
 
+    /**
+     * ✅ NOUVELLE MÉTHODE : Exporter un rapport en PDF
+     */
+    public function exportPdf(Request $request, $type)
+    {
+        try {
+            $data = [];
+            
+            switch ($type) {
+                case 'users':
+                    $data = $this->getUsersData($request);
+                    $view = 'admin.reports.pdf.users';
+                    $filename = 'rapport_utilisateurs_' . date('Y-m-d') . '.pdf';
+                    break;
+                    
+                case 'commissions':
+                    $data = $this->getCommissionsData($request);
+                    $view = 'admin.reports.pdf.commissions';
+                    $filename = 'rapport_commissions_' . date('Y-m-d') . '.pdf';
+                    break;
+                    
+                case 'sales':
+                    $data = $this->getSalesData($request);
+                    $view = 'admin.reports.pdf.sales';
+                    $filename = 'rapport_ventes_' . date('Y-m-d') . '.pdf';
+                    break;
+                    
+                case 'withdrawals':
+                    $data = $this->getWithdrawalsData($request);
+                    $view = 'admin.reports.pdf.withdrawals';
+                    $filename = 'rapport_retraits_' . date('Y-m-d') . '.pdf';
+                    break;
+                    
+                default:
+                    return redirect()->back()->with('error', 'Type de rapport invalide.');
+            }
+            
+            // Vérifier si DomPDF est installé
+            if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, $data);
+                $pdf->setPaper('A4', 'landscape');
+                return $pdf->download($filename);
+            }
+            
+            // Fallback si DomPDF n'est pas installé
+            if (class_exists('\Dompdf\Dompdf')) {
+                $dompdf = new \Dompdf\Dompdf();
+                $html = view($view, $data)->render();
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'landscape');
+                $dompdf->render();
+                return $dompdf->stream($filename);
+            }
+            
+            return redirect()->back()->with('error', 'Module PDF non installé. Contactez l\'administrateur.');
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur export PDF: ' . $e->getMessage(), [
+                'type' => $type,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Récupérer les données des utilisateurs pour le PDF
+     */
+    private function getUsersData($request)
+    {
+        $query = User::with(['rank', 'package', 'wallet']);
+
+        if ($request->filled('rank_id')) {
+            $query->where('rank_id', $request->rank_id);
+        }
+        if ($request->filled('package_id')) {
+            $query->where('package_id', $request->package_id);
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active == '1');
+        }
+        if ($request->filled('kyc_status')) {
+            $query->where('kyc_status', $request->kyc_status);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->get();
+
+        $total = $users->count();
+        $active = $users->where('is_active', true)->count();
+        $inactive = $users->where('is_active', false)->count();
+        $avgPv = $users->avg('pv_balance') ?? 0;
+        $avgBv = $users->avg('bv_balance') ?? 0;
+        $totalEarnings = $users->sum('total_earnings') ?? 0;
+        $withPackage = $users->whereNotNull('package_id')->count();
+        $withoutPackage = $users->whereNull('package_id')->count();
+
+        $stats = compact('total', 'active', 'inactive', 'avgPv', 'avgBv', 'totalEarnings', 'withPackage', 'withoutPackage');
+
+        return compact('users', 'stats');
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Récupérer les données des commissions pour le PDF
+     */
+    private function getCommissionsData($request)
+    {
+        $query = Commission::with(['user', 'fromUser']);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $commissions = $query->orderBy('created_at', 'desc')->get();
+
+        $total = $commissions->sum('amount') ?? 0;
+        $average = $commissions->avg('amount') ?? 0;
+        $totalPending = $commissions->where('status', 'pending')->sum('amount') ?? 0;
+        $totalPaid = $commissions->where('status', 'paid')->sum('amount') ?? 0;
+
+        $stats = compact('total', 'average', 'totalPending', 'totalPaid');
+
+        return compact('commissions', 'stats');
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Récupérer les données des ventes pour le PDF
+     */
+    private function getSalesData($request)
+    {
+        $query = Order::with(['user', 'items', 'items.package']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        $totalOrders = $orders->count();
+        $totalRevenue = $orders->sum('total') ?? 0;
+        $avgOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+        $totalTax = $orders->sum('tax') ?? 0;
+        $totalShipping = $orders->sum('shipping') ?? 0;
+
+        $stats = compact('totalOrders', 'totalRevenue', 'avgOrderValue', 'totalTax', 'totalShipping');
+
+        return compact('orders', 'stats');
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Récupérer les données des retraits pour le PDF
+     */
+    private function getWithdrawalsData($request)
+    {
+        $query = Withdrawal::with(['user']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('method')) {
+            $query->where('method', $request->method);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $withdrawals = $query->orderBy('created_at', 'desc')->get();
+
+        $pending = $withdrawals->where('status', 'pending')->sum('amount') ?? 0;
+        $completed = $withdrawals->where('status', 'completed')->sum('amount') ?? 0;
+        $failed = $withdrawals->where('status', 'failed')->sum('amount') ?? 0;
+        $total = $withdrawals->sum('amount') ?? 0;
+
+        $stats = compact('pending', 'completed', 'failed', 'total');
+
+        return compact('withdrawals', 'stats');
+    }
+
     public function exportUsers($request)
     {
         $query = User::with(['rank', 'package']);
@@ -291,25 +499,25 @@ class ReportController extends Controller
         return $query->get()->map(function($user) {
             return [
                 'ID' => $user->id,
-                'Name' => $user->name,
+                'Nom' => $user->name,
                 'Email' => $user->email,
-                'Phone' => $user->phone ?? '',
-                'Referral Code' => $user->sponsor_id,
-                'Rank' => $user->rank?->name ?? 'Distributor',
-                'Package' => $user->package?->name ?? 'None',
+                'Téléphone' => $user->phone ?? '',
+                'Code Parrainage' => $user->sponsor_id,
+                'Grade' => $user->rank?->name ?? 'Distributeur',
+                'Package' => $user->package?->name ?? 'Aucun',
                 'PV' => $user->pv_balance ?? 0,
                 'BV' => $user->bv_balance ?? 0,
-                'Monthly PV' => $user->monthly_pv ?? 0,
-                'Monthly BV' => $user->monthly_bv ?? 0,
-                'Team PV' => $user->team_pv ?? 0,
-                'Team BV' => $user->team_bv ?? 0,
-                'Total Earnings' => number_format($user->total_earnings ?? 0, 2),
-                'Referrals' => $user->total_sponsors ?? 0,
-                'Team' => $user->total_team ?? 0,
-                'Wallet Balance' => number_format($user->wallet?->balance ?? 0, 2),
-                'Status' => $user->is_active ? 'Active' : 'Inactive',
-                'KYC' => $user->kyc_status ?? 'Not submitted',
-                'Registered' => $user->created_at->format('Y-m-d'),
+                'PV Mensuel' => $user->monthly_pv ?? 0,
+                'BV Mensuel' => $user->monthly_bv ?? 0,
+                'PV Equipe' => $user->team_pv ?? 0,
+                'BV Equipe' => $user->team_bv ?? 0,
+                'Gains Totaux' => number_format($user->total_earnings ?? 0, 2),
+                'Parrainages' => $user->total_sponsors ?? 0,
+                'Equipe' => $user->total_team ?? 0,
+                'Solde Portefeuille' => number_format($user->wallet?->balance ?? 0, 2),
+                'Statut' => $user->is_active ? 'Actif' : 'Inactif',
+                'KYC' => $user->kyc_status ?? 'Non soumis',
+                'Inscrit le' => $user->created_at->format('Y-m-d'),
             ];
         })->toArray();
     }
@@ -424,14 +632,14 @@ class ReportController extends Controller
         return $query->get()->map(function($commission) {
             return [
                 'ID' => $commission->id,
-                'User' => $commission->user->name ?? 'N/A',
-                'From' => $commission->fromUser->name ?? 'N/A',
+                'Utilisateur' => $commission->user->name ?? 'N/A',
+                'De' => $commission->fromUser->name ?? 'N/A',
                 'Type' => $commission->type,
-                'Amount' => number_format($commission->amount, 2),
-                'Percentage' => $commission->percentage . '%',
+                'Montant' => number_format($commission->amount, 2),
+                'Pourcentage' => $commission->percentage . '%',
                 'Description' => $commission->description ?? '',
-                'Status' => $commission->status,
-                'Paid At' => $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'Pending',
+                'Statut' => $commission->status,
+                'Payé le' => $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'En attente',
                 'Date' => $commission->created_at->format('Y-m-d H:i'),
             ];
         })->toArray();
@@ -452,16 +660,16 @@ class ReportController extends Controller
         return $query->get()->map(function($order) {
             return [
                 'ID' => $order->id,
-                'Order Number' => $order->order_number,
-                'Customer' => $order->user->name ?? 'N/A',
+                'N° Commande' => $order->order_number,
+                'Client' => $order->user->name ?? 'N/A',
                 'Email' => $order->user->email ?? 'N/A',
-                'Subtotal' => number_format($order->subtotal, 2),
-                'Tax' => number_format($order->tax, 2),
-                'Shipping' => number_format($order->shipping, 2),
+                'Sous-total' => number_format($order->subtotal, 2),
+                'TVA' => number_format($order->tax, 2),
+                'Livraison' => number_format($order->shipping, 2),
                 'Total' => number_format($order->total, 2),
-                'Order Status' => $order->status,
-                'Payment Status' => $order->payment_status,
-                'Payment Method' => $order->payment_method ?? 'N/A',
+                'Statut Commande' => $order->status,
+                'Statut Paiement' => $order->payment_status,
+                'Méthode Paiement' => $order->payment_method ?? 'N/A',
                 'Date' => $order->created_at->format('Y-m-d H:i'),
             ];
         })->toArray();
@@ -482,15 +690,15 @@ class ReportController extends Controller
         return $query->get()->map(function($withdrawal) {
             return [
                 'ID' => $withdrawal->id,
-                'User' => $withdrawal->user->name ?? 'N/A',
+                'Utilisateur' => $withdrawal->user->name ?? 'N/A',
                 'Email' => $withdrawal->user->email ?? 'N/A',
-                'Requested Amount' => number_format($withdrawal->amount, 2),
-                'Fee (2.5%)' => number_format($withdrawal->fee, 2),
+                'Montant Demandé' => number_format($withdrawal->amount, 2),
+                'Frais (2.5%)' => number_format($withdrawal->fee, 2),
                 'Net' => number_format($withdrawal->net_amount, 2),
-                'Method' => $withdrawal->method,
-                'Status' => $withdrawal->status,
+                'Méthode' => $withdrawal->method,
+                'Statut' => $withdrawal->status,
                 'Date' => $withdrawal->created_at->format('Y-m-d H:i'),
-                'Completed At' => $withdrawal->completed_at ? $withdrawal->completed_at->format('Y-m-d H:i') : 'Pending',
+                'Complété le' => $withdrawal->completed_at ? $withdrawal->completed_at->format('Y-m-d H:i') : 'En attente',
             ];
         })->toArray();
     }
@@ -544,18 +752,20 @@ class ReportController extends Controller
     {
         $activities = [];
 
+        // Nouveaux utilisateurs
         $users = User::orderBy('created_at', 'desc')->limit(3)->get();
         foreach ($users as $user) {
             $activities[] = [
                 'type' => 'user_registered',
                 'user' => $user->name,
-                'description' => "New user registered: {$user->name}",
+                'description' => "Nouvel utilisateur inscrit: {$user->name}",
                 'time' => $user->created_at,
                 'icon' => 'user-plus',
                 'color' => 'success',
             ];
         }
 
+        // Commissions payées
         $commissions = Commission::where('status', 'paid')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -564,13 +774,14 @@ class ReportController extends Controller
             $activities[] = [
                 'type' => 'commission_paid',
                 'user' => $commission->user->name ?? 'N/A',
-                'description' => "Commission of $" . number_format($commission->amount, 2) . " paid to {$commission->user->name}",
+                'description' => "Commission de $" . number_format($commission->amount, 2) . " payée à {$commission->user->name}",
                 'time' => $commission->created_at,
                 'icon' => 'coins',
                 'color' => 'warning',
             ];
         }
 
+        // Retraits traités
         $withdrawals = Withdrawal::where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -579,13 +790,14 @@ class ReportController extends Controller
             $activities[] = [
                 'type' => 'withdrawal_processed',
                 'user' => $withdrawal->user->name ?? 'N/A',
-                'description' => "Withdrawal of $" . number_format($withdrawal->amount, 2) . " processed for {$withdrawal->user->name}",
+                'description' => "Retrait de $" . number_format($withdrawal->amount, 2) . " traité pour {$withdrawal->user->name}",
                 'time' => $withdrawal->created_at,
                 'icon' => 'credit-card',
                 'color' => 'info',
             ];
         }
 
+        // Commandes complétées
         $orders = Order::where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->limit(3)
@@ -594,7 +806,7 @@ class ReportController extends Controller
             $activities[] = [
                 'type' => 'order_completed',
                 'user' => $order->user->name ?? 'N/A',
-                'description' => "Order #{$order->order_number} of $" . number_format($order->total, 2) . " completed",
+                'description' => "Commande #{$order->order_number} de $" . number_format($order->total, 2) . " complétée",
                 'time' => $order->created_at,
                 'icon' => 'shopping-cart',
                 'color' => 'primary',

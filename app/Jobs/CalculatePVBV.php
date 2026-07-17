@@ -26,9 +26,8 @@ class CalculatePVBV implements ShouldQueue
         $this->period = $period ?? date('Y-m', strtotime('last month'));
     }
 
-    // ✅ CORRECTION
-public function handle(AdvancedRankCalculator $rankCalculator): void
-{
+    public function handle(AdvancedRankCalculator $rankCalculator): void
+    {
     Log::info('Starting rank update', ['user_id' => $this->userId ?? 'all']);
 
     try {
@@ -60,7 +59,7 @@ public function handle(AdvancedRankCalculator $rankCalculator): void
                         $user->rank_level = $newRank->level;
                         $user->last_rank_update = now();
                         
-                        // ✅ Utiliser saveQuietly() pour éviter les événements
+                        // Utiliser saveQuietly() pour éviter les événements
                         $user->saveQuietly();
 
                         RankHistory::create([
@@ -113,7 +112,7 @@ public function handle(AdvancedRankCalculator $rankCalculator): void
 
         throw $e;
     }
-}
+    }
 
     /**
      * Met à jour les PV d'équipe pour tous les parrains
@@ -134,7 +133,7 @@ public function handle(AdvancedRankCalculator $rankCalculator): void
         }
     }
     protected function updateCumulativePV(User $user): void
-{
+    {
     // Calculer le PV total cumulé
     $totalPV = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
         ->where('orders.user_id', $user->id)
@@ -149,5 +148,5 @@ public function handle(AdvancedRankCalculator $rankCalculator): void
     $user->pv_balance = (int) $totalPV;
     $user->bv_balance = (int) $totalBV;
     $user->save();
-}
+    }
 }
