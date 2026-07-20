@@ -101,27 +101,49 @@ class SettingController extends Controller
 
     public function commission()
     {
-        $commissionSettings = config('commission', [
+        // Récupérer les données depuis le fichier de config
+        $config = config('commission', []);
+        
+        // Construire le tableau de données pour la vue
+        $commissionSettings = [
             'rates' => [
-                'direct' => 30,
-                'indirect' => 15,
-                'leadership' => 10,
-                'retail' => 25,
+                'levels' => $config['rates']['levels'] ?? [
+                    1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
+                    6 => 34, 7 => 40, 8 => 43, 9 => 45
+                ],
+                'leadership' => $config['rates']['leadership'] ?? [
+                    5 => 0.5, 6 => 1.1, 7 => 1.8, 8 => 2.6, 9 => 3.5
+                ],
+                'retail' => $config['rates']['retail'] ?? 25,
+                'consumer_bonus' => $config['rates']['consumer_bonus'] ?? 6,
+                'global_bonus_pool' => $config['rates']['global_bonus_pool'] ?? 6,
             ],
             'leadership' => [
-                'min_pv' => 1000,
-                'max_levels' => 5,
+                'min_pv' => $config['leadership_conditions'][5]['personal_pv'] ?? 30,
+                'max_levels' => 9,
             ],
-            'withdrawal_fee' => 2.5,
-            'min_withdrawal' => 10,
-            'levels' => [
-                1 => 30,
-                2 => 15,
-                3 => 10,
-                4 => 5,
-                5 => 5,
+            'withdrawal_fee' => $config['withdrawal_fee'] ?? 2.5,
+            'min_withdrawal' => $config['min_withdrawal'] ?? 10,
+            'rank_thresholds' => $config['rank_thresholds'] ?? [
+                1 => 0, 2 => 100, 3 => 200, 4 => 1000, 5 => 3800,
+                6 => 16000, 7 => 73000, 8 => 280000, 9 => 400000
             ],
-        ]);
+            'monthly_pv_required' => $config['monthly_pv_required'] ?? [
+                1 => 0, 2 => 20, 3 => 20, 4 => 25, 5 => 30,
+                6 => 50, 7 => 100, 8 => 200, 9 => 300
+            ],
+            'leadership_conditions' => $config['leadership_conditions'] ?? [
+                5 => ['personal_pv' => 30, 'group_pv' => 500],
+                6 => ['personal_pv' => 50, 'group_pv' => 1000],
+                7 => ['personal_pv' => 100, 'group_pv' => 2000],
+                8 => ['personal_pv' => 180, 'group_pv' => 3000],
+                9 => ['personal_pv' => 300, 'group_pv' => 5000],
+            ],
+            'levels' => $config['rates']['levels'] ?? [
+                1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
+                6 => 34, 7 => 40, 8 => 43, 9 => 45
+            ],
+        ];
 
         return view('admin.settings.commission', compact('commissionSettings'));
     }
@@ -129,46 +151,92 @@ class SettingController extends Controller
     public function updateCommission(Request $request)
     {
         $request->validate([
-            'direct_rate' => 'required|numeric|min:0|max:100',
-            'indirect_rate' => 'required|numeric|min:0|max:100',
-            'leadership_rate' => 'required|numeric|min:0|max:100',
+            // Niveaux 1-9
+            'level_1' => 'required|numeric|min:0|max:100',
+            'level_2' => 'required|numeric|min:0|max:100',
+            'level_3' => 'required|numeric|min:0|max:100',
+            'level_4' => 'required|numeric|min:0|max:100',
+            'level_5' => 'required|numeric|min:0|max:100',
+            'level_6' => 'required|numeric|min:0|max:100',
+            'level_7' => 'required|numeric|min:0|max:100',
+            'level_8' => 'required|numeric|min:0|max:100',
+            'level_9' => 'required|numeric|min:0|max:100',
+            // Leadership
+            'leadership_5' => 'required|numeric|min:0|max:100',
+            'leadership_6' => 'required|numeric|min:0|max:100',
+            'leadership_7' => 'required|numeric|min:0|max:100',
+            'leadership_8' => 'required|numeric|min:0|max:100',
+            'leadership_9' => 'required|numeric|min:0|max:100',
+            // Autres taux
             'retail_rate' => 'required|numeric|min:0|max:100',
+            'consumer_bonus' => 'required|numeric|min:0|max:100',
+            'global_bonus' => 'required|numeric|min:0|max:100',
+            // Leadership conditions
             'leadership_min_pv' => 'required|integer|min:0',
             'leadership_max_levels' => 'required|integer|min:1|max:10',
+            // Withdrawal
             'withdrawal_fee' => 'required|numeric|min:0|max:100',
             'min_withdrawal' => 'required|numeric|min:0',
-            'level1' => 'required|numeric|min:0|max:100',
-            'level2' => 'required|numeric|min:0|max:100',
-            'level3' => 'required|numeric|min:0|max:100',
-            'level4' => 'required|numeric|min:0|max:100',
-            'level5' => 'required|numeric|min:0|max:100',
         ]);
 
+        // Construire la nouvelle configuration
         $config = [
             'rates' => [
-                'direct' => (float) $request->direct_rate,
-                'indirect' => (float) $request->indirect_rate,
-                'leadership' => (float) $request->leadership_rate,
+                'levels' => [
+                    1 => (float) $request->level_1,
+                    2 => (float) $request->level_2,
+                    3 => (float) $request->level_3,
+                    4 => (float) $request->level_4,
+                    5 => (float) $request->level_5,
+                    6 => (float) $request->level_6,
+                    7 => (float) $request->level_7,
+                    8 => (float) $request->level_8,
+                    9 => (float) $request->level_9,
+                ],
+                'leadership' => [
+                    5 => (float) $request->leadership_5,
+                    6 => (float) $request->leadership_6,
+                    7 => (float) $request->leadership_7,
+                    8 => (float) $request->leadership_8,
+                    9 => (float) $request->leadership_9,
+                ],
                 'retail' => (float) $request->retail_rate,
+                'consumer_bonus' => (float) $request->consumer_bonus,
+                'global_bonus_pool' => (float) $request->global_bonus,
             ],
-            'leadership' => [
-                'min_pv' => (int) $request->leadership_min_pv,
-                'max_levels' => (int) $request->leadership_max_levels,
+            'leadership_conditions' => [
+                5 => [
+                    'personal_pv' => (int) $request->leadership_min_pv,
+                    'group_pv' => 500,
+                ],
+                6 => [
+                    'personal_pv' => 50,
+                    'group_pv' => 1000,
+                ],
+                7 => [
+                    'personal_pv' => 100,
+                    'group_pv' => 2000,
+                ],
+                8 => [
+                    'personal_pv' => 180,
+                    'group_pv' => 3000,
+                ],
+                9 => [
+                    'personal_pv' => 300,
+                    'group_pv' => 5000,
+                ],
             ],
             'withdrawal_fee' => (float) $request->withdrawal_fee,
             'min_withdrawal' => (float) $request->min_withdrawal,
-            'levels' => [
-                1 => (float) $request->level1,
-                2 => (float) $request->level2,
-                3 => (float) $request->level3,
-                4 => (float) $request->level4,
-                5 => (float) $request->level5,
-            ],
         ];
 
+        // Sauvegarder dans le cache
+        Cache::put('commission_config', $config);
+
+        // Mettre à jour le fichier de config
         $this->updateConfigFile('commission.php', $config);
 
-        Cache::forget('commission_config');
+        // Vider le cache de configuration
         Artisan::call('config:clear');
 
         Log::info('Commission settings updated', [
@@ -177,28 +245,28 @@ class SettingController extends Controller
         ]);
 
         return redirect()->route('admin.settings.commission')
-            ->with('success', 'Commission settings updated.');
+            ->with('success', 'Commission settings updated successfully.');
     }
 
     public function payment()
     {
-        $paymentSettings = config('payment', [
+        $paymentSettings = [
             'gateways' => [
                 'crypto' => [
-                    'enabled' => true,
-                    'networks' => ['TRC20', 'ERC20', 'BEP20'],
+                    'enabled' => Cache::get('crypto_enabled', true),
+                    'networks' => Cache::get('crypto_networks', ['TRC20', 'ERC20', 'BEP20']),
                 ],
                 'mobile_money' => [
-                    'enabled' => true,
-                    'providers' => ['Airtel Money', 'Orange Money', 'M-Pesa'],
+                    'enabled' => Cache::get('mobile_money_enabled', true),
+                    'providers' => Cache::get('mobile_money_providers', ['Airtel Money', 'Orange Money', 'M-Pesa']),
                 ],
             ],
             'fees' => [
-                'crypto' => 0.5,
-                'mobile_money' => 1.5,
-                'bank_transfer' => 0.5,
+                'crypto' => (float) Cache::get('crypto_fee', 0.5),
+                'mobile_money' => (float) Cache::get('mobile_money_fee', 1.5),
+                'bank_transfer' => (float) Cache::get('bank_transfer_fee', 0.5),
             ],
-        ]);
+        ];
 
         return view('admin.settings.payment', compact('paymentSettings'));
     }
@@ -214,6 +282,15 @@ class SettingController extends Controller
             'mobile_money_fee' => 'required|numeric|min:0|max:100',
             'bank_transfer_fee' => 'required|numeric|min:0|max:100',
         ]);
+
+        Cache::put('crypto_enabled', $request->has('crypto_enabled'));
+        Cache::put('mobile_money_enabled', $request->has('mobile_money_enabled'));
+        Cache::put('crypto_networks', $request->crypto_networks ?? ['TRC20', 'ERC20', 'BEP20']);
+        Cache::put('mobile_money_providers', $request->mobile_money_providers ?? ['Airtel Money', 'Orange Money', 'M-Pesa']);
+        
+        Cache::put('crypto_fee', (float) $request->crypto_fee);
+        Cache::put('mobile_money_fee', (float) $request->mobile_money_fee);
+        Cache::put('bank_transfer_fee', (float) $request->bank_transfer_fee);
 
         $config = [
             'gateways' => [
@@ -278,6 +355,10 @@ class SettingController extends Controller
     private function updateConfigFile($filename, $data)
     {
         $path = config_path($filename);
+
+        if (!file_exists(dirname($path))) {
+            mkdir(dirname($path), 0755, true);
+        }
 
         $content = "<?php\n\nreturn " . var_export($data, true) . ";\n";
 
