@@ -401,13 +401,6 @@
             <option value="leadership">Leadership</option>
             <option value="retail">Retail</option>
         </select>
-        <select id="statusFilter" class="input flex-1 sm:flex-none min-w-[80px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">Tous les statuts</option>
-            <option value="paid">Paye</option>
-            <option value="pending">En attente</option>
-        </select>
-        <input type="date" id="dateFrom" class="input flex-1 sm:flex-none min-w-[80px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Du">
-        <input type="date" id="dateTo" class="input flex-1 sm:flex-none min-w-[80px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Au">
     </div>
 </div>
     </div>
