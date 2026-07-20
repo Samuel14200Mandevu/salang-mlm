@@ -10,52 +10,26 @@ use App\Models\Commission;
 use App\Models\CommissionPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class CommissionDistributor
 {
     /**
      * Taux de commission par niveau (Commission Directe - Niveaux 3 à 9)
-     * Récupéré depuis le cache ou la configuration
      */
     private function getCommissionRate(int $level): float
     {
-        // ✅ Essayer de récupérer depuis le cache d'abord
-        $rates = Cache::get('commission_rates_levels');
-        
-        if (!$rates) {
-            // Fallback: récupérer depuis le fichier de config
-            $rates = config('commission.rates.levels', [
-                1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
-                6 => 34, 7 => 40, 8 => 43, 9 => 45
-            ]);
-            
-            // Mettre en cache pour les prochains appels
-            Cache::put('commission_rates_levels', $rates, 3600);
-        }
-        
-        return (float) ($rates[$level] ?? 0);
-    }
-
-    /**
-     * Taux de leadership
-     */
-    private function getLeadershipRate(int $level): float
-    {
-        // ✅ Essayer de récupérer depuis le cache d'abord
-        $leadershipRates = Cache::get('commission_leadership_rates');
-        
-        if (!$leadershipRates) {
-            // Fallback: récupérer depuis le fichier de config
-            $leadershipRates = config('commission.rates.leadership', [
-                5 => 0.5, 6 => 1.1, 7 => 1.8, 8 => 2.6, 9 => 3.5
-            ]);
-            
-            // Mettre en cache pour les prochains appels
-            Cache::put('commission_leadership_rates', $leadershipRates, 3600);
-        }
-        
-        return (float) ($leadershipRates[$level] ?? 0);
+        $rates = [
+            1 => 0,
+            2 => 0,
+            3 => 22,
+            4 => 26,
+            5 => 30,
+            6 => 34,
+            7 => 40,
+            8 => 43,
+            9 => 45,
+        ];
+        return $rates[$level] ?? 0;
     }
 
     /**
@@ -63,28 +37,17 @@ class CommissionDistributor
      */
     private function getMonthlyPVRequirements(): array
     {
-        // ✅ Essayer de récupérer depuis le cache d'abord
-        $requirements = Cache::get('commission_monthly_pv_required');
-        
-        if (!$requirements) {
-            // Fallback: récupérer depuis le fichier de config
-            $requirements = config('commission.monthly_pv_required', [
-                1 => ['personal' => 0, 'group' => 0],
-                2 => ['personal' => 10, 'group' => 0],
-                3 => ['personal' => 20, 'group' => 0],
-                4 => ['personal' => 25, 'group' => 0],
-                5 => ['personal' => 30, 'group' => 300],
-                6 => ['personal' => 50, 'group' => 500],
-                7 => ['personal' => 100, 'group' => 1000],
-                8 => ['personal' => 200, 'group' => 2000],
-                9 => ['personal' => 300, 'group' => 3000],
-            ]);
-            
-            // Mettre en cache pour les prochains appels
-            Cache::put('commission_monthly_pv_required', $requirements, 3600);
-        }
-        
-        return $requirements;
+        return [
+            1 => ['personal' => 0, 'group' => 0],
+            2 => ['personal' => 10, 'group' => 0],
+            3 => ['personal' => 20, 'group' => 0],
+            4 => ['personal' => 25, 'group' => 0],
+            5 => ['personal' => 30, 'group' => 300],
+            6 => ['personal' => 50, 'group' => 500],
+            7 => ['personal' => 100, 'group' => 1000],
+            8 => ['personal' => 200, 'group' => 2000],
+            9 => ['personal' => 300, 'group' => 3000],
+        ];
     }
 
     /**
@@ -232,7 +195,8 @@ class CommissionDistributor
             return $commissions;
         }
 
-        // 1. Sponsor Bonus (UNIQUEMENT pour le premier achat/activation)
+        // 🔥 1. Sponsor Bonus (UNIQUEMENT pour le premier achat/activation)
+        // Vérifier si le sponsor n'a pas déjà reçu le bonus pour ce filleul
         $sponsor = $buyer->parrain;
         if ($sponsor && $sponsor->is_active) {
             $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
@@ -286,6 +250,7 @@ class CommissionDistributor
             return null;
         }
 
+        // ✅ Vérifier si le sponsor a déjà reçu le bonus
         if ($this->hasReceivedSponsorBonus($sponsor, $buyer)) {
             Log::info('Sponsor bonus déjà distribué - ignoré', [
                 'sponsor_id' => $sponsor->id,
@@ -323,6 +288,8 @@ class CommissionDistributor
         $itemType = $this->getItemType($item);
         $itemId = $this->getItemId($item);
 
+        // ✅ Sponsor Bonus UNIQUEMENT pour le premier achat
+        // Le montant dépend du package acheté pour l'activation
         if ($rankLevel == 1) {
             $amount = 10;
             $percentage = null;
@@ -524,6 +491,14 @@ class CommissionDistributor
     {
         $commissions = [];
 
+        $leadershipRates = [
+            5 => 0.5,
+            6 => 1.1,
+            7 => 1.8,
+            8 => 2.6,
+            9 => 3.5,
+        ];
+
         $pvAmount = $this->getItemPV($item);
 
         if ($pvAmount <= 0) {
@@ -549,40 +524,37 @@ class CommissionDistributor
             $currentRank = $current->rankObject;
             $rankLevel = $currentRank ? $currentRank->level : 0;
 
-            if ($rankLevel >= 5) {
-                $rate = $this->getLeadershipRate($rankLevel);
-                
-                if ($rate > 0) {
-                    $requirements = $this->getMonthlyPVRequirements();
-                    $req = $requirements[$rankLevel] ?? ['personal' => 0, 'group' => 0];
+            if ($rankLevel >= 5 && isset($leadershipRates[$rankLevel])) {
+                $requirements = $this->getMonthlyPVRequirements();
+                $req = $requirements[$rankLevel] ?? ['personal' => 0, 'group' => 0];
 
-                    if ($current->monthly_pv >= $req['personal'] &&
-                        ($req['group'] == 0 || $current->team_pv >= $req['group'])) {
+                if ($current->monthly_pv >= $req['personal'] &&
+                    ($req['group'] == 0 || $current->team_pv >= $req['group'])) {
 
-                        $amount = $pvAmount * ($rate / 100);
+                    $rate = $leadershipRates[$rankLevel];
+                    $amount = $pvAmount * ($rate / 100);
 
-                        if ($amount > 0) {
-                            $itemName = $this->getItemName($item);
-                            $itemType = $this->getItemType($item);
-                            $itemId = $this->getItemId($item);
+                    if ($amount > 0) {
+                        $itemName = $this->getItemName($item);
+                        $itemType = $this->getItemType($item);
+                        $itemId = $this->getItemId($item);
 
-                            $commissions[] = Commission::create([
-                                'user_id' => $current->id,
-                                'from_user_id' => $buyer->id,
-                                'commission_period_id' => $period->id,
-                                'period' => $period->period,
-                                'type' => 'leadership',
-                                'amount' => $amount,
-                                'percentage' => $rate,
-                                'description' => "Leadership niveau {$rankLevel} ({$rate}%) génération {$generation} sur PV de {$pvAmount} ({$itemName})",
-                                'order_id' => $orderId,
-                                'package_id' => $itemType === 'package' ? $itemId : null,
-                                'product_id' => $itemType === 'product' ? $itemId : null,
-                                'generation' => $generation,
-                                'calculation_type' => 'automatic',
-                                'status' => 'pending',
-                            ]);
-                        }
+                        $commissions[] = Commission::create([
+                            'user_id' => $current->id,
+                            'from_user_id' => $buyer->id,
+                            'commission_period_id' => $period->id,
+                            'period' => $period->period,
+                            'type' => 'leadership',
+                            'amount' => $amount,
+                            'percentage' => $rate,
+                            'description' => "Leadership niveau {$rankLevel} ({$rate}%) génération {$generation} sur PV de {$pvAmount} ({$itemName})",
+                            'order_id' => $orderId,
+                            'package_id' => $itemType === 'package' ? $itemId : null,
+                            'product_id' => $itemType === 'product' ? $itemId : null,
+                            'generation' => $generation,
+                            'calculation_type' => 'automatic',
+                            'status' => 'pending',
+                        ]);
                     }
                 }
             }

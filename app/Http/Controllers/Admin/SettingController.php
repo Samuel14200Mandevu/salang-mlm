@@ -11,28 +11,6 @@ use Illuminate\Support\Facades\Log;
 
 class SettingController extends Controller
 {
-    // Valeurs par défaut des commissions
-    private $defaultCommissionRates = [
-        'levels' => [
-            1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30,
-            6 => 34, 7 => 40, 8 => 43, 9 => 45
-        ],
-        'leadership' => [
-            5 => 0.5, 6 => 1.1, 7 => 1.8, 8 => 2.6, 9 => 3.5
-        ],
-        'retail' => 25,
-        'consumer_bonus' => 6,
-        'global_bonus_pool' => 6,
-    ];
-
-    private $defaultLeadershipConditions = [
-        5 => ['personal_pv' => 30, 'group_pv' => 500],
-        6 => ['personal_pv' => 50, 'group_pv' => 1000],
-        7 => ['personal_pv' => 100, 'group_pv' => 2000],
-        8 => ['personal_pv' => 180, 'group_pv' => 3000],
-        9 => ['personal_pv' => 300, 'group_pv' => 5000],
-    ];
-
     public function index()
     {
         $settings = [
@@ -123,30 +101,22 @@ class SettingController extends Controller
 
     public function commission()
     {
-        // ✅ Récupérer depuis le cache d'abord
-        $config = Cache::get('commission_config');
+        // Récupérer les données depuis le fichier de config
+        $config = config('commission', []);
         
-        if (!$config) {
-            // Si pas dans le cache, récupérer depuis le fichier config
-            $config = config('commission', []);
-            
-            // Si le fichier config est vide ou mal formaté, utiliser les valeurs par défaut
-            if (empty($config) || !isset($config['rates'])) {
-                $config = $this->getDefaultCommissionConfig();
-            }
-            
-            // Mettre en cache
-            Cache::put('commission_config', $config, 3600);
-        }
-
-        // ✅ S'assurer que toutes les clés existent
+        // Construire le tableau de données pour la vue
         $commissionSettings = [
             'rates' => [
-                'levels' => $config['rates']['levels'] ?? $this->defaultCommissionRates['levels'],
-                'leadership' => $config['rates']['leadership'] ?? $this->defaultCommissionRates['leadership'],
-                'retail' => $config['rates']['retail'] ?? $this->defaultCommissionRates['retail'],
-                'consumer_bonus' => $config['rates']['consumer_bonus'] ?? $this->defaultCommissionRates['consumer_bonus'],
-                'global_bonus_pool' => $config['rates']['global_bonus_pool'] ?? $this->defaultCommissionRates['global_bonus_pool'],
+                'levels' => $config['rates']['levels'] ?? [
+                    1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
+                    6 => 34, 7 => 40, 8 => 43, 9 => 45
+                ],
+                'leadership' => $config['rates']['leadership'] ?? [
+                    5 => 0.5, 6 => 1.1, 7 => 1.8, 8 => 2.6, 9 => 3.5
+                ],
+                'retail' => $config['rates']['retail'] ?? 25,
+                'consumer_bonus' => $config['rates']['consumer_bonus'] ?? 6,
+                'global_bonus_pool' => $config['rates']['global_bonus_pool'] ?? 6,
             ],
             'leadership' => [
                 'min_pv' => $config['leadership_conditions'][5]['personal_pv'] ?? 30,
@@ -162,8 +132,17 @@ class SettingController extends Controller
                 1 => 0, 2 => 20, 3 => 20, 4 => 25, 5 => 30,
                 6 => 50, 7 => 100, 8 => 200, 9 => 300
             ],
-            'leadership_conditions' => $config['leadership_conditions'] ?? $this->defaultLeadershipConditions,
-            'levels' => $config['rates']['levels'] ?? $this->defaultCommissionRates['levels'],
+            'leadership_conditions' => $config['leadership_conditions'] ?? [
+                5 => ['personal_pv' => 30, 'group_pv' => 500],
+                6 => ['personal_pv' => 50, 'group_pv' => 1000],
+                7 => ['personal_pv' => 100, 'group_pv' => 2000],
+                8 => ['personal_pv' => 180, 'group_pv' => 3000],
+                9 => ['personal_pv' => 300, 'group_pv' => 5000],
+            ],
+            'levels' => $config['rates']['levels'] ?? [
+                1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
+                6 => 34, 7 => 40, 8 => 43, 9 => 45
+            ],
         ];
 
         return view('admin.settings.commission', compact('commissionSettings'));
@@ -251,15 +230,10 @@ class SettingController extends Controller
             'min_withdrawal' => (float) $request->min_withdrawal,
         ];
 
-        // ✅ Sauvegarder dans le cache
-        Cache::put('commission_config', $config, 3600);
-        
-        // ✅ Vider les caches individuels des commissions
-        Cache::forget('commission_rates_levels');
-        Cache::forget('commission_leadership_rates');
-        Cache::forget('commission_monthly_pv_required');
+        // Sauvegarder dans le cache
+        Cache::put('commission_config', $config);
 
-        // ✅ Mettre à jour le fichier de config
+        // Mettre à jour le fichier de config
         $this->updateConfigFile('commission.php', $config);
 
         // Vider le cache de configuration
@@ -391,33 +365,8 @@ class SettingController extends Controller
         file_put_contents($path, $content);
     }
 
-    private function getDefaultCommissionConfig(): array
-    {
-        return [
-            'rates' => $this->defaultCommissionRates,
-            'leadership_conditions' => $this->defaultLeadershipConditions,
-            'withdrawal_fee' => 2.5,
-            'min_withdrawal' => 10,
-            'rank_thresholds' => [
-                1 => 0, 2 => 100, 3 => 200, 4 => 1000, 5 => 3800,
-                6 => 16000, 7 => 73000, 8 => 280000, 9 => 400000
-            ],
-            'monthly_pv_required' => [
-                1 => 0, 2 => 20, 3 => 20, 4 => 25, 5 => 30,
-                6 => 50, 7 => 100, 8 => 200, 9 => 300
-            ],
-        ];
-    }
-
     public function clearCache()
     {
-        // ✅ Vider tous les caches des commissions
-        Cache::forget('commission_config');
-        Cache::forget('commission_rates_levels');
-        Cache::forget('commission_leadership_rates');
-        Cache::forget('commission_monthly_pv_required');
-        Cache::forget('payment_config');
-        
         Artisan::call('cache:clear');
         Artisan::call('config:clear');
         Artisan::call('view:clear');
