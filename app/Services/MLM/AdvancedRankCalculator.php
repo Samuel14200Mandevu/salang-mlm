@@ -13,24 +13,10 @@ use Illuminate\Support\Facades\Cache;
 
 class AdvancedRankCalculator
 {
-    /**
-     * @var RankConditionChecker
-     */
     protected RankConditionChecker $conditionChecker;
-
-    /**
-     * @var array Cache pour les PV des branches
-     */
     protected array $branchPVCache = [];
-
-    /**
-     * @var array Cache pour les descendants
-     */
     protected array $descendantsCache = [];
 
-    /**
-     * Constructor
-     */
     public function __construct(RankConditionChecker $conditionChecker)
     {
         $this->conditionChecker = $conditionChecker;
@@ -42,23 +28,46 @@ class AdvancedRankCalculator
     public function calculateAdvancedRank(User $user): ?Rank
     {
         if (!$user->is_active) {
+            Log::info('User inactive, skipping rank calculation', ['user_id' => $user->id]);
             return null;
         }
 
         // Vider le cache pour ce calcul
         $this->clearCache();
 
+        // Récupérer tous les grades actifs triés par niveau descendant
         $ranks = Rank::where('is_active', true)
             ->orderBy('level', 'desc')
             ->get();
 
+        if ($ranks->isEmpty()) {
+            Log::warning('No active ranks found');
+            return Rank::where('level', 1)->first();
+        }
+
+        Log::info('Calculating rank for user', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'pv_balance' => $user->pv_balance,
+            'team_pv' => $user->team_pv,
+            'current_rank' => $user->rank_name ?? 'None',
+        ]);
+
+        // Vérifier les grades du plus haut au plus bas
         foreach ($ranks as $rank) {
             if ($this->isEligibleForRank($user, $rank)) {
+                Log::info('Rank found for user', [
+                    'user_id' => $user->id,
+                    'rank_id' => $rank->id,
+                    'rank_name' => $rank->name,
+                    'rank_level' => $rank->level,
+                ]);
                 return $rank;
             }
         }
 
-        // Retourner le niveau 1 par défaut
+        // Si aucun grade trouvé, retourner le grade par défaut (niveau 1)
+        Log::info('No rank found, returning default level 1', ['user_id' => $user->id]);
         return Rank::where('level', 1)->first();
     }
 
@@ -67,12 +76,12 @@ class AdvancedRankCalculator
      */
     public function isEligibleForRank(User $user, Rank $rank): bool
     {
-        // Pour les niveaux 1 à 3, c'est simple
+        // Pour les niveaux 1 à 3, vérification simple
         if ($rank->level <= 3) {
-            if ($rank->level == 2 && $user->pv_balance < 100) {
+            if ($rank->level == 2 && ($user->pv_balance ?? 0) < 100) {
                 return false;
             }
-            if ($rank->level == 3 && $user->pv_balance < 200) {
+            if ($rank->level == 3 && ($user->pv_balance ?? 0) < 200) {
                 return false;
             }
             return true;
@@ -212,7 +221,10 @@ class AdvancedRankCalculator
     {
         $qualifiedBranches = [];
 
-        $directChildren = $user->filleuls()->with('rank')->get();
+        $directChildren = User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->with('rank')
+            ->get();
 
         foreach ($directChildren as $child) {
             $childRank = $this->getUserRankObject($child);
@@ -250,9 +262,12 @@ class AdvancedRankCalculator
      */
     protected function calculateBranchPVOptimized(User $branchRoot): int
     {
-        $totalPV = $branchRoot->pv_balance;
+        $totalPV = $branchRoot->pv_balance ?? 0;
 
-        $children = $branchRoot->filleuls()->get();
+        $children = User::where('parrain_id', $branchRoot->id)
+            ->where('is_active', true)
+            ->get();
+            
         foreach ($children as $child) {
             $totalPV += $this->calculateBranchPVOptimized($child);
         }
