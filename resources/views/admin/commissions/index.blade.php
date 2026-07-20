@@ -154,19 +154,27 @@
     <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <div class="card-stats animate-fadeInUp delay-1 border-l-4 border-green-500 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total payé</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">
+                ${{ number_format($stats['total_paid'] ?? 0, 2) }}
+            </p>
         </div>
         <div class="card-stats animate-fadeInUp delay-2 border-l-4 border-yellow-500 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($pendingCommissions ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">
+                ${{ number_format($stats['total_pending'] ?? 0, 2) }}
+            </p>
         </div>
         <div class="card-stats animate-fadeInUp delay-3 border-l-4 border-red-500 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Annulé</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-red-500">${{ number_format($totalCancelled ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-red-500">
+                ${{ number_format($stats['total_cancelled'] ?? 0, 2) }}
+            </p>
         </div>
         <div class="card-stats animate-fadeInUp delay-4 border-l-4 border-blue-500 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">{{ $commissions->total() ?? 0 }}</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">
+                {{ $stats['total_count'] ?? 0 }}
+            </p>
         </div>
     </div>
 
@@ -198,7 +206,14 @@
             <option value="cancelled">Annulé</option>
         </select>
         
-        <a href="{{ route('admin.commissions.export') }}" class="btn btn-outline btn-sm sm:btn-md">
+        <select id="periodFilter" class="input w-auto min-w-[110px] sm:min-w-[140px] text-sm sm:text-base">
+            <option value="">Toutes les périodes</option>
+            @foreach($periods ?? [] as $period)
+                <option value="{{ $period }}">{{ $period }}</option>
+            @endforeach
+        </select>
+        
+        <a href="{{ route('admin.commissions.export', request()->all()) }}" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
@@ -288,12 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const typeFilter = document.getElementById('typeFilter');
     const statusFilter = document.getElementById('statusFilter');
+    const periodFilter = document.getElementById('periodFilter');
     const rows = document.querySelectorAll('#commissionsTable tr');
 
     function filterRows() {
         const search = searchInput.value.trim().toLowerCase();
         const type = typeFilter.value;
         const status = statusFilter.value;
+        const period = periodFilter.value;
 
         rows.forEach(function(row) {
             const text = row.textContent.toLowerCase();
@@ -313,6 +330,9 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('input', filterRows);
     typeFilter.addEventListener('change', filterRows);
     statusFilter.addEventListener('change', filterRows);
+    if (periodFilter) {
+        periodFilter.addEventListener('change', filterRows);
+    }
 });
 </script>
 @endpush
