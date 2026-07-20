@@ -13,7 +13,6 @@
         transition: all 0.3s ease;
     }
     
-    /* Modal styles */
     .modal-overlay {
         position: fixed;
         inset: 0;
@@ -87,6 +86,15 @@
         min-width: 100px;
         justify-content: center;
     }
+    .pv-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        background: rgba(59,130,246,0.12);
+        color: #3b82f6;
+    }
     
     @media (max-width: 640px) {
         .table thead th, .table tbody td {
@@ -117,6 +125,10 @@
         }
         .modal-actions .btn {
             width: 100%;
+        }
+        .pv-badge {
+            font-size: 0.5rem;
+            padding: 0.1rem 0.35rem;
         }
     }
 </style>
@@ -175,6 +187,7 @@
                         <th class="text-xs sm:text-sm">Image</th>
                         <th class="text-xs sm:text-sm">Name</th>
                         <th class="text-xs sm:text-sm hidden md:table-cell">Category</th>
+                        <th class="text-xs sm:text-sm">PV</th>
                         <th class="text-xs sm:text-sm">Price</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">Stock</th>
                         <th class="text-xs sm:text-sm hidden lg:table-cell">Status</th>
@@ -202,6 +215,9 @@
                             </td>
                             <td class="font-medium text-sm sm:text-base truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">{{ $product->name }}</td>
                             <td class="hidden md:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">{{ $product->category ?? '-' }}</td>
+                            <td>
+                                <span class="pv-badge">{{ $product->pv_value ?? 0 }} PV</span>
+                            </td>
                             <td class="font-bold text-primary-500 text-sm sm:text-base">${{ number_format($product->price, 2) }}</td>
                             <td class="hidden sm:table-cell">
                                 <span class="badge stock-badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }} text-[10px] sm:text-xs">
@@ -252,7 +268,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
+                            <td colspan="9" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>
@@ -273,9 +289,7 @@
     </div>
 </div>
 
-<!-- ============================================================
-DELETE MODAL
-============================================================ -->
+<!-- Delete Modal -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-danger">
@@ -326,9 +340,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ============================================================
-// DELETE MODAL
-// ============================================================
 function openDeleteModal(productId, productName) {
     document.getElementById('deleteModal').classList.add('active');
     document.getElementById('productNameDisplay').textContent = productName;
@@ -341,7 +352,6 @@ function closeDeleteModal() {
     document.body.style.overflow = '';
 }
 
-// Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
@@ -351,7 +361,6 @@ document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     });
 });
 
-// Close modal on Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {

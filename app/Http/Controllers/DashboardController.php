@@ -20,7 +20,7 @@ use App\Services\MLM\AdvancedRankCalculator;
 class DashboardController extends Controller
 {
     /**
-     * Afficher le tableau de bord
+     * Afficher le tableau de bord selon le niveau
      */
     public function index()
     {
@@ -61,13 +61,12 @@ class DashboardController extends Controller
         $currentRankLevel = $userRank ? $userRank->level : 1;
         $currentRankId = $userRank ? $userRank->id : null;
 
-        // ✅ CALCUL DES PV (CORRIGÉ)
-        // team_pv = CUMUL = PV Personnel + Somme des PV de tous les descendants
+        // ✅ CALCUL DES PV
         $pvPersonnel = $user->pv_balance ?? 0;
-        $pvCumul = $user->team_pv ?? 0;      // ← team_pv = CUMUL complet
+        $pvCumul = $user->team_pv ?? 0;
         $monthlyPv = $user->monthly_pv ?? 0;
 
-        // TROUVER LE PROCHAIN GRADE (BASÉ SUR LE CUMUL = team_pv)
+        // TROUVER LE PROCHAIN GRADE
         $nextRank = Rank::where('level', '>', $currentRankLevel)
             ->where('is_active', true)
             ->orderBy('level', 'asc')
@@ -78,7 +77,6 @@ class DashboardController extends Controller
             $nextPvRequired = $nextRank->min_pv ?? 0;
             $currentMinPv = $userRank ? $userRank->min_pv : 0;
             
-            // Progression basée sur le CUMUL (team_pv)
             $progress = 0;
             if ($nextPvRequired > $currentMinPv) {
                 $progress = (($pvCumul - $currentMinPv) / ($nextPvRequired - $currentMinPv)) * 100;
@@ -89,11 +87,15 @@ class DashboardController extends Controller
             }
             
             $pvNeeded = max(0, $nextPvRequired - $pvCumul);
+            
+            // Conditions du prochain grade
+            $conditions = $this->getRankConditions($nextRank, $user);
         } else {
             $nextRank = null;
             $nextPvRequired = 0;
             $progress = 100;
             $pvNeeded = 0;
+            $conditions = [];
         }
 
         // STATISTIQUES DES COMMISSIONS
@@ -130,6 +132,22 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->count();
 
+        $level4Ids = User::whereIn('parrain_id', $level2Ids)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->toArray();
+        $level4 = User::whereIn('parrain_id', $level4Ids)
+            ->where('is_active', true)
+            ->count();
+
+        $level5Ids = User::whereIn('parrain_id', $level4Ids)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->toArray();
+        $level5 = User::whereIn('parrain_id', $level5Ids)
+            ->where('is_active', true)
+            ->count();
+
         // PORTEFEUILLE
         $wallet = $user->wallet;
         $walletBalance = $wallet ? $wallet->balance : 0;
@@ -139,6 +157,19 @@ class DashboardController extends Controller
         if ($user->parrain_id) {
             $sponsor = User::find($user->parrain_id);
         }
+
+
+        // TOP FILLEULS - Version corrigée
+        $topDownlines = User::where('parrain_id', $user->id)
+            ->withCount(['filleuls as total_downlines'])  // ← Utilise filleuls au lieu de downlines
+            ->orderBy('total_downlines', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Si vous voulez aussi ajouter les filleuls indirects
+        $topDownlines->each(function ($downline) {
+        $downline->total_indirect = User::where('parrain_id', $downline->id)->count();
+        });
 
         // MEMBRES RÉCENTS
         $recentMembers = User::where('id', '!=', $user->id)
@@ -215,41 +246,152 @@ class DashboardController extends Controller
             'pv_cumul' => $pvCumul,
             'monthly_pv' => $monthlyPv,
             'current_min_pv' => $userRank ? $userRank->min_pv : 0,
+            'conditions' => $conditions,
         ];
 
-        // HISTORIQUE DES GRADES (pour la vue rank)
+        // HISTORIQUE DES GRADES
         $history = RankHistory::where('user_id', $user->id)
             ->with(['oldRank', 'newRank'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        // RETOURNER LA VUE AVEC TOUTES LES DONNÉES
-        return view('dashboard', compact(
-            'user',
-            'sponsor',
-            'totalCommission',
-            'pendingCommission',
-            'totalWithdrawn',
-            'totalDownlines',
-            'walletBalance',
-            'level1',
-            'level2',
-            'level3',
-            'recentMembers',
-            'recentActivities',
-            'rankProgress',
-            'stats',
-            'monthlyData',
-            'lastMonthRank',
-            'rankDistribution',
-            'history',
-            'rankStats',
-            'currentRankName',
-            'currentRankLevel',
-            'pvPersonnel',
-            'pvCumul'
-        ));
+        // Données communes à tous les niveaux
+        $data = [
+            'user' => $user,
+            'sponsor' => $sponsor,
+            'totalCommission' => $totalCommission,
+            'pendingCommission' => $pendingCommission,
+            'totalWithdrawn' => $totalWithdrawn,
+            'totalDownlines' => $totalDownlines,
+            'walletBalance' => $walletBalance,
+            'level1' => $level1,
+            'level2' => $level2,
+            'level3' => $level3,
+            'level4' => $level4,
+            'level5' => $level5,
+            'recentMembers' => $recentMembers,
+            'recentActivities' => $recentActivities,
+            'rankProgress' => $rankProgress,
+            'stats' => $stats,
+            'monthlyData' => $monthlyData,
+            'lastMonthRank' => $lastMonthRank,
+            'rankDistribution' => $rankDistribution,
+            'history' => $history,
+            'rankStats' => $rankStats,
+            'currentRankName' => $currentRankName,
+            'currentRankLevel' => $currentRankLevel,
+            'pvPersonnel' => $pvPersonnel,
+            'pvCumul' => $pvCumul,
+            'topDownlines' => $topDownlines,
+        ];
+
+        // Rediriger vers le bon dashboard selon le niveau
+        $level = $currentRankLevel;
+        
+        switch($level) {
+    case 1:
+        return view('dashboard.levels.level1', $data);
+    case 2:
+        return view('dashboard.levels.level2', $data);
+    case 3:
+        return view('dashboard.levels.level3', $data);
+    case 4:
+        return view('dashboard.levels.level4', $data);
+    case 5:
+        return view('dashboard.levels.level5', $data);
+    case 6:
+        return view('dashboard.levels.level6', $data);
+    case 7:
+        return view('dashboard.levels.level7', $data);
+    case 8:
+        return view('dashboard.levels.level8', $data);
+    case 9:
+        return view('dashboard.levels.level9', $data);
+    default:
+        return view('dashboard.levels.level1', $data);
+}
+    }
+
+    /**
+     * Récupérer les conditions du grade
+     */
+    private function getRankConditions($rank, $user)
+    {
+        $conditions = [];
+        
+        if (empty($rank->conditions)) {
+            return $conditions;
+        }
+        
+        foreach ($rank->conditions as $condition) {
+            $met = false;
+            $current = 0;
+            $required = 0;
+            
+            if (isset($condition['type'])) {
+                switch ($condition['type']) {
+                    case 'personal_pv':
+                        $required = $condition['value'] ?? 0;
+                        $current = $user->pv_balance ?? 0;
+                        $met = $current >= $required;
+                        break;
+                    case 'team_pv':
+                        $required = $condition['value'] ?? 0;
+                        $current = $user->team_pv ?? 0;
+                        $met = $current >= $required;
+                        break;
+                    case 'branches':
+                        $required = $condition['value'] ?? 0;
+                        $current = $this->countActiveBranches($user);
+                        $met = $current >= $required;
+                        break;
+                    case 'sponsors':
+                        $required = $condition['value'] ?? 0;
+                        $current = User::where('parrain_id', $user->id)->count();
+                        $met = $current >= $required;
+                        break;
+                    default:
+                        $met = true;
+                }
+            }
+            
+            $conditions[] = [
+                'label' => $condition['label'] ?? $condition['type'] ?? 'Condition',
+                'type' => $condition['type'] ?? 'unknown',
+                'required' => $required,
+                'current' => $current,
+                'met' => $met,
+            ];
+        }
+        
+        return $conditions;
+    }
+
+    /**
+     * Compter les branches actives
+     */
+    private function countActiveBranches($user)
+    {
+        $level1 = User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+            
+        $activeBranches = 0;
+        foreach ($level1 as $downline) {
+            if ($this->hasActiveDownline($downline)) {
+                $activeBranches++;
+            }
+        }
+        
+        return $activeBranches;
+    }
+
+    private function hasActiveDownline($user)
+    {
+        return User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->exists();
     }
 
     /**

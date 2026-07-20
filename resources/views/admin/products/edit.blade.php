@@ -212,6 +212,38 @@
                            class="input text-sm sm:text-base">
                 </div>
 
+                <!-- ✅ PV VALUE - NOUVEAU CHAMP -->
+                <div class="form-group">
+                    <label>PV Value <span class="required">*</span></label>
+                    <select name="pv_value" class="input text-sm sm:text-base @error('pv_value') input-error @enderror" required>
+                        <option value="">Select PV</option>
+                        <option value="15" {{ old('pv_value', $product->pv_value) == 15 ? 'selected' : '' }}>15 PV</option>
+                        <option value="20" {{ old('pv_value', $product->pv_value) == 20 ? 'selected' : '' }}>20 PV</option>
+                        <option value="25" {{ old('pv_value', $product->pv_value) == 25 ? 'selected' : '' }}>25 PV</option>
+                        <option value="30" {{ old('pv_value', $product->pv_value) == 30 ? 'selected' : '' }}>30 PV</option>
+                        <option value="35" {{ old('pv_value', $product->pv_value) == 35 ? 'selected' : '' }}>35 PV</option>
+                        <option value="40" {{ old('pv_value', $product->pv_value) == 40 ? 'selected' : '' }}>40 PV</option>
+                        <option value="45" {{ old('pv_value', $product->pv_value) == 45 ? 'selected' : '' }}>45 PV</option>
+                        <option value="50" {{ old('pv_value', $product->pv_value) == 50 ? 'selected' : '' }}>50 PV</option>
+                        <option value="55" {{ old('pv_value', $product->pv_value) == 55 ? 'selected' : '' }}>55 PV</option>
+                        <option value="75" {{ old('pv_value', $product->pv_value) == 75 ? 'selected' : '' }}>75 PV</option>
+                        <option value="100" {{ old('pv_value', $product->pv_value) == 100 ? 'selected' : '' }}>100 PV</option>
+                    </select>
+                    <p class="help-text">PV value for this product (15, 20, 25, 30, 35, 40, 45, 50, 55, 75 or 100)</p>
+                    @error('pv_value') 
+                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p> 
+                    @enderror
+                </div>
+
+                <!-- ✅ BV VALUE - NOUVEAU CHAMP -->
+                <div class="form-group">
+                    <label>BV Value</label>
+                    <input type="number" name="bv_value" step="0.01" value="{{ old('bv_value', $product->bv_value ?? 0) }}" 
+                           class="input text-sm sm:text-base" 
+                           placeholder="0">
+                    <p class="help-text">Bonus Value (usually same as PV or 0)</p>
+                </div>
+
                 <!-- Stock -->
                 <div class="form-group">
                     <label>Stock <span class="required">*</span></label>

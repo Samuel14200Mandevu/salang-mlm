@@ -65,7 +65,6 @@
     .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
     .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
 
-    /* Tableau des taux et conditions */
     .rate-table {
         width: 100%;
         border-collapse: collapse;
@@ -156,7 +155,6 @@
         color: #f59e0b;
     }
     
-    /* Conditions cartes */
     .conditions-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -181,7 +179,6 @@
         font-size: 0.7rem;
     }
     
-    /* Notice importante */
     .notice-box {
         background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02));
         border: 1px solid rgba(59,130,246,0.2);
@@ -223,7 +220,6 @@
         color: var(--primary-500);
     }
     
-    /* Carte d'explication cliquable */
     .explanation-card {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
@@ -259,7 +255,6 @@
         transform: translateX(4px);
     }
 
-    /* Modal */
     .modal-overlay {
         position: fixed;
         inset: 0;
@@ -580,12 +575,6 @@
                 </svg>
                 Toutes les commissions
             </a>
-            <a href="{{ route('commissions.export') }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Exporter
-            </a>
         </div>
     </div>
 
@@ -595,57 +584,12 @@
         <div class="notice-content">
             <div class="notice-title">Comment sont calculées les commissions ?</div>
             <div class="notice-text">
-                Les commissions sont calculées sur le <strong>PV vendu du mois (PV mensuel)</strong>, 
-                et non sur le PV total cumulé depuis l'inscription. 
-                Chaque mois, les ventes du mois sont prises en compte pour le calcul des commissions.
+                <strong>Sponsor Bonus (Parrainage) :</strong> Niveau 1 = 10$ fixe, Niveau 2-9 = 30% du prix<br>
+                <strong>Direct :</strong> Taux du sponsor × PV du package (Niveaux 3-9)<br>
+                <strong>Indirect :</strong> Différence de taux × PV du package (Niveaux 3-9)<br>
+                <strong>Leadership :</strong> % du PV du package (Niveaux 5-9)
             </div>
         </div>
-    </div>
-
-    <!-- Total -->
-    <div class="card-stats animate-fadeInUp delay-1 border-l-4 border-primary-500">
-        <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Total des commissions par niveau</p>
-        <p class="text-2xl sm:text-3xl font-bold text-primary-500">${{ number_format($total ?? 0, 2) }}</p>
-        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">Tous niveaux confondus</p>
-    </div>
-
-    <!-- Niveaux -->
-    <div class="levels-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 animate-fadeInUp delay-2">
-        @foreach($levels ?? [] as $level => $data)
-            @php
-                $percent = ($total ?? 1) > 0 ? ($data['amount'] / ($total ?? 1)) * 100 : 0;
-                $colors = ['', 'level-number-1', 'level-number-2', 'level-number-3', 'level-number-4', 'level-number-5'];
-                $color = $colors[$level] ?? 'level-number-1';
-                $colorMap = [
-                    'primary' => '#6366f1',
-                    'success' => '#22c55e',
-                    'warning' => '#f59e0b',
-                    'danger' => '#ef4444',
-                    'purple' => '#8b5cf6',
-                    'info' => '#3b82f6'
-                ];
-                $barColor = $colorMap[$data['color'] ?? 'primary'] ?? '#6366f1';
-            @endphp
-            <div class="level-card">
-                <div class="level-number {{ $color }} mx-auto mb-2 sm:mb-3">
-                    {{ $level }}
-                </div>
-                <h4 class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">{{ $data['label'] }}</h4>
-                <p class="text-lg sm:text-2xl font-bold text-primary-500 mt-1 sm:mt-2">
-                    ${{ number_format($data['amount'], 2) }}
-                </p>
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    {{ $data['count'] ?? 0 }} commission(s)
-                </p>
-                <div class="mt-2 sm:mt-3 p-1.5 sm:p-2 bg-[var(--bg-secondary)] rounded-lg">
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Taux</p>
-                    <p class="font-bold text-primary-500 text-xs sm:text-sm">{{ $data['percentage'] }}%</p>
-                </div>
-                <div class="mt-2 sm:mt-3 w-full h-1 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%; background: {{ $barColor }};"></div>
-                </div>
-            </div>
-        @endforeach
     </div>
 
     <!-- Explication des niveaux (cartes cliquables) -->
@@ -655,15 +599,15 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             
-            <!-- Niveau 1 - Direct -->
+            <!-- Niveau 1 - Sponsor -->
             <div class="explanation-card rounded-lg p-3 sm:p-4" onclick="openLevelModal(1)">
                 <div class="flex items-center gap-3">
                     <div class="card-icon card-icon-level-1 flex-shrink-0">
                         1
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Directe</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">6% à 45% sur vos filleuls directs</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Sponsor Bonus (Parrainage)</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">Niv 1: 10$, Niv 2-9: 30% du prix</p>
                     </div>
                     <svg class="card-arrow w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -671,15 +615,15 @@
                 </div>
             </div>
 
-            <!-- Niveau 2 - Indirect -->
+            <!-- Niveau 2 - Direct -->
             <div class="explanation-card rounded-lg p-3 sm:p-4" onclick="openLevelModal(2)">
                 <div class="flex items-center gap-3">
                     <div class="card-icon card-icon-level-2 flex-shrink-0">
                         2
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Indirecte</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">2% à 39% sur les niveaux inférieurs</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Directe</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">Taux sponsor × PV (Niveaux 3-9)</p>
                     </div>
                     <svg class="card-arrow w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -687,15 +631,15 @@
                 </div>
             </div>
 
-            <!-- Niveau 3 - Leadership -->
+            <!-- Niveau 3 - Indirect -->
             <div class="explanation-card rounded-lg p-3 sm:p-4" onclick="openLevelModal(3)">
                 <div class="flex items-center gap-3">
                     <div class="card-icon card-icon-level-3 flex-shrink-0">
                         3
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Leadership</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">0.5% à 3.5% sur 2 à 9 générations</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Indirecte</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">Différence de taux × PV (Niveaux 3-9)</p>
                     </div>
                     <svg class="card-arrow w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -703,15 +647,15 @@
                 </div>
             </div>
 
-            <!-- Niveau 4 - Bonus Consommateur -->
+            <!-- Niveau 4 - Leadership -->
             <div class="explanation-card rounded-lg p-3 sm:p-4" onclick="openLevelModal(4)">
                 <div class="flex items-center gap-3">
                     <div class="card-icon card-icon-level-4 flex-shrink-0">
                         4
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Bonus Consommateur</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">6% sur vos achats personnels</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Leadership</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">0.5% à 3.5% × PV (Niveaux 5-9)</p>
                     </div>
                     <svg class="card-arrow w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -756,177 +700,178 @@
 
 @push('scripts')
 <script>
-// Données complètes avec conditions précises
+// Données complètes avec les nouvelles règles
 const levelData = {
     1: {
         icon: '1',
         iconClass: 'modal-icon-level-1',
-        title: 'Commission Directe - Niveau 1',
-        subtitle: '6% à 45% sur les achats mensuels de vos filleuls directs',
-        description: 'La commission directe est la commission principale. Vous gagnez un pourcentage sur chaque achat effectué par vos filleuls directs (ceux que vous avez parrainés personnellement). Le calcul est basé sur le PV vendu dans le mois en cours.',
+        title: 'Sponsor Bonus (Commission de Parrainage)',
+        subtitle: 'Niveau 1: 10$ fixe, Niveau 2-9: 30% du prix du package',
+        description: 'Le Sponsor Bonus est la commission que vous recevez lorsque quelqu\'un que vous avez parrainé directement achète un package. C\'est la récompense pour avoir recruté un nouveau membre.',
         details: [
-            'Applicable à tous les filleuls directs (niveau 1)',
-            'Le taux dépend de votre grade actuel',
-            'Plus vous montez en grade, plus le taux est élevé',
-            'Commission versée mensuellement sur le PV du mois'
+            'Niveau 1: 10$ fixe (indépendant du prix du package)',
+            'Niveaux 2-9: 30% du prix du package',
+            'Versé directement sur votre portefeuille',
+            'Le parrain direct doit être actif'
         ],
         conditions: [
-            { label: 'Grade requis', value: 'Niveau 2 à 9' },
-            { label: 'PV mensuel requis', value: '100 à 400 000 PV/mois' },
-            { label: 'Achat mensuel', value: 'Obligatoire pour maintenir le grade' }
+            { label: 'Grade requis', value: 'Tous les niveaux' },
+            { label: 'PV mensuel requis', value: 'Selon grade (10 à 300 PV)' },
+            { label: 'Compte actif', value: 'Obligatoire' }
         ],
-        pvPayment: 'PV mensuel ≥ 20 à 300 PV (selon grade)',
+        pvPayment: 'PV mensuel selon grade (Niv 2: 10 PV, Niv 3: 20 PV, Niv 4: 25 PV, Niv 5: 30 PV, Niv 6: 50 PV, Niv 7: 100 PV, Niv 8: 200 PV, Niv 9: 300 PV)',
         table: {
-            headers: ['Grade', 'Niveau', 'Taux', 'PV Mensuel', 'PV Groupe', 'PV pour toucher'],
+            headers: ['Niveau du parrain', 'Taux', 'Calcul'],
             rows: [
-                ['Qualification', '2', '6%', '100 PV', '-', '≥20 PV'],
-                ['Cumul Directeur', '3', '22%', '200 PV', '-', '≥20 PV'],
-                ['Directeur', '4', '26%', '1000 PV', 'Option: 1000 PV', '≥25 PV'],
-                ['Manager Senior', '5', '30%', '3800 PV', '3800 PV', '≥30 PV'],
-                ['Directeur Envolée', '6', '34%', '16000 PV', '16000 PV', '≥50 PV'],
-                ['Saphire Manager', '7', '40%', '73000 PV', '73000 PV', '≥100 PV'],
-                ['Diamant Bleu', '8', '43%', '280000 PV', '280000 PV', '≥200 PV'],
-                ['Perle Diamant', '9', '45%', '400000 PV', '400000 PV', '≥300 PV']
+                ['Niveau 1', '10$ fixe', '10$ par activation'],
+                ['Niveau 2', '30%', '30% du prix du package'],
+                ['Niveau 3', '30%', '30% du prix du package'],
+                ['Niveau 4', '30%', '30% du prix du package'],
+                ['Niveau 5', '30%', '30% du prix du package'],
+                ['Niveau 6', '30%', '30% du prix du package'],
+                ['Niveau 7', '30%', '30% du prix du package'],
+                ['Niveau 8', '30%', '30% du prix du package'],
+                ['Niveau 9', '30%', '30% du prix du package']
             ]
         },
         info: [
-            { label: 'Taux min', value: '6%' },
-            { label: 'Taux max', value: '45%' },
-            { label: 'Niveau', value: '1 (Direct)' }
+            { label: 'Taux min', value: '10$ fixe' },
+            { label: 'Taux max', value: '30%' },
+            { label: 'Niveau', value: '1 (Parrainage)' }
         ],
-        formula: 'Commission = PV mensuel du filleul × Votre taux (%)',
+        formula: 'Niv 1: 10$ | Niv 2-9: Prix du package × 30%',
         example: {
-            scenario: 'Vous êtes Grade 7 (40%). Votre filleul direct a vendu 1000 PV ce mois-ci.',
-            calculation: '1000 PV × 40% = 400$',
-            result: 'Vous gagnez 400$ sur les ventes de ce mois.'
+            scenario: 'Vous êtes Niveau 4. Votre filleul direct achète un package à 350$ (Bronze).',
+            calculation: '350$ × 30% = 105$',
+            result: 'Vous gagnez 105$ de Sponsor Bonus.'
         },
-        summary: 'Plus votre grade est élevé, plus vous gagnez sur les ventes mensuelles de vos filleuls directs.'
+        summary: 'Le Sponsor Bonus récompense le recrutement direct. Plus vous recrutez, plus vous gagnez.'
     },
     2: {
         icon: '2',
         iconClass: 'modal-icon-level-2',
-        title: 'Commission Indirecte - Niveau 2',
-        subtitle: '2% à 39% sur les ventes mensuelles des niveaux inférieurs',
-        description: 'La commission indirecte est calculée sur la différence entre votre taux et celui de vos downlines. Vous gagnez sur les ventes mensuelles des membres de votre réseau à partir du niveau 2.',
+        title: 'Commission Directe',
+        subtitle: 'Taux du sponsor × PV du package (Niveaux 3 à 9)',
+        description: 'La commission directe est calculée sur les achats de vos filleuls directs. Vous gagnez un pourcentage du PV du package acheté par votre filleul direct.',
         details: [
-            'Applicable à tous les niveaux inférieurs (2 à 9)',
-            'Calculée sur la différence des pourcentages',
-            'Plus la différence est grande, plus vous gagnez',
-            'Basée sur le PV vendu dans le mois en cours'
+            'Calculée sur le PV du package acheté',
+            'Taux = votre pourcentage de grade',
+            'Niveaux 3 à 9 uniquement',
+            'Le sponsor doit être Niveau 3 minimum'
         ],
         conditions: [
-            { label: 'Grade requis', value: 'Niveau 3 à 9' },
-            { label: 'PV mensuel min', value: '10 PV/mois' },
-            { label: 'Avoir des filleuls', value: 'Obligatoire' }
+            { label: 'Grade du sponsor', value: 'Niveau 3 à 9' },
+            { label: 'Grade du filleul', value: 'Niveau 3 à 9' },
+            { label: 'PV mensuel sponsor', value: '20 à 300 PV' }
         ],
-        pvPayment: 'PV mensuel ≥ 10 PV',
+        pvPayment: 'PV mensuel ≥ 20 à 300 PV (selon grade)',
         table: {
-            headers: ['Votre Grade', 'Votre Taux', 'Taux Filleul', 'Différence', 'Gain /1000 PV'],
+            headers: ['Grade du sponsor', 'Taux', 'Exemple avec 200 PV'],
             rows: [
-                ['Grade 3', '22%', '6% (Niv 2)', '16%', '160$'],
-                ['Grade 4', '26%', '6% (Niv 2)', '20%', '200$'],
-                ['Grade 5', '30%', '22% (Niv 3)', '8%', '80$'],
-                ['Grade 6', '34%', '22% (Niv 3)', '12%', '120$'],
-                ['Grade 7', '40%', '26% (Niv 4)', '14%', '140$'],
-                ['Grade 8', '43%', '30% (Niv 5)', '13%', '130$'],
-                ['Grade 9', '45%', '22% (Niv 3)', '23%', '230$']
+                ['Niveau 3', '22%', '200 × 22% = 44$'],
+                ['Niveau 4', '26%', '200 × 26% = 52$'],
+                ['Niveau 5', '30%', '200 × 30% = 60$'],
+                ['Niveau 6', '34%', '200 × 34% = 68$'],
+                ['Niveau 7', '40%', '200 × 40% = 80$'],
+                ['Niveau 8', '43%', '200 × 43% = 86$'],
+                ['Niveau 9', '45%', '200 × 45% = 90$']
             ]
         },
         info: [
-            { label: 'Taux min', value: '2%' },
-            { label: 'Taux max', value: '39%' },
-            { label: 'Niveaux', value: '2 à 9' }
+            { label: 'Taux min', value: '22%' },
+            { label: 'Taux max', value: '45%' },
+            { label: 'Niveaux', value: '3 à 9' }
         ],
-        formula: 'Commission = PV mensuel × (Votre taux - Taux du parrain direct)',
+        formula: 'Commission = PV du package × Votre taux (%)',
         example: {
-            scenario: 'Vous êtes Grade 8 (43%). Votre filleul A est Grade 4 (26%). A1 a vendu 1000 PV ce mois.',
-            calculation: '1000 PV × (43% - 26%) = 170$',
-            result: 'Vous gagnez 170$ sur les ventes de ce mois.'
+            scenario: 'Vous êtes Niveau 7 (40%). Votre filleul direct achète un package Bronze (200 PV).',
+            calculation: '200 PV × 40% = 80$',
+            result: 'Vous gagnez 80$ de commission directe.'
         },
-        summary: 'La commission indirecte récompense la profondeur de votre réseau.'
+        summary: 'Plus votre grade est élevé, plus vous gagnez sur les achats de vos filleuls directs.'
     },
     3: {
-        icon: '3',
-        iconClass: 'modal-icon-level-3',
-        title: 'Commission Leadership - Niveaux 3 à 9',
-        subtitle: '0.5% à 3.5% sur les ventes mensuelles de 2 à 9 générations',
-        description: 'La commission de leadership récompense les leaders qui développent des équipes profondes. Elle s\'applique à partir du niveau 3 et peut toucher jusqu\'à 9 générations selon votre grade.',
+    icon: '3',
+    iconClass: 'modal-icon-level-3',
+    title: 'Commission Indirecte',
+    subtitle: 'Différence de taux × PV total (Niveaux 3 à 9)',
+    description: 'La commission indirecte est calculée sur la différence entre votre taux et celui de vos downlines. Vous gagnez sur les achats des membres de votre réseau à partir du niveau 3. Le calcul prend en compte le PV total (packages + produits).',
+    details: [
+        'Calculée sur la différence des taux',
+        'Applicable aux niveaux 3 à 9',
+        'Plus la différence est grande, plus vous gagnez',
+        'Basée sur le PV total (packages + produits)'
+    ],
+    conditions: [
+        { label: 'Grade requis', value: 'Niveau 3 à 9' },
+        { label: 'Avoir des downlines', value: 'Obligatoire' }
+    ],
+    pvPayment: 'PV mensuel ≥ 20 à 300 PV (selon grade)',
+    table: {
+        headers: ['Votre Grade', 'Taux', 'Taux du niveau inférieur', 'Différence', 'Gain sur 200 PV', 'Gain sur 250 PV'],
+        rows: [
+            ['Niveau 3', '22%', '-', '-', '-', '-'],
+            ['Niveau 4', '26%', '22% (Niv 3)', '4%', '200 × 4% = 8$', '250 × 4% = 10$'],
+            ['Niveau 5', '30%', '26% (Niv 4)', '4%', '200 × 4% = 8$', '250 × 4% = 10$'],
+            ['Niveau 6', '34%', '30% (Niv 5)', '4%', '200 × 4% = 8$', '250 × 4% = 10$'],
+            ['Niveau 7', '40%', '34% (Niv 6)', '6%', '200 × 6% = 12$', '250 × 6% = 15$'],
+            ['Niveau 8', '43%', '40% (Niv 7)', '3%', '200 × 3% = 6$', '250 × 3% = 7.50$'],
+            ['Niveau 9', '45%', '43% (Niv 8)', '2%', '200 × 2% = 4$', '250 × 2% = 5$']
+        ]
+    },
+    info: [
+        { label: 'Taux min', value: '2%' },
+        { label: 'Taux max', value: '6%' },
+        { label: 'Niveaux', value: '3 à 9' }
+    ],
+    formula: 'Commission = PV total (packages + produits) × (Votre taux - Taux du niveau inférieur)',
+    example: {
+        scenario: 'Vous êtes Niveau 9 (45%). Le niveau inférieur est Niveau 8 (43%). Un membre de votre réseau achète un package Bronze (200 PV) et des produits (50 PV), total 250 PV.',
+        calculation: '250 PV × (45% - 43%) = 250 × 2% = 5$',
+        result: 'Vous gagnez 5$ de commission indirecte.'
+    },
+    summary: 'La commission indirecte récompense la profondeur de votre réseau, en prenant en compte tous les PV générés (packages + produits).'
+},
+    4: {
+        icon: '4',
+        iconClass: 'modal-icon-level-4',
+        title: 'Commission Leadership',
+        subtitle: '0.5% à 3.5% × PV du package (Niveaux 5 à 9)',
+        description: 'La commission de leadership récompense les leaders qui développent des équipes profondes. Elle s\'applique à partir du niveau 5.',
         details: [
-            'Applicable du niveau 3 au niveau 9',
+            'Applicable du niveau 5 au niveau 9',
             'Taux selon votre grade (0.5% à 3.5%)',
-            'Nombre de générations variable (2 à 9)',
             'Conditions : PV mensuel et PV d\'équipe minimum',
-            'Versée mensuellement sur les ventes du mois'
+            'Basée sur le PV du package acheté'
         ],
         conditions: [
             { label: 'Grade requis', value: 'Niveau 5 à 9' },
-            { label: 'PV mensuel', value: '30 à 300 PV/mois' },
-            { label: 'PV d\'équipe mensuel', value: '500 à 5000 PV/mois' }
+            { label: 'PV mensuel', value: '30 à 300 PV' },
+            { label: 'PV d\'équipe', value: '300 à 3000 PV' }
         ],
         pvPayment: 'PV mensuel ≥ 30 à 300 PV (selon grade)',
         table: {
-            headers: ['Grade', 'Taux', 'Générations', 'PV Perso/mois', 'PV Équipe/mois', 'PV pour toucher'],
+            headers: ['Grade', 'Taux', 'PV Perso/mois', 'PV Équipe/mois', 'Gain sur 200 PV'],
             rows: [
-                ['Niveau 5 - Manager Senior', '0.5%', '2', '30 PV', '500 PV', '≥30 PV'],
-                ['Niveau 6 - Directeur Envolée', '1.1%', '4', '50 PV', '1000 PV', '≥50 PV'],
-                ['Niveau 7 - Saphire Manager', '1.8%', '6', '100 PV', '2000 PV', '≥100 PV'],
-                ['Niveau 8 - Diamant Bleu', '2.6%', '8', '180 PV', '3000 PV', '≥200 PV'],
-                ['Niveau 9 - Perle Diamant', '3.5%', '9', '300 PV', '5000 PV', '≥300 PV']
+                ['Niveau 5', '0.5%', '30 PV', '300 PV', '200 × 0.5% = 1$'],
+                ['Niveau 6', '1.1%', '50 PV', '500 PV', '200 × 1.1% = 2.20$'],
+                ['Niveau 7', '1.8%', '100 PV', '1000 PV', '200 × 1.8% = 3.60$'],
+                ['Niveau 8', '2.6%', '200 PV', '2000 PV', '200 × 2.6% = 5.20$'],
+                ['Niveau 9', '3.5%', '300 PV', '3000 PV', '200 × 3.5% = 7$']
             ]
         },
         info: [
             { label: 'Taux min', value: '0.5%' },
             { label: 'Taux max', value: '3.5%' },
-            { label: 'Générations', value: '2 à 9' }
+            { label: 'Niveaux', value: '5 à 9' }
         ],
-        formula: 'Commission = PV mensuel du membre × Taux de leadership (%)',
+        formula: 'Commission = PV package × Taux de leadership (%)',
         example: {
-            scenario: 'Vous êtes Grade 9 (3.5%). Un membre de niveau 5 a vendu 1000 PV ce mois.',
-            calculation: '1000 PV × 3.5% = 35$',
-            result: 'Vous gagnez 35$ sur les ventes de ce mois. Avec 50 membres actifs, cela fait 1750$/mois.'
+            scenario: 'Vous êtes Niveau 9 (3.5%). Un membre de votre réseau achète un package Bronze (200 PV).',
+            calculation: '200 PV × 3.5% = 7$',
+            result: 'Vous gagnez 7$ de commission de leadership.'
         },
         summary: 'La commission de leadership récompense les leaders avec un réseau profond.'
-    },
-    4: {
-        icon: '4',
-        iconClass: 'modal-icon-level-4',
-        title: 'Bonus Consommateur',
-        subtitle: '6% sur vos achats personnels mensuels',
-        description: 'Le bonus consommateur est une récompense pour vos achats personnels. Chaque mois, lorsque vous achetez des produits, vous recevez 6% de cashback sur vos achats.',
-        details: [
-            'Applicable à tous les distributeurs',
-            'Taux fixe de 6% sur vos achats personnels',
-            'Calculé sur le PV de vos achats du mois',
-            'Versé mensuellement sur votre portefeuille',
-            'Obligatoire pour maintenir votre grade actif'
-        ],
-        conditions: [
-            { label: 'Grade requis', value: 'Niveau 1 à 9' },
-            { label: 'PV mensuel', value: '100 PV/mois minimum' },
-            { label: 'Achat personnel', value: 'Obligatoire chaque mois' }
-        ],
-        pvPayment: 'PV mensuel ≥ 100 PV',
-        table: {
-            headers: ['Grade', 'Taux', 'PV Mensuel', 'Gain /100 PV'],
-            rows: [
-                ['Tous les grades', '6%', '100 PV/mois', '6$'],
-                ['Tous les grades', '6%', '500 PV/mois', '30$'],
-                ['Tous les grades', '6%', '1000 PV/mois', '60$'],
-                ['Tous les grades', '6%', '5000 PV/mois', '300$']
-            ]
-        },
-        info: [
-            { label: 'Taux', value: '6%' },
-            { label: 'PV minimum', value: '100 PV/mois' },
-            { label: 'Versement', value: 'Mensuel' }
-        ],
-        formula: 'Bonus = PV mensuel personnel × 6%',
-        example: {
-            scenario: 'Vous avez acheté pour 500 PV de produits ce mois-ci.',
-            calculation: '500 PV × 6% = 30$',
-            result: 'Vous recevez 30$ de cashback sur vos achats personnels.'
-        },
-        summary: 'Le bonus consommateur vous permet de gagner 6% de cashback sur tous vos achats personnels.'
     }
 };
 
@@ -1001,10 +946,9 @@ function openLevelModal(level) {
             <div class="notice-box" style="margin:0.5rem 0; background:rgba(245,158,11,0.06); border-color:rgba(245,158,11,0.2);">
                 <div class="notice-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">!</div>
                 <div class="notice-content">
-                    <div class="notice-title">Basé sur le PV mensuel</div>
+                    <div class="notice-title">Basé sur le PV du package</div>
                     <div class="notice-text">
-                        Les commissions sont calculées sur le <strong>PV vendu dans le mois en cours</strong>, 
-                        pas sur le PV total cumulé.
+                        Les commissions sont calculées sur le <strong>PV du package acheté</strong>.
                     </div>
                 </div>
             </div>
@@ -1047,10 +991,9 @@ function openLevelModal(level) {
             <div class="mt-2 p-2 bg-[var(--bg-secondary)] rounded-lg">
                 <p class="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold">À retenir</p>
                 <ul class="text-xs text-[var(--text-secondary)] space-y-1 mt-1">
-                    <li>• Les commissions sont calculées sur le <strong>PV du mois</strong></li>
+                    <li>• Les commissions sont calculées sur le <strong>PV du package</strong></li>
                     <li>• Plus vous montez en grade, plus vos taux augmentent</li>
-                    <li>• Les PV doivent être atteints <strong>chaque mois</strong></li>
-                    <li>• Les commissions sont versées mensuellement</li>
+                    <li>• Les conditions de PV mensuel doivent être remplies</li>
                 </ul>
             </div>
         </div>

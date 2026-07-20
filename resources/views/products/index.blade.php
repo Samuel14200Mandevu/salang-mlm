@@ -82,6 +82,15 @@
         background: rgba(34, 197, 94, 0.15);
         color: #22c55e;
     }
+    .pv-badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        background: rgba(59,130,246,0.12);
+        color: #3b82f6;
+    }
     
     .input {
         width: 100%;
@@ -164,9 +173,6 @@
         gap: 1rem;
     }
     
-    /* ============================================================
-       RESPONSIVE GRID
-    ============================================================ */
     @media (min-width: 1280px) {
         .product-grid {
             grid-template-columns: repeat(5, 1fr);
@@ -217,9 +223,6 @@
         }
     }
 
-    /* ============================================================
-       PAGINATION - NEXT / PREVIOUS
-    ============================================================ */
     .pagination-container {
         display: flex;
         align-items: center;
@@ -443,6 +446,17 @@
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
                                 {{ Str::limit($product->description ?? '', 40) }}
                             </p>
+                            
+                            <!-- PV ET BV -->
+                            <div class="flex items-center gap-2 mt-1">
+                                @if($product->pv_value)
+                                    <span class="pv-badge">{{ $product->pv_value }} PV</span>
+                                @endif
+                                @if($product->bv_value)
+                                    <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
+                                @endif
+                            </div>
+                            
                             <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
                                 <span class="product-price text-sm sm:text-lg font-bold text-primary-500">${{ number_format($product->price, 2) }}</span>
                                 <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-green-500' : ($product->stock > 0 ? 'text-orange-500' : 'text-red-500') }}">
@@ -480,10 +494,8 @@
                 @endforeach
             </div>
 
-            <!-- ✅ PAGINATION AVEC NEXT / PREVIOUS -->
             @if($products->hasPages())
                 <div class="pagination-container" id="paginationContainer">
-                    <!-- Previous Button -->
                     @if($products->onFirstPage())
                         <span class="pagination-btn disabled">
                             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,7 +512,6 @@
                         </a>
                     @endif
 
-                    <!-- Page Numbers -->
                     <div class="page-numbers">
                         @php
                             $currentPage = $products->currentPage();
@@ -532,7 +543,6 @@
                         @endphp
                     </div>
 
-                    <!-- Next Button -->
                     @if($products->hasMorePages())
                         <a href="{{ $products->nextPageUrl() }}" class="pagination-btn">
                             Suivant
@@ -565,7 +575,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Mettre à jour le compteur du panier
     updateCartCount();
     
     var searchInput = document.getElementById('searchInput');

@@ -68,13 +68,13 @@ class OrderController extends Controller
         }
 
         if ($order->status !== 'pending' && $order->status !== 'completed') {
-            return back()->with('error', 'This order cannot be cancelled.');
+            return back()->with('error', 'Cette commande ne peut pas être annulée.');
         }
 
         DB::beginTransaction();
 
         try {
-            // ✅ REMBOURSER LE WALLET SI LA COMMANDE ÉTAIT PAYÉE
+            // Rembourser le wallet si la commande était payée
             if ($order->payment_status === 'completed' && $order->paid_at) {
                 $wallet = Wallet::where('user_id', $order->user_id)->first();
                 if ($wallet) {
@@ -92,7 +92,7 @@ class OrderController extends Controller
                         'balance_before' => $balanceBefore,
                         'balance_after' => $wallet->balance,
                         'status' => 'completed',
-                        'description' => 'Refund for order #' . $order->order_number,
+                        'description' => 'Remboursement pour la commande #' . $order->order_number,
                         'completed_at' => now(),
                     ]);
                 }
@@ -101,7 +101,7 @@ class OrderController extends Controller
             $order->status = 'cancelled';
             $order->save();
 
-            // ✅ REMETTRE LES PRODUITS EN STOCK
+            // Remettre les produits en stock
             foreach ($order->items as $item) {
                 if ($item->product_id) {
                     $product = Product::find($item->product_id);
@@ -114,7 +114,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            Log::info('Order cancelled', [
+            Log::info('Commande annulée', [
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
                 'order_number' => $order->order_number,
@@ -122,15 +122,15 @@ class OrderController extends Controller
             ]);
 
             return redirect()->route('orders.index')
-                ->with('success', 'Order cancelled successfully.');
+                ->with('success', 'Commande annulée avec succès.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error cancelling order', [
+            Log::error('Erreur lors de l\'annulation de la commande', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error cancelling order: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
         }
     }
 
@@ -144,7 +144,7 @@ class OrderController extends Controller
 
         if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('orders.invoice', compact('order'));
-            return $pdf->download('invoice_' . $order->order_number . '.pdf');
+            return $pdf->download('facture_' . $order->order_number . '.pdf');
         }
 
         if (class_exists('\Dompdf\Dompdf')) {
@@ -153,10 +153,10 @@ class OrderController extends Controller
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
-            return $dompdf->stream('invoice_' . $order->order_number . '.pdf');
+            return $dompdf->stream('facture_' . $order->order_number . '.pdf');
         }
 
-        return back()->with('error', 'PDF module not installed. Please contact the administrator.');
+        return back()->with('error', 'Module PDF non installé. Contactez l\'administrateur.');
     }
 
     public function apiIndex(Request $request)
@@ -180,7 +180,7 @@ class OrderController extends Controller
         if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
+                'message' => 'Non autorisé'
             ], 403);
         }
 

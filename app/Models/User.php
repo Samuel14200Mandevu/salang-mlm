@@ -601,7 +601,7 @@ class User extends Authenticatable
     // MÉTHODES DE GRADE
     // ============================================================
 
-    /**
+       /**
      * Calcule et met à jour le grade
      */
     public function calculateAndUpdateRank(): bool
@@ -617,11 +617,13 @@ class User extends Authenticatable
             if ($newRank->id != $this->rank_id) {
                 $oldRankId = $this->rank_id;
                 $oldRankName = $this->rank ?? 'Distributeur';
+                $oldRankLevel = $this->rank_level ?? 1;
                 
                 DB::beginTransaction();
                 
                 $this->rank_id = $newRank->id;
                 $this->rank = $newRank->name;
+                $this->rank_level = $newRank->level; 
                 $this->last_rank_update = now();
                 $this->saveQuietly();
                 $this->clearRankCache();
@@ -632,6 +634,8 @@ class User extends Authenticatable
                     'new_rank_id' => $newRank->id,
                     'old_rank_name' => $oldRankName,
                     'new_rank_name' => $newRank->name,
+                    'old_rank_level' => $oldRankLevel, 
+                    'new_rank_level' => $newRank->level, 
                     'pv_at_time' => $this->pv_balance,
                     'bv_at_time' => $this->bv_balance,
                     'monthly_pv_at_time' => $this->monthly_pv,
@@ -644,6 +648,8 @@ class User extends Authenticatable
                     'user_id' => $this->id,
                     'old_rank' => $oldRankName,
                     'new_rank' => $newRank->name,
+                    'old_level' => $oldRankLevel,
+                    'new_level' => $newRank->level,
                 ]);
                 
                 return true;

@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\PackageController as AdminPackageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CommissionController as AdminCommissionController;
 use App\Http\Controllers\Admin\CommissionPeriodController as AdminCommissionPeriodController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
@@ -48,7 +49,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// ✅ Route Contact - AJOUTÉE POUR CORRIGER L'ERREUR
 Route::view('/contact', 'pages.contact')->name('contact');
 
 // Sponsor & Email check (AJAX)
@@ -235,7 +235,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
 
     // ============================================================
-    // COMMANDES (ORDERS)
+    // COMMANDES (ORDERS) - Routes utilisateur
     // ============================================================
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
@@ -253,6 +253,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/dashboard', [CommissionDashboardController::class, 'index'])->name('dashboard');
         Route::get('/export', [CommissionController::class, 'export'])->name('export');
         Route::get('/levels', [CommissionController::class, 'getLevelCommissions'])->name('levels');
+        Route::get('/{id}/json', [CommissionController::class, 'getJsonDetails'])->name('json.details');
+        Route::get('/export', [CommissionController::class, 'export'])->name('export');
+        Route::get('/export-pdf', [CommissionController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/{id}', [CommissionController::class, 'show'])->name('show');
     });
 
@@ -337,6 +340,17 @@ Route::prefix('admin')
 
         // ALIAS
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
+
+        // ============================================================
+        // ORDERS ADMIN - CORRIGÉ (Utilisation du nom complet)
+        // ============================================================
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', ['App\Http\Controllers\Admin\AdminOrderController', 'index'])->name('index');
+            Route::get('/{order}', ['App\Http\Controllers\Admin\AdminOrderController', 'show'])->name('show');
+            Route::get('/{order}/invoice', ['App\Http\Controllers\Admin\AdminOrderController', 'invoice'])->name('invoice');
+            Route::put('/{order}/status', ['App\Http\Controllers\Admin\AdminOrderController', 'updateStatus'])->name('update-status');
+            Route::get('/export', ['App\Http\Controllers\Admin\AdminOrderController', 'export'])->name('export');
+        });
 
         // ============================================================
         // COMMISSIONS ADMIN
@@ -465,37 +479,41 @@ Route::prefix('admin')
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
 
         // ============================================================
-        // SETTINGS ADMIN
-        // ============================================================
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-            Route::put('/', [AdminSettingController::class, 'update'])->name('update');
+// SETTINGS ADMIN
+// ============================================================
+Route::prefix('settings')->name('settings.')->group(function () {
+    Route::get('/', [AdminSettingController::class, 'index'])->name('index');
+    Route::put('/', [AdminSettingController::class, 'update'])->name('update');
 
-            // Commission Settings
-            Route::prefix('commission')->name('commission.')->group(function () {
-                Route::get('/', [AdminSettingController::class, 'commission'])->name('index');
-                Route::put('/', [AdminSettingController::class, 'updateCommission'])->name('update');
-            });
+    // Commission Settings
+    Route::prefix('commission')->name('commission.')->group(function () {
+        Route::get('/', [AdminSettingController::class, 'commission'])->name('index');
+        Route::put('/', [AdminSettingController::class, 'updateCommission'])->name('update');
+    });
 
-            // Payment Settings
-            Route::prefix('payment')->name('payment.')->group(function () {
-                Route::get('/', [AdminSettingController::class, 'payment'])->name('index');
-                Route::put('/', [AdminSettingController::class, 'updatePayment'])->name('update');
-            });
+    // Payment Settings
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::get('/', [AdminSettingController::class, 'payment'])->name('index');
+        Route::put('/', [AdminSettingController::class, 'updatePayment'])->name('update');
+    });
 
-            // ALIAS RAPIDES
-            Route::get('/commission', [AdminSettingController::class, 'commission'])->name('commission');
-            Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
+    // ALIAS RAPIDES
+    Route::get('/commission', [AdminSettingController::class, 'commission'])->name('commission');
+    Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
 
-            // System
-            Route::post('/clear-cache', [AdminSettingController::class, 'clearCache'])->name('clear-cache');
-            Route::post('/optimize', [AdminSettingController::class, 'optimize'])->name('optimize');
-            Route::post('/toggle-maintenance', [AdminSettingController::class, 'toggleMaintenance'])->name('toggle-maintenance');
-            Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
-        });
+    // ✅ AJOUTER CES ALIAS POUR COMPATIBILITÉ AVEC LES VUES
+    Route::put('/commission/update', [AdminSettingController::class, 'updateCommission'])->name('update-commission');
+    Route::put('/payment/update', [AdminSettingController::class, 'updatePayment'])->name('update-payment');
 
-        // ALIAS
-        Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
+    // System
+    Route::post('/clear-cache', [AdminSettingController::class, 'clearCache'])->name('clear-cache');
+    Route::post('/optimize', [AdminSettingController::class, 'optimize'])->name('optimize');
+    Route::post('/toggle-maintenance', [AdminSettingController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+    Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
+});
+
+// ALIAS
+Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
 
         // ============================================================
         // ADMIN ACTIVATIONS

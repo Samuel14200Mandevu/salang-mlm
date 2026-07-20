@@ -141,7 +141,7 @@
             <span class="badge">Unilevel</span>
         </div>
         
-        <form action="{{ route('admin.settings.update-commission') }}" method="POST">
+        <form action="{{ route('admin.settings.commission.update') }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -151,7 +151,7 @@
                 <div class="form-group">
                     <label>Direct Commission (%) <span class="required">*</span></label>
                     <input type="number" name="direct_rate" step="0.01" min="0" max="100"
-                           value="{{ old('direct_rate', $commissionSettings['rates']['direct'] ?? 30) }}"
+                           value="{{ old('direct_rate') ?? ($commissionSettings['rates']['direct'] ?? 30) }}"
                            class="input @error('direct_rate') input-error @enderror" required>
                     <p class="help-text">Commission paid to the direct sponsor</p>
                     @error('direct_rate')
@@ -163,7 +163,7 @@
                 <div class="form-group">
                     <label>Indirect Commission (%) <span class="required">*</span></label>
                     <input type="number" name="indirect_rate" step="0.01" min="0" max="100"
-                           value="{{ old('indirect_rate', $commissionSettings['rates']['indirect'] ?? 15) }}"
+                           value="{{ old('indirect_rate') ?? ($commissionSettings['rates']['indirect'] ?? 15) }}"
                            class="input @error('indirect_rate') input-error @enderror" required>
                     <p class="help-text">Commission paid to the sponsor's sponsor (level 2)</p>
                     @error('indirect_rate')
@@ -175,7 +175,7 @@
                 <div class="form-group">
                     <label>Leadership Commission (%) <span class="required">*</span></label>
                     <input type="number" name="leadership_rate" step="0.01" min="0" max="100"
-                           value="{{ old('leadership_rate', $commissionSettings['rates']['leadership'] ?? 10) }}"
+                           value="{{ old('leadership_rate') ?? ($commissionSettings['rates']['leadership'] ?? 10) }}"
                            class="input @error('leadership_rate') input-error @enderror" required>
                     <p class="help-text">Commission paid to leaders (levels 3+)</p>
                     @error('leadership_rate')
@@ -187,7 +187,7 @@
                 <div class="form-group">
                     <label>Retail Profit (%) <span class="required">*</span></label>
                     <input type="number" name="retail_rate" step="0.01" min="0" max="100"
-                           value="{{ old('retail_rate', $commissionSettings['rates']['retail'] ?? 25) }}"
+                           value="{{ old('retail_rate') ?? ($commissionSettings['rates']['retail'] ?? 25) }}"
                            class="input @error('retail_rate') input-error @enderror" required>
                     <p class="help-text">Profit on retail product sales</p>
                     @error('retail_rate')
@@ -214,7 +214,7 @@
             <span class="badge">Thresholds</span>
         </div>
         
-        <form action="{{ route('admin.settings.update-commission') }}" method="POST">
+        <form action="{{ route('admin.settings.commission.update') }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -224,7 +224,7 @@
                 <div class="form-group">
                     <label>Leadership Min PV <span class="required">*</span></label>
                     <input type="number" name="leadership_min_pv" min="0"
-                           value="{{ old('leadership_min_pv', $commissionSettings['leadership']['min_pv'] ?? 1000) }}"
+                           value="{{ old('leadership_min_pv') ?? ($commissionSettings['leadership']['min_pv'] ?? 1000) }}"
                            class="input @error('leadership_min_pv') input-error @enderror" required>
                     <p class="help-text">Minimum PV required to be a leader</p>
                     @error('leadership_min_pv')
@@ -236,7 +236,7 @@
                 <div class="form-group">
                     <label>Leadership Max Levels <span class="required">*</span></label>
                     <input type="number" name="leadership_max_levels" min="1" max="10"
-                           value="{{ old('leadership_max_levels', $commissionSettings['leadership']['max_levels'] ?? 5) }}"
+                           value="{{ old('leadership_max_levels') ?? ($commissionSettings['leadership']['max_levels'] ?? 5) }}"
                            class="input @error('leadership_max_levels') input-error @enderror" required>
                     <p class="help-text">Maximum levels for leadership commission</p>
                     @error('leadership_max_levels')
@@ -248,7 +248,7 @@
                 <div class="form-group">
                     <label>Withdrawal Fee (%) <span class="required">*</span></label>
                     <input type="number" name="withdrawal_fee" step="0.01" min="0" max="100"
-                           value="{{ old('withdrawal_fee', $commissionSettings['withdrawal_fee'] ?? 2.5) }}"
+                           value="{{ old('withdrawal_fee') ?? ($commissionSettings['withdrawal_fee'] ?? 2.5) }}"
                            class="input @error('withdrawal_fee') input-error @enderror" required>
                     <p class="help-text">Fee charged on each withdrawal</p>
                     @error('withdrawal_fee')
@@ -260,7 +260,7 @@
                 <div class="form-group">
                     <label>Min Withdrawal ($) <span class="required">*</span></label>
                     <input type="number" name="min_withdrawal" step="0.01" min="0"
-                           value="{{ old('min_withdrawal', $commissionSettings['min_withdrawal'] ?? 10) }}"
+                           value="{{ old('min_withdrawal') ?? ($commissionSettings['min_withdrawal'] ?? 10) }}"
                            class="input @error('min_withdrawal') input-error @enderror" required>
                     <p class="help-text">Minimum amount allowed for withdrawal</p>
                     @error('min_withdrawal')

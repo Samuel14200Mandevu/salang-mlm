@@ -41,7 +41,6 @@ class CartController extends Controller
             $total += $item['price'] * $item['quantity'];
         }
 
-        // ✅ RÉCUPÉRER LE WALLET DE L'UTILISATEUR
         $wallet = Wallet::where('user_id', $user->id)->first();
         $walletBalance = $wallet ? $wallet->balance : 0;
 
@@ -73,10 +72,10 @@ class CartController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Insufficient stock'
+                    'message' => 'Stock insuffisant'
                 ], 400);
             }
-            return back()->with('error', 'Insufficient stock');
+            return back()->with('error', 'Stock insuffisant');
         }
 
         $cart = Session::get('cart', []);
@@ -104,11 +103,11 @@ class CartController extends Controller
             return response()->json([
                 'success' => true,
                 'count' => $count,
-                'message' => $product->name . ' added to cart!'
+                'message' => $product->name . ' ajouté au panier!'
             ]);
         }
 
-        return back()->with('success', 'Product added to cart!');
+        return back()->with('success', 'Produit ajouté au panier!');
     }
 
     public function addPackage(Request $request)
@@ -120,14 +119,14 @@ class CartController extends Controller
         $package = Package::find($request->package_id);
 
         if (!$package) {
-            return back()->with('error', 'Package not found');
+            return back()->with('error', 'Package non trouvé');
         }
 
         $cart = Session::get('cart', []);
 
         foreach ($cart as $key => $item) {
             if ($item['type'] == 'package' && $item['id'] == $package->id) {
-                return back()->with('error', 'This package is already in the cart');
+                return back()->with('error', 'Ce package est déjà dans le panier');
             }
         }
 
@@ -144,7 +143,7 @@ class CartController extends Controller
         Session::put('cart', $cart);
         $count = array_sum(array_column($cart, 'quantity'));
 
-        return back()->with('success', 'Package added to cart!');
+        return back()->with('success', 'Package ajouté au panier!');
     }
 
     public function remove($id)
@@ -154,10 +153,10 @@ class CartController extends Controller
         if (isset($cart[$id])) {
             unset($cart[$id]);
             Session::put('cart', $cart);
-            return back()->with('success', 'Item removed from cart');
+            return back()->with('success', 'Article supprimé du panier');
         }
 
-        return back()->with('error', 'Item not found');
+        return back()->with('error', 'Article non trouvé');
     }
 
     public function update(Request $request)
@@ -172,16 +171,16 @@ class CartController extends Controller
         if (isset($cart[$request->id])) {
             $cart[$request->id]['quantity'] = $request->quantity;
             Session::put('cart', $cart);
-            return back()->with('success', 'Quantity updated');
+            return back()->with('success', 'Quantité mise à jour');
         }
 
-        return back()->with('error', 'Item not found');
+        return back()->with('error', 'Article non trouvé');
     }
 
     public function clear()
     {
         Session::forget('cart');
-        return redirect()->route('cart.index')->with('success', 'Cart cleared');
+        return redirect()->route('cart.index')->with('success', 'Panier vidé');
     }
 
     public function checkout(Request $request)
@@ -190,7 +189,7 @@ class CartController extends Controller
         $cart = Session::get('cart', []);
 
         if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty');
+            return redirect()->route('cart.index')->with('error', 'Votre panier est vide');
         }
 
         $subtotal = 0;
@@ -198,37 +197,32 @@ class CartController extends Controller
             $subtotal += $item['price'] * $item['quantity'];
         }
 
-        $tax = $subtotal * 0.18;
-        $shipping = $subtotal > 100 ? 0 : 10;
-        $total = $subtotal + $tax + $shipping;
+        // ✅ PAS DE TVA - Livraison gratuite
+        $total = $subtotal;
 
-        // ✅ RÉCUPÉRER LE WALLET
         $wallet = Wallet::where('user_id', $user->id)->first();
 
         if (!$wallet) {
-            return back()->with('error', 'Wallet not found. Please contact support.');
+            return back()->with('error', 'Portefeuille non trouvé. Contactez le support.');
         }
 
-        // ✅ VÉRIFIER LE SOLDE
         if ($wallet->balance < $total) {
-            return back()->with('error', 'Insufficient balance. You have $' . number_format($wallet->balance, 2) . ' and the total is $' . number_format($total, 2) . '.');
+            return back()->with('error', 'Solde insuffisant. Vous avez $' . number_format($wallet->balance, 2) . ' et le total est de $' . number_format($total, 2) . '.');
         }
 
         DB::beginTransaction();
 
         try {
-            // ✅ 1. DÉDUIRE L'ARGENT DU WALLET
             $balanceBefore = $wallet->balance;
             $wallet->balance -= $total;
             $wallet->save();
 
-            // ✅ 2. CRÉER LA COMMANDE
             $order = Order::create([
                 'user_id' => $user->id,
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
                 'subtotal' => $subtotal,
-                'tax' => $tax,
-                'shipping' => $shipping,
+                'tax' => 0,
+                'shipping' => 0,
                 'discount' => 0,
                 'total' => $total,
                 'status' => 'completed',
@@ -240,10 +234,8 @@ class CartController extends Controller
 
             $totalPV = 0;
             $totalBV = 0;
-            $hasPackage = false;
-            $packageForCommission = null;
+            $itemsForCommission = [];
 
-            // ✅ 3. CRÉER LES ITEMS
             foreach ($cart as $key => $item) {
                 $pvValue = $item['pv_value'] ?? 0;
                 $bvValue = $item['bv_value'] ?? 0;
@@ -270,11 +262,23 @@ class CartController extends Controller
                 $totalPV += $pvValue * $item['quantity'];
                 $totalBV += $bvValue * $item['quantity'];
 
+                // ✅ Collecter les items pour les commissions (PACKAGES ET PRODUITS)
+                $itemData = null;
                 if ($item['type'] == 'package') {
-                    $hasPackage = true;
-                    $packageForCommission = Package::find($item['id']);
+                    $itemData = Package::find($item['id']);
+                } elseif ($item['type'] == 'product') {
+                    $itemData = Product::find($item['id']);
                 }
 
+                if ($itemData) {
+                    $itemsForCommission[] = [
+                        'type' => $item['type'],
+                        'data' => $itemData,
+                        'quantity' => $item['quantity'],
+                    ];
+                }
+
+                // Mettre à jour le stock pour les produits
                 if ($item['type'] == 'product') {
                     $product = Product::find($item['id']);
                     if ($product) {
@@ -284,14 +288,12 @@ class CartController extends Controller
                 }
             }
 
-            // ✅ 4. METTRE À JOUR LES PV
             $user->pv_balance += $totalPV;
             $user->bv_balance += $totalBV;
             $user->monthly_pv += $totalPV;
             $user->monthly_bv += $totalBV;
             $user->save();
 
-            // ✅ 5. TRANSACTION DE PAIEMENT
             Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
@@ -302,7 +304,7 @@ class CartController extends Controller
                 'balance_before' => $balanceBefore,
                 'balance_after' => $wallet->balance,
                 'status' => 'completed',
-                'description' => 'Order #' . $order->order_number,
+                'description' => 'Commande #' . $order->order_number,
                 'metadata' => json_encode([
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
@@ -311,48 +313,62 @@ class CartController extends Controller
                 'completed_at' => now(),
             ]);
 
-            // ✅ 6. METTRE À JOUR L'ÉQUIPE
             $user->updateTeamPVWithoutEvents();
             $user->updateAllAncestorsWithoutEvents();
             $user->calculateAndUpdateRank();
 
-            // ✅ 7. CALCULER LES COMMISSIONS
-            if ($hasPackage && $packageForCommission) {
-                $this->calculateCommissionsForOrder($order, $user, $packageForCommission);
+            // ✅ CALCULER LES COMMISSIONS SEULEMENT SI L'UTILISATEUR EST ACTIF
+            if ($user->is_active) {
+                $this->calculateCommissionsForOrder($order, $user, $itemsForCommission);
+                Log::info('Commissions calculées pour la commande', [
+                    'order_id' => $order->id,
+                    'user_id' => $user->id,
+                    'user_status' => 'actif',
+                ]);
+            } else {
+                Log::info('Commissions NON calculées - compte inactif', [
+                    'order_id' => $order->id,
+                    'user_id' => $user->id,
+                    'user_status' => 'inactif',
+                    'items_count' => count($itemsForCommission),
+                ]);
             }
 
-            // ✅ 8. VIDER LE PANIER
             Session::forget('cart');
             DB::commit();
 
-            Log::info('Order completed with payment', [
+            Log::info('Commande finalisée avec paiement', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
+                'user_is_active' => $user->is_active,
                 'total' => $total,
                 'wallet_balance_after' => $wallet->balance,
-                'has_package' => $hasPackage,
+                'items_count' => count($cart),
+                'commissions_items_count' => count($itemsForCommission),
+                'commissions_calculated' => $user->is_active,
             ]);
 
             return redirect()->route('orders.show', $order)
-                ->with('success', 'Order placed successfully! $' . number_format($total, 2) . ' deducted from your wallet.');
+                ->with('success', 'Commande passée avec succès! $' . number_format($total, 2) . ' débité de votre portefeuille.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Checkout error: ' . $e->getMessage(), [
+            Log::error('Erreur lors du checkout: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString(),
             ]);
-            return back()->with('error', 'Error placing order: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la commande: ' . $e->getMessage());
         }
     }
 
     /**
-     * Calculer les commissions pour une commande
+     * ✅ Calculer les commissions pour tous les items de la commande
      */
-    private function calculateCommissionsForOrder($order, $user, $package): void
+    private function calculateCommissionsForOrder($order, $user, array $itemsForCommission): void
     {
         try {
+            // Récupérer ou créer la période de commission
             $period = CommissionPeriod::firstOrCreate(
                 ['period' => date('Y-m')],
                 [
@@ -362,24 +378,53 @@ class CartController extends Controller
                 ]
             );
 
-            $commissions = $this->commissionDistributor->distributeCommissions(
-                $user,
-                $package,
-                $order->id,
-                $period
-            );
+            $totalCommissions = 0;
+            $totalCommissionCount = 0;
+            $allCommissions = [];
 
-            $totalAmount = collect($commissions)->sum('amount');
+            foreach ($itemsForCommission as $itemData) {
+                $item = $itemData['data'];
+                $quantity = $itemData['quantity'] ?? 1;
 
-            Log::info('Commissions calculées pour la commande', [
+                // Pour chaque quantité, distribuer les commissions
+                for ($i = 0; $i < $quantity; $i++) {
+                    $commissions = $this->commissionDistributor->distributeCommissions(
+                        $user,
+                        $item,
+                        $order->id,
+                        $period
+                    );
+
+                    if (!empty($commissions)) {
+                        $allCommissions = array_merge($allCommissions, $commissions);
+                        $totalCommissions += collect($commissions)->sum('amount');
+                        $totalCommissionCount += count($commissions);
+                    }
+
+                    Log::info('Commissions calculées pour l\'item', [
+                        'order_id' => $order->id,
+                        'item_type' => $itemData['type'],
+                        'item_name' => $item->name,
+                        'quantity' => $quantity,
+                        'commissions_count' => count($commissions),
+                        'amount' => collect($commissions)->sum('amount'),
+                    ]);
+                }
+            }
+
+            Log::info('Total commissions calculées pour la commande', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'package_id' => $package->id,
-                'package_name' => $package->name,
-                'commissions_count' => count($commissions),
-                'total_amount' => $totalAmount,
+                'total_commissions' => $totalCommissionCount,
+                'total_amount' => $totalCommissions,
+                'commissions_details' => collect($allCommissions)->groupBy('type')->map(function($group) {
+                    return [
+                        'count' => $group->count(),
+                        'total' => $group->sum('amount'),
+                    ];
+                })->toArray(),
             ]);
 
         } catch (\Exception $e) {

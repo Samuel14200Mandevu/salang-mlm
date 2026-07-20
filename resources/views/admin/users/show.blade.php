@@ -401,7 +401,7 @@
                     <span class="value text-sm">{{ $user->created_at->format('d/m/Y H:i') }}</span>
                 </div>
 
-                <!-- ✅ PACKAGE D'ACTIVATION -->
+                <!-- PACKAGE D'ACTIVATION -->
                 <div class="info-row">
                     <span class="label">Package d'activation</span>
                     <span class="value">

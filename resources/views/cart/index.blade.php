@@ -71,6 +71,15 @@
         padding: 0.375rem 1rem;
         font-size: 0.75rem;
     }
+    .btn-cancel {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+    .btn-cancel:hover {
+        background: var(--bg-hover);
+        transform: translateY(-2px);
+    }
     
     .card {
         background: var(--bg-card);
@@ -101,6 +110,88 @@
     .balance-card:hover {
         border-color: rgba(245, 158, 11, 0.4);
         transform: translateX(4px);
+    }
+
+    /* ===== MODAL DE CONFIRMATION ===== */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: var(--shadow-xl);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+    .modal-overlay.active .modal-box {
+        transform: scale(1);
+    }
+    .modal-icon {
+        width: 4rem;
+        height: 4rem;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .modal-icon-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+    .modal-icon-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    .modal-title {
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    .modal-text {
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    .modal-text strong {
+        color: var(--text-primary);
+    }
+    .modal-text .text-danger {
+        color: #ef4444;
+    }
+    .modal-text .text-warning {
+        color: #f59e0b;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .modal-actions .btn {
+        min-width: 100px;
+        justify-content: center;
     }
     
     @keyframes fadeInUp {
@@ -139,6 +230,11 @@
             gap: 0.25rem;
         }
         .balance-card { padding: 0.75rem; }
+        .modal-box { padding: 1.5rem; }
+        .modal-actions { flex-direction: column; }
+        .modal-actions .btn { width: 100%; }
+        .modal-title { font-size: 1rem; }
+        .modal-text { font-size: 0.813rem; }
     }
     
     @media (max-width: 480px) {
@@ -168,7 +264,7 @@
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez vos articles avant de passer la commande</p>
     </div>
 
-    <!-- ✅ Balance Info - CORRIGÉ -->
+    <!-- Balance Info -->
     <div class="balance-card animate-fadeInUp delay-1">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -263,12 +359,9 @@
                         </svg>
                         Continuer mes achats
                     </a>
-                    <form action="{{ route('cart.clear') }}" method="POST" class="inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Vider votre panier ?')">
-                            Vider le panier
-                        </button>
-                    </form>
+                    <button type="button" onclick="openClearCartModal()" class="btn btn-danger btn-sm">
+                        Vider le panier
+                    </button>
                 </div>
             </div>
 
@@ -278,9 +371,8 @@
                     <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Résumé de la commande</h3>
                     
                     @php
-                        $tax = $total * 0.16;
-                        $shipping = $total > 100 ? 0 : 10;
-                        $grandTotal = $total + $tax + $shipping;
+                        $shipping = 0;
+                        $grandTotal = $total + $shipping;
                         $balance = $walletBalance ?? 0;
                         $canAfford = $balance >= $grandTotal;
                     @endphp
@@ -291,12 +383,8 @@
                             <span class="font-medium">${{ number_format($total, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-[var(--text-secondary)]">Taxes (16%)</span>
-                            <span class="font-medium">${{ number_format($tax, 2) }}</span>
-                        </div>
-                        <div class="flex justify-between">
                             <span class="text-[var(--text-secondary)]">Livraison</span>
-                            <span class="font-medium">{{ $shipping > 0 ? '$' . number_format($shipping, 2) : 'Gratuite' }}</span>
+                            <span class="font-medium text-green-500">Gratuite</span>
                         </div>
                         <div class="border-t border-[var(--border-color)] pt-3 mt-3">
                             <div class="flex justify-between text-base sm:text-lg font-bold">
@@ -308,7 +396,7 @@
                         </div>
                     </div>
 
-                    <!-- ✅ Vérification du solde -->
+                    <!-- Vérification du solde -->
                     <div class="mt-3">
                         @if($canAfford)
                             <form action="{{ route('cart.checkout') }}" method="POST">
@@ -336,7 +424,7 @@
                         @endif
                     </div>
                     
-                    <!-- ✅ PV Total -->
+                    <!-- PV Total -->
                     @php
                         $totalPV = array_sum(array_map(function($item) {
                             return ($item['pv_value'] ?? 0) * ($item['quantity'] ?? 1);
@@ -354,4 +442,92 @@
         </div>
     @endif
 </div>
+
+<!-- ============================================================ -->
+<!-- MODAL DE CONFIRMATION POUR VIDER LE PANIER -->
+<!-- ============================================================ -->
+<div id="clearCartModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-warning">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <h3 class="modal-title">Vider le panier ?</h3>
+        <p class="modal-text">
+            Êtes-vous sûr de vouloir <strong class="text-warning">vider votre panier</strong> ?
+            <br>
+            <span class="text-xs text-[var(--text-tertiary)]">Cette action est irréversible.</span>
+        </p>
+        <div class="modal-actions">
+            <button type="button" onclick="closeClearCartModal()" class="btn btn-outline btn-sm">
+                Annuler
+            </button>
+            <form id="clearCartForm" action="{{ route('cart.clear') }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger btn-sm" id="confirmClearBtn">
+                    Vider le panier
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+// ============================================================
+// MODAL VIDER LE PANIER
+// ============================================================
+function openClearCartModal() {
+    document.getElementById('clearCartModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeClearCartModal() {
+    document.getElementById('clearCartModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// ============================================================
+// FERMER LES MODALS EN CLIQUANT À L'EXTÉRIEUR
+// ============================================================
+document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// ============================================================
+// FERMER LES MODALS AVEC LA TOUCHE ESCAPE
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+});
+
+// ============================================================
+// DÉSACTIVER LE BOUTON APRÈS SOUMISSION
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('clearCartForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            var btn = document.getElementById('confirmClearBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Suppression...';
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection
