@@ -419,22 +419,6 @@
         </div>
     </div>
 
-    <!-- Reseau -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-4">
-        <div class="network-level-3 l1">
-            <div class="number">{{ $level1 }}</div>
-            <div class="label">Niveau 1</div>
-        </div>
-        <div class="network-level-3 l2">
-            <div class="number">{{ $level2 }}</div>
-            <div class="label">Niveau 2</div>
-        </div>
-        <div class="network-level-3 l3">
-            <div class="number">{{ $level3 }}</div>
-            <div class="label">Niveau 3</div>
-        </div>
-    </div>
-
     <!-- Rank Progress -->
     <div class="card-3 animate-fadeInUp delay-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

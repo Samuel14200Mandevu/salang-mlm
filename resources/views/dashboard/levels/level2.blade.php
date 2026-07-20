@@ -370,50 +370,6 @@
         </div>
     </div>
 
-    <!-- Reseau -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-4">
-        <div class="card-2">
-            <h4 class="font-semibold text-[var(--text-primary)] text-sm mb-3">Mon reseau</h4>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="network-level-2 l1">
-                    <div class="number">{{ $level1 }}</div>
-                    <div class="label">Niveau 1</div>
-                </div>
-                <div class="network-level-2 l2">
-                    <div class="number">{{ $level2 }}</div>
-                    <div class="label">Niveau 2</div>
-                </div>
-            </div>
-            <div class="mt-3 pt-3 border-t border-[var(--border-color)] flex justify-between">
-                <span class="text-sm text-[var(--text-secondary)]">Total equipe</span>
-                <span class="text-sm font-bold text-primary-500">{{ $level1 + $level2 }}</span>
-            </div>
-        </div>
-        <div class="card-2">
-            <h4 class="font-semibold text-[var(--text-secondary)] text-sm mb-3">Objectifs Niveau 3</h4>
-            <div class="space-y-3">
-                <div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-[var(--text-secondary)]">Filleuls directs</span>
-                        <span class="font-semibold">{{ $totalDownlines }} / 5</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-[var(--bg-secondary)] rounded-full mt-1">
-                        <div class="h-1.5 bg-blue-500 rounded-full transition-all duration-1000" style="width: {{ min(($totalDownlines / 5) * 100, 100) }}%;"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-[var(--text-secondary)]">PV mensuel</span>
-                        <span class="font-semibold">{{ number_format($pvPersonnel) }} / 1000</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-[var(--bg-secondary)] rounded-full mt-1">
-                        <div class="h-1.5 bg-green-500 rounded-full transition-all duration-1000" style="width: {{ min(($pvPersonnel / 1000) * 100, 100) }}%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Rank Progress -->
     <div class="card-2 animate-fadeInUp delay-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
