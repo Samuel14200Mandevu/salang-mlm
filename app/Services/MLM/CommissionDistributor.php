@@ -1,5 +1,4 @@
 <?php
-// app/Services/MLM/CommissionDistributor.php
 
 namespace App\Services\MLM;
 
@@ -8,14 +7,12 @@ use App\Models\Package;
 use App\Models\Product;
 use App\Models\Commission;
 use App\Models\CommissionPeriod;
+use App\Jobs\UpdateRanks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CommissionDistributor
 {
-    /**
-     * Taux de commission par niveau (Commission Directe - Niveaux 3 à 9)
-     */
     private function getCommissionRate(int $level): float
     {
         $rates = [
@@ -32,9 +29,6 @@ class CommissionDistributor
         return $rates[$level] ?? 0;
     }
 
-    /**
-     * Conditions de PV mensuel pour toucher les commissions
-     */
     private function getMonthlyPVRequirements(): array
     {
         return [
@@ -50,9 +44,6 @@ class CommissionDistributor
         ];
     }
 
-    /**
-     * Vérifier si un sponsor a déjà reçu le bonus pour ce filleul
-     */
     private function hasReceivedSponsorBonus(User $sponsor, User $buyer): bool
     {
         return Commission::where('user_id', $sponsor->id)
@@ -61,9 +52,6 @@ class CommissionDistributor
             ->exists();
     }
 
-    /**
-     * Récupérer les données d'un item (package ou produit)
-     */
     private function getItemData($item)
     {
         if ($item instanceof Package || $item instanceof Product) {
@@ -86,9 +74,6 @@ class CommissionDistributor
         return null;
     }
 
-    /**
-     * Récupérer le PV d'un item
-     */
     private function getItemPV($item): int
     {
         if ($item instanceof Package || $item instanceof Product) {
@@ -102,9 +87,6 @@ class CommissionDistributor
         return 0;
     }
 
-    /**
-     * Récupérer le prix d'un item
-     */
     private function getItemPrice($item): float
     {
         if ($item instanceof Package || $item instanceof Product) {
@@ -118,9 +100,6 @@ class CommissionDistributor
         return 0;
     }
 
-    /**
-     * Récupérer le nom d'un item
-     */
     private function getItemName($item): string
     {
         if ($item instanceof Package || $item instanceof Product) {
@@ -134,9 +113,6 @@ class CommissionDistributor
         return 'Item';
     }
 
-    /**
-     * Récupérer le type d'un item
-     */
     private function getItemType($item): string
     {
         if ($item instanceof Package) {
@@ -154,9 +130,6 @@ class CommissionDistributor
         return 'unknown';
     }
 
-    /**
-     * Récupérer l'ID d'un item
-     */
     private function getItemId($item): ?int
     {
         if ($item instanceof Package || $item instanceof Product) {
@@ -170,15 +143,12 @@ class CommissionDistributor
         return null;
     }
 
-    /**
-     * Distribuer les commissions pour un achat
-     */
     public function distributeCommissions(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
         $commissions = [];
 
         if (!$buyer->is_active) {
-            Log::info('Commissions non distribuées - compte inactif', [
+            Log::info('Commissions non distribuees - compte inactif', [
                 'buyer_id' => $buyer->id,
                 'buyer_name' => $buyer->name,
                 'item_type' => $this->getItemType($item),
@@ -189,70 +159,96 @@ class CommissionDistributor
 
         $itemData = $this->getItemData($item);
         if (!$itemData) {
-            Log::warning('Item non trouvé pour la distribution des commissions', [
+            Log::warning('Item non trouve pour la distribution des commissions', [
                 'item' => $item,
             ]);
             return $commissions;
         }
 
-        // 🔥 1. Sponsor Bonus (UNIQUEMENT pour le premier achat/activation)
-        // Vérifier si le sponsor n'a pas déjà reçu le bonus pour ce filleul
         $sponsor = $buyer->parrain;
         if ($sponsor && $sponsor->is_active) {
             $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
-            
+
             if (!$hasSponsorBonus) {
                 $sponsorBonus = $this->calculateSponsorBonus($buyer, $itemData, $orderId, $period);
                 if ($sponsorBonus) {
                     $commissions[] = $sponsorBonus;
-                    Log::info('Sponsor bonus distribué pour la première fois', [
+                    Log::info('Sponsor bonus distribue pour la premiere fois', [
                         'sponsor_id' => $sponsor->id,
                         'buyer_id' => $buyer->id,
                         'amount' => $sponsorBonus->amount,
                     ]);
                 }
             } else {
-                Log::info('Sponsor bonus déjà distribué pour ce filleul', [
+                Log::info('Sponsor bonus deja distribue pour ce filleul', [
                     'sponsor_id' => $sponsor->id,
                     'buyer_id' => $buyer->id,
                 ]);
             }
         }
 
-        // 2. Commission Directe
         $directs = $this->calculateDirectBonuses($buyer, $itemData, $orderId, $period);
         $commissions = array_merge($commissions, $directs);
 
-        // 3. Commission Indirecte
         $indirects = $this->calculateIndirectBonuses($buyer, $itemData, $orderId, $period);
         $commissions = array_merge($commissions, $indirects);
 
-        // 4. Leadership Bonus
         $leaderships = $this->calculateLeadershipBonuses($buyer, $itemData, $orderId, $period);
         $commissions = array_merge($commissions, $leaderships);
+
+        $this->triggerRankUpdates($buyer);
 
         return $commissions;
     }
 
-    /**
-     * 1. Sponsor Bonus (Commission de Parrainage) - UNE SEULE FOIS
-     */
+    private function triggerRankUpdates(User $buyer): void
+    {
+        try {
+            dispatch(new UpdateRanks($buyer->id));
+
+            if ($buyer->parrain) {
+                dispatch(new UpdateRanks($buyer->parrain->id));
+            }
+
+            $current = $buyer->parrain;
+            $depth = 0;
+            $processed = [];
+
+            while ($current && $depth < 9 && !in_array($current->id, $processed)) {
+                $processed[] = $current->id;
+                dispatch(new UpdateRanks($current->id));
+                $current = $current->parrain;
+                $depth++;
+            }
+
+            Log::info('Rank updates triggered', [
+                'buyer_id' => $buyer->id,
+                'ancestors' => count($processed),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error triggering rank updates', [
+                'buyer_id' => $buyer->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private function calculateSponsorBonus(User $buyer, $item, $orderId, CommissionPeriod $period): ?Commission
     {
         $sponsor = $buyer->parrain;
         if (!$sponsor) return null;
 
         if (!$sponsor->is_active) {
-            Log::info('Sponsor bonus non distribué - sponsor inactif', [
+            Log::info('Sponsor bonus non distribue - sponsor inactif', [
                 'sponsor_id' => $sponsor->id,
                 'sponsor_name' => $sponsor->name,
             ]);
             return null;
         }
 
-        // ✅ Vérifier si le sponsor a déjà reçu le bonus
         if ($this->hasReceivedSponsorBonus($sponsor, $buyer)) {
-            Log::info('Sponsor bonus déjà distribué - ignoré', [
+            Log::info('Sponsor bonus deja distribue - ignore', [
                 'sponsor_id' => $sponsor->id,
                 'buyer_id' => $buyer->id,
             ]);
@@ -266,7 +262,7 @@ class CommissionDistributor
         $req = $requirements[$rankLevel] ?? ['personal' => 0, 'group' => 0];
 
         if ($sponsor->monthly_pv < $req['personal']) {
-            Log::info('Sponsor bonus non distribué - PV personnel insuffisant', [
+            Log::info('Sponsor bonus non distribue - PV personnel insuffisant', [
                 'sponsor_id' => $sponsor->id,
                 'monthly_pv' => $sponsor->monthly_pv,
                 'required' => $req['personal'],
@@ -275,7 +271,7 @@ class CommissionDistributor
         }
 
         if ($req['group'] > 0 && $sponsor->team_pv < $req['group']) {
-            Log::info('Sponsor bonus non distribué - PV groupe insuffisant', [
+            Log::info('Sponsor bonus non distribue - PV groupe insuffisant', [
                 'sponsor_id' => $sponsor->id,
                 'team_pv' => $sponsor->team_pv,
                 'required' => $req['group'],
@@ -288,8 +284,6 @@ class CommissionDistributor
         $itemType = $this->getItemType($item);
         $itemId = $this->getItemId($item);
 
-        // ✅ Sponsor Bonus UNIQUEMENT pour le premier achat
-        // Le montant dépend du package acheté pour l'activation
         if ($rankLevel == 1) {
             $amount = 10;
             $percentage = null;
@@ -318,9 +312,6 @@ class CommissionDistributor
         ]);
     }
 
-    /**
-     * 2. Commission Directe
-     */
     private function calculateDirectBonuses(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
         $commissions = [];
@@ -359,7 +350,7 @@ class CommissionDistributor
 
         $sponsorRate = $this->getCommissionRate($sponsorLevel);
         $pvAmount = $this->getItemPV($item);
-        
+
         if ($pvAmount > 0 && $sponsorRate > 0) {
             $amount = $pvAmount * ($sponsorRate / 100);
 
@@ -388,9 +379,6 @@ class CommissionDistributor
         return $commissions;
     }
 
-    /**
-     * 3. Commission Indirecte
-     */
     private function calculateIndirectBonuses(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
         $commissions = [];
@@ -398,7 +386,7 @@ class CommissionDistributor
         $buyerRank = $buyer->rankObject;
         $buyerLevel = $buyerRank ? $buyerRank->level : 1;
         $buyerRate = $this->getCommissionRate($buyerLevel);
-        
+
         $pvAmount = $this->getItemPV($item);
 
         if ($pvAmount <= 0 || $buyerLevel < 3) {
@@ -465,7 +453,7 @@ class CommissionDistributor
                         'type' => 'indirect',
                         'amount' => $amount,
                         'percentage' => $difference,
-                        'description' => "Commission indirecte génération {$generation} ({$difference}%) sur PV de {$pvAmount} ({$itemName})",
+                        'description' => "Commission indirecte generation {$generation} ({$difference}%) sur PV de {$pvAmount} ({$itemName})",
                         'order_id' => $orderId,
                         'package_id' => $itemType === 'package' ? $itemId : null,
                         'product_id' => $itemType === 'product' ? $itemId : null,
@@ -484,9 +472,6 @@ class CommissionDistributor
         return $commissions;
     }
 
-    /**
-     * 4. Leadership Bonus
-     */
     private function calculateLeadershipBonuses(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
         $commissions = [];
@@ -547,7 +532,7 @@ class CommissionDistributor
                             'type' => 'leadership',
                             'amount' => $amount,
                             'percentage' => $rate,
-                            'description' => "Leadership niveau {$rankLevel} ({$rate}%) génération {$generation} sur PV de {$pvAmount} ({$itemName})",
+                            'description' => "Leadership niveau {$rankLevel} ({$rate}%) generation {$generation} sur PV de {$pvAmount} ({$itemName})",
                             'order_id' => $orderId,
                             'package_id' => $itemType === 'package' ? $itemId : null,
                             'product_id' => $itemType === 'product' ? $itemId : null,
@@ -566,9 +551,6 @@ class CommissionDistributor
         return $commissions;
     }
 
-    /**
-     * Recalculer les commissions pour une période
-     */
     public function recalculateCommissionsForPeriod(string $period): array
     {
         $periodObj = CommissionPeriod::where('period', $period)->first();
@@ -592,13 +574,13 @@ class CommissionDistributor
             foreach ($orders as $order) {
                 foreach ($order->items as $item) {
                     $itemData = null;
-                    
+
                     if ($item->package_id) {
                         $itemData = Package::find($item->package_id);
                     } elseif ($item->product_id) {
                         $itemData = Product::find($item->product_id);
                     }
-                    
+
                     if ($itemData) {
                         $commissions = $this->distributeCommissions(
                             $order->user,
@@ -636,14 +618,11 @@ class CommissionDistributor
         }
     }
 
-    /**
-     * Distribuer les commissions pour une commande entière
-     */
     public function distributeCommissionsForOrder($order): array
     {
         $period = CommissionPeriod::getCurrentPeriod();
         if (!$period) {
-            Log::error('Aucune période de commission trouvée');
+            Log::error('Aucune periode de commission trouvee');
             return [];
         }
 
@@ -651,13 +630,13 @@ class CommissionDistributor
 
         foreach ($order->items as $item) {
             $itemData = null;
-            
+
             if ($item->package_id) {
                 $itemData = Package::find($item->package_id);
             } elseif ($item->product_id) {
                 $itemData = Product::find($item->product_id);
             }
-            
+
             if ($itemData) {
                 $itemCommissions = $this->distributeCommissions(
                     $order->user,

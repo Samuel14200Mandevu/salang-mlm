@@ -19,96 +19,64 @@ class UpdateRanks implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected ?int $userId;
+    protected bool $forceAll;
     public int $timeout = 3600;
     public int $tries = 3;
 
-    public function __construct(?int $userId = null)
+    public function __construct(?int $userId = null, bool $forceAll = false)
     {
         $this->userId = $userId;
+        $this->forceAll = $forceAll;
     }
 
     public function handle(AdvancedRankCalculator $rankCalculator): void
     {
-        Log::info('Starting rank update', [
+        Log::info('UpdateRanks started', [
             'user_id' => $this->userId ?? 'all',
+            'force_all' => $this->forceAll,
         ]);
 
         try {
+            if ($this->userId) {
+                $user = User::find($this->userId);
+                if ($user && $user->is_active) {
+                    $this->updateUserRank($user, $rankCalculator);
+                }
+                return;
+            }
+
             $query = User::where('is_active', true);
 
-            if ($this->userId) {
-                $query->where('id', $this->userId);
+            if (!$this->forceAll) {
+                $query->where(function($q) {
+                    $q->where('last_rank_update', '<', now()->subHours(1))
+                      ->orWhereNull('last_rank_update')
+                      ->orWhere('rank_level', '<', 3);
+                });
             }
 
             $updated = 0;
             $errors = [];
 
-            // Utilisation de chunk pour éviter les problèmes de mémoire
             $query->chunk(50, function ($users) use ($rankCalculator, &$updated, &$errors) {
                 foreach ($users as $user) {
                     try {
-                        // Clear cache pour ce user spécifique
-                        Cache::forget("rank_calculated_{$user->id}");
-
-                        $newRank = $rankCalculator->calculateAdvancedRank($user);
-
-                        if ($newRank && $newRank->id != $user->rank_id) {
-                            $oldRankId = $user->rank_id;
-                            $oldRankName = $user->rank_name;
-
-                            DB::beginTransaction();
-
-                            // Mise à jour avec gestion des champs
-                            $user->rank_id = $newRank->id;
-                            $user->rank = $newRank->name;
-                            $user->rank_name = $newRank->name;
-                            $user->rank_level = $newRank->level;
-                            $user->last_rank_update = now();
-                            $user->save();
-
-                            // Enregistrement de l'historique
-                            RankHistory::create([
-                                'user_id' => $user->id,
-                                'old_rank_id' => $oldRankId,
-                                'new_rank_id' => $newRank->id,
-                                'old_rank_name' => $oldRankName,
-                                'new_rank_name' => $newRank->name,
-                                'pv_at_time' => $user->pv_balance,
-                                'bv_at_time' => $user->bv_balance,
-                                'monthly_pv_at_time' => $user->monthly_pv,
-                                'notes' => 'Automatic rank update - ' . now()->format('Y-m-d H:i:s'),
-                            ]);
-
-                            DB::commit();
+                        if ($this->updateUserRank($user, $rankCalculator)) {
                             $updated++;
-
-                            Log::info('User rank updated', [
-                                'user_id' => $user->id,
-                                'user_name' => $user->name,
-                                'old_rank' => $oldRankName,
-                                'new_rank' => $newRank->name,
-                            ]);
-
-                            // Vider le cache pour ce user
-                            Cache::forget("user_rank_{$user->id}");
                         }
                     } catch (\Exception $e) {
-                        DB::rollBack();
                         $errors[] = "User ID {$user->id}: " . $e->getMessage();
                         Log::error('Error updating rank for user', [
                             'user_id' => $user->id,
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString()
+                            'error' => $e->getMessage()
                         ]);
                     }
                 }
             });
 
-            Log::info('Rank update completed', [
-                'period' => now()->format('Y-m'),
+            Log::info('UpdateRanks completed', [
                 'updated' => $updated,
                 'errors' => count($errors),
-                'errors_list' => array_slice($errors, 0, 10), // Limiter l'affichage des erreurs
             ]);
 
         } catch (\Exception $e) {
@@ -116,7 +84,74 @@ class UpdateRanks implements ShouldQueue
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+            throw $e;
+        }
+    }
 
+    private function updateUserRank(User $user, AdvancedRankCalculator $rankCalculator): bool
+    {
+        try {
+            Cache::forget("rank_calculation_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $oldRankId = $user->rank_id;
+            $oldRankName = $user->rank_name ?? 'Distributeur';
+
+            if ($user->team_pv == 0 || $user->team_pv === null) {
+                $user->updateTeamPVWithoutEvents();
+            }
+
+            $newRank = $rankCalculator->calculateAdvancedRank($user);
+
+            if (!$newRank) {
+                Log::warning('No rank found for user', ['user_id' => $user->id]);
+                return false;
+            }
+
+            if ($newRank->id != $oldRankId) {
+                DB::beginTransaction();
+
+                $user->rank_id = $newRank->id;
+                $user->rank = $newRank->name;
+                $user->rank_name = $newRank->name;
+                $user->rank_level = $newRank->level;
+                $user->last_rank_update = now();
+                $user->saveQuietly();
+
+                RankHistory::create([
+                    'user_id' => $user->id,
+                    'old_rank_id' => $oldRankId,
+                    'new_rank_id' => $newRank->id,
+                    'old_rank_name' => $oldRankName,
+                    'new_rank_name' => $newRank->name,
+                    'pv_at_time' => $user->pv_balance,
+                    'bv_at_time' => $user->bv_balance,
+                    'monthly_pv_at_time' => $user->monthly_pv,
+                    'notes' => 'Automatic rank update - ' . now()->format('Y-m-d H:i:s'),
+                ]);
+
+                DB::commit();
+
+                Cache::forget("user_rank_{$user->id}");
+                Cache::forget("rank_calculation_{$user->id}");
+
+                Log::info('User rank updated', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'old_rank' => $oldRankName,
+                    'new_rank' => $newRank->name,
+                ]);
+
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating user rank', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
             throw $e;
         }
     }

@@ -1,5 +1,4 @@
 <?php
-// app/Jobs/UpdateTeamPV.php
 
 namespace App\Jobs;
 
@@ -46,24 +45,25 @@ class UpdateTeamPV implements ShouldQueue
                 try {
                     DB::beginTransaction();
 
-                    // Mise à jour du Team PV
                     $this->calculateAndUpdateTeamPV($user);
 
-                    Log::debug('TeamPV mis à jour', [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'team_pv' => $user->team_pv,
-                    ]);
-
-                    // Mettre à jour les ancêtres
                     if ($this->recursive) {
                         $this->updateAncestorsTeamPV($user);
                     }
 
-                    // Calculer le grade
+                    Cache::forget("descendants_{$user->id}");
+                    Cache::forget("descendants_count_{$user->id}");
+                    Cache::forget("user_rank_{$user->id}");
+
                     $user->calculateAndUpdateRank();
 
                     DB::commit();
+
+                    Log::debug('TeamPV updated', [
+                        'user_id' => $user->id,
+                        'team_pv' => $user->team_pv,
+                        'rank' => $user->rank_name,
+                    ]);
 
                 } catch (\Exception $e) {
                     DB::rollBack();
@@ -78,9 +78,6 @@ class UpdateTeamPV implements ShouldQueue
         Log::info('UpdateTeamPV completed');
     }
 
-    /**
-     * Calcule et met à jour le Team PV d'un utilisateur
-     */
     private function calculateAndUpdateTeamPV(User $user): void
     {
         $teamPV = $this->calculateTeamPVRecursive($user);
@@ -96,9 +93,6 @@ class UpdateTeamPV implements ShouldQueue
         Cache::forget("descendants_count_{$user->id}");
     }
 
-    /**
-     * Calcule le PV total de l'équipe (récursif)
-     */
     private function calculateTeamPVRecursive(User $user): int
     {
         $totalPV = $user->pv_balance ?? 0;
@@ -111,9 +105,6 @@ class UpdateTeamPV implements ShouldQueue
         return $totalPV;
     }
 
-    /**
-     * Calcule le BV total de l'équipe (récursif)
-     */
     private function calculateTeamBVRecursive(User $user): int
     {
         $totalBV = $user->bv_balance ?? 0;
@@ -126,9 +117,6 @@ class UpdateTeamPV implements ShouldQueue
         return $totalBV;
     }
 
-    /**
-     * Compte le nombre total de descendants
-     */
     private function countDescendants(User $user): int
     {
         $count = 0;
@@ -142,19 +130,16 @@ class UpdateTeamPV implements ShouldQueue
         return $count;
     }
 
-    /**
-     * Met à jour les PV d'équipe de tous les ancêtres
-     */
     private function updateAncestorsTeamPV(User $user): void
     {
         $lockKey = "ancestor_update_{$user->id}";
-        
+
         if (Cache::get($lockKey, false)) {
             return;
         }
-        
+
         Cache::put($lockKey, true, 60);
-        
+
         try {
             $current = $user->parrain;
             $level = 1;
@@ -165,10 +150,22 @@ class UpdateTeamPV implements ShouldQueue
                 if (in_array($current->id, $processed)) {
                     break;
                 }
-                
+
                 $processed[] = $current->id;
                 $this->calculateAndUpdateTeamPV($current);
-                
+
+                Cache::forget("descendants_{$current->id}");
+                Cache::forget("user_rank_{$current->id}");
+
+                $current->calculateAndUpdateRank();
+
+                Log::debug('Ancestor TeamPV updated', [
+                    'ancestor_id' => $current->id,
+                    'ancestor_name' => $current->name,
+                    'team_pv' => $current->team_pv,
+                    'rank' => $current->rank_name,
+                ]);
+
                 $current = $current->parrain;
                 $level++;
             }
