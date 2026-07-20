@@ -284,40 +284,6 @@
         </div>
     </div>
 
-    <!-- Statistiques par niveau de grade -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">
-                {{ $filleuls->count() }}
-            </p>
-        </div>
-        <div class="card-stats border-l-4 border-neutral-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 1</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-neutral-500">
-                {{ $filleuls->filter(fn($u) => ($controller->getUserRankInfo($u)['level'] ?? 1) == 1)->count() }}
-            </p>
-        </div>
-        <div class="card-stats border-l-4 border-purple-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 2-3</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">
-                {{ $filleuls->filter(fn($u) => in_array($controller->getUserRankInfo($u)['level'] ?? 1, [2,3]))->count() }}
-            </p>
-        </div>
-        <div class="card-stats border-l-4 border-success-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 4-6</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-success-500">
-                {{ $filleuls->filter(fn($u) => in_array($controller->getUserRankInfo($u)['level'] ?? 1, [4,5,6]))->count() }}
-            </p>
-        </div>
-        <div class="card-stats border-l-4 border-gold-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niv. 7+</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-gold-500">
-                {{ $filleuls->filter(fn($u) => ($controller->getUserRankInfo($u)['level'] ?? 1) >= 7)->count() }}
-            </p>
-        </div>
-    </div>
-
     <!-- Carte du Parrain -->
     <div class="card animate-fadeInUp delay-2 p-3 sm:p-4 border-l-4 border-primary-500">
         <div class="flex flex-wrap items-center justify-between gap-3">
