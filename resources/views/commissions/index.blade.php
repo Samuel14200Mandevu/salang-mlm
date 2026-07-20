@@ -290,6 +290,17 @@
         color: #3b82f6;
     }
     
+    /* Compteur de résultats */
+    .result-count {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        padding: 0.375rem 0.75rem;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -313,11 +324,20 @@
         .card-stats { padding: 0.75rem; }
         .card-stats .text-2xl { font-size: 1.25rem; }
         .card { padding: 0.875rem; }
-        .filters-wrapper { flex-direction: column; align-items: stretch; }
-        .filters-wrapper .input { width: 100% !important; }
-        .stats-grid { grid-template-columns: 1fr 1fr !important; }
         .modal-box .modal-body .detail-grid { grid-template-columns: 1fr; }
         .modal-box { padding: 1rem; }
+        .stats-grid { grid-template-columns: 1fr 1fr !important; }
+        .search-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .search-container .relative {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .result-count {
+            text-align: center;
+        }
     }
     
     @media (max-width: 480px) {
@@ -330,34 +350,26 @@
 <div class="space-y-4 sm:space-y-6">
     
     <!-- Header -->
-<div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-    <div>
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en detail</p>
+    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en detail</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+            <a href="{{ route('commissions.dashboard') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Tableau de bord
+            </a>
+            <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                </svg>
+                Par niveau
+            </a>
+        </div>
     </div>
-    <div class="flex flex-wrap gap-1.5 sm:gap-2">
-        <!--  Bouton Export PDF -->
-        <a href="{{ route('commissions.export-pdf', request()->all()) }}" 
-           class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Exporter PDF
-        </a>
-        <a href="{{ route('commissions.dashboard') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-            Tableau de bord
-        </a>
-        <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-            </svg>
-            Par niveau
-        </a>
-    </div>
-</div>
 
     <!-- Statistics -->
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
@@ -379,39 +391,35 @@
         </div>
     </div>
 
-    <!-- Filters -->
-<div class="flex flex-wrap items-center gap-2 sm:gap-3 animate-fadeInUp delay-5">
-    <!-- Recherche - Gauche (prend tout l'espace sur mobile) -->
-    <div class="relative flex-1 min-w-[120px] sm:min-w-[180px] w-full sm:w-auto">
-        <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    <!-- Search - Barre de recherche uniquement -->
+    <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 animate-fadeInUp delay-5 search-container">
+        <div class="relative flex-1 sm:flex-none w-full sm:w-auto min-w-[150px] sm:min-w-[250px] max-w-full sm:max-w-sm">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </span>
+            <input type="text" id="searchInput" placeholder="Rechercher une commission..." class="input pl-9 text-sm sm:text-base w-full">
+        </div>
+        
+        <span id="resultCount" class="result-count">{{ $commissions->total() ?? 0 }} commissions</span>
+        
+        <a href="{{ route('commissions.export-pdf', request()->all()) }}" 
+           class="btn btn-primary btn-sm sm:btn-md flex-shrink-0" 
+           target="_blank">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-        </span>
-        <input type="text" id="searchInput" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base w-full">
+            <span class="hidden sm:inline">Exporter PDF</span>
+            <span class="sm:hidden">PDF</span>
+        </a>
     </div>
-
-    <!-- Filtres - Droite (se replie sur mobile) -->
-    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 ml-auto w-full sm:w-auto">
-        <select id="typeFilter" class="input flex-1 sm:flex-none min-w-[80px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">Tous les types</option>
-            <option value="sponsor">Sponsor</option>
-            <option value="direct">Direct</option>
-            <option value="indirect">Indirect</option>
-            <option value="leadership">Leadership</option>
-            <option value="retail">Retail</option>
-        </select>
-    </div>
-</div>
-    </div>
-
-    <br>
 
     <!-- Commission List -->
     <div class="card animate-fadeInUp delay-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des commissions</h3>
-            <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $commissions->total() ?? 0 }} commissions</span>
+            <span class="badge badge-neutral text-[10px] sm:text-xs" id="totalBadge">{{ $commissions->total() ?? 0 }} commissions</span>
         </div>
 
         <div class="table-wrap">
@@ -501,8 +509,6 @@
     </div>
     @endif
 
-
-    <br>
     <!-- Quick Navigation -->
     <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-7">
         <a href="{{ route('commissions.dashboard') }}" class="btn btn-primary btn-sm sm:btn-md">
@@ -781,45 +787,53 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Filtres
+// ============================================================
+// RECHERCHE EN TEMPS RÉEL - UNIQUEMENT LA RECHERCHE
+// ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('searchInput');
-    var typeFilter = document.getElementById('typeFilter');
-    var statusFilter = document.getElementById('statusFilter');
-    var dateFrom = document.getElementById('dateFrom');
-    var dateTo = document.getElementById('dateTo');
     var rows = document.querySelectorAll('#commissionsTable tr');
+    var resultCount = document.getElementById('resultCount');
+    var totalBadge = document.getElementById('totalBadge');
+    var totalRows = rows.length;
 
     function filterRows() {
         var search = searchInput.value.trim().toLowerCase();
-        var type = typeFilter.value;
-        var status = statusFilter.value;
-        var from = dateFrom.value;
-        var to = dateTo.value;
+        var visibleCount = 0;
 
         rows.forEach(function(row) {
             var text = row.textContent.toLowerCase();
-            var rowType = row.dataset.type || '';
-            var rowStatus = row.dataset.status || '';
-            var rowDate = row.dataset.date || '';
-
-            var show = true;
-
-            if (search && !text.includes(search)) show = false;
-            if (type && rowType !== type) show = false;
-            if (status && rowStatus !== status) show = false;
-            if (from && rowDate < from) show = false;
-            if (to && rowDate > to) show = false;
-
-            row.style.display = show ? '' : 'none';
+            if (search === '' || text.includes(search)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         });
+
+        // Mettre à jour le compteur
+        if (resultCount) {
+            if (search === '') {
+                resultCount.textContent = totalRows + ' commissions';
+            } else {
+                resultCount.textContent = visibleCount + ' résultat(s) sur ' + totalRows;
+            }
+        }
+
+        // Mettre à jour le badge
+        if (totalBadge) {
+            if (search === '') {
+                totalBadge.textContent = totalRows + ' commissions';
+            } else {
+                totalBadge.textContent = visibleCount + ' / ' + totalRows;
+            }
+        }
     }
 
-    searchInput.addEventListener('input', filterRows);
-    typeFilter.addEventListener('change', filterRows);
-    statusFilter.addEventListener('change', filterRows);
-    dateFrom.addEventListener('change', filterRows);
-    dateTo.addEventListener('change', filterRows);
+    // Recherche immédiate à chaque frappe
+    if (searchInput) {
+        searchInput.addEventListener('input', filterRows);
+    }
 });
 
 function showToast(message, type) {
