@@ -10,27 +10,29 @@ use App\Models\Commission;
 use App\Models\CommissionPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class CommissionDistributor
 {
     /**
      * Taux de commission par niveau (Commission Directe - Niveaux 3 à 9)
-     * Récupéré depuis le fichier de configuration
+     * Récupéré depuis le cache ou la configuration
      */
     private function getCommissionRate(int $level): float
     {
-        // ✅ Récupérer depuis le fichier de config
-        $rates = config('commission.rates.levels', [
-            1 => 0,
-            2 => 0,
-            3 => 22,
-            4 => 26,
-            5 => 30,
-            6 => 34,
-            7 => 40,
-            8 => 43,
-            9 => 45,
-        ]);
+        // ✅ Essayer de récupérer depuis le cache d'abord
+        $rates = Cache::get('commission_rates_levels');
+        
+        if (!$rates) {
+            // Fallback: récupérer depuis le fichier de config
+            $rates = config('commission.rates.levels', [
+                1 => 0, 2 => 0, 3 => 22, 4 => 26, 5 => 30, 
+                6 => 34, 7 => 40, 8 => 43, 9 => 45
+            ]);
+            
+            // Mettre en cache pour les prochains appels
+            Cache::put('commission_rates_levels', $rates, 3600);
+        }
         
         return (float) ($rates[$level] ?? 0);
     }
@@ -40,36 +42,49 @@ class CommissionDistributor
      */
     private function getLeadershipRate(int $level): float
     {
-        // ✅ Récupérer depuis le fichier de config
-        $leadershipRates = config('commission.rates.leadership', [
-            5 => 0.5,
-            6 => 1.1,
-            7 => 1.8,
-            8 => 2.6,
-            9 => 3.5,
-        ]);
+        // ✅ Essayer de récupérer depuis le cache d'abord
+        $leadershipRates = Cache::get('commission_leadership_rates');
+        
+        if (!$leadershipRates) {
+            // Fallback: récupérer depuis le fichier de config
+            $leadershipRates = config('commission.rates.leadership', [
+                5 => 0.5, 6 => 1.1, 7 => 1.8, 8 => 2.6, 9 => 3.5
+            ]);
+            
+            // Mettre en cache pour les prochains appels
+            Cache::put('commission_leadership_rates', $leadershipRates, 3600);
+        }
         
         return (float) ($leadershipRates[$level] ?? 0);
     }
 
     /**
      * Conditions de PV mensuel pour toucher les commissions
-     * Récupéré depuis le fichier de configuration
      */
     private function getMonthlyPVRequirements(): array
     {
-        // ✅ Récupérer depuis le fichier de config
-        return config('commission.monthly_pv_required', [
-            1 => ['personal' => 0, 'group' => 0],
-            2 => ['personal' => 10, 'group' => 0],
-            3 => ['personal' => 20, 'group' => 0],
-            4 => ['personal' => 25, 'group' => 0],
-            5 => ['personal' => 30, 'group' => 300],
-            6 => ['personal' => 50, 'group' => 500],
-            7 => ['personal' => 100, 'group' => 1000],
-            8 => ['personal' => 200, 'group' => 2000],
-            9 => ['personal' => 300, 'group' => 3000],
-        ]);
+        // ✅ Essayer de récupérer depuis le cache d'abord
+        $requirements = Cache::get('commission_monthly_pv_required');
+        
+        if (!$requirements) {
+            // Fallback: récupérer depuis le fichier de config
+            $requirements = config('commission.monthly_pv_required', [
+                1 => ['personal' => 0, 'group' => 0],
+                2 => ['personal' => 10, 'group' => 0],
+                3 => ['personal' => 20, 'group' => 0],
+                4 => ['personal' => 25, 'group' => 0],
+                5 => ['personal' => 30, 'group' => 300],
+                6 => ['personal' => 50, 'group' => 500],
+                7 => ['personal' => 100, 'group' => 1000],
+                8 => ['personal' => 200, 'group' => 2000],
+                9 => ['personal' => 300, 'group' => 3000],
+            ]);
+            
+            // Mettre en cache pour les prochains appels
+            Cache::put('commission_monthly_pv_required', $requirements, 3600);
+        }
+        
+        return $requirements;
     }
 
     /**
@@ -375,7 +390,6 @@ class CommissionDistributor
             return $commissions;
         }
 
-        // ✅ Utiliser la méthode qui lit depuis la config
         $sponsorRate = $this->getCommissionRate($sponsorLevel);
         $pvAmount = $this->getItemPV($item);
         
@@ -465,7 +479,6 @@ class CommissionDistributor
                 continue;
             }
 
-            // ✅ Utiliser la méthode qui lit depuis la config
             $currentRate = $this->getCommissionRate($currentLevel);
             $difference = max(0, $currentRate - $previousRate);
 
@@ -537,7 +550,6 @@ class CommissionDistributor
             $rankLevel = $currentRank ? $currentRank->level : 0;
 
             if ($rankLevel >= 5) {
-                // ✅ Utiliser la méthode qui lit depuis la config
                 $rate = $this->getLeadershipRate($rankLevel);
                 
                 if ($rate > 0) {
