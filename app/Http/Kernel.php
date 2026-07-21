@@ -125,6 +125,11 @@ class Kernel extends HttpKernel
         // LOGGING & DEBUG
         'log.request' => \App\Http\Middleware\LogRequest::class,
         'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
+
+        // ============================================================
+        // WEBHOOK SECURITY - NOUVEAU
+        // ============================================================
+        'webhook.signature' => \App\Http\Middleware\VerifyWebhookSignature::class,
     ];
 
     /**

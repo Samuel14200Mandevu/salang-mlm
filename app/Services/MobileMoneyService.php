@@ -1,5 +1,4 @@
 <?php
-// app/Services/MobileMoneyService.php
 
 namespace App\Services;
 
@@ -7,13 +6,32 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\Order;
+use Devscast\Flexpay\Flexpay;
+use Devscast\Flexpay\Credentials;
+use Devscast\Flexpay\Environment;
+use Devscast\Flexpay\Data\Currency;
+use Devscast\Flexpay\Requests\MobileRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
 class MobileMoneyService
 {
-    protected array $providers = ['orange', 'airtel', 'vodacom'];
+    protected Flexpay $flexpay;
+    protected array $providers = ['orange', 'airtel', 'mpesa'];
+
+    public function __construct()
+    {
+        $this->flexpay = new Flexpay(
+            new Credentials(
+                token: config('services.flexpay.token'),
+                merchantCode: config('services.flexpay.merchant_code')
+            ),
+            environment: config('services.flexpay.environment') === 'live' 
+                ? Environment::LIVE 
+                : Environment::SANDBOX
+        );
+    }
 
     /**
      * Initier un paiement Mobile Money
@@ -25,7 +43,7 @@ class MobileMoneyService
         if (!in_array($provider, $this->providers)) {
             return [
                 'success' => false,
-                'error' => 'Provider non supporté. Utilisez Orange, Airtel ou Vodacom.'
+                'error' => 'Provider non supporté. Utilisez Orange, Airtel ou M-Pesa.'
             ];
         }
 
@@ -33,17 +51,43 @@ class MobileMoneyService
         $phoneNumber = $this->cleanPhoneNumber($phoneNumber);
 
         try {
-            $result = $this->{'initiate' . ucfirst($provider) . 'Payment'}(
-                $amount,
-                $phoneNumber,
-                $userId,
-                $orderId
+            // Générer une référence unique
+            $reference = 'SALANG-' . strtoupper($provider) . '-' . date('Ymd') . '-' . uniqid();
+
+            // Description du paiement
+            $description = 'Achat Salang MLM - ' . ucfirst($provider) . ' Money';
+
+            // Créer la requête mobile FlexPay
+            $mobile = new MobileRequest(
+                amount: (float) $amount,
+                currency: Currency::USD, // ou Currency::CDF pour Francs Congolais
+                phone: $phoneNumber,
+                reference: $reference,
+                description: $description,
+                callbackUrl: route('webhook.flexpay'),
             );
 
-            return $result;
+            // Envoyer la requête à FlexPay
+            $response = $this->flexpay->pay($mobile);
+
+            Log::info('FlexPay Mobile Money payment initiated', [
+                'provider' => $provider,
+                'reference' => $reference,
+                'response' => $response
+            ]);
+
+            return [
+                'success' => true,
+                'transaction_id' => $response['orderNumber'] ?? null,
+                'reference' => $reference,
+                'provider' => $provider,
+                'status' => 'pending',
+                'message' => 'Paiement ' . ucfirst($provider) . ' Money initié. Veuillez confirmer sur votre téléphone.',
+                'raw_response' => $response
+            ];
 
         } catch (\Exception $e) {
-            Log::error('Mobile Money exception', [
+            Log::error('FlexPay Mobile Money exception', [
                 'provider' => $provider,
                 'error' => $e->getMessage(),
                 'phone' => $phoneNumber,
@@ -57,226 +101,36 @@ class MobileMoneyService
     }
 
     /**
-     * Initier paiement Orange Money
-     */
-    private function initiateOrangePayment($amount, $phoneNumber, $userId, $orderId): array
-    {
-        try {
-            $apiKey = env('ORANGE_MONEY_API_KEY');
-            $apiSecret = env('ORANGE_MONEY_API_SECRET');
-            $baseUrl = env('ORANGE_MONEY_BASE_URL', 'https://api.orange.com');
-
-            $token = $this->getOrangeToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return [
-                    'success' => false,
-                    'error' => 'Erreur d\'authentification Orange Money'
-                ];
-            }
-
-            $reference = 'SALANG-OR-' . date('Ymd') . '-' . uniqid();
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->post("{$baseUrl}/payments/v1/transaction", [
-                'amount' => $amount,
-                'currency' => 'XOF',
-                'phone' => $phoneNumber,
-                'reference' => $reference,
-                'description' => 'Achat Salang MLM',
-                'callback_url' => route('webhook.orange-money'),
-                'metadata' => [
-                    'user_id' => $userId,
-                    'order_id' => $orderId,
-                ],
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'transaction_id' => $data['transaction_id'] ?? null,
-                    'reference' => $reference,
-                    'provider' => 'orange',
-                    'status' => 'pending',
-                    'message' => 'Paiement Orange Money initié',
-                ];
-            }
-
-            Log::error('Orange Money payment failed', [
-                'response' => $response->body(),
-                'status' => $response->status(),
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Erreur lors du paiement Orange Money'
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Orange Money exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Initier paiement Airtel Money
-     */
-    private function initiateAirtelPayment($amount, $phoneNumber, $userId, $orderId): array
-    {
-        try {
-            $apiKey = env('AIRTEL_MONEY_API_KEY');
-            $apiSecret = env('AIRTEL_MONEY_API_SECRET');
-            $baseUrl = env('AIRTEL_MONEY_BASE_URL', 'https://api.airtel.africa');
-
-            $token = $this->getAirtelToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return [
-                    'success' => false,
-                    'error' => 'Erreur d\'authentification Airtel Money'
-                ];
-            }
-
-            $reference = 'SALANG-AR-' . date('Ymd') . '-' . uniqid();
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->post("{$baseUrl}/payments/v1/collect", [
-                'amount' => $amount,
-                'currency' => 'XOF',
-                'phone' => $phoneNumber,
-                'reference' => $reference,
-                'description' => 'Achat Salang MLM',
-                'callback_url' => route('webhook.airtel-money'),
-                'metadata' => [
-                    'user_id' => $userId,
-                    'order_id' => $orderId,
-                ],
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'transaction_id' => $data['transaction_id'] ?? null,
-                    'reference' => $reference,
-                    'provider' => 'airtel',
-                    'status' => 'pending',
-                    'message' => 'Paiement Airtel Money initié',
-                ];
-            }
-
-            Log::error('Airtel Money payment failed', [
-                'response' => $response->body(),
-                'status' => $response->status(),
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Erreur lors du paiement Airtel Money'
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Airtel Money exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Initier paiement Vodacom M-Pesa
-     */
-    private function initiateVodacomPayment($amount, $phoneNumber, $userId, $orderId): array
-    {
-        try {
-            $apiKey = env('VODACOM_MONEY_API_KEY');
-            $apiSecret = env('VODACOM_MONEY_API_SECRET');
-            $baseUrl = env('VODACOM_MONEY_BASE_URL', 'https://api.vodacom.com');
-
-            $token = $this->getVodacomToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return [
-                    'success' => false,
-                    'error' => 'Erreur d\'authentification Vodacom M-Pesa'
-                ];
-            }
-
-            $reference = 'SALANG-VC-' . date('Ymd') . '-' . uniqid();
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->post("{$baseUrl}/mpesa/v1/payment", [
-                'amount' => $amount,
-                'currency' => 'CDF',
-                'phone' => $phoneNumber,
-                'reference' => $reference,
-                'description' => 'Achat Salang MLM',
-                'callback_url' => route('webhook.vodacom-money'),
-                'metadata' => [
-                    'user_id' => $userId,
-                    'order_id' => $orderId,
-                ],
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'transaction_id' => $data['transaction_id'] ?? null,
-                    'reference' => $reference,
-                    'provider' => 'vodacom',
-                    'status' => 'pending',
-                    'message' => 'Paiement Vodacom M-Pesa initié',
-                ];
-            }
-
-            Log::error('Vodacom M-Pesa payment failed', [
-                'response' => $response->body(),
-                'status' => $response->status(),
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Erreur lors du paiement Vodacom M-Pesa'
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Vodacom M-Pesa exception: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
      * Vérifier un paiement Mobile Money
      */
     public function checkPayment($reference, $provider = null)
     {
-        $provider = strtolower($provider ?? 'orange');
-
-        if (!in_array($provider, $this->providers)) {
-            return ['success' => false, 'error' => 'Provider non supporté'];
-        }
-
         try {
-            $result = $this->{'check' . ucfirst($provider) . 'Payment'}($reference);
-            return $result;
+            $state = $this->flexpay->check($reference);
+
+            if ($state->isSuccessful()) {
+                return [
+                    'success' => true,
+                    'status' => 'completed',
+                    'data' => $state,
+                ];
+            }
+
+            // Vérifier si la transaction est en attente
+            $pendingStatuses = ['pending', 'initiated', 'processing'];
+            if (in_array($state->getStatus(), $pendingStatuses)) {
+                return [
+                    'success' => true,
+                    'status' => 'pending',
+                    'data' => $state,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'status' => 'failed',
+                'data' => $state,
+            ];
 
         } catch (\Exception $e) {
             Log::error('Check payment error', [
@@ -289,223 +143,66 @@ class MobileMoneyService
     }
 
     /**
-     * Vérifier paiement Orange
-     */
-    private function checkOrangePayment($reference): array
-    {
-        try {
-            $apiKey = env('ORANGE_MONEY_API_KEY');
-            $apiSecret = env('ORANGE_MONEY_API_SECRET');
-            $baseUrl = env('ORANGE_MONEY_BASE_URL');
-
-            $token = $this->getOrangeToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return ['success' => false, 'error' => 'Erreur d\'authentification'];
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-            ])->get("{$baseUrl}/payments/v1/transaction/{$reference}");
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'status' => $data['status'] ?? 'pending',
-                    'data' => $data,
-                ];
-            }
-
-            return ['success' => false, 'error' => 'Transaction non trouvée'];
-
-        } catch (\Exception $e) {
-            Log::error('Check Orange payment error: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Vérifier paiement Airtel
-     */
-    private function checkAirtelPayment($reference): array
-    {
-        try {
-            $apiKey = env('AIRTEL_MONEY_API_KEY');
-            $apiSecret = env('AIRTEL_MONEY_API_SECRET');
-            $baseUrl = env('AIRTEL_MONEY_BASE_URL');
-
-            $token = $this->getAirtelToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return ['success' => false, 'error' => 'Erreur d\'authentification'];
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-            ])->get("{$baseUrl}/payments/v1/transaction/{$reference}");
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'status' => $data['status'] ?? 'pending',
-                    'data' => $data,
-                ];
-            }
-
-            return ['success' => false, 'error' => 'Transaction non trouvée'];
-
-        } catch (\Exception $e) {
-            Log::error('Check Airtel payment error: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Vérifier paiement Vodacom
-     */
-    private function checkVodacomPayment($reference): array
-    {
-        try {
-            $apiKey = env('VODACOM_MONEY_API_KEY');
-            $apiSecret = env('VODACOM_MONEY_API_SECRET');
-            $baseUrl = env('VODACOM_MONEY_BASE_URL');
-
-            $token = $this->getVodacomToken($apiKey, $apiSecret, $baseUrl);
-
-            if (!$token) {
-                return ['success' => false, 'error' => 'Erreur d\'authentification'];
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$token}",
-            ])->get("{$baseUrl}/mpesa/v1/payment/{$reference}");
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'status' => $data['status'] ?? 'pending',
-                    'data' => $data,
-                ];
-            }
-
-            return ['success' => false, 'error' => 'Transaction non trouvée'];
-
-        } catch (\Exception $e) {
-            Log::error('Check Vodacom payment error: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Obtenir token Orange
-     */
-    private function getOrangeToken($apiKey, $apiSecret, $baseUrl): ?string
-    {
-        $cacheKey = 'orange_payment_token';
-        
-        return Cache::remember($cacheKey, 3500, function () use ($apiKey, $apiSecret, $baseUrl) {
-            try {
-                $response = Http::withHeaders([
-                    'Authorization' => 'Basic ' . base64_encode("{$apiKey}:{$apiSecret}"),
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ])->post("{$baseUrl}/oauth/v2/token", [
-                    'grant_type' => 'client_credentials',
-                ]);
-
-                if ($response->successful()) {
-                    return $response->json('access_token');
-                }
-
-                Log::error('Orange token error', ['response' => $response->body()]);
-                return null;
-
-            } catch (\Exception $e) {
-                Log::error('Orange token exception: ' . $e->getMessage());
-                return null;
-            }
-        });
-    }
-
-    /**
-     * Obtenir token Airtel
-     */
-    private function getAirtelToken($apiKey, $apiSecret, $baseUrl): ?string
-    {
-        $cacheKey = 'airtel_payment_token';
-        
-        return Cache::remember($cacheKey, 3500, function () use ($apiKey, $apiSecret, $baseUrl) {
-            try {
-                $response = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post("{$baseUrl}/oauth/v1/token", [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $apiKey,
-                    'client_secret' => $apiSecret,
-                ]);
-
-                if ($response->successful()) {
-                    return $response->json('access_token');
-                }
-
-                Log::error('Airtel token error', ['response' => $response->body()]);
-                return null;
-
-            } catch (\Exception $e) {
-                Log::error('Airtel token exception: ' . $e->getMessage());
-                return null;
-            }
-        });
-    }
-
-    /**
-     * Obtenir token Vodacom
-     */
-    private function getVodacomToken($apiKey, $apiSecret, $baseUrl): ?string
-    {
-        $cacheKey = 'vodacom_payment_token';
-        
-        return Cache::remember($cacheKey, 3500, function () use ($apiKey, $apiSecret, $baseUrl) {
-            try {
-                $response = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post("{$baseUrl}/oauth/v1/token", [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $apiKey,
-                    'client_secret' => $apiSecret,
-                ]);
-
-                if ($response->successful()) {
-                    return $response->json('access_token');
-                }
-
-                Log::error('Vodacom token error', ['response' => $response->body()]);
-                return null;
-
-            } catch (\Exception $e) {
-                Log::error('Vodacom token exception: ' . $e->getMessage());
-                return null;
-            }
-        });
-    }
-
-    /**
      * Nettoyer le numéro de téléphone
      */
     private function cleanPhoneNumber(string $phone): string
     {
-        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        // Enlever tous les caractères non numériques
+        $phone = preg_replace('/[^0-9]/', '', $phone);
         
-        if (str_starts_with($phone, '0')) {
-            $phone = '225' . substr($phone, 1);
+        // Si le numéro commence par 0, remplacer par 243 (RDC)
+        if (strpos($phone, '0') === 0) {
+            $phone = '243' . substr($phone, 1);
         }
         
-        if (!str_starts_with($phone, '+')) {
-            $phone = '+' . $phone;
+        // Si le numéro ne commence pas par 243, ajouter 243
+        if (strpos($phone, '243') !== 0 && strlen($phone) < 10) {
+            $phone = '243' . $phone;
         }
 
         return $phone;
+    }
+
+    /**
+     * Obtenir le préfixe de l'opérateur
+     */
+    public function getOperatorPrefix($phone): ?string
+    {
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        
+        // Extraire les 2 premiers chiffres après 243
+        if (strpos($phone, '243') === 0 && strlen($phone) >= 5) {
+            $prefix = substr($phone, 3, 2);
+            return $prefix;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Valider le numéro pour un opérateur spécifique
+     */
+    public function validateNumberForOperator($phone, $provider): bool
+    {
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        $prefix = $this->getOperatorPrefix($phone);
+
+        if (!$prefix) {
+            return false;
+        }
+
+        switch ($provider) {
+            case 'orange':
+                // Orange RDC : 8X ou 9X
+                return in_array($prefix, ['80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99']);
+            case 'airtel':
+                // Airtel RDC : 7X
+                return in_array($prefix, ['70', '71', '72', '73', '74', '75', '76', '77', '78', '79']);
+            case 'mpesa':
+                // M-Pesa (Vodacom) RDC : 8X ou 99X
+                return in_array($prefix, ['80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '99']);
+            default:
+                return false;
+        }
     }
 }

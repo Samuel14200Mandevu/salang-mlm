@@ -2,6 +2,13 @@
 // config/services.php
 
 return [
+
+
+    'flexpay' => [
+        'token' => env('FLEXPAY_TOKEN'),
+        'merchant_code' => env('FLEXPAY_MERCHANT_CODE'),
+        'environment' => env('FLEXPAY_ENVIRONMENT', 'sandbox'),
+    ],
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

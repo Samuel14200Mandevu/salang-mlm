@@ -1,42 +1,15 @@
 <?php
-// config/pwa.php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Enable PWA
-    |--------------------------------------------------------------------------
-    */
-
     'enable_pwa' => env('PWA_ENABLED', true),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Livewire Support
-    |--------------------------------------------------------------------------
-    */
-
     'livewire-app' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Small Device Position
-    |--------------------------------------------------------------------------
-    */
-
     'small_device_position' => 'fixed',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Manifest Configuration
-    |--------------------------------------------------------------------------
-    */
-
     'manifest' => [
-        'name' => 'Salang MLM',
-        'short_name' => 'Salang',
+        'name' => 'Salang MLM',  // ← Nom complet CORRECT
+        'short_name' => 'Salang',  // ← Nom court CORRECT
         'description' => 'Salang Multi-Level Marketing Platform',
-        'theme_color' => '#6366f1',
+        'theme_color' => '#1f33cf',
         'background_color' => '#ffffff',
         'display' => 'standalone',
         'orientation' => 'portrait',
@@ -66,14 +39,8 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Service Worker Configuration
-    |--------------------------------------------------------------------------
-    */
-
     'service_worker' => [
-        'enabled' => env('PWA_SW_ENABLED', true),
+        'enabled' => true,
         'filename' => 'sw.js',
         'minify' => true,
         'precache' => [
@@ -91,12 +58,6 @@ return [
             'max_age_seconds' => 3600,
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Offline Fallback
-    |--------------------------------------------------------------------------
-    */
 
     'offline_fallback' => [
         'enabled' => true,

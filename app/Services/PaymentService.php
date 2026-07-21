@@ -1,5 +1,4 @@
 <?php
-// app/Services/PaymentService.php
 
 namespace App\Services;
 
@@ -9,11 +8,19 @@ use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\MobileMoneyService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
+    protected MobileMoneyService $mobileMoneyService;
+
+    public function __construct(MobileMoneyService $mobileMoneyService)
+    {
+        $this->mobileMoneyService = $mobileMoneyService;
+    }
+
     /**
      * Traiter un paiement crypto
      */
@@ -30,7 +37,7 @@ class PaymentService
     }
 
     /**
-     * Traiter un paiement Mobile Money (Orange, Airtel, Vodacom)
+     * Traiter un paiement Mobile Money (Orange, Airtel, M-Pesa)
      */
     public function processMobileMoneyPayment($userId, $amount, $provider, $phoneNumber)
     {
@@ -44,18 +51,25 @@ class PaymentService
         ]);
 
         // Vérifier le provider
-        $validProviders = ['orange', 'airtel', 'vodacom'];
+        $validProviders = ['orange', 'airtel', 'mpesa'];
         if (!in_array($provider, $validProviders)) {
             Log::error('Invalid mobile money provider', ['provider' => $provider]);
             return [
                 'success' => false,
-                'message' => 'Provider non supporté. Utilisez Orange, Airtel ou Vodacom.'
+                'message' => 'Provider non supporté. Utilisez Orange, Airtel ou M-Pesa.'
             ];
         }
 
-        // Appeler le service MobileMoneyService
-        $mobileMoneyService = app(MobileMoneyService::class);
-        $result = $mobileMoneyService->initiatePayment(
+        // Valider le numéro pour l'opérateur choisi
+        if (!$this->mobileMoneyService->validateNumberForOperator($phoneNumber, $provider)) {
+            return [
+                'success' => false,
+                'message' => 'Le numéro de téléphone ne correspond pas à l\'opérateur sélectionné.'
+            ];
+        }
+
+        // Appeler le service MobileMoneyService avec FlexPay
+        $result = $this->mobileMoneyService->initiatePayment(
             $amount,
             $phoneNumber,
             $provider,
@@ -82,6 +96,7 @@ class PaymentService
                         'provider' => $provider,
                         'phone' => $phoneNumber,
                         'transaction_id' => $result['transaction_id'] ?? null,
+                        'raw_response' => $result['raw_response'] ?? null,
                     ]),
                 ]);
             }
@@ -302,6 +317,63 @@ class PaymentService
             DB::rollBack();
             Log::error('Withdrawal creation error: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Erreur lors de la création du retrait'];
+        }
+    }
+
+    /**
+     * Confirmer un paiement mobile via webhook
+     */
+    public function confirmMobilePayment($reference, $provider)
+    {
+        $transaction = Transaction::where('reference', $reference)->first();
+        
+        if (!$transaction) {
+            Log::error('Transaction not found', ['reference' => $reference]);
+            return ['success' => false, 'message' => 'Transaction non trouvée'];
+        }
+
+        if ($transaction->status === 'completed') {
+            return ['success' => true, 'message' => 'Transaction déjà complétée'];
+        }
+
+        $wallet = Wallet::find($transaction->wallet_id);
+        
+        if (!$wallet) {
+            return ['success' => false, 'message' => 'Portefeuille non trouvé'];
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            $balanceBefore = $wallet->balance;
+            
+            $wallet->balance += $transaction->amount;
+            $wallet->total_deposited += $transaction->amount;
+            $wallet->save();
+
+            $transaction->status = 'completed';
+            $transaction->balance_before = $balanceBefore;
+            $transaction->balance_after = $wallet->balance;
+            $transaction->completed_at = now();
+            $transaction->save();
+
+            DB::commit();
+
+            Log::info('Mobile payment confirmed', [
+                'reference' => $reference,
+                'provider' => $provider,
+                'user_id' => $transaction->user_id
+            ]);
+
+            return ['success' => true, 'message' => 'Paiement confirmé'];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Mobile payment confirmation error', [
+                'reference' => $reference,
+                'error' => $e->getMessage()
+            ]);
+            return ['success' => false, 'message' => 'Erreur lors de la confirmation'];
         }
     }
 }

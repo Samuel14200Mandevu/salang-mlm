@@ -94,10 +94,26 @@ Route::view('/cookie-policy', 'pages.cookie-policy')->name('cookie-policy');
 // ============================================================
 // WEBHOOKS (PUBLIC) - Sans CSRF
 // ============================================================
-Route::prefix('webhook')->withoutMiddleware(['csrf'])->group(function () {
-    Route::post('/crypto', [WebhookController::class, 'crypto'])->name('webhook.crypto');
-    Route::post('/mobile-money', [WebhookController::class, 'mobileMoney'])->name('webhook.mobile-money');
-    Route::post('/payment', [WebhookController::class, 'payment'])->name('webhook.payment');
+Route::prefix('webhook')->group(function () {
+    // FlexPay - Orange Money, Airtel Money, M-Pesa
+    Route::post('/flexpay', [WebhookController::class, 'flexpay'])
+        ->name('webhook.flexpay')
+        ->withoutMiddleware(['csrf']);
+    
+    // Crypto (Coinbase, Binance, etc.)
+    Route::post('/crypto', [WebhookController::class, 'crypto'])
+        ->name('webhook.crypto')
+        ->withoutMiddleware(['csrf']);
+    
+    // Mobile Money (Legacy - pour compatibilité)
+    Route::post('/mobile-money', [WebhookController::class, 'mobileMoney'])
+        ->name('webhook.mobile-money')
+        ->withoutMiddleware(['csrf']);
+    
+    // Paiement générique
+    Route::post('/payment', [WebhookController::class, 'payment'])
+        ->name('webhook.payment')
+        ->withoutMiddleware(['csrf']);
 });
 
 // ============================================================
@@ -254,7 +270,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/export', [CommissionController::class, 'export'])->name('export');
         Route::get('/levels', [CommissionController::class, 'getLevelCommissions'])->name('levels');
         Route::get('/{id}/json', [CommissionController::class, 'getJsonDetails'])->name('json.details');
-        Route::get('/export', [CommissionController::class, 'export'])->name('export');
         Route::get('/export-pdf', [CommissionController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/{id}', [CommissionController::class, 'show'])->name('show');
     });
@@ -269,7 +284,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/resend', [ActivationController::class, 'resendCode'])->name('resend');
     });
 
-}); // ⭐ FERMETURE DU GROUPE auth, active
+}); // ⭐ FIN DU GROUPE auth, active
 
 // ============================================================
 // ROUTES ADMIN
@@ -342,14 +357,14 @@ Route::prefix('admin')
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
 
         // ============================================================
-        // ORDERS ADMIN - CORRIGÉ (Utilisation du nom complet)
+        // ORDERS ADMIN
         // ============================================================
         Route::prefix('orders')->name('orders.')->group(function () {
-            Route::get('/', ['App\Http\Controllers\Admin\AdminOrderController', 'index'])->name('index');
-            Route::get('/{order}', ['App\Http\Controllers\Admin\AdminOrderController', 'show'])->name('show');
-            Route::get('/{order}/invoice', ['App\Http\Controllers\Admin\AdminOrderController', 'invoice'])->name('invoice');
-            Route::put('/{order}/status', ['App\Http\Controllers\Admin\AdminOrderController', 'updateStatus'])->name('update-status');
-            Route::get('/export', ['App\Http\Controllers\Admin\AdminOrderController', 'export'])->name('export');
+            Route::get('/', [AdminOrderController::class, 'index'])->name('index');
+            Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
+            Route::get('/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('invoice');
+            Route::put('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
+            Route::get('/export', [AdminOrderController::class, 'export'])->name('export');
         });
 
         // ============================================================
@@ -479,41 +494,41 @@ Route::prefix('admin')
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
 
         // ============================================================
-// SETTINGS ADMIN
-// ============================================================
-Route::prefix('settings')->name('settings.')->group(function () {
-    Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-    Route::put('/', [AdminSettingController::class, 'update'])->name('update');
+        // SETTINGS ADMIN
+        // ============================================================
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
+            Route::put('/', [AdminSettingController::class, 'update'])->name('update');
 
-    // Commission Settings
-    Route::prefix('commission')->name('commission.')->group(function () {
-        Route::get('/', [AdminSettingController::class, 'commission'])->name('index');
-        Route::put('/', [AdminSettingController::class, 'updateCommission'])->name('update');
-    });
+            // Commission Settings
+            Route::prefix('commission')->name('commission.')->group(function () {
+                Route::get('/', [AdminSettingController::class, 'commission'])->name('index');
+                Route::put('/', [AdminSettingController::class, 'updateCommission'])->name('update');
+            });
 
-    // Payment Settings
-    Route::prefix('payment')->name('payment.')->group(function () {
-        Route::get('/', [AdminSettingController::class, 'payment'])->name('index');
-        Route::put('/', [AdminSettingController::class, 'updatePayment'])->name('update');
-    });
+            // Payment Settings
+            Route::prefix('payment')->name('payment.')->group(function () {
+                Route::get('/', [AdminSettingController::class, 'payment'])->name('index');
+                Route::put('/', [AdminSettingController::class, 'updatePayment'])->name('update');
+            });
 
-    // ALIAS RAPIDES
-    Route::get('/commission', [AdminSettingController::class, 'commission'])->name('commission');
-    Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
+            // ALIAS RAPIDES
+            Route::get('/commission', [AdminSettingController::class, 'commission'])->name('commission');
+            Route::get('/payment', [AdminSettingController::class, 'payment'])->name('payment');
 
-    // ✅ AJOUTER CES ALIAS POUR COMPATIBILITÉ AVEC LES VUES
-    Route::put('/commission/update', [AdminSettingController::class, 'updateCommission'])->name('update-commission');
-    Route::put('/payment/update', [AdminSettingController::class, 'updatePayment'])->name('update-payment');
+            // ✅ ALIAS POUR COMPATIBILITÉ AVEC LES VUES
+            Route::put('/commission/update', [AdminSettingController::class, 'updateCommission'])->name('update-commission');
+            Route::put('/payment/update', [AdminSettingController::class, 'updatePayment'])->name('update-payment');
 
-    // System
-    Route::post('/clear-cache', [AdminSettingController::class, 'clearCache'])->name('clear-cache');
-    Route::post('/optimize', [AdminSettingController::class, 'optimize'])->name('optimize');
-    Route::post('/toggle-maintenance', [AdminSettingController::class, 'toggleMaintenance'])->name('toggle-maintenance');
-    Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
-});
+            // System
+            Route::post('/clear-cache', [AdminSettingController::class, 'clearCache'])->name('clear-cache');
+            Route::post('/optimize', [AdminSettingController::class, 'optimize'])->name('optimize');
+            Route::post('/toggle-maintenance', [AdminSettingController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+            Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
+        });
 
-// ALIAS
-Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
+        // ALIAS
+        Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
 
         // ============================================================
         // ADMIN ACTIVATIONS
@@ -526,7 +541,7 @@ Route::get('/settings', [AdminSettingController::class, 'index'])->name('setting
             Route::post('/{id}/send-code', [AdminActivationController::class, 'sendCode'])->name('send-code');
         });
 
-}); // FERMETURE DU GROUPE ADMIN
+    }); // ⭐ FIN DU GROUPE ADMIN
 
 // ============================================================
 // AUTHENTIFICATION
