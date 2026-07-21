@@ -6,17 +6,33 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin - @yield('title', 'Salang MLM')</title>
     
+    <!-- ============================================ -->
+    <!-- PWA HEAD - GÉRÉ PAR LE PACKAGE              -->
+    <!-- ============================================ -->
     @if(class_exists('PwaKit'))
         {!! PwaKit::head() !!}
     @endif
     
+    <!-- ============================================ -->
+    <!-- MÉTADONNÉES PWA MANUELLES (SÉCURITÉ)        -->
+    <!-- ============================================ -->
+    <meta name="theme-color" content="#5ab638">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    
+    <!-- ============================================ -->
+    <!-- FAVICONS ET ICÔNES (COMPATIBILITÉ)          -->
+    <!-- ============================================ -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="theme-color" content="#5ab638">
     
+    <!-- ============================================ -->
+    <!-- FONTS ET STYLES                              -->
+    <!-- ============================================ -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -127,6 +143,10 @@
             color: var(--primary-500);
         }
 
+        .mobile-bottom-nav .nav-item.active svg {
+            transform: scale(1.1);
+        }
+
         @media (max-width: 767px) {
             .mobile-bottom-nav {
                 display: flex;
@@ -194,6 +214,14 @@
             background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
         }
+        .confirm-dialog .icon.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        .confirm-dialog .icon.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
         .confirm-dialog h3 {
             font-size: 1.125rem;
             font-weight: 700;
@@ -239,6 +267,13 @@
             background: #dc2626;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .confirm-dialog .actions .btn-confirm.success {
+            background: #22c55e;
+        }
+        .confirm-dialog .actions .btn-confirm.success:hover {
+            background: #16a34a;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
         }
 
         @media (max-width: 640px) {
@@ -333,12 +368,19 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">Dashboard Admin</span>
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Dashboard Admin
+                                </span>
                             </a>
                         </li>
 
                         <!-- Gestion -->
-                        <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Gestion</div></li>
+                        <li>
+                            <div class="sidebar-section transition-opacity duration-200" 
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                Gestion
+                            </div>
+                        </li>
 
                         <li>
                             <a href="{{ route('admin.users') }}" 
@@ -346,7 +388,10 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Utilisateurs</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Utilisateurs
+                                </span>
                             </a>
                         </li>
 
@@ -356,7 +401,10 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Packages</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Packages
+                                </span>
                             </a>
                         </li>
 
@@ -366,19 +414,23 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Produits</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Produits
+                                </span>
                             </a>
                         </li>
 
-                        <!-- ✅ Commandes (NOUVEAU) -->
                         <li>
                             <a href="{{ route('admin.orders.index') }}" 
                                class="sidebar-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Commandes</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Commandes
+                                </span>
                             </a>
                         </li>
 
@@ -388,12 +440,20 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">KYC</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    KYC
+                                </span>
                             </a>
                         </li>
 
                         <!-- Finances -->
-                        <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Finances</div></li>
+                        <li>
+                            <div class="sidebar-section transition-opacity duration-200" 
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                Finances
+                            </div>
+                        </li>
 
                         <li>
                             <a href="{{ route('admin.commissions') }}" 
@@ -401,7 +461,10 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Commissions</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Commissions
+                                </span>
                             </a>
                         </li>
 
@@ -411,7 +474,10 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Portefeuilles</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Portefeuilles
+                                </span>
                             </a>
                         </li>
 
@@ -421,12 +487,20 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Retraits</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Retraits
+                                </span>
                             </a>
                         </li>
 
                         <!-- Rangs -->
-                        <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Rangs</div></li>
+                        <li>
+                            <div class="sidebar-section transition-opacity duration-200" 
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                Rangs
+                            </div>
+                        </li>
 
                         <li>
                             <a href="{{ route('admin.ranks') }}" 
@@ -434,12 +508,20 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Gestion des Rangs</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Gestion des Rangs
+                                </span>
                             </a>
                         </li>
 
                         <!-- Rapports -->
-                        <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Rapports</div></li>
+                        <li>
+                            <div class="sidebar-section transition-opacity duration-200" 
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                Rapports
+                            </div>
+                        </li>
 
                         <li>
                             <a href="{{ route('admin.reports') }}" 
@@ -447,12 +529,20 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Rapports</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Rapports
+                                </span>
                             </a>
                         </li>
 
                         <!-- Administration -->
-                        <li><div class="sidebar-section" :class="sidebarOpen ? 'block' : 'hidden'">Administration</div></li>
+                        <li>
+                            <div class="sidebar-section transition-opacity duration-200" 
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                                Administration
+                            </div>
+                        </li>
 
                         <li>
                             <a href="{{ route('admin.settings') }}" 
@@ -461,7 +551,10 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Paramètres</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Paramètres
+                                </span>
                             </a>
                         </li>
 
@@ -471,7 +564,10 @@
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                 </svg>
-                                <span class="label" :class="sidebarOpen ? 'inline-block' : 'hidden'">Voir le site</span>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Voir le site
+                                </span>
                             </a>
                         </li>
                     </ul>
@@ -611,6 +707,8 @@
                 <div class="max-w-7xl mx-auto px-3 sm:px-4 text-center text-[var(--text-secondary)] text-xs sm:text-sm">
                     <div class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2">
                         <span>&copy; {{ date('Y') }} Salang Group. Tous droits réservés.</span>
+                        <span class="hidden sm:inline">•</span>
+                        <span>Administration</span>
                     </div>
                 </div>
             </footer>
@@ -634,12 +732,10 @@
                 <span>Utilisateurs</span>
             </a>
 
-            <!-- ✅ Commandes (Mobile) -->
             <a href="{{ route('admin.orders.index') }}" 
                class="nav-item {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
                 <span>Commandes</span>
             </a>
@@ -682,9 +778,14 @@
     </div>
 
     @livewireScripts
+    
+    <!-- ============================================ -->
+    <!-- PWA SCRIPTS - À GARDER À LA FIN              -->
+    <!-- ============================================ -->
     @if(class_exists('PwaKit'))
         {!! PwaKit::scripts() !!}
     @endif
+    
     @stack('scripts')
 
     <!-- ===== CONFIRMATION LOGOUT SCRIPT ===== -->
@@ -702,7 +803,6 @@
         const title = dialog.querySelector('h3');
         const message = dialog.querySelector('p');
         const confirmBtn = document.getElementById('confirmLogoutBtn');
-        const cancelBtn = dialog.querySelector('.btn-cancel');
         
         // Configurer le dialogue
         icon.className = 'icon';

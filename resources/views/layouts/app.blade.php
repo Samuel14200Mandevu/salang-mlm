@@ -4,26 +4,35 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Salang MLM</title>
+    <title>@yield('title', 'Salang MLM')</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-touch-fullscreen" content="yes">
-    <meta name="theme-color" content="#5ab638">
-    
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="msapplication-TileColor" content="#5ab638">
-    <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
-    
+    <!-- ============================================ -->
+    <!-- PWA HEAD - GÉRÉ PAR LE PACKAGE              -->
+    <!-- ============================================ -->
     @if(class_exists('PwaKit'))
         {!! PwaKit::head() !!}
     @endif
     
+    <!-- ============================================ -->
+    <!-- MÉTADONNÉES PWA MANUELLES (SÉCURITÉ)        -->
+    <!-- ============================================ -->
+    <meta name="theme-color" content="#5ab638">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    
+    <!-- ============================================ -->
+    <!-- FAVICONS ET ICÔNES (COMPATIBILITÉ)          -->
+    <!-- ============================================ -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    
+    <!-- ============================================ -->
+    <!-- FONTS ET STYLES                              -->
+    <!-- ============================================ -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -670,7 +679,7 @@
                             </a>
 
                             <!-- Notifications -->
-                            <div class="relative" x-data="{ open: false, unreadCount: {{ auth()->user()->unreadNotifications()->count() }} }">
+                            <div class="relative" x-data="{ open: false, unreadCount: {{ auth()->user()->unreadNotifications()->count() ?? 0 }} }">
                                 <button @click="open = !open" 
                                         class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -799,7 +808,8 @@
                                         @endif
                                         
                                         <hr class="border-[var(--border-color)]">
-                                        <!-- ✅ FORMULAIRE DE DÉCONNEXION AVEC CONFIRMATION -->
+                                        
+                                        <!-- FORMULAIRE DE DÉCONNEXION AVEC CONFIRMATION -->
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
                                             @csrf
                                             <button type="button" 
@@ -890,6 +900,9 @@
     @livewireScripts
     @vite(['resources/js/app.js'])
     
+    <!-- ============================================ -->
+    <!-- PWA SCRIPTS - À GARDER À LA FIN              -->
+    <!-- ============================================ -->
     @if(class_exists('PwaKit'))
         {!! PwaKit::scripts() !!}
     @endif
@@ -987,7 +1000,6 @@
         const title = dialog.querySelector('h3');
         const message = dialog.querySelector('p');
         const confirmBtn = document.getElementById('confirmLogoutBtn');
-        const cancelBtn = dialog.querySelector('.btn-cancel');
         
         // Configurer le dialogue
         icon.className = 'icon';
@@ -1056,7 +1068,6 @@
             message: 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
             confirmText: 'Se déconnecter',
             onConfirm: function() {
-                // Soumettre le formulaire
                 if (form) {
                     form.submit();
                 }
