@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Services\MLM\MonthlyCommissionService;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\PDF;
 
 class OrderController extends Controller
 {
@@ -22,6 +24,9 @@ class OrderController extends Controller
         $this->commissionService = $commissionService;
     }
 
+    /**
+     * Liste des commandes de l'utilisateur
+     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -44,12 +49,20 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        // Statistiques
+        $pendingCount = Order::where('user_id', $user->id)->where('status', 'pending')->count();
+        $completedCount = Order::where('user_id', $user->id)->where('status', 'completed')->count();
+        $totalSpent = Order::where('user_id', $user->id)->where('payment_status', 'completed')->sum('total');
+
         $orders = $query->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('orders.index', compact('orders'));
+        return view('orders.index', compact('orders', 'pendingCount', 'completedCount', 'totalSpent'));
     }
 
+    /**
+     * Détails d'une commande
+     */
     public function show(Order $order)
     {
         if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
@@ -61,13 +74,16 @@ class OrderController extends Controller
         return view('orders.show', compact('order'));
     }
 
+    /**
+     * Annuler une commande
+     */
     public function cancel(Order $order)
     {
         if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
-        if ($order->status !== 'pending' && $order->status !== 'completed') {
+        if ($order->status !== 'pending' && $order->status !== 'processing') {
             return back()->with('error', 'Cette commande ne peut pas être annulée.');
         }
 
@@ -134,31 +150,68 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * Afficher la facture (version HTML)
+     */
     public function invoice(Order $order)
     {
-        if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403);
+        // Vérifier que l'utilisateur est propriétaire de la commande
+        if ($order->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized');
         }
 
         $order->load(['items', 'items.product', 'items.package', 'user']);
 
-        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('orders.invoice', compact('order'));
-            return $pdf->download('facture_' . $order->order_number . '.pdf');
+        // Récupérer le parrain si existe
+        $sponsor = null;
+        if ($order->user->parrain_id) {
+            $sponsor = User::find($order->user->parrain_id);
         }
 
+        return view('orders.invoice', compact('order', 'sponsor'));
+    }
+
+    /**
+     * Télécharger la facture en PDF
+     */
+    public function downloadInvoice(Order $order)
+    {
+        // Vérifier que l'utilisateur est propriétaire de la commande
+        if ($order->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized');
+        }
+
+        $order->load(['items', 'items.product', 'items.package', 'user']);
+
+        // Récupérer le parrain si existe
+        $sponsor = null;
+        if ($order->user->parrain_id) {
+            $sponsor = User::find($order->user->parrain_id);
+        }
+
+        // Vérifier si DomPDF est installé
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('orders.invoice', compact('order', 'sponsor'));
+            $pdf->setPaper('a6', 'portrait');
+            return $pdf->download('Facture_' . $order->order_number . '.pdf');
+        }
+
+        // Fallback si DomPDF n'est pas installé
         if (class_exists('\Dompdf\Dompdf')) {
             $dompdf = new \Dompdf\Dompdf();
-            $html = view('orders.invoice', compact('order'))->render();
+            $html = view('orders.invoice', compact('order', 'sponsor'))->render();
             $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->setPaper('a6', 'portrait');
             $dompdf->render();
-            return $dompdf->stream('facture_' . $order->order_number . '.pdf');
+            return $dompdf->stream('Facture_' . $order->order_number . '.pdf');
         }
 
         return back()->with('error', 'Module PDF non installé. Contactez l\'administrateur.');
     }
 
+    /**
+     * API - Liste des commandes
+     */
     public function apiIndex(Request $request)
     {
         $user = Auth::user();
@@ -175,6 +228,9 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * API - Détails d'une commande
+     */
     public function apiShow(Order $order)
     {
         if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {

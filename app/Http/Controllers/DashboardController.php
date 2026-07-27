@@ -180,10 +180,16 @@ class DashboardController extends Controller
 
         // ACTIVITÉS RÉCENTES
         $recentActivities = Commission::where('user_id', $user->id)
-            ->with(['fromUser', 'package', 'period'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+            ->where(function($query) {
+            $query->where('type', 'direct')      // Bonus direct
+              ->orWhere('type', 'indirect')   // Bonus indirect
+              ->orWhere('type', 'leadership') // Bonus leadership
+              ->orWhere('type', 'pos_sale');   // Vente POS (PV reçus)
+            })
+                ->with(['fromUser', 'package', 'period'])
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
 
         // STATISTIQUES DU JOUR
         $stats = [

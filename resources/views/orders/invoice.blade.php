@@ -1,281 +1,550 @@
+{{-- resources/views/orders/invoice.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Invoice #{{ $order->order_number }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Facture #{{ $order->order_number }}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'DejaVu Sans', 'Helvetica', Arial, sans-serif;
-            margin: 20px;
-            color: #333;
-            font-size: 13px;
-            background: #fff;
-        }
-        .invoice-header {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Courier New', monospace; 
+            padding: 10px; 
+            color: #1a1a1a; 
+            font-size: 11px;
+            background: #f5f5f5;
+            max-width: 360px;
+            margin: 0 auto;
+            min-height: 100vh;
             display: flex;
-            justify-content: space-between;
-            border-bottom: 2px solid #5ab638;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-direction: column;
+            justify-content: center;
         }
-        .invoice-title h1 {
-            color: #5ab638;
-            margin: 0;
-            font-size: 24px;
-        }
-        .invoice-title p {
-            color: #666;
-            margin: 5px 0 0;
-            font-size: 13px;
-        }
-        .invoice-info {
-            text-align: right;
-        }
-        .invoice-info p {
-            margin: 3px 0;
-            font-size: 12px;
-        }
-        .invoice-info strong {
-            color: #333;
-        }
-        .company-info {
-            background: #f8fafc;
-            padding: 15px;
+        
+        .ticket {
+            background: #ffffff;
+            padding: 12px 14px 16px;
             border-radius: 8px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .company-info div p {
-            margin: 3px 0;
-            font-size: 12px;
-            color: #666;
-        }
-        .company-info div strong {
-            color: #333;
-        }
-        table {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            border: 1px solid #e5e7eb;
             width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
         }
-        th {
-            background: #5ab638;
-            color: white;
-            padding: 8px 12px;
-            text-align: left;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        
+        /* ===== EN-TETE ===== */
+        .header { 
+            text-align: center; 
+            border-bottom: 2px dashed #ccc; 
+            padding-bottom: 10px; 
+            margin-bottom: 10px;
         }
-        td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 12px;
+        
+        .header .store-logo {
+            margin: 0 auto 4px;
+            max-width: 70px;
         }
-        .text-right {
-            text-align: right;
+        .header .store-logo img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
-        .total-section {
-            margin-top: 20px;
-            border-top: 2px solid #5ab638;
-            padding-top: 20px;
-            display: flex;
-            justify-content: flex-end;
-        }
-        .total-box {
-            width: 280px;
-        }
-        .total-box .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            font-size: 13px;
-        }
-        .total-box .row.total {
+        
+        .header .store-name { 
+            color: #0E2F76; 
             font-size: 16px;
-            font-weight: bold;
-            border-top: 2px solid #333;
-            padding-top: 8px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        .header .store-sub {
+            font-size: 7px;
+            color: #666;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+        .header .store-contact {
+            font-size: 7px;
+            color: #555;
+            line-height: 1.5;
             margin-top: 4px;
-            color: #5ab638;
         }
-        .status-badge {
+        .header .store-address {
+            font-size: 6.5px;
+            color: #666;
+            line-height: 1.4;
+            margin-top: 3px;
+            background: #f8fafc;
+            padding: 4px 6px;
+            border-radius: 3px;
+        }
+        .header .store-reg {
+            font-size: 6px;
+            color: #888;
+            line-height: 1.4;
+            margin-top: 3px;
+            border-top: 1px dotted #e5e7eb;
+            padding-top: 4px;
+        }
+        .header .ticket-number {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0E2F76;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+        .header .ticket-date {
+            font-size: 8px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .header .status-badge {
             display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        .status-completed {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 4px;
             background: #dcfce7;
             color: #22c55e;
         }
-        .status-pending {
-            background: #fef3c7;
-            color: #f59e0b;
+        
+        /* ===== SEPARATEURS ===== */
+        .separator-dashed { border-top: 1px dashed #ddd; margin: 5px 0; }
+        .separator-dotted { border-top: 1px dotted #eee; margin: 3px 0; }
+        
+        /* ===== INFOS ===== */
+        .info { margin-bottom: 8px; border-bottom: 1px dashed #ddd; padding-bottom: 6px; }
+        .info .row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }
+        .info .row .label { color: #888; }
+        .info .row .value { font-weight: 600; color: #1a1a1a; }
+        
+        /* ===== SPONSOR ===== */
+        .sponsor-info { 
+            background: #f0f7ff; 
+            padding: 6px 8px; 
+            border-radius: 4px; 
+            margin: 6px 0; 
+            font-size: 8px; 
+            border-left: 3px solid #0E2F76;
         }
-        .status-processing {
-            background: #dbeafe;
-            color: #3b82f6;
+        .sponsor-info .row { display: flex; justify-content: space-between; padding: 1px 0; }
+        .sponsor-info .row .label { color: #666; }
+        .sponsor-info .row .value { font-weight: 700; color: #0E2F76; }
+        
+        /* ===== ARTICLES ===== */
+        .items { margin: 6px 0; }
+        .items .item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 8px;
+            text-transform: uppercase;
+            color: #888;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
         }
-        .status-cancelled {
-            background: #fee2e2;
-            color: #ef4444;
+        .items .item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 2px 0; 
+            border-bottom: 1px dotted #f0f0f0; 
+            font-size: 9px; 
         }
-        .footer {
-            margin-top: 40px;
+        .items .item:last-child { border-bottom: none; }
+        .items .item .qty { color: #888; width: 22px; font-weight: 600; }
+        .items .item .name { flex: 1; padding: 0 4px; }
+        .items .item .price { font-weight: 600; white-space: nowrap; }
+        .items .item .package-tag { font-size: 6px; color: #0E2F76; font-weight: 700; }
+        
+        /* ===== TOTAUX ===== */
+        .total { border-top: 2px dashed #ccc; padding-top: 6px; margin-top: 6px; }
+        .total .row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }
+        .total .row .label { color: #666; }
+        .total .row .value { color: #1a1a1a; }
+        .total .row.total { 
+            font-size: 14px; 
+            font-weight: 900; 
+            border-top: 2px double #1a1a1a; 
+            padding-top: 4px; 
+            margin-top: 3px;
+        }
+        .total .row.total .label { color: #1a1a1a; }
+        .total .row.total .value { color: #0E2F76; }
+        .total .row.discount .value { color: #ef4444; }
+        
+        /* ===== PV & COMMISSIONS ===== */
+        .pv-info { 
+            background: #f0fdf4; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            margin: 4px 0; 
+            text-align: center; 
+            font-size: 8px; 
+            border: 1px solid #bbf7d0;
+        }
+        .pv-info strong { color: #16a34a; }
+        
+        .commission-info { 
+            background: #fef3c7; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            margin: 4px 0; 
+            text-align: center; 
+            font-size: 8px; 
+            border: 1px solid #fcd34d;
+        }
+        .commission-info strong { color: #d97706; }
+        
+        /* ===== PAIEMENT ===== */
+        .payment-info { 
+            font-size: 8px; 
+            padding: 6px 8px; 
+            background: #f8fafc; 
+            border-radius: 4px; 
+            margin: 6px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .payment-info .row { display: flex; justify-content: space-between; padding: 1px 0; }
+        .payment-info .row .label { color: #888; }
+        .payment-info .row .value { font-weight: 600; }
+        .payment-info .row .value.paid { color: #22c55e; }
+        
+        /* ===== RETRAIT ===== */
+        .pickup-info {
+            background: #e0f2fe;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin: 6px 0;
             text-align: center;
-            font-size: 11px;
-            color: #999;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
+            font-size: 8px;
+            border: 1px solid #7dd3fc;
         }
+        .pickup-info strong { color: #0369a1; }
+        
+        /* ===== PIED ===== */
+        .footer { 
+            text-align: center; 
+            font-size: 7px; 
+            color: #999; 
+            margin-top: 8px; 
+            border-top: 1px dashed #ddd; 
+            padding-top: 6px;
+            line-height: 1.5;
+        }
+        .footer .thank-you {
+            font-size: 10px;
+            font-weight: 700;
+            color: #0E2F76;
+            letter-spacing: 1px;
+        }
+        .footer .barcode {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: #333;
+            font-weight: 700;
+            margin: 3px 0;
+        }
+        
+        /* ===== BOUTONS MOBILE ===== */
+        .no-print {
+            text-align: center;
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        .no-print .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            flex: 1;
+            min-width: 80px;
+            max-width: 150px;
+            text-align: center;
+        }
+        .no-print .btn:active { transform: scale(0.95); }
+        .btn-print { background: #0E2F76; color: white; }
+        .btn-download { background: #22c55e; color: white; }
+        .btn-back { background: #f3f4f6; color: #333; border: 1px solid #d1d5db; }
+        
+        /* ============================================================
+        MEDIA QUERIES - MOBILE
+        ============================================================ */
+        @media (max-width: 480px) {
+            body { 
+                padding: 5px; 
+                max-width: 100%;
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+            .ticket { 
+                padding: 10px 12px 14px;
+                border-radius: 4px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            }
+            .header .store-name { font-size: 14px; }
+            .header .store-logo { max-width: 55px; }
+            .header .store-contact { font-size: 6.5px; }
+            .header .store-address { font-size: 6px; padding: 3px 4px; }
+            .header .store-reg { font-size: 5.5px; }
+            .header .ticket-number { font-size: 11px; }
+            
+            .info .row { font-size: 8px; }
+            .items .item { font-size: 8px; }
+            .items .item-header { font-size: 7px; }
+            .total .row { font-size: 8px; }
+            .total .row.total { font-size: 12px; }
+            
+            .payment-info { font-size: 7px; padding: 4px 6px; }
+            .pickup-info { font-size: 7px; padding: 4px 6px; }
+            .footer { font-size: 6px; }
+            .footer .thank-you { font-size: 9px; }
+            .footer .barcode { font-size: 12px; }
+            
+            .no-print .btn {
+                padding: 8px 12px;
+                font-size: 10px;
+                min-width: 60px;
+                max-width: 120px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .ticket { padding: 8px 8px 12px; }
+            .header .store-name { font-size: 12px; }
+            .header .store-logo { max-width: 45px; }
+            .header .ticket-number { font-size: 10px; }
+            .items .item { font-size: 7px; padding: 1px 0; }
+            .total .row.total { font-size: 10px; }
+            .no-print .btn {
+                padding: 6px 10px;
+                font-size: 9px;
+                min-width: 50px;
+                max-width: 100px;
+            }
+        }
+        
+        /* ============================================================
+        IMPRESSION
+        ============================================================ */
         @media print {
-            body {
-                margin: 10px;
-            }
-            .no-print {
-                display: none;
-            }
-        }
-        @media (max-width: 600px) {
-            body {
-                margin: 10px;
-                font-size: 11px;
-            }
-            .invoice-header {
-                flex-direction: column;
-                text-align: center;
-            }
-            .invoice-info {
-                text-align: center;
-            }
-            .company-info {
-                flex-direction: column;
-                text-align: center;
-            }
-            .total-section {
+            body { 
+                padding: 0; 
+                background: #fff; 
+                max-width: 100%;
                 justify-content: center;
             }
-            .total-box {
-                width: 100%;
+            .ticket { 
+                border-radius: 0; 
+                box-shadow: none; 
+                border: none; 
+                padding: 8px 10px 12px;
             }
-            th, td {
-                padding: 5px 8px;
-                font-size: 10px;
-            }
+            .no-print { display: none !important; }
+            .header .store-logo { max-width: 60px; }
         }
     </style>
 </head>
 <body>
-    <div class="invoice-header">
-        <div class="invoice-title">
-            <h1>INVOICE</h1>
-            <p>Salang Group • E-Commerce & MLM</p>
+
+<div class="ticket">
+
+    <!-- ============================================================
+    EN-TETE - SALANG GROUP
+    ============================================================ -->
+    <div class="header">
+        <!-- LOGO -->
+        <div class="store-logo">
+            <img src="{{ asset('images/salang_logo.png') }}" alt="Salang Group Logo">
         </div>
-        <div class="invoice-info">
-            <p><strong>Invoice #:</strong> {{ $order->order_number }}</p>
-            <p><strong>Date:</strong> {{ $order->created_at->format('d/m/Y') }}</p>
-            <p><strong>Status:</strong> 
-                <span class="status-badge status-{{ $order->status }}">
-                    {{ ucfirst($order->status) }}
-                </span>
-            </p>
+        <div class="store-name">SALANG GROUP SARL</div>
+        <div class="store-sub">E-COMMERCE &amp; MLM</div>
+        <div class="store-contact">
+            <strong>Tel:</strong> +243 975 220 079<br>
+            <strong>Email:</strong> support@salanggroup.com<br>
+            <strong>Site:</strong> www.salanggroup.com
         </div>
+        
+        <div class="store-address">
+            Rond Point CHIKUDU, Batiment KBS au 3eme Niveau
+        </div>
+        
+        <div class="store-reg">
+            <strong>N° ID.NAT:</strong> 22-7300-N634640<br>
+            <strong>NRCM:</strong> CD/BKVIRCM/20-8-001165001<br>
+            <strong>N° IMPORT-EXPORT:</strong> 0024/CBX-21/1000439SK/Z
+        </div>
+        
+        <div class="separator-dashed"></div>
+        
+        <div style="font-size: 8px; font-weight: 700; color: #0E2F76; letter-spacing: 1px;">
+            FACTURE
+        </div>
+        <div style="font-size: 7px; color: #888; margin-top: 2px;">
+            Goma, le {{ $order->created_at->format('d/m/Y') }}
+        </div>
+        
+        <div class="ticket-number">#{{ $order->order_number }}</div>
+        <div class="ticket-date">{{ $order->created_at->format('d/m/Y H:i') }}</div>
+        
+        <span class="status-badge">PAYE</span>
     </div>
 
-    <div class="company-info">
-        <div>
-            <p><strong>Salang Group</strong></p>
-            <p>Abidjan, Cote d'Ivoire</p>
-            <p>Email: contact@salang.com</p>
-            <p>Tel: +225 07 00 00 00 00</p>
-        </div>
-        <div style="text-align: right;">
-            <p><strong>Customer</strong></p>
-            <p>{{ $order->user->name }}</p>
-            <p>{{ $order->user->email }}</p>
-            @if($order->user->phone)
-                <p>{{ $order->user->phone }}</p>
-            @endif
-        </div>
+    <!-- ============================================================
+    CLIENT
+    ============================================================ -->
+    <div class="info">
+        <div class="row"><span class="label">Client</span><span class="value">{{ $order->user->name }}</span></div>
+        <div class="row"><span class="label">Email</span><span>{{ $order->user->email }}</span></div>
+        @if($order->user->phone && $order->user->phone != 'N/A')
+        <div class="row"><span class="label">Tel</span><span>{{ $order->user->phone }}</span></div>
+        @endif
+        <div class="row"><span class="label">N° ID</span><span>{{ $order->user->sponsor_id ?? 'N/A' }}</span></div>
     </div>
 
-    <h3 style="margin: 20px 0 10px; font-size: 16px;">Order Items</h3>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th class="text-right">Unit Price</th>
-                <th class="text-right">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($order->items as $item)
-            <tr>
-                <td>
-                    {{ $item->name }}
-                    @if($item->package_id)
-                        <span style="color: #5ab638; font-size: 10px;">(Package)</span>
-                    @endif
-                </td>
-                <td>{{ $item->quantity }}</td>
-                <td class="text-right">${{ number_format($item->price, 2) }}</td>
-                <td class="text-right">${{ number_format($item->total, 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="total-section">
-        <div class="total-box">
-            <div class="row">
-                <span>Subtotal</span>
-                <span>${{ number_format($order->subtotal, 2) }}</span>
-            </div>
-            <div class="row">
-                <span>Tax (18%)</span>
-                <span>${{ number_format($order->tax, 2) }}</span>
-            </div>
-            <div class="row">
-                <span>Shipping</span>
-                <span>${{ number_format($order->shipping, 2) }}</span>
-            </div>
-            @if($order->discount > 0)
-            <div class="row" style="color: #ef4444;">
-                <span>Discount</span>
-                <span>-${{ number_format($order->discount, 2) }}</span>
-            </div>
-            @endif
-            <div class="row total">
-                <span>TOTAL</span>
-                <span>${{ number_format($order->total, 2) }}</span>
-            </div>
-        </div>
-    </div>
-
-    @if($order->shipping_address)
-    <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 8px;">
-        <p><strong>Shipping Address</strong></p>
-        <p style="margin: 5px 0 0; color: #666;">{{ nl2br($order->shipping_address) }}</p>
+    <!-- ============================================================
+    PARRAIN (SPONSOR)
+    ============================================================ -->
+    @if(isset($sponsor) && $sponsor)
+    <div class="sponsor-info">
+        <div class="row"><span class="label">Code Parrain</span><span class="value">{{ $sponsor->sponsor_id }}</span></div>
+        <div class="row"><span class="label">Membre</span><span class="value">{{ $sponsor->name }}</span></div>
+        <div class="row"><span class="label">Grade</span><span class="value">{{ $sponsor->rank ?? 'Distributeur' }}</span></div>
     </div>
     @endif
 
-    <div class="footer">
-        <p>Thank you for your trust!</p>
-        <p style="font-size: 10px;">This invoice is automatically generated by Salang MLM.</p>
+    <!-- ============================================================
+    ARTICLES
+    ============================================================ -->
+    <div class="items">
+        <div class="item-header">
+            <span>Qte</span>
+            <span>Article</span>
+            <span>Prix</span>
+        </div>
+        
+        @foreach($order->items as $item)
+        <div class="item">
+            <span class="qty">{{ $item->quantity }}x</span>
+            <span class="name">
+                {{ Str::limit($item->name, 16) }}
+                @if($item->package_id)
+                    <span class="package-tag"> [PKG]</span>
+                @endif
+            </span>
+            <span class="price">${{ number_format($item->total, 2) }}</span>
+        </div>
+        @endforeach
     </div>
+
+    <!-- ============================================================
+    TOTAUX
+    ============================================================ -->
+    <div class="total">
+        <div class="row">
+            <span class="label">Sous-total</span>
+            <span class="value">${{ number_format($order->subtotal, 2) }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Taxe (16%)</span>
+            <span class="value">${{ number_format($order->tax, 2) }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Livraison</span>
+            <span class="value">${{ number_format($order->shipping, 2) }}</span>
+        </div>
+        @if($order->discount > 0)
+        <div class="row discount">
+            <span class="label">Remise</span>
+            <span class="value">-${{ number_format($order->discount, 2) }}</span>
+        </div>
+        @endif
+        <div class="row total">
+            <span class="label">TOTAL</span>
+            <span class="value">${{ number_format($order->total, 2) }}</span>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    PAIEMENT
+    ============================================================ -->
+    <div class="payment-info">
+        <div class="row">
+            <span class="label">Paiement</span>
+            <span class="value">{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Statut</span>
+            <span class="value paid">Paye</span>
+        </div>
+        @if(isset($order->metadata['cashier_name']))
+        <div class="row">
+            <span class="label">Caissier</span>
+            <span class="value" style="color:#0E2F76; font-weight:bold;">{{ $order->metadata['cashier_name'] }}</span>
+        </div>
+        @endif
+    </div>
+
+    <!-- ============================================================
+    PIED DE PAGE
+    ============================================================ -->
+    <div class="footer">
+        <div class="separator-dashed"></div>
+        <div style="display:flex; justify-content:space-between; font-size:7px; color:#888; margin-bottom:3px;">
+            <span>Date: {{ $order->created_at->format('d/m/Y') }}</span>
+            <span>Heure: {{ $order->created_at->format('H:i') }}</span>
+        </div>
+        
+        <div class="barcode">|| ||| || ||| ||| ||</div>
+        
+        <div class="thank-you">MERCI POUR VOTRE CONFIANCE</div>
+        
+        <div style="font-size:6px; color:#aaa; margin-top:2px;">
+            Ce ticket fait office de facture<br>
+            Presentez-le au guichet pour recuperer votre produit
+        </div>
+        
+        <div style="margin-top:3px; font-size:5px; color:#ccc; border-top:1px dotted #eee; padding-top:3px;">
+            Salang Group SARL - Tous droits reserves
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+BOUTONS D'ACTION - OPTIMISES POUR MOBILE
+============================================================ -->
+<div class="no-print">
+    <button onclick="window.print()" class="btn btn-print">
+        Imprimer
+    </button>
+    <a href="{{ route('orders.invoice.download', $order) }}" class="btn btn-download">
+        PDF
+    </a>
+    <a href="{{ route('orders.index') }}" class="btn btn-back">
+        Retour
+    </a>
+</div>
+
+<script>
+    // Impression automatique si demandé
+    @if(request()->has('print'))
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 800);
+        };
+    @endif
+</script>
+
 </body>
 </html>

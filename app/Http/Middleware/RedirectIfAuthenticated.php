@@ -19,10 +19,17 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
                 
+                // ✅ Redirection selon le rôle
                 if ($user->hasRole('admin')) {
                     return redirect()->route('admin.dashboard');
                 }
                 
+                // ✅ Redirection pour le caissier
+                if ($user->hasRole('cashier')) {
+                    return redirect()->route('cashier.dashboard');
+                }
+                
+                // ✅ Redirection par défaut pour les utilisateurs normaux
                 return redirect()->route('dashboard');
             }
         }

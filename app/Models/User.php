@@ -58,6 +58,7 @@ class User extends Authenticatable
         'activation_package_id',
         'ip_address',
         'last_login_at',
+        'user_type',
     ];
 
     protected $hidden = [
@@ -243,6 +244,35 @@ class User extends Authenticatable
                     ->withPivot('achieved_at', 'period')
                     ->withTimestamps();
     }
+
+public function scopeMembers($query)
+{
+    return $query->where('user_type', 'member');
+}
+
+public function scopeClients($query)
+{
+    return $query->where('user_type', 'client');
+}
+
+public function getUserTypeLabelAttribute()
+{
+    $labels = [
+        'member' => ' Membre MLM',
+        'client' => ' Client POS',
+    ];
+    return $labels[$this->user_type] ?? ucfirst($this->user_type);
+}
+
+public function getIsClientAttribute()
+{
+    return $this->user_type === 'client';
+}
+
+public function getIsMemberAttribute()
+{
+    return $this->user_type === 'member';
+}
 
     // ============================================================
     // ACCESSEURS
@@ -452,8 +482,6 @@ class User extends Authenticatable
      */
     public function updateTeamPVWithoutEvents(): void
     {
-        // ✅ CORRECTION : team_pv = PV Personnel + team_pv de tous les filleuls
-        // team_pv du filleul contient déjà son PV + ses descendants
         $totalPV = $this->pv_balance ?? 0;
         $totalBV = $this->bv_balance ?? 0;
         $count = 0;
@@ -461,7 +489,6 @@ class User extends Authenticatable
         $filleuls = $this->filleuls()->get();
         
         foreach ($filleuls as $filleul) {
-            // ✅ Ajouter uniquement team_pv (qui contient déjà tout)
             $totalPV += $filleul->team_pv;
             $totalBV += $filleul->team_bv;
             $count += 1 + ($filleul->total_team ?? 0);
@@ -597,11 +624,91 @@ class User extends Authenticatable
         return $this->team_pv ?? 0;
     }
 
+    /**
+     * Ajouter des PV à l'utilisateur (depuis POS ou achats)
+     * Méthode principale pour créditer les PV
+     */
+    public function addPV(int $amount, string $source = 'pos_sale', ?int $sourceId = null): void
+{
+    if ($amount <= 0) {
+        return;
+    }
+
+    DB::beginTransaction();
+    try {
+        // 1. Récupérer ou créer le wallet
+        $wallet = $this->wallet()->first();
+        if (!$wallet) {
+            $wallet = Wallet::create([
+                'user_id' => $this->id,
+                'balance' => 0,
+                'is_active' => true,
+            ]);
+        }
+
+        // 2. Ajouter les PV à l'utilisateur (table users)
+        $oldBalance = $this->pv_balance;
+        $this->pv_balance += $amount;
+        $this->monthly_pv += $amount;
+        $this->team_pv += $amount;
+        $this->bv_balance += $amount;      // BV personnel
+        $this->monthly_bv += $amount;      // BV mensuel
+        $this->team_bv += $amount;         // BV de l'équipe
+        
+        $this->saveQuietly();
+
+        // 3. Mettre à jour le team_pv des ancêtres
+        $this->updateTeamPV();
+
+        // 4. Mettre à jour le grade
+        $this->calculateAndUpdateRank();
+
+        // 5. Créer une trace dans les transactions
+        Transaction::create([
+            'user_id' => $this->id,
+            'wallet_id' => $wallet->id,
+            'type' => 'pv_credit',
+            'amount' => $amount,
+            'net_amount' => $amount,
+            'balance_before' => $oldBalance,
+            'balance_after' => $this->pv_balance,
+            'description' => "Crédit de {$amount} PV depuis {$source}",
+            'source_type' => $source,
+            'source_id' => $sourceId,
+            'status' => 'completed',
+        ]);
+
+        DB::commit();
+
+        Log::info('PV ajoutés', [
+            'user_id' => $this->id,
+            'user_name' => $this->name,
+            'amount' => $amount,
+            'source' => $source,
+            'pv_balance' => $this->pv_balance,
+            'monthly_pv' => $this->monthly_pv,
+            'team_pv' => $this->team_pv,
+            'bv_balance' => $this->bv_balance,
+            'monthly_bv' => $this->monthly_bv,
+            'team_bv' => $this->team_bv,
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur addPV', [
+            'user_id' => $this->id,
+            'amount' => $amount,
+            'error' => $e->getMessage(),
+        ]);
+        throw $e;
+    }
+}
+
     // ============================================================
     // MÉTHODES DE GRADE
     // ============================================================
 
-       /**
+    /**
      * Calcule et met à jour le grade
      */
     public function calculateAndUpdateRank(): bool
@@ -644,7 +751,7 @@ class User extends Authenticatable
                 
                 DB::commit();
                 
-                Log::info('Grade mis a jour', [
+                Log::info('Grade mis à jour', [
                     'user_id' => $this->id,
                     'old_rank' => $oldRankName,
                     'new_rank' => $newRank->name,
@@ -657,7 +764,7 @@ class User extends Authenticatable
             return false;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur mise a jour grade', [
+            Log::error('Erreur mise à jour grade', [
                 'user_id' => $this->id,
                 'error' => $e->getMessage()
             ]);
@@ -692,51 +799,45 @@ class User extends Authenticatable
     }
 
     /**
- * Met à jour les PV mensuels
- * - Mois d'activation → monthly_pv = pv_balance (tout le mois)
- * - Mois suivants → monthly_pv = achats du mois en cours uniquement
- */
-public function updateMonthlyPV(): void
-{
-    $monthStart = now()->startOfMonth();
-    $monthEnd = now()->endOfMonth();
-    
-    // ✅ 1. Vérifier si l'utilisateur a été activé ce mois-ci
-    $activatedThisMonth = false;
-    if ($this->activated_at) {
-        $activatedThisMonth = $this->activated_at->between($monthStart, $monthEnd);
-    }
-    
-    // ✅ 2. Si activé ce mois-ci → monthly_pv = pv_balance
-    //    pv_balance contient déjà : package d'activation + tous les achats du mois
-    if ($activatedThisMonth) {
-        $this->monthly_pv = $this->pv_balance;
-        $this->monthly_bv = $this->bv_balance;
+     * Met à jour les PV mensuels
+     */
+    public function updateMonthlyPV(): void
+    {
+        $monthStart = now()->startOfMonth();
+        $monthEnd = now()->endOfMonth();
+        
+        $activatedThisMonth = false;
+        if ($this->activated_at) {
+            $activatedThisMonth = $this->activated_at->between($monthStart, $monthEnd);
+        }
+        
+        if ($activatedThisMonth) {
+            $this->monthly_pv = $this->pv_balance;
+            $this->monthly_bv = $this->bv_balance;
+            $this->saveQuietly();
+            $this->clearRankCache();
+            return;
+        }
+        
+        $totalPV = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.user_id', $this->id)
+            ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
+            ->where('orders.payment_status', 'completed')
+            ->sum('order_items.pv_value');
+        
+        $totalBV = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.user_id', $this->id)
+            ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
+            ->where('orders.payment_status', 'completed')
+            ->sum('order_items.bv_value');
+        
+        $this->monthly_pv = (int) $totalPV;
+        $this->monthly_bv = (int) $totalBV;
         $this->saveQuietly();
         $this->clearRankCache();
-        return;
     }
-    
-    // ✅ 3. Mois suivants → Calculer uniquement les achats du mois en cours
-    $totalPV = DB::table('order_items')
-        ->join('orders', 'order_items.order_id', '=', 'orders.id')
-        ->where('orders.user_id', $this->id)
-        ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
-        ->where('orders.payment_status', 'completed')
-        ->sum('order_items.pv_value');
-    
-    $totalBV = DB::table('order_items')
-        ->join('orders', 'order_items.order_id', '=', 'orders.id')
-        ->where('orders.user_id', $this->id)
-        ->whereBetween('orders.created_at', [$monthStart, $monthEnd])
-        ->where('orders.payment_status', 'completed')
-        ->sum('order_items.bv_value');
-    
-    $this->monthly_pv = (int) $totalPV;
-    $this->monthly_bv = (int) $totalBV;
-    $this->saveQuietly();
-    $this->clearRankCache();
-}
 
     /**
      * Vérifie si l'utilisateur est qualifié pour le paiement

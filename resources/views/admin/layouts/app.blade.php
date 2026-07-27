@@ -40,12 +40,18 @@
     @stack('styles')
 
     <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 72px;
+        }
+
         /* ===== SIDEBAR LINKS ===== */
         .sidebar-link {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.625rem 0.75rem;
+            padding: 0.625rem 0.875rem;
             border-radius: var(--radius-md, 0.5rem);
             color: var(--text-secondary);
             transition: all 0.2s ease;
@@ -55,6 +61,7 @@
             position: relative;
             white-space: nowrap;
             overflow: hidden;
+            cursor: pointer;
         }
 
         .sidebar-link svg {
@@ -70,6 +77,7 @@
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: opacity 0.2s ease;
         }
 
         .sidebar-link:hover {
@@ -87,73 +95,29 @@
             color: white;
         }
 
+        .sidebar-link .badge {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ef4444;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            min-width: 20px;
+            text-align: center;
+        }
+
         .sidebar-section {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
             color: var(--text-tertiary);
-            padding: 0.75rem 0.75rem 0.5rem;
+            padding: 0.75rem 0.875rem 0.5rem;
             margin-top: 0.5rem;
-        }
-
-        /* ===== MOBILE BOTTOM NAV ===== */
-        .mobile-bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: var(--bg-navbar);
-            border-top: 1px solid var(--border-color);
-            display: none;
-            padding: 0.25rem 0 env(safe-area-inset-bottom, 0.25rem) 0;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-        }
-
-        .mobile-bottom-nav .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.25rem 0;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            color: var(--text-secondary);
-            text-decoration: none;
-            flex: 1;
-            position: relative;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .mobile-bottom-nav .nav-item svg {
-            width: 24px;
-            height: 24px;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-bottom-nav .nav-item span {
-            font-size: 10px;
-            margin-top: 1px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-bottom-nav .nav-item.active {
-            color: var(--primary-500);
-        }
-
-        .mobile-bottom-nav .nav-item.active svg {
-            transform: scale(1.1);
-        }
-
-        @media (max-width: 767px) {
-            .mobile-bottom-nav {
-                display: flex;
-            }
-            main {
-                padding-bottom: 80px !important;
-            }
         }
 
         /* ===== SCROLLBAR ===== */
@@ -166,6 +130,10 @@
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
         }
 
         /* ===== CONFIRMATION DIALOG ===== */
@@ -234,7 +202,7 @@
             color: var(--text-secondary);
             text-align: center;
             margin-bottom: 1.5rem;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .confirm-dialog .actions {
             display: flex;
@@ -276,7 +244,8 @@
             box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
         }
 
-        @media (max-width: 640px) {
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 767px) {
             .confirm-dialog {
                 padding: 1.5rem;
                 max-width: 95%;
@@ -303,22 +272,24 @@
 <body class="h-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200 antialiased">
     <div class="min-h-screen flex" 
          x-data="{ 
-            sidebarOpen: window.innerWidth > 1024,
+            sidebarOpen: localStorage.getItem('sidebar_open') === 'true' ? true : (window.innerWidth > 1024),
             isMobile: window.innerWidth < 768
          }" 
          x-init="
-            sidebarOpen = window.innerWidth > 1024;
+            sidebarOpen = localStorage.getItem('sidebar_open') === 'true' ? true : (window.innerWidth > 1024);
             isMobile = window.innerWidth < 768;
+            if (window.innerWidth < 768) sidebarOpen = false;
             window.addEventListener('resize', () => {
                 isMobile = window.innerWidth < 768;
                 if (window.innerWidth > 1024) sidebarOpen = true;
                 if (window.innerWidth < 768) sidebarOpen = false;
             });
-         ">
+         "
+         @sidebar-toggle.window="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)">
         
         <!-- Overlay mobile -->
         <div x-show="sidebarOpen && isMobile" 
-             @click="sidebarOpen = false" 
+             @click="sidebarOpen = false; localStorage.setItem('sidebar_open', false)"
              class="fixed inset-0 bg-black/50 z-40 lg:hidden"
              x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
@@ -331,270 +302,273 @@
 
         <!-- Sidebar -->
         <aside id="sidebar" 
-               class="fixed top-0 left-0 z-50 h-full transition-all duration-300 ease-in-out"
+               class="fixed top-0 left-0 z-50 h-full transition-all duration-300 ease-in-out bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
-                  'w-20': !sidebarOpen && !isMobile,
+                  'w-[72px]': !sidebarOpen && !isMobile,
                   'w-64 translate-x-0': sidebarOpen && isMobile,
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
             
-            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
-                
-                <!-- Logo -->
-                <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
-                        <img src="{{ asset('images/salang_logo.png') }}" 
-                             alt="Salang" 
-                             class="logo-themeable transition-all duration-300"
-                             :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
-                    </a>
-                    <button @click="sidebarOpen = false" 
-                            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
-                        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
+            <!-- Logo -->
+            <div class="flex items-center justify-between h-16 px-3 border-b border-[var(--border-color)] flex-shrink-0">
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
+                    <img src="{{ asset('images/salang_logo.png') }}" 
+                         alt="Salang" 
+                         class="logo-themeable transition-all duration-300"
+                         :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
+                </a>
+                <button @click="sidebarOpen = false; localStorage.setItem('sidebar_open', false)" 
+                        class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                    <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
 
-                <!-- Menu -->
-                <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
-                    <ul class="space-y-0.5">
-                        <!-- Dashboard -->
-                        <li>
-                            <a href="{{ route('admin.dashboard') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Dashboard Admin
-                                </span>
-                            </a>
-                        </li>
+            <!-- Menu -->
+            <nav class="flex-1 overflow-y-auto py-3 px-2 custom-scrollbar">
+                <ul class="space-y-0.5">
+                    
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{{ route('admin.dashboard') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Dashboard
+                            </span>
+                        </a>
+                    </li>
 
-                        <!-- Gestion -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Gestion
-                            </div>
-                        </li>
+                    <!-- Section Gestion -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Gestion
+                        </div>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.users') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Utilisateurs
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.users') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Utilisateurs
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.packages') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.packages*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Packages
-                                </span>
-                            </a>
-                        </li>
+                    <!-- ✅ Gestion des Caissiers -->
+                    <li>
+                        <a href="{{ route('admin.cashiers.index') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.cashiers*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Caissiers
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.products') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Produits
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.packages') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.packages*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Packages
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.orders.index') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Commandes
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.products') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Produits
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.kyc') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.kyc*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    KYC
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.orders.index') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Commandes
+                            </span>
+                        </a>
+                    </li>
 
-                        <!-- Finances -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Finances
-                            </div>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.kyc') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.kyc*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                KYC
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.commissions') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.commissions') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Commissions
-                                </span>
-                            </a>
-                        </li>
+                    <!-- Section Finances -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Finances
+                        </div>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.wallets') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.wallets') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Portefeuilles
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.commissions') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.commissions') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Commissions
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.withdrawals') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Retraits
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.wallets') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.wallets') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Portefeuilles
+                            </span>
+                        </a>
+                    </li>
 
-                        <!-- Rangs -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Rangs
-                            </div>
-                        </li>
+                    <li>
+                        <a href="{{ route('admin.withdrawals') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Retraits
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.ranks') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.ranks*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Gestion des Rangs
-                                </span>
-                            </a>
-                        </li>
+                    <!-- Section Rangs -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Rangs
+                        </div>
+                    </li>
 
-                        <!-- Rapports -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                    <li>
+                        <a href="{{ route('admin.ranks') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.ranks*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Gestion des Rangs
+                            </span>
+                        </a>
+                    </li>
+
+                    <!-- Section Rapports -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Rapports
+                        </div>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.reports') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
                                 Rapports
-                            </div>
-                        </li>
+                            </span>
+                        </a>
+                    </li>
 
-                        <li>
-                            <a href="{{ route('admin.reports') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Rapports
-                                </span>
-                            </a>
-                        </li>
+                    <li>
+    <a href="{{ route('admin.pos-reports.index') }}" 
+       class="sidebar-link {{ request()->routeIs('admin.pos-reports.*') ? 'active' : '' }}">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+        </svg>
+        <span class="label">Rapports POS</span>
+    </a>
+</li>
 
-                        <!-- Administration -->
-                        <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Administration
-                            </div>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('admin.settings') }}" 
-                               class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Paramètres
-                                </span>
-                            </a>
-                        </li>
-
-                        <!-- Retour -->
-                        <li class="pt-4 mt-4 border-t border-[var(--border-color)]">
-                            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Voir le site
-                                </span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-
-                <!-- Profil sidebar -->
-                <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
-                    <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                        <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            @auth
-                                @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                    <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
-                                         alt="Avatar" class="w-8 h-8 rounded-full object-cover">
-                                @else
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                                @endif
-                            @endauth
+                    <!-- Section Administration -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Administration
                         </div>
-                        <div class="transition-all duration-300 overflow-hidden" 
-                             :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0'">
-                            <p class="text-sm font-medium text-[var(--text-primary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()->name }} @endauth
-                            </p>
-                            <p class="text-xs text-[var(--text-secondary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()->email }} @endauth
-                            </p>
-                        </div>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.settings') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Paramètres
+                            </span>
+                        </a>
+                    </li>
+
+                    <!-- Séparateur + Retour au site -->
+                    <li class="pt-4 mt-4 border-t border-[var(--border-color)]">
+                        <a href="{{ route('dashboard') }}" class="sidebar-link">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Voir le site
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Profil sidebar -->
+            <div class="p-3 border-t border-[var(--border-color)] flex-shrink-0">
+                <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
+                    <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        @auth
+                            @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
+                                <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
+                                     alt="Avatar" class="w-9 h-9 rounded-full object-cover">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            @endif
+                        @endauth
+                    </div>
+                    <div class="transition-all duration-300 overflow-hidden min-w-0" 
+                         :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 w-0'">
+                        <p class="text-sm font-medium text-[var(--text-primary)] truncate">
+                            @auth {{ Auth::user()->name }} @endauth
+                        </p>
+                        <p class="text-xs text-[var(--text-secondary)] truncate">
+                            @auth {{ Auth::user()->email }} @endauth
+                        </p>
                     </div>
                 </div>
             </div>
@@ -603,8 +577,8 @@
         <!-- Contenu principal -->
         <div class="flex-1 transition-all duration-300 ease-in-out w-full"
              :style="{
-                'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '5rem' : '0',
-                'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
+                'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '4.5rem' : '0',
+                'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 4.5rem)' : '100%'
              }">
             
             <!-- Top Navigation -->
@@ -613,7 +587,7 @@
                     <div class="flex justify-between items-center h-14 sm:h-16">
                         
                         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen" 
+                            <button @click="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)" 
                                     class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
                                 <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -629,7 +603,7 @@
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
                             
                             <!-- Theme Toggle -->
                             <button id="theme-toggle" 
@@ -648,10 +622,10 @@
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[60px] md:max-w-[100px]">
                                             {{ Auth::user()->name }}
                                         </span>
-                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
-                                                     alt="Avatar" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover">
+                                                     alt="Avatar" class="w-8 h-8 rounded-full object-cover">
                                             @else
                                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                             @endif
@@ -670,10 +644,31 @@
                                             <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()->email }}</p>
                                         </div>
                                         
-                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Dashboard Admin</a>
-                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Voir le site</a>
+                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                                </svg>
+                                                Dashboard Admin
+                                            </span>
+                                        </a>
+                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                                </svg>
+                                                Voir le site
+                                            </span>
+                                        </a>
                                         <hr class="border-[var(--border-color)]">
-                                        <a href="{{ route('profile.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">Mon Profil</a>
+                                        <a href="{{ route('profile.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                </svg>
+                                                Mon Profil
+                                            </span>
+                                        </a>
                                         <hr class="border-[var(--border-color)]">
                                         
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
@@ -713,49 +708,6 @@
                 </div>
             </footer>
         </div>
-
-        <!-- Mobile Bottom Nav -->
-        <nav class="mobile-bottom-nav" id="mobileBottomNav">
-            <a href="{{ route('admin.dashboard') }}" 
-               class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                </svg>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('admin.users') }}" 
-               class="nav-item {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span>Utilisateurs</span>
-            </a>
-
-            <a href="{{ route('admin.orders.index') }}" 
-               class="nav-item {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                <span>Commandes</span>
-            </a>
-
-            <a href="{{ route('admin.commissions') }}" 
-               class="nav-item {{ request()->routeIs('admin.commissions') ? 'active' : '' }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>Commissions</span>
-            </a>
-
-            <a href="{{ route('profile.index') }}" 
-               class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                <span>Profil</span>
-            </a>
-        </nav>
     </div>
 
     <!-- ===== CONFIRMATION DIALOG ===== -->

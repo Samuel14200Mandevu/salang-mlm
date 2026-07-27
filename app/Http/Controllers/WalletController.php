@@ -23,7 +23,9 @@ class WalletController extends Controller
         $totalWithdrawn = $wallet ? $wallet->total_withdrawn : 0;
         $totalDeposited = $wallet ? $wallet->total_deposited : 0;
 
+        // 🔥 EXCLURE LES TRANSACTIONS DE TYPE 'pv_credit' ET 'bv_credit'
         $transactions = Transaction::where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
@@ -169,7 +171,8 @@ class WalletController extends Controller
     {
         $user = Auth::user();
 
-        $query = Transaction::where('user_id', $user->id);
+        $query = Transaction::where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit']); // 🔥 EXCLURE PV/BV
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -189,7 +192,11 @@ class WalletController extends Controller
 
         $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        $types = Transaction::where('user_id', $user->id)->distinct()->pluck('type');
+        $types = Transaction::where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit'])
+            ->distinct()
+            ->pluck('type');
+            
         $statuses = ['pending', 'completed', 'failed', 'cancelled'];
 
         return view('wallet.transactions', compact('transactions', 'types', 'statuses'));
@@ -200,6 +207,7 @@ class WalletController extends Controller
         $user = Auth::user();
 
         $transactions = Transaction::where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit']) // 🔥 EXCLURE PV/BV
             ->when($request->filled('type'), function($query) use ($request) {
                 return $query->where('type', $request->type);
             })
@@ -268,6 +276,7 @@ class WalletController extends Controller
         $user = Auth::user();
 
         $transactions = Transaction::where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit']) // EXCLURE PV/BV
             ->when($request->filled('type'), function($query) use ($request) {
                 return $query->where('type', $request->type);
             })

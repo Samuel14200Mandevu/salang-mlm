@@ -105,9 +105,9 @@ class Kernel extends HttpKernel
         // ============================================================
         // SALANG MLM CUSTOM MIDDLEWARES
         // ============================================================
-
-        // AUTHENTICATION & SECURITY
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        // ✅ CORRIGÉ : 'cashier' au lieu de 'cashier.middleware'
+        'pos' => \App\Http\Middleware\CashierMiddleware::class,
         'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
         'active' => \App\Http\Middleware\EnsureUserActive::class,
         'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
@@ -127,7 +127,14 @@ class Kernel extends HttpKernel
         'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
 
         // ============================================================
-        // WEBHOOK SECURITY - NOUVEAU
+        // SPATIE PERMISSION
+        // ============================================================
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+
+        // ============================================================
+        // WEBHOOK SECURITY
         // ============================================================
         'webhook.signature' => \App\Http\Middleware\VerifyWebhookSignature::class,
     ];
@@ -162,6 +169,7 @@ class Kernel extends HttpKernel
         // 2. AUTHENTICATION
         \App\Http\Middleware\ApiAuthenticate::class,
         \App\Http\Middleware\AdminMiddleware::class,
+        \App\Http\Middleware\CashierMiddleware::class,
         
         // 3. USER VALIDATION
         \App\Http\Middleware\EnsureUserActive::class,

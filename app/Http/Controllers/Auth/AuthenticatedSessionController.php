@@ -23,22 +23,29 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // ✅ Vérifier l'état du compte après connexion
+        // Vérifier l'état du compte après connexion
         $user = Auth::user();
 
-        // ✅ Supprimer les anciens messages d'erreur
+        // Supprimer les anciens messages d'erreur
         $request->session()->forget('error');
 
         if (!$user->is_active) {
-            // ✅ Rediriger vers la page d'activation avec un message d'information
+            // Rediriger vers la page d'activation avec un message d'information
             return redirect()->route('activate.index')
                 ->with('warning', 'Votre compte est inactif. Veuillez l\'activer pour recevoir des commissions.');
         }
 
+        // Redirection selon le rôle
         if ($user->hasRole('admin')) {
             return redirect()->intended(route('admin.dashboard'));
         }
 
+        // Redirection pour le caissier
+        if ($user->hasRole('cashier')) {
+            return redirect()->intended(route('cashier.dashboard'));
+        }
+
+        // Redirection par défaut pour les utilisateurs normaux
         return redirect()->intended(route('dashboard'));
     }
 
@@ -50,7 +57,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        // ✅ Supprimer les messages d'erreur lors de la déconnexion
+        // Supprimer les messages d'erreur lors de la déconnexion
         $request->session()->forget('error');
         $request->session()->forget('warning');
 

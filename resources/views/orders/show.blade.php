@@ -233,12 +233,12 @@
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Order details</p>
         </div>
         <div class="flex gap-1.5 sm:gap-2">
-            <a href="{{ route('orders.invoice', $order) }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
-                </svg>
-                Invoice
-            </a>
+            <a href="{{ route('orders.invoice', $order) }}" class="btn btn-primary btn-sm sm:btn-md" target="_blank">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
+    </svg>
+    Voir la facture
+</a>
             <a href="{{ route('orders.index') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

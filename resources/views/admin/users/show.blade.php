@@ -23,7 +23,7 @@
         background: var(--bg-card);
         border-radius: var(--radius-lg);
         padding: 2rem;
-        max-width: 450px;
+        max-width: 500px;
         width: 90%;
         box-shadow: var(--shadow-xl);
         transform: scale(0.9);
@@ -148,6 +148,9 @@
     .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
     .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-cashier { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-cashier-principal { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; font-weight: 700; }
+    .badge-gold { background: rgba(234, 179, 8, 0.12); color: #eab308; }
     
     .btn {
         display: inline-flex;
@@ -212,6 +215,30 @@
         background: var(--bg-hover);
     }
     
+    .package-preview {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+        margin-top: 0.5rem;
+    }
+    .package-preview:hover {
+        border-color: var(--primary-500);
+    }
+    .package-preview .package-name {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .package-preview .package-price {
+        font-weight: 700;
+        color: var(--primary-500);
+    }
+    .package-preview .package-detail {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -231,6 +258,7 @@
         .card { padding: 0.875rem; }
         .sponsor-card { padding: 0.5rem 0.75rem; }
         .code-display { font-size: 1rem; padding: 0.5rem 0.75rem; }
+        .package-preview { padding: 0.75rem; }
     }
     
     @media (min-width: 641px) and (max-width: 1024px) {
@@ -329,8 +357,35 @@
                 <div class="info-row">
                     <span class="label">Rôle</span>
                     <span class="value">
-                        <span class="badge {{ $user->hasRole('admin') ? 'badge-purple' : 'badge-neutral' }}">
-                            {{ $user->hasRole('admin') ? 'Administrateur' : 'Utilisateur' }}
+                        @php
+                            $roleName = $user->getRoleNames()->first() ?? 'user';
+                            $roleDisplay = 'Utilisateur';
+                            $badgeClass = 'badge-neutral';
+                            
+                            if($roleName === 'admin') {
+                                $roleDisplay = 'Administrateur';
+                                $badgeClass = 'badge-purple';
+                            } elseif($roleName === 'cashier') {
+                                $roleDisplay = 'Caissier';
+                                $badgeClass = 'badge-cashier';
+                            } elseif($roleName === 'caissier_principal') {
+                                $roleDisplay = 'Caissier Principal';
+                                $badgeClass = 'badge-cashier-principal';
+                            }
+                            
+                            if($user->hasRole('caissier_principal') && $roleName !== 'caissier_principal') {
+                                $roleDisplay = 'Caissier Principal';
+                                $badgeClass = 'badge-cashier-principal';
+                            } elseif($user->hasRole('cashier') && $roleName !== 'cashier' && $roleName !== 'caissier_principal') {
+                                $roleDisplay = 'Caissier';
+                                $badgeClass = 'badge-cashier';
+                            } elseif($user->hasRole('admin') && $roleName !== 'admin') {
+                                $roleDisplay = 'Administrateur';
+                                $badgeClass = 'badge-purple';
+                            }
+                        @endphp
+                        <span class="badge {{ $badgeClass }}">
+                            {{ $roleDisplay }}
                         </span>
                     </span>
                 </div>
@@ -503,13 +558,14 @@
                     Désactiver
                 </button>
             @else
+                <!-- NOUVEAU : Bouton pour activer avec sélection du package -->
                 <button type="button" 
-                        onclick="openActivateModal()" 
+                        onclick="openActivateWithPackageModal()" 
                         class="btn btn-success btn-sm sm:btn-md">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Activer
+                    Activer avec package
                 </button>
                 
                 <button type="button" 
@@ -597,6 +653,92 @@
     </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- NOUVEAU : MODAL ACTIVATION AVEC CHOIX DU PACKAGE -->
+<!-- ============================================================ -->
+<div id="activateWithPackageModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-success">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <h3 class="modal-title">Activer avec un package</h3>
+        <p class="modal-text">
+            Choisissez le package à attribuer à <strong>{{ $user->name }}</strong>.
+            <br>
+            L'utilisateur recevra les PV/BV correspondants lors de l'activation.
+        </p>
+        
+        <form action="{{ route('admin.activations.activate-with-package', $user->id) }}" method="POST" class="space-y-4">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium mb-1">Package d'activation</label>
+                <select name="package_id" id="activationPackageSelect" class="input w-full" required>
+                    <option value="">Sélectionner un package</option>
+                    @foreach($packages as $package)
+                        <option value="{{ $package->id }}" 
+                                data-name="{{ $package->name }}"
+                                data-price="{{ $package->price }}"
+                                data-pv="{{ $package->pv_value }}"
+                                data-bv="{{ $package->bv_value }}"
+                                data-commission="{{ $package->commission_rate ?? 30 }}">
+                            {{ $package->name }} - ${{ number_format($package->price, 2) }} ({{ $package->pv_value }} PV)
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- Aperçu du package sélectionné -->
+            <div id="packagePreview" class="package-preview" style="display: none;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="package-name" id="previewPackageName">Package</span>
+                        <div class="package-detail">
+                            <span id="previewPackagePV">0</span> PV | 
+                            <span id="previewPackageBV">0</span> BV | 
+                            Commission: <span id="previewPackageCommission">0</span>%
+                        </div>
+                    </div>
+                    <span class="package-price" id="previewPackagePrice">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Info sur les PV/BV actuels -->
+            <div class="text-sm text-[var(--text-secondary)] bg-[var(--bg-secondary)] p-3 rounded-lg">
+                <div class="flex justify-between">
+                    <span>PV actuel:</span>
+                    <span class="font-bold text-primary-500">{{ $currentPV ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>BV actuel:</span>
+                    <span class="font-bold text-primary-500">{{ $currentBV ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between border-t border-[var(--border-light)] pt-2 mt-2">
+                    <span>PV après activation:</span>
+                    <span class="font-bold text-green-500" id="newPVTotal">{{ $currentPV ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>BV après activation:</span>
+                    <span class="font-bold text-green-500" id="newBVTotal">{{ $currentBV ?? 0 }}</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" onclick="closeActivateWithPackageModal()" class="btn btn-outline btn-sm">
+                    Annuler
+                </button>
+                <button type="submit" class="btn btn-success btn-sm" id="activatePackageBtn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Activer le compte
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Deactivate Modal -->
 <div id="deactivateModal" class="modal-overlay">
     <div class="modal-box">
@@ -617,31 +759,6 @@
             </button>
             <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-warning btn-sm">
                 Désactiver
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Activate Modal -->
-<div id="activateModal" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-icon modal-icon-success">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-        </div>
-        <h3 class="modal-title">Confirmer l'activation</h3>
-        <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong class="text-success">activer</strong> le compte de <strong>{{ $user->name }}</strong> ?
-            <br>
-            L'utilisateur pourra se connecter à nouveau.
-        </p>
-        <div class="modal-actions">
-            <button type="button" onclick="closeActivateModal()" class="btn btn-outline btn-sm">
-                Annuler
-            </button>
-            <a href="{{ route('admin.users.toggle-status', $user->id) }}" class="btn btn-success btn-sm">
-                Activer
             </a>
         </div>
     </div>
@@ -691,6 +808,58 @@ function closeGenerateCodeModal() {
 }
 
 // ============================================================
+// NOUVEAU : MODAL ACTIVATION AVEC PACKAGE
+// ============================================================
+function openActivateWithPackageModal() {
+    document.getElementById('activateWithPackageModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    updatePackagePreview();
+}
+
+function closeActivateWithPackageModal() {
+    document.getElementById('activateWithPackageModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Mise à jour de l'aperçu du package
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('activationPackageSelect');
+    if (select) {
+        select.addEventListener('change', updatePackagePreview);
+    }
+});
+
+function updatePackagePreview() {
+    const select = document.getElementById('activationPackageSelect');
+    const preview = document.getElementById('packagePreview');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption && selectedOption.value) {
+        const name = selectedOption.dataset.name || 'Package';
+        const price = parseFloat(selectedOption.dataset.price) || 0;
+        const pv = parseInt(selectedOption.dataset.pv) || 0;
+        const bv = parseInt(selectedOption.dataset.bv) || 0;
+        const commission = parseInt(selectedOption.dataset.commission) || 0;
+        
+        document.getElementById('previewPackageName').textContent = name;
+        document.getElementById('previewPackagePrice').textContent = '$' + price.toFixed(2);
+        document.getElementById('previewPackagePV').textContent = pv;
+        document.getElementById('previewPackageBV').textContent = bv;
+        document.getElementById('previewPackageCommission').textContent = commission;
+        
+        // Mettre à jour les totaux
+        const currentPV = {{ $currentPV ?? 0 }};
+        const currentBV = {{ $currentBV ?? 0 }};
+        document.getElementById('newPVTotal').textContent = currentPV + pv;
+        document.getElementById('newBVTotal').textContent = currentBV + bv;
+        
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// ============================================================
 // MODAL DÉSACTIVER
 // ============================================================
 function openDeactivateModal() {
@@ -700,19 +869,6 @@ function openDeactivateModal() {
 
 function closeDeactivateModal() {
     document.getElementById('deactivateModal').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-// ============================================================
-// MODAL ACTIVER
-// ============================================================
-function openActivateModal() {
-    document.getElementById('activateModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeActivateModal() {
-    document.getElementById('activateModal').classList.remove('active');
     document.body.style.overflow = '';
 }
 

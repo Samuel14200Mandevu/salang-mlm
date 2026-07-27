@@ -42,7 +42,11 @@ class MonthlyCommissionService
             [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'calculation_date' => $endDate,
+                'payment_date' => $startDate->copy()->addMonth()->day(15),
                 'status' => 'pending',
+                'total_commissions' => 0,
+                'total_paid' => 0,
             ]
         );
     }
@@ -52,59 +56,83 @@ class MonthlyCommissionService
      */
     public function calculateMonthlyPVBV($periodId): bool
     {
-        $period = CommissionPeriod::findOrFail($periodId);
-        $period->update(['status' => 'calculating']);
-
-        DB::beginTransaction();
-
         try {
-            User::withoutEvents(function () use ($period) {
+            $period = CommissionPeriod::findOrFail($periodId);
+            $period->update(['status' => 'calculating']);
+
+            DB::beginTransaction();
+
+            // Réinitialiser les PV/BV mensuels
+            User::withoutEvents(function () {
                 User::query()->update([
                     'monthly_pv' => 0,
                     'monthly_bv' => 0,
                     'team_pv' => 0,
                     'team_bv' => 0,
                 ]);
+            });
 
-                $orders = \App\Models\Order::whereBetween('paid_at', [
-                    $period->start_date,
-                    $period->end_date
-                ])->where('payment_status', 'completed')->get();
+            // Récupérer les commandes de la période
+            $orders = \App\Models\Order::whereBetween('paid_at', [
+                $period->start_date,
+                $period->end_date
+            ])->where('payment_status', 'completed')->get();
 
-                foreach ($orders as $order) {
-                    $user = $order->user;
-                    if (!$user) continue;
+            $userPV = [];
+            $userBV = [];
 
-                    foreach ($order->items as $item) {
-                        if ($item->package_id) {
-                            $package = \App\Models\Package::find($item->package_id);
-                            if ($package) {
-                                $pv = $package->pv_value * $item->quantity;
-                                $bv = $package->bv_value * $item->quantity;
+            foreach ($orders as $order) {
+                $user = $order->user;
+                if (!$user) continue;
 
-                                $user->monthly_pv += $pv;
-                                $user->monthly_bv += $bv;
-                                $user->pv_balance += $pv;
-                                $user->bv_balance += $bv;
-                                $user->saveQuietly();
+                foreach ($order->items as $item) {
+                    if ($item->package_id) {
+                        $package = \App\Models\Package::find($item->package_id);
+                        if ($package) {
+                            $pv = $package->pv_value * $item->quantity;
+                            $bv = $package->bv_value * $item->quantity;
 
-                                $this->addTeamPVBVWithoutEvents($user, $pv, $bv);
+                            if (!isset($userPV[$user->id])) {
+                                $userPV[$user->id] = 0;
+                                $userBV[$user->id] = 0;
                             }
+                            $userPV[$user->id] += $pv;
+                            $userBV[$user->id] += $bv;
                         }
                     }
                 }
-            });
+            }
+
+            // Mettre à jour les utilisateurs
+            foreach ($userPV as $userId => $pv) {
+                $user = User::find($userId);
+                if ($user) {
+                    $user->monthly_pv = $pv;
+                    $user->monthly_bv = $userBV[$userId] ?? 0;
+                    $user->pv_balance += $pv;
+                    $user->bv_balance += $userBV[$userId] ?? 0;
+                    $user->saveQuietly();
+
+                    // Mettre à jour les PV d'équipe
+                    $this->addTeamPVBVWithoutEvents($user, $pv, $userBV[$userId] ?? 0);
+                }
+            }
 
             DB::commit();
             $period->update(['status' => 'calculated']);
 
-            Log::info("PV/BV mensuels calculés pour la période {$period->period}");
+            Log::info("PV/BV mensuels calculés pour la période {$period->period}", [
+                'users_updated' => count($userPV),
+                'total_pv' => array_sum($userPV),
+            ]);
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur calcul PV/BV mensuels: ' . $e->getMessage());
-            $period->update(['status' => 'pending', 'notes' => 'Erreur: ' . $e->getMessage()]);
+            if (isset($period)) {
+                $period->update(['status' => 'pending', 'notes' => 'Erreur: ' . $e->getMessage()]);
+            }
             return false;
         }
     }
@@ -134,44 +162,38 @@ class MonthlyCommissionService
      */
     public function calculateMonthlyRanks($periodId): bool
     {
-        $period = CommissionPeriod::findOrFail($periodId);
-        $period->update(['status' => 'calculating']);
-
-        DB::beginTransaction();
-
         try {
+            $period = CommissionPeriod::findOrFail($periodId);
+            $period->update(['status' => 'calculating']);
+
+            DB::beginTransaction();
+
             User::withoutEvents(function () use ($period) {
                 User::chunk(100, function ($users) use ($period) {
                     foreach ($users as $user) {
-                        $directSponsors = User::where('parrain_id', $user->id)->count();
-                        $qualifiedBranches = $this->countQualifiedBranches($user);
-
-                        $rank = $this->rankCalculator->calculateAdvancedRank($user);
-
-                        if ($rank) {
-                            $user->rank_id = $rank->id;
-                            $user->rank = $rank->name;
-                            $user->last_rank_update = now();
-                            $user->direct_sponsors_count = $directSponsors;
-                            $user->qualified_branches = $qualifiedBranches;
-                            $user->saveQuietly();
-
-                            UserMonthlyRank::updateOrCreate(
-                                [
-                                    'user_id' => $user->id,
-                                    'period' => $period->period,
-                                ],
-                                [
-                                    'rank_id' => $rank->id,
-                                    'pv_monthly' => $user->monthly_pv,
-                                    'bv_monthly' => $user->monthly_bv,
-                                    'team_pv' => $user->team_pv,
-                                    'team_bv' => $user->team_bv,
-                                    'direct_sponsors' => $directSponsors,
-                                    'qualified_branches' => $qualifiedBranches,
-                                ]
-                            );
+                        // Calculer et mettre à jour le grade
+                        if (method_exists($user, 'calculateAndUpdateRank')) {
+                            $user->calculateAndUpdateRank();
                         }
+                        
+                        // Enregistrer le grade mensuel
+                        UserMonthlyRank::updateOrCreate(
+                            [
+                                'user_id' => $user->id,
+                                'period' => $period->period,
+                            ],
+                            [
+                                'rank_id' => $user->rank_id,
+                                'rank_name' => $user->rank_name ?? 'Distributeur',
+                                'rank_level' => $user->rank_level ?? 1,
+                                'pv_monthly' => $user->monthly_pv ?? 0,
+                                'bv_monthly' => $user->monthly_bv ?? 0,
+                                'team_pv' => $user->team_pv ?? 0,
+                                'team_bv' => $user->team_bv ?? 0,
+                                'direct_sponsors' => User::where('parrain_id', $user->id)->count(),
+                                'qualified_branches' => $this->countQualifiedBranches($user),
+                            ]
+                        );
                     }
                 });
             });
@@ -185,7 +207,9 @@ class MonthlyCommissionService
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur calcul rangs mensuels: ' . $e->getMessage());
-            $period->update(['status' => 'pending', 'notes' => 'Erreur: ' . $e->getMessage()]);
+            if (isset($period)) {
+                $period->update(['status' => 'pending', 'notes' => 'Erreur: ' . $e->getMessage()]);
+            }
             return false;
         }
     }
@@ -220,11 +244,11 @@ class MonthlyCommissionService
      */
     public function cleanPeriod($periodId): bool
     {
-        $period = CommissionPeriod::findOrFail($periodId);
-
-        DB::beginTransaction();
-
         try {
+            $period = CommissionPeriod::findOrFail($periodId);
+
+            DB::beginTransaction();
+
             Commission::where('commission_period_id', $period->id)->delete();
             CommissionPayment::where('commission_period_id', $period->id)->delete();
             UserMonthlyRank::where('period', $period->period)->delete();
@@ -252,38 +276,39 @@ class MonthlyCommissionService
      */
     public function calculateMonthlyCommissions($periodId): bool
     {
-        $period = CommissionPeriod::findOrFail($periodId);
-
-        if ($period->status !== 'calculated' && $period->status !== 'pending') {
-            Log::warning('Tentative de calcul des commissions avec statut invalide', [
-                'period' => $period->period,
-                'status' => $period->status,
-            ]);
-            return false;
-        }
-
-        $orderCount = \App\Models\Order::whereBetween('paid_at', [
-            $period->start_date,
-            $period->end_date
-        ])->where('payment_status', 'completed')->count();
-
-        if ($orderCount === 0) {
-            Log::info('Aucune commande trouvée pour la période', [
-                'period' => $period->period,
-            ]);
-            $period->update([
-                'status' => 'calculated',
-                'total_commissions' => 0,
-                'notes' => 'Aucune commande dans cette période'
-            ]);
-            return true;
-        }
-
-        $period->update(['status' => 'calculating']);
-
-        DB::beginTransaction();
-
         try {
+            $period = CommissionPeriod::findOrFail($periodId);
+
+            if ($period->status !== 'calculated' && $period->status !== 'pending') {
+                Log::warning('Tentative de calcul des commissions avec statut invalide', [
+                    'period' => $period->period,
+                    'status' => $period->status,
+                ]);
+                return false;
+            }
+
+            $orderCount = \App\Models\Order::whereBetween('paid_at', [
+                $period->start_date,
+                $period->end_date
+            ])->where('payment_status', 'completed')->count();
+
+            if ($orderCount === 0) {
+                Log::info('Aucune commande trouvée pour la période', [
+                    'period' => $period->period,
+                ]);
+                $period->update([
+                    'status' => 'calculated',
+                    'total_commissions' => 0,
+                    'notes' => 'Aucune commande dans cette période'
+                ]);
+                return true;
+            }
+
+            $period->update(['status' => 'calculating']);
+
+            DB::beginTransaction();
+
+            // Supprimer les anciennes commissions
             Commission::where('commission_period_id', $period->id)->delete();
 
             $orders = \App\Models\Order::whereBetween('paid_at', [
@@ -335,10 +360,12 @@ class MonthlyCommissionService
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur calcul commissions mensuelles: ' . $e->getMessage());
-            $period->update([
-                'status' => 'pending',
-                'notes' => 'Erreur: ' . $e->getMessage()
-            ]);
+            if (isset($period)) {
+                $period->update([
+                    'status' => 'pending',
+                    'notes' => 'Erreur: ' . $e->getMessage()
+                ]);
+            }
             return false;
         }
     }
@@ -348,38 +375,38 @@ class MonthlyCommissionService
      */
     public function generatePayments($periodId): bool
     {
-        $period = CommissionPeriod::findOrFail($periodId);
-
-        if ($period->status !== 'calculated') {
-            Log::warning('Tentative de génération de paiements sans commissions', [
-                'period' => $period->period,
-                'status' => $period->status,
-            ]);
-            return false;
-        }
-
-        $commissionCount = Commission::where('commission_period_id', $period->id)
-            ->where('status', 'pending')
-            ->count();
-
-        if ($commissionCount === 0) {
-            Log::info('Aucune commission en attente pour la période', [
-                'period' => $period->period,
-            ]);
-            $period->update([
-                'status' => 'paid',
-                'payment_date' => now(),
-                'total_paid' => 0,
-                'notes' => 'Aucune commission à payer'
-            ]);
-            return true;
-        }
-
-        $period->update(['status' => 'paying']);
-
-        DB::beginTransaction();
-
         try {
+            $period = CommissionPeriod::findOrFail($periodId);
+
+            if ($period->status !== 'calculated') {
+                Log::warning('Tentative de génération de paiements sans commissions', [
+                    'period' => $period->period,
+                    'status' => $period->status,
+                ]);
+                return false;
+            }
+
+            $commissionCount = Commission::where('commission_period_id', $period->id)
+                ->where('status', 'pending')
+                ->count();
+
+            if ($commissionCount === 0) {
+                Log::info('Aucune commission en attente pour la période', [
+                    'period' => $period->period,
+                ]);
+                $period->update([
+                    'status' => 'paid',
+                    'payment_date' => now(),
+                    'total_paid' => 0,
+                    'notes' => 'Aucune commission à payer'
+                ]);
+                return true;
+            }
+
+            $period->update(['status' => 'paying']);
+
+            DB::beginTransaction();
+
             CommissionPayment::where('commission_period_id', $period->id)->delete();
 
             $commissionsByUser = Commission::where('commission_period_id', $period->id)
@@ -602,9 +629,113 @@ class MonthlyCommissionService
                 'period' => $period->period,
                 'trace' => $e->getTraceAsString()
             ]);
-            $period->update([
-                'status' => 'calculated',
-                'notes' => 'Erreur paiement: ' . $e->getMessage()
+            if (isset($period)) {
+                $period->update([
+                    'status' => 'calculated',
+                    'notes' => 'Erreur paiement: ' . $e->getMessage()
+                ]);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Réinitialiser les PV mensuels (le 7)
+     */
+    public function resetMonthlyPV(): bool
+    {
+        try {
+            Log::info('Début de la réinitialisation des PV mensuels');
+
+            DB::beginTransaction();
+
+            $updated = User::withoutEvents(function () {
+                return User::query()->update([
+                    'monthly_pv' => 0,
+                    'monthly_bv' => 0,
+                ]);
+            });
+
+            DB::commit();
+
+            Log::info('Réinitialisation des PV mensuels terminée', [
+                'users_updated' => $updated,
+                'date' => now()->toDateString(),
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la réinitialisation des PV mensuels', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Recalculer les PV mensuels
+     */
+    public function recalculateMonthlyPV(): bool
+    {
+        try {
+            Log::info('Début du recalcul des PV mensuels');
+
+            $currentPeriod = date('Y-m');
+            $period = CommissionPeriod::where('period', $currentPeriod)
+                ->whereIn('status', ['active', 'pending'])
+                ->first();
+
+            if (!$period) {
+                Log::warning('Aucune période active trouvée pour le recalcul des PV');
+                return false;
+            }
+
+            DB::beginTransaction();
+
+            $orders = \App\Models\Order::whereBetween('paid_at', [
+                $period->start_date,
+                $period->end_date
+            ])->where('payment_status', 'completed')->get();
+
+            $userPV = [];
+
+            foreach ($orders as $order) {
+                foreach ($order->items as $item) {
+                    if (!isset($userPV[$order->user_id])) {
+                        $userPV[$order->user_id] = 0;
+                    }
+                    if ($item->package_id) {
+                        $package = \App\Models\Package::find($item->package_id);
+                        if ($package) {
+                            $userPV[$order->user_id] += $package->pv_value * $item->quantity;
+                        }
+                    }
+                }
+            }
+
+            foreach ($userPV as $userId => $pv) {
+                $user = User::find($userId);
+                if ($user) {
+                    $user->monthly_pv = $pv;
+                    $user->saveQuietly();
+                }
+            }
+
+            DB::commit();
+
+            Log::info('Recalcul des PV mensuels terminé', [
+                'users_updated' => count($userPV),
+                'total_pv' => array_sum($userPV),
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors du recalcul des PV mensuels', [
+                'error' => $e->getMessage(),
             ]);
             return false;
         }
@@ -632,7 +763,7 @@ class MonthlyCommissionService
      */
     private function isQualifiedBranch($user): bool
     {
-        $rankLevel = $user->rank ? $user->rank->level : 1;
+        $rankLevel = $user->rank_level ?? 1;
         return $rankLevel >= 3;
     }
 }

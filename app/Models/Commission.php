@@ -16,6 +16,7 @@ class Commission extends Model
         'commission_period_id',
         'period',
         'type',
+        'source', 
         'amount',
         'percentage',
         'description',
@@ -141,6 +142,22 @@ class Commission extends Model
         return $query->where('type', 'consumer');
     }
 
+    // SCOPES PAR SOURCE
+    public function scopeSource($query, $source)
+    {
+        return $query->where('source', $source);
+    }
+
+    public function scopePos($query)
+    {
+        return $query->where('source', 'pos');
+    }
+
+    public function scopeMlm($query)
+    {
+        return $query->where('source', 'mlm');
+    }
+
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
@@ -223,15 +240,35 @@ class Commission extends Model
     public function getTypeIconAttribute()
     {
         $icons = [
-            'sponsor' => '👤',
-            'direct' => '⬇️',
-            'indirect' => '↘️',
-            'leadership' => '⭐',
-            'retail' => '🛒',
-            'global' => '🌍',
-            'consumer' => '👥',
+            'sponsor' => '',
+            'direct' => '⬇',
+            'indirect' => '↘',
+            'leadership' => '',
+            'retail' => '',
+            'global' => '',
+            'consumer' => '',
         ];
-        return $icons[$this->type] ?? '📊';
+        return $icons[$this->type] ?? '';
+    }
+
+    // ✅ SOURCE LABEL
+    public function getSourceLabelAttribute()
+    {
+        $labels = [
+            'mlm' => 'Réseau MLM',
+            'pos' => 'Vente POS (CASH)',
+        ];
+        return $labels[$this->source] ?? ucfirst($this->source);
+    }
+
+    public function getSourceBadgeAttribute()
+    {
+        $colors = [
+            'mlm' => 'badge-primary',
+            'pos' => 'badge-success',
+        ];
+        $color = $colors[$this->source] ?? 'badge-neutral';
+        return '<span class="badge ' . $color . '">' . $this->source_label . '</span>';
     }
 
     public function getFormattedAmountAttribute()
@@ -268,11 +305,11 @@ class Commission extends Model
     public function getItemTypeLabelAttribute()
     {
         if ($this->package_id) {
-            return '📦 Package';
+            return 'Package';
         }
         
         if ($this->product_id) {
-            return '🛒 Produit';
+            return 'Produit';
         }
         
         return 'N/A';
@@ -325,9 +362,6 @@ class Commission extends Model
     // MÉTHODES
     // ============================================================
 
-    /**
-     * Marquer la commission comme payée
-     */
     public function markAsPaid()
     {
         $this->status = 'paid';
@@ -335,9 +369,6 @@ class Commission extends Model
         $this->save();
     }
 
-    /**
-     * Marquer la commission comme approuvée
-     */
     public function markAsApproved()
     {
         $this->status = 'approved';
@@ -345,9 +376,6 @@ class Commission extends Model
         $this->save();
     }
 
-    /**
-     * Marquer la commission comme annulée
-     */
     public function markAsCancelled($reason = null)
     {
         $this->status = 'cancelled';
@@ -357,129 +385,92 @@ class Commission extends Model
         $this->save();
     }
 
-    /**
-     * Vérifier si la commission est pour un package
-     */
     public function isForPackage()
     {
         return !is_null($this->package_id);
     }
 
-    /**
-     * Vérifier si la commission est pour un produit
-     */
     public function isForProduct()
     {
         return !is_null($this->product_id);
     }
 
-    /**
-     * Vérifier si la commission est de type sponsor
-     */
     public function isSponsor()
     {
         return $this->type === 'sponsor';
     }
 
-    /**
-     * Vérifier si la commission est de type direct
-     */
     public function isDirect()
     {
         return $this->type === 'direct';
     }
 
-    /**
-     * Vérifier si la commission est de type indirect
-     */
     public function isIndirect()
     {
         return $this->type === 'indirect';
     }
 
-    /**
-     * Vérifier si la commission est de type leadership
-     */
     public function isLeadership()
     {
         return $this->type === 'leadership';
     }
 
-    /**
-     * Vérifier si la commission est de type retail
-     */
     public function isRetail()
     {
         return $this->type === 'retail';
     }
 
-    /**
-     * Vérifier si la commission est de type global
-     */
     public function isGlobal()
     {
         return $this->type === 'global';
     }
 
-    /**
-     * Obtenir le nom de l'utilisateur qui a généré la commission
-     */
+    // ✅ MÉTHODES SOURCE
+    public function isPos()
+    {
+        return $this->source === 'pos';
+    }
+
+    public function isMlm()
+    {
+        return $this->source === 'mlm';
+    }
+
     public function getFromUserNameAttribute()
     {
         return $this->fromUser ? $this->fromUser->name : 'Système';
     }
 
-    /**
-     * Obtenir le nom de l'utilisateur qui reçoit la commission
-     */
     public function getToUserNameAttribute()
     {
         return $this->user ? $this->user->name : 'N/A';
     }
 
-    /**
-     * Obtenir le code de la commande
-     */
     public function getOrderNumberAttribute()
     {
         return $this->order ? $this->order->order_number : 'N/A';
     }
 
-    /**
-     * Obtenir le montant formaté avec devise
-     */
     public function getAmountFormattedAttribute()
     {
         return '$' . number_format($this->amount, 2);
     }
 
-    /**
-     * Obtenir le pourcentage formaté
-     */
     public function getPercentageFormattedAttribute()
     {
         return $this->percentage ? $this->percentage . '%' : 'N/A';
     }
 
-    /**
-     * Obtenir la date de création formatée
-     */
     public function getCreatedAtFormattedAttribute()
     {
         return $this->created_at->format('d/m/Y H:i');
     }
 
-    /**
-     * Obtenir la date de paiement formatée
-     */
     public function getPaidAtFormattedAttribute()
     {
         return $this->paid_at ? $this->paid_at->format('d/m/Y H:i') : 'N/A';
     }
 
-    /**
-     * Obtenir le badge de statut HTML
-     */
     public function getStatusBadgeAttribute()
     {
         $colors = [
@@ -493,18 +484,12 @@ class Commission extends Model
         return '<span class="badge badge-' . $color . '">' . $this->status_label . '</span>';
     }
 
-    /**
-     * Obtenir le badge de type HTML
-     */
     public function getTypeBadgeAttribute()
     {
         $color = $this->type_color;
         return '<span class="badge badge-' . $color . '">' . $this->type_icon . ' ' . $this->type_label . '</span>';
     }
 
-    /**
-     * Obtenir les détails complets de la commission
-     */
     public function getDetailsAttribute()
     {
         return [
@@ -517,6 +502,8 @@ class Commission extends Model
             'type_label' => $this->type_label,
             'type_color' => $this->type_color,
             'type_icon' => $this->type_icon,
+            'source' => $this->source,
+            'source_label' => $this->source_label,
             'amount' => $this->amount,
             'amount_formatted' => $this->amount_formatted,
             'percentage' => $this->percentage,
@@ -540,6 +527,8 @@ class Commission extends Model
             'is_pending' => $this->is_pending,
             'is_cancelled' => $this->is_cancelled,
             'is_approved' => $this->is_approved,
+            'is_pos' => $this->is_pos,
+            'is_mlm' => $this->is_mlm,
         ];
     }
 }

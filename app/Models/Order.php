@@ -23,6 +23,7 @@ class Order extends Model
         'status',
         'payment_status',
         'payment_method',
+        'source',          
         'shipping_address',
         'billing_address',
         'metadata',
@@ -45,34 +46,24 @@ class Order extends Model
 
     protected static function booted(): void
     {
-        // ✅ Après création d'une commande
         static::created(function ($order) {
-            // Mettre à jour le PV mensuel de l'utilisateur
             if ($order->user_id) {
                 $user = User::find($order->user_id);
                 if ($user) {
                     $user->updateMonthlyPV();
-                    // Mettre à jour le team_pv et les ancêtres
                     dispatch(new UpdateTeamPV($user->id, true));
                 }
             }
         });
 
-        // ✅ Après mise à jour d'une commande
         static::updated(function ($order) {
-            // Si la commande devient "completed" ou "paid"
             if ($order->wasChanged('status') || $order->wasChanged('payment_status')) {
                 if ($order->status === 'completed' || $order->payment_status === 'completed') {
                     if ($order->user_id) {
                         $user = User::find($order->user_id);
                         if ($user) {
-                            // Mettre à jour le PV mensuel
                             $user->updateMonthlyPV();
-                            
-                            // Mettre à jour le team_pv et les ancêtres
                             dispatch(new UpdateTeamPV($user->id, true));
-                            
-                            // Recalculer le grade
                             $user->calculateAndUpdateRank();
                             
                             Log::info('Order: Mise à jour des PV après commande', [
@@ -85,7 +76,6 @@ class Order extends Model
                 }
             }
             
-            // Si le statut de paiement change
             if ($order->wasChanged('payment_status') && $order->payment_status === 'completed') {
                 if ($order->user_id) {
                     $user = User::find($order->user_id);
@@ -97,7 +87,6 @@ class Order extends Model
             }
         });
 
-        // ✅ Après suppression d'une commande
         static::deleted(function ($order) {
             if ($order->user_id) {
                 $user = User::find($order->user_id);
@@ -129,6 +118,20 @@ class Order extends Model
     }
 
     // ============================================================
+    // SCOPES
+    // ============================================================
+
+    public function scopePos($query)
+    {
+        return $query->where('source', 'pos');
+    }
+
+    public function scopeMlm($query)
+    {
+        return $query->where('source', 'mlm');
+    }
+
+    // ============================================================
     // ACCESSEURS
     // ============================================================
 
@@ -153,6 +156,11 @@ class Order extends Model
         return $labels[$this->payment_status] ?? ucfirst($this->payment_status);
     }
 
+    public function cashier()
+{
+    return $this->belongsTo(User::class, 'cashier_id');
+}
+
     public function getTotalPVAttribute(): int
     {
         return $this->items()->sum('pv_value') ?? 0;
@@ -171,6 +179,16 @@ class Order extends Model
     public function getFormattedTotalAttribute()
     {
         return '$' . number_format($this->total, 2);
+    }
+
+    // ✅ SOURCE LABEL
+    public function getSourceLabelAttribute()
+    {
+        $labels = [
+            'mlm' => ' Site MLM',
+            'pos' => ' Guichet POS',
+        ];
+        return $labels[$this->source] ?? ucfirst($this->source);
     }
 
     // ============================================================
@@ -192,9 +210,16 @@ class Order extends Model
         return $this->status === 'pending';
     }
 
-    /**
-     * Met à jour les PV de l'utilisateur après la commande
-     */
+    public function isPos()
+    {
+        return $this->source === 'pos';
+    }
+
+    public function isMlm()
+    {
+        return $this->source === 'mlm';
+    }
+
     public function updateUserPV(): void
     {
         if ($this->user_id) {

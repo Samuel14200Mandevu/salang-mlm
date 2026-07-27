@@ -14,10 +14,32 @@
         transition: all 0.3s ease;
     }
     
-    /* ✅ Badge inactif */
+    /* Badge inactif */
     .badge-danger {
         background: rgba(239, 68, 68, 0.12);
         color: #ef4444;
+    }
+    
+    /* Badges pour les rôles */
+    .badge-admin {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+    }
+    
+    .badge-cashier {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
+    
+    .badge-cashier-principal {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+        font-weight: 600;
+    }
+    
+    .badge-user {
+        background: rgba(107, 114, 128, 0.12);
+        color: #6b7280;
     }
     
     @media (max-width: 640px) {
@@ -92,8 +114,10 @@
         </div>
         <select id="roleFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
             <option value="">Tous les rôles</option>
-            <option value="1">Admin</option>
-            <option value="0">Utilisateur</option>
+            <option value="admin">Admin</option>
+            <option value="cashier">Caissier</option>
+            <option value="caissier_principal">Caissier Principal</option>
+            <option value="user">Utilisateur</option>
         </select>
         <select id="statusFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
             <option value="">Tous les statuts</option>
@@ -155,10 +179,53 @@
                 </thead>
                 <tbody id="usersTableBody">
                     @forelse($users as $user)
+                        @php
+                            // Récupérer le premier rôle de l'utilisateur
+                            $roleName = $user->getRoleNames()->first() ?? 'user';
+                            
+                            // Déterminer l'affichage et la classe CSS du badge
+                            $roleDisplay = 'Utilisateur';
+                            $badgeClass = 'badge-user';
+                            
+                            if($roleName === 'admin') {
+                                $roleDisplay = 'Admin';
+                                $badgeClass = 'badge-admin';
+                            } elseif($roleName === 'cashier') {
+                                $roleDisplay = 'Caissier';
+                                $badgeClass = 'badge-cashier';
+                            } elseif($roleName === 'caissier_principal') {
+                                $roleDisplay = 'Caissier Principal';
+                                $badgeClass = 'badge-cashier-principal';
+                            }
+                            
+                            // Si l'utilisateur a plusieurs rôles, on vérifie aussi avec hasRole
+                            if($user->hasRole('caissier_principal') && $roleName !== 'caissier_principal') {
+                                $roleDisplay = 'Caissier Principal';
+                                $badgeClass = 'badge-cashier-principal';
+                            } elseif($user->hasRole('cashier') && $roleName !== 'cashier' && $roleName !== 'caissier_principal') {
+                                $roleDisplay = 'Caissier';
+                                $badgeClass = 'badge-cashier';
+                            } elseif($user->hasRole('admin') && $roleName !== 'admin') {
+                                $roleDisplay = 'Admin';
+                                $badgeClass = 'badge-admin';
+                            }
+                            
+                            // Pour le filtrage JavaScript
+                            $roleFilterValue = $roleName;
+                            if($roleName === 'caissier_principal') {
+                                $roleFilterValue = 'caissier_principal';
+                            } elseif($roleName === 'cashier') {
+                                $roleFilterValue = 'cashier';
+                            } elseif($roleName === 'admin') {
+                                $roleFilterValue = 'admin';
+                            } else {
+                                $roleFilterValue = 'user';
+                            }
+                        @endphp
                         <tr class="user-row" 
                             data-name="{{ strtolower($user->name) }}" 
                             data-email="{{ strtolower($user->email) }}"
-                            data-role="{{ $user->hasRole('admin') ? '1' : '0' }}"
+                            data-role="{{ $roleFilterValue }}"
                             data-status="{{ $user->is_active ? '1' : '0' }}"
                             data-package="{{ $user->package_id ?? '' }}"
                             onclick="window.location='{{ route('admin.users.show', $user) }}'">
@@ -166,8 +233,8 @@
                             <td class="font-medium text-sm sm:text-base">{{ $user->name }}</td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden sm:table-cell">{{ $user->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge {{ $user->hasRole('admin') ? 'badge-purple' : 'badge-neutral' }} text-[10px] sm:text-xs">
-                                    {{ $user->hasRole('admin') ? 'Admin' : 'Utilisateur' }}
+                                <span class="badge {{ $badgeClass }} text-[10px] sm:text-xs">
+                                    {{ $roleDisplay }}
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $user->package?->name ?? '-' }}</td>

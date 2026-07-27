@@ -28,18 +28,20 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\ProcessMonthlyCommissions::class,
         
         // ============================================================
-        // GRADES (RANKS) - AJOUTÉS
+        // GRADES (RANKS)
         // ============================================================
         \App\Console\Commands\UpdateRanks::class,
         \App\Console\Commands\RecalculateAllRanks::class,
-        \App\Console\Commands\FixAllRanks::class,        // ← NOUVEAU
-        \App\Console\Commands\ForceUpdateRanks::class,    // ← NOUVEAU
-        \App\Console\Commands\RecalculateTeamPV::class,   // ← NOUVEAU
+        \App\Console\Commands\FixAllRanks::class,
+        \App\Console\Commands\ForceUpdateRanks::class,
+        \App\Console\Commands\RecalculateTeamPV::class,
         
         // ============================================================
         // PV & MISE À JOUR
         // ============================================================
         \App\Console\Commands\UpdateMonthlyPV::class,
+        \App\Console\Commands\RecalculateMonthlyPV::class,
+        \App\Console\Commands\ResetMonthlyPV::class,
         
         // ============================================================
         // RAPPORTS & MAINTENANCE
@@ -58,6 +60,46 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // ============================================================
+        // RÉINITIALISATION DES PV MENSUELS - LE 7 DE CHAQUE MOIS
+        // ============================================================
+        
+        // Réinitialiser les PV mensuels à 0 le 7 de chaque mois à 00:00
+        $schedule->command('pv:reset-monthly')
+            ->monthlyOn(7, '00:00')
+            ->before(function () {
+                \Log::info('🔄 Début de la réinitialisation des PV mensuels');
+            })
+            ->after(function () {
+                \Log::info('✅ Réinitialisation des PV mensuels terminée');
+            })
+            ->onFailure(function () {
+                \Log::error('❌ Échec de la réinitialisation des PV mensuels');
+                // Envoyer une notification d'erreur
+            })
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/pv-reset-monthly.log'));
+
+        // Recalculer les PV mensuels après réinitialisation (5 minutes après)
+        $schedule->command('monthly:recalculate')
+            ->monthlyOn(7, '00:05')
+            ->after(function () {
+                \Log::info('✅ Recalcul des PV mensuels après réinitialisation terminé');
+            })
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/pv-recalculate.log'));
+
+        // Mettre à jour les grades après réinitialisation (15 minutes après)
+        // Note: Les grades sont basés sur PV cumulé (pv_balance + team_pv)
+        // Le reset ne touche pas aux grades, mais on vérifie quand même
+        $schedule->command('ranks:update --all')
+            ->monthlyOn(7, '00:15')
+            ->after(function () {
+                \Log::info('✅ Mise à jour des grades après réinitialisation des PV terminée');
+            })
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/ranks-after-pv-reset.log'));
+
         // ============================================================
         // GRADES (RANKS) - PRIORITAIRE
         // ============================================================
@@ -86,13 +128,15 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/pv-cumulative.log'));
 
-        // Chaque jour à 00:00 - Forcer la mise à jour de tous les grades
-        $schedule->command('ranks:update --all')->dailyAt('00:00')
+        // Chaque jour à 00:30 - Forcer la mise à jour de tous les grades
+        // Note: Décalé à 00:30 pour éviter conflit avec le reset du 7 à 00:00
+        $schedule->command('ranks:update --all')->dailyAt('00:30')
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/ranks-daily.log'));
 
-        // Chaque jour à 00:30 - Corriger tous les grades
-        $schedule->command('ranks:fix-all')->dailyAt('00:30')
+        // Chaque jour à 00:45 - Corriger tous les grades
+        // Note: Décalé à 00:45 pour éviter conflit avec le reset du 7
+        $schedule->command('ranks:fix-all')->dailyAt('00:45')
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/ranks-fix.log'));
 
@@ -107,7 +151,7 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/pv-monthly.log'));
 
         // ============================================================
-        //  COMMISSIONS
+        // COMMISSIONS
         // ============================================================
 
         // Toutes les 5 minutes - Traiter les commissions en attente
@@ -181,6 +225,15 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/status.log'));
+
+        // ============================================================
+        // VÉRIFICATION DES PV MENSUELS - JOURNALIER
+        // ============================================================
+
+        // Chaque jour à 23:55 - Vérifier l'état des PV mensuels
+        $schedule->command('pv:check-status')->dailyAt('23:55')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/pv-check-status.log'));
     }
 
     /**
