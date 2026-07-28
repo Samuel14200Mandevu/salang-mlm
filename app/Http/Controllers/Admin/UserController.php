@@ -172,37 +172,38 @@ class UserController extends Controller
         $ranks = Rank::orderBy('level')->get();
         $packages = Package::orderBy('price')->get();
         $users = User::select('id', 'name', 'email', 'sponsor_id')
-            ->where('sponsor_id', '!=', null)
+            ->whereNotNull('sponsor_id')
             ->orderBy('name')
             ->get();
 
         return view('admin.users.create', compact('ranks', 'packages', 'users'));
     }
 
-    /**
-     * Créer un utilisateur (CORRIGÉ pour les caissiers)
-     */
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:user,cashier,admin',
-            'rank_id' => 'nullable|exists:ranks,id',
-            'package_id' => 'nullable|exists:packages,id',
-            'parrain_id' => 'nullable|exists:users,id',
             'is_active' => 'boolean',
-            'kyc_status' => 'nullable|in:not_submitted,pending,partial,verified,rejected',
-        ]);
+        ];
+
+        if ($request->role !== 'cashier') {
+            $rules['package_id'] = 'nullable|exists:packages,id';
+            $rules['parrain_id'] = 'nullable|exists:users,id';
+            $rules['rank_id'] = 'nullable|exists:ranks,id';
+            $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
+        }
+
+        $validated = $request->validate($rules);
 
         DB::beginTransaction();
 
         try {
             $role = $request->role;
 
-            // ✅ Si c'est un caissier : pas de code de parrain, pas de MLM
             if ($role === 'cashier') {
                 $user = User::create([
                     'name' => $request->name,
@@ -213,13 +214,11 @@ class UserController extends Controller
                     'city' => $request->city ?? null,
                     'country' => $request->country ?? null,
                     'is_active' => $request->has('is_active'),
-                    // ✅ Pas de code de parrain
                     'sponsor_id' => null,
                     'parrain_id' => null,
-                    // ✅ Pas de grade MLM
                     'rank_id' => null,
-                    'rank' => null,
-                    'rank_level' => null,
+                    'rank' => 'Distributeur',
+                    'rank_level' => 1,
                     'package_id' => null,
                     'pv_balance' => 0,
                     'bv_balance' => 0,
@@ -233,10 +232,9 @@ class UserController extends Controller
                     'direct_sponsors_count' => 0,
                     'commission_balance' => 0,
                     'total_earnings' => 0,
-                    'kyc_status' => $request->kyc_status ?? 'not_submitted',
+                    'kyc_status' => 'not_submitted',
                 ]);
 
-                // ✅ Créer le wallet
                 Wallet::create([
                     'user_id' => $user->id,
                     'balance' => 0,
@@ -245,23 +243,20 @@ class UserController extends Controller
                     'is_active' => true,
                 ]);
 
-                // ✅ Assigner le rôle cashier
                 $user->assignRole('cashier');
+
+                DB::commit();
 
                 Log::info('Nouveau caissier créé (sans code de parrain)', [
                     'admin_id' => auth()->id(),
                     'cashier_id' => $user->id,
                     'cashier_name' => $user->name,
-                    'cashier_email' => $user->email,
                 ]);
 
-                DB::commit();
-
                 return redirect()->route('admin.users')
-                    ->with('success', '✅ Caissier créé avec succès !');
+                    ->with('success', 'Caissier créé avec succès !');
 
             } else {
-                // ✅ Pour les utilisateurs normaux et admins : avec code de parrain
                 $parrain = null;
                 if ($request->filled('parrain_id')) {
                     $parrain = User::find($request->parrain_id);
@@ -300,7 +295,6 @@ class UserController extends Controller
                     'bv_balance' => $request->package_id ? Package::find($request->package_id)?->bv_value ?? 0 : 0,
                 ]);
 
-                // ✅ Créer le wallet
                 if (!Wallet::where('user_id', $user->id)->exists()) {
                     Wallet::create([
                         'user_id' => $user->id,
@@ -311,7 +305,6 @@ class UserController extends Controller
                     ]);
                 }
 
-                // ✅ Créer la généalogie
                 Genealogy::create([
                     'user_id' => $user->id,
                     'sponsor_id' => $parrain?->id,
@@ -323,30 +316,20 @@ class UserController extends Controller
                     'total_children' => 0,
                 ]);
 
-                // ✅ Assigner le rôle
                 if ($role === 'admin') {
                     $user->assignRole('admin');
                 } else {
                     $user->assignRole('user');
                 }
 
-                // ✅ Mettre à jour le parrain
                 if ($parrain) {
                     $parrain->increment('total_sponsors');
                     $parrain->increment('total_team');
                     $this->updateTeamCounters($parrain);
                 }
 
-                Log::info('Nouvel utilisateur créé', [
-                    'admin_id' => auth()->id(),
-                    'user_id' => $user->id,
-                    'user_name' => $user->name,
-                    'role' => $role,
-                ]);
-
                 DB::commit();
 
-                // ✅ Envoyer la notification
                 try {
                     $user->notify(new WelcomeNotification($parrain?->name));
                 } catch (\Exception $e) {
@@ -357,16 +340,17 @@ class UserController extends Controller
                 }
 
                 return redirect()->route('admin.users')
-                    ->with('success', "✅ Utilisateur créé avec succès. Code de parrain: {$sponsorCode}");
+                    ->with('success', "Utilisateur créé avec succès. Code de parrain: {$sponsorCode}");
             }
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur création utilisateur', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'data' => $request->all()
             ]);
-            return back()->withInput()->with('error', '❌ Erreur: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
@@ -377,7 +361,7 @@ class UserController extends Controller
         $packages = Package::orderBy('price')->get();
         $users = User::select('id', 'name', 'email', 'sponsor_id')
             ->where('id', '!=', $id)
-            ->where('sponsor_id', '!=', null)
+            ->whereNotNull('sponsor_id')
             ->orderBy('name')
             ->get();
 
@@ -388,16 +372,22 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'nullable|string|max:20',
-            'rank_id' => 'nullable|exists:ranks,id',
-            'package_id' => 'nullable|exists:packages,id',
-            'parrain_id' => 'nullable|exists:users,id|not_in:' . $id,
             'is_active' => 'boolean',
-            'kyc_status' => 'nullable|in:not_submitted,pending,partial,verified,rejected',
-        ]);
+            'role' => 'required|in:user,cashier,admin',
+        ];
+
+        if ($request->role !== 'cashier') {
+            $rules['package_id'] = 'nullable|exists:packages,id';
+            $rules['parrain_id'] = 'nullable|exists:users,id|not_in:' . $id;
+            $rules['rank_id'] = 'nullable|exists:ranks,id';
+            $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
+        }
+
+        $validated = $request->validate($rules);
 
         DB::beginTransaction();
 
@@ -405,11 +395,8 @@ class UserController extends Controller
             $data = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
-                'rank_id' => $request->rank_id,
-                'package_id' => $request->package_id,
+                'phone' => $request->phone ?? 'N/A',
                 'is_active' => $request->has('is_active'),
-                'kyc_status' => $request->kyc_status ?? $user->kyc_status,
             ];
 
             if ($request->filled('password')) {
@@ -417,54 +404,117 @@ class UserController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
-            if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
-                if ($user->parrain_id) {
-                    $oldParrain = User::find($user->parrain_id);
-                    if ($oldParrain) {
-                        $oldParrain->decrement('total_sponsors');
-                        $this->updateTeamCountersDec($oldParrain);
+            // Si le rôle est cashier, supprimer les données MLM mais garder 'rank' avec une valeur
+            if ($request->role === 'cashier') {
+                $data['sponsor_id'] = null;
+                $data['parrain_id'] = null;
+                $data['rank_id'] = null;
+                $data['rank'] = 'Distributeur';
+                $data['rank_level'] = 1;
+                $data['package_id'] = null;
+                $data['pv_balance'] = 0;
+                $data['bv_balance'] = 0;
+                $data['monthly_pv'] = 0;
+                $data['monthly_bv'] = 0;
+                $data['team_pv'] = 0;
+                $data['team_bv'] = 0;
+                $data['total_team'] = 0;
+                $data['total_sponsors'] = 0;
+                $data['qualified_branches'] = 0;
+                $data['direct_sponsors_count'] = 0;
+            } else {
+                // Gérer le parrain
+                if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
+                    if ($user->parrain_id) {
+                        $oldParrain = User::find($user->parrain_id);
+                        if ($oldParrain) {
+                            $oldParrain->decrement('total_sponsors');
+                            $this->updateTeamCountersDec($oldParrain);
+                        }
+                    }
+
+                    if ($request->parrain_id) {
+                        $newParrain = User::find($request->parrain_id);
+                        if ($newParrain && $newParrain->id != $user->id) {
+                            $newParrain->increment('total_sponsors');
+                            $this->updateTeamCounters($newParrain);
+                        }
+                    }
+
+                    $data['parrain_id'] = $request->parrain_id;
+
+                    $genealogy = Genealogy::where('user_id', $user->id)->first();
+                    if ($genealogy) {
+                        $newParrain = $request->parrain_id ? User::find($request->parrain_id) : null;
+                        $genealogy->sponsor_id = $newParrain?->id;
+                        $genealogy->parent_id = $newParrain?->id;
+                        $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
+                        $genealogy->save();
                     }
                 }
 
-                if ($request->parrain_id) {
-                    $newParrain = User::find($request->parrain_id);
-                    if ($newParrain) {
-                        $newParrain->increment('total_sponsors');
-                        $this->updateTeamCounters($newParrain);
+                // Package et grade
+                if ($request->has('package_id')) {
+                    $data['package_id'] = $request->package_id;
+                    if ($request->package_id) {
+                        $package = Package::find($request->package_id);
+                        if ($package) {
+                            $rank = Rank::where('min_pv', '<=', $package->pv_value)
+                                ->orderBy('level', 'desc')
+                                ->first();
+                            if ($rank) {
+                                $data['rank_id'] = $rank->id;
+                                $data['rank'] = $rank->name;
+                                $data['rank_level'] = $rank->level;
+                            }
+                        }
                     }
                 }
 
-                $data['parrain_id'] = $request->parrain_id;
+                if ($request->has('rank_id')) {
+                    $data['rank_id'] = $request->rank_id;
+                    if ($request->rank_id) {
+                        $rank = Rank::find($request->rank_id);
+                        if ($rank) {
+                            $data['rank'] = $rank->name;
+                            $data['rank_level'] = $rank->level;
+                        }
+                    }
+                }
 
-                $genealogy = Genealogy::where('user_id', $user->id)->first();
-                if ($genealogy) {
-                    $newParrain = $request->parrain_id ? User::find($request->parrain_id) : null;
-                    $genealogy->sponsor_id = $newParrain?->id;
-                    $genealogy->parent_id = $newParrain?->id;
-                    $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
-                    $genealogy->save();
+                if ($request->has('kyc_status')) {
+                    $data['kyc_status'] = $request->kyc_status;
                 }
             }
 
             $user->update($data);
+
+            // Mettre à jour le rôle
+            $newRole = $request->role;
+            $currentRole = $user->roles->first()?->name ?? 'user';
+            if ($currentRole !== $newRole) {
+                $user->syncRoles([$newRole]);
+            }
 
             DB::commit();
 
             Log::info('User updated', [
                 'user_id' => $user->id,
                 'admin_id' => auth()->id(),
+                'new_role' => $newRole,
             ]);
 
-            return redirect()->route('admin.users')
-                ->with('success', "User {$user->name} updated successfully.");
+            return redirect()->route('admin.users.show', $user->id)
+                ->with('success', "Utilisateur {$user->name} mis à jour avec succès.");
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating user', [
                 'user_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
-            return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+            return back()->withInput()->with('error', '❌ Erreur: ' . $e->getMessage());
         }
     }
 
@@ -474,7 +524,7 @@ class UserController extends Controller
 
         if (auth()->id() == $user->id) {
             return redirect()->route('admin.users')
-                ->with('error', 'You cannot delete your own account.');
+                ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
         DB::beginTransaction();
@@ -512,7 +562,7 @@ class UserController extends Controller
             ]);
 
             return redirect()->route('admin.users')
-                ->with('success', "User {$user->name} deleted successfully.");
+                ->with('success', "Utilisateur {$user->name} supprimé avec succès.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -520,7 +570,7 @@ class UserController extends Controller
                 'user_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
@@ -530,13 +580,13 @@ class UserController extends Controller
 
         if (auth()->id() == $user->id) {
             return redirect()->route('admin.users')
-                ->with('error', 'You cannot deactivate your own account.');
+                ->with('error', 'Vous ne pouvez pas désactiver votre propre compte.');
         }
 
         $user->is_active = !$user->is_active;
         $user->save();
 
-        $status = $user->is_active ? 'activated' : 'deactivated';
+        $status = $user->is_active ? 'activé' : 'désactivé';
 
         Log::info('User ' . $status, [
             'user_id' => $user->id,
@@ -544,7 +594,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users')
-            ->with('success', "User {$status} successfully.");
+            ->with('success', "Utilisateur {$status} avec succès.");
     }
 
     public function resetPassword($id)
@@ -561,7 +611,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.show', $id)
-            ->with('success', "Password reset. New password: {$newPassword}");
+            ->with('success', "Mot de passe réinitialisé. Nouveau mot de passe: {$newPassword}");
     }
 
     public function assignPackage(Request $request, $id)
@@ -592,7 +642,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.show', $id)
-            ->with('success', "Package {$package->name} assigned to {$user->name}.");
+            ->with('success', "Package {$package->name} assigné à {$user->name}.");
     }
 
     private function generateSponsorCode(): string
@@ -762,6 +812,8 @@ class UserController extends Controller
                     'password' => Hash::make(Str::random(12)),
                     'sponsor_id' => $sponsorCode,
                     'parrain_id' => $parrain?->id,
+                    'rank' => 'Distributeur',
+                    'rank_level' => 1,
                     'is_active' => true,
                     'kyc_status' => 'not_submitted',
                 ]);

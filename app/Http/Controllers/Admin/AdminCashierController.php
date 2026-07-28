@@ -77,10 +77,10 @@ class AdminCashierController extends Controller
                 'city' => $request->city,
                 'country' => $request->country,
                 'is_active' => $request->is_active ?? true,
-                // ✅ Pas de code de parrain
+                //  Pas de code de parrain
                 'sponsor_id' => null,
                 'parrain_id' => null,
-                // ✅ Pas de grade MLM
+                //  Pas de grade MLM
                 'rank_id' => null,
                 'rank' => null,
                 'rank_level' => null,
@@ -100,7 +100,7 @@ class AdminCashierController extends Controller
                 'kyc_status' => 'not_submitted',
             ]);
 
-            // ✅ Créer le wallet
+            //  Créer le wallet
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -109,7 +109,7 @@ class AdminCashierController extends Controller
                 'is_active' => true,
             ]);
 
-            // ✅ Assigner le rôle cashier
+            //  Assigner le rôle cashier
             $user->assignRole('cashier');
 
             Log::info('Nouveau caissier créé (sans code de parrain, sans MLM)', [
@@ -121,7 +121,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', '✅ Caissier créé avec succès !');
+                ->with('success', ' Caissier créé avec succès !');
 
         } catch (\Exception $e) {
             Log::error('Erreur création caissier', [
@@ -130,7 +130,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', '❌ Erreur lors de la création: ' . $e->getMessage())
+                ->with('error', ' Erreur lors de la création: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -175,7 +175,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', '✅ Caissier supprimé avec succès !');
+                ->with('success', ' Caissier supprimé avec succès !');
 
         } catch (\Exception $e) {
             Log::error('Erreur suppression caissier', [
@@ -184,7 +184,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', '❌ Erreur lors de la suppression: ' . $e->getMessage());
+                ->with('error', ' Erreur lors de la suppression: ' . $e->getMessage());
         }
     }
 
@@ -209,7 +209,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', "✅ Caissier {$status} avec succès !");
+                ->with('success', " Caissier {$status} avec succès !");
 
         } catch (\Exception $e) {
             Log::error('Erreur changement statut caissier', [
@@ -218,7 +218,7 @@ class AdminCashierController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', '❌ Erreur lors du changement de statut: ' . $e->getMessage());
+                ->with('error', ' Erreur lors du changement de statut: ' . $e->getMessage());
         }
     }
 }

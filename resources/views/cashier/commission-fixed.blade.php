@@ -280,22 +280,22 @@
         <form method="GET" action="{{ route('cashier.commissions') }}" class="filter-section">
             <select name="status" class="flex-1">
                 <option value="">Tous les statuts</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>⏳ En attente</option>
-                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>✅ Approuvées</option>
-                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>💰 Payées</option>
-                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>❌ Rejetées</option>
+                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}> En attente</option>
+                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}> Approuvées</option>
+                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}> Payées</option>
+                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}> Rejetées</option>
             </select>
             
             <select name="type" class="flex-1">
                 <option value="">Tous les types</option>
-                <option value="direct" {{ request('type') == 'direct' ? 'selected' : '' }}>🎯 Bonus Direct</option>
-                <option value="indirect" {{ request('type') == 'indirect' ? 'selected' : '' }}>🔄 Bonus Indirect</option>
-                <option value="leadership" {{ request('type') == 'leadership' ? 'selected' : '' }}>⭐ Bonus Leadership</option>
+                <option value="direct" {{ request('type') == 'direct' ? 'selected' : '' }}> Bonus Direct</option>
+                <option value="indirect" {{ request('type') == 'indirect' ? 'selected' : '' }}> Bonus Indirect</option>
+                <option value="leadership" {{ request('type') == 'leadership' ? 'selected' : '' }}> Bonus Leadership</option>
             </select>
             
-            <!-- ✅ FILTRE PAR MEMBRE -->
+            <!-- FILTRE PAR MEMBRE -->
             <select name="user_id" class="flex-1">
-                <option value="">👤 Tous les membres</option>
+                <option value=""> Tous les membres</option>
                 @foreach($members ?? [] as $member)
                     <option value="{{ $member->id }}" {{ request('user_id') == $member->id ? 'selected' : '' }}>
                         {{ $member->name }} ({{ $member->sponsor_id ?? 'N/A' }})
@@ -363,7 +363,7 @@
                                 <span class="font-bold text-green-500 text-sm">
                                     ${{ number_format($commission->amount, 2) }}
                                 </span>
-                                <span class="payment-badge ml-1">💰 CASH</span>
+                                <span class="payment-badge ml-1"> CASH</span>
                             </td>
                             <td>
                                 @php
@@ -421,7 +421,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div>
-                <h4 class="font-semibold text-[var(--text-primary)] text-sm">💰 Comment fonctionnent les commissions POS ?</h4>
+                <h4 class="font-semibold text-[var(--text-primary)] text-sm"> Comment fonctionnent les commissions POS ?</h4>
                 <ul class="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 space-y-1 list-disc list-inside">
                     <li>Lors d'une vente au guichet, le <strong class="text-primary-500">parrain</strong> du client reçoit une <strong class="text-green-500">commission en espèces (CASH)</strong> hors système MLM</li>
                     <li>Le pourcentage dépend du <strong class="text-primary-500">grade</strong> du parrain (de 6% à 45%)</li>

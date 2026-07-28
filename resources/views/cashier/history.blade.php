@@ -29,6 +29,7 @@
     .history-stat-card .number.blue { color: #3b82f6; }
     .history-stat-card .number.purple { color: #8b5cf6; }
     .history-stat-card .number.orange { color: #f59e0b; }
+    .history-stat-card .number.red { color: #ef4444; }
     .history-stat-card .label {
         font-size: 0.7rem;
         color: var(--text-secondary);
@@ -48,6 +49,7 @@
     .icon-blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
     .icon-orange { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .icon-red { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     
     .history-table {
         width: 100%;
@@ -72,6 +74,12 @@
     }
     .history-table tr:hover td {
         background: var(--bg-hover);
+    }
+    .history-table .text-right {
+        text-align: right;
+    }
+    .history-table .text-center {
+        text-align: center;
     }
     
     .filter-section {
@@ -137,6 +145,42 @@
         border: 1px solid rgba(34, 197, 94, 0.2);
     }
     
+    .badge-paid {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    
+    .badge-partial {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(245, 158, 11, 0.12);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .badge-commission {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(245, 158, 11, 0.12);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
     .total-pv {
         font-weight: 600;
         color: #22c55e;
@@ -150,6 +194,14 @@
     .rest-amount {
         font-weight: 600;
         color: var(--text-primary);
+    }
+    
+    .rest-amount.positive {
+        color: #ef4444;
+    }
+    
+    .rest-amount.zero {
+        color: #22c55e;
     }
     
     @media (max-width: 768px) {
@@ -225,7 +277,7 @@
                 </svg>
             </div>
             <div class="number green">${{ number_format($stats['total_sales'] ?? 0, 2) }}</div>
-            <div class="label">Total ventes</div>
+            <div class="label">Total encaissé</div>
         </div>
         
         <div class="history-stat-card animate-fadeInUp delay-3">
@@ -272,6 +324,7 @@
                         <th>Code parrain</th>
                         <th class="text-right">Prix produits</th>
                         <th class="text-right">Commission CASH</th>
+                        <th class="text-right">Payé</th>
                         <th class="text-right">Reste</th>
                         <th class="text-right">PV gagnés</th>
                     </tr>
@@ -279,7 +332,7 @@
                 <tbody>
                     @forelse($orders ?? [] as $order)
                         @php
-                            // Calcul du total des produits
+                            // Total des produits
                             $totalProducts = $order->subtotal;
                             
                             // Récupérer le sponsor
@@ -294,8 +347,11 @@
                                 ->first();
                             $commissionAmount = $commission ? $commission->amount : 0;
                             
-                            // Calcul du reste (prix produits - commission)
-                            $rest = $totalProducts - $commissionAmount;
+                            // ✅ Montant payé = total (le client a payé le prix total)
+                            $paidAmount = $totalProducts;
+                            
+                            // ✅ Reste = 0 car le client a payé le montant total
+                            $rest = 0;
                             
                             // Total PV
                             $totalPV = $order->items->sum(function($item) {
@@ -326,10 +382,18 @@
                             </td>
                             <td class="text-right">
                                 <span class="commission-amount">${{ number_format($commissionAmount, 2) }}</span>
-                                <span class="badge-cash ml-1">CASH</span>
+                                <span class="badge-commission ml-1">Commission</span>
                             </td>
-                            <td class="text-right rest-amount">
-                                ${{ number_format($rest, 2) }}
+                            <td class="text-right">
+                                <span class="text-green-500 font-semibold">
+                                    ${{ number_format($paidAmount, 2) }}
+                                </span>
+                                <span class="badge-paid ml-1">Payé</span>
+                            </td>
+                            <td class="text-right">
+                                <span class="rest-amount zero">
+                                    ${{ number_format($rest, 2) }}
+                                </span>
                             </td>
                             <td class="text-right">
                                 <span class="total-pv">{{ number_format($totalPV) }} PV</span>
@@ -337,7 +401,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>

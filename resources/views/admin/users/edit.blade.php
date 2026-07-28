@@ -84,6 +84,14 @@
         border-color: var(--primary-500);
         background: rgba(90, 182, 56, 0.05);
     }
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+    }
     @media (max-width: 640px) {
         .form-group label {
             font-size: 0.75rem;
@@ -145,7 +153,25 @@
         </div>
     </div>
 
-    <div class="card animate-fadeInUp delay-1 max-w-2xl p-3 sm:p-4 md:p-6">
+    @if($errors->any())
+        <div class="alert-danger animate-fadeInUp delay-1">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <p class="font-medium">Des erreurs sont survenues :</p>
+                    <ul class="list-disc list-inside text-sm mt-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card animate-fadeInUp delay-2 max-w-2xl p-3 sm:p-4 md:p-6">
         <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
             @csrf @method('PUT')
 
@@ -229,24 +255,24 @@
                             </option>
                         @endforeach
                     </select>
-                    <p class="help-text" id="packageHelp">Sélectionnez un package pour cet utilisateur</p>
+                    <p class="help-text">Sélectionnez un package pour cet utilisateur</p>
                 </div>
 
-                <!-- Sponsor -->
+                <!-- Sponsor (Parrain) -->
                 <div class="form-group" id="sponsorGroup">
                     <label>Sponsor (Parrain)</label>
-                    <select name="sponsor_id" class="input text-sm sm:text-base">
+                    <select name="parrain_id" class="input text-sm sm:text-base">
                         <option value="">Aucun</option>
                         @foreach($users ?? [] as $sponsor)
                             @if($sponsor->id != $user->id)
-                                <option value="{{ $sponsor->sponsor_id }}" 
-                                    {{ $user->sponsor_id == $sponsor->sponsor_id ? 'selected' : '' }}>
+                                <option value="{{ $sponsor->id }}" 
+                                    {{ $user->parrain_id == $sponsor->id ? 'selected' : '' }}>
                                     {{ $sponsor->name }} ({{ $sponsor->sponsor_id }})
                                 </option>
                             @endif
                         @endforeach
                     </select>
-                    <p class="help-text" id="sponsorHelp">Sélectionnez le parrain par son code unique</p>
+                    <p class="help-text">Sélectionnez le parrain pour cet utilisateur</p>
                 </div>
 
                 <!-- Sponsor Code (lecture seule) -->
@@ -263,7 +289,6 @@
                     <p class="help-text mb-2">Sélectionnez le rôle que cet utilisateur aura dans la plateforme</p>
                     
                     <div class="space-y-2" id="roleSelector">
-                        <!-- Option : Utilisateur -->
                         @php
                             $currentRole = $user->roles->first()?->name ?? 'user';
                         @endphp
@@ -277,7 +302,6 @@
                             <span class="role-badge user">Standard</span>
                         </label>
 
-                        <!-- Option : Caissier -->
                         <label class="role-option {{ $currentRole === 'cashier' ? 'selected' : '' }}" id="role-cashier">
                             <input type="radio" name="role" value="cashier" {{ $currentRole === 'cashier' ? 'checked' : '' }}>
                             <div class="role-info">
@@ -287,7 +311,6 @@
                             <span class="role-badge cashier">Ventes</span>
                         </label>
 
-                        <!-- Option : Administrateur -->
                         <label class="role-option {{ $currentRole === 'admin' ? 'selected' : '' }}" id="role-admin">
                             <input type="radio" name="role" value="admin" {{ $currentRole === 'admin' ? 'checked' : '' }}>
                             <div class="role-info">
@@ -356,8 +379,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
-    const packageHelp = document.getElementById('packageHelp');
-    const sponsorHelp = document.getElementById('sponsorHelp');
     
     const infoMessages = {
         user: 'Un code de parrain unique a été généré pour cet utilisateur. Il peut bénéficier du système MLM et des commissions.',

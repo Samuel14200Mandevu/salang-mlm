@@ -21,10 +21,6 @@
         color: var(--text-tertiary);
         margin-top: 0.125rem;
     }
-    .form-group .input-error {
-        border-color: #ef4444;
-        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
-    }
     .card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
@@ -83,8 +79,8 @@
         box-shadow: 0 0 0 4px var(--border-focus);
     }
     .input-error {
-        border-color: #ef4444;
-        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
     }
     .role-option {
         display: flex;
@@ -141,9 +137,13 @@
         border-color: var(--primary-500);
         background: rgba(90, 182, 56, 0.05);
     }
-    .role-option .role-badge.employee {
-        background: rgba(139, 92, 246, 0.12);
-        color: #8b5cf6;
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
     }
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
@@ -205,8 +205,25 @@
         </div>
     </div>
 
-    <!-- Formulaire -->
-    <div class="card animate-fadeInUp delay-1 max-w-2xl">
+    @if($errors->any())
+        <div class="alert-danger animate-fadeInUp delay-1">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <p class="font-medium">Des erreurs sont survenues :</p>
+                    <ul class="list-disc list-inside text-sm mt-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card animate-fadeInUp delay-2 max-w-2xl">
         <form action="{{ route('admin.users.store') }}" method="POST">
             @csrf
 
@@ -288,8 +305,8 @@
                               placeholder="Adresse complète...">{{ old('address') }}</textarea>
                 </div>
 
-                <!-- Package -->
-                <div class="form-group">
+                <!-- Package - Masqué pour les caissiers -->
+                <div class="form-group" id="packageGroup">
                     <label>Package</label>
                     <select name="package_id" class="input text-sm sm:text-base">
                         <option value="">Aucun</option>
@@ -301,10 +318,10 @@
                             @endforeach
                         @endif
                     </select>
-                    <p class="help-text" id="packageHelp">Sélectionnez un package pour ce nouvel utilisateur</p>
+                    <p class="help-text">Sélectionnez un package pour ce nouvel utilisateur</p>
                 </div>
 
-                <!-- Sponsor -->
+                <!-- Sponsor (Parrain) - Masqué pour les caissiers -->
                 <div class="form-group" id="sponsorGroup">
                     <label>Sponsor (Parrain)</label>
                     <select name="parrain_id" class="input text-sm sm:text-base">
@@ -317,7 +334,7 @@
                             @endforeach
                         @endif
                     </select>
-                    <p class="help-text" id="sponsorHelp">Sélectionnez le parrain pour ce nouvel utilisateur</p>
+                    <p class="help-text">Sélectionnez le parrain pour ce nouvel utilisateur</p>
                 </div>
 
                 <!-- RÔLE -->
@@ -388,7 +405,7 @@
 
             <!-- Boutons -->
             <div class="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-3">
-                <button type="submit" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+                <button type="submit" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5" id="submitBtn">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -407,10 +424,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const roleOptions = document.querySelectorAll('.role-option');
     const roleInfoText = document.getElementById('roleInfoText');
-    const packageGroup = document.querySelector('.form-group:has(select[name="package_id"])');
+    const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
-    const packageHelp = document.getElementById('packageHelp');
-    const sponsorHelp = document.getElementById('sponsorHelp');
     
     const infoMessages = {
         user: 'Un code de parrain unique sera généré automatiquement pour ce nouvel utilisateur. Il pourra bénéficier du système MLM et des commissions.',
@@ -418,24 +433,18 @@ document.addEventListener('DOMContentLoaded', function() {
         admin: ' Administrateur avec accès complet à l\'administration. Un code de parrain sera généré automatiquement.'
     };
     
-    // Fonction pour mettre à jour l'affichage selon le rôle
     function updateRoleDisplay(role) {
-        // Mettre à jour le texte d'information
         roleInfoText.textContent = infoMessages[role] || infoMessages.user;
         
-        // Gérer l'affichage du package et du sponsor
         if (role === 'cashier') {
-            // Cacher le package et le sponsor pour les caissiers
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
         } else {
-            // Afficher le package et le sponsor pour les autres rôles
             if (packageGroup) packageGroup.style.display = 'block';
             if (sponsorGroup) sponsorGroup.style.display = 'block';
         }
     }
     
-    // Initialiser avec le rôle sélectionné
     const selectedRadio = document.querySelector('input[name="role"]:checked');
     if (selectedRadio) {
         updateRoleDisplay(selectedRadio.value);
@@ -443,13 +452,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     roleOptions.forEach(option => {
         option.addEventListener('click', function() {
-            // Désélectionner toutes les options
             roleOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Sélectionner l'option cliquée
             this.classList.add('selected');
             
-            // Cocher le radio bouton correspondant
             const radio = this.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
