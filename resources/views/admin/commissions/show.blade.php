@@ -129,6 +129,8 @@
     .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
     .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
+    .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: var(--bg-hover); }
     
     /* Card */
     .card {
@@ -171,6 +173,88 @@
     .delay-1 { animation-delay: 0.05s; }
     .delay-2 { animation-delay: 0.10s; }
     .delay-3 { animation-delay: 0.15s; }
+    
+    /* ============================================================
+       MODAL DE CONFIRMATION
+       ============================================================ */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+    .modal-overlay.active .modal-box {
+        transform: scale(1) translateY(0);
+    }
+    .modal-icon {
+        width: 4rem;
+        height: 4rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .modal-icon-success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .modal-icon-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    .modal-icon svg {
+        width: 2rem;
+        height: 2rem;
+    }
+    .modal-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .modal-message {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    .modal-message strong {
+        color: var(--text-primary);
+    }
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .modal-actions .btn {
+        min-width: 100px;
+        justify-content: center;
+    }
     
     /* ============================================================
        RESPONSIVE
@@ -229,6 +313,17 @@
         .timeline-item {
             padding: 0.375rem 0;
         }
+        .modal-box {
+            padding: 1.5rem;
+            max-width: 95%;
+        }
+        .modal-actions {
+            flex-direction: column;
+        }
+        .modal-actions .btn {
+            width: 100%;
+            min-width: unset;
+        }
     }
     
     @media (max-width: 480px) {
@@ -253,6 +348,15 @@
         .type-badge {
             font-size: 0.55rem;
             padding: 0.075rem 0.3rem;
+        }
+        .modal-box {
+            padding: 1rem;
+        }
+        .modal-title {
+            font-size: 1rem;
+        }
+        .modal-message {
+            font-size: 0.813rem;
         }
     }
     
@@ -279,11 +383,10 @@
                 Commission #{{ $commission->id }}
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Details de la commission
+                Détails de la commission
             </p>
         </div>
         <div class="header-actions flex flex-wrap gap-2">
-            {{-- ✅ Route corrigée : admin.commissions (sans .index) --}}
             <a href="{{ route('admin.commissions') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -291,26 +394,18 @@
                 Retour
             </a>
             @if($commission->status == 'pending')
-                {{-- ✅ Route corrigée : admin.commissions.approve --}}
-                <form action="{{ route('admin.commissions.approve', $commission->id) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="btn btn-success btn-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        Approuver
-                    </button>
-                </form>
-                {{-- ✅ Route corrigée : admin.commissions.reject --}}
-                <form action="{{ route('admin.commissions.reject', $commission->id) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        Rejeter
-                    </button>
-                </form>
+                <button onclick="openConfirmModal('approve')" class="btn btn-success btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Approuver
+                </button>
+                <button onclick="openConfirmModal('reject')" class="btn btn-danger btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Rejeter
+                </button>
             @endif
         </div>
     </div>
@@ -349,14 +444,14 @@
             <p class="detail-label">Statut</p>
             <p class="detail-value">
                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : ($commission->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
-                    {{ $commission->status == 'paid' ? 'Payee' : ($commission->status == 'pending' ? 'En attente' : 'Annulee') }}
+                    {{ $commission->status == 'paid' ? 'Payée' : ($commission->status == 'pending' ? 'En attente' : 'Annulée') }}
                 </span>
             </p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">
                 @if($commission->paid_at)
-                    Payee le {{ $commission->paid_at->format('d/m/Y H:i') }}
+                    Payée le {{ $commission->paid_at->format('d/m/Y H:i') }}
                 @else
-                    Non payee
+                    Non payée
                 @endif
             </p>
         </div>
@@ -403,10 +498,10 @@
                 </div>
                 <div class="min-w-0">
                     <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                        {{ $commission->fromUser?->name ?? 'Systeme' }}
+                        {{ $commission->fromUser?->name ?? 'Système' }}
                     </p>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)] truncate">
-                        {{ $commission->fromUser?->email ?? 'Genere automatiquement' }}
+                        {{ $commission->fromUser?->email ?? 'Généré automatiquement' }}
                     </p>
                     @if($commission->fromUser)
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
@@ -418,7 +513,7 @@
             
             @if($commission->package)
             <div class="mt-2 sm:mt-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Package associe</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Package associé</p>
                 <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
                     {{ $commission->package->name }}
                 </p>
@@ -453,7 +548,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-info"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission creee</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission créée</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     {{ $commission->created_at->format('d/m/Y H:i:s') }}
                     <span class="text-[10px]">({{ $commission->created_at->diffForHumans() }})</span>
@@ -465,7 +560,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-success"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission payee</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission payée</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     {{ $commission->paid_at?->format('d/m/Y H:i:s') ?? 'N/A' }}
                 </p>
@@ -477,7 +572,7 @@
             <div>
                 <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">En attente de paiement</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    Cette commission sera payee automatiquement lors du prochain cycle
+                    Cette commission sera payée automatiquement lors du prochain cycle
                 </p>
             </div>
         </div>
@@ -485,7 +580,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-danger"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission annulee</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission annulée</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     {{ $commission->updated_at->format('d/m/Y H:i:s') }}
                 </p>
@@ -528,7 +623,7 @@
                             <td class="amount-positive">+${{ number_format($similar->amount, 2) }}</td>
                             <td class="hidden md:table-cell">
                                 <span class="badge {{ $similar->status == 'paid' ? 'badge-success' : ($similar->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $similar->status == 'paid' ? 'Paye' : ($similar->status == 'pending' ? 'En attente' : 'Annule') }}
+                                    {{ $similar->status == 'paid' ? 'Payé' : ($similar->status == 'pending' ? 'En attente' : 'Annulé') }}
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell text-[var(--text-secondary)] text-xs">
@@ -542,4 +637,150 @@
     </div>
     @endif
 </div>
+
+<!-- ============================================================
+MODAL DE CONFIRMATION
+============================================================ -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-box">
+        <div id="modalIcon" class="modal-icon modal-icon-success">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <h3 id="modalTitle" class="modal-title">Confirmer l'approbation</h3>
+        <p id="modalMessage" class="modal-message">
+            Êtes-vous sûr de vouloir <strong>approuver</strong> cette commission ?
+            <br>
+            <span class="text-xs text-[var(--text-secondary)]">
+                Montant: <strong id="modalAmount" class="text-primary-500">$0.00</strong>
+            </span>
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeConfirmModal()" class="btn btn-secondary">
+                Annuler
+            </button>
+            <button id="confirmActionBtn" class="btn btn-success">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Confirmer
+            </button>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    let confirmAction = null;
+    let confirmForm = null;
+
+    function openConfirmModal(action) {
+        const modal = document.getElementById('confirmModal');
+        const icon = document.getElementById('modalIcon');
+        const title = document.getElementById('modalTitle');
+        const message = document.getElementById('modalMessage');
+        const amount = document.getElementById('modalAmount');
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        
+        // Réinitialiser les classes
+        icon.className = 'modal-icon';
+        
+        if (action === 'approve') {
+            icon.classList.add('modal-icon-success');
+            icon.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            `;
+            title.textContent = 'Confirmer l\'approbation';
+            message.innerHTML = `
+                Êtes-vous sûr de vouloir <strong>approuver</strong> cette commission ?
+                <br>
+                <span class="text-xs text-[var(--text-secondary)]">
+                    Montant: <strong id="modalAmount" class="text-primary-500">${{ number_format($commission->amount, 2) }}</strong>
+                </span>
+            `;
+            confirmBtn.className = 'btn btn-success';
+            confirmBtn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Approuver
+            `;
+            confirmAction = 'approve';
+            confirmForm = document.getElementById('approveForm');
+        } else if (action === 'reject') {
+            icon.classList.add('modal-icon-danger');
+            icon.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            `;
+            title.textContent = 'Confirmer le rejet';
+            message.innerHTML = `
+                Êtes-vous sûr de vouloir <strong>rejeter</strong> cette commission ?
+                <br>
+                <span class="text-xs text-[var(--text-secondary)]">
+                    Montant: <strong id="modalAmount" class="text-red-500">${{ number_format($commission->amount, 2) }}</strong>
+                </span>
+            `;
+            confirmBtn.className = 'btn btn-danger';
+            confirmBtn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Rejeter
+            `;
+            confirmAction = 'reject';
+            confirmForm = document.getElementById('rejectForm');
+        }
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        confirmAction = null;
+        confirmForm = null;
+    }
+
+    document.getElementById('confirmActionBtn').addEventListener('click', function() {
+        if (confirmForm) {
+            confirmForm.submit();
+        }
+        closeConfirmModal();
+    });
+
+    // Fermer la modal en cliquant sur l'overlay
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeConfirmModal();
+        }
+    });
+
+    // Fermer la modal avec la touche Echap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeConfirmModal();
+        }
+    });
+</script>
+@endpush
+
+<!-- ============================================================
+FORMULAIRES CACHÉS
+============================================================ -->
+@if($commission->status == 'pending')
+    <form id="approveForm" action="{{ route('admin.commissions.approve', $commission->id) }}" method="POST" style="display:none;">
+        @csrf
+    </form>
+    <form id="rejectForm" action="{{ route('admin.commissions.reject', $commission->id) }}" method="POST" style="display:none;">
+        @csrf
+    </form>
+@endif
+
 @endsection

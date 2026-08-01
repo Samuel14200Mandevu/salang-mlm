@@ -32,6 +32,7 @@
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
     
     .card-stats {
         background: var(--bg-card);
@@ -80,6 +81,10 @@
         border-color: var(--primary-500);
         box-shadow: 0 0 0 4px var(--border-focus);
     }
+    .input-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
     
     .card {
         background: var(--bg-card);
@@ -120,6 +125,32 @@
     .delay-4 { animation-delay: 0.20s; }
     .delay-5 { animation-delay: 0.25s; }
     .delay-6 { animation-delay: 0.30s; }
+    
+    /* Type badges spécifiques */
+    .type-badge-cash_pos {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .type-badge-commission {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
+    .type-badge-bonus {
+        background: rgba(236, 72, 153, 0.12);
+        color: #ec4899;
+    }
+    .type-badge-leadership {
+        background: rgba(245, 158, 11, 0.12);
+        color: #f59e0b;
+    }
+    .type-badge-direct {
+        background: rgba(99, 102, 241, 0.12);
+        color: #6366f1;
+    }
+    .type-badge-indirect {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+    }
     
     @media (max-width: 640px) {
         .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.7rem; }
@@ -194,8 +225,13 @@
         
         <select id="typeFilter" class="input w-auto min-w-[110px] sm:min-w-[140px] text-sm sm:text-base">
             <option value="">Tous les types</option>
+            @php
+                $allowedTypes = ['cash_pos', 'commission', 'bonus', 'leadership', 'direct', 'indirect'];
+            @endphp
             @foreach($types ?? [] as $type)
-                <option value="{{ $type }}">{{ ucfirst($type) }}</option>
+                @if(in_array($type, $allowedTypes))
+                    <option value="{{ $type }}">{{ ucfirst(str_replace('_', ' ', $type)) }}</option>
+                @endif
             @endforeach
         </select>
         
@@ -238,6 +274,17 @@
                 </thead>
                 <tbody id="commissionsTable">
                     @forelse($commissions as $commission)
+                        @php
+                            // ✅ EXCLURE LES TYPES NON SOUHAITÉS
+                            $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
+                            if (in_array($commission->type, $excludedTypes)) {
+                                continue;
+                            }
+                            
+                            // Définir une classe CSS pour le type
+                            $typeClass = 'type-badge-' . $commission->type;
+                            $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
+                        @endphp
                         <tr class="commission-row" 
                             data-user="{{ strtolower($commission->user?->name ?? '') }}"
                             data-type="{{ $commission->type }}"
@@ -249,8 +296,8 @@
                                 {{ $commission->fromUser?->name ?? 'Système' }}
                             </td>
                             <td class="hidden sm:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">
-                                    {{ $commission->type_label ?? $commission->type }}
+                                <span class="badge {{ $typeClass }} text-[10px] sm:text-xs">
+                                    {{ $typeLabel }}
                                 </span>
                             </td>
                             <td class="amount-positive text-sm sm:text-base">
