@@ -409,17 +409,32 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
-    <!-- ============================================================
+   <!-- ============================================================
     EN-TÊTE
     ============================================================ -->
-    <div class="animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-            Dashboard Admin
-        </h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-            Bonjour, <span class="font-semibold text-primary-500">{{ Auth::user()->name }}</span>
-        </p>
-    </div>
+<div class="animate-fadeInUp">
+    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+        Tableau de bord Admin
+    </h1>
+    <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+        @php
+            $heure = date('H');
+            if ($heure >= 5 && $heure < 12) {
+                $salutation = 'Bonjour';
+            } elseif ($heure >= 12 && $heure < 18) {
+                $salutation = 'Bon après-midi';
+            } elseif ($heure >= 18 && $heure < 22) {
+                $salutation = 'Bonsoir';
+            } else {
+                $salutation = 'Bonne nuit';
+            }
+        @endphp
+        {{ $salutation }}, <span class="font-semibold text-primary-500">{{ Auth::user()->name }}</span>
+        <span class="text-[var(--text-tertiary)] text-xs ml-1">
+            ({{ date('H:i') }})
+        </span>
+    </p>
+</div>
 
     <!-- ============================================================
     STATISTIQUES - 4 CARTES

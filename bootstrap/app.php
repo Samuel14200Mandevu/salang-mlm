@@ -41,16 +41,14 @@ return Application::configure(basePath: dirname(__DIR__))
     
     // ✅ MIDDLEWARES
     ->withMiddleware(function (Middleware $middleware) {
-        // ✅ Enregistrer TOUS les alias de middlewares
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'json' => \App\Http\Middleware\ForceJsonResponse::class,
             'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
-            'active' => \App\Http\Middleware\EnsureUserActive::class,  // <-- AJOUTER ICI
-            'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class, // Optionnel
+            'active' => \App\Http\Middleware\EnsureUserActive::class,
+            'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
         ]);
         
-        // ✅ Exceptions CSRF pour les webhooks
         $middleware->validateCsrfTokens(except: [
             'webhook/*',
             'webhook/crypto',
@@ -81,6 +79,11 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
     })
+    
+    // ✅ ENREGISTRER LE SERVICE PROVIDER
+    ->withProviders([
+        \App\Providers\TimezoneServiceProvider::class,
+    ])
     
     // ✅ CRÉER L'APPLICATION
     ->create();

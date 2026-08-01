@@ -161,6 +161,12 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
     }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
     .btn-warning {
         background: var(--gradient-warning);
         color: white;
@@ -351,7 +357,8 @@
                     </div>
                 </div>
 
-                <form action="{{ route('profile.update') }}" method="POST">
+                {{-- CORRECTION : Utiliser la route cashier.profile.update au lieu de profile.update --}}
+                <form action="{{ route('cashier.profile.update') }}" method="POST">
                     @csrf @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -406,7 +413,8 @@
                     </div>
                 </div>
 
-                <form action="{{ route('profile.update-password') }}" method="POST">
+                {{-- CORRECTION : Utiliser la route cashier.profile.update-password au lieu de profile.update-password --}}
+                <form action="{{ route('cashier.profile.update-password') }}" method="POST">
                     @csrf @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -467,7 +475,8 @@
 
     <!-- Delete Account Modal -->
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" class="p-4 sm:p-6">
+        {{-- CORRECTION : Utiliser la route cashier.profile.destroy au lieu de profile.destroy --}}
+        <form method="post" action="{{ route('cashier.profile.destroy') }}" class="p-4 sm:p-6">
             @csrf @method('delete')
 
             <div class="text-center">
@@ -519,7 +528,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 var formData = new FormData();
                 formData.append('avatar', this.files[0]);
 
-                fetch('{{ route('profile.update-avatar') }}', {
+                {{-- CORRECTION : Utiliser la route cashier.profile.update-avatar --}}
+                fetch('{{ route('cashier.profile.update-avatar') }}', {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: formData
@@ -540,7 +550,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
             if (confirm('Supprimer votre photo de profil ?')) {
-                fetch('{{ route('profile.delete-avatar') }}', {
+                {{-- CORRECTION : Utiliser la route cashier.profile.delete-avatar --}}
+                fetch('{{ route('cashier.profile.delete-avatar') }}', {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
                 })

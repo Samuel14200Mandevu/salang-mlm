@@ -62,6 +62,9 @@
                             <td>
                                 <div class="font-medium text-sm sm:text-base">{{ $customer->name }}</div>
                                 <div class="text-xs text-[var(--text-secondary)]">{{ $customer->email }}</div>
+                                @if($customer->address)
+                                    <div class="text-[10px] text-[var(--text-tertiary)]">{{ $customer->address }}{{ $customer->city ? ', ' . $customer->city : '' }}</div>
+                                @endif
                             </td>
                             <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
                                 {{ $customer->phone ?? 'N/A' }}
@@ -116,14 +119,21 @@
 </div>
 
 <!-- Modal Nouveau Client -->
-<div id="customerModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-[var(--bg-card)] rounded-lg p-6 max-w-md w-full border border-[var(--border-color)]">
-        <h3 class="text-lg font-bold text-[var(--text-primary)] mb-4">
-            <svg class="inline-block w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-            </svg>
-            Nouveau client POS
-        </h3>
+<div id="customerModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" onclick="if(event.target === this) closeModal('customerModal')">
+    <div class="bg-[var(--bg-card)] rounded-lg p-6 max-w-md w-full border border-[var(--border-color)] shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-[var(--text-primary)]">
+                <svg class="inline-block w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                Nouveau client POS
+            </h3>
+            <button onclick="closeModal('customerModal')" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
         <form id="customerFormModal">
             <div class="space-y-3">
                 <div>
@@ -142,8 +152,16 @@
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
                     <input type="text" id="newAddressModal" placeholder="Adresse complète" class="input">
                 </div>
-                <div class="text-xs text-[var(--text-secondary)]">
-                    <span class="text-yellow-500">ℹ️</span> Le client pourra être parrainé lors de sa première vente
+                <div>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
+                    <input type="text" id="newCityModal" placeholder="Ville" class="input">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
+                    <input type="text" id="newCountryModal" placeholder="Pays" class="input">
+                </div>
+                <div class="text-xs text-[var(--text-secondary)] bg-blue-500/5 p-2 rounded-lg border border-blue-500/10">
+                    <span class="text-yellow-500">ℹ</span> Le client pourra être parrainé lors de sa première vente
                 </div>
             </div>
             <div class="mt-4 flex gap-2">
@@ -161,29 +179,160 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+    .card-stats {
+        background: var(--bg-card);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+    .card-stats p:last-child {
+        margin-bottom: 0;
+    }
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        min-width: 480px;
+    }
+    .table th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+    .table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+    .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+    .table-striped tbody tr:hover {
+        background: var(--bg-hover);
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    .badge-success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    .input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--border-focus);
+    }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+    .btn-outline:hover {
+        border-color: var(--primary-500);
+        color: var(--primary-500);
+    }
+    .flex-1 {
+        flex: 1;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 function openNewCustomerModal() {
-    document.getElementById('customerModal').classList.add('flex');
-    document.getElementById('customerModal').classList.remove('hidden');
+    const modal = document.getElementById('customerModal');
+    modal.classList.add('flex');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-    document.getElementById(id).classList.remove('flex');
+    const modal = document.getElementById(id);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+    document.getElementById('customerFormModal').reset();
 }
 
 document.getElementById('customerFormModal').addEventListener('submit', function(e) {
     e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+        <svg class="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Création...
+    `;
     
     const data = {
         name: document.getElementById('newNameModal').value,
         email: document.getElementById('newEmailModal').value,
         phone: document.getElementById('newPhoneModal').value,
         address: document.getElementById('newAddressModal').value,
+        city: document.getElementById('newCityModal')?.value,
+        country: document.getElementById('newCountryModal')?.value,
     };
 
-    fetch('/cashier/customers', {
+    fetch('{{ route('cashier.customers.store') }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -191,20 +340,36 @@ document.getElementById('customerFormModal').addEventListener('submit', function
         },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            toast('✅ Client créé avec succès !', 'success');
+            window.showToast(' Client créé avec succès !', 'success');
             closeModal('customerModal');
             document.getElementById('customerFormModal').reset();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            toast('❌ Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
+            window.showToast(' Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
         }
     })
     .catch(error => {
-        toast('❌ Erreur: ' + error.message, 'error');
+        window.showToast(' Erreur: ' + error.message, 'error');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Créer
+        `;
     });
+});
+
+// Fermer la modal avec la touche Echap
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal('customerModal');
+    }
 });
 </script>
 @endpush

@@ -57,6 +57,14 @@
         background: rgba(34, 197, 94, 0.15);
         color: #22c55e;
     }
+    .badge-mlm {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+    .badge-pos {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
     .pv-badge {
         display: inline-block;
         padding: 0.1rem 0.5rem;
@@ -258,155 +266,38 @@
         }
     }
 
-    /* Styles du panier */
-    .cart-sidebar {
-        position: fixed;
-        right: 0;
-        top: 0;
-        height: 100vh;
-        width: 380px;
-        background: var(--bg-card);
-        border-left: 1px solid var(--border-color);
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        z-index: 999;
+    .tabs {
         display: flex;
-        flex-direction: column;
-        box-shadow: -4px 0 24px rgba(0,0,0,0.1);
-    }
-    .cart-sidebar.open {
-        transform: translateX(0);
-    }
-    .cart-sidebar .cart-header {
-        padding: 1rem 1.5rem;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
         border-bottom: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding-bottom: 0.5rem;
     }
-    .cart-sidebar .cart-body {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1rem 1.5rem;
-    }
-    .cart-sidebar .cart-footer {
-        padding: 1rem 1.5rem;
-        border-top: 1px solid var(--border-color);
-        background: var(--bg-secondary);
-    }
-    .cart-item {
-        display: flex;
-        gap: 0.75rem;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-        align-items: center;
-    }
-    .cart-item:last-child {
-        border-bottom: none;
-    }
-    .cart-item .item-image {
-        width: 50px;
-        height: 50px;
+    .tab-btn {
+        padding: 0.5rem 1.5rem;
+        border: none;
         border-radius: var(--radius-md);
-        overflow: hidden;
-        flex-shrink: 0;
-        background: var(--bg-secondary);
-    }
-    .cart-item .item-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    .cart-item .item-info {
-        flex: 1;
-    }
-    .cart-item .item-info h4 {
-        font-size: 0.813rem;
         font-weight: 600;
-        color: var(--text-primary);
-    }
-    .cart-item .item-info .item-price {
-        font-size: 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: transparent;
         color: var(--text-secondary);
     }
-    .cart-item .item-quantity {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .cart-item .item-quantity button {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 1px solid var(--border-color);
-        background: transparent;
+    .tab-btn:hover {
         color: var(--text-primary);
-        cursor: pointer;
-        font-size: 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        background: var(--bg-secondary);
     }
-    .cart-item .item-quantity button:hover {
-        background: var(--primary-500);
+    .tab-btn.active {
         color: white;
-        border-color: var(--primary-500);
+        background: var(--gradient-primary);
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
     }
-    .cart-item .item-quantity span {
-        min-width: 20px;
-        text-align: center;
-        font-weight: 600;
-    }
-    .cart-item .remove-item {
-        color: #ef4444;
-        cursor: pointer;
-        background: none;
-        border: none;
-        font-size: 1rem;
-    }
-    .cart-item .remove-item:hover {
-        color: #dc2626;
-    }
-    
-    .cart-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 998;
+    .tab-content {
         display: none;
     }
-    .cart-overlay.active {
+    .tab-content.active {
         display: block;
-    }
-
-    .cart-total {
-        display: flex;
-        justify-content: space-between;
-        font-size: 1.125rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .cart-total .total-price {
-        color: var(--primary-500);
-    }
-
-    .cart-badge {
-        position: relative;
-    }
-    .cart-badge .badge-count {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background: #ef4444;
-        color: white;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        font-size: 0.6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
     }
 </style>
 @endpush
@@ -416,7 +307,6 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
-    <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
@@ -426,17 +316,10 @@
                 Point de Vente
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Ajoutez un ou plusieurs produits au panier
+                Vendez des produits ou activez des packages MLM
             </p>
         </div>
         <div class="flex gap-2">
-            <button onclick="toggleCart()" class="btn btn-outline btn-sm cart-badge">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                Panier
-                <span id="cartCount" class="badge-count hidden">0</span>
-            </button>
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -446,355 +329,243 @@
         </div>
     </div>
 
-    <!-- Barre de recherche -->
-    <div class="animate-fadeInUp delay-1">
+    <div class="tabs animate-fadeInUp delay-1">
+        <button class="tab-btn active" data-tab="products" onclick="switchTab('products')">
+            Produits
+        </button>
+        <button class="tab-btn" data-tab="packages" onclick="switchTab('packages')">
+            Packages MLM
+        </button>
+        <div class="animate-fadeInUp delay-1">
         <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
+                
             </span>
             <input type="text" 
                    id="searchInput"
-                   placeholder="Rechercher un produit..."
+                   placeholder="Rechercher un produit ou package..."
                    class="input pl-10 search-input text-sm sm:text-base">
         </div>
     </div>
 
-    <!-- Search Results -->
-    <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeInUp">
-        Resultats: <span id="resultCount" class="font-semibold text-primary-500">0</span> produit(s)
     </div>
 
-    <!-- Product Grid -->
-    <div id="productsContainer">
-        @if(isset($products) && $products->count() > 0)
-            <div class="product-grid">
-                @foreach($products as $product)
-                    <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
-                         data-name="{{ strtolower($product->name) }}"
-                         data-description="{{ strtolower($product->description ?? '') }}"
-                         data-product-id="{{ $product->id }}">
-                        
-                        <div class="image-container">
-                            @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
-                                <img src="{{ asset('storage/products/' . $product->image) }}" 
-                                     alt="{{ $product->name }}"
-                                     loading="lazy"
-                                     onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}'">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--text-tertiary)]">
-                                    <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
-                                    </svg>
-                                </div>
-                            @endif
-                            
-                            @if($product->stock < 5 && $product->stock > 0)
-                                <span class="absolute top-1 sm:top-2 right-1 sm:right-2 badge badge-warning text-[8px] sm:text-[10px]">
-                                    Stock faible
-                                </span>
-                            @endif
-                            @if($product->stock == 0)
-                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <span class="badge badge-danger text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-4 transform -rotate-12">
-                                        Rupture de stock
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
+    
+    <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeInUp">
+        Résultats: <span id="resultCount" class="font-semibold text-primary-500">0</span> article(s)
+    </div>
 
-                        <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
-                            <h3 class="product-name font-semibold text-[var(--text-primary)] text-xs sm:text-sm truncate">
-                                {{ $product->name }}
-                            </h3>
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
-                                {{ Str::limit($product->description ?? '', 40) }}
-                            </p>
-                            
-                            <!-- PV -->
-                            <div class="flex items-center gap-2 mt-1">
-                                @if($product->pv_value)
-                                    <span class="pv-badge">{{ $product->pv_value }} PV</span>
-                                @endif
-                                @if($product->bv_value)
-                                    <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
-                                @endif
-                            </div>
-                            
-                            <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
-                                <span class="product-price text-sm sm:text-lg font-bold text-primary-500">${{ number_format($product->price, 2) }}</span>
-                                <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-green-500' : ($product->stock > 0 ? 'text-orange-500' : 'text-red-500') }}">
-                                    @if($product->stock > 10) En stock
-                                    @elseif($product->stock > 0) {{ $product->stock }} restants
-                                    @else Rupture
+    <div id="productsContainer">
+        @if((isset($products) && $products->count() > 0) || (isset($packages) && $packages->count() > 0))
+            <div id="tab-products" class="tab-content active">
+                @if(isset($products) && $products->count() > 0)
+                    <div class="product-grid">
+                        @foreach($products as $product)
+                            <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
+                                 data-name="{{ strtolower($product->name) }}"
+                                 data-description="{{ strtolower($product->description ?? '') }}"
+                                 data-product-id="{{ $product->id }}"
+                                 data-type="product">
+                                
+                                <div class="image-container">
+                                    @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
+                                        <img src="{{ asset('storage/products/' . $product->image) }}" 
+                                             alt="{{ $product->name }}"
+                                             loading="lazy"
+                                             onerror="this.onerror=null; this.src='{{ asset('images/no-image.png') }}'">
+                                    @else
+                                        <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--text-tertiary)]">
+                                            <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                                            </svg>
+                                        </div>
                                     @endif
-                                </span>
+                                    
+                                    <span class="absolute top-1 sm:top-2 left-1 sm:left-2 badge badge-pos text-[8px] sm:text-[10px]">
+                                        POS
+                                    </span>
+                                    
+                                    @if($product->stock < 5 && $product->stock > 0)
+                                        <span class="absolute top-1 sm:top-2 right-1 sm:right-2 badge badge-warning text-[8px] sm:text-[10px]">
+                                            Stock faible
+                                        </span>
+                                    @endif
+                                    @if($product->stock == 0)
+                                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <span class="badge badge-danger text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-4 transform -rotate-12">
+                                                Rupture de stock
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
+                                    <h3 class="product-name font-semibold text-[var(--text-primary)] text-xs sm:text-sm truncate">
+                                        {{ $product->name }}
+                                    </h3>
+                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
+                                        {{ Str::limit($product->description ?? '', 40) }}
+                                    </p>
+                                    
+                                    <div class="flex items-center gap-2 mt-1">
+                                        @if($product->pv_value)
+                                            <span class="pv-badge">{{ $product->pv_value }} PV</span>
+                                        @endif
+                                        @if($product->bv_value)
+                                            <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
+                                        <span class="product-price text-sm sm:text-lg font-bold text-primary-500">${{ number_format($product->price, 2) }}</span>
+                                        <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-green-500' : ($product->stock > 0 ? 'text-orange-500' : 'text-red-500') }}">
+                                            @if($product->stock > 10) En stock
+                                            @elseif($product->stock > 0) {{ $product->stock }} restants
+                                            @else Rupture
+                                            @endif
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-1 sm:mt-2">
+                                        @if($product->stock > 0)
+                                            <button onclick="window.addToCart({{ $product->id }}, 'product')" 
+                                                    class="btn btn-primary btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
+                                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                </svg>
+                                                Ajouter au panier
+                                            </button>
+                                        @else
+                                            <button class="btn btn-danger btn-sm w-full opacity-50 cursor-not-allowed text-[10px] sm:text-xs" disabled>
+                                                Rupture de stock
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="mt-1 sm:mt-2">
-                                @if($product->stock > 0)
-                                    <button onclick="addToCart({{ $product->id }})" 
-                                            class="btn btn-primary btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
-                                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        Ajouter au panier
-                                    </button>
-                                @else
-                                    <button class="btn btn-danger btn-sm w-full opacity-50 cursor-not-allowed text-[10px] sm:text-xs" disabled>
-                                        Rupture de stock
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
-                @endforeach
+                @else
+                    <div class="card text-center py-8 sm:py-12">
+                        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                        </svg>
+                        <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun produit disponible</h3>
+                        <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun produit n'est disponible pour le moment</p>
+                    </div>
+                @endif
+            </div>
+
+            <div id="tab-packages" class="tab-content">
+                @if(isset($packages) && $packages->count() > 0)
+                    <div class="product-grid">
+                        @foreach($packages as $package)
+                            <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
+                                 data-name="{{ strtolower($package->name) }}"
+                                 data-description="{{ strtolower($package->description ?? '') }}"
+                                 data-product-id="{{ $package->id }}"
+                                 data-type="package">
+                                
+                                <div class="image-container" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));">
+                                    <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-primary-500">
+                                        <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                                        </svg>
+                                    </div>
+                                    
+                                    <span class="absolute top-1 sm:top-2 left-1 sm:left-2 badge badge-mlm text-[8px] sm:text-[10px]">
+                                        MLM
+                                    </span>
+                                    
+                                    @if($package->is_popular ?? false)
+                                        <span class="absolute top-1 sm:top-2 right-1 sm:right-2 badge badge-success text-[8px] sm:text-[10px]">
+                                            Populaire
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
+                                    <h3 class="product-name font-semibold text-[var(--text-primary)] text-xs sm:text-sm truncate">
+                                        {{ $package->name }}
+                                    </h3>
+                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
+                                        {{ Str::limit($package->description ?? 'Package MLM', 40) }}
+                                    </p>
+                                    
+                                    <div class="flex items-center gap-2 mt-1">
+                                        @if($package->pv_value)
+                                            <span class="pv-badge">{{ $package->pv_value }} PV</span>
+                                        @endif
+                                        @if($package->bv_value)
+                                            <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $package->bv_value }} BV</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
+                                        <span class="product-price text-sm sm:text-lg font-bold text-primary-500">${{ number_format($package->price, 2) }}</span>
+                                        <span class="text-[8px] sm:text-[10px] text-blue-500">
+                                            {{ $package->commission_rate ?? 30 }}% commission
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-1 sm:mt-2">
+                                        <button onclick="window.addToCart({{ $package->id }}, 'package')" 
+                                                class="btn btn-gold btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            Ajouter au panier
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="card text-center py-8 sm:py-12">
+                        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                        </svg>
+                        <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun package disponible</h3>
+                        <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun package MLM n'est disponible pour le moment</p>
+                    </div>
+                @endif
             </div>
         @else
             <div class="card text-center py-8 sm:py-12 animate-fadeInUp">
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                 </svg>
-                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun produit disponible</h3>
-                <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun produit n'est disponible pour le moment</p>
+                <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun article disponible</h3>
+                <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun produit ou package n'est disponible pour le moment</p>
             </div>
         @endif
-    </div>
-</div>
-
-<!-- Overlay -->
-<div id="cartOverlay" class="cart-overlay" onclick="toggleCart()"></div>
-
-<!-- Cart Sidebar -->
-<div id="cartSidebar" class="cart-sidebar">
-    <div class="cart-header">
-        <h3 class="font-bold text-[var(--text-primary)]">🛒 Panier</h3>
-        <button onclick="toggleCart()" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-    <div id="cartBody" class="cart-body">
-        <div id="cartEmpty" class="text-center py-8 text-[var(--text-tertiary)]">
-            <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <p>Votre panier est vide</p>
-            <p class="text-xs mt-1">Ajoutez des produits en cliquant sur "Ajouter au panier"</p>
-        </div>
-        <div id="cartItems" class="hidden">
-            <!-- Les items seront ajoutés ici par JavaScript -->
-        </div>
-    </div>
-    <div id="cartFooter" class="cart-footer hidden">
-        <div class="cart-total">
-            <span>Total</span>
-            <span id="cartTotal" class="total-price">$0.00</span>
-        </div>
-        <button onclick="checkout()" class="btn btn-success btn-block mt-3">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            Passer la commande
-        </button>
-        <button onclick="clearCart()" class="btn btn-outline btn-sm w-full mt-2">
-            Vider le panier
-        </button>
     </div>
 </div>
 
 @push('scripts')
 <script>
 // ================================================================
-//  PANIER (GESTION MULTI-PRODUITS)
+//  SWITCH TAB
 // ================================================================
-let cart = [];
-let cartItemsContainer = document.getElementById('cartItems');
-let cartEmpty = document.getElementById('cartEmpty');
-let cartFooter = document.getElementById('cartFooter');
-let cartTotal = document.getElementById('cartTotal');
-let cartCount = document.getElementById('cartCount');
-
-// Récupérer le panier depuis le localStorage
-function loadCart() {
-    try {
-        const saved = localStorage.getItem('pos_cart');
-        if (saved) {
-            cart = JSON.parse(saved);
-            renderCart();
-        }
-    } catch (e) {
-        cart = [];
-    }
-}
-
-// Sauvegarder le panier dans localStorage
-function saveCart() {
-    localStorage.setItem('pos_cart', JSON.stringify(cart));
-    updateCartCount();
-}
-
-// Ajouter un produit au panier
-function addToCart(productId) {
-    const existing = cart.find(item => item.id === productId);
-    if (existing) {
-        existing.quantity += 1;
-        saveCart();
-        renderCart();
-        showToast('Quantité augmentée', 'success');
-        return;
-    }
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     
-    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-    if (!card) {
-        showToast('Erreur: produit non trouvé', 'error');
-        return;
-    }
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
     
-    const name = card.querySelector('.product-name')?.textContent || 'Produit';
-    const priceText = card.querySelector('.product-price')?.textContent || '$0.00';
-    const price = parseFloat(priceText.replace('$', '').replace(',', ''));
-    const image = card.querySelector('.image-container img')?.getAttribute('src') || null;
-    
-    cart.push({
-        id: productId,
-        name: name,
-        price: price,
-        image: image,
-        quantity: 1
-    });
-    
-    saveCart();
-    renderCart();
-    showToast('Produit ajouté au panier', 'success');
-}
-
-function removeFromCart(productId) {
-    cart = cart.filter(item => item.id !== productId);
-    saveCart();
-    renderCart();
-}
-
-function updateQuantity(productId, delta) {
-    const item = cart.find(item => item.id === productId);
-    if (item) {
-        item.quantity += delta;
-        if (item.quantity <= 0) {
-            removeFromCart(productId);
-        } else {
-            saveCart();
-            renderCart();
-        }
-    }
-}
-
-function clearCart() {
-    if (cart.length === 0) return;
-    if (confirm('Vider le panier ?')) {
-        cart = [];
-        saveCart();
-        renderCart();
-        showToast('Panier vidé', 'info');
-    }
-}
-
-function renderCart() {
-    cartItemsContainer.innerHTML = '';
-    
-    if (cart.length === 0) {
-        cartEmpty.classList.remove('hidden');
-        cartItemsContainer.classList.add('hidden');
-        cartFooter.classList.add('hidden');
-        updateCartCount();
-        return;
-    }
-    
-    cartEmpty.classList.add('hidden');
-    cartItemsContainer.classList.remove('hidden');
-    cartFooter.classList.remove('hidden');
-    
-    let total = 0;
-    cart.forEach(item => {
-        const subtotal = item.price * item.quantity;
-        total += subtotal;
-        
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
-            <div class="item-image">
-                ${item.image ? `<img src="${item.image}" alt="${item.name}">` : `
-                    <svg class="w-full h-full p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
-                    </svg>
-                `}
-            </div>
-            <div class="item-info">
-                <h4>${item.name}</h4>
-                <div class="item-price">$${item.price.toFixed(2)} x ${item.quantity}</div>
-            </div>
-            <div class="item-quantity">
-                <button onclick="updateQuantity(${item.id}, -1)">-</button>
-                <span>${item.quantity}</span>
-                <button onclick="updateQuantity(${item.id}, 1)">+</button>
-            </div>
-            <button class="remove-item" onclick="removeFromCart(${item.id})">×</button>
-        `;
-        cartItemsContainer.appendChild(div);
-    });
-    
-    cartTotal.textContent = `$${total.toFixed(2)}`;
-    updateCartCount();
-}
-
-function updateCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    if (count > 0) {
-        cartCount.textContent = count;
-        cartCount.classList.remove('hidden');
-    } else {
-        cartCount.classList.add('hidden');
-    }
-}
-
-function toggleCart() {
-    document.getElementById('cartSidebar').classList.toggle('open');
-    document.getElementById('cartOverlay').classList.toggle('active');
-}
-
-function checkout() {
-    if (cart.length === 0) {
-        showToast('Le panier est vide', 'error');
-        return;
-    }
-    const products = cart.map(item => item.id);
-    window.location.href = `/cashier/checkout?products=${products.join(',')}`;
-}
-
-function showToast(message, type = 'success') {
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500'
-    };
-    const toast = document.createElement('div');
-    toast.className = `custom-toast fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${colors[type] || colors.success} text-white text-sm max-w-xs`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.product-card').forEach(card => card.style.display = '');
+    document.getElementById('searchResult').classList.add('hidden');
 }
 
 // ================================================================
-//  RECHERCHE DE PRODUITS
+//  RECHERCHE
 // ================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    loadCart();
-    
     var searchInput = document.getElementById('searchInput');
     var productCards = document.querySelectorAll('.product-card');
     var searchResult = document.getElementById('searchResult');
@@ -809,14 +580,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             timeout = setTimeout(function() {
                 var count = 0;
+                var activeTab = document.querySelector('.tab-content.active');
+                var activeTabId = activeTab ? activeTab.id : 'tab-products';
                 
                 productCards.forEach(function(card) {
                     var name = card.dataset.name || '';
                     var description = card.dataset.description || '';
                     
-                    if (name.includes(query) || description.includes(query)) {
+                    var isInActiveTab = false;
+                    if (activeTabId === 'tab-products' && card.dataset.type === 'product') {
+                        isInActiveTab = true;
+                    } else if (activeTabId === 'tab-packages' && card.dataset.type === 'package') {
+                        isInActiveTab = true;
+                    }
+                    
+                    if (isInActiveTab && (name.includes(query) || description.includes(query))) {
                         card.style.display = '';
                         count++;
+                    } else if (!isInActiveTab) {
+                        card.style.display = '';
                     } else {
                         card.style.display = 'none';
                     }
@@ -830,6 +612,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 300);
         });
+    }
+    
+    // Initialiser le panier (s'assurer qu'il est chargé)
+    if (typeof window.loadCart === 'function') {
+        window.loadCart();
     }
 });
 </script>

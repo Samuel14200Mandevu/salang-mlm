@@ -577,6 +577,20 @@
                             </a>
                         </li>
 
+                        <!-- Membres -->
+                        <li>
+                            <a href="{{ route('cashier.members') }}" 
+                               class="sidebar-link {{ request()->routeIs('cashier.members') ? 'active' : '' }}">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <span class="label transition-opacity duration-200" 
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                    Membres
+                                </span>
+                            </a>
+                        </li>
+
                         <!-- Profil -->
                         <li>
                             <a href="{{ route('cashier.profile') }}" 
@@ -618,7 +632,7 @@
 
                         <!-- Déconnexion -->
                         <li class="pt-4 mt-4 border-t border-[var(--border-color)]">
-                            <form method="POST" action="{{ route('logout') }}" id="logout-form" onsubmit="event.preventDefault(); confirmLogout(event, this);">
+                            <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
                                 @csrf
                                 <button type="submit" class="sidebar-link danger">
                                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -704,6 +718,15 @@
                                 </svg>
                             </button>
 
+                            <!-- Panier -->
+                            <button id="cartToggleBtn" 
+                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors relative">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden">0</span>
+                            </button>
+
                             <!-- Profile -->
                             @auth
                                 <div class="relative" x-data="{ open: false }">
@@ -768,7 +791,7 @@
                                         
                                         <hr class="border-[var(--border-color)]">
                                         
-                                        <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile" onsubmit="event.preventDefault(); confirmLogout(event, this);">
+                                        <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile" class="logout-form">
                                             @csrf
                                             <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
                                                 <span class="flex items-center gap-2">
@@ -800,7 +823,7 @@
             </footer>
         </div>
 
-        <!-- Mobile Bottom Nav (SANS PANIER) -->
+        <!-- Mobile Bottom Nav -->
         <nav class="mobile-bottom-nav" id="mobileBottomNav">
             <a href="{{ route('cashier.dashboard') }}" 
                class="nav-item {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}">
@@ -833,7 +856,81 @@
                 </svg>
                 <span>Clients</span>
             </a>
+
+            <button id="mobileCartToggleBtn" class="nav-item relative">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span>Panier</span>
+                <span id="mobileCartCount" class="badge-count hidden">0</span>
+            </button>
         </nav>
+    </div>
+
+    <!-- ===== CART SIDEBAR ===== -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[998] hidden"></div>
+
+    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-[380px] bg-[var(--bg-card)] border-l border-[var(--border-color)] transform translate-x-full transition-transform duration-300 ease-in-out z-[999] flex flex-col shadow-[-4px_0_24px_rgba(0,0,0,0.1)]">
+        <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center">
+            <h3 class="font-bold text-[var(--text-primary)]">Panier</h3>
+            <button id="cartCloseBtn" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div id="cartBody" class="flex-1 overflow-y-auto p-4">
+            <div id="cartEmpty" class="text-center py-8 text-[var(--text-tertiary)]">
+                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <p>Votre panier est vide</p>
+                <p class="text-xs mt-1">Ajoutez des produits ou packages MLM</p>
+            </div>
+            <div id="cartItems" class="hidden"></div>
+        </div>
+        <div id="cartFooter" class="p-4 border-t border-[var(--border-color)] bg-[var(--bg-secondary)] hidden">
+            <div class="flex justify-between text-lg font-bold text-[var(--text-primary)]">
+                <span>Total</span>
+                <span id="cartTotal" class="text-primary-500">$0.00</span>
+            </div>
+            <!-- Bouton "Passer la commande" avec un lien direct, pas un formulaire -->
+            <a href="#" id="checkoutLink" class="btn btn-success w-full mt-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Passer la commande
+            </a>
+            <button id="clearCartBtn" class="btn btn-outline btn-sm w-full mt-2">
+                Vider le panier
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL VIDER LE PANIER ===== -->
+    <div id="clearCartModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center opacity-0 invisible transition-all duration-300">
+        <div class="bg-[var(--bg-card)] rounded-xl p-6 max-w-[420px] w-[90%] shadow-xl border border-[var(--border-color)] transform scale-90 transition-all duration-300">
+            <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4 text-amber-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
+                </svg>
+            </div>
+            <h3 class="text-center text-xl font-bold text-[var(--text-primary)] mb-2">Vider le panier ?</h3>
+            <p class="text-center text-[var(--text-secondary)] text-sm mb-6">
+                Êtes-vous sûr de vouloir <strong>vider votre panier</strong> ?
+                <br>
+                Cette action est <strong>irréversible</strong> et tous les articles seront supprimés.
+            </p>
+            <div class="flex gap-3 justify-center">
+                <button id="clearCartCancelBtn" class="btn btn-outline btn-sm">Annuler</button>
+                <button id="clearCartConfirmBtn" class="btn btn-danger btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Vider
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ===== CONFIRMATION DIALOG ===== -->
@@ -849,8 +946,8 @@
             <h3 id="confirmTitle">Confirmation de déconnexion</h3>
             <p id="confirmMessage">Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.</p>
             <div class="actions">
-                <button type="button" class="btn btn-cancel" onclick="closeConfirmDialog()">Annuler</button>
-                <button type="button" class="btn btn-confirm" id="confirmDialogBtn">Se déconnecter</button>
+                <button type="button" id="confirmCancelBtn" class="btn btn-cancel">Annuler</button>
+                <button type="button" id="confirmDialogBtn" class="btn btn-confirm">Se déconnecter</button>
             </div>
         </div>
     </div>
@@ -865,12 +962,286 @@
 
     <script>
     // ================================================================
+    //  DÉFINITION DES FONCTIONS GLOBALES
+    // ================================================================
+    
+    window.cart = [];
+
+    // Fonction pour construire l'URL de checkout avec les items
+    window.buildCheckoutUrl = function() {
+        if (window.cart.length === 0) return null;
+        // Construire la chaîne items=product:1,product:2,package:3
+        const items = window.cart.map(item => item.type + ':' + item.id);
+        return '{{ route('cashier.checkout') }}?items=' + items.join(',');
+    };
+
+    window.loadCart = function() {
+        try {
+            const saved = localStorage.getItem('pos_cart');
+            if (saved) {
+                window.cart = JSON.parse(saved);
+                window.renderCart();
+            }
+        } catch (e) {
+            window.cart = [];
+        }
+    };
+
+    window.saveCart = function() {
+        localStorage.setItem('pos_cart', JSON.stringify(window.cart));
+        window.updateCartCount();
+    };
+
+    window.addToCart = function(itemId, type) {
+        const existing = window.cart.find(item => item.id === itemId && item.type === type);
+        if (existing) {
+            existing.quantity += 1;
+            window.saveCart();
+            window.renderCart();
+            window.showToast('Quantité augmentée', 'success');
+            return;
+        }
+        
+        let card;
+        if (type === 'product') {
+            card = document.querySelector(`.product-card[data-product-id="${itemId}"][data-type="product"]`);
+        } else {
+            card = document.querySelector(`.product-card[data-product-id="${itemId}"][data-type="package"]`);
+        }
+        
+        if (!card) {
+            window.showToast('Erreur: article non trouvé', 'error');
+            return;
+        }
+        
+        const name = card.querySelector('.product-name')?.textContent || 'Article';
+        const priceText = card.querySelector('.product-price')?.textContent || '$0.00';
+        const price = parseFloat(priceText.replace('$', '').replace(',', ''));
+        const image = card.querySelector('.image-container img')?.getAttribute('src') || null;
+        const source = type === 'product' ? 'pos' : 'mlm';
+        const sourceLabel = type === 'product' ? 'POS' : 'MLM';
+        const pvBadge = card.querySelector('.pv-badge');
+        const pvValue = pvBadge ? parseFloat(pvBadge.textContent.replace(' PV', '')) || 0 : 0;
+        const bvBadge = card.querySelector('.pv-badge[style*="color:#8b5cf6"]');
+        const bvValue = bvBadge ? parseFloat(bvBadge.textContent.replace(' BV', '')) || 0 : 0;
+        
+        window.cart.push({
+            id: itemId,
+            type: type,
+            name: name,
+            price: price,
+            image: image,
+            source: source,
+            sourceLabel: sourceLabel,
+            pv_value: pvValue,
+            bv_value: bvValue,
+            quantity: 1
+        });
+        
+        window.saveCart();
+        window.renderCart();
+        window.showToast('Article ajouté au panier', 'success');
+    };
+
+    window.removeFromCart = function(itemId, type) {
+        window.cart = window.cart.filter(item => !(item.id === itemId && item.type === type));
+        window.saveCart();
+        window.renderCart();
+    };
+
+    window.updateQuantity = function(itemId, type, delta) {
+        const item = window.cart.find(item => item.id === itemId && item.type === type);
+        if (item) {
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                window.removeFromCart(itemId, type);
+            } else {
+                window.saveCart();
+                window.renderCart();
+            }
+        }
+    };
+
+    window.renderCart = function() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartEmpty = document.getElementById('cartEmpty');
+        const cartFooter = document.getElementById('cartFooter');
+        const cartTotal = document.getElementById('cartTotal');
+        const checkoutLink = document.getElementById('checkoutLink');
+        
+        if (!cartItemsContainer) return;
+        
+        cartItemsContainer.innerHTML = '';
+        
+        if (window.cart.length === 0) {
+            if (cartEmpty) cartEmpty.classList.remove('hidden');
+            if (cartItemsContainer) cartItemsContainer.classList.add('hidden');
+            if (cartFooter) cartFooter.classList.add('hidden');
+            window.updateCartCount();
+            return;
+        }
+        
+        if (cartEmpty) cartEmpty.classList.add('hidden');
+        if (cartItemsContainer) cartItemsContainer.classList.remove('hidden');
+        if (cartFooter) cartFooter.classList.remove('hidden');
+        
+        let total = 0;
+        window.cart.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            total += subtotal;
+            
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 items-center py-3 border-b border-[var(--border-color)] last:border-b-0';
+            div.innerHTML = `
+                <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--bg-secondary)]">
+                    ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `
+                        <svg class="w-full h-full p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                        </svg>
+                    `}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-semibold text-[var(--text-primary)] truncate">${item.name}</h4>
+                    <div class="text-xs text-[var(--text-secondary)]">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${item.source === 'pos' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}">${item.sourceLabel}</span>
+                    ${item.pv_value ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 ml-1">${item.pv_value} PV</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', -1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-primary-500 hover:text-white hover:border-primary-500 flex items-center justify-center text-xs">-</button>
+                    <span class="w-5 text-center font-semibold text-sm">${item.quantity}</span>
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', 1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-primary-500 hover:text-white hover:border-primary-500 flex items-center justify-center text-xs">+</button>
+                </div>
+                <button onclick="window.removeFromCart(${item.id}, '${item.type}')" class="text-red-500 hover:text-red-600 text-lg leading-none">×</button>
+            `;
+            cartItemsContainer.appendChild(div);
+        });
+        
+        if (cartTotal) cartTotal.textContent = `$${total.toFixed(2)}`;
+        window.updateCartCount();
+        
+        // Mettre à jour le lien "Passer la commande"
+        if (checkoutLink) {
+            const url = window.buildCheckoutUrl();
+            if (url) {
+                checkoutLink.href = url;
+                checkoutLink.style.display = 'inline-flex';
+            } else {
+                checkoutLink.href = '#';
+                checkoutLink.style.display = 'none';
+            }
+        }
+    };
+
+    window.updateCartCount = function() {
+        const count = window.cart.reduce((sum, item) => sum + item.quantity, 0);
+        const headerCartCount = document.getElementById('headerCartCount');
+        const mobileCartCount = document.getElementById('mobileCartCount');
+        
+        if (count > 0) {
+            if (headerCartCount) {
+                headerCartCount.textContent = count;
+                headerCartCount.classList.remove('hidden');
+            }
+            if (mobileCartCount) {
+                mobileCartCount.textContent = count;
+                mobileCartCount.classList.remove('hidden');
+            }
+        } else {
+            if (headerCartCount) headerCartCount.classList.add('hidden');
+            if (mobileCartCount) mobileCartCount.classList.add('hidden');
+        }
+    };
+
+    window.toggleCart = function() {
+        const sidebar = document.getElementById('cartSidebar');
+        const overlay = document.getElementById('cartOverlay');
+        if (sidebar) {
+            sidebar.classList.toggle('translate-x-full');
+        }
+        if (overlay) {
+            overlay.classList.toggle('hidden');
+        }
+    };
+
+    window.openClearCartModal = function() {
+        if (window.cart.length === 0) {
+            window.showToast('Le panier est déjà vide', 'info');
+            return;
+        }
+        const modal = document.getElementById('clearCartModal');
+        if (modal) {
+            modal.classList.remove('opacity-0', 'invisible');
+            const box = modal.querySelector('.bg-\\[var\\(--bg-card\\)\\]');
+            if (box) box.classList.remove('scale-90');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.closeClearCartModal = function() {
+        const modal = document.getElementById('clearCartModal');
+        if (modal) {
+            modal.classList.add('opacity-0', 'invisible');
+            const box = modal.querySelector('.bg-\\[var\\(--bg-card\\)\\]');
+            if (box) box.classList.add('scale-90');
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.confirmClearCart = function() {
+        window.cart = [];
+        window.saveCart();
+        window.renderCart();
+        window.closeClearCartModal();
+        window.showToast('Panier vidé avec succès', 'info');
+    };
+
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast-item ${type}`;
+        
+        const icons = {
+            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+            warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+        };
+        
+        toast.innerHTML = `
+            <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${icons[type] || icons.info}
+            </svg>
+            <span>${message}</span>
+            <button class="toast-close" onclick="this.closest('.toast-item').remove()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        `;
+        
+        container.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.style.animation = 'toastOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 400);
+            }
+        }, 3500);
+    };
+
+    // ================================================================
     //  CONFIRMATION DIALOG
     // ================================================================
     let confirmCallback = null;
     let confirmForm = null;
 
-    function showConfirmDialog(options) {
+    window.showConfirmDialog = function(options) {
         const dialog = document.getElementById('confirmDialog');
         const icon = dialog.querySelector('.icon');
         const title = document.getElementById('confirmTitle');
@@ -917,55 +1288,37 @@
         
         dialog.classList.add('active');
         document.body.style.overflow = 'hidden';
-    }
+    };
 
-    function closeConfirmDialog() {
+    window.closeConfirmDialog = function() {
         document.getElementById('confirmDialog').classList.remove('active');
         document.body.style.overflow = '';
         confirmCallback = null;
         confirmForm = null;
-    }
+    };
 
-    function confirmLogout(event, form) {
+    window.confirmLogout = function(event, form) {
         event.preventDefault();
-        showConfirmDialog({
+        window.showConfirmDialog({
             type: 'danger',
             title: 'Confirmation de déconnexion',
             message: 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
             confirmText: 'Se déconnecter',
             onConfirm: function() {
                 if (form) form.submit();
-                closeConfirmDialog();
+                window.closeConfirmDialog();
             },
             form: form
         });
-    }
+    };
 
+    // ================================================================
+    //  INITIALISATION AU CHARGEMENT
+    // ================================================================
     document.addEventListener('DOMContentLoaded', function() {
-        const confirmBtn = document.getElementById('confirmDialogBtn');
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', function() {
-                if (typeof confirmCallback === 'function') {
-                    confirmCallback();
-                } else if (confirmForm) {
-                    confirmForm.submit();
-                }
-                closeConfirmDialog();
-            });
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeConfirmDialog();
-        });
-
-        document.getElementById('confirmDialog').addEventListener('click', function(e) {
-            if (e.target === this) closeConfirmDialog();
-        });
-
         // ================================================================
-        //  THEME TOGGLE - CORRIGÉ
+        //  THEME TOGGLE
         // ================================================================
-        // Récupérer la préférence de thème depuis localStorage
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         }
@@ -987,18 +1340,14 @@
             function updateIcon() {
                 if (!icon) return;
                 if (document.documentElement.classList.contains('dark')) {
-                    // Icone lune (mode sombre)
                     icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
                 } else {
-                    // Icone soleil (mode clair)
                     icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
                 }
             }
             
-            // Appliquer le thème initial
             setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
             
-            // Écouter le clic sur le bouton de thème
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
@@ -1010,51 +1359,121 @@
         }
 
         // ================================================================
-        //  TOAST SYSTEM (Global)
+        //  CART - EVENT LISTENERS
         // ================================================================
-        window.toast = function(message, type) {
-            type = type || 'info';
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast-item ' + type;
-            
-            // Icon
-            const icons = {
-                success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
-                error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
-                warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-                info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-            };
-            
-            toast.innerHTML = `
-                <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ${icons[type] || icons.info}
-                </svg>
-                <span>${message}</span>
-                <button class="toast-close" onclick="this.closest('.toast-item').remove()">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
+        
+        // Bouton d'ouverture du panier (header)
+        document.getElementById('cartToggleBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.toggleCart();
+        });
+
+        // Bouton d'ouverture du panier (mobile)
+        document.getElementById('mobileCartToggleBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.toggleCart();
+        });
+
+        // Bouton de fermeture du panier
+        document.getElementById('cartCloseBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.toggleCart();
+        });
+
+        // Overlay du panier
+        document.getElementById('cartOverlay')?.addEventListener('click', function(e) {
+            window.toggleCart();
+        });
+
+        // Lien "Passer la commande" - déjà géré par l'URL
+        document.getElementById('checkoutLink')?.addEventListener('click', function(e) {
+            if (window.cart.length === 0) {
+                e.preventDefault();
+                window.showToast('Le panier est vide', 'error');
+                return;
+            }
+            // Le lien a déjà le bon href, on le laisse faire
+        });
+
+        // Bouton vider le panier
+        document.getElementById('clearCartBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.openClearCartModal();
+        });
+
+        // Modal vider le panier - Annuler
+        document.getElementById('clearCartCancelBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.closeClearCartModal();
+        });
+
+        // Modal vider le panier - Confirmer
+        document.getElementById('clearCartConfirmBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.confirmClearCart();
+        });
+
+        // Fermer la modal en cliquant sur l'overlay
+        document.getElementById('clearCartModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.closeClearCartModal();
+            }
+        });
+
+        // ================================================================
+        //  CONFIRMATION DIALOG - EVENT LISTENERS
+        // ================================================================
+        
+        document.getElementById('confirmCancelBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.closeConfirmDialog();
+        });
+
+        document.getElementById('confirmDialogBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            } else if (confirmForm) {
+                confirmForm.submit();
+            }
+            window.closeConfirmDialog();
+        });
+
+        document.getElementById('confirmDialog')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.closeConfirmDialog();
+            }
+        });
+
+        // ================================================================
+        //  LOGOUT FORMS - EVENT LISTENERS
+        // ================================================================
+        
+        document.querySelectorAll('.logout-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                window.confirmLogout(e, this);
             });
-            
-            // Auto dismiss after 3.5 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.style.animation = 'toastOut 0.3s ease forwards';
-                    setTimeout(() => toast.remove(), 400);
+        });
+
+        // ================================================================
+        //  KEYBOARD SHORTCUTS
+        // ================================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeConfirmDialog();
+                window.closeClearCartModal();
+                const sidebar = document.getElementById('cartSidebar');
+                if (sidebar && !sidebar.classList.contains('translate-x-full')) {
+                    window.toggleCart();
                 }
-            }, 3500);
-        };
+            }
+        });
+
+        // ================================================================
+        //  CHARGER LE PANIER
+        // ================================================================
+        window.loadCart();
     });
     </script>
 </body>

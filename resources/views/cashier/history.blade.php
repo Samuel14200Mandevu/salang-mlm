@@ -344,13 +344,14 @@
                             // Récupérer la commission POS
                             $commission = \App\Models\Commission::where('order_id', $order->id)
                                 ->where('source', 'pos')
+                                ->where('type', 'cash_pos')
                                 ->first();
                             $commissionAmount = $commission ? $commission->amount : 0;
                             
-                            // ✅ Montant payé = total (le client a payé le prix total)
+                            // Montant payé = total (le client a payé le prix total)
                             $paidAmount = $totalProducts;
                             
-                            // ✅ Reste = 0 car le client a payé le montant total
+                            // Reste = 0 car le client a payé le montant total
                             $rest = 0;
                             
                             // Total PV

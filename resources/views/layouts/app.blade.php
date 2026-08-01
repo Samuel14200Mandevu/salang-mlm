@@ -378,7 +378,7 @@
             
             <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 
-               <!-- Logo -->
+                <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
                     <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1">
                         <img src="{{ asset('images/salang_logo.png') }}" 
@@ -398,7 +398,7 @@
                 <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
                     <ul class="space-y-0.5">
                         
-                        <!-- Dashboard -->
+                        <!-- Accueil -->
                         <li>
                             <a href="{{ route('dashboard') }}" 
                                class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -407,16 +407,16 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Dashboard
+                                    Accueil
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Shop -->
+                        <!-- Boutique -->
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Shop
+                                Boutique
                             </div>
                         </li>
 
@@ -428,7 +428,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Products
+                                    Produits
                                 </span>
                             </a>
                         </li>
@@ -454,7 +454,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    My Orders
+                                    Mes commandes
                                 </span>
                             </a>
                         </li>
@@ -477,16 +477,16 @@
                                 </div>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Cart
+                                    Panier
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Network -->
+                        <!-- Réseau -->
                         <li>
                             <div class="sidebar-section transition-opacity duration-200" 
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
-                                Network
+                                Réseau
                             </div>
                         </li>
 
@@ -498,7 +498,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    My Network
+                                    Mon réseau
                                 </span>
                             </a>
                         </li>
@@ -511,7 +511,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    My Rank
+                                    Mon rang
                                 </span>
                             </a>
                         </li>
@@ -532,7 +532,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Wallet
+                                    Portefeuille
                                 </span>
                             </a>
                         </li>
@@ -545,20 +545,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    My Commissions
-                                </span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('withdrawal.index') }}" 
-                               class="sidebar-link {{ request()->routeIs('withdrawal.*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200" 
-                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Withdrawals
+                                    Mes commissions
                                 </span>
                             </a>
                         </li>
@@ -571,12 +558,12 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    KYC Verification
+                                    Vérification KYC
                                 </span>
                             </a>
                         </li>
 
-                        <!-- Admin (visible uniquement pour les admins) -->
+                        <!-- Administration (visible uniquement pour les admins) -->
                         @auth
                             @if(Auth::user()->hasRole('admin'))
                                 <li>
@@ -594,7 +581,7 @@
                                         </svg>
                                         <span class="label transition-opacity duration-200" 
                                               :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                            Admin Panel
+                                            Panneau d'administration
                                         </span>
                                     </a>
                                 </li>
@@ -603,7 +590,7 @@
                     </ul>
                 </nav>
 
-                <!-- Sidebar Footer -->
+                <!-- Pied de page de la sidebar -->
                 <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -631,14 +618,14 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- Contenu principal -->
         <div class="flex-1 transition-all duration-300 ease-in-out w-full"
              :style="{
                 'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '5rem' : '0',
                 'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
              }">
             
-            <!-- Top Navigation -->
+            <!-- Barre de navigation supérieure -->
             <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 shadow-sm">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
@@ -655,14 +642,14 @@
                                 @if(isset($header) && $header)
                                     <div class="truncate">{{ $header }}</div>
                                 @else
-                                    <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Dashboard</h1>
+                                    <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Accueil</h1>
                                 @endif
                             </div>
                         </div>
                         
                         <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
                             
-                            <!-- Cart -->
+                            <!-- Panier -->
                             <a href="{{ route('cart.index') }}" 
                                class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors group">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -701,7 +688,7 @@
                                     
                                     <div class="px-3 sm:px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
                                         <h4 class="font-semibold text-sm sm:text-base text-[var(--text-primary)]">Notifications</h4>
-                                        <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">View all</a>
+                                        <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">Voir tout</a>
                                     </div>
 
                                     <div class="divide-y divide-[var(--border-color)]" id="notificationList">
@@ -713,7 +700,7 @@
                                             </div>
                                         @empty
                                             <div class="px-3 sm:px-4 py-4 text-center text-[var(--text-secondary)] text-sm">
-                                                No notifications
+                                                Aucune notification
                                             </div>
                                         @endforelse
                                     </div>
@@ -721,22 +708,25 @@
                                     <div class="px-3 sm:px-4 py-2 border-t border-[var(--border-color)] text-center">
                                         <button @click="markAllAsRead()" 
                                                 class="text-xs text-primary-500 hover:text-primary-600 transition font-medium hover:underline cursor-pointer">
-                                            Mark all as read
+                                            Tout marquer comme lu
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Theme Toggle -->
+                            <!-- Changement de thème -->
                             <button id="theme-toggle" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+                                    aria-label="Changer de thème">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon">
+                                    <!-- Mode clair : affiche une lune (mode sombre) -->
+                                    <!-- Mode sombre : affiche un soleil (mode clair) -->
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon"/>
+                                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon-path"/>
                                 </svg>
                             </button>
 
-                            <!-- Profile -->
+                            <!-- Profil -->
                             @auth
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" 
@@ -772,7 +762,7 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                                 </svg>
-                                                Dashboard
+                                                Accueil
                                             </span>
                                         </a>
                                         
@@ -781,7 +771,7 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                                 </svg>
-                                                Profile
+                                                Profil
                                             </span>
                                         </a>
                                         
@@ -819,7 +809,7 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                                     </svg>
-                                                    Logout
+                                                    Déconnexion
                                                 </span>
                                             </button>
                                         </form>
@@ -831,20 +821,20 @@
                 </div>
             </nav>
 
-            <!-- Content -->
+            <!-- Contenu -->
             <main class="p-3 sm:p-4 md:p-6 lg:p-8">
                 @yield('content')
             </main>
         </div>
 
-        <!-- Mobile Bottom Nav -->
+        <!-- Navigation mobile en bas -->
         <nav class="mobile-bottom-nav" id="mobileBottomNav">
             <a href="{{ route('dashboard') }}" 
                class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                 </svg>
-                <span>Home</span>
+                <span>Accueil</span>
             </a>
 
             <a href="{{ route('products.index') }}" 
@@ -852,7 +842,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
-                <span>Shop</span>
+                <span>Boutique</span>
                 @php $cartCount = session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0; @endphp
                 @if($cartCount > 0)
                     <span class="badge-count">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
@@ -864,7 +854,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                <span>Network</span>
+                <span>Réseau</span>
             </a>
 
             <a href="{{ route('profile.index') }}" 
@@ -872,13 +862,13 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                <span>Profile</span>
+                <span>Profil</span>
             </a>
         </nav>
 
     </div>
 
-    <!-- ===== CONFIRMATION DIALOG ===== -->
+    <!-- ===== DIALOGUE DE CONFIRMATION ===== -->
     <div id="confirmDialog" class="confirm-overlay">
         <div class="confirm-dialog">
             <div class="icon danger">
@@ -907,7 +897,7 @@
         {!! PwaKit::scripts() !!}
     @endif
     
-    <!-- Cookie Consent -->
+    <!-- Consentement aux cookies -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (!localStorage.getItem('cookie_consent')) {
@@ -932,9 +922,9 @@
             
             banner.innerHTML = `
                 <div style="flex: 1; min-width: 150px; text-align: center; font-size: 0.75rem; color: var(--text-secondary);">
-                    We use cookies.
+                    Nous utilisons des cookies.
                     <a href="{{ route('cookie-policy') }}" style="color: var(--primary-500); text-decoration: underline; white-space: nowrap;">
-                        Learn more
+                        En savoir plus
                     </a>
                 </div>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
@@ -950,7 +940,7 @@
                         transition: all 0.3s ease;
                         white-space: nowrap;
                     ">
-                        Accept
+                        Accepter
                     </button>
                     <button onclick="rejectCookies()" style="
                         padding: 0.375rem 1.25rem;
@@ -964,7 +954,7 @@
                         transition: all 0.3s ease;
                         white-space: nowrap;
                     ">
-                        Reject
+                        Refuser
                     </button>
                 </div>
             `;
@@ -1107,20 +1097,21 @@
     });
     </script>
 
-    <!-- ===== THEME TOGGLE ===== -->
+    <!-- ===== CHANGEMENT DE THÈME ===== -->
     <script>
     (function() {
         'use strict';
         
+        // Appliquer le thème sauvegardé
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         }
         
         function initTheme() {
             var toggle = document.getElementById('theme-toggle');
-            var icon = document.getElementById('theme-icon');
+            var iconPath = document.getElementById('theme-icon-path');
             
-            if (!toggle) return;
+            if (!toggle || !iconPath) return;
             
             function setTheme(theme) {
                 if (theme === 'dark') {
@@ -1134,14 +1125,17 @@
             }
             
             function updateIcon() {
-                if (!icon) return;
+                if (!iconPath) return;
                 if (document.documentElement.classList.contains('dark')) {
-                    icon.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+                    // Mode sombre : afficher un soleil (pour revenir en mode clair)
+                    iconPath.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
                 } else {
-                    icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                    // Mode clair : afficher une lune (pour passer en mode sombre)
+                    iconPath.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
                 }
             }
             
+            // Remplacer le bouton par une copie pour éviter les doublons d'écouteurs
             var newToggle = toggle.cloneNode(true);
             toggle.parentNode.replaceChild(newToggle, toggle);
             
@@ -1154,6 +1148,7 @@
                 }
             });
             
+            // Appliquer le thème initial
             setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
         }
         

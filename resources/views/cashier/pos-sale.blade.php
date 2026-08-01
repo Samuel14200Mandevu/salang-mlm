@@ -48,6 +48,22 @@
         font-weight: 700;
         color: var(--primary-500);
     }
+    .product-preview .product-info .source-badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+    .source-badge-pos {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+    }
+    .source-badge-mlm {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
 
     .sale-form .form-group {
         margin-bottom: 1rem;
@@ -208,6 +224,15 @@
         border-radius: 9999px;
         border: 1px solid rgba(245, 158, 11, 0.2);
     }
+    .pv-badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        background: rgba(59,130,246,0.12);
+        color: #3b82f6;
+    }
 
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
@@ -294,7 +319,7 @@
         <div class="product-info">
             <h3>{{ $product->name }}</h3>
             <p>{{ Str::limit($product->description ?? '', 60) }}</p>
-            <div class="flex items-center gap-3 mt-1">
+            <div class="flex items-center gap-3 mt-1 flex-wrap">
                 <span class="price">${{ number_format($product->price, 2) }}</span>
                 @if($product->pv_value)
                     <span class="pv-badge">{{ $product->pv_value }} PV</span>
@@ -302,6 +327,7 @@
                 @if($product->bv_value)
                     <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
                 @endif
+                <span class="source-badge source-badge-pos">POS</span>
             </div>
         </div>
     </div>
@@ -311,6 +337,7 @@
         <form action="{{ route('cashier.pos.order') }}" method="POST" class="sale-form">
             @csrf
             <input type="hidden" name="product_id" value="{{ $product->id }}">
+            <input type="hidden" name="source" value="pos">
             
             <div class="form-row">
                 <!-- Client -->
@@ -351,7 +378,7 @@
                 
                 <div class="form-group">
                     <label>Commission CASH <span class="text-xs text-[var(--text-tertiary)]">(optionnelle)</span></label>
-                    <input type="number" name="commission_amount" class="input" placeholder="5.00" step="0.50" min="0" max="15">
+                    <input type="number" name="commission_amount" class="input" placeholder="5.00" step="0.50" min="0" max="15" value="5">
                     <p class="text-[10px] text-[var(--text-tertiary)] mt-1">Entre 5$ et 15$</p>
                 </div>
             </div>

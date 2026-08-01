@@ -1,4 +1,3 @@
-{{-- resources/views/cashier/dashboard.blade.php --}}
 @extends('cashier.layouts.app')
 
 @push('styles')
@@ -93,7 +92,7 @@
 </style>
 @endpush
 
-@section('title', 'Dashboard')
+@section('title', 'Tableau de bord')
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
@@ -119,7 +118,7 @@
                 <svg class="inline-block w-7 h-7 text-primary-500 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                 </svg>
-                Dashboard Caissier
+                Tableau de bord Caissier
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                 Bienvenue, {{ Auth::user()->name ?? 'Caissier' }} ! Gérez vos ventes au guichet.
@@ -193,13 +192,21 @@
     </div>
 
     {{-- Actions rapides --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-3">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-3">
         <a href="{{ route('cashier.pos') }}" class="quick-action">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
             <span class="label">Point de Vente</span>
-            <p class="sub">Lancer une vente au guichet</p>
+            <p class="sub">Vendre au guichet</p>
+        </a>
+
+        <a href="{{ route('cashier.members') }}" class="quick-action">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span class="label">Membres</span>
+            <p class="sub">Gérer les membres</p>
         </a>
 
         <a href="{{ route('cashier.orders') }}" class="quick-action">
@@ -207,15 +214,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
             <span class="label">Commandes</span>
-            <p class="sub">Voir toutes les commandes</p>
+            <p class="sub">Toutes les commandes</p>
         </a>
 
-        <a href="{{ route('cashier.daily-sales') }}" class="quick-action">
+        <a href="{{ route('cashier.commissions') }}" class="quick-action">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <span class="label">Ventes du jour</span>
-            <p class="sub">Rapport des ventes</p>
+            <span class="label">Commissions</span>
+            <p class="sub">Gérer les commissions</p>
         </a>
     </div>
 
@@ -244,22 +251,8 @@
                             <td class="text-sm sm:text-base">{{ $order->user?->name ?? 'N/A' }}</td>
                             <td class="text-right font-bold text-sm sm:text-base">${{ number_format($order->total, 2) }}</td>
                             <td>
-                                @php
-                                    $statusClasses = [
-                                        'completed' => 'badge-success',
-                                        'pending' => 'badge-warning',
-                                        'cancelled' => 'badge-danger',
-                                        'processing' => 'badge-info',
-                                    ];
-                                    $statusLabels = [
-                                        'completed' => 'Terminée',
-                                        'pending' => 'En attente',
-                                        'cancelled' => 'Annulée',
-                                        'processing' => 'En traitement',
-                                    ];
-                                @endphp
-                                <span class="badge {{ $statusClasses[$order->status] ?? 'badge-warning' }}">
-                                    {{ $statusLabels[$order->status] ?? ucfirst($order->status) }}
+                                <span class="badge {{ $order->status == 'completed' ? 'badge-success' : ($order->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
+                                    {{ $order->status == 'completed' ? 'Terminée' : ($order->status == 'pending' ? 'En attente' : 'Annulée') }}
                                 </span>
                             </td>
                             <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">

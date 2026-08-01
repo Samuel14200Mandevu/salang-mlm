@@ -380,7 +380,7 @@
         
         <div class="store-reg">
             <strong>N° ID.NAT:</strong> 22-7300-N634640<br>
-            <strong>NRCM:</strong> CD/BKVIRCM/20-8-001165001<br>
+            <strong>N° RCCM:</strong> CD/BKVIRCM/20-8-001165001<br>
             <strong>N° IMPORT-EXPORT:</strong> 0024/CBX-21/1000439SK/Z
         </div>
         

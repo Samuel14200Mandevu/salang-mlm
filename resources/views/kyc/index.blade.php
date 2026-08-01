@@ -199,17 +199,17 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
-    <!-- Header -->
+    <!-- En-tête -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">KYC Verification</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Verify your identity to secure your account</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Vérification KYC</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité pour sécuriser votre compte</p>
         </div>
         <a href="{{ route('kyc.create') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Submit Document
+            Soumettre un document
         </a>
     </div>
 
@@ -225,40 +225,40 @@
         </div>
     @endif
 
-    <!-- KYC Status -->
+    <!-- Statut KYC -->
     <div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-1">
         
         <div class="kyc-status-card border-l-4 border-primary-500">
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">KYC Status</p>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Statut KYC</p>
             <div class="mt-1 sm:mt-2">
                 <span class="kyc-status-badge kyc-status-badge-{{ $user->kyc_status ?? 'not_submitted' }}">
                     @if($user->kyc_status == 'not_submitted')
-                        Not Submitted
+                        Non soumis
                     @elseif($user->kyc_status == 'pending')
-                        Pending
+                        En attente
                     @elseif($user->kyc_status == 'partial')
-                        Partial
+                        Partiel
                     @elseif($user->kyc_status == 'verified')
-                        Verified
+                        Vérifié
                     @elseif($user->kyc_status == 'rejected')
-                        Rejected
+                        Rejeté
                     @else
-                        Not Submitted
+                        Non soumis
                     @endif
                 </span>
             </div>
         </div>
         
         <div class="kyc-status-card border-l-4 border-blue-500 animate-fadeInUp delay-2">
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Documents Submitted</p>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Documents soumis</p>
             <p class="text-2xl sm:text-3xl font-bold text-blue-500">{{ $documents->count() }}</p>
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                {{ $documents->where('status', 'verified')->count() }} verified
+                {{ $documents->where('status', 'verified')->count() }} vérifiés
             </p>
         </div>
         
         <div class="kyc-status-card border-l-4 border-green-500 animate-fadeInUp delay-3">
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Verification Level</p>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Niveau de vérification</p>
             <div class="mt-1 sm:mt-2 flex items-center gap-2">
                 <div class="flex-1 h-1.5 sm:h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
                     @php
@@ -275,9 +275,9 @@
             </div>
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
                 @if($progress == 100)
-                    Verification complete
+                    Vérification terminée
                 @else
-                    Required: ID Card + Proof of Address
+                    Requis : Carte d'identité + Justificatif de domicile
                 @endif
             </p>
         </div>
@@ -286,7 +286,7 @@
     <!-- Documents -->
     <div class="card animate-fadeInUp delay-4">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">My Documents</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Mes documents</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $documents->count() }} document(s)</span>
         </div>
 
@@ -319,7 +319,7 @@
                         </span>
                         <h4>{{ $doc->document_type_label }}</h4>
                         <p>{{ $doc->document_number ?? 'N/A' }}</p>
-                        <p class="mt-1">{{ $doc->file_name }} ({{ number_format($doc->file_size / 1024, 1) }} KB)</p>
+                        <p class="mt-1">{{ $doc->file_name }} ({{ number_format($doc->file_size / 1024, 1) }} Ko)</p>
                         <div class="mt-2 sm:mt-3">
                             <span class="badge 
                                 {{ $doc->status == 'pending' ? 'badge-warning' : 
@@ -335,7 +335,7 @@
                         @endif
                         @if($doc->status == 'verified' && $doc->verified_at)
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-2">
-                                Verified on {{ $doc->verified_at->format('d/m/Y') }}
+                                Vérifié le {{ $doc->verified_at->format('d/m/Y') }}
                             </p>
                         @endif
                     </div>
@@ -346,26 +346,26 @@
                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                <h4 class="text-sm sm:text-base font-semibold text-[var(--text-primary)]">No documents submitted</h4>
-                <p class="text-xs sm:text-sm mt-1">Submit your documents to verify your identity.</p>
+                <h4 class="text-sm sm:text-base font-semibold text-[var(--text-primary)]">Aucun document soumis</h4>
+                <p class="text-xs sm:text-sm mt-1">Soumettez vos documents pour vérifier votre identité.</p>
                 <a href="{{ route('kyc.create') }}" class="btn btn-primary btn-sm mt-3 sm:mt-4">
-                    Submit Document
+                    Soumettre un document
                 </a>
             </div>
         @endif
     </div>
 
-    <!-- Information -->
+    <!-- Informations -->
     <div class="card animate-fadeInUp delay-5 border-l-4 border-primary-500">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-2 sm:mb-3">Why verify your identity?</h3>
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-2 sm:mb-3">Pourquoi vérifier votre identité ?</h3>
         <div class="info-grid grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
             <div class="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
                 <div>
-                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Security</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Protects your account from fraud</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Sécurité</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Protège votre compte contre la fraude</p>
                 </div>
             </div>
             <div class="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
@@ -373,8 +373,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <div>
-                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Withdrawals</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Required for withdrawals over $5,000</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Retraits</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Obligatoire pour les retraits de plus de 100$</p>
                 </div>
             </div>
             <div class="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
@@ -382,8 +382,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                 </svg>
                 <div>
-                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Credibility</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Builds trust in your network</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">Crédibilité</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Renforce la confiance au sein du réseau</p>
                 </div>
             </div>
         </div>
@@ -395,13 +395,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Submit Document
+            Soumettre un document
         </a>
         <button onclick="window.print()" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
             </svg>
-            Print
+            Imprimer
         </button>
     </div>
 </div>

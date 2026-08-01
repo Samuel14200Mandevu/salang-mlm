@@ -296,46 +296,100 @@ Route::middleware(['auth', 'active'])->group(function () {
 // ============================================================
 Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->group(function () {
     
-    // Dashboard
+    // ============================================================
+    // DASHBOARD
+    // ============================================================
     Route::get('/dashboard', [CashierController::class, 'dashboard'])->name('dashboard');
     
+    // ============================================================
     // POS - Vente directe (un seul produit)
+    // ============================================================
     Route::get('/pos', [CashierController::class, 'pos'])->name('pos');
     Route::get('/pos/sale/{product}', [CashierController::class, 'posSale'])->name('pos.sale');
     Route::post('/pos/order', [CashierController::class, 'createOrder'])->name('pos.order');
     Route::get('/sponsor/check', [CashierController::class, 'checkSponsor'])->name('sponsor.check');
     
     // ============================================================
-    // ROUTES POUR LE PANIER MULTI-PRODUITS
+    // PANIER MULTI-PRODUITS
     // ============================================================
     Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
     Route::get('/checkout', [CashierController::class, 'checkout'])->name('checkout');
-    Route::post('checkout/order', [CashierController::class, 'createMultiOrder'])->name('checkout.order');
+    Route::post('/checkout/order', [CashierController::class, 'createCheckoutOrder'])->name('checkout.order');
     
-    // Commandes
+    // ============================================================
+    // COMMANDES
+    // ============================================================
     Route::get('/orders', [CashierController::class, 'orders'])->name('orders');
     Route::get('/orders/{id}', [CashierController::class, 'showOrder'])->name('orders.show');
     Route::get('/orders/invoice/{id}', [CashierController::class, 'invoice'])->name('orders.invoice');
+    Route::get('/orders/invoice/{id}/print', [CashierController::class, 'printInvoice'])->name('orders.invoice.print');
+    Route::post('/orders/{id}/cancel', [CashierController::class, 'cancelOrder'])->name('orders.cancel');
     
-    // Clients
+    // ============================================================
+    // CLIENTS
+    // ============================================================
     Route::get('/customers', [CashierController::class, 'customers'])->name('customers');
     Route::get('/customers/search', [CashierController::class, 'searchCustomer'])->name('customers.search');
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
+    Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
     
-    // Ventes du jour
+    // ============================================================
+    // MEMBRES (Gestion complète)
+    // ============================================================
+    Route::get('/members', [CashierController::class, 'members'])->name('members');
+    Route::get('/members/{member}', [CashierController::class, 'memberShow'])->name('members.show');
+    Route::get('/members/{member}/commissions', [CashierController::class, 'memberCommissions'])->name('members.commissions');
+    Route::get('/members/{member}/orders', [CashierController::class, 'memberOrders'])->name('members.orders');
+    Route::put('/members/{member}/commissions/update', [CashierController::class, 'updateMemberCommissions'])->name('members.commissions.update');
+    Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
+    
+    // ============================================================
+    // COMMISSIONS
+    // ============================================================
+    Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
+    Route::get('/commissions/export', [CashierController::class, 'exportCommissions'])->name('commissions.export');
+    Route::get('/commissions/stats', [CashierController::class, 'commissionsStats'])->name('commissions.stats');
+    Route::get('/commissions/network/{userId}', [CashierController::class, 'viewNetwork'])->name('commissions.network');
+    Route::get('/commissions/{id}', [CashierController::class, 'commissionShow'])->name('commissions.show');
+    Route::post('/commissions/{id}/approve', [CashierController::class, 'approveCommission'])->name('commissions.approve');
+    Route::post('/commissions/{id}/reject', [CashierController::class, 'rejectCommission'])->name('commissions.reject');
+    Route::post('/commissions/{id}/pay', [CashierController::class, 'commissionPay'])->name('commissions.pay');
+    Route::post('/commissions/{id}/cancel', [CashierController::class, 'commissionCancel'])->name('commissions.cancel');
+    Route::post('/commissions/batch-approve', [CashierController::class, 'batchApproveCommissions'])->name('commissions.batch-approve');
+    
+    // ============================================================
+    // VENTES DU JOUR
+    // ============================================================
     Route::get('/daily-sales', [CashierController::class, 'dailySales'])->name('daily-sales');
     
-    // Commissions POS
-    Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
-    
-    // Historique
+    // ============================================================
+    // HISTORIQUE COMPLET
+    // ============================================================
     Route::get('/history', [CashierController::class, 'history'])->name('history');
     
-    // Profil
+    // ============================================================
+    // STATISTIQUES
+    // ============================================================
+    Route::get('/stats', [CashierController::class, 'stats'])->name('stats');
+    Route::get('/stats/export', [CashierController::class, 'exportStats'])->name('stats.export');
+    
+    // ============================================================
+    // PROFIL CAISSIER (CORRIGÉ)
+    // ============================================================
     Route::get('/profile', [CashierController::class, 'profile'])->name('profile');
-
+    Route::put('/profile', [CashierController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/password', [CashierController::class, 'updatePassword'])->name('profile.update-password');
+    Route::delete('/profile', [CashierController::class, 'destroyProfile'])->name('profile.destroy');
+    Route::post('/profile/avatar', [CashierController::class, 'updateAvatar'])->name('profile.update-avatar');
+    Route::delete('/profile/avatar', [CashierController::class, 'deleteAvatar'])->name('profile.delete-avatar');
+    
+    // ============================================================
+    // FACTURES (CORRIGÉ - suppression des doublons)
+    // ============================================================
+    // Les routes invoice sont déjà définies dans la section COMMANDES
+    // On garde seulement celles qui sont spécifiques
+    Route::get('/invoice/{order}/pdf', [CashierController::class, 'downloadInvoice'])->name('invoice.download');
 });
-
 // ============================================================
 // ROUTES ADMIN
 // ============================================================
