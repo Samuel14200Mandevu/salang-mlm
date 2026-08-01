@@ -39,6 +39,39 @@ class ProcessPendingWithdrawals extends Command
         $isDryRun = $this->option('dry-run');
         $isForce = $this->option('force');
 
+        // MODE SIMULATION
+        if ($isDryRun) {
+            $this->warn($this->icon('warning') . ' Mode SIMULATION - Aucune modification');
+            
+            $pendingCount = Withdrawal::where('status', 'pending')->count();
+            $totalAmount = Withdrawal::where('status', 'pending')->sum('amount');
+            
+            $this->line("   Retraits en attente: {$pendingCount}");
+            $this->line("   Montant total: $" . number_format($totalAmount, 2));
+            
+            if ($pendingCount > 0) {
+                $this->newLine();
+                $this->info('📋 Détails des retraits en attente:');
+                
+                $withdrawals = Withdrawal::where('status', 'pending')
+                    ->with('user')
+                    ->limit(10)
+                    ->get();
+                
+                foreach ($withdrawals as $w) {
+                    $hours = $w->created_at->diffInHours(now());
+                    $ready = $hours >= 48 ? '✅ Prêt' : '⏳ ' . (48 - $hours) . 'h restantes';
+                    $userName = $w->user ? $w->user->name : 'N/A';
+                    
+                    $this->line("   #{$w->id}: {$w->amount} USD - {$w->method} - {$userName} - {$ready}");
+                }
+            }
+            
+            $this->info($this->icon('success') . ' Simulation terminée');
+            return 0;
+        }
+
+        // TRAITEMENT D'UN RETRAIT SPÉCIFIQUE
         if ($this->option('id')) {
             $withdrawal = Withdrawal::find($this->option('id'));
             if (!$withdrawal) {
@@ -46,11 +79,8 @@ class ProcessPendingWithdrawals extends Command
                 return 1;
             }
             
-            if ($isDryRun) {
-                $this->warn($this->icon('warning') . ' Mode SIMULATION - Aucune modification');
-                $this->line("   Retrait #{$withdrawal->id}: {$withdrawal->amount} USD - Statut: {$withdrawal->status}");
-                $this->line("   Créé: {$withdrawal->created_at->diffForHumans()}");
-                $this->line("   48h écoulées: " . ($withdrawal->created_at->diffInHours(now()) >= 48 ? '✓ Oui' : '✗ Non'));
+            if ($withdrawal->status !== 'pending') {
+                $this->warn($this->icon('warning') . " Le retrait #{$withdrawal->id} n'est pas en attente (statut: {$withdrawal->status})");
                 return 0;
             }
             
@@ -58,6 +88,7 @@ class ProcessPendingWithdrawals extends Command
             return 0;
         }
 
+        // TRAITEMENT DE TOUS LES RETRAITS
         $query = Withdrawal::where('status', 'pending');
         
         if (!$isForce) {
@@ -74,31 +105,7 @@ class ProcessPendingWithdrawals extends Command
             return 0;
         }
 
-        $this->info("{$withdrawals->count()} retrait(s) à traiter");
-
-        if ($isDryRun) {
-            $this->warn($this->icon('warning') . ' Mode SIMULATION - Aucune modification');
-            
-            $headers = ['ID', 'Montant', 'Méthode', 'Heures', 'Utilisateur', 'Statut 48h'];
-            $rows = [];
-            
-            foreach ($withdrawals as $withdrawal) {
-                $hours = $withdrawal->created_at->diffInHours(now());
-                $isReady = $hours >= 48 ? '✓ Oui' : '✗ Non (' . (48 - $hours) . 'h restantes)';
-                $rows[] = [
-                    $withdrawal->id,
-                    '$' . number_format($withdrawal->amount, 2),
-                    $withdrawal->method,
-                    $hours . 'h',
-                    $withdrawal->user->name ?? 'N/A',
-                    $isReady,
-                ];
-            }
-            
-            $this->table($headers, $rows);
-            $this->info($this->icon('success') . ' Simulation terminée');
-            return 0;
-        }
+        $this->info("📊 {$withdrawals->count()} retrait(s) à traiter");
 
         $bar = $this->output->createProgressBar($withdrawals->count());
         $bar->start();
@@ -120,8 +127,8 @@ class ProcessPendingWithdrawals extends Command
         $this->newLine(2);
 
         $this->info($this->icon('success') . ' Traitement terminé');
-        $this->line("   Traités: {$processed}");
-        $this->line("   Erreurs: {$errors}");
+        $this->line("   ✅ Traités: {$processed}");
+        $this->line("   ❌ Erreurs: {$errors}");
 
         return 0;
     }
@@ -148,14 +155,12 @@ class ProcessPendingWithdrawals extends Command
                 return false;
             }
 
-            // Passer en "processing"
             $withdrawal->status = 'processing';
             $withdrawal->processing_started_at = now();
             $withdrawal->save();
 
             $this->line($this->icon('process') . " Retrait #{$withdrawal->id}: en cours de traitement...");
 
-            // Vérifier le solde
             if ($wallet->balance < $withdrawal->amount) {
                 $withdrawal->status = 'failed';
                 $withdrawal->notes = 'Solde insuffisant après vérification';
@@ -165,13 +170,11 @@ class ProcessPendingWithdrawals extends Command
                 return false;
             }
 
-            // Débiter le portefeuille
             $balanceBefore = $wallet->balance;
             $wallet->balance -= $withdrawal->amount;
             $wallet->total_withdrawn += $withdrawal->amount;
             $wallet->save();
 
-            // Créer la transaction
             Transaction::create([
                 'user_id' => $withdrawal->user_id,
                 'wallet_id' => $wallet->id,
@@ -191,14 +194,13 @@ class ProcessPendingWithdrawals extends Command
                 'completed_at' => now(),
             ]);
 
-            // Marquer comme terminé
             $withdrawal->status = 'completed';
             $withdrawal->completed_at = now();
             $withdrawal->save();
 
             DB::commit();
             
-            $this->line($this->icon('success') . " Retrait #{$withdrawal->id}: {$withdrawal->amount} USD vers {$withdrawal->method} (48h)");
+            $this->line($this->icon('success') . " Retrait #{$withdrawal->id}: {$withdrawal->amount} USD traité (48h)");
             
             Log::info('Retrait traité avec succès', [
                 'withdrawal_id' => $withdrawal->id,
