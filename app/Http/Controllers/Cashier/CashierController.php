@@ -788,260 +788,259 @@ class CashierController extends Controller
      * Créer une commande depuis le checkout (panier multi-produits)
      */
     public function createCheckoutOrder(Request $request)
-    {
-        Log::info('=== CREATION COMMANDE CHECKOUT ===');
+{
+    Log::info('=== CREATION COMMANDE CHECKOUT ===');
+    
+    try {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'sponsor_code' => 'required|string|exists:users,sponsor_id',
+            'commission_amount' => 'nullable|numeric|min:0|max:15',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+        ]);
         
-        try {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'phone' => 'required|string|max:20',
-                'email' => 'nullable|email|max:255',
-                'sponsor_code' => 'required|string|exists:users,sponsor_id',
-                'commission_amount' => 'nullable|numeric|min:0|max:15',
-                'address' => 'nullable|string|max:255',
-                'city' => 'nullable|string|max:255',
-                'country' => 'nullable|string|max:255',
+        $cart = session()->get('pos_cart', []);
+        
+        if (empty($cart)) {
+            return redirect()->back()->with('error', 'Votre panier est vide.');
+        }
+        
+        $sponsor = User::where('sponsor_id', $request->sponsor_code)
+            ->where('is_active', true)
+            ->first();
+            
+        if (!$sponsor) {
+            return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
+        }
+        
+        $client = User::where('phone', $request->phone)->first();
+        
+        if (!$client) {
+            $client = User::create([
+                'name' => $request->name,
+                'email' => $request->email ?? $request->phone . '@client.tmp',
+                'phone' => $request->phone,
+                'password' => bcrypt(Str::random(12)),
+                'sponsor_id' => 'CLT' . strtoupper(Str::random(6)),
+                'parrain_id' => $sponsor->id,
+                'is_active' => true,
+                'user_type' => 'client',
+                'kyc_status' => 'not_submitted',
+                'pv_balance' => 0,
+                'bv_balance' => 0,
+                'monthly_pv' => 0,
+                'monthly_bv' => 0,
+                'team_pv' => 0,
+                'team_bv' => 0,
+                'total_team' => 0,
+                'address' => $request->address,
+                'city' => $request->city,
+                'country' => $request->country,
             ]);
             
-            $cart = session()->get('pos_cart', []);
-            
-            if (empty($cart)) {
-                return redirect()->back()->with('error', 'Votre panier est vide.');
+            Wallet::create([
+                'user_id' => $client->id,
+                'balance' => 0,
+                'pending_balance' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
+            ]);
+        } else {
+            if (!$client->parrain_id) {
+                $client->parrain_id = $sponsor->id;
             }
-            
-            $sponsor = User::where('sponsor_id', $request->sponsor_code)
-                ->where('is_active', true)
-                ->first();
-                
-            if (!$sponsor) {
-                return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
+            if ($request->filled('address')) {
+                $client->address = $request->address;
             }
-            
-            $client = User::where('phone', $request->phone)->first();
-            
-            if (!$client) {
-                // ✅ CLIENT POS - TOUS LES PV À 0
-                $client = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email ?? $request->phone . '@client.tmp',
-                    'phone' => $request->phone,
-                    'password' => bcrypt(Str::random(12)),
-                    'sponsor_id' => 'CLT' . strtoupper(Str::random(6)),
-                    'parrain_id' => $sponsor->id,
-                    'is_active' => true,
-                    'user_type' => 'client',
-                    'kyc_status' => 'not_submitted',
-                    'pv_balance' => 0,
-                    'bv_balance' => 0,
-                    'monthly_pv' => 0,
-                    'monthly_bv' => 0,
-                    'team_pv' => 0,
-                    'team_bv' => 0,
-                    'total_team' => 0,
-                    'address' => $request->address,
-                    'city' => $request->city,
-                    'country' => $request->country,
-                ]);
-                
-                Wallet::create([
-                    'user_id' => $client->id,
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]);
-            } else {
-                if (!$client->parrain_id) {
-                    $client->parrain_id = $sponsor->id;
-                }
-                if ($request->filled('address')) {
-                    $client->address = $request->address;
-                }
-                if ($request->filled('city')) {
-                    $client->city = $request->city;
-                }
-                if ($request->filled('country')) {
-                    $client->country = $request->country;
-                }
-                $client->save();
+            if ($request->filled('city')) {
+                $client->city = $request->city;
             }
+            if ($request->filled('country')) {
+                $client->country = $request->country;
+            }
+            $client->save();
+        }
+        
+        $subtotal = 0;
+        $totalPv = 0;
+        $totalBv = 0;
+        $isMlmProduct = false;
+        
+        foreach ($cart as $item) {
+            $subtotal += $item['price'] * $item['quantity'];
+            $totalPv += ($item['pv_value'] ?? 0) * $item['quantity'];
+            $totalBv += ($item['bv_value'] ?? 0) * $item['quantity'];
             
-            $subtotal = 0;
-            $totalPv = 0;
-            $totalBv = 0;
-            $isMlmProduct = false;
+            if (isset($item['source']) && $item['source'] == 'mlm') {
+                $isMlmProduct = true;
+            }
+        }
+        
+        $total = $subtotal;
+        $commissionAmount = $request->input('commission_amount', 0);
+        
+        DB::beginTransaction();
+        
+        try {
+            $orderNumber = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+            
+            $order = Order::create([
+                'user_id' => $client->id,
+                'order_number' => $orderNumber,
+                'subtotal' => $subtotal,
+                'tax' => 0,
+                'shipping' => 0,
+                'discount' => 0,
+                'total' => $total,
+                'total_pv' => $totalPv,
+                'total_bv' => $totalBv,
+                'status' => 'completed',
+                'payment_status' => 'completed',
+                'payment_method' => 'cash',
+                'source' => $isMlmProduct ? 'mlm' : 'pos',
+                'shipping_address' => $client->address,
+                'billing_address' => $client->address,
+                'metadata' => [
+                    'cashier_id' => auth()->id(),
+                    'sponsor_id' => $sponsor->id,
+                    'cashier_name' => auth()->user()->name,
+                    'pos_sale' => true,
+                    'multi_products' => true,
+                    'product_count' => count($cart),
+                    'commission_amount' => $commissionAmount,
+                ],
+                'paid_at' => now(),
+            ]);
             
             foreach ($cart as $item) {
-                $subtotal += $item['price'] * $item['quantity'];
-                $totalPv += ($item['pv_value'] ?? 0) * $item['quantity'];
-                $totalBv += ($item['bv_value'] ?? 0) * $item['quantity'];
+                $product = Product::find($item['id']);
+                $package = null;
                 
-                if (isset($item['source']) && $item['source'] == 'mlm') {
-                    $isMlmProduct = true;
+                if (!$product) {
+                    $package = Package::find($item['id']);
+                }
+                
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product ? $product->id : null,
+                    'package_id' => $package ? $package->id : null,
+                    'name' => $item['name'],
+                    'sku' => $product ? 'PROD-' . $product->id : 'PKG-' . $package->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'total' => $item['price'] * $item['quantity'],
+                    'pv_value' => $item['pv_value'] ?? 0,
+                    'bv_value' => $item['bv_value'] ?? 0,
+                ]);
+                
+                if ($product) {
+                    Product::where('id', $item['id'])->decrement('stock', $item['quantity']);
                 }
             }
             
-            $total = $subtotal;
-            $commissionAmount = $request->input('commission_amount', 0);
+            if ($totalPv > 0 && $sponsor) {
+                $sponsor->increment('team_pv', $totalPv);
+                
+                // ✅ Si le client est un membre, il reçoit aussi des PV personnels
+                if ($client->user_type === 'member') {
+                    $client->increment('pv_balance', $totalPv);
+                    $client->increment('monthly_pv', $totalPv);
+                }
+            }
             
-            DB::beginTransaction();
-            
-            try {
-                $orderNumber = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-                
-                $order = Order::create([
-                    'user_id' => $client->id,
-                    'order_number' => $orderNumber,
-                    'subtotal' => $subtotal,
-                    'tax' => 0,
-                    'shipping' => 0,
-                    'discount' => 0,
-                    'total' => $total,
-                    'total_pv' => $totalPv,
-                    'total_bv' => $totalBv,
-                    'status' => 'completed',
-                    'payment_status' => 'completed',
-                    'payment_method' => 'cash',
-                    'source' => $isMlmProduct ? 'mlm' : 'pos',
-                    'shipping_address' => $client->address,
-                    'billing_address' => $client->address,
-                    'metadata' => [
-                        'cashier_id' => auth()->id(),
-                        'sponsor_id' => $sponsor->id,
-                        'cashier_name' => auth()->user()->name,
-                        'pos_sale' => true,
-                        'multi_products' => true,
-                        'product_count' => count($cart),
-                        'commission_amount' => $commissionAmount,
-                    ],
-                    'paid_at' => now(),
-                ]);
-                
-                foreach ($cart as $item) {
-                    $product = Product::find($item['id']);
-                    $package = null;
-                    
-                    if (!$product) {
-                        $package = Package::find($item['id']);
-                    }
-                    
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $product ? $product->id : null,
-                        'package_id' => $package ? $package->id : null,
-                        'name' => $item['name'],
-                        'sku' => $product ? 'PROD-' . $product->id : 'PKG-' . $package->id,
-                        'quantity' => $item['quantity'],
-                        'price' => $item['price'],
-                        'total' => $item['price'] * $item['quantity'],
-                        'pv_value' => $item['pv_value'] ?? 0,
-                        'bv_value' => $item['bv_value'] ?? 0,
-                    ]);
-                    
-                    if ($product) {
-                        Product::where('id', $item['id'])->decrement('stock', $item['quantity']);
-                    }
-                }
-                
-                // ✅ AJOUT DU PV AU SPONSOR (team_pv)
-                if ($totalPv > 0 && $sponsor) {
-                    $sponsor->increment('team_pv', $totalPv);
-                    
-                    Log::info('PV ajouté au team_pv du sponsor (checkout POS)', [
-                        'sponsor_id' => $sponsor->id,
-                        'pv_added' => $totalPv,
-                        'client_id' => $client->id,
-                        'client_name' => $client->name,
-                    ]);
-                }
-                
-                // ✅ COMMISSION CASH POS
-                if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
-                    Commission::create([
-                        'user_id' => $sponsor->id,
-                        'from_user_id' => $client->id,
-                        'period' => now()->format('Y-m'),
-                        'type' => 'cash_pos',
-                        'source' => 'pos',
-                        'amount' => $commissionAmount,
-                        'percentage' => 0,
-                        'description' => "Commission CASH POS - Commande #{$orderNumber}",
-                        'notes' => "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce",
-                        'order_id' => $order->id,
-                        'status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
-                }
-                
-                // ✅ COMMISSION POS TRANSACTION (pour le caissier)
+            if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
                 Commission::create([
-                    'user_id' => auth()->id(),
+                    'user_id' => $sponsor->id,
                     'from_user_id' => $client->id,
                     'period' => now()->format('Y-m'),
-                    'type' => 'pos_transaction',
+                    'type' => 'cash_pos',
                     'source' => 'pos',
-                    'amount' => 0,
+                    'amount' => $commissionAmount,
                     'percentage' => 0,
-                    'description' => "Vente POS - Commande #{$orderNumber}",
-                    'notes' => "Client: {$client->name} - " . count($cart) . " produit(s) - Total: $" . number_format($total, 2),
+                    'description' => "Commission CASH POS - Commande #{$orderNumber}",
+                    'notes' => "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce",
                     'order_id' => $order->id,
-                    'status' => 'completed',
+                    'status' => 'paid',
+                    'paid_at' => now(),
                 ]);
-                
-                // ✅ NEW CLIENT (si nouveau client)
-                if ($client->wasRecentlyCreated) {
-                    Commission::create([
-                        'user_id' => $client->id,
-                        'from_user_id' => $sponsor->id,
-                        'period' => now()->format('Y-m'),
-                        'type' => 'new_client',
-                        'source' => 'pos',
-                        'amount' => 0,
-                        'percentage' => 0,
-                        'description' => "Nouveau client - Parrain: {$sponsor->name}",
-                        'notes' => "Code parrain: {$sponsor->sponsor_id}",
-                        'order_id' => $order->id,
-                        'status' => 'completed',
-                    ]);
-                }
-                
-                // ✅ PURCHASE (achat du client)
+            }
+            
+            Commission::create([
+                'user_id' => auth()->id(),
+                'from_user_id' => $client->id,
+                'period' => now()->format('Y-m'),
+                'type' => 'pos_transaction',
+                'source' => 'pos',
+                'amount' => 0,
+                'percentage' => 0,
+                'description' => "Vente POS - Commande #{$orderNumber}",
+                'notes' => "Client: {$client->name} - " . count($cart) . " produit(s) - Total: $" . number_format($total, 2),
+                'order_id' => $order->id,
+                'status' => 'completed',
+            ]);
+            
+            if ($client->wasRecentlyCreated) {
                 Commission::create([
                     'user_id' => $client->id,
                     'from_user_id' => $sponsor->id,
                     'period' => now()->format('Y-m'),
-                    'type' => 'purchase',
+                    'type' => 'new_client',
                     'source' => 'pos',
-                    'amount' => $total,
+                    'amount' => 0,
                     'percentage' => 0,
-                    'description' => "Achat POS - Commande #{$orderNumber}",
-                    'notes' => count($cart) . " produit(s) - Total: $" . number_format($total, 2),
+                    'description' => "Nouveau client - Parrain: {$sponsor->name}",
+                    'notes' => "Code parrain: {$sponsor->sponsor_id}",
                     'order_id' => $order->id,
                     'status' => 'completed',
                 ]);
-                
-                // ✅ MISE À JOUR DU TEAM PV ET DU GRADE
-                UpdateTeamPV::dispatch($sponsor->id, true);
-                $sponsor->calculateAndUpdateRank();
-                
-                session()->forget('pos_cart');
-                
-                DB::commit();
-                
-                return redirect()->route('cashier.orders.invoice', $order->id)
-                    ->with('success', 'Commande #' . $orderNumber . ' validée avec ' . count($cart) . ' produits !');
-                
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Erreur création commande checkout: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage())->withInput();
             }
             
+            Commission::create([
+                'user_id' => $client->id,
+                'from_user_id' => $sponsor->id,
+                'period' => now()->format('Y-m'),
+                'type' => 'purchase',
+                'source' => 'pos',
+                'amount' => $total,
+                'percentage' => 0,
+                'description' => "Achat POS - Commande #{$orderNumber}",
+                'notes' => count($cart) . " produit(s) - Total: $" . number_format($total, 2),
+                'order_id' => $order->id,
+                'status' => 'completed',
+            ]);
+            
+            UpdateTeamPV::dispatch($sponsor->id, true);
+            $sponsor->calculateAndUpdateRank();
+            
+            // ✅ VIDER LE PANIER APRÈS VALIDATION
+            session()->forget('pos_cart');
+            
+            // ✅ VIDER LE PANIER DANS LE LOCALSTORAGE (via JavaScript)
+            // On passe un paramètre pour indiquer que le panier doit être vidé
+            $clearCart = true;
+            
+            DB::commit();
+            
+            // ✅ REDIRIGER AVEC UN PARAMÈTRE POUR VIDER LE PANIER LOCALSTORAGE
+            return redirect()->route('cashier.orders.invoice', $order->id)
+                ->with('success', 'Commande #' . $orderNumber . ' validée avec ' . count($cart) . ' produits !')
+                ->with('clear_cart', true);
+                
         } catch (\Exception $e) {
-            Log::error('Erreur validation: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Erreur création commande checkout: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage())->withInput();
         }
+        
+    } catch (\Exception $e) {
+        Log::error('Erreur validation: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage())->withInput();
     }
+}
 
     /**
      * Liste des commandes (POS + En ligne + MLM)

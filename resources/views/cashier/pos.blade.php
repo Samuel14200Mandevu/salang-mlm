@@ -562,6 +562,28 @@ function switchTab(tab) {
     document.getElementById('searchResult').classList.add('hidden');
 }
 
+window.clearCart = function() {
+    // Vider le localStorage
+    if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('pos_cart');
+    }
+    
+    // Vider le tableau du panier
+    window.cart = [];
+    
+    // Mettre à jour l'affichage
+    if (typeof window.renderCart === 'function') {
+        window.renderCart();
+    }
+    
+    // Mettre à jour le compteur
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    }
+    
+    console.log('Panier vidé avec succès');
+};
+
 // ================================================================
 //  RECHERCHE
 // ================================================================

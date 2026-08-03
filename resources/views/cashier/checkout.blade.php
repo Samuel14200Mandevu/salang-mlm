@@ -748,6 +748,23 @@ document.addEventListener('DOMContentLoaded', function() {
             return true;
         });
     }
+@if(session('clear_cart'))
+        // Vider le panier dans localStorage
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('pos_cart');
+            console.log('Panier localstorage vidé');
+        }
+        
+        // Recharger le panier dans l'interface
+        if (typeof window.loadCart === 'function') {
+            window.loadCart();
+        }
+        
+        // Afficher un message de succès
+        if (typeof window.showToast === 'function') {
+            window.showToast(' Commande validée avec succès !', 'success');
+        }
+    @endif
 });
 </script>
 @endpush
