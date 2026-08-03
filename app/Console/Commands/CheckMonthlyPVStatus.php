@@ -45,10 +45,12 @@ class CheckMonthlyPVStatus extends Command
                 [
                     ['ID', $user->id],
                     ['Nom', $user->name],
+                    ['Type', $user->user_type ?? 'member'],
                     ['PV mensuel', $user->monthly_pv ?? 0],
                     ['BV mensuel', $user->monthly_bv ?? 0],
                     ['PV cumulé', $user->pv_balance ?? 0],
                     ['BV cumulé', $user->bv_balance ?? 0],
+                    ['PV d\'équipe', $user->team_pv ?? 0],
                     ['Grade', $user->rank_name ?? 'Distributeur'],
                     ['Niveau', $user->rank_level ?? 1],
                 ]
@@ -58,6 +60,13 @@ class CheckMonthlyPVStatus extends Command
 
         $totalUsers = User::where('is_active', true)->count();
         $usersWithPV = User::where('monthly_pv', '>', 0)->count();
+        
+        // ✅ Statistiques par type d'utilisateur
+        $members = User::where('user_type', 'member')->where('is_active', true)->count();
+        $clients = User::where('user_type', 'client')->where('is_active', true)->count();
+        $membersWithPV = User::where('user_type', 'member')->where('monthly_pv', '>', 0)->count();
+        $clientsWithPV = User::where('user_type', 'client')->where('monthly_pv', '>', 0)->count();
+        
         $totalPV = User::sum('monthly_pv');
         $totalBV = User::sum('monthly_bv');
         $currentPeriod = date('Y-m');
@@ -67,7 +76,7 @@ class CheckMonthlyPVStatus extends Command
         $topUsers = User::where('monthly_pv', '>', 0)
             ->orderBy('monthly_pv', 'desc')
             ->limit(10)
-            ->get(['id', 'name', 'monthly_pv', 'rank_id']);
+            ->get(['id', 'name', 'monthly_pv', 'rank_id', 'user_type']);
 
         $this->table(
             ['Métrique', 'Valeur'],
@@ -75,10 +84,15 @@ class CheckMonthlyPVStatus extends Command
                 ['Période', $currentPeriod],
                 ['Statut période', $period ? $period->status_label : 'Aucune'],
                 ['Total utilisateurs actifs', $totalUsers],
+                ['  └ Membres MLM', $members],
+                ['  └ Clients POS', $clients],
                 ['Utilisateurs avec PV', $usersWithPV],
+                ['  └ Membres avec PV', $membersWithPV],
+                ['  └ Clients avec PV', $clientsWithPV],
                 ['Total PV mensuel', number_format($totalPV, 0)],
                 ['Total BV mensuel', number_format($totalBV, 0)],
-                ['PV moyen', $usersWithPV > 0 ? number_format($totalPV / $usersWithPV, 0) : 0],
+                ['PV moyen (membres)', $membersWithPV > 0 ? number_format(User::where('user_type', 'member')->sum('monthly_pv') / $membersWithPV, 0) : 0],
+                ['PV moyen (clients)', $clientsWithPV > 0 ? number_format(User::where('user_type', 'client')->sum('monthly_pv') / $clientsWithPV, 0) : 0],
                 ['Prochain reset', Carbon::now()->startOfMonth()->addDays(7)->toDateString()],
                 ['Jours avant reset', Carbon::now()->diffInDays(Carbon::now()->startOfMonth()->addDays(7))],
             ]
@@ -89,12 +103,13 @@ class CheckMonthlyPVStatus extends Command
             $this->info($this->icon('trophy') . ' Top 10 des utilisateurs avec le plus de PV mensuel:');
             
             $this->table(
-                ['#', 'ID', 'Nom', 'PV', 'Grade'],
+                ['#', 'ID', 'Nom', 'Type', 'PV', 'Grade'],
                 $topUsers->map(function ($user, $index) {
                     return [
                         $index + 1,
                         $user->id,
                         $user->name,
+                        $user->user_type ?? 'member',
                         number_format($user->monthly_pv, 0),
                         $user->rank_name ?? 'Distributeur',
                     ];

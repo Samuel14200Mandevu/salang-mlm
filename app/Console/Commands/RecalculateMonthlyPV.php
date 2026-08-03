@@ -44,6 +44,7 @@ class RecalculateMonthlyPV extends Command
             }
         }
 
+        // ✅ Inclure tous les utilisateurs (membres + clients)
         $query = User::where('is_active', true);
 
         if ($userId) {
@@ -78,6 +79,7 @@ class RecalculateMonthlyPV extends Command
                         Log::info('PV mensuel recalculé', [
                             'user_id' => $user->id,
                             'user_name' => $user->name,
+                            'user_type' => $user->user_type,
                             'old_pv' => $oldPV,
                             'new_pv' => $newPV,
                             'month' => now()->format('Y-m'),

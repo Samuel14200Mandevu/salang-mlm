@@ -178,10 +178,33 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'parrain_id');
     }
 
-    public function filleuls()
-    {
-        return $this->hasMany(User::class, 'parrain_id')->where('is_active', true);
-    }
+/**
+ * Filleuls - UNIQUEMENT LES MEMBRES
+ */
+public function filleuls()
+{
+    return $this->hasMany(User::class, 'parrain_id')
+        ->where('user_type', 'member') 
+        ->where('is_active', true);
+}
+
+/**
+ * Clients Filleuls - UNIQUEMENT LES CLIENTS POS
+ */
+public function clientsFilleuls()
+{
+    return $this->hasMany(User::class, 'parrain_id')
+        ->where('user_type', 'client')  
+        ->where('is_active', true);
+}
+
+/**
+ * Tous les filleuls (membres + clients)
+ */
+public function tousFilleuls()
+{
+    return $this->hasMany(User::class, 'parrain_id')->where('is_active', true);
+}
 
     public function wallet()
     {
@@ -628,15 +651,26 @@ public function getIsMemberAttribute()
      * Ajouter des PV à l'utilisateur (depuis POS ou achats)
      * Méthode principale pour créditer les PV
      */
-    public function addPV(int $amount, string $source = 'pos_sale', ?int $sourceId = null): void
+ public function addPV(int $amount, string $source = 'pos_sale', ?int $sourceId = null): void
 {
     if ($amount <= 0) {
         return;
     }
 
+    // ✅ SI L'UTILISATEUR EST UN CLIENT POS → NE RIEN FAIRE
+    if ($this->user_type === 'client') {
+        Log::info('Client POS - pas de PV ajouté', [
+            'user_id' => $this->id,
+            'user_name' => $this->name,
+            'amount' => $amount,
+            'source' => $source,
+        ]);
+        return;
+    }
+
     DB::beginTransaction();
     try {
-        // 1. Récupérer ou créer le wallet
+        // ✅ AJOUTER LES PV UNIQUEMENT POUR LES MEMBRES
         $wallet = $this->wallet()->first();
         if (!$wallet) {
             $wallet = Wallet::create([
@@ -646,31 +680,28 @@ public function getIsMemberAttribute()
             ]);
         }
 
-        // 2. Ajouter les PV à l'utilisateur (table users)
-        $oldBalance = $this->pv_balance;
+        $oldPvBalance = $this->pv_balance;
+        $oldMonthlyPv = $this->monthly_pv;
+        
+        // ✅ AJOUTER AU PV PERSONNEL (pv_balance et monthly_pv)
         $this->pv_balance += $amount;
         $this->monthly_pv += $amount;
-        $this->team_pv += $amount;
-        $this->bv_balance += $amount;      // BV personnel
-        $this->monthly_bv += $amount;      // BV mensuel
-        $this->team_bv += $amount;         // BV de l'équipe
+        $this->bv_balance += $amount;
+        $this->monthly_bv += $amount;
         
         $this->saveQuietly();
 
-        // 3. Mettre à jour le team_pv des ancêtres
+        // ✅ METTRE À JOUR LE team_pv DES ANCÊTRES
         $this->updateTeamPV();
-
-        // 4. Mettre à jour le grade
         $this->calculateAndUpdateRank();
 
-        // 5. Créer une trace dans les transactions
         Transaction::create([
             'user_id' => $this->id,
             'wallet_id' => $wallet->id,
             'type' => 'pv_credit',
             'amount' => $amount,
             'net_amount' => $amount,
-            'balance_before' => $oldBalance,
+            'balance_before' => $oldPvBalance,
             'balance_after' => $this->pv_balance,
             'description' => "Crédit de {$amount} PV depuis {$source}",
             'source_type' => $source,
@@ -680,7 +711,7 @@ public function getIsMemberAttribute()
 
         DB::commit();
 
-        Log::info('PV ajoutés', [
+        Log::info('PV ajoutés pour membre', [
             'user_id' => $this->id,
             'user_name' => $this->name,
             'amount' => $amount,
@@ -688,9 +719,6 @@ public function getIsMemberAttribute()
             'pv_balance' => $this->pv_balance,
             'monthly_pv' => $this->monthly_pv,
             'team_pv' => $this->team_pv,
-            'bv_balance' => $this->bv_balance,
-            'monthly_bv' => $this->monthly_bv,
-            'team_bv' => $this->team_bv,
         ]);
 
     } catch (\Exception $e) {

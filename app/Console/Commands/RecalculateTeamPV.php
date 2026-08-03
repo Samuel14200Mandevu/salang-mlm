@@ -14,6 +14,7 @@ class RecalculateTeamPV extends Command
 
     public function handle()
     {
+        // ✅ Inclure tous les utilisateurs (membres + clients)
         $query = User::where('is_active', true);
         
         if ($this->option('user')) {
@@ -51,7 +52,14 @@ class RecalculateTeamPV extends Command
 
     private function calculateTeamPV(User $user): int
     {
+        // ✅ Le PV d'équipe = PV personnel de l'utilisateur + PV d'équipe de ses filleuls
         $total = $user->pv_balance ?? 0;
+        
+        // ✅ Pour les clients POS, ils n'ont pas de filleuls
+        if ($user->user_type === 'client') {
+            return $total;
+        }
+        
         $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
         
         foreach ($children as $child) {
@@ -64,6 +72,11 @@ class RecalculateTeamPV extends Command
     private function calculateTeamBV(User $user): int
     {
         $total = $user->bv_balance ?? 0;
+        
+        if ($user->user_type === 'client') {
+            return $total;
+        }
+        
         $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
         
         foreach ($children as $child) {
@@ -75,6 +88,11 @@ class RecalculateTeamPV extends Command
 
     private function countDescendants(User $user): int
     {
+        // ✅ Les clients POS n'ont pas de filleuls
+        if ($user->user_type === 'client') {
+            return 0;
+        }
+        
         $count = 0;
         $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
         

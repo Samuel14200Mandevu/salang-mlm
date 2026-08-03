@@ -161,6 +161,7 @@ class DashboardController extends Controller
 
         // TOP FILLEULS - Version corrigée
         $topDownlines = User::where('parrain_id', $user->id)
+            ->where('user_type', 'member') 
             ->withCount(['filleuls as total_downlines'])  // ← Utilise filleuls au lieu de downlines
             ->orderBy('total_downlines', 'desc')
             ->limit(10)
@@ -168,7 +169,9 @@ class DashboardController extends Controller
 
         // Si vous voulez aussi ajouter les filleuls indirects
         $topDownlines->each(function ($downline) {
-        $downline->total_indirect = User::where('parrain_id', $downline->id)->count();
+        $downline->total_indirect = User::where('parrain_id', $downline->id)
+            ->where('user_type', 'member')
+            ->count();
         });
 
         // MEMBRES RÉCENTS

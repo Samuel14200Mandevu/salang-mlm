@@ -16,56 +16,21 @@ class CommissionDistributor
 {
     /**
      * Taux de commission par niveau (Bonus Direct)
-     * Bonus Direct : Calculé sur le PV mensuel du sponsor
      */
     private function getCommissionRate(int $level): float
     {
         $rates = [
-            1 => 0,   // Distributeur - Pas de commission directe
-            2 => 0,   // Qualification - Pas de commission directe
-            3 => 22,  // Cumul Directeur - Commission directe 22%
-            4 => 26,  // Directeur - Commission directe 26%
-            5 => 30,  // Manager Senior - Commission directe 30%
-            6 => 34,  // Directeur Envolée - Commission directe 34%
-            7 => 40,  // Saphire Manager - Commission directe 40%
-            8 => 43,  // Diamant Bleu - Commission directe 43%
-            9 => 45,  // Perle Diamant - Commission directe 45%
+            1 => 0,   // Distributeur
+            2 => 0,   // Qualification
+            3 => 22,  // Cumul Directeur
+            4 => 26,  // Directeur
+            5 => 30,  // Manager Senior
+            6 => 34,  // Directeur Envolée
+            7 => 40,  // Saphire Manager
+            8 => 43,  // Diamant Bleu
+            9 => 45,  // Perle Diamant
         ];
         return $rates[$level] ?? 0;
-    }
-
-    /**
-     * Obtenir le taux de commission en fonction du PV mensuel du sponsor
-     */
-    private function getCommissionRateBasedOnMonthlyPV(User $sponsor): float
-    {
-        $rank = $sponsor->rankObject;
-        $rankLevel = $rank ? $rank->level : 1;
-        $monthlyPV = $sponsor->monthly_pv ?? 0;
-        
-        $requirements = $this->getMonthlyPVRequirements();
-        $req = $requirements[$rankLevel] ?? ['personal' => 0, 'group' => 0];
-        
-        if ($monthlyPV < $req['personal']) {
-            Log::info('Sponsor ne remplit pas les conditions de PV mensuel', [
-                'sponsor_id' => $sponsor->id,
-                'sponsor_level' => $rankLevel,
-                'monthly_pv' => $monthlyPV,
-                'required' => $req['personal'],
-            ]);
-            return 0;
-        }
-        
-        if ($req['group'] > 0 && ($sponsor->team_pv ?? 0) < $req['group']) {
-            Log::info('Sponsor ne remplit pas les conditions de PV groupe', [
-                'sponsor_id' => $sponsor->id,
-                'team_pv' => $sponsor->team_pv,
-                'required' => $req['group'],
-            ]);
-            return 0;
-        }
-        
-        return $this->getCommissionRate($rankLevel);
     }
 
     /**
@@ -98,7 +63,7 @@ class CommissionDistributor
     }
 
     /**
-     * Récupérer les données d'un item (package ou produit)
+     * Récupérer les données d'un item
      */
     private function getItemData($item)
     {
@@ -207,98 +172,177 @@ class CommissionDistributor
     }
 
     /**
+     * Récupérer la source de la commande
+     */
+    private function getSourceFromOrder(int $orderId): string
+    {
+        $order = \App\Models\Order::find($orderId);
+        return $order ? $order->source : 'unknown';
+    }
+
+    /**
+     * Récupérer le montant de la commission POS depuis la commande
+     */
+    private function getCommissionAmountFromOrder(int $orderId): float
+    {
+        $order = \App\Models\Order::find($orderId);
+        if (!$order) {
+            return 0;
+        }
+        
+        if (isset($order->metadata['commission_amount'])) {
+            return (float) $order->metadata['commission_amount'];
+        }
+        
+        return 0;
+    }
+
+    /**
      * Distribuer les commissions pour un achat
      * 
-     * 1. Sponsor Bonus : Commission de parrainage - UNIQUEMENT lors de l'activation (package)
-     * 2. Bonus Direct : Calculé sur le PV mensuel du sponsor
-     * 3. Bonus Indirect : Commission sur l'effort des descendants (générations 2+)
-     * 4. Leadership Bonus : Commission supplémentaire pour les leaders (niveaux 5+)
+     * Logique MLM/POS :
+     * - Achat POS → team_pv + CASH POS
+     * - Achat MLM personnel → monthly_pv (membre) + team_pv (parrain) + PAS de commissions MLM
+     * - Achat MLM filleul → monthly_pv (filleul) + team_pv (parrain) + Commissions MLM
      */
     public function distributeCommissions(User $buyer, $item, $orderId, CommissionPeriod $period): array
-    {
-        $commissions = [];
+{
+    $commissions = [];
 
-        // ✅ SUPPRIMÉ : La vérification de is_active pour permettre l'activation manuelle
-        // Les commissions sponsor sont distribuées même si le compte n'est pas encore actif
+    $itemData = $this->getItemData($item);
+    if (!$itemData) {
+        return $commissions;
+    }
 
-        $itemData = $this->getItemData($item);
-        if (!$itemData) {
-            Log::warning('Item non trouvé pour la distribution des commissions', [
-                'item' => $item,
-            ]);
-            return $commissions;
-        }
+    $itemType = $this->getItemType($item);
+    $isPackage = ($itemType === 'package');
+    $itemPV = $this->getItemPV($item);
+    $sponsor = $buyer->parrain;
 
-        $itemType = $this->getItemType($item);
-        $isPackage = ($itemType === 'package');
+    $source = $this->getSourceFromOrder($orderId);
+    $isPosSource = ($source === 'pos');
+    $isMlmSource = ($source === 'mlm' || $source === 'web' || $source === 'online');
 
-        // ============================================================
-        // 1. SPONSOR BONUS - UNIQUEMENT POUR L'ACTIVATION AVEC PACKAGE
-        // ============================================================
-        $sponsor = $buyer->parrain;
+    // ============================================================
+    // 0. AJOUTER LE PV AU SPONSOR
+    // ============================================================
+    if ($sponsor && $sponsor->is_active && $itemPV > 0) {
         
-        if ($sponsor && $sponsor->is_active && $isPackage) {
-            // Vérifier si le sponsor a déjà reçu le bonus pour ce filleul
-            $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
+        // ✅ CAS 1 : Achat POS (client ou membre)
+        if ($isPosSource) {
+            // ✅ AJOUTER AU team_pv DU SPONSOR UNIQUEMENT
+            $sponsor->increment('team_pv', $itemPV);
+            
+            Log::info('PV ajouté au team_pv (source POS)', [
+                'sponsor_id' => $sponsor->id,
+                'sponsor_name' => $sponsor->name,
+                'pv_added' => $itemPV,
+                'buyer_id' => $buyer->id,
+                'buyer_name' => $buyer->name,
+                'buyer_type' => $buyer->user_type,
+                'source' => 'POS',
+                'new_team_pv' => $sponsor->team_pv,
+            ]);
+            
+            // ✅ SI L'ACHETEUR EST UN MEMBRE, IL REÇOIT AUSSI DES PV PERSONNELS
+            if ($buyer->user_type === 'member') {
+                $buyer->increment('pv_balance', $itemPV);
+                $buyer->increment('monthly_pv', $itemPV);
+                
+                Log::info('PV ajouté au membre (achat POS)', [
+                    'buyer_id' => $buyer->id,
+                    'buyer_name' => $buyer->name,
+                    'pv_added' => $itemPV,
+                    'new_pv_balance' => $buyer->pv_balance,
+                    'new_monthly_pv' => $buyer->monthly_pv,
+                ]);
+            }
+        }
+        
+        // ✅ CAS 2 : Achat MLM (membre)
+        if ($isMlmSource && $buyer->user_type === 'member') {
+            // ✅ L'ACHETEUR REÇOIT SON PV PERSONNEL
+            $buyer->increment('pv_balance', $itemPV);
+            $buyer->increment('monthly_pv', $itemPV);
+            
+            // ✅ LE PARRAIN REÇOIT LE PV AU team_pv
+            $sponsor->increment('team_pv', $itemPV);
+            
+            Log::info('PV ajouté (source MLM)', [
+                'buyer_id' => $buyer->id,
+                'buyer_name' => $buyer->name,
+                'pv_personnel' => $itemPV,
+                'sponsor_id' => $sponsor->id,
+                'pv_team' => $itemPV,
+                'source' => 'MLM',
+            ]);
+        }
+    }
 
+    // ============================================================
+    // 1. COMMISSION CASH POS - POUR TOUT ACHAT POS
+    // ============================================================
+    if ($isPosSource && $sponsor && $sponsor->is_active) {
+        $commissionAmount = $this->getCommissionAmountFromOrder($orderId);
+        
+        if ($commissionAmount > 0) {
+            $commission = Commission::create([
+                'user_id' => $sponsor->id,
+                'from_user_id' => $buyer->id,
+                'commission_period_id' => $period->id,
+                'period' => $period->period,
+                'type' => 'cash_pos',
+                'amount' => $commissionAmount,
+                'percentage' => 0,
+                'description' => "Commission CASH POS (${commissionAmount}$) - Achat POS par {$buyer->name}",
+                'order_id' => $orderId,
+                'package_id' => $isPackage ? $this->getItemId($item) : null,
+                'product_id' => !$isPackage ? $this->getItemId($item) : null,
+                'generation' => 1,
+                'calculation_type' => 'automatic',
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+            
+            $commissions[] = $commission;
+        }
+    }
+
+    // ============================================================
+    // 2. COMMISSIONS MLM - UNIQUEMENT POUR LES MEMBRES
+    // ============================================================
+    if ($buyer->user_type === 'member' && $buyer->is_active && $sponsor && $isMlmSource) {
+        
+        // ✅ Sponsor Bonus
+        if ($isPackage && $sponsor->is_active) {
+            $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
+            
             if (!$hasSponsorBonus) {
                 $sponsorBonus = $this->calculateSponsorBonus($buyer, $itemData, $orderId, $period);
                 if ($sponsorBonus) {
                     $commissions[] = $sponsorBonus;
-                    Log::info('Sponsor bonus distribué pour activation avec package', [
-                        'sponsor_id' => $sponsor->id,
-                        'buyer_id' => $buyer->id,
-                        'package_name' => $this->getItemName($item),
-                        'amount' => $sponsorBonus->amount,
-                        'activation_method' => $buyer->activation_method ?? 'code',
-                    ]);
                 }
-            } else {
-                Log::info('Sponsor bonus non distribué - déjà existant', [
-                    'sponsor_id' => $sponsor->id,
-                    'buyer_id' => $buyer->id,
-                    'has_bonus' => $hasSponsorBonus,
-                ]);
-            }
-        } else {
-            if ($sponsor && $sponsor->is_active && !$isPackage) {
-                Log::info('Sponsor bonus non distribué - achat produit, pas un package', [
-                    'sponsor_id' => $sponsor->id,
-                    'buyer_id' => $buyer->id,
-                    'item_type' => $itemType,
-                    'item_name' => $this->getItemName($item),
-                ]);
             }
         }
-
-        // ============================================================
-        // 2. BONUS DIRECT - Uniquement si le compte est actif
-        // ============================================================
-        if ($buyer->is_active) {
-            $directs = $this->calculateDirectBonuses($buyer, $itemData, $orderId, $period);
-            $commissions = array_merge($commissions, $directs);
-
-            // ============================================================
-            // 3. BONUS INDIRECT
-            // ============================================================
-            $indirects = $this->calculateIndirectBonuses($buyer, $itemData, $orderId, $period);
-            $commissions = array_merge($commissions, $indirects);
-
-            // ============================================================
-            // 4. LEADERSHIP BONUS
-            // ============================================================
-            $leaderships = $this->calculateLeadershipBonuses($buyer, $itemData, $orderId, $period);
-            $commissions = array_merge($commissions, $leaderships);
-
-            // Déclencher la mise à jour des grades
-            $this->triggerRankUpdates($buyer);
-        }
-
-        return $commissions;
+        
+        // ✅ Bonus Direct, Indirect, Leadership
+        $directs = $this->calculateDirectBonuses($buyer, $itemData, $orderId, $period);
+        $commissions = array_merge($commissions, $directs);
+        
+        $indirects = $this->calculateIndirectBonuses($buyer, $itemData, $orderId, $period);
+        $commissions = array_merge($commissions, $indirects);
+        
+        $leaderships = $this->calculateLeadershipBonuses($buyer, $itemData, $orderId, $period);
+        $commissions = array_merge($commissions, $leaderships);
+        
+        $this->triggerRankUpdates($buyer);
     }
 
+    return $commissions;
+}
+
     /**
-     * Déclencher la mise à jour des grades pour l'acheteur et ses parrains
+     * Déclencher la mise à jour des grades
      */
     private function triggerRankUpdates(User $buyer): void
     {
@@ -334,10 +378,7 @@ class CommissionDistributor
     }
 
     /**
-     * 1. SPONSOR BONUS - CORRIGÉ
-     * Commission de parrainage - UNE SEULE FOIS lors de l'activation avec package
-     * ✅ Ne vérifie plus is_active ni activated_at pour permettre l'activation manuelle
-     * ✅ Status 'paid' directement
+     * 1. SPONSOR BONUS
      */
     private function calculateSponsorBonus(User $buyer, $item, $orderId, CommissionPeriod $period): ?Commission
     {
@@ -347,12 +388,10 @@ class CommissionDistributor
         if (!$sponsor->is_active) {
             Log::info('Sponsor bonus non distribué - sponsor inactif', [
                 'sponsor_id' => $sponsor->id,
-                'sponsor_name' => $sponsor->name,
             ]);
             return null;
         }
 
-        // Vérifier que c'est bien un package (activation)
         $itemType = $this->getItemType($item);
         if ($itemType !== 'package') {
             Log::info('Sponsor bonus non distribué - pas un package', [
@@ -362,7 +401,6 @@ class CommissionDistributor
             return null;
         }
 
-        // ✅ Vérifier que le sponsor n'a pas déjà reçu le bonus
         if ($this->hasReceivedSponsorBonus($sponsor, $buyer)) {
             Log::info('Sponsor bonus déjà distribué - ignoré', [
                 'sponsor_id' => $sponsor->id,
@@ -371,13 +409,9 @@ class CommissionDistributor
             return null;
         }
 
-        // ✅ SUPPRESSION DE LA VÉRIFICATION DE activated_at
-        // ✅ SUPPRESSION DE LA VÉRIFICATION DE is_active
-
         $rank = $sponsor->rankObject;
         $rankLevel = $rank ? $rank->level : 1;
 
-        // Vérifier les conditions de PV mensuel du sponsor
         $requirements = $this->getMonthlyPVRequirements();
         $req = $requirements[$rankLevel] ?? ['personal' => 0, 'group' => 0];
 
@@ -413,15 +447,6 @@ class CommissionDistributor
             $description = "Sponsor bonus (30%) pour activation de {$buyer->name} avec {$itemName}";
         }
 
-        Log::info('Création Sponsor Bonus', [
-            'sponsor_id' => $sponsor->id,
-            'buyer_id' => $buyer->id,
-            'rank_level' => $rankLevel,
-            'amount' => $amount,
-            'package' => $itemName,
-            'activation_method' => $buyer->activation_method ?? 'code',
-        ]);
-
         return Commission::create([
             'user_id' => $sponsor->id,
             'from_user_id' => $buyer->id,
@@ -436,13 +461,13 @@ class CommissionDistributor
             'product_id' => null,
             'generation' => 1,
             'calculation_type' => 'automatic',
-            'status' => 'paid', // ✅ Payé immédiatement
-            'paid_at' => now(),  // ✅ Date de paiement
+            'status' => 'paid',
+            'paid_at' => now(),
         ]);
     }
 
     /**
-     * 2. BONUS DIRECT - CALCULÉ SUR LE PV MENSUEL DU SPONSOR
+     * 2. BONUS DIRECT
      */
     private function calculateDirectBonuses(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
@@ -452,21 +477,11 @@ class CommissionDistributor
         $buyerLevel = $buyerRank ? $buyerRank->level : 1;
 
         if ($buyerLevel < 3) {
-            Log::info('Pas de bonus direct - acheteur niveau < 3', [
-                'buyer_id' => $buyer->id,
-                'buyer_level' => $buyerLevel,
-            ]);
             return $commissions;
         }
 
         $sponsor = $buyer->parrain;
-        if (!$sponsor) {
-            Log::info('Pas de bonus direct - pas de sponsor', ['buyer_id' => $buyer->id]);
-            return $commissions;
-        }
-
-        if (!$sponsor->is_active) {
-            Log::info('Pas de bonus direct - sponsor inactif', ['sponsor_id' => $sponsor->id]);
+        if (!$sponsor || !$sponsor->is_active) {
             return $commissions;
         }
 
@@ -474,10 +489,6 @@ class CommissionDistributor
         $sponsorLevel = $sponsorRank ? $sponsorRank->level : 1;
 
         if ($sponsorLevel < 3) {
-            Log::info('Pas de bonus direct - sponsor niveau < 3', [
-                'sponsor_id' => $sponsor->id,
-                'sponsor_level' => $sponsorLevel,
-            ]);
             return $commissions;
         }
 
@@ -485,30 +496,16 @@ class CommissionDistributor
         $req = $requirements[$sponsorLevel] ?? ['personal' => 0, 'group' => 0];
 
         if (($sponsor->monthly_pv ?? 0) < $req['personal']) {
-            Log::info('Pas de bonus direct - PV personnel insuffisant', [
-                'sponsor_id' => $sponsor->id,
-                'monthly_pv' => $sponsor->monthly_pv,
-                'required' => $req['personal'],
-            ]);
             return $commissions;
         }
 
         if ($req['group'] > 0 && ($sponsor->team_pv ?? 0) < $req['group']) {
-            Log::info('Pas de bonus direct - PV groupe insuffisant', [
-                'sponsor_id' => $sponsor->id,
-                'team_pv' => $sponsor->team_pv,
-                'required' => $req['group'],
-            ]);
             return $commissions;
         }
 
         $sponsorRate = $this->getCommissionRate($sponsorLevel);
         
         if ($sponsorRate <= 0) {
-            Log::info('Pas de bonus direct - taux à 0', [
-                'sponsor_id' => $sponsor->id,
-                'sponsor_level' => $sponsorLevel,
-            ]);
             return $commissions;
         }
 
@@ -538,9 +535,8 @@ class CommissionDistributor
                 'status' => 'pending',
             ]);
 
-            Log::info('Bonus direct créé sur PV mensuel du sponsor', [
+            Log::info('Bonus direct créé', [
                 'sponsor_id' => $sponsor->id,
-                'sponsor_monthly_pv' => $sponsorMonthlyPV,
                 'amount' => $amount,
                 'rate' => $sponsorRate,
             ]);
@@ -626,7 +622,7 @@ class CommissionDistributor
                         'type' => 'indirect',
                         'amount' => $amount,
                         'percentage' => $difference,
-                        'description' => "Bonus Indirect Génération {$generation} ({$difference}%) - PV Mensuel {$current->monthly_pv} sur PV de {$pvAmount} pour {$buyer->name} ({$itemName})",
+                        'description' => "Bonus Indirect Génération {$generation} ({$difference}%) pour {$buyer->name} ({$itemName})",
                         'order_id' => $orderId,
                         'package_id' => $itemType === 'package' ? $itemId : null,
                         'product_id' => $itemType === 'product' ? $itemId : null,
@@ -639,7 +635,6 @@ class CommissionDistributor
                         'user_id' => $current->id,
                         'generation' => $generation,
                         'amount' => $amount,
-                        'difference' => $difference,
                     ]);
                 }
             }
@@ -715,7 +710,7 @@ class CommissionDistributor
                             'type' => 'leadership',
                             'amount' => $amount,
                             'percentage' => $rate,
-                            'description' => "Leadership Niveau {$rankLevel} ({$rate}%) - PV Mensuel {$current->monthly_pv} Génération {$generation} sur PV de {$pvAmount} pour {$buyer->name} ({$itemName})",
+                            'description' => "Leadership Niveau {$rankLevel} ({$rate}%) pour {$buyer->name} ({$itemName})",
                             'order_id' => $orderId,
                             'package_id' => $itemType === 'package' ? $itemId : null,
                             'product_id' => $itemType === 'product' ? $itemId : null,
@@ -727,9 +722,7 @@ class CommissionDistributor
                         Log::info('Leadership bonus créé', [
                             'user_id' => $current->id,
                             'rank_level' => $rankLevel,
-                            'generation' => $generation,
                             'amount' => $amount,
-                            'rate' => $rate,
                         ]);
                     }
                 }

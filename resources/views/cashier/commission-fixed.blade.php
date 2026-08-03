@@ -96,6 +96,7 @@
         flex-wrap: wrap;
         gap: 0.5rem;
         margin-bottom: 1rem;
+        align-items: center;
     }
     .filter-section select,
     .filter-section input {
@@ -114,6 +115,61 @@
         outline: none;
         box-shadow: 0 0 0 3px var(--border-focus);
     }
+    
+    /* RECHERCHE EN TEMPS RÉEL */
+    .search-wrapper {
+        position: relative;
+        flex: 2;
+        min-width: 200px;
+    }
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+        pointer-events: none;
+    }
+    .search-wrapper .search-input {
+        width: 100%;
+        padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        transition: all 0.2s ease;
+    }
+    .search-wrapper .search-input:focus {
+        border-color: var(--primary-500);
+        outline: none;
+        box-shadow: 0 0 0 3px var(--border-focus);
+    }
+    .search-wrapper .search-input::placeholder {
+        color: var(--text-tertiary);
+    }
+    .search-wrapper .clear-search {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+        cursor: pointer;
+        display: none;
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    .search-wrapper .clear-search:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+    .search-wrapper .clear-search.visible {
+        display: block;
+    }
+    
     .filter-section .btn-filter {
         padding: 0.375rem 1.5rem;
         background: var(--primary-500);
@@ -188,6 +244,44 @@
     .badge-status-approved { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
     .badge-status-paid { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
     .badge-status-rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .badge-status-cancelled { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+    
+    /* RECHERCHE - SURVOL DES LIGNES */
+    .commission-row {
+        transition: all 0.2s ease;
+    }
+    .commission-row:hover {
+        background: var(--bg-hover);
+    }
+    .commission-row.hidden {
+        display: none;
+    }
+    
+    /* BADGE DE TYPE POUR TOUS LES TYPES */
+    .type-badge-cash_pos {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+    .type-badge-direct {
+        background: rgba(99, 102, 241, 0.15);
+        color: #6366f1;
+    }
+    .type-badge-indirect {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+    .type-badge-leadership {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+    .type-badge-sponsor {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+    .type-badge-default {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+    }
     
     @media (max-width: 640px) {
         .commission-stats {
@@ -209,6 +303,9 @@
             width: 100%;
             min-width: unset;
         }
+        .search-wrapper {
+            width: 100%;
+        }
         .payment-badge {
             font-size: 0.45rem;
         }
@@ -228,9 +325,6 @@
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                <svg class="inline-block w-6 h-6 text-primary-500 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
                 Toutes les commissions
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
@@ -258,7 +352,7 @@
         <div class="commission-stat-card">
             <div class="icon icon-green">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
             <div class="number">${{ number_format($stats['total_commissions'] ?? 0, 2) }}</div>
@@ -268,7 +362,7 @@
         <div class="commission-stat-card animate-fadeInUp delay-2">
             <div class="icon icon-blue">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
             <div class="number">${{ number_format($stats['pos_total'] ?? 0, 2) }}</div>
@@ -296,19 +390,44 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    <!-- Filtres avec recherche en temps réel -->
     <div class="card animate-fadeInUp delay-2">
-        <form method="GET" action="{{ route('cashier.commissions') }}" class="filter-section">
-            <select name="type" class="flex-1">
+        <form method="GET" action="{{ route('cashier.commissions') }}" class="filter-section" id="filterForm">
+            <!-- RECHERCHE EN TEMPS RÉEL -->
+            <div class="search-wrapper">
+                <span class="search-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       placeholder="🔍 Rechercher par nom, code, type..."
+                       autocomplete="off">
+                <button type="button" id="clearSearch" class="clear-search" aria-label="Effacer la recherche">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <select name="type" class="flex-1" id="typeFilter">
                 <option value="">Tous les types</option>
+                @php
+                    // TOUS LES TYPES DE COMMISSIONS (sauf purchase, new_client, pos_transaction)
+                    $allowedTypes = ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor'];
+                @endphp
                 @foreach($types ?? [] as $type)
-                    <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
-                        {{ ucfirst(str_replace('_', ' ', $type)) }}
-                    </option>
+                    @if(in_array($type, $allowedTypes))
+                        <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
+                            {{ $type == 'cash_pos' ? 'CASH POS' : ucfirst($type) }}
+                        </option>
+                    @endif
                 @endforeach
             </select>
             
-            <select name="status" class="flex-1">
+            <select name="status" class="flex-1" id="statusFilter">
                 <option value="">Tous les statuts</option>
                 @foreach($statuses ?? [] as $key => $label)
                     <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
@@ -317,13 +436,13 @@
                 @endforeach
             </select>
             
-            <select name="source" class="flex-1">
+            <select name="source" class="flex-1" id="sourceFilter">
                 <option value="">Toutes les sources</option>
                 <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
                 <option value="mlm" {{ request('source') == 'mlm' ? 'selected' : '' }}>MLM</option>
             </select>
             
-            <select name="user_id" class="flex-1">
+            <select name="user_id" class="flex-1" id="userFilter">
                 <option value=""> Tous les membres</option>
                 @foreach($members ?? [] as $member)
                     <option value="{{ $member->id }}" {{ request('user_id') == $member->id ? 'selected' : '' }}>
@@ -332,10 +451,10 @@
                 @endforeach
             </select>
             
-            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début" class="flex-1">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin" class="flex-1">
+            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début" class="flex-1" id="dateFrom">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin" class="flex-1" id="dateTo">
             
-            <button type="submit" class="btn-filter">🔍 Filtrer</button>
+            <button type="submit" class="btn-filter"> Filtrer</button>
             <a href="{{ route('cashier.commissions') }}" class="btn-reset">↺ Réinitialiser</a>
         </form>
     </div>
@@ -358,9 +477,34 @@
                         <th class="hidden lg:table-cell">Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="commissionsTable">
                     @forelse($commissions ?? [] as $commission)
-                        <tr>
+                        @php
+                            // EXCLURE purchase, new_client, pos_transaction
+                            $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
+                            if (in_array($commission->type, $excludedTypes)) {
+                                continue;
+                            }
+                            
+                            // Déterminer la classe CSS du type
+                            $typeClass = 'type-badge-' . $commission->type;
+                            if (!in_array($commission->type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor'])) {
+                                $typeClass = 'type-badge-default';
+                            }
+                            
+                            // Libellé du type
+                            $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
+                            if ($commission->type == 'cash_pos') {
+                                $typeLabel = 'CASH POS';
+                            }
+                        @endphp
+                        <tr class="commission-row" 
+                            data-search="{{ strtolower($commission->user?->name ?? '') }} {{ strtolower($commission->user?->sponsor_id ?? '') }} {{ strtolower($commission->user?->email ?? '') }} {{ strtolower($commission->fromUser?->name ?? '') }} {{ strtolower($commission->type ?? '') }} {{ strtolower($typeLabel ?? '') }} {{ strtolower($commission->status ?? '') }} {{ $commission->id }}"
+                            data-type="{{ $commission->type }}"
+                            data-status="{{ $commission->status }}"
+                            data-source="{{ $commission->source }}"
+                            data-user="{{ $commission->user_id }}"
+                            data-date="{{ $commission->created_at->format('Y-m-d') }}">
                             <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $commission->id }}</td>
                             <td>
                                 <div class="font-medium text-sm">{{ $commission->user?->name ?? 'N/A' }}</div>
@@ -382,19 +526,9 @@
                                 @endif
                             </td>
                             <td>
-                                @if($commission->type == 'cash_pos')
-                                    <span class="badge" style="background: rgba(34, 197, 94, 0.12); color: #22c55e;">CASH POS</span>
-                                @elseif($commission->type == 'direct')
-                                    <span class="badge" style="background: rgba(99,102,241,0.15); color: #6366f1;">Direct</span>
-                                @elseif($commission->type == 'indirect')
-                                    <span class="badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;">Indirect</span>
-                                @elseif($commission->type == 'leadership')
-                                    <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b;">Leadership</span>
-                                @elseif($commission->type == 'sponsor')
-                                    <span class="badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">Sponsor</span>
-                                @else
-                                    <span class="badge" style="background: var(--bg-secondary); color: var(--text-secondary);">{{ ucfirst($commission->type) }}</span>
-                                @endif
+                                <span class="badge {{ $typeClass }}" style="padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.6rem; font-weight: 600;">
+                                    {{ $typeLabel }}
+                                </span>
                             </td>
                             <td class="commission-percentage">
                                 {{ $commission->percentage ?? 0 }}%
@@ -416,6 +550,8 @@
                                     <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">Payée</span>
                                 @elseif($commission->status == 'rejected')
                                     <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">Rejetée</span>
+                                @elseif($commission->status == 'cancelled')
+                                    <span class="badge" style="background: rgba(107, 114, 128, 0.15); color: #6b7280;">Annulée</span>
                                 @else
                                     <span class="badge" style="background: var(--bg-secondary); color: var(--text-secondary);">{{ ucfirst($commission->status) }}</span>
                                 @endif
@@ -440,7 +576,7 @@
                         <tr>
                             <td colspan="10" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <p class="text-lg font-medium text-[var(--text-primary)]">Aucune commission</p>
                                 <p class="text-sm text-[var(--text-tertiary)] mt-1">Aucune commission trouvée</p>
@@ -487,13 +623,135 @@
                         <span class="w-3 h-3 rounded-full" style="background: #22c55e;"></span>
                         <span class="text-[var(--text-secondary)]">Sponsor Bonus</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #8b5cf6;"></span>
-                        <span class="text-[var(--text-secondary)]">Autres</span>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const rows = document.querySelectorAll('#commissionsTable .commission-row');
+    const typeFilter = document.getElementById('typeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const sourceFilter = document.getElementById('sourceFilter');
+    const userFilter = document.getElementById('userFilter');
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    let searchTimeout = null;
+
+    // Fonction de recherche
+    function filterRows() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const type = typeFilter.value;
+        const status = statusFilter.value;
+        const source = sourceFilter.value;
+        const user = userFilter.value;
+        const dateFromVal = dateFrom.value;
+        const dateToVal = dateTo.value;
+
+        let visibleCount = 0;
+
+        rows.forEach(function(row) {
+            const searchData = row.dataset.search || '';
+            const rowType = row.dataset.type || '';
+            const rowStatus = row.dataset.status || '';
+            const rowSource = row.dataset.source || '';
+            const rowUser = row.dataset.user || '';
+            const rowDate = row.dataset.date || '';
+
+            let show = true;
+
+            // Recherche en temps réel
+            if (searchTerm && !searchData.includes(searchTerm)) {
+                show = false;
+            }
+
+            // Filtres
+            if (type && rowType !== type) show = false;
+            if (status && rowStatus !== status) show = false;
+            if (source && rowSource !== source) show = false;
+            if (user && rowUser !== user) show = false;
+            
+            // Filtres dates
+            if (dateFromVal && rowDate < dateFromVal) show = false;
+            if (dateToVal && rowDate > dateToVal) show = false;
+
+            if (show) {
+                row.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        // Afficher/masquer le bouton "Effacer"
+        if (searchTerm.length > 0) {
+            clearSearchBtn.classList.add('visible');
+        } else {
+            clearSearchBtn.classList.remove('visible');
+        }
+
+        // Afficher un message si aucun résultat
+        const noResultMsg = document.querySelector('#noResultsMsg');
+        if (visibleCount === 0 && rows.length > 0) {
+            if (!noResultMsg) {
+                const msg = document.createElement('tr');
+                msg.id = 'noResultsMsg';
+                msg.innerHTML = `
+                    <td colspan="10" class="text-center py-8 text-[var(--text-secondary)]">
+                        <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <p class="text-base font-medium text-[var(--text-primary)]">Aucun résultat</p>
+                        <p class="text-sm text-[var(--text-tertiary)] mt-1">Aucune commission ne correspond à votre recherche</p>
+                    </td>
+                `;
+                document.querySelector('#commissionsTable').appendChild(msg);
+            }
+        } else {
+            if (noResultMsg) noResultMsg.remove();
+        }
+    }
+
+    // Événements de recherche en temps réel
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterRows, 200);
+    });
+
+    // Événements des filtres
+    typeFilter.addEventListener('change', filterRows);
+    statusFilter.addEventListener('change', filterRows);
+    sourceFilter.addEventListener('change', filterRows);
+    userFilter.addEventListener('change', filterRows);
+    dateFrom.addEventListener('change', filterRows);
+    dateTo.addEventListener('change', filterRows);
+
+    // Bouton "Effacer"
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        clearSearchBtn.classList.remove('visible');
+        filterRows();
+        searchInput.focus();
+    });
+
+    // Touche Escape pour effacer la recherche
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            clearSearchBtn.classList.remove('visible');
+            filterRows();
+            searchInput.blur();
+        }
+    });
+
+    // Initialisation
+    filterRows();
+});
+</script>
+@endpush
 @endsection

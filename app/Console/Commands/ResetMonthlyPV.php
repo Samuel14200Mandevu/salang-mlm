@@ -52,6 +52,7 @@ class ResetMonthlyPV extends Command
             }
         }
 
+        // ✅ Inclure tous les utilisateurs (membres + clients)
         $query = User::where('is_active', true);
 
         if ($userId) {
@@ -71,7 +72,7 @@ class ResetMonthlyPV extends Command
         if ($isDryRun) {
             $this->warn($this->icon('warning') . ' Mode SIMULATION - Aucune modification');
             
-            $headers = ['ID', 'Nom', 'PV actuel', 'Nouveau PV', 'Grade'];
+            $headers = ['ID', 'Nom', 'Type', 'PV actuel', 'Nouveau PV', 'Grade'];
             $rows = [];
             
             $bar = $this->output->createProgressBar($users->count());
@@ -88,10 +89,12 @@ class ResetMonthlyPV extends Command
                     ->sum('order_items.pv_value');
                 
                 $rankName = $user->rank_name ?? 'Distributeur';
+                $userType = $user->user_type ?? 'member';
                 
                 $rows[] = [
                     $user->id,
                     $user->name,
+                    $userType,
                     $user->monthly_pv,
                     (int) $totalPV,
                     $rankName,
@@ -135,6 +138,7 @@ class ResetMonthlyPV extends Command
                     
                     $oldPV = $user->monthly_pv;
                     
+                    // ✅ Réinitialiser monthly_pv ET monthly_bv
                     $user->monthly_pv = (int) $totalPV;
                     $user->monthly_bv = (int) $totalBV;
                     $user->saveQuietly();
@@ -149,6 +153,7 @@ class ResetMonthlyPV extends Command
                         Log::info('PV mensuel réinitialisé', [
                             'user_id' => $user->id,
                             'user_name' => $user->name,
+                            'user_type' => $user->user_type,
                             'old_monthly_pv' => $oldPV,
                             'new_monthly_pv' => $totalPV,
                             'month' => now()->format('Y-m'),
