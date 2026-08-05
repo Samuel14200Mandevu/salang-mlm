@@ -234,6 +234,46 @@
         color: #3b82f6;
     }
 
+    /* STYLES POUR L'IMPRESSION */
+    .print-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .print-actions .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+    .btn-print-thermal {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+    }
+    .btn-print-thermal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4);
+    }
+    .btn-print-a4 {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: white;
+        box-shadow: 0 4px 20px rgba(30, 41, 59, 0.3);
+    }
+    .btn-print-a4:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.4);
+    }
+
+    .thermal-ticket {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        width: 80mm;
+        max-width: 80mm;
+        padding: 10px;
+        background: white;
+        color: black;
+        display: none;
+    }
+
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -297,6 +337,22 @@
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
         </div>
+        
+        <!-- BOUTONS D'IMPRESSION -->
+        <div class="print-actions animate-fadeInUp delay-2">
+            <button onclick="printThermalTicket()" class="btn btn-print-thermal">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                🧾 Ticket thermique
+            </button>
+            <button onclick="window.print()" class="btn btn-print-a4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                📄 Imprimer A4
+            </button>
+        </div>
     @endif
 
     @if(session('error'))
@@ -340,7 +396,6 @@
             <input type="hidden" name="source" value="pos">
             
             <div class="form-row">
-                <!-- Client -->
                 <div class="form-group">
                     <label>Nom client <span class="required">*</span></label>
                     <input type="text" name="name" class="input" placeholder="Jean Dupont" required>
@@ -395,6 +450,52 @@
                 </a>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- TICKET THERMIQUE CACHÉ -->
+<div class="thermal-ticket" id="thermalTicket">
+    <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:8px;">
+        <h2 style="font-size:16px;font-weight:bold;margin:0;">SALANG GROUP SARL</h2>
+        <p style="font-size:10px;margin:2px 0;color:#666;">E-COMMERCE &amp; MLM</p>
+        <p style="font-size:10px;margin:2px 0;color:#666;">Rond Point CHIKUDU, Batiment KBS</p>
+        <p style="font-size:10px;margin:2px 0;color:#666;">Tel: +243 975 220 079</p>
+        <p style="font-size:10px;margin:2px 0;color:#666;">--------------------------------</p>
+        <p style="font-size:11px;font-weight:bold;margin:4px 0;">Ticket de caisse</p>
+        <p id="ticketDate" style="font-size:10px;margin:2px 0;color:#666;">{{ now()->format('d/m/Y H:i') }}</p>
+        <p style="font-size:10px;margin:2px 0;color:#666;">--------------------------------</p>
+    </div>
+    
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin:8px 0;">
+        <thead>
+            <tr>
+                <th style="text-align:left;border-bottom:1px solid #ccc;padding:4px 0;font-size:10px;text-transform:uppercase;">Article</th>
+                <th style="text-align:right;border-bottom:1px solid #ccc;padding:4px 0;font-size:10px;text-transform:uppercase;">Qté</th>
+                <th style="text-align:right;border-bottom:1px solid #ccc;padding:4px 0;font-size:10px;text-transform:uppercase;">Prix</th>
+                <th style="text-align:right;border-bottom:1px solid #ccc;padding:4px 0;font-size:10px;text-transform:uppercase;">Total</th>
+            </tr>
+        </thead>
+        <tbody id="ticketItems">
+            <tr>
+                <td colspan="4" style="text-align:center;color:#999;padding:8px 0;">Aucun article</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div style="border-top:1px solid #ccc;padding-top:8px;margin-top:8px;text-align:right;font-size:14px;font-weight:bold;">
+        <p>Total: <span id="ticketTotal">$0.00</span></p>
+        <p style="font-size:12px;font-weight:normal;color:#666;">
+            Commission CASH: <span id="ticketCommission">$0.00</span>
+        </p>
+    </div>
+    
+    <div style="text-align:center;font-size:10px;color:#666;border-top:1px dashed #ccc;padding-top:8px;margin-top:8px;">
+        <p>--------------------------------</p>
+        <p style="font-weight:bold;">Merci pour votre achat!</p>
+        <div style="font-size:9px;color:#999;margin-top:4px;">
+            N° ID.NAT: 22-7300-N634640<br>
+            N° RCCM: CD/BKVIRCM/20-8-001165001
+        </div>
     </div>
 </div>
 
@@ -481,6 +582,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// ================================================================
+//  IMPRESSION TICKET THERMIQUE
+// ================================================================
+function printThermalTicket() {
+    const orderData = getOrderData();
+    if (!orderData) {
+        alert('Aucune commande à imprimer');
+        return;
+    }
+    
+    updateThermalTicket(orderData);
+    
+    const ticket = document.getElementById('thermalTicket');
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Ticket de caisse</title>
+                <style>
+                    body { margin: 0; padding: 0; display: flex; justify-content: center; background: #f0f0f0; }
+                    .print-content { width: 80mm; padding: 10px; background: white; font-family: 'Courier New', monospace; font-size: 12px; }
+                    .print-content .header { text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 8px; margin-bottom: 8px; }
+                    .print-content .header h2 { font-size: 16px; font-weight: bold; margin: 0; }
+                    .print-content .header p { font-size: 10px; margin: 2px 0; color: #666; }
+                    .print-content .items { width: 100%; border-collapse: collapse; font-size: 11px; margin: 8px 0; }
+                    .print-content .items th { text-align: left; border-bottom: 1px solid #ccc; padding: 4px 0; font-size: 10px; text-transform: uppercase; }
+                    .print-content .items td { padding: 3px 0; border-bottom: 1px dashed #eee; }
+                    .print-content .items .text-right { text-align: right; }
+                    .print-content .total { border-top: 1px solid #ccc; padding-top: 8px; margin-top: 8px; text-align: right; font-size: 14px; font-weight: bold; }
+                    .print-content .footer { text-align: center; font-size: 10px; color: #666; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 8px; }
+                    .print-content .footer .signature { font-size: 9px; color: #999; margin-top: 4px; }
+                    @media print { body { background: white; } }
+                </style>
+            </head>
+            <body>
+                <div class="print-content">
+                    ${ticket.innerHTML}
+                </div>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 1000);
+                    };
+                <\/script>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function updateThermalTicket(data) {
+    document.getElementById('ticketDate').textContent = data.date || new Date().toLocaleString();
+    
+    const tbody = document.getElementById('ticketItems');
+    if (data.items && data.items.length > 0) {
+        tbody.innerHTML = data.items.map(item => `
+            <tr>
+                <td>${item.name}</td>
+                <td class="text-right">${item.quantity}</td>
+                <td class="text-right">$${item.price.toFixed(2)}</td>
+                <td class="text-right">$${(item.price * item.quantity).toFixed(2)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    document.getElementById('ticketTotal').textContent = `$${data.total.toFixed(2)}`;
+    document.getElementById('ticketCommission').textContent = `$${data.commission.toFixed(2)}`;
+}
+
+function getOrderData() {
+    try {
+        const data = localStorage.getItem('last_order_data');
+        if (data) {
+            return JSON.parse(data);
+        }
+    } catch (e) {
+        console.error('Erreur:', e);
+    }
+    return null;
+}
+
+// Sauvegarder les données de la commande
+function saveOrderData(orderData) {
+    localStorage.setItem('last_order_data', JSON.stringify(orderData));
+}
+
+// Récupérer les données depuis la session PHP
+@if(session('success'))
+    @php
+        // Récupérer la dernière commande
+        $lastOrder = \App\Models\Order::with('items')->latest()->first();
+        if ($lastOrder) {
+            $orderData = [
+                'date' => now()->format('d/m/Y H:i'),
+                'items' => $lastOrder->items->map(function($item) {
+                    return [
+                        'name' => $item->name,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                    ];
+                })->toArray(),
+                'total' => $lastOrder->total,
+                'commission' => $lastOrder->metadata['commission_amount'] ?? 0,
+            ];
+            echo "localStorage.setItem('last_order_data', '" . json_encode($orderData) . "');";
+        }
+    @endphp
+@endif
 </script>
 @endpush
 @endsection

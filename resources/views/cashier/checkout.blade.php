@@ -115,6 +115,157 @@
         margin-top: 0.25rem;
     }
     
+    /* STYLES POUR LA RECHERCHE DE CLIENT */
+    .customer-search-wrapper {
+        position: relative;
+    }
+    .customer-search-wrapper .search-input {
+        padding-right: 2.5rem;
+    }
+    .customer-search-wrapper .clear-search {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        display: none;
+        padding: 0.25rem;
+        border-radius: 50%;
+    }
+    .customer-search-wrapper .clear-search:hover {
+        color: var(--text-primary);
+        background: var(--bg-hover);
+    }
+    .customer-search-wrapper .clear-search.visible {
+        display: block;
+    }
+    
+    .customer-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 50;
+        display: none;
+        margin-top: 0.25rem;
+        box-shadow: var(--shadow-lg);
+    }
+    .customer-results.visible {
+        display: block;
+    }
+    .customer-results .result-item {
+        padding: 0.625rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .customer-results .result-item:last-child {
+        border-bottom: none;
+    }
+    .customer-results .result-item:hover {
+        background: var(--bg-hover);
+    }
+    .customer-results .result-item .customer-avatar {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .customer-results .result-item .customer-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .customer-results .result-item .customer-info .name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    .customer-results .result-item .customer-info .details {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+    }
+    .customer-results .result-item .customer-info .details .sponsor-code {
+        color: var(--primary-500);
+        font-weight: 600;
+    }
+    .customer-results .result-item .select-badge {
+        font-size: 0.6rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        flex-shrink: 0;
+    }
+    .customer-selected {
+        background: rgba(34, 197, 94, 0.05);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    .customer-selected.visible {
+        display: flex;
+    }
+    .customer-selected .customer-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+    .customer-selected .customer-info .name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    .customer-selected .customer-info .details {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+    }
+    .customer-selected .change-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+    }
+    .customer-selected .change-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+    
     .sponsor-info {
         background: rgba(59, 130, 246, 0.08);
         border: 1px solid rgba(59, 130, 246, 0.15);
@@ -281,6 +432,17 @@
         .card {
             padding: 0.875rem;
         }
+        .customer-selected {
+            flex-wrap: wrap;
+        }
+        .customer-selected .change-btn {
+            margin-left: 0;
+            width: 100%;
+            text-align: center;
+        }
+        .customer-results .result-item {
+            padding: 0.5rem 0.75rem;
+        }
     }
 </style>
 @endpush
@@ -324,7 +486,7 @@
             <svg class="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <h3 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">⚠️ Votre panier est vide</h3>
+            <h3 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Votre panier est vide</h3>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-1">
                 Ajoutez des produits avant de passer commande.
             </p>
@@ -415,85 +577,126 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             
-                            <div class="form-group">
-                                <label for="name">Nom complet <span class="text-red-500">*</span></label>
-                                <input type="text" 
-                                       id="name" 
-                                       name="name" 
-                                       class="input @error('name') input-error @enderror" 
-                                       placeholder="Nom du client"
-                                       value="{{ old('name') }}"
-                                       required>
-                                @error('name')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
+                            <!-- RECHERCHE DE CLIENT -->
+                            <div class="form-group md:col-span-2">
+                                <label for="customer_search">Rechercher un client existant</label>
+                                <div class="customer-search-wrapper">
+                                    <input type="text" 
+                                           id="customer_search" 
+                                           class="input search-input" 
+                                           placeholder="Rechercher par nom, téléphone ou email..."
+                                           autocomplete="off">
+                                    <button type="button" id="clearCustomerSearch" class="clear-search" aria-label="Effacer la recherche">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                    <div id="customerResults" class="customer-results"></div>
+                                </div>
+                                
+                                <!-- Client sélectionné -->
+                                <div id="customerSelected" class="customer-selected">
+                                    <div id="selectedAvatar" class="customer-avatar">JD</div>
+                                    <div class="customer-info">
+                                        <div id="selectedName" class="name">Jean Dupont</div>
+                                        <div id="selectedDetails" class="details">
+                                            <span id="selectedPhone">+225 07 00 00 00 00</span>
+                                            <span class="sponsor-code" id="selectedSponsorCode">SALXXXXXX</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="changeCustomerBtn" class="change-btn">Changer</button>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="phone">Téléphone <span class="text-red-500">*</span></label>
-                                <input type="tel" 
-                                       id="phone" 
-                                       name="phone" 
-                                       class="input @error('phone') input-error @enderror" 
-                                       placeholder="Numéro de téléphone"
-                                       value="{{ old('phone') }}"
-                                       required>
-                                @error('phone')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            <!-- Champs cachés pour les données du client sélectionné -->
+                            <input type="hidden" id="selectedCustomerId" name="customer_id" value="{{ old('customer_id') }}">
+                            <input type="hidden" id="selectedCustomerName" name="customer_name" value="{{ old('customer_name') }}">
+                            <input type="hidden" id="selectedCustomerPhone" name="customer_phone" value="{{ old('customer_phone') }}">
+                            <input type="hidden" id="selectedCustomerEmail" name="customer_email" value="{{ old('customer_email') }}">
+                            <input type="hidden" id="selectedCustomerAddress" name="customer_address" value="{{ old('customer_address') }}">
+                            <input type="hidden" id="selectedCustomerCity" name="customer_city" value="{{ old('customer_city') }}">
+                            <input type="hidden" id="selectedCustomerCountry" name="customer_country" value="{{ old('customer_country') }}">
+                            <input type="hidden" id="selectedCustomerParrainId" name="customer_parrain_id" value="{{ old('customer_parrain_id') }}">
 
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" 
-                                       id="email" 
-                                       name="email" 
-                                       class="input @error('email') input-error @enderror" 
-                                       placeholder="Email du client"
-                                       value="{{ old('email') }}">
-                                @error('email')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            <!-- Informations manuelles (si nouveau client) -->
+                            <div id="manualCustomerFields" style="{{ old('customer_id') ? 'display:none;' : '' }}">
+                                <div class="form-group">
+                                    <label for="name">Nom complet <span class="text-red-500">*</span></label>
+                                    <input type="text" 
+                                           id="name" 
+                                           name="name" 
+                                           class="input @error('name') input-error @enderror" 
+                                           placeholder="Nom du client"
+                                           value="{{ old('name') }}">
+                                    @error('name')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                            <!-- ✅ NOUVEAU CHAMPS ADRESSE, VILLE, PAYS -->
-                            <div class="form-group">
-                                <label for="address">Adresse</label>
-                                <input type="text" 
-                                       id="address" 
-                                       name="address" 
-                                       class="input @error('address') input-error @enderror" 
-                                       placeholder="Adresse du client"
-                                       value="{{ old('address') }}">
-                                @error('address')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
-                            </div>
+                                <div class="form-group">
+                                    <label for="phone">Téléphone <span class="text-red-500">*</span></label>
+                                    <input type="tel" 
+                                           id="phone" 
+                                           name="phone" 
+                                           class="input @error('phone') input-error @enderror" 
+                                           placeholder="Numéro de téléphone"
+                                           value="{{ old('phone') }}">
+                                    @error('phone')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                            <div class="form-group">
-                                <label for="city">Ville</label>
-                                <input type="text" 
-                                       id="city" 
-                                       name="city" 
-                                       class="input @error('city') input-error @enderror" 
-                                       placeholder="Ville"
-                                       value="{{ old('city') }}">
-                                @error('city')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
-                            </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" 
+                                           id="email" 
+                                           name="email" 
+                                           class="input @error('email') input-error @enderror" 
+                                           placeholder="Email du client"
+                                           value="{{ old('email') }}">
+                                    @error('email')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                            <div class="form-group">
-                                <label for="country">Pays</label>
-                                <input type="text" 
-                                       id="country" 
-                                       name="country" 
-                                       class="input @error('country') input-error @enderror" 
-                                       placeholder="Pays"
-                                       value="{{ old('country') }}">
-                                @error('country')
-                                    <p class="error-text">{{ $message }}</p>
-                                @enderror
+                                <div class="form-group">
+                                    <label for="address">Adresse</label>
+                                    <input type="text" 
+                                           id="address" 
+                                           name="address" 
+                                           class="input @error('address') input-error @enderror" 
+                                           placeholder="Adresse du client"
+                                           value="{{ old('address') }}">
+                                    @error('address')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="city">Ville</label>
+                                    <input type="text" 
+                                           id="city" 
+                                           name="city" 
+                                           class="input @error('city') input-error @enderror" 
+                                           placeholder="Ville"
+                                           value="{{ old('city') }}">
+                                    @error('city')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="country">Pays</label>
+                                    <input type="text" 
+                                           id="country" 
+                                           name="country" 
+                                           class="input @error('country') input-error @enderror" 
+                                           placeholder="Pays"
+                                           value="{{ old('country') }}">
+                                    @error('country')
+                                        <p class="error-text">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="form-group md:col-span-2">
@@ -593,7 +796,7 @@
                     </div>
                     
                     <div class="mt-3 text-xs text-[var(--text-secondary)] text-center border-t border-[var(--border-color)] pt-3">
-                        <p>💰 Paiement en espèces</p>
+                        <p>Paiement en espèces</p>
                         <p class="mt-0.5">Commission CASH POS payée directement au parrain</p>
                     </div>
                 </div>
@@ -604,6 +807,184 @@
 
 @push('scripts')
 <script>
+// ============================================================
+//  RECHERCHE DE CLIENT
+// ============================================================
+const customerSearch = document.getElementById('customer_search');
+const customerResults = document.getElementById('customerResults');
+const clearSearchBtn = document.getElementById('clearCustomerSearch');
+const customerSelected = document.getElementById('customerSelected');
+const selectedAvatar = document.getElementById('selectedAvatar');
+const selectedName = document.getElementById('selectedName');
+const selectedPhone = document.getElementById('selectedPhone');
+const selectedSponsorCode = document.getElementById('selectedSponsorCode');
+const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+const manualFields = document.getElementById('manualCustomerFields');
+let searchTimeout = null;
+
+// Champs cachés du client sélectionné
+const selectedId = document.getElementById('selectedCustomerId');
+const selectedNameHidden = document.getElementById('selectedCustomerName');
+const selectedPhoneHidden = document.getElementById('selectedCustomerPhone');
+const selectedEmailHidden = document.getElementById('selectedCustomerEmail');
+const selectedAddressHidden = document.getElementById('selectedCustomerAddress');
+const selectedCityHidden = document.getElementById('selectedCustomerCity');
+const selectedCountryHidden = document.getElementById('selectedCustomerCountry');
+const selectedParrainIdHidden = document.getElementById('selectedCustomerParrainId');
+
+// Champs manuels
+const nameInput = document.getElementById('name');
+const phoneInput = document.getElementById('phone');
+const emailInput = document.getElementById('email');
+const addressInput = document.getElementById('address');
+const cityInput = document.getElementById('city');
+const countryInput = document.getElementById('country');
+
+// Recherche de client
+customerSearch.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+        customerResults.classList.remove('visible');
+        customerResults.innerHTML = '';
+        clearSearchBtn.classList.remove('visible');
+        return;
+    }
+    
+    clearSearchBtn.classList.add('visible');
+    
+    searchTimeout = setTimeout(function() {
+        fetch(`{{ route('cashier.customers.search') }}?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            customerResults.innerHTML = '';
+            
+            if (data.length === 0) {
+                customerResults.innerHTML = `
+                    <div class="result-item" style="cursor:default; justify-content:center; color:var(--text-tertiary);">
+                        Aucun client trouvé
+                    </div>
+                `;
+                customerResults.classList.add('visible');
+                return;
+            }
+            
+            data.forEach(function(customer) {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div class="customer-avatar">${customer.name.charAt(0).toUpperCase()}</div>
+                    <div class="customer-info">
+                        <div class="name">${customer.name}</div>
+                        <div class="details">
+                            ${customer.phone ? customer.phone + ' • ' : ''}
+                            ${customer.email || 'N/A'}
+                            ${customer.sponsor_id ? `<span class="sponsor-code"> • Code: ${customer.sponsor_id}</span>` : ''}
+                            ${customer.parrain ? `<span class="sponsor-code"> • Parrain: ${customer.parrain.name}</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="select-badge">Sélectionner</span>
+                `;
+                div.addEventListener('click', function() {
+                    selectCustomer(customer);
+                });
+                customerResults.appendChild(div);
+            });
+            
+            customerResults.classList.add('visible');
+        })
+        .catch(function() {
+            customerResults.innerHTML = `
+                <div class="result-item" style="cursor:default; justify-content:center; color:var(--text-tertiary);">
+                    Erreur lors de la recherche
+                </div>
+            `;
+            customerResults.classList.add('visible');
+        });
+    }, 300);
+});
+
+// Effacer la recherche
+clearSearchBtn.addEventListener('click', function() {
+    customerSearch.value = '';
+    customerResults.classList.remove('visible');
+    customerResults.innerHTML = '';
+    clearSearchBtn.classList.remove('visible');
+    customerSearch.focus();
+});
+
+// Sélectionner un client
+function selectCustomer(customer) {
+    // Remplir les champs cachés
+    selectedId.value = customer.id;
+    selectedNameHidden.value = customer.name;
+    selectedPhoneHidden.value = customer.phone || '';
+    selectedEmailHidden.value = customer.email || '';
+    selectedAddressHidden.value = customer.address || '';
+    selectedCityHidden.value = customer.city || '';
+    selectedCountryHidden.value = customer.country || '';
+    selectedParrainIdHidden.value = customer.parrain_id || '';
+    
+    // Afficher le client sélectionné
+    selectedAvatar.textContent = customer.name.charAt(0).toUpperCase();
+    selectedName.textContent = customer.name;
+    selectedPhone.textContent = customer.phone || 'Téléphone non renseigné';
+    selectedSponsorCode.textContent = customer.sponsor_id ? 'Code: ' + customer.sponsor_id : '';
+    
+    customerSelected.classList.add('visible');
+    manualFields.style.display = 'none';
+    customerResults.classList.remove('visible');
+    customerResults.innerHTML = '';
+    customerSearch.value = '';
+    clearSearchBtn.classList.remove('visible');
+    
+    // Nettoyer les champs manuels
+    nameInput.value = '';
+    phoneInput.value = '';
+    emailInput.value = '';
+    addressInput.value = '';
+    cityInput.value = '';
+    countryInput.value = '';
+    
+    // Afficher un toast de confirmation
+    if (typeof window.showToast === 'function') {
+        window.showToast('Client sélectionné : ' + customer.name, 'success');
+    }
+}
+
+// Changer de client
+changeCustomerBtn.addEventListener('click', function() {
+    customerSelected.classList.remove('visible');
+    manualFields.style.display = 'block';
+    selectedId.value = '';
+    selectedNameHidden.value = '';
+    selectedPhoneHidden.value = '';
+    selectedEmailHidden.value = '';
+    selectedAddressHidden.value = '';
+    selectedCityHidden.value = '';
+    selectedCountryHidden.value = '';
+    selectedParrainIdHidden.value = '';
+    customerSearch.focus();
+});
+
+// Fermer les résultats en cliquant ailleurs
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.customer-search-wrapper') && !e.target.closest('#customerSelected')) {
+        customerResults.classList.remove('visible');
+    }
+});
+
+// ============================================================
+//  VÉRIFICATION DU CODE PARRAIN
+// ============================================================
 function checkSponsor() {
     const code = document.getElementById('sponsor_code').value.trim();
     const info = document.getElementById('sponsorInfo');
@@ -682,6 +1063,9 @@ function checkSponsor() {
     });
 }
 
+// ============================================================
+//  VALIDATION DU FORMULAIRE - CORRIGÉE
+// ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     // Vérification automatique du code parrain
     const sponsorInput = document.getElementById('sponsor_code');
@@ -702,38 +1086,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Validation du formulaire
+    // ✅ Validation du formulaire - CORRIGÉE
     const form = document.getElementById('checkoutOrderForm');
     const submitBtn = document.getElementById('submitOrderBtn');
 
     if (form) {
         form.addEventListener('submit', function(e) {
+            let isValid = true;
+            let errorMessage = '';
+            
+            // ✅ Cas 1: Client sélectionné via la recherche
+            const isCustomerSelected = selectedId.value !== '';
+            
+            // ✅ Cas 2: Nouveau client - champs manuels
             const name = document.getElementById('name')?.value.trim();
             const phone = document.getElementById('phone')?.value.trim();
+            
+            // ✅ Vérifier le code parrain
             const sponsorCode = document.getElementById('sponsor_code')?.value.trim();
             
-            if (!name) {
-                e.preventDefault();
-                window.showToast('Veuillez entrer le nom du client', 'error');
-                document.getElementById('name')?.focus();
-                return false;
+            // ✅ Si client sélectionné, pas besoin de vérifier name et phone
+            if (!isCustomerSelected) {
+                // Client non sélectionné → vérifier les champs manuels
+                if (!name) {
+                    isValid = false;
+                    errorMessage = 'Veuillez entrer le nom du client';
+                    document.getElementById('name')?.focus();
+                } else if (!phone) {
+                    isValid = false;
+                    errorMessage = 'Veuillez entrer le téléphone du client';
+                    document.getElementById('phone')?.focus();
+                }
             }
             
-            if (!phone) {
-                e.preventDefault();
-                window.showToast('Veuillez entrer le téléphone du client', 'error');
-                document.getElementById('phone')?.focus();
-                return false;
-            }
-            
-            if (!sponsorCode) {
-                e.preventDefault();
-                window.showToast('Veuillez entrer un code parrain', 'error');
+            // ✅ Vérifier le code parrain (toujours requis)
+            if (isValid && !sponsorCode) {
+                isValid = false;
+                errorMessage = 'Veuillez entrer un code parrain';
                 document.getElementById('sponsor_code')?.focus();
+            }
+            
+            // ✅ Si une erreur, empêcher la soumission
+            if (!isValid) {
+                e.preventDefault();
+                if (typeof window.showToast === 'function') {
+                    window.showToast('❌ ' + errorMessage, 'error');
+                } else {
+                    alert(errorMessage);
+                }
                 return false;
             }
             
-            // Désactiver le bouton pour éviter les doubles soumissions
+            // ✅ Désactiver le bouton pour éviter les doubles soumissions
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = `
@@ -748,21 +1152,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return true;
         });
     }
-@if(session('clear_cart'))
-        // Vider le panier dans localStorage
+
+    // VIDER LE PANIER SI COMMANDE VALIDÉE
+    @if(session('clear_cart'))
         if (typeof localStorage !== 'undefined') {
             localStorage.removeItem('pos_cart');
             console.log('Panier localstorage vidé');
         }
         
-        // Recharger le panier dans l'interface
         if (typeof window.loadCart === 'function') {
             window.loadCart();
         }
         
-        // Afficher un message de succès
         if (typeof window.showToast === 'function') {
-            window.showToast(' Commande validée avec succès !', 'success');
+            window.showToast('Commande validée avec succès !', 'success');
         }
     @endif
 });

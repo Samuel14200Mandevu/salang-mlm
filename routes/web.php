@@ -296,46 +296,37 @@ Route::middleware(['auth', 'active'])->group(function () {
 // ============================================================
 Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->group(function () {
     
-    // ============================================================
-    // DASHBOARD
-    // ============================================================
+    // Dashboard
     Route::get('/dashboard', [CashierController::class, 'dashboard'])->name('dashboard');
     
-    // ============================================================
     // POS - Vente directe (un seul produit)
-    // ============================================================
     Route::get('/pos', [CashierController::class, 'pos'])->name('pos');
     Route::get('/pos/sale/{product}', [CashierController::class, 'posSale'])->name('pos.sale');
     Route::post('/pos/order', [CashierController::class, 'createOrder'])->name('pos.order');
     Route::get('/sponsor/check', [CashierController::class, 'checkSponsor'])->name('sponsor.check');
+    Route::get('/product/find/{id}', [CashierController::class, 'findProduct'])->name('product.find');
+    Route::get('/product/find-by-sku/{sku}', [CashierController::class, 'findProductBySku'])->name('product.find-by-sku');
     
-    // ============================================================
-    // PANIER MULTI-PRODUITS
-    // ============================================================
+    // Panier multi-produits
     Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
     Route::get('/checkout', [CashierController::class, 'checkout'])->name('checkout');
     Route::post('/checkout/order', [CashierController::class, 'createCheckoutOrder'])->name('checkout.order');
     
-    // ============================================================
-    // COMMANDES
-    // ============================================================
+    // Commandes
     Route::get('/orders', [CashierController::class, 'orders'])->name('orders');
     Route::get('/orders/{id}', [CashierController::class, 'showOrder'])->name('orders.show');
     Route::get('/orders/invoice/{id}', [CashierController::class, 'invoice'])->name('orders.invoice');
     Route::get('/orders/invoice/{id}/print', [CashierController::class, 'printInvoice'])->name('orders.invoice.print');
     Route::post('/orders/{id}/cancel', [CashierController::class, 'cancelOrder'])->name('orders.cancel');
+    Route::post('/orders/{id}/request-cancellation', [CashierController::class, 'requestCancellation'])->name('cashier.orders.request-cancellation');
     
-    // ============================================================
-    // CLIENTS
-    // ============================================================
+    // Clients
     Route::get('/customers', [CashierController::class, 'customers'])->name('customers');
     Route::get('/customers/search', [CashierController::class, 'searchCustomer'])->name('customers.search');
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
     Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
     
-    // ============================================================
-    // MEMBRES (Gestion complète)
-    // ============================================================
+    // Membres (Gestion complète)
     Route::get('/members', [CashierController::class, 'members'])->name('members');
     Route::get('/members/{member}', [CashierController::class, 'memberShow'])->name('members.show');
     Route::get('/members/{member}/commissions', [CashierController::class, 'memberCommissions'])->name('members.commissions');
@@ -343,13 +334,14 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::put('/members/{member}/commissions/update', [CashierController::class, 'updateMemberCommissions'])->name('members.commissions.update');
     Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
     
-    // ============================================================
-    // COMMISSIONS
-    // ============================================================
+    // Commissions - Routes statiques avant paramètres
     Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
     Route::get('/commissions/export', [CashierController::class, 'exportCommissions'])->name('commissions.export');
+    Route::get('/commissions/export-pdf', [CashierController::class, 'exportPdf'])->name('commissions.export-pdf');
     Route::get('/commissions/stats', [CashierController::class, 'commissionsStats'])->name('commissions.stats');
     Route::get('/commissions/network/{userId}', [CashierController::class, 'viewNetwork'])->name('commissions.network');
+    
+    // Routes avec paramètres (après les statiques)
     Route::get('/commissions/{id}', [CashierController::class, 'commissionShow'])->name('commissions.show');
     Route::post('/commissions/{id}/approve', [CashierController::class, 'approveCommission'])->name('commissions.approve');
     Route::post('/commissions/{id}/reject', [CashierController::class, 'rejectCommission'])->name('commissions.reject');
@@ -357,25 +349,17 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/commissions/{id}/cancel', [CashierController::class, 'commissionCancel'])->name('commissions.cancel');
     Route::post('/commissions/batch-approve', [CashierController::class, 'batchApproveCommissions'])->name('commissions.batch-approve');
     
-    // ============================================================
-    // VENTES DU JOUR
-    // ============================================================
+    // Ventes du jour
     Route::get('/daily-sales', [CashierController::class, 'dailySales'])->name('daily-sales');
     
-    // ============================================================
-    // HISTORIQUE COMPLET
-    // ============================================================
+    // Historique complet
     Route::get('/history', [CashierController::class, 'history'])->name('history');
     
-    // ============================================================
-    // STATISTIQUES
-    // ============================================================
+    // Statistiques
     Route::get('/stats', [CashierController::class, 'stats'])->name('stats');
     Route::get('/stats/export', [CashierController::class, 'exportStats'])->name('stats.export');
     
-    // ============================================================
-    // PROFIL CAISSIER (CORRIGÉ)
-    // ============================================================
+    // Profil caissier
     Route::get('/profile', [CashierController::class, 'profile'])->name('profile');
     Route::put('/profile', [CashierController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [CashierController::class, 'updatePassword'])->name('profile.update-password');
@@ -383,13 +367,10 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/profile/avatar', [CashierController::class, 'updateAvatar'])->name('profile.update-avatar');
     Route::delete('/profile/avatar', [CashierController::class, 'deleteAvatar'])->name('profile.delete-avatar');
     
-    // ============================================================
-    // FACTURES (CORRIGÉ - suppression des doublons)
-    // ============================================================
-    // Les routes invoice sont déjà définies dans la section COMMANDES
-    // On garde seulement celles qui sont spécifiques
+    // Factures
     Route::get('/invoice/{order}/pdf', [CashierController::class, 'downloadInvoice'])->name('invoice.download');
 });
+
 // ============================================================
 // ROUTES ADMIN
 // ============================================================
@@ -421,8 +402,6 @@ Route::prefix('admin')
             Route::get('/export', [AdminUserController::class, 'export'])->name('export');
             Route::post('/import', [AdminUserController::class, 'import'])->name('import');
         });
-
-        // ALIAS
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
 
         // ============================================================
@@ -448,8 +427,6 @@ Route::prefix('admin')
             Route::get('/{id}/toggle-status', [AdminPackageController::class, 'toggleStatus'])->name('toggle-status');
             Route::post('/{id}/duplicate', [AdminPackageController::class, 'duplicate'])->name('duplicate');
         });
-
-        // ALIAS
         Route::get('/packages', [AdminPackageController::class, 'index'])->name('packages');
 
         // ============================================================
@@ -465,9 +442,15 @@ Route::prefix('admin')
             Route::get('/{id}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('toggle-status');
             Route::get('/{id}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('toggle-featured');
             Route::delete('/{id}/gallery', [AdminProductController::class, 'removeGalleryImage'])->name('remove-gallery');
+            
+            // Routes QR Codes
+            Route::get('/{id}/qr-code', [AdminProductController::class, 'showQrCode'])->name('qr-code');
+            Route::get('/{id}/download-qr', [AdminProductController::class, 'downloadQrCode'])->name('download-qr');
+            Route::post('/generate-qr-codes', [AdminProductController::class, 'generateQrCodesBatch'])->name('generate-qr-codes');
+            Route::get('/generate-all-qr', [AdminProductController::class, 'generateAllQrCodes'])->name('generate-all-qr');
+            Route::get('/qr-codes', [AdminProductController::class, 'showQrCodes'])->name('qr-codes');
+            Route::get('/qr-codes/print-all', [AdminProductController::class, 'printAllQrCodes'])->name('print-all-qr');
         });
-
-        // ALIAS
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
 
         // ============================================================
@@ -479,6 +462,7 @@ Route::prefix('admin')
             Route::get('/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('invoice');
             Route::put('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
             Route::get('/export', [AdminOrderController::class, 'export'])->name('export');
+            Route::put('/{order}/handle-cancellation', [AdminOrderController::class, 'handleCancellation'])->name('handle-cancellation');
         });
 
         // ============================================================
@@ -513,8 +497,6 @@ Route::prefix('admin')
             Route::get('/periods', [CommissionTriggerController::class, 'getPeriods'])->name('periods.list');
             Route::post('/periods/{periodId}/step', [CommissionTriggerController::class, 'processPeriodStep'])->name('periods.step');
         });
-
-        // ALIAS
         Route::get('/commissions', [AdminCommissionController::class, 'index'])->name('commissions');
 
         // ============================================================
@@ -528,8 +510,6 @@ Route::prefix('admin')
             Route::get('/export', [AdminWalletController::class, 'export'])->name('export');
             Route::get('/stats', [AdminWalletController::class, 'stats'])->name('stats');
         });
-
-        // ALIAS
         Route::get('/wallets', [AdminWalletController::class, 'index'])->name('wallets');
 
         // ============================================================
@@ -545,8 +525,6 @@ Route::prefix('admin')
             Route::get('/export', [AdminWithdrawalController::class, 'export'])->name('export');
             Route::get('/stats', [AdminWithdrawalController::class, 'stats'])->name('stats');
         });
-
-        // ALIAS
         Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])->name('withdrawals');
 
         // ============================================================
@@ -567,11 +545,8 @@ Route::prefix('admin')
                 Route::get('/', [AdminRankController::class, 'history'])->name('index');
                 Route::get('/export', [AdminRankController::class, 'exportHistory'])->name('export');
             });
-
             Route::get('/history', [AdminRankController::class, 'history'])->name('history');
         });
-
-        // ALIAS
         Route::get('/ranks', [AdminRankController::class, 'index'])->name('ranks');
 
         // ============================================================
@@ -583,8 +558,6 @@ Route::prefix('admin')
             Route::post('/{id}/reject', [AdminKycController::class, 'reject'])->name('reject');
             Route::get('/export', [AdminKycController::class, 'export'])->name('export');
         });
-
-        // ALIAS
         Route::get('/kyc', [AdminKycController::class, 'index'])->name('kyc');
 
         // ============================================================
@@ -599,8 +572,6 @@ Route::prefix('admin')
             Route::get('/export', [AdminReportController::class, 'export'])->name('export');
             Route::get('/pdf/{type}', [AdminReportController::class, 'exportPdf'])->name('pdf');
         });
-
-        // ALIAS
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
 
         // ============================================================
@@ -630,8 +601,6 @@ Route::prefix('admin')
             Route::post('/toggle-maintenance', [AdminSettingController::class, 'toggleMaintenance'])->name('toggle-maintenance');
             Route::get('/system-info', [AdminSettingController::class, 'systemInfo'])->name('system-info');
         });
-
-        // ALIAS
         Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings');
 
         // ============================================================

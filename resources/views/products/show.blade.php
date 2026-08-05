@@ -1,3 +1,4 @@
+{{-- resources/views/products/show.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -69,6 +70,54 @@
         font-weight: 600;
         background: rgba(139,92,246,0.12);
         color: #8b5cf6;
+    }
+    
+    /* STYLES POUR LA WISHLIST */
+    .btn-wishlist {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid var(--border-color);
+        text-decoration: none;
+        background: transparent;
+        color: var(--text-primary);
+    }
+    .btn-wishlist:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        transform: translateY(-2px);
+    }
+    .btn-wishlist.active {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+    .btn-wishlist.active:hover {
+        background: rgba(239, 68, 68, 0.2);
+    }
+    .btn-wishlist .heart-icon {
+        width: 1.2rem;
+        height: 1.2rem;
+        transition: transform 0.3s ease;
+        flex-shrink: 0;
+    }
+    .btn-wishlist:hover .heart-icon {
+        transform: scale(1.2);
+    }
+    .btn-wishlist .heart-icon.active {
+        color: #ef4444;
+        fill: #ef4444;
+    }
+    .btn-wishlist .heart-icon.inactive {
+        color: var(--text-secondary);
+        fill: none;
     }
     
     .btn {
@@ -171,10 +220,16 @@
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes heartPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
     .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
     .animate-fadeInLeft { animation: fadeInLeft 0.6s ease forwards; }
     .animate-fadeInRight { animation: fadeInRight 0.6s ease forwards; }
     .delay-4 { animation-delay: 0.20s; }
+    .heart-pulse { animation: heartPulse 0.5s ease; }
     
     .custom-toast {
         animation: slideUp 0.3s ease forwards;
@@ -222,6 +277,10 @@
             font-size: 0.75rem;
             padding: 0.375rem 0.875rem;
         }
+        .btn-wishlist {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.875rem;
+        }
         .input {
             font-size: 0.813rem;
             padding: 0.5rem 0.75rem;
@@ -244,6 +303,14 @@
         }
         .related-grid {
             grid-template-columns: 1fr 1fr !important;
+        }
+        .btn-wishlist {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+        }
+        .btn-wishlist .heart-icon {
+            width: 1rem;
+            height: 1rem;
         }
     }
 </style>
@@ -299,7 +366,7 @@
                 </div>
             </div>
 
-            <!-- ✅ PV ET BV -->
+            <!-- PV ET BV -->
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 @if($product->pv_value)
                     <span class="pv-badge">
@@ -339,7 +406,7 @@
                 </p>
             </div>
 
-            <!-- ✅ INFORMATIONS SUPPLÉMENTAIRES AVEC PV -->
+            <!-- Informations supplémentaires -->
             @if($product->sku || $product->pv_value || $product->bv_value)
                 <div class="mt-3 sm:mt-4 grid grid-cols-2 gap-2 text-xs sm:text-sm text-[var(--text-secondary)]">
                     @if($product->sku)
@@ -361,9 +428,9 @@
             @endif
 
             <!-- Actions -->
-            <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
                 @if($product->stock > 0)
-                    <form action="{{ route('cart.add') }}" method="POST" class="flex-1">
+                    <form action="{{ route('cart.add') }}" method="POST" class="flex-1 min-w-[200px]">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -386,6 +453,31 @@
                         Rupture de stock
                     </button>
                 @endif
+
+                <!-- BOUTON WISHLIST AVEC SVG -->
+                @auth
+                    <button onclick="toggleWishlist({{ $product->id }})" 
+                            class="btn-wishlist {{ $isInWishlist ? 'active' : '' }}"
+                            id="wishlistBtn"
+                            title="{{ $isInWishlist ? 'Retirer de la liste de souhaits' : 'Ajouter à la liste de souhaits' }}">
+                        <svg class="heart-icon {{ $isInWishlist ? 'active' : 'inactive' }}" 
+                             fill="{{ $isInWishlist ? 'currentColor' : 'none' }}" 
+                             stroke="currentColor" 
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span id="wishlistText">{{ $isInWishlist ? 'Retirer' : 'Ajouter' }}</span>
+                    </button>
+                @else
+                    <a href="{{ route('login') }}" class="btn-wishlist" title="Connectez-vous pour ajouter à votre liste de souhaits">
+                        <svg class="heart-icon inactive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span>Se connecter</span>
+                    </a>
+                @endauth
             </div>
 
             <!-- Share -->
@@ -436,6 +528,9 @@
 
 @push('scripts')
 <script>
+// ============================================================
+//  QUANTITY CONTROLS
+// ============================================================
 function incrementQty() {
     var input = document.getElementById('qty');
     var max = parseInt(input.max);
@@ -448,23 +543,6 @@ function decrementQty() {
     var input = document.getElementById('qty');
     if (parseInt(input.value) > 1) {
         input.value = parseInt(input.value) - 1;
-    }
-}
-
-function copyLink() {
-    var link = window.location.href;
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(link).then(function() {
-            showToast('Lien copié !');
-        });
-    } else {
-        var input = document.createElement('input');
-        input.value = link;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        showToast('Lien copié !');
     }
 }
 
@@ -494,6 +572,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ============================================================
+//  COPY LINK
+// ============================================================
+function copyLink() {
+    var link = window.location.href;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(function() {
+            showToast('Lien copié !');
+        });
+    } else {
+        var input = document.createElement('input');
+        input.value = link;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showToast('Lien copié !');
+    }
+}
+
+// ============================================================
+//  TOAST NOTIFICATION
+// ============================================================
 function showToast(message, type) {
     type = type || 'success';
     document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
@@ -521,6 +622,55 @@ function showToast(message, type) {
         toast.style.transform = 'translateY(20px)';
         setTimeout(function() { toast.remove(); }, 500);
     }, 3000);
+}
+
+// ============================================================
+//  WISHLIST TOGGLE
+// ============================================================
+function toggleWishlist(productId) {
+    const btn = document.getElementById('wishlistBtn');
+    const heartIcon = btn.querySelector('.heart-icon');
+    const text = document.getElementById('wishlistText');
+    
+    // Ajouter une animation de pulse
+    heartIcon.classList.add('heart-pulse');
+    setTimeout(() => {
+        heartIcon.classList.remove('heart-pulse');
+    }, 500);
+    
+    fetch(`/wishlist/toggle/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.added) {
+                btn.classList.add('active');
+                heartIcon.classList.remove('inactive');
+                heartIcon.classList.add('active');
+                heartIcon.setAttribute('fill', 'currentColor');
+                text.textContent = 'Retirer';
+                showToast(' ' + data.message);
+            } else {
+                btn.classList.remove('active');
+                heartIcon.classList.remove('active');
+                heartIcon.classList.add('inactive');
+                heartIcon.setAttribute('fill', 'none');
+                text.textContent = 'Ajouter';
+                showToast(' ' + data.message);
+            }
+        } else {
+            showToast(' ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast(' Une erreur est survenue', 'error');
+    });
 }
 </script>
 @endpush

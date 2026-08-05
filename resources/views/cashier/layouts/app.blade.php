@@ -478,7 +478,7 @@
                                 </svg>
                                 <span class="label transition-opacity duration-200" 
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
-                                    Dashboard
+                                    Accueil
                                 </span>
                             </a>
                         </li>

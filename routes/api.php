@@ -3,6 +3,22 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// ============================================================
+// ROUTES API - TEMPORAIREMENT DÉSACTIVÉES
+// ============================================================
+
+// ✅ Route de test pour vérifier que l'API est disponible
+Route::get('/ping', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'API Salang Group est disponible',
+        'version' => '1.0',
+        'timestamp' => now()->toDateTimeString()
+    ]);
+});
+
+/*
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProductController;
@@ -15,6 +31,9 @@ use App\Http\Controllers\Api\NetworkController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\ReportController;
 
 // ============================================================
 // ROUTES PUBLIQUES API
@@ -171,3 +190,4 @@ Route::prefix('admin')
         Route::get('/dashboard/stats', [App\Http\Controllers\Admin\DashboardController::class, 'apiStats'])->name('dashboard.stats');
         Route::get('/dashboard/chart-data', [App\Http\Controllers\Admin\DashboardController::class, 'chartData'])->name('dashboard.chart');
     });
+*/

@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminPOSReportController extends Controller
 {
@@ -38,8 +39,8 @@ class AdminPOSReportController extends Controller
         // Top 5 des meilleurs parrains (PV générés)
         $topSponsors = $this->getTopSponsors(5);
         
-        // Dernières commandes POS
-        $recentOrders = Order::with(['user', 'cashier'])
+        // ✅ Dernières commandes POS avec toutes les relations
+        $recentOrders = Order::with(['user', 'cashier', 'creator', 'items'])
             ->where('source', 'pos')
             ->where('status', 'completed')
             ->orderBy('created_at', 'desc')
@@ -67,7 +68,7 @@ class AdminPOSReportController extends Controller
      */
     public function sales(Request $request)
     {
-        $query = Order::with(['user', 'cashier', 'items'])
+        $query = Order::with(['user', 'cashier', 'creator', 'items'])
             ->where('source', 'pos')
             ->where('status', 'completed');
         
@@ -154,7 +155,7 @@ class AdminPOSReportController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Order::with(['user', 'cashier'])
+        $query = Order::with(['user', 'cashier', 'creator'])
             ->where('source', 'pos')
             ->where('status', 'completed');
         
@@ -196,11 +197,14 @@ class AdminPOSReportController extends Controller
                     ->where('source', 'pos')
                     ->first();
                 
+                // Récupérer le nom du caissier
+                $cashierName = $order->cashier_name;
+                
                 fputcsv($file, [
                     $order->created_at->format('d/m/Y H:i'),
                     $order->order_number,
                     $order->user->name ?? 'N/A',
-                    $order->cashier->name ?? 'N/A',
+                    $cashierName,
                     number_format($order->subtotal, 2),
                     number_format($order->tax, 2),
                     number_format($order->total, 2),
@@ -220,7 +224,7 @@ class AdminPOSReportController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $query = Order::with(['user', 'cashier'])
+        $query = Order::with(['user', 'cashier', 'creator'])
             ->where('source', 'pos')
             ->where('status', 'completed');
         
@@ -234,7 +238,7 @@ class AdminPOSReportController extends Controller
         $orders = $query->get();
         $stats = $this->getGlobalStats();
         
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pos-reports.pdf', compact('orders', 'stats'));
+        $pdf = Pdf::loadView('admin.pos-reports.pdf', compact('orders', 'stats'));
         return $pdf->download('rapport_pos_' . date('Y-m-d') . '.pdf');
     }
 

@@ -402,41 +402,52 @@
         </div>
     </div>
 
-    <!-- Dernières commandes -->
-    <div class="chart-container animate-fadeInUp delay-4">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base"> Dernières commandes POS</h3>
-            <a href="{{ route('admin.pos-reports.sales') }}" class="text-sm text-primary-500 hover:underline">Voir tout</a>
-        </div>
-        <div class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>N° commande</th>
-                        <th>Client</th>
-                        <th>Caissier</th>
-                        <th class="text-right">Total</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($recentOrders ?? [] as $order)
-                        <tr>
-                            <td class="font-mono text-xs text-primary-500">#{{ $order->order_number }}</td>
-                            <td class="text-sm">{{ $order->user->name ?? 'N/A' }}</td>
-                            <td class="text-sm">{{ $order->cashier->name ?? 'N/A' }}</td>
-                            <td class="text-right font-bold">${{ number_format($order->total, 2) }}</td>
-                            <td class="text-xs text-[var(--text-secondary)]">{{ $order->created_at->format('d/m/Y H:i') }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-[var(--text-secondary)]">Aucune commande POS</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+   <!-- Dernières commandes -->
+<div class="chart-container animate-fadeInUp delay-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Dernières commandes POS</h3>
+        <a href="{{ route('admin.pos-reports.sales') }}" class="text-sm text-primary-500 hover:underline">Voir tout</a>
     </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>N° commande</th>
+                    <th>Client</th>
+                    <th>Caissier</th>
+                    <th class="text-right">Total</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentOrders ?? [] as $order)
+                    <tr>
+                        <td class="font-mono text-xs text-primary-500">#{{ $order->order_number }}</td>
+                        <td class="text-sm">{{ $order->user->name ?? 'N/A' }}</td>
+                        <td class="text-sm">
+                            @php
+                                $cashierName = $order->cashier_name;
+                            @endphp
+                            @if($cashierName != 'Système')
+                                <span class="font-medium text-blue-600">
+                                    {{ $cashierName }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 text-xs">Système</span>
+                            @endif
+                        </td>
+                        <td class="text-right font-bold">${{ number_format($order->total, 2) }}</td>
+                        <td class="text-xs text-[var(--text-secondary)]">{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-[var(--text-secondary)]">Aucune commande POS</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
 
 </div>
 @endsection

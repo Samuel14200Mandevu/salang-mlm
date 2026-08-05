@@ -304,10 +304,10 @@
     <!-- Filtres -->
     <div class="card animate-fadeInUp delay-2">
         <form method="GET" action="{{ route('cashier.history') }}" class="filter-section">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="🔍 Rechercher (nom, téléphone, commande)" class="flex-1">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher (nom, téléphone, commande)" class="flex-1">
             <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début" class="flex-1">
             <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin" class="flex-1">
-            <button type="submit" class="btn-filter">🔍 Filtrer</button>
+            <button type="submit" class="btn-filter">Filtrer</button>
             <a href="{{ route('cashier.history') }}" class="btn-reset">↺ Réinitialiser</a>
         </form>
     </div>

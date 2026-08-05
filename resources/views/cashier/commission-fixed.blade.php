@@ -283,6 +283,240 @@
         color: var(--text-secondary);
     }
     
+    /* BOUTON PDF */
+    .btn-pdf {
+        background: #dc2626;
+        color: white;
+        box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+    }
+    .btn-pdf:hover {
+        background: #b91c1c;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4);
+    }
+    
+    /* ============================================================
+       MODAL RAPPORT PDF
+       ============================================================ */
+    .pdf-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s ease;
+        padding: 1rem;
+    }
+    .pdf-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .pdf-modal-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        max-width: 1200px;
+        width: 100%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+        border: 1px solid var(--border-color);
+        transform: scale(0.95) translateY(20px);
+        transition: transform 0.4s ease;
+    }
+    .pdf-modal-overlay.active .pdf-modal-box {
+        transform: scale(1) translateY(0);
+    }
+    .pdf-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .pdf-modal-header h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .pdf-modal-header .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+    .pdf-modal-header .close-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+    .pdf-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: #ffffff;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .pdf-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        flex-shrink: 0;
+        background: var(--bg-secondary);
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .pdf-modal-footer .btn {
+        min-width: 120px;
+        justify-content: center;
+    }
+    
+    /* STYLES POUR LE RAPPORT PDF DANS LA MODAL */
+    .pdf-report {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        color: #1a1a1a;
+        background: #ffffff;
+    }
+    .pdf-report .report-header {
+        text-align: center;
+        border-bottom: 2px solid #0E2F76;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .pdf-report .report-header h1 {
+        font-size: 18px;
+        font-weight: 900;
+        color: #0E2F76;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+    .pdf-report .report-header .sub {
+        font-size: 10px;
+        color: #666;
+        margin-top: 4px;
+    }
+    .pdf-report .report-header .period {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0E2F76;
+        margin-top: 4px;
+    }
+    .pdf-report .report-header .date {
+        font-size: 9px;
+        color: #888;
+        margin-top: 2px;
+    }
+    .pdf-report table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+    }
+    .pdf-report table th {
+        background: #f0f4f8;
+        color: #0E2F76;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 7px;
+        padding: 6px 4px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    .pdf-report table td {
+        padding: 4px;
+        border: 1px solid #ddd;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .pdf-report table td.text-left {
+        text-align: left;
+    }
+    .pdf-report table td.text-right {
+        text-align: right;
+    }
+    .pdf-report table tr:nth-child(even) {
+        background: #f9fafb;
+    }
+    .pdf-report table tr:hover {
+        background: #f0f7ff;
+    }
+    .pdf-report .total-row td {
+        font-weight: 700;
+        background: #e8f0fe !important;
+        border-top: 2px solid #0E2F76;
+    }
+    .pdf-report .report-footer {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 8px;
+        color: #999;
+        border-top: 1px solid #ddd;
+        padding-top: 0.75rem;
+    }
+    
+    .pdf-report .amount-positive {
+        color: #22c55e;
+        font-weight: 700;
+    }
+    .pdf-report .amount-negative {
+        color: #ef4444;
+        font-weight: 700;
+    }
+    .pdf-report .badge-cash {
+        display: inline-block;
+        padding: 0.05rem 0.4rem;
+        border-radius: 3px;
+        font-size: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .pdf-report .badge-sponsor {
+        display: inline-block;
+        padding: 0.05rem 0.4rem;
+        border-radius: 3px;
+        font-size: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(99, 102, 241, 0.12);
+        color: #6366f1;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    
+    .pdf-report .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+        color: #999;
+    }
+    .pdf-report .empty-state svg {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.75rem;
+        display: block;
+    }
+    .pdf-report .empty-state p {
+        font-size: 12px;
+        margin: 0;
+    }
+    
     @media (max-width: 640px) {
         .commission-stats {
             grid-template-columns: 1fr 1fr;
@@ -312,6 +546,37 @@
         .card {
             padding: 0.875rem;
         }
+        .header-actions {
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .header-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+        .pdf-modal-box {
+            max-height: 95vh;
+            max-width: 100%;
+        }
+        .pdf-modal-body {
+            padding: 0.75rem;
+        }
+        .pdf-modal-footer {
+            flex-direction: column;
+        }
+        .pdf-modal-footer .btn {
+            width: 100%;
+        }
+        .pdf-report table {
+            font-size: 7px;
+        }
+        .pdf-report table th {
+            font-size: 6px;
+            padding: 3px 2px;
+        }
+        .pdf-report table td {
+            padding: 2px;
+        }
     }
 </style>
 @endpush
@@ -331,7 +596,14 @@
                 Commissions POS (CASH) et MLM
             </p>
         </div>
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-2 flex-wrap header-actions">
+            <!-- ✅ BOUTON RAPPORT PDF -->
+            <button onclick="openPdfModal()" class="btn btn-pdf btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Aperçu PDF
+            </button>
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -393,7 +665,6 @@
     <!-- Filtres avec recherche en temps réel -->
     <div class="card animate-fadeInUp delay-2">
         <form method="GET" action="{{ route('cashier.commissions') }}" class="filter-section" id="filterForm">
-            <!-- RECHERCHE EN TEMPS RÉEL -->
             <div class="search-wrapper">
                 <span class="search-icon">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,7 +674,7 @@
                 <input type="text" 
                        id="searchInput" 
                        class="search-input" 
-                       placeholder="🔍 Rechercher par nom, code, type..."
+                       placeholder="Rechercher par nom, code, type..."
                        autocomplete="off">
                 <button type="button" id="clearSearch" class="clear-search" aria-label="Effacer la recherche">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -415,7 +686,6 @@
             <select name="type" class="flex-1" id="typeFilter">
                 <option value="">Tous les types</option>
                 @php
-                    // TOUS LES TYPES DE COMMISSIONS (sauf purchase, new_client, pos_transaction)
                     $allowedTypes = ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor'];
                 @endphp
                 @foreach($types ?? [] as $type)
@@ -480,19 +750,16 @@
                 <tbody id="commissionsTable">
                     @forelse($commissions ?? [] as $commission)
                         @php
-                            // EXCLURE purchase, new_client, pos_transaction
                             $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
                             if (in_array($commission->type, $excludedTypes)) {
                                 continue;
                             }
                             
-                            // Déterminer la classe CSS du type
                             $typeClass = 'type-badge-' . $commission->type;
                             if (!in_array($commission->type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor'])) {
                                 $typeClass = 'type-badge-default';
                             }
                             
-                            // Libellé du type
                             $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
                             if ($commission->type == 'cash_pos') {
                                 $typeLabel = 'CASH POS';
@@ -629,6 +896,48 @@
     </div>
 </div>
 
+<!-- ============================================================
+MODAL RAPPORT PDF
+============================================================ -->
+<div id="pdfModal" class="pdf-modal-overlay">
+    <div class="pdf-modal-box">
+        <div class="pdf-modal-header">
+            <h2>
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Aperçu du rapport des commissions
+            </h2>
+            <button onclick="closePdfModal()" class="close-btn">✕</button>
+        </div>
+        <div id="pdfModalBody" class="pdf-modal-body">
+            <div class="pdf-report" id="pdfReportContent">
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <p class="mt-2 text-gray-500">Génération du rapport...</p>
+                </div>
+            </div>
+        </div>
+        <div class="pdf-modal-footer">
+            <button onclick="closePdfModal()" class="btn btn-outline btn-sm">Fermer</button>
+            <button onclick="downloadPdf()" class="btn btn-pdf btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Télécharger PDF
+            </button>
+            <button onclick="printPdf()" class="btn btn-primary btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Imprimer
+            </button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -643,7 +952,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateTo = document.getElementById('dateTo');
     let searchTimeout = null;
 
-    // Fonction de recherche
     function filterRows() {
         const searchTerm = searchInput.value.trim().toLowerCase();
         const type = typeFilter.value;
@@ -665,18 +973,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let show = true;
 
-            // Recherche en temps réel
             if (searchTerm && !searchData.includes(searchTerm)) {
                 show = false;
             }
 
-            // Filtres
             if (type && rowType !== type) show = false;
             if (status && rowStatus !== status) show = false;
             if (source && rowSource !== source) show = false;
             if (user && rowUser !== user) show = false;
             
-            // Filtres dates
             if (dateFromVal && rowDate < dateFromVal) show = false;
             if (dateToVal && rowDate > dateToVal) show = false;
 
@@ -688,14 +993,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Afficher/masquer le bouton "Effacer"
         if (searchTerm.length > 0) {
             clearSearchBtn.classList.add('visible');
         } else {
             clearSearchBtn.classList.remove('visible');
         }
 
-        // Afficher un message si aucun résultat
         const noResultMsg = document.querySelector('#noResultsMsg');
         if (visibleCount === 0 && rows.length > 0) {
             if (!noResultMsg) {
@@ -717,13 +1020,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Événements de recherche en temps réel
     searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(filterRows, 200);
     });
 
-    // Événements des filtres
     typeFilter.addEventListener('change', filterRows);
     statusFilter.addEventListener('change', filterRows);
     sourceFilter.addEventListener('change', filterRows);
@@ -731,7 +1032,6 @@ document.addEventListener('DOMContentLoaded', function() {
     dateFrom.addEventListener('change', filterRows);
     dateTo.addEventListener('change', filterRows);
 
-    // Bouton "Effacer"
     clearSearchBtn.addEventListener('click', function() {
         searchInput.value = '';
         clearSearchBtn.classList.remove('visible');
@@ -739,7 +1039,6 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.focus();
     });
 
-    // Touche Escape pour effacer la recherche
     searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             searchInput.value = '';
@@ -749,8 +1048,116 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialisation
     filterRows();
+});
+
+// ============================================================
+//  MODAL RAPPORT PDF
+// ============================================================
+let currentPdfUrl = '';
+
+function openPdfModal() {
+    const modal = document.getElementById('pdfModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Générer le rapport
+    generateReportContent();
+}
+
+function closePdfModal() {
+    const modal = document.getElementById('pdfModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function generateReportContent() {
+    const type = document.getElementById('typeFilter')?.value || '';
+    const status = document.getElementById('statusFilter')?.value || '';
+    const source = document.getElementById('sourceFilter')?.value || '';
+    const user = document.getElementById('userFilter')?.value || '';
+    const dateFrom = document.getElementById('dateFrom')?.value || '';
+    const dateTo = document.getElementById('dateTo')?.value || '';
+    const search = document.getElementById('searchInput')?.value || '';
+
+    // Construire l'URL avec les paramètres
+    let url = '{{ route('cashier.commissions.export-pdf') }}?';
+    const params = new URLSearchParams();
+    
+    if (type) params.append('type', type);
+    if (status) params.append('status', status);
+    if (source) params.append('source', source);
+    if (user) params.append('user_id', user);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (search) params.append('search', search);
+    
+    // Ajouter la période par défaut (mois en cours)
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    if (!dateFrom && !dateTo) {
+        params.append('period', year + '-' + month);
+    }
+    
+    currentPdfUrl = url + params.toString();
+    
+    // Afficher le contenu du PDF dans la modal via iframe ou fetch
+    // On utilise fetch pour obtenir le HTML du PDF et l'afficher
+    fetch(currentPdfUrl, {
+        headers: {
+            'Accept': 'text/html',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('pdfReportContent').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('pdfReportContent').innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p>Erreur lors du chargement du rapport</p>
+                <p class="text-sm text-gray-400">${error.message}</p>
+            </div>
+        `;
+    });
+}
+
+function downloadPdf() {
+    if (currentPdfUrl) {
+        // Ajouter le paramètre download
+        const url = new URL(currentPdfUrl);
+        url.searchParams.set('download', 'true');
+        window.open(url.toString(), '_blank');
+    }
+}
+
+function printPdf() {
+    if (currentPdfUrl) {
+        // Ouvrir dans un nouvel onglet et imprimer
+        const win = window.open(currentPdfUrl, '_blank');
+        win.onload = function() {
+            win.print();
+        };
+    }
+}
+
+// Fermer la modal avec Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePdfModal();
+    }
+});
+
+// Fermer la modal en cliquant sur l'overlay
+document.getElementById('pdfModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePdfModal();
+    }
 });
 </script>
 @endpush

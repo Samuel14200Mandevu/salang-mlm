@@ -106,6 +106,67 @@ class AdminOrderController extends Controller
         return back()->with('error', 'Module PDF non installé.');
     }
 
+    /**
+ * Traiter une demande d'annulation
+ */
+public function handleCancellation(Request $request, Order $order)
+{
+    $request->validate([
+        'action' => 'required|in:approve,reject',
+        'admin_notes' => 'nullable|string|max:500',
+    ]);
+    
+    // Vérifier qu'il y a une demande en attente
+    if (!isset($order->metadata['cancellation_request']) || 
+        $order->metadata['cancellation_request']['status'] != 'pending') {
+        return redirect()->back()->with('error', 'Aucune demande d\'annulation en attente.');
+    }
+    
+    $metadata = $order->metadata;
+    
+    if ($request->action == 'approve') {
+        // Approuver l'annulation
+        $metadata['cancellation_request']['status'] = 'approved';
+        $metadata['cancellation_request']['processed_at'] = now()->toISOString();
+        $metadata['cancellation_request']['processed_by'] = auth()->id();
+        
+        $order->metadata = $metadata;
+        $order->status = 'cancelled';
+        $order->cancelled_at = now();
+        $order->cancelled_by = auth()->id();
+        $order->save();
+        
+        Log::info('Demande d\'annulation approuvée', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'admin_id' => auth()->id()
+        ]);
+        
+        return redirect()->route('admin.orders.show', $order)
+            ->with('success', 'La commande a été annulée avec succès.');
+        
+    } else {
+        // Rejeter l'annulation
+        $metadata['cancellation_request']['status'] = 'rejected';
+        $metadata['cancellation_request']['processed_at'] = now()->toISOString();
+        $metadata['cancellation_request']['processed_by'] = auth()->id();
+        $metadata['cancellation_request']['admin_notes'] = $request->admin_notes;
+        
+        $order->metadata = $metadata;
+        $order->save();
+        
+        Log::info('Demande d\'annulation rejetée', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'admin_id' => auth()->id(),
+            'reason' => $request->admin_notes
+        ]);
+        
+        return redirect()->route('admin.orders.show', $order)
+            ->with('warning', 'La demande d\'annulation a été rejetée.');
+    }
+}
+
     public function export(Request $request)
     {
         $query = Order::with(['user']);

@@ -317,7 +317,7 @@
     <!-- Filtres -->
     <div class="card animate-fadeInUp delay-2">
         <form method="GET" action="{{ route('cashier.members') }}" class="filter-section">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="🔍 Rechercher (nom, email, code)" class="flex-1">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher (nom, email, code)" class="flex-1">
             <select name="status">
                 <option value="">Tous les statuts</option>
                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actifs</option>
@@ -330,7 +330,7 @@
                 <option value="caissier_principal" {{ request('role') == 'caissier_principal' ? 'selected' : '' }}>Caissier Principal</option>
                 <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrateur</option>
             </select>
-            <button type="submit" class="btn-filter">🔍 Filtrer</button>
+            <button type="submit" class="btn-filter">Filtrer</button>
             <a href="{{ route('cashier.members') }}" class="btn-reset">↺ Réinitialiser</a>
         </form>
     </div>

@@ -36,7 +36,49 @@
     .product-card:hover .image-container img {
         transform: scale(1.05);
     }
-    .product-card .badge {
+    
+    /* BADGES PV COLORÉS */
+    .pv-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.1rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        min-width: 40px;
+        transition: all 0.3s ease;
+    }
+    .pv-badge-sm {
+        font-size: 0.55rem;
+        padding: 0.075rem 0.5rem;
+        min-width: 32px;
+    }
+    .pv-15 { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .pv-20 { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .pv-25 { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); }
+    .pv-30 { background: rgba(236, 72, 153, 0.15); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.2); }
+    .pv-35 { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .pv-40 { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .pv-45 { background: rgba(168, 85, 247, 0.15); color: #8b5cf6; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .pv-50 { background: rgba(236, 72, 153, 0.15); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.2); }
+    .pv-55 { background: rgba(20, 184, 166, 0.15); color: #14b8a6; border: 1px solid rgba(20, 184, 166, 0.2); }
+    .pv-75 { background: rgba(234, 88, 12, 0.15); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2); }
+    .pv-100 { background: rgba(220, 38, 38, 0.15); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
+    .pv-default { background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid rgba(107, 114, 128, 0.2); }
+    
+    .bv-badge {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+    }
+    
+    .badge {
         display: inline-block;
         padding: 0.125rem 0.5rem;
         border-radius: 9999px;
@@ -64,15 +106,6 @@
     .badge-pos {
         background: rgba(34, 197, 94, 0.15);
         color: #22c55e;
-    }
-    .pv-badge {
-        display: inline-block;
-        padding: 0.1rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.55rem;
-        font-weight: 600;
-        background: rgba(59,130,246,0.12);
-        color: #3b82f6;
     }
     
     .input {
@@ -299,6 +332,127 @@
     .tab-content.active {
         display: block;
     }
+    
+    /* STYLE POUR L'INDICATEUR DE CLIC SUR L'IMAGE */
+    .image-container .click-hint {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.55rem;
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .image-container:hover .click-hint {
+        opacity: 1;
+    }
+    
+    /* TOAST PERSONNALISÉ POUR L'AJOUT */
+    .toast-add {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #22c55e;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 8px 32px rgba(34, 197, 94, 0.4);
+        z-index: 9999;
+        animation: slideUp 0.3s ease forwards;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+    .toast-add.error {
+        background: #ef4444;
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.9); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes slideDown {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(30px) scale(0.9); }
+    }
+
+    /* STYLES POUR LE SCANNER QR / CODE-BARRES */
+    .scanner-container {
+        position: relative;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 0.5rem 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: var(--bg-secondary);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .scanner-container:hover {
+        border-color: var(--primary-500);
+        background: var(--bg-input);
+    }
+    .scanner-container .scanner-icon {
+        font-size: 1.5rem;
+        color: var(--text-tertiary);
+        transition: all 0.3s ease;
+    }
+    .scanner-container:hover .scanner-icon {
+        color: var(--primary-500);
+    }
+    .scanner-container .scanner-text {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .scanner-container .scanner-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .scanner-container.scanning {
+        border-color: var(--primary-500);
+        background: rgba(90, 182, 56, 0.05);
+        animation: pulse-border 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+        0%, 100% { border-color: var(--primary-500); }
+        50% { border-color: var(--primary-300); }
+    }
+    .qr-result {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        display: none;
+    }
+    .qr-result.show {
+        display: block;
+    }
+    .qr-result.success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .qr-result.error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
 </style>
 @endpush
 
@@ -319,7 +473,14 @@
                 Vendez des produits ou activez des packages MLM
             </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            <!-- SCANNER QR / CODE-BARRES -->
+            <div class="scanner-container" id="scannerContainer">
+                <span class="scanner-text">Scanner QR / Code-barres</span>
+                <input type="text" id="qrScanner" class="scanner-input" autofocus>
+            </div>
+            <div id="qrResult" class="qr-result"></div>
+            
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -336,23 +497,16 @@
         <button class="tab-btn" data-tab="packages" onclick="switchTab('packages')">
             Packages MLM
         </button>
-        <div class="animate-fadeInUp delay-1">
-        <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                
-            </span>
-            <input type="text" 
-                   id="searchInput"
-                   placeholder="Rechercher un produit ou package..."
-                   class="input pl-10 search-input text-sm sm:text-base">
+        <div class="animate-fadeInUp delay-1" style="margin-left: auto;">
+            <div class="relative">
+                <input type="text" 
+                       id="searchInput"
+                       placeholder="Rechercher un produit ou package..."
+                       class="input pl-10 text-sm sm:text-base" style="min-width: 200px;">
+            </div>
         </div>
     </div>
 
-    </div>
-
-    
     <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden animate-fadeInUp">
         Résultats: <span id="resultCount" class="font-semibold text-primary-500">0</span> article(s)
     </div>
@@ -363,13 +517,19 @@
                 @if(isset($products) && $products->count() > 0)
                     <div class="product-grid">
                         @foreach($products as $product)
+                            @php
+                                $pvClass = 'pv-default';
+                                if ($product->pv_value) {
+                                    $pvClass = 'pv-' . $product->pv_value;
+                                }
+                            @endphp
                             <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
                                  data-name="{{ strtolower($product->name) }}"
                                  data-description="{{ strtolower($product->description ?? '') }}"
                                  data-product-id="{{ $product->id }}"
                                  data-type="product">
                                 
-                                <div class="image-container">
+                                <div class="image-container" onclick="addToCart({{ $product->id }}, 'product')">
                                     @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
                                         <img src="{{ asset('storage/products/' . $product->image) }}" 
                                              alt="{{ $product->name }}"
@@ -399,6 +559,13 @@
                                             </span>
                                         </div>
                                     @endif
+                                    
+                                    <div class="click-hint">
+                                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        Cliquez pour ajouter
+                                    </div>
                                 </div>
 
                                 <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
@@ -409,12 +576,16 @@
                                         {{ Str::limit($product->description ?? '', 40) }}
                                     </p>
                                     
-                                    <div class="flex items-center gap-2 mt-1">
+                                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                                         @if($product->pv_value)
-                                            <span class="pv-badge">{{ $product->pv_value }} PV</span>
+                                            <span class="pv-badge pv-badge-sm {{ $pvClass }}">
+                                                {{ $product->pv_value }} PV
+                                            </span>
                                         @endif
                                         @if($product->bv_value)
-                                            <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
+                                            <span class="bv-badge text-[0.5rem]">
+                                                {{ $product->bv_value }} BV
+                                            </span>
                                         @endif
                                     </div>
                                     
@@ -430,7 +601,7 @@
                                     
                                     <div class="mt-1 sm:mt-2">
                                         @if($product->stock > 0)
-                                            <button onclick="window.addToCart({{ $product->id }}, 'product')" 
+                                            <button onclick="addToCart({{ $product->id }}, 'product')" 
                                                     class="btn btn-primary btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
                                                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -462,13 +633,19 @@
                 @if(isset($packages) && $packages->count() > 0)
                     <div class="product-grid">
                         @foreach($packages as $package)
+                            @php
+                                $pvClass = 'pv-default';
+                                if ($package->pv_value) {
+                                    $pvClass = 'pv-' . $package->pv_value;
+                                }
+                            @endphp
                             <div class="product-card animate-fadeInUp delay-{{ min($loop->index % 6 + 1, 12) }}"
                                  data-name="{{ strtolower($package->name) }}"
                                  data-description="{{ strtolower($package->description ?? '') }}"
                                  data-product-id="{{ $package->id }}"
                                  data-type="package">
                                 
-                                <div class="image-container" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));">
+                                <div class="image-container" onclick="addToCart({{ $package->id }}, 'package')" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));">
                                     <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-primary-500">
                                         <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
@@ -484,6 +661,13 @@
                                             Populaire
                                         </span>
                                     @endif
+                                    
+                                    <div class="click-hint">
+                                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        Cliquez pour ajouter
+                                    </div>
                                 </div>
 
                                 <div class="product-content p-2 sm:p-3 flex flex-col flex-1">
@@ -494,12 +678,16 @@
                                         {{ Str::limit($package->description ?? 'Package MLM', 40) }}
                                     </p>
                                     
-                                    <div class="flex items-center gap-2 mt-1">
+                                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                                         @if($package->pv_value)
-                                            <span class="pv-badge">{{ $package->pv_value }} PV</span>
+                                            <span class="pv-badge pv-badge-sm {{ $pvClass }}">
+                                                {{ $package->pv_value }} PV
+                                            </span>
                                         @endif
                                         @if($package->bv_value)
-                                            <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $package->bv_value }} BV</span>
+                                            <span class="bv-badge text-[0.5rem]">
+                                                {{ $package->bv_value }} BV
+                                            </span>
                                         @endif
                                     </div>
                                     
@@ -511,7 +699,7 @@
                                     </div>
                                     
                                     <div class="mt-1 sm:mt-2">
-                                        <button onclick="window.addToCart({{ $package->id }}, 'package')" 
+                                        <button onclick="addToCart({{ $package->id }}, 'package')" 
                                                 class="btn btn-gold btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -548,41 +736,104 @@
 @push('scripts')
 <script>
 // ================================================================
+//  TOAST NOTIFICATION
+// ================================================================
+function showToast(message, isError = false) {
+    const existing = document.querySelector('.toast-add');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-add' + (isError ? ' error' : '');
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isError ? 'M6 18L18 6M6 6l12 12' : 'M5 13l4 4L19 7'}"/>
+        </svg>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// ================================================================
+//  AJOUTER AU PANIER
+// ================================================================
+function addToCart(productId, type) {
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"][data-type="${type}"]`);
+    if (!card) {
+        showToast('Produit non trouvé', true);
+        return;
+    }
+    
+    const name = card.querySelector('.product-name')?.textContent?.trim() || 'Produit';
+    const priceElement = card.querySelector('.product-price');
+    const price = parseFloat(priceElement?.textContent?.replace('$', '').replace(',', '')) || 0;
+    const pvElement = card.querySelector('.pv-badge');
+    const pv = pvElement ? parseInt(pvElement.textContent) || 0 : 0;
+    
+    if (type === 'product') {
+        const stockElement = card.querySelector('.product-stock');
+        const stockText = stockElement?.textContent?.trim() || '';
+        if (stockText.includes('Rupture') || stockText.includes('0 restants')) {
+            showToast('Ce produit est en rupture de stock', true);
+            return;
+        }
+    }
+    
+    if (typeof window.addToCartGlobal === 'function') {
+        window.addToCartGlobal(productId, type, name, price, pv);
+        showToast(` ${name} ajouté au panier !`);
+    } else {
+        try {
+            let cart = JSON.parse(localStorage.getItem('pos_cart') || '[]');
+            const existing = cart.find(item => item.id === productId && item.type === type);
+            if (existing) {
+                existing.quantity = (existing.quantity || 1) + 1;
+            } else {
+                cart.push({
+                    id: productId,
+                    type: type,
+                    name: name,
+                    price: price,
+                    pv: pv,
+                    quantity: 1
+                });
+            }
+            localStorage.setItem('pos_cart', JSON.stringify(cart));
+            showToast(` ${name} ajouté au panier !`);
+            
+            if (typeof window.renderCart === 'function') {
+                window.renderCart();
+            }
+            if (typeof window.updateCartCount === 'function') {
+                window.updateCartCount();
+            }
+        } catch (e) {
+            showToast('Erreur lors de l\'ajout au panier', true);
+        }
+    }
+}
+
+// ================================================================
 //  SWITCH TAB
 // ================================================================
 function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+    const target = document.getElementById('tab-' + tab);
+    if (target) target.classList.add('active');
+    
+    const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+    if (btn) btn.classList.add('active');
     
     document.getElementById('searchInput').value = '';
     document.querySelectorAll('.product-card').forEach(card => card.style.display = '');
     document.getElementById('searchResult').classList.add('hidden');
 }
-
-window.clearCart = function() {
-    // Vider le localStorage
-    if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('pos_cart');
-    }
-    
-    // Vider le tableau du panier
-    window.cart = [];
-    
-    // Mettre à jour l'affichage
-    if (typeof window.renderCart === 'function') {
-        window.renderCart();
-    }
-    
-    // Mettre à jour le compteur
-    if (typeof window.updateCartCount === 'function') {
-        window.updateCartCount();
-    }
-    
-    console.log('Panier vidé avec succès');
-};
 
 // ================================================================
 //  RECHERCHE
@@ -635,12 +886,168 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
     }
-    
-    // Initialiser le panier (s'assurer qu'il est chargé)
-    if (typeof window.loadCart === 'function') {
-        window.loadCart();
+});
+
+// ================================================================
+//  NETTOYER LE PANIER
+// ================================================================
+window.clearCart = function() {
+    if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('pos_cart');
+    }
+    window.cart = [];
+    if (typeof window.renderCart === 'function') {
+        window.renderCart();
+    }
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    }
+    showToast(' Panier vidé');
+};
+
+// ================================================================
+//  SCANNER QR / CODE-BARRES (ID + SKU)
+// ================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const scannerInput = document.getElementById('qrScanner');
+    const scannerContainer = document.getElementById('scannerContainer');
+
+    if (scannerInput) {
+        scannerInput.addEventListener('focus', function() {
+            scannerContainer.classList.add('scanning');
+        });
+
+        scannerInput.addEventListener('blur', function() {
+            scannerContainer.classList.remove('scanning');
+        });
+
+        scannerInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const code = this.value.trim();
+                if (code) {
+                    processScannedCode(code);
+                }
+                this.value = '';
+            }
+        });
+
+        setTimeout(() => {
+            scannerInput.focus();
+        }, 500);
     }
 });
+
+// ✅ FONCTION PRINCIPALE DE SCAN - DÉTECTE ID OU SKU
+function processScannedCode(code) {
+    const qrResult = document.getElementById('qrResult');
+    const codeValue = code.trim();
+    
+    // ✅ Détecter si c'est un ID (nombre) ou un SKU (texte)
+    const isNumeric = /^\d+$/.test(codeValue);
+    
+    if (isNumeric) {
+        // Recherche par ID (QR code)
+        findProductById(parseInt(codeValue));
+    } else {
+        // Recherche par SKU (code-barres)
+        findProductBySku(codeValue);
+    }
+}
+
+// ✅ Recherche par ID (QR code)
+function findProductById(id) {
+    const qrResult = document.getElementById('qrResult');
+    
+    qrResult.className = 'qr-result show';
+    qrResult.innerHTML = `🔍 Recherche du produit...`;
+    
+    fetch(`/cashier/product/find/${id}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            qrResult.className = 'qr-result show success';
+            qrResult.innerHTML = ` ${data.product.name} ajouté au panier!`;
+            addToCart(data.product.id, 'product');
+            
+            const container = document.getElementById('scannerContainer');
+            container.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                container.style.borderColor = '';
+            }, 2000);
+        } else {
+            qrResult.className = 'qr-result show error';
+            qrResult.innerHTML = ` ${data.message || 'Produit non trouvé (ID: ' + id + ')'}`;
+            
+            const container = document.getElementById('scannerContainer');
+            container.style.borderColor = '#ef4444';
+            setTimeout(() => {
+                container.style.borderColor = '';
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        qrResult.className = 'qr-result show error';
+        qrResult.innerHTML = ` Erreur: ${error.message}`;
+    });
+    
+    setTimeout(() => {
+        qrResult.className = 'qr-result';
+    }, 5000);
+}
+
+// ✅ Recherche par SKU (code-barres)
+function findProductBySku(sku) {
+    const qrResult = document.getElementById('qrResult');
+    
+    qrResult.className = 'qr-result show';
+    qrResult.innerHTML = `🔍 Recherche du produit (SKU: ${sku})...`;
+    
+    fetch(`/cashier/product/find-by-sku/${encodeURIComponent(sku)}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            qrResult.className = 'qr-result show success';
+            qrResult.innerHTML = ` ${data.product.name} ajouté au panier!`;
+            addToCart(data.product.id, 'product');
+            
+            const container = document.getElementById('scannerContainer');
+            container.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                container.style.borderColor = '';
+            }, 2000);
+        } else {
+            qrResult.className = 'qr-result show error';
+            qrResult.innerHTML = ` ${data.message || 'Produit non trouvé (SKU: ' + sku + ')'}`;
+            
+            const container = document.getElementById('scannerContainer');
+            container.style.borderColor = '#ef4444';
+            setTimeout(() => {
+                container.style.borderColor = '';
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        qrResult.className = 'qr-result show error';
+        qrResult.innerHTML = ` Erreur: ${error.message}`;
+    });
+    
+    setTimeout(() => {
+        qrResult.className = 'qr-result';
+    }, 5000);
+}
 </script>
 @endpush
 @endsection

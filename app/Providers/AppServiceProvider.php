@@ -73,17 +73,20 @@ class AppServiceProvider extends ServiceProvider
             return new NetworkService();
         });
 
-        // ✅ Services Paiement
+        // ✅ Services Paiement - CORRIGÉ AVEC DÉPENDANCES
+        $this->app->singleton(MobileMoneyService::class, function ($app) {
+            return new MobileMoneyService();
+        });
+
+        // ✅ PaymentService AVEC MobileMoneyService en paramètre
         $this->app->singleton(PaymentService::class, function ($app) {
-            return new PaymentService();
+            return new PaymentService(
+                $app->make(MobileMoneyService::class)
+            );
         });
 
         $this->app->singleton(CryptoPaymentService::class, function ($app) {
             return new CryptoPaymentService();
-        });
-
-        $this->app->singleton(MobileMoneyService::class, function ($app) {
-            return new MobileMoneyService();
         });
 
         // ✅ Services Utilitaires

@@ -63,6 +63,10 @@
         background: rgba(59, 130, 246, 0.12);
         color: #3b82f6;
     }
+    .badge-cancellation-pending {
+        background: rgba(245, 158, 11, 0.12);
+        color: #f59e0b;
+    }
     
     .btn {
         display: inline-flex;
@@ -192,6 +196,26 @@
     .timeline-dot-info { background: #3b82f6; }
     .timeline-dot-danger { background: #ef4444; }
     
+    .cancellation-request-box {
+        background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .cancellation-request-box .request-info {
+        font-size: 0.875rem;
+    }
+    .cancellation-request-box .request-reason {
+        background: var(--bg-secondary);
+        padding: 0.75rem;
+        border-radius: var(--radius-md);
+        margin: 0.5rem 0;
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+        border-left: 3px solid #f59e0b;
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -227,6 +251,12 @@
         }
         .address-grid {
             grid-template-columns: 1fr !important;
+        }
+        .cancellation-actions {
+            flex-direction: column;
+        }
+        .cancellation-actions .btn {
+            width: 100%;
         }
     }
     
@@ -293,6 +323,13 @@
                         @else {{ ucfirst($order->status) }}
                         @endif
                     </span>
+                    
+                    {{-- ✅ Demande d'annulation en attente --}}
+                    @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'pending')
+                        <span class="badge badge-cancellation-pending ml-2">
+                             Demande d'annulation
+                        </span>
+                    @endif
                 </div>
                 <div class="text-right">
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Date de la commande</p>
@@ -397,6 +434,12 @@
                     <span class="text-[var(--text-secondary)]">Email</span>
                     <span class="font-medium">{{ $order->user?->email ?? 'N/A' }}</span>
                 </div>
+                @if(isset($order->metadata['cashier_name']))
+                <div class="flex justify-between text-xs sm:text-sm mt-1">
+                    <span class="text-[var(--text-secondary)]">Caissier</span>
+                    <span class="font-medium">{{ $order->metadata['cashier_name'] }}</span>
+                </div>
+                @endif
             </div>
 
             <!-- Actions Admin -->
@@ -444,6 +487,85 @@
                     </form>
                 @endif
             </div>
+
+            {{-- ✅ SECTION DEMANDE D'ANNULATION (ADMIN) --}}
+            @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'pending')
+                <div class="cancellation-request-box">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <h4 class="font-semibold text-[var(--text-primary)] text-sm">Demande d'annulation</h4>
+                    </div>
+                    
+                    <div class="request-info">
+                        <p class="text-xs text-[var(--text-secondary)]">
+                            Demandé par <strong>{{ $order->user?->name ?? 'N/A' }}</strong> 
+                            le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['requested_at'])->format('d/m/Y H:i') }}
+                        </p>
+                    </div>
+                    
+                    <div class="request-reason">
+                        <p class="text-sm"><strong>Motif :</strong></p>
+                        <p>{{ $order->metadata['cancellation_request']['reason'] ?? 'Aucun motif fourni' }}</p>
+                    </div>
+                    
+                    <div class="cancellation-actions flex gap-2 mt-3">
+                        <form action="{{ route('admin.orders.handle-cancellation', $order) }}" method="POST" class="flex-1">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-success w-full text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Approuver l'annulation
+                            </button>
+                        </form>
+                        
+                        <button onclick="openRejectModal()" class="btn btn-danger flex-1 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Rejeter
+                        </button>
+                    </div>
+                </div>
+            @endif
+            
+            {{-- ✅ Demande d'annulation déjà traitée --}}
+            @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'approved')
+                <div class="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span class="text-green-500 font-medium">Annulation approuvée</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-1">
+                        Traitée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
+                    </p>
+                </div>
+            @endif
+            
+            @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'rejected')
+                <div class="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        <span class="text-red-500 font-medium">Annulation rejetée</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-1">
+                        Rejetée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
+                    </p>
+                    @if(isset($order->metadata['cancellation_request']['admin_notes']))
+                        <p class="text-xs text-[var(--text-secondary)] mt-1">
+                            <strong>Motif du rejet :</strong> {{ $order->metadata['cancellation_request']['admin_notes'] }}
+                        </p>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 
@@ -517,7 +639,112 @@
                 </div>
             </div>
             @endif
+            
+            {{-- ✅ Demande d'annulation dans l'historique --}}
+            @if(isset($order->metadata['cancellation_request']))
+            <div class="timeline-item">
+                <div class="timeline-dot 
+                    @if($order->metadata['cancellation_request']['status'] == 'pending') timeline-dot-warning
+                    @elseif($order->metadata['cancellation_request']['status'] == 'approved') timeline-dot-success
+                    @else timeline-dot-danger
+                    @endif
+                "></div>
+                <div>
+                    <p class="font-medium text-[var(--text-primary)] text-sm">
+                        Demande d'annulation 
+                        @if($order->metadata['cancellation_request']['status'] == 'pending') en attente
+                        @elseif($order->metadata['cancellation_request']['status'] == 'approved') approuvée
+                        @else rejetée
+                        @endif
+                    </p>
+                    <p class="text-xs text-[var(--text-secondary)]">
+                        @if($order->metadata['cancellation_request']['status'] == 'pending')
+                            Demandée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['requested_at'])->format('d/m/Y H:i') }}
+                        @else
+                            Traitée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
+                        @endif
+                    </p>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
+
+{{-- ✅ MODAL REJET ANNULATION (ADMIN) --}}
+<div id="rejectModal" class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-box" style="background:var(--bg-card);border-radius:var(--radius-lg);padding:2rem;max-width:500px;width:90%;box-shadow:var(--shadow-xl);border:1px solid var(--border-color);">
+        <div class="modal-icon" style="width:4rem;height:4rem;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;background:rgba(239,68,68,0.1);color:#ef4444;">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+        <h3 class="modal-title" style="text-align:center;font-size:1.25rem;font-weight:700;color:var(--text-primary);margin-bottom:0.5rem;">Rejeter la demande</h3>
+        <p class="modal-text" style="text-align:center;font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.6;">
+            Êtes-vous sûr de vouloir <strong class="text-danger">rejeter</strong> cette demande d'annulation ?
+        </p>
+        
+        <div class="mb-3">
+            <label for="rejectReason" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                Motif du rejet <span class="text-red-500">*</span>
+            </label>
+            <textarea id="rejectReason" 
+                      class="input w-full p-2 border border-[var(--border-color)] rounded-md text-sm"
+                      rows="3"
+                      placeholder="Expliquez pourquoi vous rejetez cette demande..."
+                      required></textarea>
+        </div>
+        
+        <div class="modal-actions" style="display:flex;gap:0.75rem;justify-content:center;">
+            <button type="button" onclick="closeRejectModal()" class="btn btn-outline btn-sm" style="min-width:100px;justify-content:center;">
+                Annuler
+            </button>
+            <form action="{{ route('admin.orders.handle-cancellation', $order) }}" method="POST" class="inline">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="action" value="reject">
+                <input type="hidden" id="rejectReasonInput" name="admin_notes" value="">
+                <button type="submit" class="btn btn-danger btn-sm" style="min-width:100px;justify-content:center;" onclick="document.getElementById('rejectReasonInput').value = document.getElementById('rejectReason').value;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Rejeter
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+// ============================================================
+//  MODAL REJET
+// ============================================================
+function openRejectModal() {
+    document.getElementById('rejectModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('rejectReason').focus();
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Fermer en cliquant à l'extérieur
+document.getElementById('rejectModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRejectModal();
+    }
+});
+
+// Fermer avec Echap
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('rejectModal').style.display === 'flex') {
+        closeRejectModal();
+    }
+});
+</script>
+@endpush
 @endsection

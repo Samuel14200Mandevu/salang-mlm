@@ -14,12 +14,16 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'cashier_id',
+        'created_by',
         'order_number',
         'subtotal',
         'tax',
         'shipping',
         'discount',
         'total',
+        'total_pv',
+        'total_bv',
         'status',
         'payment_status',
         'payment_method',
@@ -39,6 +43,8 @@ class Order extends Model
         'paid_at' => 'datetime',
         'metadata' => 'array',
     ];
+
+    protected $appends = ['cashier_name', 'cashier_id_from_metadata'];
 
     // ============================================================
     // BOOTED - TRIGGERS AUTOMATIQUES
@@ -104,7 +110,7 @@ class Order extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function items()
@@ -115,6 +121,22 @@ class Order extends Model
     public function commissions()
     {
         return $this->hasMany(Commission::class);
+    }
+
+    /**
+     * ✅ Relation avec le caissier
+     */
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    /**
+     * ✅ Relation avec le créateur de la commande
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     // ============================================================
@@ -156,10 +178,49 @@ class Order extends Model
         return $labels[$this->payment_status] ?? ucfirst($this->payment_status);
     }
 
-    public function cashier()
-{
-    return $this->belongsTo(User::class, 'cashier_id');
-}
+    /**
+     * ✅ Accesseur pour récupérer l'ID du caissier depuis le metadata
+     */
+    public function getCashierIdFromMetadataAttribute()
+    {
+        if ($this->metadata && isset($this->metadata['cashier_id'])) {
+            return $this->metadata['cashier_id'];
+        }
+        return null;
+    }
+
+    /**
+     * ✅ Accesseur pour obtenir le nom du caissier
+     */
+    public function getCashierNameAttribute()
+    {
+        // 1. Vérifier dans le metadata (pour les commandes POS)
+        if ($this->metadata && isset($this->metadata['cashier_id'])) {
+            $cashierId = $this->metadata['cashier_id'];
+            $cashier = User::find($cashierId);
+            if ($cashier) {
+                return $cashier->name;
+            }
+        }
+        
+        // 2. Vérifier si cashier_id est défini
+        if ($this->cashier_id && $this->cashier) {
+            return $this->cashier->name;
+        }
+        
+        // 3. Vérifier si created_by est défini
+        if ($this->created_by && $this->creator) {
+            return $this->creator->name;
+        }
+        
+        // 4. Vérifier si l'utilisateur est un caissier
+        if ($this->user && $this->user->hasRole('cashier')) {
+            return $this->user->name;
+        }
+        
+        // 5. Sinon, retourner "Système"
+        return 'Système';
+    }
 
     public function getTotalPVAttribute(): int
     {

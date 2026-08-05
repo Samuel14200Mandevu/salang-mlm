@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf; 
 
 class CashierController extends Controller
 {
@@ -76,6 +77,62 @@ class CashierController extends Controller
     }
 
     /**
+     * Trouver un produit par son ID (pour le scanner QR)
+     */
+    public function findProduct($id)
+    {
+        $product = Product::where('is_active', true)->find($id);
+        
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produit non trouvé (ID: ' . $id . ')'
+            ], 404);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'pv_value' => $product->pv_value,
+                'stock' => $product->stock,
+                'sku' => $product->sku,
+            ]
+        ]);
+    }
+
+    /**
+     * ✅ Trouver un produit par son SKU (code-barres)
+     */
+    public function findProductBySku($sku)
+    {
+        $product = Product::where('sku', $sku)
+            ->where('is_active', true)
+            ->first();
+        
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produit non trouvé (SKU: ' . $sku . ')'
+            ], 404);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'pv_value' => $product->pv_value,
+                'stock' => $product->stock,
+                'sku' => $product->sku,
+            ]
+        ]);
+    }
+
+    /**
      * Créer une commande POS directement (single product)
      */
     public function createOrder(Request $request)
@@ -107,7 +164,6 @@ class CashierController extends Controller
             $client = User::where('phone', $request->phone)->first();
             
             if (!$client) {
-                // ✅ CLIENT POS - TOUS LES PV À 0
                 $client = User::create([
                     'name' => $request->name,
                     'email' => $request->email ?? $request->phone . '@client.tmp',
@@ -144,7 +200,6 @@ class CashierController extends Controller
                     'sponsor_id' => $sponsor->id,
                 ]);
             } else {
-                // Mettre à jour les informations du client existant
                 if (!$client->parrain_id) {
                     $client->parrain_id = $sponsor->id;
                 }
@@ -179,6 +234,8 @@ class CashierController extends Controller
                 
                 $order = Order::create([
                     'user_id' => $client->id,
+                    'cashier_id' => auth()->id(),
+                    'created_by' => auth()->id(),
                     'order_number' => $orderNumber,
                     'subtotal' => $subtotal,
                     'tax' => 0,
@@ -215,9 +272,7 @@ class CashierController extends Controller
                     'bv_value' => $product->bv_value ?? 0,
                 ]);
                 
-                // ✅ AJOUT DU PV AU SPONSOR (team_pv)
                 if ($totalPv > 0 && $sponsor) {
-                    // ✅ Le PV va au team_pv du sponsor
                     $sponsor->increment('team_pv', $totalPv);
                     
                     Log::info('PV ajouté au team_pv du sponsor (POS)', [
@@ -226,11 +281,10 @@ class CashierController extends Controller
                         'pv_added' => $totalPv,
                         'client_id' => $client->id,
                         'client_name' => $client->name,
-                        'client_type' => $client->user_type,
                     ]);
                 }
                 
-                // ✅ COMMISSION CASH POS
+                // Commission CASH POS
                 if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
                     Commission::create([
                         'user_id' => $sponsor->id,
@@ -254,7 +308,7 @@ class CashierController extends Controller
                     ]);
                 }
                 
-                // ✅ COMMISSION POS TRANSACTION (pour le caissier)
+                // Commission POS TRANSACTION
                 Commission::create([
                     'user_id' => auth()->id(),
                     'from_user_id' => $client->id,
@@ -269,7 +323,6 @@ class CashierController extends Controller
                     'status' => 'completed',
                 ]);
                 
-                // ✅ NEW CLIENT (si nouveau client)
                 if ($client->wasRecentlyCreated) {
                     Commission::create([
                         'user_id' => $client->id,
@@ -286,7 +339,6 @@ class CashierController extends Controller
                     ]);
                 }
                 
-                // ✅ PURCHASE (achat du client)
                 Commission::create([
                     'user_id' => $client->id,
                     'from_user_id' => $sponsor->id,
@@ -301,9 +353,11 @@ class CashierController extends Controller
                     'status' => 'completed',
                 ]);
                 
-                // ✅ MISE À JOUR DU TEAM PV ET DU GRADE
                 UpdateTeamPV::dispatch($sponsor->id, true);
                 $sponsor->calculateAndUpdateRank();
+                
+                // Sauvegarder les données pour l'impression
+                $this->saveOrderData($order, $commissionAmount);
                 
                 DB::commit();
                 
@@ -425,6 +479,8 @@ class CashierController extends Controller
                 
                 $order = Order::create([
                     'user_id' => $client->id,
+                    'cashier_id' => auth()->id(),
+                    'created_by' => auth()->id(),
                     'order_number' => $orderNumber,
                     'subtotal' => $subtotal,
                     'tax' => 0,
@@ -467,7 +523,6 @@ class CashierController extends Controller
                     Product::where('id', $item['id'])->decrement('stock', $item['quantity']);
                 }
                 
-                // ✅ AJOUT DU PV AU SPONSOR (team_pv)
                 if ($totalPv > 0 && $sponsor) {
                     $sponsor->increment('team_pv', $totalPv);
                     
@@ -479,7 +534,6 @@ class CashierController extends Controller
                     ]);
                 }
                 
-                // ✅ COMMISSION CASH POS
                 if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
                     Commission::create([
                         'user_id' => $sponsor->id,
@@ -497,7 +551,6 @@ class CashierController extends Controller
                     ]);
                 }
                 
-                // ✅ COMMISSION POS TRANSACTION (pour le caissier)
                 Commission::create([
                     'user_id' => auth()->id(),
                     'from_user_id' => $client->id,
@@ -512,7 +565,6 @@ class CashierController extends Controller
                     'status' => 'completed',
                 ]);
                 
-                // ✅ NEW CLIENT (si nouveau client)
                 if ($client->wasRecentlyCreated) {
                     Commission::create([
                         'user_id' => $client->id,
@@ -529,7 +581,6 @@ class CashierController extends Controller
                     ]);
                 }
                 
-                // ✅ PURCHASE (achat du client)
                 Commission::create([
                     'user_id' => $client->id,
                     'from_user_id' => $sponsor->id,
@@ -544,9 +595,11 @@ class CashierController extends Controller
                     'status' => 'completed',
                 ]);
                 
-                // ✅ MISE À JOUR DU TEAM PV ET DU GRADE
                 UpdateTeamPV::dispatch($sponsor->id, true);
                 $sponsor->calculateAndUpdateRank();
+                
+                // Sauvegarder les données pour l'impression
+                $this->saveOrderData($order, $commissionAmount);
                 
                 session()->forget('pos_cart');
                 
@@ -565,6 +618,28 @@ class CashierController extends Controller
             Log::error('Erreur validation: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Sauvegarder les données pour l'impression
+     */
+    protected function saveOrderData($order, $commissionAmount)
+    {
+        $data = [
+            'date' => now()->format('d/m/Y H:i'),
+            'items' => $order->items->map(function($item) {
+                return [
+                    'name' => $item->name,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                ];
+            })->toArray(),
+            'total' => $order->total,
+            'commission' => $commissionAmount ?? 0,
+        ];
+        
+        session(['last_order_data' => $data]);
+        return $data;
     }
 
     /**
@@ -690,7 +765,6 @@ class CashierController extends Controller
         $totalPv = 0;
         $totalBv = 0;
         
-        // 1. Essayer de récupérer depuis les paramètres URL
         if (!empty($itemsParam)) {
             $cart = [];
             $parts = explode(',', $itemsParam);
@@ -741,7 +815,6 @@ class CashierController extends Controller
             $cartItems = collect($cart);
         }
         
-        // 2. Sinon, récupérer depuis la session
         if ($cartItems->isEmpty()) {
             $cart = session()->get('pos_cart', []);
             if (!empty($cart)) {
@@ -749,7 +822,6 @@ class CashierController extends Controller
             }
         }
         
-        // 3. Dernier recours: décoder depuis le paramètre cart (base64)
         if ($cartItems->isEmpty() && !empty($cartJson)) {
             try {
                 $decoded = json_decode(base64_decode($cartJson), true);
@@ -761,7 +833,6 @@ class CashierController extends Controller
             }
         }
         
-        // Calculer les totaux
         $total = $cartItems->sum(function($item) {
             return $item['price'] * $item['quantity'];
         });
@@ -774,7 +845,6 @@ class CashierController extends Controller
             return ($item['bv_value'] ?? 0) * $item['quantity'];
         });
         
-        // Sauvegarder dans la session pour la suite
         if ($cartItems->isNotEmpty()) {
             session()->put('pos_cart', $cartItems->toArray());
         }
@@ -785,16 +855,19 @@ class CashierController extends Controller
     }
 
     /**
-     * Créer une commande depuis le checkout (panier multi-produits)
-     */
-    public function createCheckoutOrder(Request $request)
+ * Créer une commande depuis le checkout (panier multi-produits)
+ */
+public function createCheckoutOrder(Request $request)
 {
     Log::info('=== CREATION COMMANDE CHECKOUT ===');
+    Log::info('Données reçues:', $request->all());
     
     try {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'customer_id' => 'nullable|exists:users,id',  
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'customer_phone' => 'nullable|string|max:20',  
             'email' => 'nullable|email|max:255',
             'sponsor_code' => 'required|string|exists:users,sponsor_id',
             'commission_amount' => 'nullable|numeric|min:0|max:15',
@@ -817,9 +890,34 @@ class CashierController extends Controller
             return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
         }
         
-        $client = User::where('phone', $request->phone)->first();
+        // ✅ RÉCUPÉRER LE CLIENT - CORRIGÉ
+        $client = null;
         
+        // 1. D'abord, vérifier si un customer_id est fourni (client sélectionné)
+        if ($request->filled('customer_id')) {
+            $client = User::find($request->customer_id);
+            Log::info('Client trouvé par ID:', ['id' => $client->id ?? null]);
+        }
+        
+        // 2. Sinon, chercher par téléphone
+        if (!$client && $request->filled('phone')) {
+            $client = User::where('phone', $request->phone)->first();
+            Log::info('Client trouvé par téléphone:', ['phone' => $request->phone]);
+        }
+        
+        // 3. Sinon, chercher par customer_phone
+        if (!$client && $request->filled('customer_phone')) {
+            $client = User::where('phone', $request->customer_phone)->first();
+            Log::info('Client trouvé par customer_phone:', ['phone' => $request->customer_phone]);
+        }
+        
+        // 4. Si toujours pas de client, en créer un nouveau
         if (!$client) {
+            // Vérifier qu'on a les infos nécessaires
+            if (!$request->filled('name') || !$request->filled('phone')) {
+                return redirect()->back()->with('error', 'Veuillez remplir le nom et le téléphone du client.');
+            }
+            
             $client = User::create([
                 'name' => $request->name,
                 'email' => $request->email ?? $request->phone . '@client.tmp',
@@ -849,7 +947,10 @@ class CashierController extends Controller
                 'currency' => 'USD',
                 'is_active' => true,
             ]);
+            
+            Log::info('Nouveau client créé:', ['id' => $client->id]);
         } else {
+            // ✅ Mettre à jour le client existant (ce bloc était mal placé)
             if (!$client->parrain_id) {
                 $client->parrain_id = $sponsor->id;
             }
@@ -863,6 +964,7 @@ class CashierController extends Controller
                 $client->country = $request->country;
             }
             $client->save();
+            Log::info('Client mis à jour:', ['id' => $client->id]);
         }
         
         $subtotal = 0;
@@ -890,6 +992,8 @@ class CashierController extends Controller
             
             $order = Order::create([
                 'user_id' => $client->id,
+                'cashier_id' => auth()->id(),
+                'created_by' => auth()->id(),
                 'order_number' => $orderNumber,
                 'subtotal' => $subtotal,
                 'tax' => 0,
@@ -945,7 +1049,6 @@ class CashierController extends Controller
             if ($totalPv > 0 && $sponsor) {
                 $sponsor->increment('team_pv', $totalPv);
                 
-                // ✅ Si le client est un membre, il reçoit aussi des PV personnels
                 if ($client->user_type === 'member') {
                     $client->increment('pv_balance', $totalPv);
                     $client->increment('monthly_pv', $totalPv);
@@ -1016,16 +1119,13 @@ class CashierController extends Controller
             UpdateTeamPV::dispatch($sponsor->id, true);
             $sponsor->calculateAndUpdateRank();
             
-            // ✅ VIDER LE PANIER APRÈS VALIDATION
-            session()->forget('pos_cart');
+            // Sauvegarder les données pour l'impression
+            $this->saveOrderData($order, $commissionAmount);
             
-            // ✅ VIDER LE PANIER DANS LE LOCALSTORAGE (via JavaScript)
-            // On passe un paramètre pour indiquer que le panier doit être vidé
-            $clearCart = true;
+            session()->forget('pos_cart');
             
             DB::commit();
             
-            // ✅ REDIRIGER AVEC UN PARAMÈTRE POUR VIDER LE PANIER LOCALSTORAGE
             return redirect()->route('cashier.orders.invoice', $order->id)
                 ->with('success', 'Commande #' . $orderNumber . ' validée avec ' . count($cart) . ' produits !')
                 ->with('clear_cart', true);
@@ -1041,13 +1141,12 @@ class CashierController extends Controller
         return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage())->withInput();
     }
 }
-
     /**
      * Liste des commandes (POS + En ligne + MLM)
      */
     public function orders(Request $request)
     {
-        $query = Order::with(['user']);
+        $query = Order::with(['user', 'cashier']);
         
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -1088,7 +1187,7 @@ class CashierController extends Controller
      */
     public function showOrder($id)
     {
-        $order = Order::with(['user', 'items'])
+        $order = Order::with(['user', 'cashier', 'items'])
             ->where(function($query) use ($id) {
                 $query->where('id', $id)
                       ->orWhere('order_number', $id);
@@ -1099,31 +1198,39 @@ class CashierController extends Controller
     }
 
     /**
-     * Facture d'une commande
-     */
-    public function invoice($id)
-    {
-        $order = Order::with(['user', 'items'])
-            ->where(function($query) use ($id) {
-                $query->where('id', $id)
-                      ->orWhere('order_number', $id);
-            })
-            ->firstOrFail();
-        
-        $sponsor = null;
-        if (isset($order->metadata['sponsor_id'])) {
-            $sponsor = User::find($order->metadata['sponsor_id']);
-        }
-        
-        return view('cashier.invoice', compact('order', 'sponsor'));
+ * Facture d'une commande
+ */
+public function invoice($id)
+{
+    // ✅ Charger toutes les relations nécessaires
+    $order = Order::with(['user', 'cashier', 'items', 'items.product'])
+        ->where(function($query) use ($id) {
+            $query->where('id', $id)
+                  ->orWhere('order_number', $id);
+        })
+        ->firstOrFail();
+    
+    // ✅ Récupérer le sponsor depuis le metadata
+    $sponsor = null;
+    if (isset($order->metadata['sponsor_id'])) {
+        $sponsor = User::find($order->metadata['sponsor_id']);
     }
+    
+    // ✅ Récupérer le caissier
+    $cashier = null;
+    if (isset($order->metadata['cashier_id'])) {
+        $cashier = User::find($order->metadata['cashier_id']);
+    }
+    
+    return view('cashier.invoice', compact('order', 'sponsor', 'cashier'));
+}
 
     /**
      * Imprimer la facture
      */
     public function printInvoice($id)
     {
-        $order = Order::with(['user', 'items'])
+        $order = Order::with(['user', 'cashier', 'items'])
             ->where(function($query) use ($id) {
                 $query->where('id', $id)
                       ->orWhere('order_number', $id);
@@ -1143,7 +1250,7 @@ class CashierController extends Controller
      */
     public function downloadInvoice($id)
     {
-        $order = Order::with(['user', 'items'])
+        $order = Order::with(['user', 'cashier', 'items'])
             ->where(function($query) use ($id) {
                 $query->where('id', $id)
                       ->orWhere('order_number', $id);
@@ -1155,7 +1262,8 @@ class CashierController extends Controller
             $sponsor = User::find($order->metadata['sponsor_id']);
         }
         
-        return view('cashier.invoice', compact('order', 'sponsor'));
+        $pdf = Pdf::loadView('cashier.invoice-pdf', compact('order', 'sponsor'));
+        return $pdf->download('facture_' . $order->order_number . '.pdf');
     }
 
     /**
@@ -1359,7 +1467,7 @@ class CashierController extends Controller
      */
     public function history(Request $request)
     {
-        $query = Order::with(['user', 'items'])
+        $query = Order::with(['user', 'cashier', 'items'])
             ->where('source', 'pos')
             ->where('status', 'completed');
         
@@ -1657,107 +1765,100 @@ class CashierController extends Controller
      * Liste toutes les commissions POS
      */
     public function commissions(Request $request)
-{
-    // ✅ EXCLURE LES TYPES SYSTÈME
-    $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
-    
-    $query = Commission::with(['user', 'fromUser', 'order'])
-        ->whereNotIn('type', $excludedTypes);  // ✅ PAS DE FILTRE SUR source
-    
-    if ($request->filled('type')) {
-        $query->where('type', $request->type);
+    {
+        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        
+        $query = Commission::with(['user', 'fromUser', 'order'])
+            ->whereNotIn('type', $excludedTypes);
+        
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
+        
+        $stats = [
+            'total_commissions' => Commission::whereNotIn('type', $excludedTypes)->sum('amount'),
+            'paid_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'paid')->sum('amount'),
+            'pending_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'pending')->sum('amount'),
+            'approved_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'approved')->sum('amount'),
+            'total_members' => Commission::whereNotIn('type', $excludedTypes)->distinct('user_id')->count('user_id'),
+            'pos_total' => Commission::where('source', 'pos')->whereNotIn('type', $excludedTypes)->sum('amount'),
+            'mlm_total' => Commission::where('source', 'mlm')->whereNotIn('type', $excludedTypes)->sum('amount'),
+        ];
+        
+        $members = User::whereHas('commissions', function($q) use ($excludedTypes) {
+            $q->whereNotIn('type', $excludedTypes);
+        })->get(['id', 'name', 'sponsor_id']);
+        
+        $types = Commission::whereNotIn('type', $excludedTypes)->distinct()->pluck('type');
+        $sources = ['pos' => 'POS', 'mlm' => 'MLM'];
+        $statuses = ['pending' => 'En attente', 'approved' => 'Approuvée', 'paid' => 'Payée', 'rejected' => 'Rejetée', 'cancelled' => 'Annulée'];
+        
+        return view('cashier.commission-fixed', compact(
+            'commissions', 
+            'stats', 
+            'members', 
+            'types', 
+            'sources', 
+            'statuses'
+        ));
     }
-    
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
-    }
-    
-    if ($request->filled('source')) {
-        $query->where('source', $request->source);
-    }
-    
-    if ($request->filled('user_id')) {
-        $query->where('user_id', $request->user_id);
-    }
-    
-    if ($request->filled('date_from')) {
-        $query->whereDate('created_at', '>=', $request->date_from);
-    }
-    
-    if ($request->filled('date_to')) {
-        $query->whereDate('created_at', '<=', $request->date_to);
-    }
-    
-    $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
-    
-    // ✅ STATISTIQUES - TOUTES LES COMMISSIONS SAUF TYPES SYSTÈME
-    $stats = [
-        'total_commissions' => Commission::whereNotIn('type', $excludedTypes)->sum('amount'),
-        'paid_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'paid')->sum('amount'),
-        'pending_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'pending')->sum('amount'),
-        'approved_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'approved')->sum('amount'),
-        'total_members' => Commission::whereNotIn('type', $excludedTypes)->distinct('user_id')->count('user_id'),
-        // ✅ POS CASH uniquement
-        'pos_total' => Commission::where('source', 'pos')->whereNotIn('type', $excludedTypes)->sum('amount'),
-        // ✅ MLM uniquement
-        'mlm_total' => Commission::where('source', 'mlm')->whereNotIn('type', $excludedTypes)->sum('amount'),
-    ];
-    
-    // ✅ MEMBRES QUI ONT DES COMMISSIONS
-    $members = User::whereHas('commissions', function($q) use ($excludedTypes) {
-        $q->whereNotIn('type', $excludedTypes);
-    })->get(['id', 'name', 'sponsor_id']);
-    
-    // ✅ TYPES DE COMMISSIONS DISPONIBLES
-    $types = Commission::whereNotIn('type', $excludedTypes)->distinct()->pluck('type');
-    $sources = ['pos' => 'POS', 'mlm' => 'MLM'];
-    $statuses = ['pending' => 'En attente', 'approved' => 'Approuvée', 'paid' => 'Payée', 'rejected' => 'Rejetée', 'cancelled' => 'Annulée'];
-    
-    return view('cashier.commission-fixed', compact(
-        'commissions', 
-        'stats', 
-        'members', 
-        'types', 
-        'sources', 
-        'statuses'
-    ));
-}
 
     /**
      * Détails d'une commission
      */
     public function commissionShow($id)
-{
-    // ✅ Récupérer la commission sans filtre source
-    $commission = Commission::with(['user', 'fromUser', 'order'])
-        ->findOrFail($id);
+    {
+        $commission = Commission::with(['user', 'fromUser', 'order'])
+            ->findOrFail($id);
 
-    $parrain = User::find($commission->user->parrain_id ?? null);
+        $parrain = User::find($commission->user->parrain_id ?? null);
 
-    $similarCommissions = Commission::where('user_id', $commission->user_id)
-        ->where('id', '!=', $id)
-        ->orderBy('created_at', 'desc')
-        ->limit(5)
-        ->get();
+        $similarCommissions = Commission::where('user_id', $commission->user_id)
+            ->where('id', '!=', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
-    $networkCommissions = Commission::where('user_id', $commission->user_id)
-        ->where('status', 'paid')
-        ->sum('amount');
+        $networkCommissions = Commission::where('user_id', $commission->user_id)
+            ->where('status', 'paid')
+            ->sum('amount');
 
-    return view('cashier.commissions-show', compact(
-        'commission',
-        'parrain',
-        'similarCommissions',
-        'networkCommissions'
-    ));
-}
+        return view('cashier.commissions-show', compact(
+            'commission',
+            'parrain',
+            'similarCommissions',
+            'networkCommissions'
+        ));
+    }
 
     /**
      * Approuver une commission
      */
     public function approveCommission($id)
     {
-        $commission = Commission::where('source', 'pos')->findOrFail($id);
+        $commission = Commission::findOrFail($id);
         
         if ($commission->status !== 'pending') {
             return redirect()->back()->with('error', 'Cette commission ne peut pas être approuvée.');
@@ -1777,7 +1878,7 @@ class CashierController extends Controller
      */
     public function rejectCommission($id)
     {
-        $commission = Commission::where('source', 'pos')->findOrFail($id);
+        $commission = Commission::findOrFail($id);
         
         if ($commission->status !== 'pending') {
             return redirect()->back()->with('error', 'Cette commission ne peut pas être rejetée.');
@@ -1797,7 +1898,7 @@ class CashierController extends Controller
      */
     public function commissionPay($id)
     {
-        $commission = Commission::where('source', 'pos')->findOrFail($id);
+        $commission = Commission::findOrFail($id);
         
         if (!in_array($commission->status, ['pending', 'approved'])) {
             return redirect()->back()->with('error', 'Cette commission ne peut pas être payée.');
@@ -1851,7 +1952,7 @@ class CashierController extends Controller
      */
     public function commissionCancel($id)
     {
-        $commission = Commission::where('source', 'pos')->findOrFail($id);
+        $commission = Commission::findOrFail($id);
         
         if (!in_array($commission->status, ['pending', 'approved'])) {
             return redirect()->back()->with('error', 'Cette commission ne peut pas être annulée.');
@@ -1880,7 +1981,7 @@ class CashierController extends Controller
         $errors = 0;
         
         foreach ($request->commission_ids as $id) {
-            $commission = Commission::where('source', 'pos')->find($id);
+            $commission = Commission::find($id);
             if ($commission && $commission->status === 'pending') {
                 $commission->update([
                     'status' => 'approved',
@@ -1906,8 +2007,10 @@ class CashierController extends Controller
      */
     public function exportCommissions(Request $request)
     {
+        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        
         $query = Commission::with(['user', 'fromUser'])
-            ->where('source', 'pos');
+            ->whereNotIn('type', $excludedTypes);
         
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -1921,18 +2024,24 @@ class CashierController extends Controller
             $query->where('status', $request->status);
         }
         
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        
         $commissions = $query->orderBy('created_at', 'desc')->get();
         
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="commissions_pos_' . date('Y-m-d') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="commissions_' . date('Y-m-d') . '.csv"',
         ];
         
         $callback = function() use ($commissions) {
             $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            
             fputcsv($file, [
-                'ID', 'Membre', 'Email', 'Type', 'Montant', 
-                'Statut', 'Crée le', 'Payé le', 'Description'
+                'ID', 'Membre', 'Email', 'Code Parrain', 'Type', 'Source',
+                'Montant', 'Statut', 'Période', 'Crée le', 'Payé le', 'Description'
             ]);
             
             foreach ($commissions as $commission) {
@@ -1940,9 +2049,12 @@ class CashierController extends Controller
                     $commission->id,
                     $commission->user->name ?? 'N/A',
                     $commission->user->email ?? 'N/A',
+                    $commission->user->sponsor_id ?? 'N/A',
                     $commission->type,
-                    $commission->amount,
+                    $commission->source,
+                    number_format($commission->amount, 2),
                     $commission->status,
+                    $commission->period,
                     $commission->created_at->format('Y-m-d H:i'),
                     $commission->paid_at ? $commission->paid_at->format('Y-m-d H:i') : 'N/A',
                     $commission->description,
@@ -1960,30 +2072,32 @@ class CashierController extends Controller
      */
     public function commissionsStats()
     {
+        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        
         $stats = [
-            'total' => Commission::where('source', 'pos')->sum('amount'),
-            'paid' => Commission::where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'pending' => Commission::where('source', 'pos')->where('status', 'pending')->sum('amount'),
-            'approved' => Commission::where('source', 'pos')->where('status', 'approved')->sum('amount'),
-            'rejected' => Commission::where('source', 'pos')->where('status', 'rejected')->sum('amount'),
-            'cancelled' => Commission::where('source', 'pos')->where('status', 'cancelled')->sum('amount'),
-            'count' => Commission::where('source', 'pos')->count(),
-            'members' => Commission::where('source', 'pos')->distinct('user_id')->count('user_id'),
+            'total' => Commission::whereNotIn('type', $excludedTypes)->sum('amount'),
+            'paid' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'paid')->sum('amount'),
+            'pending' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'pending')->sum('amount'),
+            'approved' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'approved')->sum('amount'),
+            'rejected' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'rejected')->sum('amount'),
+            'cancelled' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'cancelled')->sum('amount'),
+            'count' => Commission::whereNotIn('type', $excludedTypes)->count(),
+            'members' => Commission::whereNotIn('type', $excludedTypes)->distinct('user_id')->count('user_id'),
         ];
         
-        $monthlyData = Commission::where('source', 'pos')
+        $monthlyData = Commission::whereNotIn('type', $excludedTypes)
             ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as total, COUNT(*) as count')
             ->groupBy('month')
             ->orderBy('month', 'desc')
             ->limit(12)
             ->get();
         
-        $typeData = Commission::where('source', 'pos')
+        $typeData = Commission::whereNotIn('type', $excludedTypes)
             ->selectRaw('type, SUM(amount) as total, COUNT(*) as count')
             ->groupBy('type')
             ->get();
         
-        $topMembers = Commission::where('source', 'pos')
+        $topMembers = Commission::whereNotIn('type', $excludedTypes)
             ->selectRaw('user_id, SUM(amount) as total')
             ->groupBy('user_id')
             ->orderBy('total', 'desc')
@@ -2230,6 +2344,7 @@ class CashierController extends Controller
         
         $callback = function() use ($stats) {
             $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
             fputcsv($file, ['Métrique', 'Valeur']);
             
             foreach ($stats as $key => $value) {
@@ -2240,5 +2355,207 @@ class CashierController extends Controller
         };
         
         return response()->stream($callback, 200, $headers);
+    }
+
+ /**
+ * Demander l'annulation d'une commande
+ */
+public function requestCancellation(Request $request, $id)
+{
+    $order = Order::findOrFail($id);
+    
+    // ✅ MODIFICATION : Permettre l'annulation pour les commandes terminées aussi (dans les 10 min)
+    if (!in_array($order->status, ['pending', 'processing', 'completed'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Cette commande ne peut pas être annulée. Statut: ' . $order->status
+        ], 400);
+    }
+    
+    // ✅ VÉRIFIER LE DÉLAI DE 10 MINUTES
+    $createdAt = $order->created_at;
+    $now = now();
+    $diffInMinutes = $createdAt->diffInMinutes($now);
+    
+    if ($diffInMinutes > 10) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Le délai de 10 minutes pour annuler cette commande est dépassé. (Créée il y a ' . $diffInMinutes . ' minutes)'
+        ], 400);
+    }
+    
+    // Vérifier s'il y a déjà une demande en attente
+    if (isset($order->metadata['cancellation_request']) && 
+        $order->metadata['cancellation_request']['status'] == 'pending') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Une demande d\'annulation est déjà en attente.'
+        ], 400);
+    }
+    
+    $request->validate([
+        'reason' => 'required|string|min:10|max:500'
+    ]);
+    
+    // Créer la demande d'annulation
+    $metadata = $order->metadata ?? [];
+    $metadata['cancellation_request'] = [
+        'status' => 'pending',
+        'reason' => $request->reason,
+        'requested_by' => auth()->id(),
+        'requested_at' => now()->toISOString(),
+    ];
+    
+    $order->metadata = $metadata;
+    $order->save();
+    
+    Log::info('Demande d\'annulation créée', [
+        'order_id' => $order->id,
+        'order_number' => $order->order_number,
+        'user_id' => auth()->id(),
+        'reason' => $request->reason,
+        'time_elapsed' => $diffInMinutes . ' minutes',
+        'status' => $order->status
+    ]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Demande d\'annulation envoyée avec succès.'
+    ]);
+}
+    /**
+     * Exporter les commissions en PDF - Un membre par ligne
+     */
+    public function exportPdf(Request $request)
+    {
+        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        
+        $query = Commission::with(['user', 'fromUser'])
+            ->whereNotIn('type', $excludedTypes);
+        
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        if ($request->filled('period')) {
+            $query->where('period', $request->period);
+        }
+        
+        if (!$request->filled('period') && !$request->filled('date_from') && !$request->filled('date_to')) {
+            $period = date('Y-m');
+            $query->where('period', $period);
+        } else {
+            $period = $request->period ?? date('Y-m');
+        }
+        
+        $commissions = $query->orderBy('created_at', 'desc')->get();
+        
+        $members = [];
+        foreach ($commissions as $commission) {
+            $userId = $commission->user_id;
+            
+            if (!isset($members[$userId])) {
+                $members[$userId] = [
+                    'user' => $commission->user,
+                    'period' => $commission->period ?? $period,
+                    'monthly_pv' => $commission->user?->monthly_pv ?? 0,
+                    'sponsor' => 0,
+                    'direct' => 0,
+                    'indirect' => 0,
+                    'leadership' => 0,
+                    'cash_pos' => 0,
+                ];
+            }
+            
+            switch ($commission->type) {
+                case 'sponsor':
+                    $members[$userId]['sponsor'] += $commission->amount;
+                    break;
+                case 'direct':
+                    $members[$userId]['direct'] += $commission->amount;
+                    break;
+                case 'indirect':
+                    $members[$userId]['indirect'] += $commission->amount;
+                    break;
+                case 'leadership':
+                    $members[$userId]['leadership'] += $commission->amount;
+                    break;
+                case 'cash_pos':
+                    $members[$userId]['cash_pos'] += $commission->amount;
+                    break;
+            }
+        }
+        
+        $members = collect($members);
+        
+        $totals = [
+            'sponsor' => $members->sum('sponsor'),
+            'direct' => $members->sum('direct'),
+            'indirect' => $members->sum('indirect'),
+            'leadership' => $members->sum('leadership'),
+            'cash_pos' => $members->sum('cash_pos'),
+            'grand_total' => $members->sum(function($item) {
+                return $item['sponsor'] + $item['direct'] + $item['indirect'] + $item['leadership'] + $item['cash_pos'];
+            }),
+        ];
+        
+        $logoBase64 = $this->getLogoBase64();
+        
+        if ($request->has('download')) {
+            $pdf = Pdf::loadView('cashier.commissions-pdf', [
+                'members' => $members,
+                'period' => $period,
+                'date' => now(),
+                'totals' => $totals,
+                'request' => $request,
+                'logoBase64' => $logoBase64,
+            ]);
+            return $pdf->download('commissions_' . $period . '.pdf');
+        }
+        
+        return view('cashier.commissions-pdf', [
+            'members' => $members,
+            'period' => $period,
+            'date' => now(),
+            'totals' => $totals,
+            'request' => $request,
+            'logoBase64' => $logoBase64,
+        ]);
+    }
+
+    /**
+     * ✅ Méthode pour récupérer le logo en base64
+     */
+    private function getLogoBase64()
+    {
+        $logoPath = public_path('images/salang_logo.png');
+        
+        if (file_exists($logoPath)) {
+            $imageData = file_get_contents($logoPath);
+            $base64 = base64_encode($imageData);
+            return 'data:image/png;base64,' . $base64;
+        }
+        
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     }
 }

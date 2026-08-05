@@ -63,6 +63,32 @@
         border-color: var(--primary-500);
         color: var(--primary-500);
     }
+    .btn-danger {
+        background: var(--gradient-danger);
+        color: white;
+    }
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+    }
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
+    }
+    .btn-success {
+        background: var(--gradient-success);
+        color: white;
+        box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+    }
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(34, 197, 94, 0.4);
+    }
     
     .badge {
         display: inline-block;
@@ -75,6 +101,9 @@
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-cancellation-pending { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-cancellation-approved { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .badge-cancellation-rejected { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     
     .card {
         background: var(--bg-card);
@@ -108,6 +137,131 @@
         font-size: 0.875rem;
     }
     
+    /* Modal d'annulation */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: var(--shadow-xl);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+    .modal-overlay.active .modal-box {
+        transform: scale(1);
+    }
+    .modal-icon {
+        width: 4rem;
+        height: 4rem;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .modal-icon-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+    .modal-title {
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    .modal-text {
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    .modal-text .text-danger {
+        color: #ef4444;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .modal-actions .btn {
+        min-width: 100px;
+        justify-content: center;
+    }
+    .modal-actions .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .modal-actions .btn:disabled:hover {
+        transform: none !important;
+    }
+    
+    .cancellation-status {
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    .cancellation-status.pending {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+    }
+    .cancellation-status.approved {
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+    .cancellation-status.rejected {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    
+    /* Timer d'annulation */
+    .cancellation-timer {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .cancellation-timer .time {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+    .cancellation-timer.expired {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -125,6 +279,15 @@
         .item-line .item-name { font-size: 0.8rem; }
         .detail-grid {
             grid-template-columns: 1fr !important;
+        }
+        .modal-box {
+            padding: 1.5rem;
+        }
+        .modal-actions {
+            flex-direction: column;
+        }
+        .modal-actions .btn {
+            width: 100%;
         }
     }
 </style>
@@ -193,6 +356,24 @@
             <span class="badge {{ $order->status == 'completed' ? 'badge-success' : ($order->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
                 {{ $order->status == 'completed' ? 'Terminée' : ($order->status == 'pending' ? 'En attente' : ($order->status == 'cancelled' ? 'Annulée' : ucfirst($order->status))) }}
             </span>
+            
+            {{-- Statut de la demande d'annulation --}}
+            @if(isset($order->metadata['cancellation_request']))
+                @php
+                    $cancellationStatus = $order->metadata['cancellation_request']['status'] ?? 'pending';
+                @endphp
+                <span class="badge 
+                    @if($cancellationStatus == 'pending') badge-cancellation-pending
+                    @elseif($cancellationStatus == 'approved') badge-cancellation-approved
+                    @else badge-cancellation-rejected
+                    @endif
+                ">
+                    @if($cancellationStatus == 'pending') ⏳ Demande d'annulation
+                    @elseif($cancellationStatus == 'approved') ✅ Annulation approuvée
+                    @else ❌ Annulation rejetée
+                    @endif
+                </span>
+            @endif
         </div>
     </div>
 
@@ -348,7 +529,354 @@
                     <span class="font-medium text-sm">{{ $order->created_at->format('d/m/Y H:i') }}</span>
                 </div>
             </div>
+
+            {{-- ✅ SECTION DEMANDE D'ANNULATION AVEC TIMER 10 MINUTES --}}
+            @php
+                $canRequestCancellation = false;
+                $timeRemaining = 0;
+                $minutesRemaining = 0;
+                $secondsRemaining = 0;
+                $isTimeExpired = false;
+                
+                if (in_array($order->status, ['pending', 'processing', 'completed'])) {
+                    $createdAt = $order->created_at;
+                    $now = now();
+                    $diffInMinutes = $createdAt->diffInMinutes($now);
+                    
+                    // ✅ Limite de 10 minutes (600 secondes)
+                    if ($diffInMinutes <= 10) {
+                        $canRequestCancellation = true;
+                        $timeRemaining = 600 - ($diffInMinutes * 60);
+                        $minutesRemaining = floor($timeRemaining / 60);
+                        $secondsRemaining = $timeRemaining % 60;
+                    } else {
+                        $isTimeExpired = true;
+                    }
+                }
+                
+                $hasCancellationRequest = isset($order->metadata['cancellation_request']);
+                $cancellationStatus = $hasCancellationRequest ? $order->metadata['cancellation_request']['status'] : null;
+            @endphp
+
+            @if($order->status == 'pending' || $order->status == 'processing')
+                <div class="mt-3 pt-3 border-t border-[var(--border-color)]">
+                    
+                    {{-- ✅ TIMER D'ANNULATION --}}
+                    @if($canRequestCancellation)
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="cancellation-timer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>Temps restant :</span>
+                                <span class="time" id="cancellationTimer">
+                                    {{ sprintf('%02d:%02d', $minutesRemaining, $secondsRemaining) }}
+                                </span>
+                            </div>
+                            <span class="text-[10px] text-[var(--text-secondary)]">⏳ 10 min max</span>
+                        </div>
+                    @elseif($isTimeExpired)
+                        <div class="cancellation-timer expired">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>Délai dépassé</span>
+                            <span class="text-[10px]">(+10 min)</span>
+                        </div>
+                    @endif
+
+                    {{-- ✅ BOUTON DEMANDE D'ANNULATION --}}
+                    @if(!$hasCancellationRequest || $cancellationStatus == 'rejected')
+                        @if($canRequestCancellation)
+                            <button onclick="openCancelModal()" 
+                                    class="btn btn-danger w-full mt-2 text-sm sm:text-base py-2 sm:py-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Demander l'annulation
+                            </button>
+                            <p class="text-[10px] text-[var(--text-secondary)] text-center mt-1">
+                                Une demande sera envoyée à l'administrateur pour validation
+                            </p>
+                        @elseif($isTimeExpired)
+                            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg mt-2">
+                                <div class="flex items-center gap-2 text-red-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    <span class="font-medium">Délai d'annulation dépassé</span>
+                                </div>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                    La commande a été créée il y a plus de 10 minutes.
+                                </p>
+                                <p class="text-xs text-[var(--text-secondary)]">
+                                    Créée le : {{ $order->created_at->format('d/m/Y H:i:s') }}
+                                </p>
+                            </div>
+                        @endif
+                    @endif
+                    
+                    {{-- STATUT DE LA DEMANDE --}}
+                    @if($hasCancellationRequest && $cancellationStatus == 'pending')
+                        <div class="mt-2">
+                            <div class="cancellation-status pending">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <span>Demande d'annulation en attente de validation</span>
+                                </div>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                    Demandé le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['requested_at'])->format('d/m/Y H:i') }}
+                                </p>
+                                @if(isset($order->metadata['cancellation_request']['reason']))
+                                    <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                        <strong>Motif :</strong> {{ $order->metadata['cancellation_request']['reason'] }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                    
+                    @if($hasCancellationRequest && $cancellationStatus == 'approved')
+                        <div class="mt-2">
+                            <div class="cancellation-status approved">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>Annulation approuvée par l'administrateur</span>
+                                </div>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                    Approuvée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    @if($hasCancellationRequest && $cancellationStatus == 'rejected')
+                        <div class="mt-2">
+                            <div class="cancellation-status rejected">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    <span>Annulation rejetée par l'administrateur</span>
+                                </div>
+                                <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                    Rejetée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
+                                </p>
+                                @if(isset($order->metadata['cancellation_request']['admin_notes']))
+                                    <p class="text-xs text-[var(--text-secondary)] mt-1">
+                                        <strong>Motif du rejet :</strong> {{ $order->metadata['cancellation_request']['admin_notes'] }}
+                                    </p>
+                                @endif
+                            </div>
+                            {{-- Refaire une demande si le délai n'est pas dépassé --}}
+                            @if($canRequestCancellation)
+                                <button onclick="openCancelModal()" 
+                                        class="btn btn-danger w-full mt-2 text-sm sm:text-base py-2 sm:py-2.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Refaire une demande
+                                </button>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 </div>
+
+{{-- MODAL DEMANDE D'ANNULATION --}}
+<div id="cancelModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-warning">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 class="modal-title">Demander l'annulation</h3>
+        <p class="modal-text">
+            Êtes-vous sûr de vouloir demander l'annulation de cette commande ?
+            <br>
+            Cette demande sera envoyée à l'<strong>administrateur</strong> pour validation.
+            <br>
+            <span class="text-danger">Une fois approuvée, la commande sera annulée définitivement.</span>
+        </p>
+        
+        <div class="mb-3">
+            <label for="cancellationReason" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                Motif de l'annulation <span class="text-red-500">*</span>
+            </label>
+            <textarea id="cancellationReason" 
+                      class="input w-full p-2 border border-[var(--border-color)] rounded-md text-sm"
+                      rows="3"
+                      placeholder="Expliquez pourquoi vous souhaitez annuler cette commande (minimum 10 caractères)..."
+                      required></textarea>
+            <p class="text-[10px] text-[var(--text-secondary)] mt-1">Minimum 10 caractères</p>
+        </div>
+        
+        <div class="modal-actions">
+            <button type="button" onclick="closeCancelModal()" class="btn btn-outline btn-sm">
+                Annuler
+            </button>
+            <button type="button" onclick="submitCancelRequest()" class="btn btn-danger btn-sm" id="submitCancelBtn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Envoyer la demande
+            </button>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+// ============================================================
+//  TIMER POUR L'ANNULATION (10 MINUTES)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const timerElement = document.getElementById('cancellationTimer');
+    if (timerElement) {
+        let timeRemaining = {{ $timeRemaining ?? 0 }};
+        
+        if (timeRemaining > 0) {
+            const countdown = setInterval(function() {
+                if (timeRemaining <= 0) {
+                    clearInterval(countdown);
+                    timerElement.textContent = '00:00';
+                    // Recharger la page après 2 secondes pour mettre à jour l'interface
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                    return;
+                }
+                
+                timeRemaining--;
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerElement.textContent = 
+                    String(minutes).padStart(2, '0') + ':' + 
+                    String(seconds).padStart(2, '0');
+            }, 1000);
+        }
+    }
+});
+
+// ============================================================
+//  MODAL D'ANNULATION
+// ============================================================
+function openCancelModal() {
+    document.getElementById('cancelModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('cancellationReason').value = '';
+    document.getElementById('cancellationReason').focus();
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Fermer en cliquant à l'extérieur
+document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Fermer avec Echap
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+});
+
+// ============================================================
+//  SOUMETTRE LA DEMANDE D'ANNULATION
+// ============================================================
+function submitCancelRequest() {
+    const reason = document.getElementById('cancellationReason').value.trim();
+    const submitBtn = document.getElementById('submitCancelBtn');
+    const reasonTextarea = document.getElementById('cancellationReason');
+    
+    // Vérifier la longueur du motif
+    if (reason.length < 10) {
+        reasonTextarea.focus();
+        reasonTextarea.style.borderColor = '#ef4444';
+        reasonTextarea.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.15)';
+        
+        // Afficher un message d'erreur
+        let errorMsg = document.getElementById('reasonError');
+        if (!errorMsg) {
+            errorMsg = document.createElement('p');
+            errorMsg.id = 'reasonError';
+            errorMsg.className = 'text-red-500 text-xs mt-1';
+            errorMsg.textContent = 'Veuillez entrer un motif d\'au moins 10 caractères';
+            reasonTextarea.parentNode.appendChild(errorMsg);
+        }
+        
+        setTimeout(() => {
+            reasonTextarea.style.borderColor = '';
+            reasonTextarea.style.boxShadow = '';
+            if (errorMsg) errorMsg.remove();
+        }, 3000);
+        return;
+    }
+    
+    // Désactiver le bouton
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+        <svg class="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Envoi en cours...
+    `;
+    submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    
+    // Envoyer la demande
+    fetch(`/cashier/orders/{{ $order->id }}/request-cancellation`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeCancelModal();
+            // Recharger la page pour afficher le nouveau statut
+            window.location.reload();
+        } else {
+            alert(' ' + (data.message || 'Une erreur est survenue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert(' Erreur lors de l\'envoi de la demande');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        submitBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Envoyer la demande
+        `;
+    });
+}
+</script>
+@endpush
 @endsection

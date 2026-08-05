@@ -80,9 +80,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     
-    // ✅ ENREGISTRER LE SERVICE PROVIDER
+    // ✅ ENREGISTRER LES SERVICE PROVIDERS
     ->withProviders([
         \App\Providers\TimezoneServiceProvider::class,
+        \Barryvdh\DomPDF\ServiceProvider::class, // ✅ AJOUT POUR DOMPDF
     ])
     
     // ✅ CRÉER L'APPLICATION

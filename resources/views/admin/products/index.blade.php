@@ -138,19 +138,38 @@
 <div class="space-y-4 sm:space-y-6">
     
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Products</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Manage product catalog</p>
-        </div>
+<div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Products</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Manage product catalog</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
         <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            <span class="hidden xs:inline">Add</span>
+            <span class="hidden xs:inline">Add Product</span>
             <span class="inline xs:hidden">+</span>
         </a>
+        
+        <!-- ✅ MODIFICATION : Utiliser la route GET existante -->
+        <a href="{{ route('admin.products.generate-all-qr') }}" 
+           class="btn btn-primary btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Générer QR codes
+        </a>
+        
+        <!-- Bouton pour voir les QR codes -->
+        <a href="{{ route('admin.products.qr-codes') }}" class="btn btn-outline btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Voir QR codes
+        </a>
     </div>
+</div>
 
     @if(session('success'))
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">

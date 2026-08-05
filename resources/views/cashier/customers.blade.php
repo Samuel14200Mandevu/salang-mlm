@@ -10,7 +10,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                <span class="text-primary-500"></span> Clients POS
+                Clients POS
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                 Liste des clients enregistrés au guichet
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-1">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total clients</p>
             <p class="text-xl sm:text-2xl font-bold text-primary-500">{{ $customers->total() ?? 0 }}</p>
@@ -37,6 +37,10 @@
         <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Avec parrain</p>
             <p class="text-xl sm:text-2xl font-bold text-purple-500">{{ $customers->whereNotNull('parrain_id')->count() }}</p>
+        </div>
+        <div class="card-stats border-l-4 border-orange-500 animate-fadeInUp delay-4">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Parrains uniques</p>
+            <p class="text-xl sm:text-2xl font-bold text-orange-500">{{ $customers->whereNotNull('parrain_id')->unique('parrain_id')->count() }}</p>
         </div>
     </div>
 
@@ -161,7 +165,7 @@
                     <input type="text" id="newCountryModal" placeholder="Pays" class="input">
                 </div>
                 <div class="text-xs text-[var(--text-secondary)] bg-blue-500/5 p-2 rounded-lg border border-blue-500/10">
-                    <span class="text-yellow-500">ℹ</span> Le client pourra être parrainé lors de sa première vente
+                    <span class="text-yellow-500">ℹ️</span> Le client pourra être parrainé lors de sa première vente
                 </div>
             </div>
             <div class="mt-4 flex gap-2">
@@ -186,6 +190,11 @@
         padding: 0.75rem 1rem;
         border-radius: var(--radius-md);
         border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
     }
     .card-stats p:last-child {
         margin-bottom: 0;
@@ -291,6 +300,34 @@
     .flex-1 {
         flex: 1;
     }
+    
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+    }
+    
+    @media (max-width: 640px) {
+        .card-stats {
+            padding: 0.75rem;
+        }
+        .card-stats .text-2xl {
+            font-size: 1.25rem;
+        }
+        .card {
+            padding: 0.875rem;
+        }
+        .table th,
+        .table td {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.65rem;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.65rem;
+        }
+    }
 </style>
 @endpush
 
@@ -343,16 +380,16 @@ document.getElementById('customerFormModal').addEventListener('submit', function
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            window.showToast(' Client créé avec succès !', 'success');
+            window.showToast('✅ Client créé avec succès !', 'success');
             closeModal('customerModal');
             document.getElementById('customerFormModal').reset();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            window.showToast(' Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
+            window.showToast('❌ Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
         }
     })
     .catch(error => {
-        window.showToast(' Erreur: ' + error.message, 'error');
+        window.showToast('❌ Erreur: ' + error.message, 'error');
     })
     .finally(() => {
         submitBtn.disabled = false;

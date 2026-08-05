@@ -631,10 +631,10 @@ BOUTONS D'ACTION
 ============================================================ -->
 <div class="no-print">
     <button onclick="window.print()" class="btn btn-print">
-        🖨️ Imprimer
+         Imprimer
     </button>
     <a href="{{ route('cashier.orders') }}" class="btn btn-back">
-        ↩️ Retour
+        ↩ Retour
     </a>
 </div>
 
