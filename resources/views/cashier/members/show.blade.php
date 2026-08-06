@@ -323,28 +323,29 @@
         </div>
     </div>
 
-    <!-- Informations du membre -->
-    <div class="detail-card animate-fadeInUp delay-1">
-        <div class="flex flex-wrap items-start gap-4">
-            <div class="avatar-lg">
-                {{ strtoupper(substr($member->name, 0, 1)) }}
+   <!-- Informations du membre -->
+<div class="detail-card animate-fadeInUp delay-1">
+    <div class="flex flex-wrap items-start gap-4">
+        <div class="avatar-lg">
+            {{ strtoupper(substr($member->name, 0, 1)) }}
+        </div>
+        <div class="flex-1">
+            <h2 class="text-xl font-bold text-[var(--text-primary)]">{{ $member->name }}</h2>
+            <div class="flex flex-wrap gap-2 mt-1">
+                <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
+                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                </span>
+                @php
+                    $roleName = $member->getRoleNames()->first() ?? 'user';
+                @endphp
+                @if($roleName != 'user')
+                    <span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
+                @endif
             </div>
-            <div class="flex-1">
-                <h2 class="text-xl font-bold text-[var(--text-primary)]">{{ $member->name }}</h2>
-                <div class="flex flex-wrap gap-2 mt-1">
-                    <span class="rank-badge">{{ $member->rank ?? 'Distributeur' }}</span>
-                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
-                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                    </span>
-                    @php
-                        $roleName = $member->getRoleNames()->first() ?? 'user';
-                    @endphp
-                    @if($roleName != 'user')
-                        <span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
-                    @endif
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                    <div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                <!-- Colonne 1: Informations personnelles -->
+                <div>
+                    <div class="mb-2">
                         <p class="text-xs text-[var(--text-secondary)]">Email</p>
                         <p class="text-sm">{{ $member->email }}</p>
                     </div>
@@ -352,26 +353,89 @@
                         <p class="text-xs text-[var(--text-secondary)]">Téléphone</p>
                         <p class="text-sm">{{ $member->phone ?? 'N/A' }}</p>
                     </div>
-                    <div>
-                        <p class="text-xs text-[var(--text-secondary)]">Code parrain</p>
+                </div>
+                
+                <!-- Colonne 2: Informations du compte -->
+                <div>
+                    <div class="mb-2">
+                        <p class="text-xs text-[var(--text-secondary)]">Code</p>
                         <p class="text-sm font-mono text-primary-500">{{ $member->sponsor_id ?? 'N/A' }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-[var(--text-secondary)]">Inscrit le</p>
                         <p class="text-sm">{{ $member->created_at->format('d/m/Y H:i') }}</p>
                     </div>
-                    <div>
-                        <p class="text-xs text-[var(--text-secondary)]">Package</p>
-                        <p class="text-sm">{{ $member->package?->name ?? 'Aucun' }}</p>
+                </div>
+                
+                <!-- ✅ Colonne 3: Niveau, Pourcentage et Parrain -->
+                <div>
+                    <div class="mb-2">
+                        <p class="text-xs text-[var(--text-secondary)]">Grade & Niveau</p>
+                        <p class="text-sm font-bold text-purple-500">
+                            @php
+                                $level = $member->rank_level ?? 0;
+                                $levelNames = [
+                                    0 => 'Membre',
+                                    1 => 'Distributeur',
+                                    2 => 'Qualification',
+                                    3 => 'Cumul Directeur',
+                                    4 => 'Directeur',
+                                    5 => 'Manager Senior',
+                                    6 => 'Directeur Envolée',
+                                    7 => 'Saphire Manager',
+                                    8 => 'Diamant Bleu',
+                                    9 => 'Perle Diamant',
+                                ];
+                                echo $levelNames[$level] ?? 'Niveau ' . $level;
+                            @endphp
+                            <span class="text-xs text-[var(--text-secondary)] font-normal">(Niv. {{ $level }})</span>
+                        </p>
+                    </div>
+                    <div class="mb-2">
+                        <p class="text-xs text-[var(--text-secondary)]">Taux de commission</p>
+                        <p class="text-sm font-bold text-green-500">
+                            @php
+                                // Taux selon le niveau (d'après CommissionDistributor)
+                                $commissionRates = [
+                                    0 => 0,
+                                    1 => 0,
+                                    2 => 0,
+                                    3 => 22,
+                                    4 => 26,
+                                    5 => 30,
+                                    6 => 34,
+                                    7 => 40,
+                                    8 => 43,
+                                    9 => 45,
+                                ];
+                                $rate = $commissionRates[$level] ?? 0;
+                            @endphp
+                            @if($rate > 0)
+                                {{ $rate }}%
+                            @else
+                                <span class="text-[var(--text-tertiary)] font-normal">Aucun</span>
+                            @endif
+                            <span class="text-xs text-[var(--text-secondary)] font-normal">(sur les PV)</span>
+                        </p>
                     </div>
                     <div>
-                        <p class="text-xs text-[var(--text-secondary)]">PV</p>
-                        <p class="text-sm font-bold text-primary-500">{{ $member->pv_balance ?? 0 }}</p>
+                        <p class="text-xs text-[var(--text-secondary)]">Parrain</p>
+                        <p class="text-sm font-medium text-primary-500">
+                            @if($member->parrain)
+                                {{ $member->parrain->name }}
+                                <span class="text-xs text-[var(--text-secondary)] font-normal">
+                                    (Code: {{ $member->parrain->sponsor_id ?? 'N/A' }})
+                                </span>
+                            @else
+                                <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Résumé des commissions -->
     <div class="commission-summary animate-fadeInUp delay-2">
@@ -418,7 +482,7 @@
                 <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
                 <option value="mlm" {{ request('source') == 'mlm' ? 'selected' : '' }}>MLM</option>
             </select>
-            <button type="submit" class="btn-filter">🔍 Filtrer</button>
+            <button type="submit" class="btn-filter">Filtrer</button>
             <a href="{{ route('cashier.members.show', $member->id) }}" class="btn-reset">↺ Réinitialiser</a>
         </form>
     </div>
