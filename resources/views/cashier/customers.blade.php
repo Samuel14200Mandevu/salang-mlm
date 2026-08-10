@@ -380,16 +380,16 @@ document.getElementById('customerFormModal').addEventListener('submit', function
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            window.showToast('✅ Client créé avec succès !', 'success');
+            window.showToast(' Client créé avec succès !', 'success');
             closeModal('customerModal');
             document.getElementById('customerFormModal').reset();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            window.showToast('❌ Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
+            window.showToast(' Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
         }
     })
     .catch(error => {
-        window.showToast('❌ Erreur: ' + error.message, 'error');
+        window.showToast(' Erreur: ' + error.message, 'error');
     })
     .finally(() => {
         submitBtn.disabled = false;

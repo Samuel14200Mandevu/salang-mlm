@@ -6,25 +6,6 @@
 
 @section('content')
 
-<!-- Statistiques -->
-<div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-label">Commandes</div>
-        <div class="stat-value">{{ $stats['total_orders'] ?? 0 }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Chiffre d'affaires</div>
-        <div class="stat-value green">${{ number_format($stats['total_revenue'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Panier moyen</div>
-        <div class="stat-value purple">${{ number_format($stats['avg_order_value'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">TVA</div>
-        <div class="stat-value yellow">${{ number_format($stats['total_tax'] ?? 0, 2) }}</div>
-    </div>
-</div>
 
 <!-- Tableau -->
 <table>

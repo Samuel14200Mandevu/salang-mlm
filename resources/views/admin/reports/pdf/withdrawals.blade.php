@@ -6,25 +6,6 @@
 
 @section('content')
 
-<!-- Statistiques -->
-<div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-label">En attente</div>
-        <div class="stat-value yellow">${{ number_format($stats['pending'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Payés</div>
-        <div class="stat-value green">${{ number_format($stats['completed'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Échoués</div>
-        <div class="stat-value red">${{ number_format($stats['failed'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Total</div>
-        <div class="stat-value purple">${{ number_format($stats['total'] ?? 0, 2) }}</div>
-    </div>
-</div>
 
 <!-- Tableau -->
 <table>

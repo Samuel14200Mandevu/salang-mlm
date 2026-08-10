@@ -190,7 +190,7 @@
         <div class="header-left">
             <img src="{{ public_path('images/salang_logo.png') }}" alt="Salang Group" class="logo">
             <div class="company-info">
-                <span class="company-name">SALANG GROUP</span>
+                <span class="company-name">SALANG GROUP</span><br>
                 <span class="company-slogan">Santé & Bien-être - Marketing de réseau relationnel</span>
             </div>
         </div>

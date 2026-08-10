@@ -63,6 +63,15 @@ class RegisteredUserController extends Controller
             'terms.accepted' => 'You must accept the terms and conditions.',
         ]);
 
+        // ✅ Vérifier le format du code sponsor (doit commencer par "51" et faire 6 chiffres)
+        if (!preg_match('/^51[0-9]{4}$/', $request->sponsor_id)) {
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors([
+                    'sponsor_id' => 'Invalid sponsor code format. Must start with 51 and have 6 digits (e.g., 511739).'
+                ]);
+        }
+
         try {
             Log::info('Registration attempt', [
                 'email' => $request->email,
@@ -75,7 +84,7 @@ class RegisteredUserController extends Controller
             Log::info('Sponsor search result', [
                 'sponsor_id_input' => $request->sponsor_id,
                 'sponsor_found' => $sponsor ? 'YES' : 'NO',
-                'sponsor_id' => $sponsor ? $sponsor->id : 'N/A',
+                'sponsor_id' => $sponsor ? $sponsor->sponsor_id : 'N/A',
                 'sponsor_name' => $sponsor ? $sponsor->name : 'N/A',
             ]);
 
@@ -264,6 +273,14 @@ class RegisteredUserController extends Controller
      */
     private function findSponsor(string $sponsorId): ?User
     {
+        // Recherche par sponsor_id (format 51XXXX)
+        $sponsor = User::where('sponsor_id', $sponsorId)->where('is_active', true)->first();
+        if ($sponsor) {
+            Log::info('Sponsor found by sponsor_id', ['sponsor_id' => $sponsorId, 'name' => $sponsor->name]);
+            return $sponsor;
+        }
+
+        // Recherche par ID
         if (is_numeric($sponsorId)) {
             $sponsor = User::find((int)$sponsorId);
             if ($sponsor && $sponsor->is_active) {
@@ -272,18 +289,14 @@ class RegisteredUserController extends Controller
             }
         }
 
-        $sponsor = User::where('sponsor_id', $sponsorId)->where('is_active', true)->first();
-        if ($sponsor) {
-            Log::info('Sponsor found by sponsor_id', ['sponsor_id' => $sponsorId, 'name' => $sponsor->name]);
-            return $sponsor;
-        }
-
+        // Recherche par email
         $sponsor = User::where('email', $sponsorId)->where('is_active', true)->first();
         if ($sponsor) {
             Log::info('Sponsor found by email', ['email' => $sponsorId, 'name' => $sponsor->name]);
             return $sponsor;
         }
 
+        // Recherche par nom
         $sponsor = User::where('name', $sponsorId)->where('is_active', true)->first();
         if ($sponsor) {
             Log::info('Sponsor found by name', ['name' => $sponsorId, 'id' => $sponsor->id]);
@@ -295,24 +308,53 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Générer un code de parrainage unique
+     * Générer un code de parrainage unique au format 51XXXX (6 chiffres)
      */
     private function generateSponsorId(): string
     {
-        $prefix = 'SAL';
-        $maxAttempts = 10;
-        $attempts = 0;
-
-        do {
-            $random = strtoupper(substr(uniqid(), -6));
-            $sponsorCode = $prefix . $random;
-            $attempts++;
-        } while (User::where('sponsor_id', $sponsorCode)->exists() && $attempts < $maxAttempts);
-
-        if ($attempts >= $maxAttempts) {
-            $sponsorCode = $prefix . strtoupper(substr(md5(time() . rand()), -6));
+        $prefix = '51';
+        
+        // Trouver le dernier code utilisé commençant par "51"
+        $lastCode = User::where('sponsor_id', 'LIKE', '51%')
+            ->orderBy('sponsor_id', 'desc')
+            ->first();
+        
+        if ($lastCode) {
+            // Extraire les 4 derniers chiffres du dernier code
+            $lastNumber = (int) substr($lastCode->sponsor_id, 2);
+            // Incrémenter de 1
+            $newNumber = $lastNumber + 1;
+        } else {
+            // Si aucun code n'existe, commencer à 1671 (pour 511671)
+            $newNumber = 1671;
         }
-
+        
+        // Vérifier si le code existe déjà (au cas où)
+        $maxAttempts = 100;
+        $attempts = 0;
+        $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        
+        while (User::where('sponsor_id', $sponsorCode)->exists() && $attempts < $maxAttempts) {
+            $newNumber++;
+            $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
+        
+        if ($attempts >= $maxAttempts) {
+            // En cas d'échec, générer aléatoirement
+            $random = rand(1000, 9999);
+            $sponsorCode = $prefix . $random;
+            while (User::where('sponsor_id', $sponsorCode)->exists()) {
+                $random = rand(1000, 9999);
+                $sponsorCode = $prefix . $random;
+            }
+        }
+        
+        Log::info('Nouveau code sponsor généré', [
+            'code' => $sponsorCode,
+            'from_last' => $lastCode ? $lastCode->sponsor_id : 'none'
+        ]);
+        
         return $sponsorCode;
     }
 
@@ -386,5 +428,47 @@ class RegisteredUserController extends Controller
                 break;
             }
         }
+    }
+
+    /**
+     * Vérifier un code sponsor via AJAX
+     */
+    public function checkSponsorCode(Request $request)
+    {
+        $request->validate([
+            'sponsor_id' => 'required|string'
+        ]);
+        
+        $sponsorId = $request->sponsor_id;
+        
+        // Vérifier le format
+        if (!preg_match('/^51[0-9]{4}$/', $sponsorId)) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Le code doit commencer par 51 et contenir 6 chiffres (ex: 511739).'
+            ], 422);
+        }
+        
+        $sponsor = User::where('sponsor_id', $sponsorId)
+            ->where('is_active', true)
+            ->first();
+        
+        if (!$sponsor) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Code sponsor invalide ou compte inactif.'
+            ], 422);
+        }
+        
+        return response()->json([
+            'valid' => true,
+            'message' => 'Code sponsor valide.',
+            'sponsor' => [
+                'id' => $sponsor->id,
+                'name' => $sponsor->name,
+                'email' => $sponsor->email,
+                'sponsor_id' => $sponsor->sponsor_id,
+            ]
+        ]);
     }
 }

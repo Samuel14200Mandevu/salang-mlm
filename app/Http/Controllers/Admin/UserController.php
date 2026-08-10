@@ -34,6 +34,7 @@ class UserController extends Controller
     {
         $query = User::with(['rank', 'package']);
 
+        // ✅ RECHERCHE SERVER-SIDE (comme Cashier)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -48,8 +49,10 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        if ($request->filled('rank')) {
-            $query->where('rank_id', $request->rank);
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('name', $request->role);
+            });
         }
 
         if ($request->filled('package')) {
@@ -68,6 +71,7 @@ class UserController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        // ✅ Pagination avec les résultats de recherche
         $users = $query->orderBy('created_at', 'desc')->paginate(15);
 
         $stats = [
@@ -89,6 +93,7 @@ class UserController extends Controller
         $packages = Package::orderBy('price')->get();
         $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
 
+        // ✅ Garder les filtres pour l'affichage
         return view('admin.users.index', compact('users', 'stats', 'ranks', 'packages', 'kycStatuses'));
     }
 
@@ -645,17 +650,49 @@ class UserController extends Controller
             ->with('success', "Package {$package->name} assigné à {$user->name}.");
     }
 
+    /**
+     * Générer un code de parrainage unique au format 51XXXX (6 chiffres)
+     */
     private function generateSponsorCode(): string
     {
-        $prefix = 'SAL';
-        $random = strtoupper(Str::random(6));
-        $sponsorCode = $prefix . $random;
-
-        while (User::where('sponsor_id', $sponsorCode)->exists()) {
-            $random = strtoupper(Str::random(6));
-            $sponsorCode = $prefix . $random;
+        $prefix = '51';
+        
+        // Trouver le dernier code utilisé commençant par "51"
+        $lastCode = User::where('sponsor_id', 'LIKE', '51%')
+            ->orderBy('sponsor_id', 'desc')
+            ->first();
+        
+        if ($lastCode) {
+            // Extraire les 4 derniers chiffres du dernier code
+            $lastNumber = (int) substr($lastCode->sponsor_id, 2);
+            // Incrémenter de 1
+            $newNumber = $lastNumber + 1;
+        } else {
+            // Si aucun code n'existe, commencer à 1671 (pour 511671)
+            $newNumber = 1671;
         }
-
+        
+        // Vérifier si le code existe déjà
+        $maxAttempts = 100;
+        $attempts = 0;
+        $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        
+        while (User::where('sponsor_id', $sponsorCode)->exists() && $attempts < $maxAttempts) {
+            $newNumber++;
+            $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
+        
+        if ($attempts >= $maxAttempts) {
+            // En cas d'échec, générer aléatoirement
+            $random = rand(1000, 9999);
+            $sponsorCode = $prefix . $random;
+            while (User::where('sponsor_id', $sponsorCode)->exists()) {
+                $random = rand(1000, 9999);
+                $sponsorCode = $prefix . $random;
+            }
+        }
+        
         return $sponsorCode;
     }
 

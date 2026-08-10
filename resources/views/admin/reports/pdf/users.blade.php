@@ -6,59 +6,66 @@
 
 @section('content')
 
-<!-- Statistiques -->
-<div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-label">Total</div>
-        <div class="stat-value">{{ number_format($stats['total'] ?? 0) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Actifs</div>
-        <div class="stat-value green">{{ number_format($stats['active'] ?? 0) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Inactifs</div>
-        <div class="stat-value red">{{ number_format($stats['inactive'] ?? 0) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">PV Moyen</div>
-        <div class="stat-value purple">{{ number_format($stats['avg_pv'] ?? 0) }}</div>
-    </div>
-</div>
-
 <!-- Tableau -->
 <table>
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Grade</th>
-            <th>Package</th>
-            <th>PV</th>
-            <th>Statut</th>
-            <th>Inscrit</th>
+            <th style="width:5%;">ID</th>
+            <th style="width:15%;">Nom complet</th>
+            <th style="width:10%;">Code</th>
+            <th style="width:12%;">Grade & Niveau</th>
+            <th style="width:12%;">Parrain</th>
+            <th style="width:10%;">Code Parrain</th>
+            <th style="width:8%;">PV Perso</th>
+            <th style="width:8%;">PV Cumulé</th>
+            <th style="width:8%;">Statut</th>
+            <th style="width:7%;">KYC</th>
+            <th style="width:10%;">Inscrit</th>
         </tr>
     </thead>
     <tbody>
         @forelse($users ?? [] as $user)
             <tr>
-                <td>#{{ $user->id }}</td>
+                <td style="text-align:center;">#{{ $user->id }}</td>
                 <td>{{ $user->name }}</td>
-                <td>{{ $user->email }}</td>
-                <td>{{ $user->rank?->name ?? 'Distributeur' }}</td>
-                <td>{{ $user->package?->name ?? 'Aucun' }}</td>
-                <td>{{ number_format($user->pv_balance ?? 0) }}</td>
+                <td style="text-align:center;">{{ $user->sponsor_id ?? '-' }}</td>
                 <td>
+                    {{ $user->rank_name ?? ($user->rank ?? 'Distributeur') }}
+                    @if($user->rank_level)
+                        <span style="font-size:7px; color:#6b7280;">(Niv. {{ $user->rank_level }})</span>
+                    @endif
+                </td>
+                <td>
+                    @if($user->parrain)
+                        {{ $user->parrain->name }}
+                    @elseif($user->parrain_id)
+                        ID: {{ $user->parrain_id }}
+                    @else
+                        -
+                    @endif
+                </td>
+                <td style="text-align:center;">{{ $user->parrain->sponsor_id ?? ($user->parrain_id ?? '-') }}</td>
+                <td style="text-align:center;">{{ number_format($user->pv_balance ?? 0) }}</td>
+                <td style="text-align:center;">{{ number_format($user->team_pv ?? 0) }}</td>
+                <td style="text-align:center;">
                     <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
                         {{ $user->is_active ? 'Actif' : 'Inactif' }}
                     </span>
                 </td>
-                <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                <td style="text-align:center;">
+                    <span class="badge 
+                        @if($user->kyc_status == 'verified') badge-success
+                        @elseif($user->kyc_status == 'pending') badge-warning
+                        @elseif($user->kyc_status == 'rejected') badge-danger
+                        @else badge-secondary @endif">
+                        {{ $user->kyc_status_label ?? ucfirst($user->kyc_status ?? 'Non soumis') }}
+                    </span>
+                </td>
+                <td style="text-align:center;">{{ $user->created_at ? $user->created_at->format('d/m/Y') : '-' }}</td>
             </tr>
         @empty
             <tr>
-                <td colspan="8" style="text-align:center; color:#999; padding:20px;">
+                <td colspan="11" style="text-align:center; color:#999; padding:20px;">
                     Aucun utilisateur trouvé
                 </td>
             </tr>
@@ -68,7 +75,29 @@
 
 <!-- Récapitulatif -->
 <div style="margin-top:10px; font-size:8px; color:#888; text-align:center; border-top:1px solid #e5e7eb; padding-top:8px;">
-    Total: {{ $users->total() ?? 0 }} utilisateurs
+    @php
+        $count = 0;
+        if (isset($users)) {
+            if (method_exists($users, 'total')) {
+                $count = $users->total();
+            } elseif (is_countable($users)) {
+                $count = count($users);
+            }
+        }
+    @endphp
+    Total: {{ $count }} utilisateurs
+    
+    @if(isset($stats))
+        | Actifs: {{ $stats['active'] ?? 0 }} | Inactifs: {{ $stats['inactive'] ?? 0 }}
+        @if(isset($stats['members']) && isset($stats['clients']))
+            | Membres: {{ $stats['members'] ?? 0 }} | Clients: {{ $stats['clients'] ?? 0 }}
+        @endif
+        @if(isset($stats['withPackage']) && isset($stats['withoutPackage']))
+            | Avec package: {{ $stats['withPackage'] }} | Sans package: {{ $stats['withoutPackage'] }}
+        @endif
+        | PV Total: {{ number_format($stats['totalPv'] ?? 0, 0) }}
+        | PV Cumulé Total: {{ number_format($stats['totalTeamPv'] ?? 0, 0) }}
+    @endif
 </div>
 
 @endsection

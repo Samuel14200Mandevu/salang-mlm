@@ -6,25 +6,6 @@
 
 @section('content')
 
-<!-- Statistiques -->
-<div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-label">Total</div>
-        <div class="stat-value">${{ number_format($stats['total'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Moyenne</div>
-        <div class="stat-value green">${{ number_format($stats['average'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">En attente</div>
-        <div class="stat-value yellow">${{ number_format($stats['total_pending'] ?? 0, 2) }}</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Payées</div>
-        <div class="stat-value purple">${{ number_format($stats['total_paid'] ?? 0, 2) }}</div>
-    </div>
-</div>
 
 <!-- Tableau -->
 <table>

@@ -38,7 +38,13 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
         }
 
-        $sponsor = User::find($sponsorId) ?? User::where('sponsor_id', $sponsorId)->first();
+        // Vérifier le format du code sponsor
+        if (!preg_match('/^51[0-9]{4}$/', $sponsorId)) {
+            session()->forget('sponsor_id');
+            return redirect('/register')->with('error', 'Invalid sponsor code format. Must start with 51 and have 6 digits.');
+        }
+
+        $sponsor = User::where('sponsor_id', $sponsorId)->first();
         
         if (!$sponsor) {
             Log::error('Sponsor not found: ' . $sponsorId);
@@ -114,7 +120,7 @@ class SocialiteController extends Controller
             return redirect('/register')->with('error', 'Invalid sponsor ID.');
         }
 
-        // Générer le code sponsor unique
+        // Générer le code sponsor unique au format 51XXXX
         $sponsorCode = $this->generateSponsorId();
 
         try {
@@ -191,17 +197,49 @@ class SocialiteController extends Controller
         }
     }
 
+    /**
+     * Générer un code de parrainage unique au format 51XXXX (6 chiffres)
+     */
     private function generateSponsorId(): string
     {
-        $prefix = 'SAL';
-        $random = strtoupper(Str::random(6));
-        $sponsorCode = $prefix . $random;
-
-        while (User::where('sponsor_id', $sponsorCode)->exists()) {
-            $random = strtoupper(Str::random(6));
-            $sponsorCode = $prefix . $random;
+        $prefix = '51';
+        
+        // Trouver le dernier code utilisé commençant par "51"
+        $lastCode = User::where('sponsor_id', 'LIKE', '51%')
+            ->orderBy('sponsor_id', 'desc')
+            ->first();
+        
+        if ($lastCode) {
+            // Extraire les 4 derniers chiffres du dernier code
+            $lastNumber = (int) substr($lastCode->sponsor_id, 2);
+            // Incrémenter de 1
+            $newNumber = $lastNumber + 1;
+        } else {
+            // Si aucun code n'existe, commencer à 1671 (pour 511671)
+            $newNumber = 1671;
         }
-
+        
+        // Vérifier si le code existe déjà
+        $maxAttempts = 100;
+        $attempts = 0;
+        $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        
+        while (User::where('sponsor_id', $sponsorCode)->exists() && $attempts < $maxAttempts) {
+            $newNumber++;
+            $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
+        
+        if ($attempts >= $maxAttempts) {
+            // En cas d'échec, générer aléatoirement
+            $random = rand(1000, 9999);
+            $sponsorCode = $prefix . $random;
+            while (User::where('sponsor_id', $sponsorCode)->exists()) {
+                $random = rand(1000, 9999);
+                $sponsorCode = $prefix . $random;
+            }
+        }
+        
         return $sponsorCode;
     }
 
@@ -213,8 +251,15 @@ class SocialiteController extends Controller
             'sponsor_id.required' => 'Sponsor ID is required.',
         ]);
 
-        $sponsor = User::find($request->sponsor_id) 
-            ?? User::where('sponsor_id', $request->sponsor_id)->first();
+        // Vérifier le format du code sponsor
+        if (!preg_match('/^51[0-9]{4}$/', $request->sponsor_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid sponsor code format. Must start with 51 and have 6 digits (e.g., 511739).'
+            ], 422);
+        }
+
+        $sponsor = User::where('sponsor_id', $request->sponsor_id)->first();
 
         if (!$sponsor) {
             return response()->json([

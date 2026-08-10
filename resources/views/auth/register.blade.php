@@ -755,29 +755,29 @@
         </div>
 
         <!-- Conditions -->
-        <div class="form-group mb-6">
-            <label class="flex items-start gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-                <input type="checkbox" 
-                       name="terms" 
-                       id="terms"
-                       value="1"
-                       class="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0"
-                       required>
-                <span>
-                    J'accepte les 
-                    <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        conditions generales
-                    </a>
-                    et la 
-                    <a href="#" class="text-primary-500 hover:text-primary-600 font-medium transition">
-                        politique de confidentialite
-                    </a>
-                </span>
-            </label>
-            @error('terms')
-                <p class="error-message">{{ $message }}</p>
-            @enderror
-        </div>
+<div class="form-group mb-6">
+    <label class="flex items-start gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+        <input type="checkbox" 
+               name="terms" 
+               id="terms"
+               value="1"
+               class="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0"
+               required>
+        <span>
+            J'accepte les 
+            <a href="{{ route('legal.terms') }}" class="text-primary-500 hover:text-primary-600 font-medium transition">
+                conditions générales
+            </a>
+            et la 
+            <a href="{{ route('legal.privacy') }}" class="text-primary-500 hover:text-primary-600 font-medium transition">
+                politique de confidentialité
+            </a>
+        </span>
+    </label>
+    @error('terms')
+        <p class="error-message">{{ $message }}</p>
+    @enderror
+</div>
 
         <!-- Submit -->
         <button type="submit" class="btn-primary" id="submitBtn">

@@ -246,6 +246,27 @@
     .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
     .delay-1 { animation-delay: 0.05s; }
     
+    /* ✅ NOUVEAU STYLE POUR LE LIEN PV */
+    .pv-link {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .pv-link:hover .pv-value {
+        color: #8b5cf6;
+        transform: scale(1.05);
+    }
+    .pv-link .pv-value {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    .pv-link .pv-icon {
+        transition: all 0.3s ease;
+    }
+    .pv-link:hover .pv-icon {
+        transform: translateX(3px);
+    }
+    
     @media (max-width: 640px) {
         .modal-box { padding: 1.5rem; }
         .modal-actions { flex-direction: column; }
@@ -401,10 +422,6 @@
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
-                    <span class="label">Package</span>
-                    <span class="value">{{ $user->package?->name ?? 'Aucun' }}</span>
-                </div>
-                <div class="info-row">
                     <span class="label">Code de parrainage</span>
                     <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
@@ -427,33 +444,6 @@
                             <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
                         @endif
                     </span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Filleuls</span>
-                    <span class="value">
-                        @php
-                            $filleuls = App\Models\User::where('parrain_id', $user->id)->get();
-                        @endphp
-                        @if($filleuls->count() > 0)
-                            <span class="font-bold text-primary-500">{{ $filleuls->count() }}</span>
-                            <span class="text-xs text-[var(--text-tertiary)] block">
-                                @foreach($filleuls->take(5) as $filleul)
-                                    <a href="{{ route('admin.users.show', $filleul->id) }}" class="text-primary-500 hover:underline">
-                                        {{ $filleul->name }}
-                                    </a>@if(!$loop->last), @endif
-                                @endforeach
-                                @if($filleuls->count() > 5)
-                                    <span class="text-[var(--text-tertiary)]">et {{ $filleuls->count() - 5 }} autre(s)</span>
-                                @endif
-                            </span>
-                        @else
-                            <span class="text-[var(--text-tertiary)]">Aucun filleul</span>
-                        @endif
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Inscrit le</span>
-                    <span class="value text-sm">{{ $user->created_at->format('d/m/Y H:i') }}</span>
                 </div>
 
                 <!-- PACKAGE D'ACTIVATION -->
@@ -482,7 +472,7 @@
             </div>
         </div>
 
-        <!-- Statistics -->
+        <!-- ✅ Statistics avec lien vers Gestion des PV -->
         <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="text-center">
                 <p class="text-2xl font-bold text-primary-500">{{ $filleuls->count() ?? 0 }}</p>
@@ -496,9 +486,21 @@
                 <p class="text-2xl font-bold text-green-500">${{ number_format($totalCommissions ?? 0, 2) }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Total Commissions</p>
             </div>
+            <!-- ✅ PV cliquable vers la gestion des PV -->
             <div class="text-center">
-                <p class="text-2xl font-bold text-purple-500">{{ $user->pv_balance ?? 0 }}</p>
-                <p class="text-xs text-[var(--text-secondary)]">PV</p>
+                <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
+                   class="pv-link block group" 
+                   title="Voir les détails PV de cet utilisateur dans la gestion des PV">
+                    <p class="text-2xl font-bold text-purple-500 pv-value group-hover:text-purple-600 transition-colors">
+                        {{ $user->pv_balance ?? 0 }}
+                    </p>
+                    <p class="text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1">
+                        PV
+                        <svg class="w-3 h-3 text-[var(--text-tertiary)] pv-icon group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                    </p>
+                </a>
             </div>
         </div>
 
@@ -545,8 +547,18 @@
         </div>
         @endif
 
-        <!-- Actions -->
+        <!-- ✅ Actions avec bouton Gérer les PV -->
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)] flex flex-wrap gap-2 sm:gap-3">
+            
+            <!-- ✅ NOUVEAU : Bouton Gérer les PV -->
+            <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
+               class="btn btn-info btn-sm sm:btn-md" 
+               title="Gérer les Points de Volume de cet utilisateur">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Gérer les PV
+            </a>
             
             @if($user->is_active)
                 <button type="button" 
@@ -558,7 +570,6 @@
                     Désactiver
                 </button>
             @else
-                <!-- NOUVEAU : Bouton pour activer avec sélection du package -->
                 <button type="button" 
                         onclick="openActivateWithPackageModal()" 
                         class="btn btn-success btn-sm sm:btn-md">

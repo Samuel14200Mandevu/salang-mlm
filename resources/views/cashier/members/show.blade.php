@@ -124,6 +124,7 @@
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-secondary { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+    .badge-primary { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
     
     .btn {
         display: inline-flex;
@@ -203,6 +204,14 @@
         background: var(--bg-secondary);
     }
     
+    .filleul-row {
+        transition: all 0.3s ease;
+    }
+    .filleul-row:hover {
+        background: var(--bg-hover);
+        transform: translateX(2px);
+    }
+    
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -267,6 +276,21 @@
         background: var(--bg-hover);
     }
     
+    .badge-level {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
+    .badge-level-1 { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+    .badge-level-2 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .badge-level-3 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .badge-level-4 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-level-5 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    
     @media (max-width: 640px) {
         .detail-card { padding: 0.875rem; }
         .commission-summary { grid-template-columns: 1fr 1fr; }
@@ -324,118 +348,117 @@
     </div>
 
    <!-- Informations du membre -->
-<div class="detail-card animate-fadeInUp delay-1">
-    <div class="flex flex-wrap items-start gap-4">
-        <div class="avatar-lg">
-            {{ strtoupper(substr($member->name, 0, 1)) }}
-        </div>
-        <div class="flex-1">
-            <h2 class="text-xl font-bold text-[var(--text-primary)]">{{ $member->name }}</h2>
-            <div class="flex flex-wrap gap-2 mt-1">
-                <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
-                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                </span>
-                @php
-                    $roleName = $member->getRoleNames()->first() ?? 'user';
-                @endphp
-                @if($roleName != 'user')
-                    <span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
-                @endif
+    <div class="detail-card animate-fadeInUp delay-1">
+        <div class="flex flex-wrap items-start gap-4">
+            <div class="avatar-lg">
+                {{ strtoupper(substr($member->name, 0, 1)) }}
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
-                <!-- Colonne 1: Informations personnelles -->
-                <div>
-                    <div class="mb-2">
-                        <p class="text-xs text-[var(--text-secondary)]">Email</p>
-                        <p class="text-sm">{{ $member->email }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-[var(--text-secondary)]">Téléphone</p>
-                        <p class="text-sm">{{ $member->phone ?? 'N/A' }}</p>
-                    </div>
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-[var(--text-primary)]">{{ $member->name }}</h2>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
+                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                    </span>
+                    @php
+                        $roleName = $member->getRoleNames()->first() ?? 'user';
+                    @endphp
+                    @if($roleName != 'user')
+                        <span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
+                    @endif
                 </div>
-                
-                <!-- Colonne 2: Informations du compte -->
-                <div>
-                    <div class="mb-2">
-                        <p class="text-xs text-[var(--text-secondary)]">Code</p>
-                        <p class="text-sm font-mono text-primary-500">{{ $member->sponsor_id ?? 'N/A' }}</p>
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                    <!-- Colonne 1: Informations personnelles -->
                     <div>
-                        <p class="text-xs text-[var(--text-secondary)]">Inscrit le</p>
-                        <p class="text-sm">{{ $member->created_at->format('d/m/Y H:i') }}</p>
+                        <div class="mb-2">
+                            <p class="text-xs text-[var(--text-secondary)]">Email</p>
+                            <p class="text-sm">{{ $member->email }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-[var(--text-secondary)]">Téléphone</p>
+                            <p class="text-sm">{{ $member->phone ?? 'N/A' }}</p>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- ✅ Colonne 3: Niveau, Pourcentage et Parrain -->
-                <div>
-                    <div class="mb-2">
-                        <p class="text-xs text-[var(--text-secondary)]">Grade & Niveau</p>
-                        <p class="text-sm font-bold text-purple-500">
-                            @php
-                                $level = $member->rank_level ?? 0;
-                                $levelNames = [
-                                    0 => 'Membre',
-                                    1 => 'Distributeur',
-                                    2 => 'Qualification',
-                                    3 => 'Cumul Directeur',
-                                    4 => 'Directeur',
-                                    5 => 'Manager Senior',
-                                    6 => 'Directeur Envolée',
-                                    7 => 'Saphire Manager',
-                                    8 => 'Diamant Bleu',
-                                    9 => 'Perle Diamant',
-                                ];
-                                echo $levelNames[$level] ?? 'Niveau ' . $level;
-                            @endphp
-                            <span class="text-xs text-[var(--text-secondary)] font-normal">(Niv. {{ $level }})</span>
-                        </p>
-                    </div>
-                    <div class="mb-2">
-                        <p class="text-xs text-[var(--text-secondary)]">Taux de commission</p>
-                        <p class="text-sm font-bold text-green-500">
-                            @php
-                                // Taux selon le niveau (d'après CommissionDistributor)
-                                $commissionRates = [
-                                    0 => 0,
-                                    1 => 0,
-                                    2 => 0,
-                                    3 => 22,
-                                    4 => 26,
-                                    5 => 30,
-                                    6 => 34,
-                                    7 => 40,
-                                    8 => 43,
-                                    9 => 45,
-                                ];
-                                $rate = $commissionRates[$level] ?? 0;
-                            @endphp
-                            @if($rate > 0)
-                                {{ $rate }}%
-                            @else
-                                <span class="text-[var(--text-tertiary)] font-normal">Aucun</span>
-                            @endif
-                            <span class="text-xs text-[var(--text-secondary)] font-normal">(sur les PV)</span>
-                        </p>
-                    </div>
+                    
+                    <!-- Colonne 2: Informations du compte -->
                     <div>
-                        <p class="text-xs text-[var(--text-secondary)]">Parrain</p>
-                        <p class="text-sm font-medium text-primary-500">
-                            @if($member->parrain)
-                                {{ $member->parrain->name }}
-                                <span class="text-xs text-[var(--text-secondary)] font-normal">
-                                    (Code: {{ $member->parrain->sponsor_id ?? 'N/A' }})
-                                </span>
-                            @else
-                                <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
-                            @endif
-                        </p>
+                        <div class="mb-2">
+                            <p class="text-xs text-[var(--text-secondary)]">Code</p>
+                            <p class="text-sm font-mono text-primary-500">{{ $member->sponsor_id ?? 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-[var(--text-secondary)]">Inscrit le</p>
+                            <p class="text-sm">{{ $member->created_at->format('d/m/Y H:i') }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Colonne 3: Niveau, Pourcentage et Parrain -->
+                    <div>
+                        <div class="mb-2">
+                            <p class="text-xs text-[var(--text-secondary)]">Grade & Niveau</p>
+                            <p class="text-sm font-bold text-purple-500">
+                                @php
+                                    $level = $member->rank_level ?? 0;
+                                    $levelNames = [
+                                        0 => 'Membre',
+                                        1 => 'Distributeur',
+                                        2 => 'Qualification',
+                                        3 => 'Cumul Directeur',
+                                        4 => 'Directeur',
+                                        5 => 'Manager Senior',
+                                        6 => 'Directeur Envolée',
+                                        7 => 'Saphire Manager',
+                                        8 => 'Diamant Bleu',
+                                        9 => 'Perle Diamant',
+                                    ];
+                                    echo $levelNames[$level] ?? 'Niveau ' . $level;
+                                @endphp
+                                <span class="text-xs text-[var(--text-secondary)] font-normal">(Niv. {{ $level }})</span>
+                            </p>
+                        </div>
+                        <div class="mb-2">
+                            <p class="text-xs text-[var(--text-secondary)]">Taux de commission</p>
+                            <p class="text-sm font-bold text-green-500">
+                                @php
+                                    $commissionRates = [
+                                        0 => 0,
+                                        1 => 0,
+                                        2 => 0,
+                                        3 => 22,
+                                        4 => 26,
+                                        5 => 30,
+                                        6 => 34,
+                                        7 => 40,
+                                        8 => 43,
+                                        9 => 45,
+                                    ];
+                                    $rate = $commissionRates[$level] ?? 0;
+                                @endphp
+                                @if($rate > 0)
+                                    {{ $rate }}%
+                                @else
+                                    <span class="text-[var(--text-tertiary)] font-normal">Aucun</span>
+                                @endif
+                                <span class="text-xs text-[var(--text-secondary)] font-normal">(sur les PV)</span>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-[var(--text-secondary)]">Parrain</p>
+                            <p class="text-sm font-medium text-primary-500">
+                                @if($member->parrain)
+                                    {{ $member->parrain->name }}
+                                    <span class="text-xs text-[var(--text-secondary)] font-normal">
+                                        (Code: {{ $member->parrain->sponsor_id ?? 'N/A' }})
+                                    </span>
+                                @else
+                                    <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
+                                @endif
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- Résumé des commissions -->
     <div class="commission-summary animate-fadeInUp delay-2">
@@ -457,7 +480,7 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    <!-- Filtres Commissions -->
     <div class="card animate-fadeInUp delay-2">
         <form method="GET" action="{{ route('cashier.members.show', $member->id) }}" class="filter-section">
             <select name="type">
@@ -595,5 +618,187 @@
             </div>
         @endif
     </div>
+
+    <!-- ============================================================ -->
+    <!-- LISTE DES FILLEULS (DOWNLINES)                               -->
+    <!-- ============================================================ -->
+    <div class="detail-card animate-fadeInUp delay-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                Filleuls
+                <span class="text-xs text-[var(--text-secondary)] font-normal">({{ $downlines->total() ?? 0 }})</span>
+            </h3>
+            <div class="flex flex-wrap gap-2 text-[10px] sm:text-xs">
+                <span class="badge badge-success text-[8px]">Actif</span>
+                <span class="badge badge-danger text-[8px]">Inactif</span>
+            </div>
+        </div>
+
+        <!-- Filtres Filleuls -->
+        <div class="filter-section">
+            <input type="text" id="downlineSearch" placeholder="Rechercher un filleul..." class="text-sm">
+            <select id="downlineLevelFilter" class="text-sm">
+                <option value="">Tous les niveaux</option>
+                <option value="1">Niveau 1</option>
+                <option value="2">Niveau 2</option>
+                <option value="3">Niveau 3</option>
+                <option value="4">Niveau 4</option>
+                <option value="5">Niveau 5+</option>
+            </select>
+            <select id="downlineStatusFilter" class="text-sm">
+                <option value="">Tous les statuts</option>
+                <option value="1">Actif</option>
+                <option value="0">Inactif</option>
+            </select>
+            <button onclick="filterDownlines()" class="btn-filter">Filtrer</button>
+            <button onclick="resetDownlineFilters()" class="btn-reset">↺ Réinitialiser</button>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="text-xs sm:text-sm">#</th>
+                        <th class="text-xs sm:text-sm">Nom</th>
+                        <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
+                        <th class="text-xs sm:text-sm">Code</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Niveau</th>
+                        <th class="text-xs sm:text-sm hidden lg:table-cell">PV</th>
+                        <th class="text-xs sm:text-sm hidden xl:table-cell">Inscrit</th>
+                        <th class="text-xs sm:text-sm">Statut</th>
+                        <th class="text-xs sm:text-sm text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="downlinesTable">
+                    @forelse($downlines ?? [] as $downline)
+                        <tr class="filleul-row" 
+                            data-name="{{ strtolower($downline->name) }}" 
+                            data-email="{{ strtolower($downline->email) }}"
+                            data-level="{{ $downline->level ?? 1 }}"
+                            data-status="{{ $downline->is_active ? 1 : 0 }}">
+                            <td class="font-mono text-xs">#{{ $downline->id }}</td>
+                            <td>
+                                <div class="font-medium text-sm">{{ $downline->name }}</div>
+                                <div class="text-xs text-[var(--text-secondary)]">Tél: {{ $downline->phone ?? 'N/A' }}</div>
+                            </td>
+                            <td class="hidden sm:table-cell text-xs text-[var(--text-secondary)]">
+                                {{ $downline->email }}
+                            </td>
+                            <td>
+                                <span class="font-mono text-xs text-primary-500">{{ $downline->sponsor_id ?? 'N/A' }}</span>
+                            </td>
+                            <td class="hidden md:table-cell">
+                                @php
+                                    $level = $downline->level ?? 1;
+                                    $levelClass = 'badge-level';
+                                    if ($level == 1) $levelClass .= ' badge-level-1';
+                                    elseif ($level == 2) $levelClass .= ' badge-level-2';
+                                    elseif ($level == 3) $levelClass .= ' badge-level-3';
+                                    elseif ($level == 4) $levelClass .= ' badge-level-4';
+                                    else $levelClass .= ' badge-level-5';
+                                @endphp
+                                <span class="{{ $levelClass }}">Niv. {{ $level }}</span>
+                            </td>
+                            <td class="hidden lg:table-cell text-sm font-medium text-green-500">
+                                {{ number_format($downline->pv_balance ?? 0) }}
+                            </td>
+                            <td class="hidden xl:table-cell text-xs text-[var(--text-secondary)]">
+                                {{ $downline->created_at->format('d/m/Y') }}
+                            </td>
+                            <td>
+                                <span class="badge {{ $downline->is_active ? 'badge-success' : 'badge-danger' }} text-[10px]">
+                                    {{ $downline->is_active ? 'Actif' : 'Inactif' }}
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <a href="{{ route('cashier.members.show', $downline->id) }}" 
+                                   class="btn btn-primary btn-sm" title="Voir">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
+                                <svg class="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <p class="text-base font-medium text-[var(--text-primary)]">Aucun filleul</p>
+                                <p class="text-sm text-[var(--text-tertiary)] mt-1">Ce membre n'a pas encore de filleuls dans son réseau</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if(isset($downlines) && $downlines->hasPages())
+            <div class="mt-3 sm:mt-4">
+                {{ $downlines->links() }}
+            </div>
+        @endif
+    </div>
+
 </div>
+
+@push('scripts')
+<script>
+// Filtres pour les filleuls
+function filterDownlines() {
+    const search = document.getElementById('downlineSearch').value.trim().toLowerCase();
+    const level = document.getElementById('downlineLevelFilter').value;
+    const status = document.getElementById('downlineStatusFilter').value;
+    const rows = document.querySelectorAll('#downlinesTable tr');
+
+    rows.forEach(row => {
+        const name = row.dataset.name || '';
+        const email = row.dataset.email || '';
+        const rowLevel = row.dataset.level || '1';
+        const rowStatus = row.dataset.status || '1';
+
+        let show = true;
+
+        if (search && !name.includes(search) && !email.includes(search)) {
+            show = false;
+        }
+
+        if (level && rowLevel != level) {
+            show = false;
+        }
+
+        if (status && rowStatus != status) {
+            show = false;
+        }
+
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function resetDownlineFilters() {
+    document.getElementById('downlineSearch').value = '';
+    document.getElementById('downlineLevelFilter').value = '';
+    document.getElementById('downlineStatusFilter').value = '';
+    filterDownlines();
+}
+
+// Filtrer en temps réel sur la recherche
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('downlineSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterDownlines);
+    }
+    const levelFilter = document.getElementById('downlineLevelFilter');
+    if (levelFilter) {
+        levelFilter.addEventListener('change', filterDownlines);
+    }
+    const statusFilter = document.getElementById('downlineStatusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterDownlines);
+    }
+});
+</script>
+@endpush
 @endsection

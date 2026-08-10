@@ -1567,30 +1567,61 @@ public function invoice($id)
         return view('cashier.members', compact('members', 'stats'));
     }
 
-    /**
-     * Détails d'un membre
-     */
-    public function memberShow($id)
-    {
-        $member = User::where('user_type', 'member')->with(['package', 'orders'])->findOrFail($id);
-        
-        $commissions = Commission::where('user_id', $member->id)
-            ->where('source', 'pos')
-            ->where('status', 'paid')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        
-        $stats = [
-            'total_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'paid_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'pending_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'pending')->sum('amount'),
-            'approved_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'approved')->count(),
-            'cancelled_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'cancelled')->count(),
-        ];
-        
-        return view('cashier.members.show', compact('member', 'commissions', 'stats'));
+/**
+ * Détails d'un membre (pour le caissier)
+ */
+public function memberShow($id)
+{
+    $member = User::where('user_type', 'member')->with(['package', 'orders'])->findOrFail($id);
+    
+    // Récupérer les commissions avec filtrage
+    $commissionsQuery = Commission::where('user_id', $member->id)
+        ->where('source', 'pos')
+        ->orderBy('created_at', 'desc');
+    
+    if (request()->filled('type')) {
+        $commissionsQuery->where('type', request()->type);
     }
-
+    if (request()->filled('status')) {
+        $commissionsQuery->where('status', request()->status);
+    }
+    if (request()->filled('source')) {
+        $commissionsQuery->where('source', request()->source);
+    }
+    
+    $commissions = $commissionsQuery->paginate(15);
+    
+    // ✅ Récupérer les filleuls (downlines)
+    $downlines = User::where('parrain_id', $member->id)
+        ->where('user_type', 'member')
+        ->with(['package'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+    
+    // ✅ Ajouter le niveau à chaque filleul
+    foreach ($downlines as $downline) {
+        if (class_exists('App\Models\Genealogy')) {
+            $genealogy = \App\Models\Genealogy::where('user_id', $downline->id)->first();
+            $downline->level = $genealogy->level ?? 1;
+        } else {
+            $downline->level = $this->getDownlineLevel($member->id, $downline->id);
+        }
+    }
+    
+    // Statistiques complètes
+    $stats = [
+        'total_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
+        'paid_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
+        'pending_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'pending')->sum('amount'),
+        'approved_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'approved')->count(),
+        'cancelled_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'cancelled')->count(),
+        // Stats des filleuls
+        'total_downlines' => $downlines->total(),
+        'active_downlines' => User::where('parrain_id', $member->id)->where('is_active', true)->count(),
+    ];
+    
+    return view('cashier.members.show', compact('member', 'commissions', 'stats', 'downlines'));
+}
     /**
      * Commandes d'un membre
      */
@@ -2422,6 +2453,42 @@ public function requestCancellation(Request $request, $id)
         'success' => true,
         'message' => 'Demande d\'annulation envoyée avec succès.'
     ]);
+}
+
+
+/**
+ * Calculer le niveau d'un filleul par rapport à un parrain
+ */
+private function getDownlineLevel($parrainId, $downlineId, $currentLevel = 1, $maxLevel = 10)
+{
+    if ($currentLevel > $maxLevel) {
+        return $maxLevel;
+    }
+    
+    // Vérifier si le filleul est directement sous le parrain
+    $downline = User::find($downlineId);
+    if (!$downline) {
+        return $currentLevel;
+    }
+    
+    // Si le parrain direct du filleul est le parrain recherché
+    if ($downline->parrain_id == $parrainId) {
+        return $currentLevel;
+    }
+    
+    // Sinon, remonter l'arbre pour trouver le niveau
+    $current = $downline;
+    $level = 0;
+    
+    while ($current && $current->parrain_id && $level < $maxLevel) {
+        $level++;
+        if ($current->parrain_id == $parrainId) {
+            return $level;
+        }
+        $current = User::find($current->parrain_id);
+    }
+    
+    return $maxLevel;
 }
     /**
      * Exporter les commissions en PDF - Un membre par ligne

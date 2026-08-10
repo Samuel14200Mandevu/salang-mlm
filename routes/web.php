@@ -4,6 +4,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\EmailCheckController;
 use App\Http\Controllers\Auth\SponsorCheckController;
+use App\Http\Controllers\Auth\RegisteredUserController; // ✅ AJOUTÉ
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\UserPackageController;
@@ -40,6 +41,10 @@ use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\ActivationController as AdminActivationController;
 
+use App\Http\Controllers\LegalController;
+
+use App\Http\Controllers\Admin\AdminPVController;
+
 // Controllers Cashier
 use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\Admin\AdminCashierController;
@@ -62,6 +67,10 @@ Route::view('/contact', 'pages.contact')->name('contact');
 // Sponsor & Email check (AJAX)
 Route::get('/check-email', [EmailCheckController::class, 'check'])->name('check.email');
 Route::get('/check-sponsor', [SponsorCheckController::class, 'check'])->name('check.sponsor');
+
+// ✅ NOUVELLE ROUTE : Vérification du code sponsor au format 51XXXX
+Route::post('/check-sponsor-code', [RegisteredUserController::class, 'checkSponsorCode'])
+    ->name('check.sponsor.code');
 
 // Onboarding
 Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
@@ -405,6 +414,37 @@ Route::prefix('admin')
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
 
         // ============================================================
+        // GESTION DES PV (Points de Volume) - ADMIN
+        // ============================================================
+        Route::prefix('pv')->name('pv.')->group(function () {
+            Route::get('/', [AdminPVController::class, 'index'])->name('index');
+            Route::get('/export', [AdminPVController::class, 'export'])->name('export');
+            
+            // Gestion individuelle
+            Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
+            Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
+            Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
+            Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
+            
+            // Attribution massive
+            Route::post('/bulk', [AdminPVController::class, 'bulkAssign'])->name('bulk');
+            
+            // Statistiques
+            Route::get('/stats', [AdminPVController::class, 'stats'])->name('stats');
+            Route::get('/history/{user?}', [AdminPVController::class, 'history'])->name('history');
+            
+            // Gestion des périodes
+            Route::prefix('periods')->name('periods.')->group(function () {
+                Route::get('/', [AdminPVController::class, 'periods'])->name('index');
+                Route::post('/create', [AdminPVController::class, 'createPeriod'])->name('create');
+                Route::post('/{period}/process', [AdminPVController::class, 'processPeriod'])->name('process');
+                Route::post('/{period}/reset-monthly', [AdminPVController::class, 'resetMonthlyPV'])->name('reset-monthly');
+                Route::delete('/{period}/clean', [AdminPVController::class, 'cleanPeriod'])->name('clean');
+            });
+        });
+        Route::get('/pv', [AdminPVController::class, 'index'])->name('pv');
+
+        // ============================================================
         // GESTION DES CAISSIERS - ADMIN
         // ============================================================
         Route::prefix('cashiers')->name('cashiers.')->group(function () {
@@ -640,3 +680,26 @@ require __DIR__ . '/auth.php';
 Route::fallback(function () {
     return redirect()->route('home');
 })->name('fallback');
+
+// ============================================================
+// ROUTES PV - DÉPLACÉES EN DEHORS DU GROUPE ADMIN
+// ============================================================
+Route::prefix('admin/pv')
+    ->middleware(['auth', 'active', 'admin'])
+    ->name('admin.pv.')
+    ->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AdminPVController::class, 'index'])->name('index');
+        Route::get('/export', [App\Http\Controllers\Admin\AdminPVController::class, 'export'])->name('export');
+        Route::put('/{user}', [App\Http\Controllers\Admin\AdminPVController::class, 'update'])->name('update');
+        Route::post('/{user}/monthly', [App\Http\Controllers\Admin\AdminPVController::class, 'addMonthly'])->name('monthly');
+        Route::get('/{user}/rank-info', [App\Http\Controllers\Admin\AdminPVController::class, 'getRankInfo'])->name('rank-info');
+        Route::post('/{user}/recalculate-rank', [App\Http\Controllers\Admin\AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
+        Route::post('/bulk', [App\Http\Controllers\Admin\AdminPVController::class, 'bulkAssign'])->name('bulk');
+        Route::get('/stats', [App\Http\Controllers\Admin\AdminPVController::class, 'stats'])->name('stats');
+        Route::get('/history/{user?}', [App\Http\Controllers\Admin\AdminPVController::class, 'history'])->name('history');
+    });
+
+    // Pages légales
+Route::get('/mentions-legales', [LegalController::class, 'legal'])->name('legal.mentions');
+Route::get('/confidentialite', [LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/conditions-generales', [LegalController::class, 'terms'])->name('legal.terms');

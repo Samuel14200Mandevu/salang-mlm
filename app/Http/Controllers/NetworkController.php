@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Rank;
-use App\Models\Genealogy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NetworkController extends Controller
 {
+    /**
+     * Afficher la page principale du réseau
+     */
     public function index()
     {
         $user = Auth::user();
@@ -21,21 +23,38 @@ class NetworkController extends Controller
 
         $parrain = User::find($user->parrain_id);
         
+        // ✅ Construire l'arbre complet avec TOUS les niveaux
+        $tree = $this->buildTree($user, 0, 999);
+
+        // ✅ Récupérer TOUS les descendants pour les statistiques
+        $allDescendants = $this->getAllDescendantsWithLevel($user->id, 1, 999);
+        
+        // Statistiques du réseau
+        $stats = [
+            'total' => count($allDescendants),
+            'level_1' => $this->countLevelN($user, 1),
+            'level_2' => $this->countLevelN($user, 2),
+            'level_3' => $this->countLevelN($user, 3),
+            'level_4' => $this->countLevelN($user, 4),
+            'level_5' => $this->countLevelN($user, 5),
+            'level_6' => $this->countLevelN($user, 6),
+            'level_7' => $this->countLevelN($user, 7),
+            'level_8' => $this->countLevelN($user, 8),
+            'level_9' => $this->countLevelN($user, 9),
+            'level_10' => $this->countLevelN($user, 10),
+            'active' => User::where('parrain_id', $user->id)->where('is_active', true)->count(),
+            'total_pv' => $user->team_pv ?? 0,
+        ];
+
+        // ✅ Récupérer les filleuls directs pour la vue liste
         $filleuls = User::where('parrain_id', $user->id)
             ->with(['package', 'rank', 'genealogy'])
             ->get();
 
-        $tree = $this->buildTree($user);
-
-        $stats = [
-            'total' => $filleuls->count(),
-            'level_1' => $this->countLevel1($user),
-            'level_2' => $this->countLevel2($user),
-            'level_3' => $this->countLevel3($user),
-            'level_4' => $this->countLevel4($user),
-            'level_5' => $this->countLevel5($user),
-            'active' => $filleuls->where('is_active', true)->count(),
-        ];
+        foreach ($filleuls as $member) {
+            $member->level = 1;
+            $member->downline_count = User::where('parrain_id', $member->id)->count();
+        }
 
         $recentDownlines = User::where('parrain_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -43,186 +62,71 @@ class NetworkController extends Controller
             ->with(['package', 'rank', 'genealogy'])
             ->get();
 
+        foreach ($recentDownlines as $member) {
+            $member->level = 1;
+            $member->downline_count = User::where('parrain_id', $member->id)->count();
+        }
+
         return view('network.index', compact(
             'user',
             'parrain',
             'filleuls',
             'tree',
             'stats',
-            'recentDownlines'
+            'recentDownlines',
+            'allDescendants'
         ))->with('controller', $this);
     }
 
-    /**
-     * ✅ MÉTHODE POUR OBTENIR LES INFOS DU GRADE
-     */
-    public function getUserRankInfo($user)
+    public function show($id)
     {
-        // ✅ Si rank est un objet (relation chargée)
-        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
-            return [
-                'name' => $user->rank->name,
-                'level' => $user->rank->level,
-            ];
-        }
+        $member = User::with(['package', 'rank', 'genealogy'])->findOrFail($id);
+        $currentUser = Auth::user();
         
-        // ✅ Si rank_id existe
-        if ($user->rank_id) {
-            $rank = Rank::find($user->rank_id);
-            if ($rank) {
-                return [
-                    'name' => $rank->name,
-                    'level' => $rank->level,
-                ];
-            }
-        }
+        $isInNetwork = $this->isInNetwork($currentUser->id, $member->id);
         
-        // ✅ Si rank est une chaîne (stocké directement)
-        if (is_string($user->rank) && !empty($user->rank)) {
-            $levels = [
-                'Distributeur' => 1, 'Distributor' => 1,
-                'Qualification' => 2, 'Supervisor' => 2,
-                'Cumul Directeur' => 3, 'Assistant Manager' => 3,
-                'Directeur' => 4, 'Manager' => 4,
-                'Manager Senior' => 5, 'Senior Manager' => 5,
-                'Directeur Envolée' => 6, 'Soaring Manager' => 6,
-                'Saphire Manager' => 7,
-                'Blue Diamond' => 8,
-                'Diamond Pearl' => 9,
-            ];
-            
-            return [
-                'name' => $user->rank,
-                'level' => $levels[$user->rank] ?? 1,
-            ];
+        if (!$isInNetwork && $currentUser->id != $member->id) {
+            abort(403, 'Vous n\'avez pas accès à ce profil.');
         }
-        
-        // ✅ Valeur par défaut
-        return ['name' => 'Distributor', 'level' => 1];
-    }
 
-    /**
-     * ✅ MÉTHODE POUR OBTENIR LA COULEUR DU GRADE
-     */
-    public function getRankColor($level)
-    {
-        $colors = [
-            1 => 'rank-level-1',
-            2 => 'rank-level-2',
-            3 => 'rank-level-3',
-            4 => 'rank-level-4',
-            5 => 'rank-level-5',
-            6 => 'rank-level-6',
-            7 => 'rank-level-7',
-            8 => 'rank-level-8',
-            9 => 'rank-level-9',
+        $downlines = User::where('parrain_id', $member->id)
+            ->with(['package', 'rank', 'genealogy'])
+            ->get();
+
+        foreach ($downlines as $downline) {
+            $downline->level = $this->getUserLevel($member->id, $downline->id);
+            $downline->downline_count = User::where('parrain_id', $downline->id)->count();
+        }
+
+        $memberStats = [
+            'total_downlines' => $downlines->count(),
+            'active_downlines' => $downlines->where('is_active', true)->count(),
+            'total_pv' => $member->team_pv ?? 0,
+            'level' => $this->getUserLevel($currentUser->id, $member->id),
         ];
-        return $colors[$level] ?? 'rank-level-1';
+
+        return view('network.show', compact('member', 'downlines', 'memberStats'))->with('controller', $this);
     }
 
-    /**
-     * ✅ MÉTHODE POUR OBTENIR LA COULEUR DE L'AVATAR
-     */
-    public function getAvatarColor($user)
+    public function treeData(Request $request)
     {
-        if (!$user->is_active) {
-            return 'avatar-danger';
-        }
+        $userId = $request->get('user_id', Auth::id());
+        $user = User::findOrFail($userId);
+        $depth = $request->get('depth', 999);
         
-        $rankInfo = $this->getUserRankInfo($user);
-        $level = $rankInfo['level'];
-        
-        if ($level == 1) return 'avatar-neutral';
-        if ($level == 2) return 'avatar-info';
-        if ($level == 3) return 'avatar-purple';
-        if ($level >= 4 && $level <= 6) return 'avatar-warning';
-        if ($level >= 7) return 'avatar-gold';
-        
-        return 'avatar-success';
+        $tree = $this->buildTree($user, 0, $depth);
+
+        return response()->json([
+            'success' => true,
+            'data' => $tree
+        ]);
     }
 
-    private function countLevel1($user)
-    {
-        return User::where('parrain_id', $user->id)->count();
-    }
+    // ============================================================
+    // MÉTHODES PRIVÉES (BASE DE DONNÉES)
+    // ============================================================
 
-    private function countLevel2($user)
-    {
-        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
-
-        if (empty($level1Ids)) {
-            return 0;
-        }
-
-        return User::whereIn('parrain_id', $level1Ids)->count();
-    }
-
-    private function countLevel3($user)
-    {
-        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
-
-        if (empty($level1Ids)) {
-            return 0;
-        }
-
-        $level2Ids = User::whereIn('parrain_id', $level1Ids)->pluck('id')->toArray();
-
-        if (empty($level2Ids)) {
-            return 0;
-        }
-
-        return User::whereIn('parrain_id', $level2Ids)->count();
-    }
-
-    private function countLevel4($user)
-    {
-        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
-        if (empty($level1Ids)) return 0;
-
-        $level2Ids = User::whereIn('parrain_id', $level1Ids)->pluck('id')->toArray();
-        if (empty($level2Ids)) return 0;
-
-        $level3Ids = User::whereIn('parrain_id', $level2Ids)->pluck('id')->toArray();
-        if (empty($level3Ids)) return 0;
-
-        return User::whereIn('parrain_id', $level3Ids)->count();
-    }
-
-    private function countLevel5($user)
-    {
-        $level1Ids = User::where('parrain_id', $user->id)->pluck('id')->toArray();
-        if (empty($level1Ids)) return 0;
-
-        $level2Ids = User::whereIn('parrain_id', $level1Ids)->pluck('id')->toArray();
-        if (empty($level2Ids)) return 0;
-
-        $level3Ids = User::whereIn('parrain_id', $level2Ids)->pluck('id')->toArray();
-        if (empty($level3Ids)) return 0;
-
-        $level4Ids = User::whereIn('parrain_id', $level3Ids)->pluck('id')->toArray();
-        if (empty($level4Ids)) return 0;
-
-        return User::whereIn('parrain_id', $level4Ids)->count();
-    }
-
-    private function getAllDescendants($user)
-    {
-        $descendants = collect();
-        $this->getDescendantsRecursive($user, $descendants);
-        return $descendants;
-    }
-
-    private function getDescendantsRecursive($user, &$descendants)
-    {
-        $children = User::where('parrain_id', $user->id)->get();
-        
-        foreach ($children as $child) {
-            $descendants->push($child);
-            $this->getDescendantsRecursive($child, $descendants);
-        }
-    }
-
-    private function buildTree($user, $level = 0, $maxLevel = 3)
+    private function buildTree($user, $level = 0, $maxLevel = 999)
     {
         if ($level > $maxLevel || !$user) {
             return null;
@@ -235,10 +139,13 @@ class NetworkController extends Controller
         $children = [];
 
         foreach ($downlines as $child) {
+            $child->level = $level + 1;
+            $childTree = $this->buildTree($child, $level + 1, $maxLevel);
+            
             $children[] = [
                 'user' => $child,
                 'level' => $level + 1,
-                'children' => $this->buildTree($child, $level + 1, $maxLevel),
+                'children' => $childTree ? $childTree['children'] : [],
             ];
         }
 
@@ -249,89 +156,172 @@ class NetworkController extends Controller
         ];
     }
 
-    public function treeData()
+    public function getAllDescendantsWithLevel($userId, $currentLevel = 1, $maxLevel = 999)
     {
-        $user = Auth::user();
-        $tree = $this->buildTree($user, 0, 5);
-
-        return response()->json([
-            'success' => true,
-            'data' => $tree
-        ]);
+        if ($currentLevel > $maxLevel) return [];
+        
+        $results = [];
+        $children = User::where('parrain_id', $userId)->with(['package', 'rank', 'genealogy'])->get();
+        
+        foreach ($children as $child) {
+            $child->level = $currentLevel;
+            $results[] = $child;
+            $results = array_merge($results, $this->getAllDescendantsWithLevel($child->id, $currentLevel + 1, $maxLevel));
+        }
+        return $results;
     }
 
-    public function downlines(Request $request)
+    private function countLevelN($user, $targetLevel)
     {
-        $user = Auth::user();
-
-        $query = User::where('parrain_id', $user->id)
-            ->with(['package', 'rank', 'genealogy']);
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('sponsor_id', 'like', "%{$search}%");
-            });
+        $level = 0;
+        $currentIds = [$user->id];
+        while ($level < $targetLevel) {
+            $nextIds = User::whereIn('parrain_id', $currentIds)->pluck('id')->toArray();
+            if (empty($nextIds)) return 0;
+            $currentIds = $nextIds;
+            $level++;
         }
-
-        $downlines = $query->paginate(20);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'data' => $downlines
-            ]);
-        }
-
-        return view('network.downlines', compact('downlines'));
+        return count($currentIds);
     }
 
-    public function search(Request $request)
+    private function getUserLevel($parrainId, $userId)
     {
-        $user = Auth::user();
-        $search = $request->get('q');
-
-        if (strlen($search) < 2) {
-            return response()->json([]);
+        if ($parrainId == $userId) return 0;
+        $level = 0;
+        $current = User::find($userId);
+        while ($current && $current->parrain_id && $level < 999) {
+            $level++;
+            if ($current->parrain_id == $parrainId) return $level;
+            $current = User::find($current->parrain_id);
         }
-
-        $results = User::where('parrain_id', $user->id)
-            ->where(function($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('sponsor_id', 'LIKE', "%{$search}%");
-            })
-            ->with(['genealogy'])
-            ->limit(20)
-            ->get(['id', 'name', 'email', 'sponsor_id', 'avatar', 'created_at']);
-
-        return response()->json([
-            'success' => true,
-            'data' => $results
-        ]);
+        return $level > 0 ? $level : 1;
     }
 
-    public function apiStats()
+    private function isInNetwork($parrainId, $userId)
     {
-        $user = Auth::user();
+        if ($parrainId == $userId) return true;
+        $level = 0;
+        $current = User::find($userId);
+        while ($current && $current->parrain_id && $level < 999) {
+            $level++;
+            if ($current->parrain_id == $parrainId) return true;
+            $current = User::find($current->parrain_id);
+        }
+        return false;
+    }
 
-        $stats = [
-            'total' => User::where('parrain_id', $user->id)->count(),
-            'level_1' => $this->countLevel1($user),
-            'level_2' => $this->countLevel2($user),
-            'level_3' => $this->countLevel3($user),
-            'level_4' => $this->countLevel4($user),
-            'level_5' => $this->countLevel5($user),
-            'active' => User::where('parrain_id', $user->id)
-                ->where('is_active', true)
-                ->count(),
-        ];
+    // ============================================================
+    // MÉTHODES D'AFFICHAGE (GRADES & AVATARS)
+    // ============================================================
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
+    public function getUserRankInfo($user)
+    {
+        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
+            return ['name' => $user->rank->name, 'level' => $user->rank->level];
+        }
+        if ($user->rank_id) {
+            $rank = Rank::find($user->rank_id);
+            if ($rank) return ['name' => $rank->name, 'level' => $rank->level];
+        }
+        if (is_string($user->rank) && !empty($user->rank)) {
+            $levels = [
+                'Distributeur' => 1, 'Distributor' => 1, 'Qualification' => 2, 'Supervisor' => 2,
+                'Cumul Directeur' => 3, 'Assistant Manager' => 3, 'Directeur' => 4, 'Manager' => 4,
+                'Manager Senior' => 5, 'Senior Manager' => 5, 'Directeur Envolée' => 6, 'Soaring Manager' => 6,
+                'Saphire Manager' => 7, 'Blue Diamond' => 8, 'Diamond Pearl' => 9,
+            ];
+            return ['name' => $user->rank, 'level' => $levels[$user->rank] ?? 1];
+        }
+        return ['name' => 'Distributor', 'level' => 1];
+    }
+
+    public function getRankColor($level)
+    {
+        $colors = [1 => 'rank-level-1', 2 => 'rank-level-2', 3 => 'rank-level-3', 4 => 'rank-level-4', 5 => 'rank-level-5', 6 => 'rank-level-6', 7 => 'rank-level-7', 8 => 'rank-level-8', 9 => 'rank-level-9'];
+        return $colors[$level] ?? 'rank-level-1';
+    }
+
+    public function getAvatarColor($user)
+    {
+        if (!$user->is_active) return 'avatar-danger';
+        $rankInfo = $this->getUserRankInfo($user);
+        $level = $rankInfo['level'];
+        if ($level == 1) return 'avatar-neutral';
+        if ($level == 2) return 'avatar-info';
+        if ($level == 3) return 'avatar-purple';
+        if ($level >= 4 && $level <= 6) return 'avatar-warning';
+        if ($level >= 7) return 'avatar-gold';
+        return 'avatar-success';
+    }
+
+    public function countNodes($tree)
+    {
+        if (!$tree || !isset($tree['children']) || !is_array($tree['children'])) return 0;
+        $count = 1;
+        foreach ($tree['children'] as $child) $count += $this->countNodes($child);
+        return $count;
+    }
+
+    // ============================================================
+    // LA MÉTHODE D'AFFICHAGE "ARBRE GÉNÉALOGIQUE" (COMME L'IMAGE)
+    // ============================================================
+    
+    public function renderGenealogyTree($node, $controller)
+    {
+        if (!$node || !isset($node['user'])) {
+            return '';
+        }
+
+        $user = $node['user'];
+        $level = $node['level'] ?? 0;
+        $children = $node['children'] ?? [];
+
+        $rankInfo = $controller->getUserRankInfo($user);
+        $rankName = $rankInfo['name'];
+        $rankLevel = $rankInfo['level'];
+        $avatarColor = $controller->getAvatarColor($user);
+
+        // Taille de l'avatar selon le niveau
+        $avatarSize = ($level == 0) ? 'avatar-xl' : (($level <= 2) ? 'avatar-lg' : 'avatar-md');
+        $badgeSize = ($level <= 2) ? 'text-[9px]' : 'text-[7px]';
+        $nameSize = ($level <= 2) ? 'text-sm' : 'text-xs';
+
+        $html = '<div class="tree-branch">';
+
+        // Le noeud (Avatar + Nom + Badges)
+        $html .= '<div class="tree-node-container">';
+        $html .= '<div class="tree-node' . ($level == 0 ? ' active' : '') . '" onclick="navigateToUser(' . $user->id . ')">';
+        
+        $html .= '<div class="avatar ' . $avatarSize . ' ' . $avatarColor . ' relative">';
+        $html .= strtoupper(substr($user->name, 0, 2));
+        $html .= '<span class="status-dot ' . ($user->is_active ? 'online' : 'offline') . '"></span>';
+        if ($level > 0) $html .= '<span class="level-badge level-' . $level . '">' . $level . '</span>';
+        $html .= '</div>';
+
+        $html .= '<span class="name ' . $nameSize . '">' . e($user->name) . '</span>';
+        if ($level == 0) $html .= '<span class="badge badge-success ' . $badgeSize . '">Moi</span>';
+        else $html .= '<span class="badge ' . $controller->getRankColor($rankLevel) . ' ' . $badgeSize . '">' . e($rankName) . '</span>';
+        $html .= '</div>';
+        $html .= '</div>';
+
+        // Les enfants (Récursivité + lignes de connexion)
+        if (!empty($children) && is_array($children)) {
+            $html .= '<div class="tree-children-container">';
+
+            // Ligne horizontale reliant les enfants s'il y en a plus d'un
+            if (count($children) > 1) {
+                $html .= '<div class="horizontal-branch-line"></div>';
+            }
+
+            $html .= '<div class="tree-children">';
+            foreach ($children as $child) {
+                $html .= $this->renderGenealogyTree($child, $controller);
+            }
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+
+        $html .= '</div>'; // Fin tree-branch
+        return $html;
     }
 }

@@ -2,629 +2,455 @@
 
 @push('styles')
 <style>
+    /* ===== CONTENEUR GLOBAL ===== */
+    .tree-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem;
+        min-height: 600px;
+        background: radial-gradient(ellipse at center, var(--bg-card) 0%, var(--bg-secondary) 100%);
+        border-radius: var(--radius-lg);
+        position: relative;
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    /* ===== STRUCTURE DE L'ARBRE GÉNÉALOGIQUE ===== */
+    .tree-branch {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0 15px;
+        position: relative;
+    }
+
+    /* Conteneur de l'avatar */
+    .tree-node-container {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
     .tree-node {
         display: flex;
         flex-direction: column;
         align-items: center;
         padding: 0.5rem;
-        position: relative;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        animation: fadeInUp 0.5s ease forwards;
     }
-    .tree-node::before {
-        content: '';
-        position: absolute;
-        top: -1rem;
-        left: 50%;
-        width: 2px;
-        height: 1rem;
-        background: var(--border-color);
+
+    .tree-node:hover {
+        transform: translateY(-3px);
     }
-    .tree-node:first-child::before { display: none; }
-    .tree-children {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 2px solid var(--border-color);
-        position: relative;
+
+    .tree-node .avatar {
+        border: 3px solid var(--bg-card);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
     }
-    .tree-children::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: 50%;
-        width: 2px;
-        height: 1rem;
-        background: var(--border-color);
+    .tree-node:hover .avatar {
+        border-color: var(--primary-500);
+        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.2);
     }
-    .tree-level-badge {
-        position: absolute;
-        top: -0.5rem;
-        right: -0.5rem;
-        font-size: 0.5rem;
-        padding: 0.1rem 0.4rem;
-        border-radius: var(--radius-full);
-        background: var(--primary-500);
-        color: white;
-        font-weight: 700;
-    }
-    
+
+    /* ===== AVATARS ===== */
     .avatar {
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
         font-weight: 700;
-        flex-shrink: 0;
-        overflow: hidden;
-        position: relative;
         color: white;
+        position: relative;
+        text-transform: uppercase;
     }
-    .avatar-xl { width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
-    .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
-    .avatar-md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
-    .avatar-sm { width: 2rem; height: 2rem; font-size: 0.75rem; }
-    .avatar-gradient { background: var(--gradient-primary); }
-    .avatar-success { background: #22c55e; }
-    .avatar-danger { background: #ef4444; }
-    .avatar-info { background: #3b82f6; }
-    .avatar-purple { background: #8b5cf6; }
-    .avatar-warning { background: #f59e0b; }
-    .avatar-gold { background: #eab308; }
-    .avatar-neutral { background: #6b7280; }
-    .avatar-ring { border: 3px solid var(--primary-500); box-shadow: 0 0 0 4px rgba(90, 182, 56, 0.15); }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    
+    .avatar-md { width: 2.8rem; height: 2.8rem; font-size: 0.8rem; }
+    .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1rem; }
+    .avatar-xl { width: 4.2rem; height: 4.2rem; font-size: 1.2rem; }
+
+    .avatar .status-dot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-card);
+    }
+    .avatar .status-dot.online { background: #22c55e; }
+    .avatar .status-dot.offline { background: #6b7280; }
+
+    .level-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        font-size: 0.5rem;
+        padding: 0.05rem 0.35rem;
+        border-radius: 9999px;
+        font-weight: 700;
+        color: white;
+        border: 2px solid var(--bg-card);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .level-badge.level-1 { background: #22c55e; }
+    .level-badge.level-2 { background: #3b82f6; }
+    .level-badge.level-3 { background: #8b5cf6; }
+    .level-badge.level-4 { background: #f59e0b; }
+    .level-badge.level-5 { background: #ec4899; }
+
+    .name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 0.3rem;
+        text-align: center;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .badge {
         display: inline-block;
-        padding: 0.25rem 0.75rem;
+        padding: 0.1rem 0.4rem;
         border-radius: 9999px;
-        font-size: 0.65rem;
         font-weight: 600;
+        margin-top: 0.05rem;
+        opacity: 0.9;
     }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .badge-gold { background: rgba(234, 179, 8, 0.12); color: #eab308; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
-    .badge-primary { background: rgba(90, 182, 56, 0.12); color: var(--primary-500); }
-    
-    .rank-level-1 { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
-    .rank-level-2 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .rank-level-3 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-    .rank-level-4 { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .rank-level-5 { background: rgba(234, 179, 8, 0.12); color: #eab308; }
-    .rank-level-6 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .rank-level-7 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .rank-level-8 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-    .rank-level-9 { background: rgba(234, 179, 8, 0.12); color: #eab308; }
-    
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-    }
-    .card-stats {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        padding: 1rem 1.25rem;
-        transition: all 0.3s ease;
-    }
-    .card-stats:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-    
-    .btn {
-        display: inline-flex;
+    .badge-success { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* ===== LES CONNECTEURS (LIGNES ENTRE PARENTS ET ENFANTS) ===== */
+    .tree-children-container {
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.5rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-    }
-    .btn-primary {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
-    }
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-    }
-    .btn-outline:hover {
-        border-color: var(--primary-500);
-        color: var(--primary-500);
-    }
-    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
-    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
-    
-    .input {
         width: 100%;
-        padding: 0.625rem 1rem;
-        font-size: 0.875rem;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-md);
-        background: var(--bg-input);
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-        outline: none;
+        position: relative;
+        padding-top: 20px;
     }
-    .input:focus {
-        border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px var(--border-focus);
+
+    /* La ligne VERTICALE qui part du parent vers le bas */
+    .tree-children-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 2px;
+        height: 20px;
+        background: #94a3b8; /* Gris doux pour la ligne */
+        transform: translateX(-50%);
+        z-index: 1;
     }
-    
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
-    .table thead th {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-secondary);
-        background: var(--bg-secondary);
-        border-bottom: 2px solid var(--border-color);
+
+    /* La ligne HORIZONTALE qui relie les enfants entre eux (apparaît seulement si > 1 enfant) */
+    .horizontal-branch-line {
+        position: absolute;
+        top: 20px; /* Rejoint la fin de la ligne verticale */
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: #94a3b8;
+        z-index: 1;
     }
-    .table tbody td {
-        padding: 0.75rem 1rem;
-        color: var(--text-primary);
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border-light);
+
+    .tree-children {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+        padding-top: 0;
+        position: relative;
+        z-index: 2;
+        gap: 20px;
     }
-    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
-    
+
+    /* La petite ligne VERTICALE pour chaque enfant (remonte vers l'horizontale) */
+    .tree-children > .tree-branch::before {
+        content: '';
+        position: absolute;
+        top: -20px; /* Distance entre le haut de l'enfant et la ligne horizontale */
+        left: 50%;
+        width: 2px;
+        height: 20px;
+        background: #94a3b8;
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+
+    /* Cas spécial pour un seul enfant : pas de ligne horizontale, juste la verticale continue */
+    .tree-children-container:has(.horizontal-branch-line) + .tree-children > .tree-branch::before {
+        top: -20px;
+        height: 20px;
+    }
+
+    /* ===== COULEURS AVATARS ===== */
+    .avatar-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .avatar-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .avatar-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .avatar-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .avatar-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .avatar-gold { background: linear-gradient(135deg, #eab308, #ca8a04); }
+    .avatar-neutral { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+    /* ===== STATS & UI ===== */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.5rem; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.4rem 0.5rem; text-align: center; transition: all 0.3s ease; }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--primary-500); }
+    .stat-card .number { font-size: 1.1rem; font-weight: 700; }
+    .stat-card .label { font-size: 0.5rem; color: var(--text-secondary); text-transform: uppercase; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 0.75rem; }
+    .btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.7rem; transition: all 0.3s ease; cursor: pointer; border: none; }
+    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
+    .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.6rem; }
     .hidden { display: none; }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+
+    /* ===== ZOOM & SCROLL ===== */
+    .tree-container-wrapper { position: relative; width: 100%; overflow: auto; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-color); min-height: 400px; max-height: 600px; }
+    .tree-container-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+    .tree-container-wrapper::-webkit-scrollbar-thumb { background: var(--primary-500); border-radius: 3px; }
+    .tree-scroll-content { min-width: max-content; padding: 0.5rem; display: flex; justify-content: center; transform-origin: top left; transition: transform 0.2s ease; }
+    .zoom-controls { display: flex; align-items: center; gap: 0.15rem; background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: var(--radius-full); border: 1px solid var(--border-color); }
+    .zoom-controls button { width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-weight: 700; }
+    .zoom-controls button:hover { background: var(--primary-500); color: white; }
+    .zoom-controls .zoom-level { font-size: 0.55rem; font-weight: 600; color: var(--text-secondary); min-width: 30px; text-align: center; }
+    .fullscreen-btn { display: flex; align-items: center; gap: 0.15rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease; font-size: 0.6rem; }
+    .fullscreen-btn:hover { background: var(--primary-500); color: white; }
+    .tree-container-wrapper.fullscreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; max-height: 100vh; border-radius: 0; background: var(--bg-primary); }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fadeInUp { animation: fadeInUp 0.4s ease forwards; }
+    .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; } .delay-4 { animation-delay: 0.4s; }
+
+    .custom-toast { position: fixed; bottom: 1rem; right: 1rem; padding: 0.4rem 0.8rem; border-radius: var(--radius-md); background: #22c55e; color: white; font-weight: 500; font-size: 0.7rem; box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 9999; animation: fadeInUp 0.3s ease forwards; max-width: 300px; }
+
+    /* ===== RESPONSIVE (ADAPTATION DES LIGNES) ===== */
+    @media (max-width: 768px) {
+        .tree-children { gap: 15px; }
+        .tree-children-container { padding-top: 15px; }
+        .tree-children-container::before { height: 15px; }
+        .horizontal-branch-line { top: 15px; }
+        .tree-children > .tree-branch::before { top: -15px; height: 15px; }
+        .avatar-xl { width: 3.5rem; height: 3.5rem; font-size: 1rem; }
+        .avatar-lg { width: 3rem; height: 3rem; font-size: 0.9rem; }
+        .avatar-md { width: 2.2rem; height: 2.2rem; font-size: 0.7rem; }
     }
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.10s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.20s; }
-    .delay-5 { animation-delay: 0.25s; }
-    .delay-6 { animation-delay: 0.30s; }
-    
-    .custom-toast {
-        animation: slideUp 0.3s ease forwards;
-        position: fixed;
-        bottom: 1rem;
-        left: 1rem;
-        right: 1rem;
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md);
-        background: #22c55e;
-        color: white;
-        font-weight: 500;
-        font-size: 0.875rem;
-        box-shadow: var(--shadow-lg);
-        z-index: 9999;
-    }
-    @media (min-width: 640px) {
-        .custom-toast { left: auto; right: 1rem; max-width: 400px; }
-    }
-    
-    @media (max-width: 640px) {
-        .tree-children { flex-direction: column; align-items: center; gap: 0.5rem; }
-        .tree-children::before { display: none; }
-        .tree-node::before { display: none; }
-        .avatar-xl { width: 3.5rem; height: 3.5rem; font-size: 1.2rem; }
-        .avatar-lg { width: 2.5rem; height: 2.5rem; font-size: 0.8rem; }
-        .card { padding: 0.875rem; }
-        .card-stats { padding: 0.75rem; }
-        .card-stats .text-2xl { font-size: 1.25rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .btn-sm svg { width: 0.875rem; height: 0.875rem; }
-        .badge { font-size: 0.6rem; padding: 0.125rem 0.5rem; }
-        .stats-grid { grid-template-columns: 1fr 1fr !important; }
-        .tree-header { flex-direction: column; align-items: flex-start !important; }
-        .tree-header .btn-group { margin-left: 0 !important; margin-top: 0.5rem; }
-    }
-    
+
     @media (max-width: 480px) {
-        .stats-grid { grid-template-columns: 1fr !important; }
-        .card { padding: 0.75rem; }
-        .tree-view { padding: 0.5rem; }
-        .avatar-xl { width: 3rem; height: 3rem; font-size: 1rem; }
-        .avatar-lg { width: 2rem; height: 2rem; font-size: 0.7rem; }
-        .tree-node { padding: 0.25rem; }
-        .tree-children { gap: 0.25rem; }
-        .tree-level-badge { font-size: 0.4rem; padding: 0.05rem 0.3rem; top: -0.3rem; right: -0.3rem; }
+        .tree-children { gap: 10px; }
+        .tree-children-container { padding-top: 10px; }
+        .tree-children-container::before { height: 10px; }
+        .horizontal-branch-line { top: 10px; }
+        .tree-children > .tree-branch::before { top: -10px; height: 10px; }
+        .tree-node { padding: 0.2rem; }
+        .name { font-size: 0.6rem; max-width: 50px; }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+<div class="space-y-2 sm:space-y-3">
     
-    <!-- Header -->
-    <div class="tree-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="flex flex-wrap items-center justify-between gap-2 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Réseau</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Visualisez votre arbre généalogique</p>
+            <h1 class="text-lg sm:text-2xl font-bold text-[var(--text-primary)]"> Mon Réseau</h1>
+            <p class="text-xs text-[var(--text-secondary)]">Arbre généalogique MLM</p>
         </div>
-        <div class="btn-group flex gap-1.5 sm:gap-2">
-            <button class="btn btn-primary btn-sm sm:btn-md" onclick="toggleView('tree')" id="treeViewBtn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                Arbre
-            </button>
-            <button class="btn btn-outline btn-sm sm:btn-md" onclick="toggleView('list')" id="listViewBtn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-                Liste
-            </button>
+        <div class="flex gap-1">
+            <button class="btn btn-primary btn-sm" onclick="toggleView('tree')" id="treeViewBtn"> Arbre</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleView('list')" id="listViewBtn"> Liste</button>
         </div>
     </div>
 
-    <!-- Carte du Parrain -->
-    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4 border-l-4 border-primary-500">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Mon Parrain</p>
-                @if($parrain)
-                    @php
-                        $parrainRank = $controller->getUserRankInfo($parrain);
-                        $parrainRankName = $parrainRank['name'];
-                        $parrainRankLevel = $parrainRank['level'];
-                    @endphp
-                    <div class="flex items-center gap-3 mt-1">
-                        <div class="avatar avatar-md avatar-gradient">
-                            {{ strtoupper(substr($parrain->name, 0, 1)) }}
-                        </div>
-                        <div>
-                            <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                                {{ $parrain->name }}
-                            </p>
-                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                                {{ $parrain->email }}
-                            </p>
-                            <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] font-mono">
-                                Code: {{ $parrain->sponsor_id }}
-                            </p>
-                            <span class="badge {{ $controller->getRankColor($parrainRankLevel) }} text-[10px] sm:text-xs mt-0.5">
-                                {{ $parrainRankName }} (Niv. {{ $parrainRankLevel }})
-                            </span>
-                        </div>
-                    </div>
-                @else
-                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                        Aucun parrain
-                    </p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                        Vous êtes le premier de votre réseau
-                    </p>
-                @endif
+    <div id="treeView" class="card animate-fadeInUp delay-2 p-2 sm:p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 class="font-semibold text-sm text-[var(--text-primary)]">Arbre MLM</h3>
+            <div class="flex flex-wrap items-center gap-1">
+                <span class="level-indicator"><span class="font-semibold text-primary-500">{{ $controller->countNodes($tree) ?? 0 }}</span> membres</span>
+                <div class="zoom-controls">
+                    <button onclick="zoomTree('out')">−</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button onclick="zoomTree('in')">+</button>
+                    <button onclick="zoomTree('reset')">⟲</button>
+                </div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/></svg>
+                </button>
             </div>
-            @if($parrain)
-                <span class="badge badge-success text-[10px] sm:text-xs">Parrainé</span>
-            @endif
         </div>
-    </div>
 
-    <!-- Vue Arbre -->
-    <div id="treeView" class="tree-view card animate-fadeInUp delay-4 p-3 sm:p-4 md:p-6">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Arbre Généalogique</h3>
-        
-        <div class="flex justify-center overflow-x-auto py-3 sm:py-4">
-            <div class="tree-node">
-                <!-- Moi -->
-                @php
-                    $myRankInfo = $controller->getUserRankInfo(Auth::user());
-                    $myRankName = $myRankInfo['name'];
-                    $myRankLevel = $myRankInfo['level'];
-                @endphp
-                <div class="flex flex-col items-center">
-                    <div class="avatar avatar-xl avatar-gradient avatar-ring relative">
-                        @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                            <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" alt="Avatar">
-                        @else
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        @endif
-                        <span class="tree-level-badge">{{ $myRankLevel }}</span>
-                    </div>
-                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()->name }}</p>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moi</p>
-                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ $myRankName }}</span>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">
-                        Code: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
-                    </p>
-                    @if($parrain)
-                        <p class="text-[8px] sm:text-[10px] text-[var(--text-secondary)] mt-0.5">
-                            Parrain: <span class="font-medium text-primary-500">{{ $parrain->name }}</span>
-                        </p>
+        <div class="tree-container-wrapper" id="treeContainerWrapper">
+            <div class="tree-scroll-content" id="treeScrollContent" style="transform: scale(1);">
+                <div class="tree-wrapper">
+                    @if($tree && isset($tree['children']) && count($tree['children']) > 0)
+                        {!! $controller->renderGenealogyTree($tree, $controller) !!}
+                    @else
+                        <div class="text-center py-6 text-[var(--text-secondary)]">
+                            <div class="text-4xl mb-2">🌱</div>
+                            <p class="font-medium">Vous n'avez pas encore de filleuls</p>
+                            <p class="text-xs text-[var(--text-tertiary)]">Partagez votre lien de parrainage !</p>
+                        </div>
                     @endif
                 </div>
-
-                <!-- Enfants -->
-                @if($filleuls->count() > 0)
-                    <div class="tree-children">
-                        @foreach($filleuls->take(6) as $member)
-                            @php
-                                $rankInfo = $controller->getUserRankInfo($member);
-                                $rankName = $rankInfo['name'];
-                                $rankLevel = $rankInfo['level'];
-                                $avatarColor = $controller->getAvatarColor($member);
-                            @endphp
-                            <div class="tree-node">
-                                <div class="flex flex-col items-center">
-                                    <div class="avatar avatar-lg {{ $avatarColor }} relative">
-                                        {{ strtoupper(substr($member->name, 0, 1)) }}
-                                        <span class="tree-level-badge">{{ $rankLevel }}</span>
-                                    </div>
-                                    <p class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-0.5 sm:mt-1 truncate max-w-[60px] sm:max-w-[80px]">{{ $member->name }}</p>
-                                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $rankName }}</p>
-                                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-0.5">
-                                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                                    </span>
-                                    <p class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] mt-0.5 font-mono truncate max-w-[60px]">
-                                        {{ $member->sponsor_id }}
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
-                        @if($filleuls->count() > 6)
-                            <div class="tree-node">
-                                <div class="flex flex-col items-center justify-center h-full min-h-[80px]">
-                                    <div class="avatar avatar-lg bg-primary-500/20 text-primary-500">
-                                        +{{ $filleuls->count() - 6 }}
-                                    </div>
-                                    <p class="text-xs text-[var(--text-secondary)] mt-1">Voir plus</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <p class="text-center text-[var(--text-secondary)] py-6 sm:py-8 mt-3 sm:mt-4 text-sm sm:text-base">
-                        <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Vous n'avez pas encore de filleuls.<br>
-                        Partagez votre lien de parrainage pour développer votre réseau !
-                    </p>
-                @endif
             </div>
         </div>
     </div>
 
-    <!-- Vue Liste -->
-<div id="listView" class="card animate-fadeInUp delay-5 hidden p-3 sm:p-4 md:p-6">
-    <div class="flex items-center justify-between mb-3 sm:mb-4">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Membres de mon réseau</h3>
-        <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $filleuls->count() }} membres</span>
-    </div>
-
-    <!-- Recherche -->
-    <div class="relative mb-3 sm:mb-4">
-        <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </span>
-        <input type="text" id="searchMember" placeholder="Rechercher un membre..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
-    </div>
-
-    <div class="table-wrap">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th class="text-xs sm:text-sm">#</th>
-                    <th class="text-xs sm:text-sm">Nom</th>
-                    <th class="text-xs sm:text-sm hidden sm:table-cell">Email</th>
-                    <th class="text-xs sm:text-sm hidden md:table-cell">Code</th>
-                    <th class="text-xs sm:text-sm">Grade</th>
-                    <th class="text-xs sm:text-sm">Niveau</th>
-                    <th class="text-xs sm:text-sm hidden lg:table-cell">Package</th>
-                    <th class="text-xs sm:text-sm">PV</th>
-                    <th class="text-xs sm:text-sm">Statut</th>
-                </tr>
-            </thead>
-            <tbody id="memberList">
-                @forelse($filleuls as $index => $member)
-                    @php
-                        $rankInfo = $controller->getUserRankInfo($member);
-                        $rankName = $rankInfo['name'];
-                        $rankLevel = $rankInfo['level'];
-                        $rankColor = $controller->getRankColor($rankLevel);
-                        $genealogyLevel = $member->genealogy?->level ?? 1;
-                    @endphp
-                    <tr data-name="{{ strtolower($member->name) }}" 
-                        data-email="{{ strtolower($member->email) }}"
-                        data-sponsor="{{ strtolower($member->sponsor_id) }}">
-                        <td class="text-xs sm:text-sm text-[var(--text-tertiary)] font-mono">
-                            #{{ $member->id }}
-                        </td>
-                        <td class="font-medium text-sm sm:text-base">
-                            <div class="flex items-center gap-2">
-                                <div class="avatar avatar-sm {{ $member->is_active ? 'avatar-success' : 'avatar-danger' }}">
-                                    {{ strtoupper(substr($member->name, 0, 1)) }}
-                                </div>
-                                <div>
-                                    {{ $member->name }}
-                                    <span class="text-[8px] sm:text-[10px] text-[var(--text-tertiary)] block sm:hidden">
-                                        {{ $member->email }}
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
-                            {{ $member->email }}
-                        </td>
-                        <td class="hidden md:table-cell text-[10px] sm:text-xs font-mono text-primary-500 font-semibold">
-                            {{ $member->sponsor_id }}
-                        </td>
-                        <td>
-                            <span class="badge {{ $rankColor }} text-[10px] sm:text-xs">
-                                {{ $rankName }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge {{ $controller->getRankColor($genealogyLevel) }} text-[10px] sm:text-xs">
-                                Niv. {{ $genealogyLevel }}
-                            </span>
-                        </td>
-                        <td class="hidden lg:table-cell text-sm sm:text-base">
-                            {{ $member->package?->name ?? 'Starter' }}
-                        </td>
-                        <td class="text-sm sm:text-base font-semibold text-primary-500">
-                            {{ number_format($member->pv_balance ?? 0) }}
-                        </td>
-                        <td>
-                            <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                            </span>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="9" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
-                            <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                            Aucun membre dans votre réseau
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Résumé -->
-    @if($filleuls->count() > 0)
-        <div class="mt-3 sm:mt-4 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-[var(--text-secondary)]">
-            <span>
-                Affichage de <strong class="text-[var(--text-primary)]">{{ $filleuls->count() }}</strong> membre(s)
-            </span>
-            <span>
-                Total PV: <strong class="text-primary-500">{{ number_format($filleuls->sum('pv_balance')) }}</strong>
-            </span>
+    <div id="listView" class="card animate-fadeInUp delay-3 hidden p-2 sm:p-3">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-sm text-[var(--text-primary)]"> Liste des membres</h3>
+            <span class="badge badge-neutral text-[8px]">{{ $filleuls->count() }} membres</span>
         </div>
-    @endif
-</div>
-    <!-- Lien de parrainage -->
-    <div class="card animate-fadeInUp delay-6 border-l-4 border-primary-500 p-3 sm:p-4 md:p-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="relative mb-2">
+            <input type="text" id="searchMember" placeholder="Rechercher..." class="w-full pl-6 pr-2 py-1 text-xs border-2 border-[var(--border-color)] rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] focus:border-primary-500 focus:outline-none">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-xs">
+                <thead>
+                    <tr class="border-b-2 border-[var(--border-color)]">
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)]">#</th>
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)]">Membre</th>
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)] hidden sm:table-cell">Grade</th>
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)] hidden md:table-cell">Niv.</th>
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)]">PV</th>
+                        <th class="text-left py-1 px-2 font-semibold text-[var(--text-secondary)]">Statut</th>
+                        <th class="text-center py-1 px-2 font-semibold text-[var(--text-secondary)]">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="memberList">
+                    @forelse($filleuls as $member)
+                        @php
+                            $rankInfo = $controller->getUserRankInfo($member);
+                            $rankName = $rankInfo['name'];
+                            $rankColor = $controller->getRankColor($rankInfo['level']);
+                            $avatarColor = $controller->getAvatarColor($member);
+                        @endphp
+                        <tr data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}" class="border-b border-[var(--border-light)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer" onclick="navigateToUser({{ $member->id }})">
+                            <td class="py-1 px-2 text-[var(--text-tertiary)] font-mono">#{{ $member->id }}</td>
+                            <td class="py-1 px-2"><div class="flex items-center gap-1.5"><div class="avatar avatar-sm {{ $avatarColor }}">{{ strtoupper(substr($member->name, 0, 1)) }}</div><span class="font-medium">{{ $member->name }}</span></div></td>
+                            <td class="hidden sm:table-cell py-1 px-2"><span class="badge {{ $rankColor }}">{{ $rankName }}</span></td>
+                            <td class="hidden md:table-cell py-1 px-2"><span class="badge badge-info">Niv.{{ $member->level ?? 1 }}</span></td>
+                            <td class="py-1 px-2 font-semibold text-primary-500">{{ number_format($member->pv_balance ?? 0) }}</td>
+                            <td class="py-1 px-2"><span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">{{ $member->is_active ? 'Actif' : 'Inactif' }}</span></td>
+                            <td class="text-center py-1 px-2"><button onclick="event.stopPropagation(); navigateToUser({{ $member->id }})" class="btn btn-primary btn-sm text-[8px]">👁</button></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="text-center py-4 text-[var(--text-secondary)]"><div class="text-2xl mb-1">📭</div>Aucun membre dans votre réseau</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card animate-fadeInUp delay-4 border-l-4 border-primary-500 p-2 sm:p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="min-w-0">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Votre lien de parrainage</p>
-                <p class="text-xs sm:text-sm font-semibold text-primary-500 break-all" id="sponsorLink">
-                    {{ url('/register?ref=' . Auth::user()->sponsor_id) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
-                    Code de parrain: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span>
-                </p>
+                <p class="text-[8px] uppercase tracking-wider text-[var(--text-secondary)]">🔗 Lien de parrainage</p>
+                <p class="text-xs font-semibold text-primary-500 break-all" id="sponsorLink">{{ url('/register?ref=' . Auth::user()->sponsor_id) }}</p>
+                <p class="text-[8px] text-[var(--text-secondary)]">Code: <span class="font-mono text-primary-500 font-semibold">{{ Auth::user()->sponsor_id }}</span></p>
             </div>
-            <button onclick="copyLink()" class="btn btn-primary btn-sm sm:btn-md flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
-                </svg>
-                Copier
-            </button>
+            <button onclick="copyLink()" class="btn btn-primary btn-sm flex-shrink-0">📋 Copier</button>
         </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
+const BASE_URL = '{{ url("/") }}';
+function navigateToUser(userId) { window.location.href = BASE_URL + '/network/show/' + userId; }
 function toggleView(view) {
-    var treeView = document.getElementById('treeView');
-    var listView = document.getElementById('listView');
-    var treeBtn = document.getElementById('treeViewBtn');
-    var listBtn = document.getElementById('listViewBtn');
-
-    if (view === 'tree') {
-        treeView.classList.remove('hidden');
-        listView.classList.add('hidden');
-        treeBtn.className = 'btn btn-primary btn-sm sm:btn-md';
-        listBtn.className = 'btn btn-outline btn-sm sm:btn-md';
-    } else {
-        treeView.classList.add('hidden');
-        listView.classList.remove('hidden');
-        listBtn.className = 'btn btn-primary btn-sm sm:btn-md';
-        treeBtn.className = 'btn btn-outline btn-sm sm:btn-md';
-    }
+    document.getElementById('treeView').classList.toggle('hidden', view !== 'tree');
+    document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+    document.getElementById('treeViewBtn').className = view === 'tree' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+    document.getElementById('listViewBtn').className = view === 'list' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
 }
-
-function copyLink() {
-    var link = document.getElementById('sponsorLink').textContent;
-    
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(link).then(function() {
-            showToast('Lien de parrainage copié !');
-        }).catch(function() {
-            fallbackCopy(link);
-        });
-    } else {
-        fallbackCopy(link);
-    }
-}
-
-function fallbackCopy(text) {
-    var input = document.createElement('input');
-    input.value = text;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    document.body.removeChild(input);
-    showToast('Lien de parrainage copié !');
-}
-
-function showToast(message) {
-    document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
-    
-    var toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(function() {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        setTimeout(function() { toast.remove(); }, 500);
-    }, 3000);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('searchMember');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             var query = this.value.trim().toLowerCase();
-            var rows = document.querySelectorAll('#memberList tr');
-            
-            rows.forEach(function(row) {
-                var name = row.dataset.name || '';
-                var email = row.dataset.email || '';
-                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            document.querySelectorAll('#memberList tr').forEach(function(row) {
+                row.style.display = (row.dataset.name.includes(query) || row.dataset.email.includes(query)) ? '' : 'none';
             });
         });
     }
+    initDragScroll();
 });
+
+let currentZoom = 1;
+const zoomStep = 0.1, minZoom = 0.3, maxZoom = 2;
+function zoomTree(action) {
+    const content = document.getElementById('treeScrollContent');
+    if (!content) return;
+    if (action === 'in') currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+    else if (action === 'out') currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+    else if (action === 'reset') currentZoom = 1;
+    content.style.transform = 'scale(' + currentZoom + ')';
+    content.style.transformOrigin = 'top left';
+    document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+}
+
+function toggleFullscreen() {
+    const wrapper = document.getElementById('treeContainerWrapper');
+    if (!wrapper) return;
+    wrapper.classList.toggle('fullscreen');
+    document.body.style.overflow = wrapper.classList.contains('fullscreen') ? 'hidden' : '';
+    if(!wrapper.classList.contains('fullscreen')) { wrapper.scrollTop = 0; wrapper.scrollLeft = 0; }
+}
+
+function initDragScroll() {
+    const wrapper = document.getElementById('treeContainerWrapper');
+    if (!wrapper) return;
+    let isDragging = false, startX = 0, startY = 0, scrollLeft = 0, scrollTop = 0;
+    wrapper.addEventListener('mousedown', function(e) {
+        isDragging = true; wrapper.classList.add('dragging');
+        startX = e.pageX - wrapper.offsetLeft; startY = e.pageY - wrapper.offsetTop;
+        scrollLeft = wrapper.scrollLeft; scrollTop = wrapper.scrollTop;
+        wrapper.style.cursor = 'grabbing';
+    });
+    ['mouseleave', 'mouseup'].forEach(evt => {
+        wrapper.addEventListener(evt, function() {
+            isDragging = false; wrapper.classList.remove('dragging'); wrapper.style.cursor = 'grab';
+        });
+    });
+    wrapper.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - wrapper.offsetLeft, y = e.pageY - wrapper.offsetTop;
+        wrapper.scrollLeft = scrollLeft - (x - startX) * 1.5;
+        wrapper.scrollTop = scrollTop - (y - startY) * 1.5;
+    });
+    wrapper.addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.deltaY > 0 ? zoomTree('out') : zoomTree('in');
+        }
+    }, { passive: false });
+}
+
+function copyLink() {
+    var link = document.getElementById('sponsorLink').textContent;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => showToast('✅ Lien copié !')).catch(() => fallbackCopy(link));
+    } else { fallbackCopy(link); }
+}
+function fallbackCopy(text) {
+    var input = document.createElement('input'); input.value = text; document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input); showToast('✅ Lien copié !');
+}
+function showToast(message) {
+    document.querySelectorAll('.custom-toast').forEach(el => el.remove());
+    var toast = document.createElement('div'); toast.className = 'custom-toast'; toast.textContent = message; document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(20px)'; setTimeout(() => toast.remove(), 500); }, 2500);
+}
 </script>
 @endpush
 @endsection

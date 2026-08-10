@@ -277,113 +277,173 @@ class ReportController extends Controller
         ));
     }
 
-    /**
-     * ✅ NOUVELLE MÉTHODE : Exporter un rapport en PDF
-     */
-    public function exportPdf(Request $request, $type)
-    {
-        try {
-            $data = [];
-            
-            switch ($type) {
-                case 'users':
-                    $data = $this->getUsersData($request);
-                    $view = 'admin.reports.pdf.users';
-                    $filename = 'rapport_utilisateurs_' . date('Y-m-d') . '.pdf';
-                    break;
-                    
-                case 'commissions':
-                    $data = $this->getCommissionsData($request);
-                    $view = 'admin.reports.pdf.commissions';
-                    $filename = 'rapport_commissions_' . date('Y-m-d') . '.pdf';
-                    break;
-                    
-                case 'sales':
-                    $data = $this->getSalesData($request);
-                    $view = 'admin.reports.pdf.sales';
-                    $filename = 'rapport_ventes_' . date('Y-m-d') . '.pdf';
-                    break;
-                    
-                case 'withdrawals':
-                    $data = $this->getWithdrawalsData($request);
-                    $view = 'admin.reports.pdf.withdrawals';
-                    $filename = 'rapport_retraits_' . date('Y-m-d') . '.pdf';
-                    break;
-                    
-                default:
-                    return redirect()->back()->with('error', 'Type de rapport invalide.');
-            }
-            
-            // Vérifier si DomPDF est installé
-            if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, $data);
-                $pdf->setPaper('A4', 'landscape');
-                return $pdf->download($filename);
-            }
-            
-            // Fallback si DomPDF n'est pas installé
-            if (class_exists('\Dompdf\Dompdf')) {
-                $dompdf = new \Dompdf\Dompdf();
-                $html = view($view, $data)->render();
-                $dompdf->loadHtml($html);
-                $dompdf->setPaper('A4', 'landscape');
-                $dompdf->render();
-                return $dompdf->stream($filename);
-            }
-            
-            return redirect()->back()->with('error', 'Module PDF non installé. Contactez l\'administrateur.');
-            
-        } catch (\Exception $e) {
-            Log::error('Erreur export PDF: ' . $e->getMessage(), [
-                'type' => $type,
-                'trace' => $e->getTraceAsString()
+/**
+ * ✅ Exporter un rapport en PDF avec support de pagination
+ */
+public function exportPdf(Request $request, $type)
+{
+    try {
+        ini_set('max_execution_time', 120);
+        ini_set('memory_limit', '512M');
+        
+        $data = [];
+        
+        switch ($type) {
+            case 'users':
+                // ✅ Récupérer les paramètres
+                $page = $request->input('page', 1);
+                $perPage = $request->input('per_page', 500);
+                $sortBy = $request->input('sort_by', 'id_asc'); // Par défaut ID croissant
+                
+                $data = $this->getUsersData($request, $page, $perPage, $sortBy);
+                $view = 'admin.reports.pdf.users';
+                
+                // Nom du fichier avec l'option de tri
+                $sortLabel = $sortBy == 'sponsor_asc' ? 'par_code_parrainage' : 'par_id';
+                $filename = 'rapport_utilisateurs_' . date('Y-m-d') . '_' . $sortLabel . '_page_' . $page . '.pdf';
+                break;
+                
+            case 'commissions':
+                $data = $this->getCommissionsData($request);
+                $view = 'admin.reports.pdf.commissions';
+                $filename = 'rapport_commissions_' . date('Y-m-d') . '.pdf';
+                break;
+                
+            case 'sales':
+                $data = $this->getSalesData($request);
+                $view = 'admin.reports.pdf.sales';
+                $filename = 'rapport_ventes_' . date('Y-m-d') . '.pdf';
+                break;
+                
+            case 'withdrawals':
+                $data = $this->getWithdrawalsData($request);
+                $view = 'admin.reports.pdf.withdrawals';
+                $filename = 'rapport_retraits_' . date('Y-m-d') . '.pdf';
+                break;
+                
+            default:
+                return redirect()->back()->with('error', 'Type de rapport invalide.');
+        }
+        
+        // Générer le PDF
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, $data);
+            $pdf->setPaper('A4', 'landscape');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
             ]);
-            return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+            return $pdf->download($filename);
         }
+        
+        if (class_exists('\Dompdf\Dompdf')) {
+            $dompdf = new \Dompdf\Dompdf();
+            $html = view($view, $data)->render();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            return $dompdf->stream($filename);
+        }
+        
+        return redirect()->back()->with('error', 'Module PDF non installé.');
+        
+    } catch (\Exception $e) {
+        Log::error('Erreur export PDF: ' . $e->getMessage(), [
+            'type' => $type,
+            'trace' => $e->getTraceAsString()
+        ]);
+        return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+    }
+}
+
+/**
+ * ✅ Récupérer les données des utilisateurs pour le PDF avec pagination
+ */
+private function getUsersData($request, $page = 1, $perPage = 500, $sortBy = 'id_asc')
+{
+    $query = User::with(['rank', 'parrain'])
+        ->select([
+            'id',
+            'name',
+            'sponsor_id',
+            'parrain_id',
+            'rank_id',
+            'rank',
+            'rank_level',
+            'pv_balance',
+            'team_pv',
+            'is_active',
+            'kyc_status',
+            'created_at'
+        ]);
+
+    // Appliquer les filtres
+    if ($request->filled('rank_id')) {
+        $query->where('rank_id', $request->rank_id);
+    }
+    if ($request->filled('package_id')) {
+        $query->where('package_id', $request->package_id);
+    }
+    if ($request->filled('is_active')) {
+        $query->where('is_active', $request->is_active == '1');
+    }
+    if ($request->filled('kyc_status')) {
+        $query->where('kyc_status', $request->kyc_status);
+    }
+    if ($request->filled('date_from')) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+    if ($request->filled('date_to')) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+    if ($request->filled('user_type')) {
+        $query->where('user_type', $request->user_type);
     }
 
-    /**
-     * ✅ NOUVELLE MÉTHODE : Récupérer les données des utilisateurs pour le PDF
-     */
-    private function getUsersData($request)
-    {
-        $query = User::with(['rank', 'package', 'wallet']);
-
-        if ($request->filled('rank_id')) {
-            $query->where('rank_id', $request->rank_id);
-        }
-        if ($request->filled('package_id')) {
-            $query->where('package_id', $request->package_id);
-        }
-        if ($request->filled('is_active')) {
-            $query->where('is_active', $request->is_active == '1');
-        }
-        if ($request->filled('kyc_status')) {
-            $query->where('kyc_status', $request->kyc_status);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $users = $query->orderBy('created_at', 'desc')->get();
-
-        $total = $users->count();
-        $active = $users->where('is_active', true)->count();
-        $inactive = $users->where('is_active', false)->count();
-        $avgPv = $users->avg('pv_balance') ?? 0;
-        $avgBv = $users->avg('bv_balance') ?? 0;
-        $totalEarnings = $users->sum('total_earnings') ?? 0;
-        $withPackage = $users->whereNotNull('package_id')->count();
-        $withoutPackage = $users->whereNull('package_id')->count();
-
-        $stats = compact('total', 'active', 'inactive', 'avgPv', 'avgBv', 'totalEarnings', 'withPackage', 'withoutPackage');
-
-        return compact('users', 'stats');
+    // ✅ APPLIQUER LE TRI SELON LE CHOIX
+    switch ($sortBy) {
+        case 'sponsor_asc':
+            // Trier par code de parrainage (sponsor_id) croissant
+            $query->orderBy('sponsor_id', 'asc');
+            break;
+        case 'id_asc':
+        default:
+            // Trier par ID croissant (par défaut)
+            $query->orderBy('id', 'asc');
+            break;
     }
 
+    // Pagination
+    $users = $query->paginate($perPage, ['*'], 'page', $page);
+
+    // Calculer les statistiques globales
+    $total = $query->count();
+    $active = $query->where('is_active', true)->count();
+    $inactive = $query->where('is_active', false)->count();
+    $members = $query->where('user_type', 'member')->count();
+    $clients = $query->where('user_type', 'client')->count();
+    $avgPv = $query->avg('pv_balance') ?? 0;
+    $totalPv = $query->sum('pv_balance') ?? 0;
+    $totalTeamPv = $query->sum('team_pv') ?? 0;
+    $withPackage = $query->whereNotNull('package_id')->count();
+    $withoutPackage = $query->whereNull('package_id')->count();
+
+    $stats = compact(
+        'total', 
+        'active', 
+        'inactive',
+        'members',
+        'clients',
+        'avgPv',
+        'totalPv',
+        'totalTeamPv',
+        'withPackage', 
+        'withoutPackage'
+    );
+
+    return compact('users', 'stats');
+}
     /**
      * ✅ NOUVELLE MÉTHODE : Récupérer les données des commissions pour le PDF
      */
