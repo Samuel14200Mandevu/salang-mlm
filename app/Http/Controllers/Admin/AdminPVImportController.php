@@ -18,9 +18,16 @@ class AdminPVImportController extends Controller
     /**
      * Page d'import des PV mensuels
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('admin.pv.import');
+        $userId = $request->input('user_id');
+        $user = null;
+        
+        if ($userId) {
+            $user = User::with(['rank', 'parrain'])->find($userId);
+        }
+        
+        return view('admin.pv.import', compact('user'));
     }
 
     /**

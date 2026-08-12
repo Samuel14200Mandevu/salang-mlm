@@ -515,7 +515,7 @@
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
-            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-success btn-sm sm:btn-md">
+            <a href="{{ url('/admin/pv/import?user_id=' . $user->id) }}" class="btn btn-success btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>

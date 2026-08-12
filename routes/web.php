@@ -428,8 +428,20 @@ Route::prefix('admin')
             // ROUTES STATIQUES (DOIVENT ÊTRE AVANT LES ROUTES DYNAMIQUES)
             // ============================================================
             
-            // Page principale et recherche
-            Route::get('/', [AdminPVController::class, 'index'])->name('index');
+            // ✅ Page principale = Redirection vers l'import
+            Route::get('/', function() {
+                return redirect()->route('admin.pv.import.index');
+            })->name('index');
+            
+            // ✅ ROUTES D'IMPORT (la page principale)
+            Route::prefix('import')->name('import.')->group(function () {
+                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
+                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
+                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
+                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
+            });
+            
+            // ✅ Page de recherche
             Route::get('/search', [AdminPVController::class, 'search'])->name('search');
             Route::get('/export', [AdminPVController::class, 'export'])->name('export');
             
@@ -437,21 +449,11 @@ Route::prefix('admin')
             Route::get('/stats', [AdminPVController::class, 'stats'])->name('stats');
             Route::get('/history/{user?}', [AdminPVController::class, 'history'])->name('history');
             
-            // ✅ ROUTES D'IMPORT (STATIQUES)
-            Route::prefix('import')->name('import.')->group(function () {
-                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
-                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
-                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
-                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
-            });
-
             // ✅ ROUTES API STATIQUES
             Route::get('/search-user', [AdminPVImportController::class, 'searchUser'])->name('search-user');
             Route::get('/user-stats/{userId}', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
 
-            // ============================================================
-            // GESTION DES PÉRIODES (STATIQUES)
-            // ============================================================
+            // GESTION DES PÉRIODES
             Route::prefix('periods')->name('periods.')->group(function () {
                 Route::get('/', [AdminPVController::class, 'periods'])->name('index');
                 Route::post('/create', [AdminPVController::class, 'createPeriod'])->name('create');
@@ -464,7 +466,7 @@ Route::prefix('admin')
             // ROUTES DYNAMIQUES (AVEC PARAMÈTRES) - APRÈS LES STATIQUES
             // ============================================================
             
-            // Gestion individuelle
+            // ✅ Gestion individuelle d'un utilisateur
             Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
             Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
             Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
