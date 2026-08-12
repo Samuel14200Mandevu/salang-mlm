@@ -104,7 +104,7 @@ class CashierController extends Controller
     }
 
     /**
-     * ✅ Trouver un produit par son SKU (code-barres)
+     * Trouver un produit par son SKU (code-barres)
      */
     public function findProductBySku($sku)
     {
@@ -890,7 +890,7 @@ public function createCheckoutOrder(Request $request)
             return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
         }
         
-        // ✅ RÉCUPÉRER LE CLIENT - CORRIGÉ
+        // RÉCUPÉRER LE CLIENT - CORRIGÉ
         $client = null;
         
         // 1. D'abord, vérifier si un customer_id est fourni (client sélectionné)
@@ -950,7 +950,7 @@ public function createCheckoutOrder(Request $request)
             
             Log::info('Nouveau client créé:', ['id' => $client->id]);
         } else {
-            // ✅ Mettre à jour le client existant (ce bloc était mal placé)
+            // Mettre à jour le client existant (ce bloc était mal placé)
             if (!$client->parrain_id) {
                 $client->parrain_id = $sponsor->id;
             }
@@ -1202,7 +1202,7 @@ public function createCheckoutOrder(Request $request)
  */
 public function invoice($id)
 {
-    // ✅ Charger toutes les relations nécessaires
+    // Charger toutes les relations nécessaires
     $order = Order::with(['user', 'cashier', 'items', 'items.product'])
         ->where(function($query) use ($id) {
             $query->where('id', $id)
@@ -1210,13 +1210,13 @@ public function invoice($id)
         })
         ->firstOrFail();
     
-    // ✅ Récupérer le sponsor depuis le metadata
+    // Récupérer le sponsor depuis le metadata
     $sponsor = null;
     if (isset($order->metadata['sponsor_id'])) {
         $sponsor = User::find($order->metadata['sponsor_id']);
     }
     
-    // ✅ Récupérer le caissier
+    // Récupérer le caissier
     $cashier = null;
     if (isset($order->metadata['cashier_id'])) {
         $cashier = User::find($order->metadata['cashier_id']);
@@ -1591,14 +1591,14 @@ public function memberShow($id)
     
     $commissions = $commissionsQuery->paginate(15);
     
-    // ✅ Récupérer les filleuls (downlines)
+    // Récupérer les filleuls (downlines)
     $downlines = User::where('parrain_id', $member->id)
         ->where('user_type', 'member')
         ->with(['package'])
         ->orderBy('created_at', 'desc')
         ->paginate(20);
     
-    // ✅ Ajouter le niveau à chaque filleul
+    // Ajouter le niveau à chaque filleul
     foreach ($downlines as $downline) {
         if (class_exists('App\Models\Genealogy')) {
             $genealogy = \App\Models\Genealogy::where('user_id', $downline->id)->first();
@@ -2395,7 +2395,7 @@ public function requestCancellation(Request $request, $id)
 {
     $order = Order::findOrFail($id);
     
-    // ✅ MODIFICATION : Permettre l'annulation pour les commandes terminées aussi (dans les 10 min)
+    // MODIFICATION : Permettre l'annulation pour les commandes terminées aussi (dans les 10 min)
     if (!in_array($order->status, ['pending', 'processing', 'completed'])) {
         return response()->json([
             'success' => false,
@@ -2403,7 +2403,7 @@ public function requestCancellation(Request $request, $id)
         ], 400);
     }
     
-    // ✅ VÉRIFIER LE DÉLAI DE 10 MINUTES
+    // VÉRIFIER LE DÉLAI DE 10 MINUTES
     $createdAt = $order->created_at;
     $now = now();
     $diffInMinutes = $createdAt->diffInMinutes($now);
@@ -2490,6 +2490,245 @@ private function getDownlineLevel($parrainId, $downlineId, $currentLevel = 1, $m
     
     return $maxLevel;
 }
+
+/**
+ * Afficher le formulaire de création d'un nouveau membre
+ */
+public function memberCreate()
+{
+    return view('cashier.members.create');
+}
+
+/**
+ * Enregistrer un nouveau membre
+ */
+public function memberStore(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255',
+        'phone' => 'required|string|max:20|unique:users,phone',
+        'email' => 'nullable|email|max:255|unique:users,email',
+        'birth_date' => 'nullable|date',
+        'gender' => 'nullable|string|in:male,female',
+        'address' => 'nullable|string|max:255',
+        'profession' => 'nullable|string|max:255',
+        'identity_number' => 'nullable|string|max:100',
+        'bank_name' => 'nullable|string|max:100',
+        'account_number' => 'nullable|string|max:100',
+        'account_holder' => 'nullable|string|max:255',
+        'mobile_money' => 'nullable|string|max:50',
+        'member_code' => 'required|string|max:50|unique:users,sponsor_id',  // Code saisi par le caissier
+        'sponsor_id' => 'required|exists:users,id',
+        'signature_name' => 'required|string|max:255',
+        'signature_date' => 'required|date',
+        'signature_location' => 'nullable|string|max:255',
+        'terms' => 'accepted',
+        'rules' => 'accepted',
+        'accuracy' => 'accepted',
+        'efforts' => 'accepted',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
+    }
+
+    try {
+        DB::beginTransaction();
+
+        // Trouver le parrain
+        $sponsor = User::where('id', $request->sponsor_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$sponsor) {
+            return redirect()->back()->with('error', 'Parrain invalide ou inactif')->withInput();
+        }
+
+        // Utiliser le code saisi par le caissier
+        $memberCode = strtoupper(trim($request->member_code));
+        
+        // Vérifier que le code n'est pas déjà utilisé (double sécurité)
+        if (User::where('sponsor_id', $memberCode)->exists()) {
+            return redirect()->back()
+                ->with('error', 'Ce code membre est déjà attribué à un autre membre.')
+                ->withInput();
+        }
+
+        // Créer l'email si non fourni
+        $email = $request->email;
+        if (!$email) {
+            $nameParts = explode(' ', trim($request->name));
+            $firstName = strtolower($nameParts[0] ?? 'user');
+            $lastName = strtolower($nameParts[1] ?? '');
+            $firstName = preg_replace('/[^a-z0-9]/', '', $firstName);
+            $lastName = preg_replace('/[^a-z0-9]/', '', $lastName);
+            $email = $firstName . ($lastName ? '.' . $lastName : '') . '@salanggroup.com';
+            
+            $counter = 1;
+            $originalEmail = $email;
+            while (User::where('email', $email)->exists()) {
+                $email = str_replace('@salanggroup.com', $counter . '@salanggroup.com', $originalEmail);
+                $counter++;
+            }
+        }
+
+        // Créer le membre avec le code saisi
+        $member = User::create([
+            'name' => $request->name,
+            'email' => $email,
+            'phone' => $request->phone,
+            'password' => bcrypt('password123'),
+            'sponsor_id' => $memberCode,  // Code saisi par le caissier
+            'parrain_id' => $sponsor->id,
+            'is_active' => true,
+            'user_type' => 'member',
+            'kyc_status' => 'pending',
+            'pv_balance' => 0,
+            'bv_balance' => 0,
+            'monthly_pv' => 0,
+            'monthly_bv' => 0,
+            'team_pv' => 0,
+            'team_bv' => 0,
+            'total_team' => 0,
+            'address' => $request->address,
+            'city' => $request->city ?? 'Goma',
+            'country' => $request->country ?? 'RDC',
+            'metadata' => [
+                'birth_date' => $request->birth_date,
+                'gender' => $request->gender,
+                'profession' => $request->profession,
+                'identity_number' => $request->identity_number,
+                'bank_name' => $request->bank_name,
+                'account_number' => $request->account_number,
+                'account_holder' => $request->account_holder,
+                'mobile_money' => $request->mobile_money,
+                'signature_name' => $request->signature_name,
+                'signature_date' => $request->signature_date,
+                'signature_location' => $request->signature_location,
+                'registered_by' => auth()->id(),
+                'registered_by_name' => auth()->user()->name,
+                'registered_at' => now()->toISOString(),
+                'sponsor_name' => $sponsor->name,
+                'sponsor_code' => $sponsor->sponsor_id,
+                'cashier_id' => $request->cashier_id ?? auth()->id(),
+                'cashier_name' => $request->cashier_name ?? auth()->user()->name,
+            ],
+        ]);
+
+        // Assigner le rôle "member"
+        $member->assignRole('member');
+
+        // Créer le wallet
+        Wallet::create([
+            'user_id' => $member->id,
+            'balance' => 0,
+            'pending_balance' => 0,
+            'currency' => 'USD',
+            'is_active' => true,
+        ]);
+
+        // Créer une entrée dans la généalogie
+        if (class_exists('App\Models\Genealogy')) {
+            $level = 1;
+            $parent = User::find($sponsor->id);
+            
+            while ($parent && $parent->parrain_id) {
+                $level++;
+                $parent = User::find($parent->parrain_id);
+                if ($level > 10) break;
+            }
+            
+            \App\Models\Genealogy::create([
+                'user_id' => $member->id,
+                'sponsor_id' => $sponsor->id,
+                'level' => $level,
+                'position' => 'left',
+            ]);
+        }
+
+        // Commission pour le parrain (nouveau membre)
+        Commission::create([
+            'user_id' => $sponsor->id,
+            'from_user_id' => $member->id,
+            'period' => now()->format('Y-m'),
+            'type' => 'new_member',
+            'source' => 'membership',
+            'amount' => 0,
+            'percentage' => 0,
+            'description' => "Nouveau membre parrainé - {$member->name}",
+            'notes' => "Code: {$memberCode} - Parrain: {$sponsor->name} - Enregistré par: " . auth()->user()->name,
+            'status' => 'completed',
+        ]);
+
+        DB::commit();
+
+        return redirect()->route('cashier.members.show', $member->id)
+            ->with('success', 'Membre enregistré avec succès ! 
+                Code: ' . $memberCode . ' | Email: ' . $email . ' | Mot de passe par défaut: password123');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur création membre: ' . $e->getMessage());
+        return redirect()->back()
+            ->with('error', 'Erreur lors de l\'enregistrement: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+/**
+ * Vérifier si un code membre est disponible (AJAX)
+ */
+public function checkMemberCode(Request $request)
+{
+    $code = $request->get('code', '');
+    
+    if (empty($code)) {
+        return response()->json([
+            'available' => false,
+            'message' => 'Code requis'
+        ]);
+    }
+    
+    // Vérifier si le code existe déjà
+    $exists = User::where('sponsor_id', $code)->exists();
+    
+    if ($exists) {
+        return response()->json([
+            'available' => false,
+            'message' => 'Ce code est déjà attribué à un autre membre'
+        ]);
+    }
+    
+    return response()->json([
+        'available' => true,
+        'message' => 'Code disponible'
+    ]);
+}
+
+/**
+ * Rechercher des parrains existants (AJAX)
+ */
+public function searchSponsors(Request $request)
+{
+    $query = $request->get('q', '');
+    
+    if (strlen($query) < 2) {
+        return response()->json([]);
+    }
+    
+    $sponsors = User::where('is_active', true)
+        ->where(function($q) use ($query) {
+            $q->where('name', 'LIKE', "%{$query}%")
+              ->orWhere('email', 'LIKE', "%{$query}%")
+              ->orWhere('phone', 'LIKE', "%{$query}%")
+              ->orWhere('sponsor_id', 'LIKE', "%{$query}%");
+        })
+        ->whereIn('user_type', ['member', 'admin'])
+        ->limit(10)
+        ->get(['id', 'name', 'email', 'phone', 'sponsor_id']);
+    
+    return response()->json($sponsors);
+}
+
     /**
      * Exporter les commissions en PDF - Un membre par ligne
      */
@@ -2611,7 +2850,7 @@ private function getDownlineLevel($parrainId, $downlineId, $currentLevel = 1, $m
     }
 
     /**
-     * ✅ Méthode pour récupérer le logo en base64
+     * Méthode pour récupérer le logo en base64
      */
     private function getLogoBase64()
     {

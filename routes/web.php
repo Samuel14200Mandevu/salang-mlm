@@ -4,9 +4,8 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\EmailCheckController;
 use App\Http\Controllers\Auth\SponsorCheckController;
-use App\Http\Controllers\Auth\RegisteredUserController; // ✅ AJOUTÉ
+use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\UserPackageController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RankController;
@@ -44,6 +43,7 @@ use App\Http\Controllers\Admin\ActivationController as AdminActivationController
 use App\Http\Controllers\LegalController;
 
 use App\Http\Controllers\Admin\AdminPVController;
+use App\Http\Controllers\Admin\AdminPVImportController;
 
 // Controllers Cashier
 use App\Http\Controllers\Cashier\CashierController;
@@ -71,11 +71,6 @@ Route::get('/check-sponsor', [SponsorCheckController::class, 'check'])->name('ch
 // ✅ NOUVELLE ROUTE : Vérification du code sponsor au format 51XXXX
 Route::post('/check-sponsor-code', [RegisteredUserController::class, 'checkSponsorCode'])
     ->name('check.sponsor.code');
-
-// Onboarding
-Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
-Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
-Route::get('/onboarding/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
 
 // Produits (publics)
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -327,7 +322,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/orders/invoice/{id}', [CashierController::class, 'invoice'])->name('orders.invoice');
     Route::get('/orders/invoice/{id}/print', [CashierController::class, 'printInvoice'])->name('orders.invoice.print');
     Route::post('/orders/{id}/cancel', [CashierController::class, 'cancelOrder'])->name('orders.cancel');
-    Route::post('/orders/{id}/request-cancellation', [CashierController::class, 'requestCancellation'])->name('cashier.orders.request-cancellation');
+    Route::post('/orders/{id}/request-cancellation', [CashierController::class, 'requestCancellation'])->name('orders.request-cancellation');
     
     // Clients
     Route::get('/customers', [CashierController::class, 'customers'])->name('customers');
@@ -335,13 +330,24 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
     Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
     
-    // Membres (Gestion complète)
+    // ============================================================
+    // MEMBRES - Gestion complète AVEC création
+    // ============================================================
     Route::get('/members', [CashierController::class, 'members'])->name('members');
+    Route::get('/members/create', [CashierController::class, 'memberCreate'])->name('members.create');  
+    Route::post('/members', [CashierController::class, 'memberStore'])->name('members.store'); 
+    Route::get('/check-member-code', [CashierController::class, 'checkMemberCode'])->name('check-member-code');         
+    Route::get('/search-sponsors', [CashierController::class, 'searchSponsors'])->name('search-sponsors');
     Route::get('/members/{member}', [CashierController::class, 'memberShow'])->name('members.show');
     Route::get('/members/{member}/commissions', [CashierController::class, 'memberCommissions'])->name('members.commissions');
     Route::get('/members/{member}/orders', [CashierController::class, 'memberOrders'])->name('members.orders');
     Route::put('/members/{member}/commissions/update', [CashierController::class, 'updateMemberCommissions'])->name('members.commissions.update');
     Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
+    
+    // ============================================================
+    // VÉRIFICATION DU PARRAIN (AJAX) - ✅ DÉPLACÉ ICI
+    // ============================================================
+    Route::get('/check-sponsor', [CashierController::class, 'checkSponsor'])->name('check-sponsor');
     
     // Commissions - Routes statiques avant paramètres
     Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
@@ -417,12 +423,19 @@ Route::prefix('admin')
         // GESTION DES PV (Points de Volume) - ADMIN
         // ============================================================
         Route::prefix('pv')->name('pv.')->group(function () {
+            // Page principale et recherche
             Route::get('/', [AdminPVController::class, 'index'])->name('index');
+            Route::get('/search', [AdminPVController::class, 'search'])->name('search');
             Route::get('/export', [AdminPVController::class, 'export'])->name('export');
             
             // Gestion individuelle
+            Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
             Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
             Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
+            
+            Route::post('/{user}/add-historical', [AdminPVController::class, 'addHistorical'])->name('add-historical');
+            Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
+            
             Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
             Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
             
@@ -441,7 +454,28 @@ Route::prefix('admin')
                 Route::post('/{period}/reset-monthly', [AdminPVController::class, 'resetMonthlyPV'])->name('reset-monthly');
                 Route::delete('/{period}/clean', [AdminPVController::class, 'cleanPeriod'])->name('clean');
             });
-        });
+
+            //  ROUTE DE RÉINITIALISATION COMPLÈTE
+                Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
+
+            // ============================================================
+            //  ROUTES D'IMPORT - AJOUTÉES ICI
+            // ============================================================
+            Route::prefix('import')->name('import.')->group(function () {
+                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
+                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
+                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
+                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
+            });
+
+            // Statistiques utilisateur (API)
+            Route::get('/user-stats', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
+
+            // Ajout mensuel par utilisateur
+            Route::post('/{user}/add-monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('add-monthly');
+
+        }); // FIN GROUPE PV
+
         Route::get('/pv', [AdminPVController::class, 'index'])->name('pv');
 
         // ============================================================
@@ -682,24 +716,8 @@ Route::fallback(function () {
 })->name('fallback');
 
 // ============================================================
-// ROUTES PV - DÉPLACÉES EN DEHORS DU GROUPE ADMIN
+// PAGES LEGALES (en dehors du groupe admin)
 // ============================================================
-Route::prefix('admin/pv')
-    ->middleware(['auth', 'active', 'admin'])
-    ->name('admin.pv.')
-    ->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\AdminPVController::class, 'index'])->name('index');
-        Route::get('/export', [App\Http\Controllers\Admin\AdminPVController::class, 'export'])->name('export');
-        Route::put('/{user}', [App\Http\Controllers\Admin\AdminPVController::class, 'update'])->name('update');
-        Route::post('/{user}/monthly', [App\Http\Controllers\Admin\AdminPVController::class, 'addMonthly'])->name('monthly');
-        Route::get('/{user}/rank-info', [App\Http\Controllers\Admin\AdminPVController::class, 'getRankInfo'])->name('rank-info');
-        Route::post('/{user}/recalculate-rank', [App\Http\Controllers\Admin\AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
-        Route::post('/bulk', [App\Http\Controllers\Admin\AdminPVController::class, 'bulkAssign'])->name('bulk');
-        Route::get('/stats', [App\Http\Controllers\Admin\AdminPVController::class, 'stats'])->name('stats');
-        Route::get('/history/{user?}', [App\Http\Controllers\Admin\AdminPVController::class, 'history'])->name('history');
-    });
-
-    // Pages légales
 Route::get('/mentions-legales', [LegalController::class, 'legal'])->name('legal.mentions');
 Route::get('/confidentialite', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/conditions-generales', [LegalController::class, 'terms'])->name('legal.terms');

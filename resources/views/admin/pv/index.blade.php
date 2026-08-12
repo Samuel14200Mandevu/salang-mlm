@@ -1,3 +1,4 @@
+{{-- resources/views/admin/pv/index.blade.php --}}
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -222,6 +223,10 @@
         background: var(--gradient-danger);
         color: white;
     }
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+    }
     
     .info-row {
         display: flex;
@@ -252,6 +257,12 @@
         gap: 1.5rem;
     }
     
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
     .modal-overlay {
         display: none;
         position: fixed;
@@ -272,7 +283,7 @@
         background: var(--bg-card);
         border-radius: var(--radius-lg);
         padding: 1.5rem;
-        max-width: 500px;
+        max-width: 550px;
         width: 95%;
         max-height: 90vh;
         overflow-y: auto;
@@ -341,12 +352,115 @@
         padding: 1.25rem;
     }
     
+    .table-pv-history {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .table-pv-history th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .table-pv-history td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .table-pv-history tr:hover td {
+        background: var(--bg-hover);
+    }
+    
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        color: white;
+        font-weight: 600;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        max-width: 400px;
+    }
+    .toast-success { background: #22c55e; }
+    .toast-error { background: #ef4444; }
+    .toast-warning { background: #f59e0b; }
+    
+    /* Styles pour la confirmation personnalisée */
+    .custom-confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .custom-confirm-overlay.active {
+        display: flex;
+    }
+    .custom-confirm-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 500px;
+        width: 95%;
+        text-align: center;
+        animation: modalIn 0.3s ease;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .custom-confirm-box .icon {
+        font-size: 3.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .custom-confirm-box h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    .custom-confirm-box p {
+        color: var(--text-secondary);
+        font-size: 0.938rem;
+        margin-bottom: 0.25rem;
+    }
+    .custom-confirm-box .warning-text {
+        color: #ef4444;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0.5rem 0 1.5rem 0;
+        padding: 0.75rem;
+        background: rgba(239, 68, 68, 0.08);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid #ef4444;
+    }
+    .custom-confirm-box .btn-group {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .custom-confirm-box .btn-group .btn {
+        min-width: 120px;
+    }
+    
     @media (max-width: 768px) {
         .user-profile-header {
             flex-direction: column;
             text-align: center;
         }
         .grid-3 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .grid-2 {
             grid-template-columns: 1fr;
             gap: 1rem;
         }
@@ -367,6 +481,18 @@
         .btn-sm {
             padding: 0.25rem 0.5rem;
             font-size: 0.65rem;
+        }
+        .toast {
+            bottom: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+        .custom-confirm-box .btn-group {
+            flex-direction: column;
+        }
+        .custom-confirm-box .btn-group .btn {
+            width: 100%;
         }
     }
 </style>
@@ -389,6 +515,12 @@
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
+            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-success btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <span class="hidden xs:inline">Importer des PV</span>
+            </a>
             <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -423,7 +555,7 @@
             {{ strtoupper(substr($user->name, 0, 1)) }}
         </div>
         <div class="user-profile-info flex-1">
-            <h2>{{ $user->name }}</h2>
+            <h2 id="userNameDisplay">{{ $user->name }}</h2>
             <div class="subtitle">
                 {{ $user->email }} 
                 @if($user->phone && $user->phone !== 'N/A')
@@ -431,7 +563,6 @@
                 @endif
             </div>
             <div>
-                
                 <span class="badge badge-purple">
                     {{ $user->rank_name ?? 'Distributeur' }} (Niv. {{ $user->rank_level ?? 1 }})
                 </span>
@@ -459,162 +590,77 @@
     <div class="grid-3 animate-fadeInUp delay-1">
         <div class="pv-display-card border-l-4 border-primary-500">
             <div class="pv-label">PV Total</div>
-            <div class="pv-value">{{ number_format($user->pv_balance ?? 0, 0, ',', ' ') }}</div>
+            <div class="pv-value" id="pv_balance_display">{{ number_format($user->pv_balance ?? 0, 1, ',', ' ') }}</div>
             <div class="text-xs text-[var(--text-secondary)] mt-1">Points de Volume totaux</div>
         </div>
         <div class="pv-display-card border-l-4 border-green-500">
             <div class="pv-label">PV Mensuel</div>
-            <div class="pv-value text-green-500">{{ number_format($user->monthly_pv ?? 0, 0, ',', ' ') }}</div>
+            <div class="pv-value text-green-500" id="monthly_pv_display">{{ number_format($user->monthly_pv ?? 0, 1, ',', ' ') }}</div>
             <div class="text-xs text-[var(--text-secondary)] mt-1">Points de Volume du mois</div>
         </div>
         <div class="pv-display-card border-l-4 border-blue-500">
             <div class="pv-label">PV Équipe</div>
-            <div class="pv-value text-blue-500">{{ number_format($user->team_pv ?? 0, 0, ',', ' ') }}</div>
+            <div class="pv-value text-blue-500" id="team_pv_display">{{ number_format($user->team_pv ?? 0, 1, ',', ' ') }}</div>
             <div class="text-xs text-[var(--text-secondary)] mt-1">PV généré par les filleuls</div>
         </div>
     </div>
 
     <!-- ===== FORMULAIRE DE MODIFICATION ===== -->
-    <div class="card animate-fadeInUp delay-2">
-        <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">
-            <svg class="inline-block w-5 h-5 text-warning-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Modifier les PV
-        </h3>
-        
-        <form method="POST" action="{{ route('admin.pv.update', $user->id) }}">
-            @csrf
-            @method('PUT')
+    <div class="grid-2 animate-fadeInUp delay-2">
+        <!-- Carte 1: Modifier les PV -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">
+                <svg class="inline-block w-5 h-5 text-warning-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Modifier les PV
+            </h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label for="pv_balance">PV Total <span class="required">*</span></label>
-                    <input type="number" id="pv_balance" name="pv_balance" min="0" step="1" value="{{ $user->pv_balance ?? 0 }}" required>
-                    <small class="help-text">Points de Volume totaux de l'utilisateur. Affecte le grade et les commissions.</small>
+            <form method="POST" action="{{ route('admin.pv.update', $user->id) }}" id="pvForm">
+                @csrf
+                @method('PUT')
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="form-group">
+                        <label for="pv_balance">PV Total <span class="required">*</span></label>
+                        <input type="text" id="pv_balance" name="pv_balance" 
+                               value="{{ number_format($user->pv_balance ?? 0, 1, '.', '') }}" 
+                               step="0.1" required
+                               oninput="this.value = this.value.replace(',', '.')">
+                        <small class="help-text">Points de Volume totaux de l'utilisateur. (Ex: 87.5)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monthly_pv">PV Mensuel <span class="required">*</span></label>
+                        <input type="text" id="monthly_pv" name="monthly_pv" 
+                               value="{{ number_format($user->monthly_pv ?? 0, 1, '.', '') }}" 
+                               step="0.1" required
+                               oninput="this.value = this.value.replace(',', '.')">
+                        <small class="help-text">Points de Volume du mois en cours. (Ex: 87.5)</small>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="monthly_pv">PV Mensuel <span class="required">*</span></label>
-                    <input type="number" id="monthly_pv" name="monthly_pv" min="0" step="1" value="{{ $user->monthly_pv ?? 0 }}" required>
-                    <small class="help-text">Points de Volume du mois en cours. Réinitialisé le 7 de chaque mois.</small>
+                    <label for="package_id">Package</label>
+                    <select id="package_id" name="package_id">
+                        <option value="">Aucun package</option>
+                        @foreach($packages ?? [] as $package)
+                            <option value="{{ $package->id }}" {{ $user->package_id == $package->id ? 'selected' : '' }}>
+                                {{ $package->name }} ({{ number_format($package->pv_value, 1, ',', ' ') }} PV • {{ number_format($package->bv_value, 1, ',', ' ') }} BV)
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="help-text">Le package affecte le PV et le grade de l'utilisateur.</small>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="package_id">Package</label>
-                <select id="package_id" name="package_id">
-                    <option value="">Aucun package</option>
-                    @foreach($packages ?? [] as $package)
-                        <option value="{{ $package->id }}" {{ $user->package_id == $package->id ? 'selected' : '' }}>
-                            {{ $package->name }} ({{ $package->pv_value }} PV • {{ $package->bv_value }} BV)
-                        </option>
-                    @endforeach
-                </select>
-                <small class="help-text">Le package affecte le PV et le grade de l'utilisateur.</small>
-            </div>
-            
-            <div class="flex flex-wrap gap-3 mt-6">
-                <button type="submit" class="btn btn-primary flex-1 sm:flex-none">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Mettre à jour
-                </button>
-                <button type="button" onclick="openAddMonthlyPV()" class="btn btn-success">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    + PV Mensuel
-                </button>
-                <button type="button" onclick="openDeletePVModal()" class="btn btn-danger">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    Réinitialiser PV
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ===== MODAL: AJOUTER PV MENSUEL ===== -->
-<div id="addMonthlyPvModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>
-                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                Ajouter PV Mensuel
-            </h2>
-            <button class="modal-close" onclick="closeModal('addMonthlyPvModal')">&times;</button>
-        </div>
-        <form method="POST" action="{{ route('admin.pv.monthly', $user->id) }}">
-            @csrf
-            <div class="form-group">
-                <label>Utilisateur</label>
-                <input type="text" value="{{ $user->name }}" disabled class="bg-[var(--bg-secondary)]" style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md);">
-            </div>
-            
-            <div class="form-group">
-                <label for="modal_monthly_pv_amount">PV à ajouter <span class="required">*</span></label>
-                <input type="number" id="modal_monthly_pv_amount" name="amount" min="1" step="1" required placeholder="Ex: 100" style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md);">
-                <small class="help-text">Ce montant sera ajouté au PV mensuel et au PV total.</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="modal_monthly_pv_notes">Notes (optionnel)</label>
-                <input type="text" id="modal_monthly_pv_notes" name="notes" placeholder="Raison de l'ajout..." style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md);">
-            </div>
-            
-            <div class="flex gap-2 mt-4">
-                <button type="submit" class="btn btn-success flex-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Ajouter
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addMonthlyPvModal')">Annuler</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ===== MODAL: RÉINITIALISER PV ===== -->
-<div id="deletePVModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>
-                <svg class="w-5 h-5 text-danger-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                Réinitialiser les PV
-            </h2>
-            <button class="modal-close" onclick="closeModal('deletePVModal')">&times;</button>
-        </div>
-        <div class="text-center">
-            <div class="modal-icon modal-icon-danger mx-auto mb-4" style="width:4rem;height:4rem;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.1);color:#ef4444;">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-[var(--text-primary)] mb-2">Réinitialiser les PV</h3>
-            <p class="text-[var(--text-secondary)] mb-4">
-                Êtes-vous sûr de vouloir réinitialiser <strong>tous les PV</strong> de <strong>{{ $user->name }}</strong> ?
-                <br>
-                <span class="text-danger text-sm">Cette action est irréversible !</span>
-            </p>
-            <form method="POST" action="{{ route('admin.pv.update', $user->id) }}">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="pv_balance" value="0">
-                <input type="hidden" name="monthly_pv" value="0">
-                <input type="hidden" name="team_pv" value="0">
-                <input type="hidden" name="package_id" value="">
-                <div class="flex gap-2 justify-center">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('deletePVModal')">Annuler</button>
-                    <button type="submit" class="btn btn-danger">
+                
+                <div class="flex flex-wrap gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Mettre à jour
+                    </button>
+                    <button type="button" onclick="openDeletePVModal()" class="btn btn-danger">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
@@ -622,6 +668,140 @@
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- ⚠️ SECTION SUPPRIMÉE : Ajouter des PV Historiques -->
+        <!-- La fonctionnalité est maintenant disponible via la page d'import -->
+    </div>
+
+    <!-- ===== HISTORIQUE DES PV ===== -->
+    <div class="card animate-fadeInUp delay-3">
+        <div class="flex flex-wrap items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-[var(--text-primary)]">
+                <svg class="inline-block w-5 h-5 text-info-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Historique des PV
+            </h3>
+            <span class="text-sm text-[var(--text-secondary)]" id="history_count">
+                Total: {{ isset($pvHistory) ? count($pvHistory) : 0 }} entrées
+            </span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="table-pv-history">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Période</th>
+                        <th>Type</th>
+                        <th>Montant</th>
+                        <th>Notes</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    @if(isset($pvHistory) && count($pvHistory) > 0)
+                        @foreach($pvHistory as $entry)
+                            <tr id="history-row-{{ $entry->id }}">
+                                <td>{{ \Carbon\Carbon::parse($entry->date)->format('d/m/Y') }}</td>
+                                <td>{{ $entry->period ?? '-' }}</td>
+                                <td>
+                                    <span class="badge badge-info">{{ ucfirst($entry->type) }}</span>
+                                </td>
+                                <td class="font-bold text-primary-500">{{ number_format($entry->amount, 1, ',', ' ') }}</td>
+                                <td>{{ $entry->notes ?? '-' }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="deleteHistory({{ $entry->id }})">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr id="noHistoryRow">
+                            <td colspan="6" class="text-center text-[var(--text-secondary)] py-4">
+                                Aucun historique de PV trouvé
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: RÉINITIALISATION ===== -->
+<div id="deletePVModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>
+                <svg class="w-5 h-5 text-danger-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                ⚠️ Réinitialisation Complète
+            </h2>
+            <button class="modal-close" onclick="closeModal('deletePVModal')">&times;</button>
+        </div>
+        <div class="text-center">
+            <div class="modal-icon mx-auto mb-4" style="width:4rem;height:4rem;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.15);color:#ef4444;">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-[var(--text-primary)] mb-2">⚠️ Réinitialisation complète</h3>
+            <p class="text-[var(--text-secondary)] mb-3">
+                Êtes-vous sûr de vouloir réinitialiser <strong>COMPLÈTEMENT</strong> 
+                <strong class="text-danger" style="color: #ef4444;">{{ $user->name }}</strong> ?
+            </p>
+            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; text-align: left;">
+                <p style="font-size: 0.813rem; color: var(--text-secondary); margin: 0;">
+                    <span style="color: #ef4444; font-weight: bold;">⚠️ Cette action est IRREVERSIBLE !</span><br>
+                    <span style="font-size: 0.75rem;">Tous les PV seront remis à 0 et le rang sera "Distributeur".</span>
+                </p>
+            </div>
+            
+            <div class="flex gap-2 justify-center">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deletePVModal')">
+                    ❌ Annuler
+                </button>
+                <button type="button" class="btn btn-danger" onclick="showCustomConfirm()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    ✅ Réinitialiser
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CONFIRMATION UNIQUE ===== -->
+<div id="customConfirmOverlay" class="custom-confirm-overlay">
+    <div class="custom-confirm-box">
+        <div class="icon">⚠️</div>
+        <h3>Confirmation finale</h3>
+        <p>
+            Êtes-vous sûr de vouloir réinitialiser 
+            <strong style="color: #ef4444;" id="confirmUserName">{{ $user->name }}</strong> ?
+        </p>
+        <div class="warning-text">
+            ⚠️ Cette action est IRREVERSIBLE !<br>
+            Tous les PV seront remis à 0 et le rang sera "Distributeur".
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="closeCustomConfirm()">
+                ❌ Annuler
+            </button>
+            <button class="btn btn-danger" onclick="submitReset()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Confirmer
+            </button>
         </div>
     </div>
 </div>
@@ -640,14 +820,6 @@ function closeModal(id) {
     document.body.style.overflow = '';
 }
 
-function openAddMonthlyPV() {
-    openModal('addMonthlyPvModal');
-}
-
-function openRecalculateRank() {
-    openModal('recalculateRankModal');
-}
-
 function openDeletePVModal() {
     openModal('deletePVModal');
 }
@@ -662,13 +834,172 @@ document.querySelectorAll('.modal-overlay').forEach(function(modal) {
     });
 });
 
-// Raccourci clavier ESC pour fermer les modals
+// Raccourci clavier ESC
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
         });
+        closeCustomConfirm();
+    }
+});
+
+// ============================================================
+// CONFIRMATION UNIQUE
+// ============================================================
+function showCustomConfirm() {
+    // Fermer la modal
+    closeModal('deletePVModal');
+    
+    // Afficher la confirmation
+    const overlay = document.getElementById('customConfirmOverlay');
+    const userName = document.getElementById('userNameDisplay').textContent || '{{ $user->name }}';
+    document.getElementById('confirmUserName').textContent = userName;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCustomConfirm() {
+    const overlay = document.getElementById('customConfirmOverlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    // Réouvrir la modal
+    openModal('deletePVModal');
+}
+
+function submitReset() {
+    // Fermer la confirmation
+    closeCustomConfirm();
+    
+    // Créer un formulaire et le soumettre
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route('admin.pv.reset', $user->id) }}';
+    
+    // Ajouter le token CSRF
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = '{{ csrf_token() }}';
+    form.appendChild(csrfInput);
+    
+    // Ajouter le method spoofing
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'PUT';
+    form.appendChild(methodInput);
+    
+    // Ajouter le champ de confirmation
+    const confirmInput = document.createElement('input');
+    confirmInput.type = 'hidden';
+    confirmInput.name = 'confirmed';
+    confirmInput.value = '1';
+    form.appendChild(confirmInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// ============================================================
+// SUPPRIMER UN HISTORIQUE (AJAX)
+// ============================================================
+function deleteHistory(historyId) {
+    if (!confirm('Supprimer cette entrée ? Cette action est irréversible !')) {
+        return;
+    }
+    
+    const url = '{{ url('admin/pv/history') }}/' + historyId;
+    
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById('history-row-' + historyId);
+            if (row) {
+                row.remove();
+            }
+            
+            const counter = document.getElementById('history_count');
+            const currentCount = parseInt(counter.textContent.match(/\d+/)?.[0] || 0);
+            counter.textContent = 'Total: ' + (currentCount - 1) + ' entrées';
+            
+            if (data.user) {
+                document.getElementById('pv_balance_display').textContent = 
+                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                    .format(data.user.pv_balance);
+                document.getElementById('monthly_pv_display').textContent = 
+                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                    .format(data.user.monthly_pv);
+                document.getElementById('team_pv_display').textContent = 
+                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                    .format(data.user.team_pv);
+                    
+                document.getElementById('pv_balance').value = data.user.pv_balance;
+                document.getElementById('monthly_pv').value = data.user.monthly_pv;
+            }
+            
+            showToast('✅ Historique supprimé avec succès', 'success');
+        } else {
+            showToast('❌ Erreur: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('❌ Erreur lors de la suppression', 'error');
+    });
+}
+
+// ============================================================
+// TOAST NOTIFICATION
+// ============================================================
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+// ============================================================
+// REMPLACEMENT AUTO DES VIRGULES PAR DES POINTS
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const pvForm = document.getElementById('pvForm');
+    if (pvForm) {
+        pvForm.addEventListener('submit', function(e) {
+            const inputs = this.querySelectorAll('input[name="pv_balance"], input[name="monthly_pv"]');
+            inputs.forEach(input => {
+                if (input.value) {
+                    input.value = input.value.replace(',', '.');
+                }
+            });
+        });
+    }
+    
+    const dateInput = document.getElementById('historical_date');
+    if (dateInput) {
+        dateInput.setAttribute('min', '2020-01-01');
+        dateInput.setAttribute('max', '{{ date('Y-m-d') }}');
+    }
+    
+    const monthInput = document.getElementById('historical_period');
+    if (monthInput) {
+        monthInput.setAttribute('min', '2020-01');
+        monthInput.setAttribute('max', '{{ date('Y-m') }}');
     }
 });
 </script>

@@ -259,8 +259,9 @@ class AdvancedRankCalculator
 
     /**
      * Calcule le PV d'une branche (version optimisée)
+     * ✅ CORRECTION : retourne float au lieu de int
      */
-    protected function calculateBranchPVOptimized(User $branchRoot): int
+    protected function calculateBranchPVOptimized(User $branchRoot): float
     {
         $totalPV = $branchRoot->pv_balance ?? 0;
 

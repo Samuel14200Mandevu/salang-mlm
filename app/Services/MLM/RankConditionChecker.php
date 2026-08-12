@@ -209,8 +209,9 @@ class RankConditionChecker
 
     /**
      * CALCUL DU CUMUL = PV Personnel + Team PV
+     * ✅ CORRECTION : retourne float au lieu de int
      */
-    private function getCumulPV(User $user): int
+    private function getCumulPV(User $user): float
     {
         return ($user->pv_balance ?? 0) + ($user->team_pv ?? 0);
     }
@@ -223,7 +224,7 @@ class RankConditionChecker
     {
         $count = 0;
         
-        // ✅ Charger les filleuls avec leurs relations
+        // Charger les filleuls avec leurs relations
         $filleuls = User::where('parrain_id', $user->id)
             ->where('is_active', true)
             ->with('rank')
