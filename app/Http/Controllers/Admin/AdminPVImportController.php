@@ -24,6 +24,74 @@ class AdminPVImportController extends Controller
     }
 
     /**
+     * Rechercher un utilisateur (API)
+     */
+    public function searchUser(Request $request)
+    {
+        $query = $request->input('search');
+        
+        // Validation
+        if (!$query || strlen($query) < 2) {
+            return response()->json(['error' => 'Recherche trop courte (minimum 2 caractères)'], 400);
+        }
+        
+        // Rechercher par nom, email ou sponsor_id
+        $user = User::with(['rank', 'parrain'])
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%")
+                  ->orWhere('sponsor_id', 'LIKE', "%{$query}%");
+            })
+            ->first();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Aucun membre trouvé avec ces critères'], 404);
+        }
+        
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'sponsor_id' => $user->sponsor_id,
+            'rank_name' => $user->rank_name ?? 'Distributeur',
+            'rank_level' => $user->rank_level ?? 1,
+            'pv_balance' => $user->pv_balance ?? 0,
+            'monthly_pv' => $user->monthly_pv ?? 0,
+            'team_pv' => $user->team_pv ?? 0,
+            'bv_balance' => $user->bv_balance ?? 0,
+            'total_team' => $user->total_team ?? 0,
+            'parrain_name' => $user->parrain?->name,
+            'parrain_sponsor_id' => $user->parrain?->sponsor_id,
+        ]);
+    }
+
+    /**
+     * Récupérer les statistiques d'un utilisateur par ID (API)
+     */
+    public function getUserStats($userId)
+    {
+        $user = User::with(['rank', 'parrain'])->find($userId);
+        
+        if (!$user) {
+            return response()->json(['error' => 'Utilisateur non trouvé'], 404);
+        }
+        
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'sponsor_id' => $user->sponsor_id,
+            'rank_name' => $user->rank_name ?? 'Distributeur',
+            'rank_level' => $user->rank_level ?? 1,
+            'pv_balance' => $user->pv_balance ?? 0,
+            'monthly_pv' => $user->monthly_pv ?? 0,
+            'team_pv' => $user->team_pv ?? 0,
+            'bv_balance' => $user->bv_balance ?? 0,
+            'total_team' => $user->total_team ?? 0,
+            'parrain_name' => $user->parrain?->name,
+            'parrain_sponsor_id' => $user->parrain?->sponsor_id,
+        ]);
+    }
+
+    /**
      * Importer des PV depuis un fichier CSV
      */
     public function importCSV(Request $request)
@@ -163,12 +231,12 @@ class AdminPVImportController extends Controller
 
             DB::commit();
 
-            $message = " Import terminé !\n";
-            $message .= " Lignes importées: {$imported}\n";
-            $message .= " Utilisateurs mis à jour: " . count($usersUpdated) . "\n";
+            $message = "✅ Import terminé !\n";
+            $message .= "📊 Lignes importées: {$imported}\n";
+            $message .= "👥 Utilisateurs mis à jour: " . count($usersUpdated) . "\n";
 
             if (!empty($errors)) {
-                $message .= " Erreurs: " . count($errors) . "\n";
+                $message .= "⚠️ Erreurs: " . count($errors) . "\n";
                 Log::warning('Erreurs import CSV', $errors);
             }
 
@@ -226,7 +294,7 @@ class AdminPVImportController extends Controller
 
             $user->saveQuietly();
             $user->updateTeamPVOptimized();
-            $user->updateRankSync(); // Mise à jour IMMÉDIATE du grade
+            $user->updateRankSync();
 
             // Mettre à jour les ancêtres
             if ($user->parrain_id) {
@@ -239,8 +307,8 @@ class AdminPVImportController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " {$amount} PV ajoutés pour {$period} à {$user->name}. Nouveau grade: {$user->rank_name}");
+            return redirect()->route('admin.pv.show', $user->id)
+                ->with('success', "✅ {$amount} PV ajoutés pour {$period} à {$user->name}. Nouveau grade: {$user->rank_name}");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -251,28 +319,5 @@ class AdminPVImportController extends Controller
             ]);
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Récupérer les statistiques d'un utilisateur (API)
-     */
-    public function getUserStats($userId)
-    {
-        $user = User::with(['rank', 'parrain'])->findOrFail($userId);
-        
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'sponsor_id' => $user->sponsor_id,
-            'rank_name' => $user->rank_name,
-            'rank_level' => $user->rank_level,
-            'pv_balance' => $user->pv_balance,
-            'monthly_pv' => $user->monthly_pv,
-            'team_pv' => $user->team_pv,
-            'bv_balance' => $user->bv_balance,
-            'total_team' => $user->total_team,
-            'parrain_name' => $user->parrain?->name,
-            'parrain_sponsor_id' => $user->parrain?->sponsor_id,
-        ]);
     }
 }

@@ -423,30 +423,35 @@ Route::prefix('admin')
         // GESTION DES PV (Points de Volume) - ADMIN
         // ============================================================
         Route::prefix('pv')->name('pv.')->group(function () {
+            
+            // ============================================================
+            // ROUTES STATIQUES (DOIVENT ÊTRE AVANT LES ROUTES DYNAMIQUES)
+            // ============================================================
+            
             // Page principale et recherche
             Route::get('/', [AdminPVController::class, 'index'])->name('index');
             Route::get('/search', [AdminPVController::class, 'search'])->name('search');
             Route::get('/export', [AdminPVController::class, 'export'])->name('export');
             
-            // Gestion individuelle
-            Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
-            Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
-            Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
-            
-            Route::post('/{user}/add-historical', [AdminPVController::class, 'addHistorical'])->name('add-historical');
-            Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
-            
-            Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
-            Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
-            
-            // Attribution massive
-            Route::post('/bulk', [AdminPVController::class, 'bulkAssign'])->name('bulk');
-            
             // Statistiques
             Route::get('/stats', [AdminPVController::class, 'stats'])->name('stats');
             Route::get('/history/{user?}', [AdminPVController::class, 'history'])->name('history');
             
-            // Gestion des périodes
+            // ✅ ROUTES D'IMPORT (STATIQUES)
+            Route::prefix('import')->name('import.')->group(function () {
+                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
+                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
+                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
+                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
+            });
+
+            // ✅ ROUTES API STATIQUES
+            Route::get('/search-user', [AdminPVImportController::class, 'searchUser'])->name('search-user');
+            Route::get('/user-stats/{userId}', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
+
+            // ============================================================
+            // GESTION DES PÉRIODES (STATIQUES)
+            // ============================================================
             Route::prefix('periods')->name('periods.')->group(function () {
                 Route::get('/', [AdminPVController::class, 'periods'])->name('index');
                 Route::post('/create', [AdminPVController::class, 'createPeriod'])->name('create');
@@ -455,24 +460,25 @@ Route::prefix('admin')
                 Route::delete('/{period}/clean', [AdminPVController::class, 'cleanPeriod'])->name('clean');
             });
 
-            //  ROUTE DE RÉINITIALISATION COMPLÈTE
-                Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
-
             // ============================================================
-            //  ROUTES D'IMPORT - AJOUTÉES ICI
+            // ROUTES DYNAMIQUES (AVEC PARAMÈTRES) - APRÈS LES STATIQUES
             // ============================================================
-            Route::prefix('import')->name('import.')->group(function () {
-                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
-                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
-                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
-                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
-            });
-
-            // Statistiques utilisateur (API)
-            Route::get('/user-stats', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
-
-            // Ajout mensuel par utilisateur
+            
+            // Gestion individuelle
+            Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
+            Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
+            Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
+            Route::post('/{user}/add-historical', [AdminPVController::class, 'addHistorical'])->name('add-historical');
             Route::post('/{user}/add-monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('add-monthly');
+            Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
+            Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
+            Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
+            
+            // Routes avec paramètres dynamiques
+            Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
+            
+            // Attribution massive
+            Route::post('/bulk', [AdminPVController::class, 'bulkAssign'])->name('bulk');
 
         }); // FIN GROUPE PV
 

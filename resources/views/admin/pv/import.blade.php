@@ -166,7 +166,7 @@
 @section('content')
 <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
     <h1 class="text-2xl font-bold text-[var(--text-primary)]">
-        📥 Import des PV Mensuels
+         Import des PV Mensuels
     </h1>
 
     @if(session('success'))
@@ -175,7 +175,7 @@
             @if(session('user_id'))
                 <br>
                 <a href="{{ route('admin.pv.show', session('user_id')) }}" class="text-primary-500 hover:underline font-semibold">
-                    📊 Voir l'historique des PV de l'utilisateur
+                    Voir l'historique des PV de l'utilisateur
                 </a>
             @endif
         </div>
@@ -189,7 +189,7 @@
 
     <!-- Import CSV -->
     <div class="card">
-        <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4">📄 Import CSV</h2>
+        <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4"> Import CSV</h2>
         <p class="text-sm text-[var(--text-secondary)] mb-4">
             Format : <code>member_id,member_name,product_code,product_name,quantity,unit_pv,total_pv,order_date</code>
         </p>
@@ -260,11 +260,11 @@
 
     <!-- Lien vers la gestion des PV -->
     <div class="card">
-        <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4">📊 Gestion des PV</h2>
+        <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4"> Gestion des PV</h2>
         <p class="text-sm text-[var(--text-secondary)] mb-4">
             Retourner à la gestion des PV pour voir l'historique complet.
         </p>
-        <a href="{{ route('admin.pv.index') }}" class="btn btn-outline">
+        <a href="{{ route('admin.pv.search') }}" class="btn btn-outline">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -277,7 +277,6 @@
 function searchUser() {
     const query = document.getElementById('searchUser').value;
     
-    // Vérifier que la recherche n'est pas vide
     if (!query || query.length < 2) {
         alert('Veuillez saisir au moins 2 caractères (nom ou code sponsor)');
         return;
@@ -287,11 +286,10 @@ function searchUser() {
     document.getElementById('userInfo').innerHTML = '<p class="text-[var(--text-secondary)]">🔍 Recherche en cours...</p>';
     document.getElementById('userResult').classList.remove('hidden');
     
-    // Récupérer le token CSRF
     const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
     
-    // Utiliser l'URL absolue
-    fetch('{{ url("admin/pv/user-stats") }}?search=' + encodeURIComponent(query), {
+    // Utiliser la route de recherche
+    fetch('{{ url("admin/pv/search-user") }}?search=' + encodeURIComponent(query), {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -302,20 +300,18 @@ function searchUser() {
     })
     .then(response => {
         if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                throw new Error('Session expirée. Veuillez rafraîchir la page.');
-            }
-            if (response.status === 404) {
-                throw new Error('Aucun membre trouvé avec ces critères.');
-            }
-            throw new Error('Erreur ' + response.status + ' - ' + response.statusText);
+            return response.json().then(data => {
+                throw new Error(data.error || 'Erreur ' + response.status);
+            }).catch(() => {
+                throw new Error('Erreur ' + response.status + ' - ' + response.statusText);
+            });
         }
         return response.json();
     })
     .then(data => {
         if (data.error) {
             document.getElementById('userInfo').innerHTML = `
-                <p class="text-red-500">❌ ${data.error}</p>
+                <p class="text-red-500"> ${data.error}</p>
             `;
             return;
         }
@@ -335,14 +331,16 @@ function searchUser() {
         `;
         
         // Mettre à jour l'action du formulaire
-        document.getElementById('addMonthlyForm').action = `/admin/pv/${data.id}/add-monthly`;
+        document.getElementById('addMonthlyForm').action = '/admin/pv/' + data.id + '/add-monthly';
+        document.getElementById('userResult').classList.remove('hidden');
     })
     .catch(err => {
         console.error('Erreur détaillée:', err);
         document.getElementById('userInfo').innerHTML = `
-            <p class="text-red-500">❌ Erreur: ${err.message}</p>
+            <p class="text-red-500"> Erreur: ${err.message}</p>
             <p class="text-sm text-[var(--text-secondary)]">Vérifiez que le serveur est accessible et que vous êtes connecté.</p>
         `;
+        document.getElementById('userResult').classList.remove('hidden');
     });
 }
 </script>
