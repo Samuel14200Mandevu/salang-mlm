@@ -11,14 +11,12 @@ use Illuminate\Support\Facades\Cache;
 
 class RankConditionChecker
 {
-    /**
-     * Vérifier si un utilisateur remplit les conditions pour un niveau
-     */
+    protected array $rankLevelCache = [];
+
     public function checkConditions(User $user, Rank $rank): bool
     {
         $rankLevel = $rank->level;
 
-        // 🔥 DEBUG: Log pour voir les données
         Log::info('Checking conditions for rank', [
             'user_id' => $user->id,
             'user_name' => $user->name,
@@ -44,40 +42,25 @@ class RankConditionChecker
         }
     }
 
-    /**
-     * Niveau 1 : Distributeur
-     */
     private function checkLevel1(User $user): bool
     {
         return true;
     }
 
-    /**
-     * Niveau 2 : Qualification
-     * PV personnel ≥ 100
-     */
     private function checkLevel2(User $user): bool
     {
         return ($user->pv_balance ?? 0) >= 100;
     }
 
-    /**
-     * Niveau 3 : Cumul Directeur
-     * PV personnel ≥ 200
-     */
     private function checkLevel3(User $user): bool
     {
         return ($user->pv_balance ?? 0) >= 200;
     }
 
-    /**
-     * Niveau 4 : Directeur
-     */
     private function checkLevel4(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
 
-        // Option 1: PV ≥ 1000
         if (($user->pv_balance ?? 0) >= 1000) {
             Log::info('Level 4 - Option 1 passed', ['user_id' => $user->id]);
             return true;
@@ -85,13 +68,11 @@ class RankConditionChecker
 
         $branchesNiveau3 = $this->countQualifiedBranches($user, 3);
 
-        // Option 2: 3 branches Niveau 3 + CUMUL ≥ 1000
         if ($branchesNiveau3 >= 3 && $cumulPV >= 1000) {
             Log::info('Level 4 - Option 2 passed', ['user_id' => $user->id, 'branches' => $branchesNiveau3]);
             return true;
         }
 
-        // Option 3: 2 branches Niveau 3 + CUMUL ≥ 2200
         if ($branchesNiveau3 >= 2 && $cumulPV >= 2200) {
             Log::info('Level 4 - Option 3 passed', ['user_id' => $user->id, 'branches' => $branchesNiveau3]);
             return true;
@@ -100,48 +81,20 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * Niveau 5 : Manager Senior
-     */
     private function checkLevel5(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
         $branchesNiveau4 = $this->countQualifiedBranches($user, 4);
         $branchesNiveau3 = $this->countQualifiedBranches($user, 3);
 
-        Log::info('Level 5 check', [
-            'user_id' => $user->id,
-            'cumul' => $cumulPV,
-            'branches_n4' => $branchesNiveau4,
-            'branches_n3' => $branchesNiveau3,
-        ]);
-
-        if ($branchesNiveau4 >= 3 && $cumulPV >= 3800) {
-            Log::info('Level 5 - Option 1 passed', ['user_id' => $user->id]);
-            return true;
-        }
-
-        if ($branchesNiveau4 >= 2 && $cumulPV >= 7800) {
-            Log::info('Level 5 - Option 2 passed', ['user_id' => $user->id]);
-            return true;
-        }
-
-        if ($branchesNiveau4 >= 2 && $branchesNiveau3 >= 4 && $cumulPV >= 3800) {
-            Log::info('Level 5 - Option 3 passed', ['user_id' => $user->id]);
-            return true;
-        }
-
-        if ($branchesNiveau4 >= 1 && $branchesNiveau3 >= 6 && $cumulPV >= 3800) {
-            Log::info('Level 5 - Option 4 passed', ['user_id' => $user->id]);
-            return true;
-        }
+        if ($branchesNiveau4 >= 3 && $cumulPV >= 3800) return true;
+        if ($branchesNiveau4 >= 2 && $cumulPV >= 7800) return true;
+        if ($branchesNiveau4 >= 2 && $branchesNiveau3 >= 4 && $cumulPV >= 3800) return true;
+        if ($branchesNiveau4 >= 1 && $branchesNiveau3 >= 6 && $cumulPV >= 3800) return true;
 
         return false;
     }
 
-    /**
-     * Niveau 6 : Directeur Envolée
-     */
     private function checkLevel6(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
@@ -156,9 +109,6 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * Niveau 7 : Saphire Manager
-     */
     private function checkLevel7(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
@@ -173,9 +123,6 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * Niveau 8 : Diamant Bleu
-     */
     private function checkLevel8(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
@@ -190,9 +137,6 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * Niveau 9 : Diamond Pearl
-     */
     private function checkLevel9(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
@@ -207,64 +151,45 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * CALCUL DU CUMUL = PV Personnel + Team PV
-     * ✅ CORRECTION : retourne float au lieu de int
-     */
     private function getCumulPV(User $user): float
     {
         return ($user->pv_balance ?? 0) + ($user->team_pv ?? 0);
     }
 
-    /**
-     * Compter les branches qualifiées pour un niveau donné
-     * Une branche est qualifiée si le filleul a le niveau requis
-     */
     private function countQualifiedBranches(User $user, int $rankLevel): int
     {
         $count = 0;
         
-        // Charger les filleuls avec leurs relations
         $filleuls = User::where('parrain_id', $user->id)
             ->where('is_active', true)
             ->with('rank')
             ->get();
 
         foreach ($filleuls as $filleul) {
-            // Vérifier si le filleul a le niveau requis (lui ou ses descendants)
             if ($this->hasRankLevel($filleul, $rankLevel)) {
                 $count++;
             }
         }
 
-        Log::info('Count qualified branches', [
-            'user_id' => $user->id,
-            'rank_level' => $rankLevel,
-            'count' => $count,
-            'filleuls_count' => $filleuls->count(),
-        ]);
-
         return $count;
     }
 
-    /**
-     * Vérifier si un utilisateur ou ses descendants ont un niveau donné
-     */
-    private function hasRankLevel(User $user, int $rankLevel, int $maxDepth = 20, int $currentDepth = 0): bool
+    private function hasRankLevel(User $user, int $rankLevel, int $maxDepth = 3, int $currentDepth = 0): bool
     {
         if ($currentDepth >= $maxDepth) {
             return false;
         }
 
-        // Récupérer le niveau de l'utilisateur
         $userLevel = $this->getUserRankLevel($user);
 
-        // L'utilisateur lui-même a le niveau requis
         if ($userLevel >= $rankLevel) {
             return true;
         }
 
-        // Vérifier récursivement les descendants
+        if ($currentDepth + 1 >= $maxDepth) {
+            return false;
+        }
+
         $descendants = User::where('parrain_id', $user->id)
             ->where('is_active', true)
             ->with('rank')
@@ -279,17 +204,12 @@ class RankConditionChecker
         return false;
     }
 
-    /**
-     * Obtenir le niveau d'un utilisateur
-     */
     private function getUserRankLevel(User $user): int
     {
-        // Si le user a une relation rank chargée
         if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
             return $user->rank->level ?? 1;
         }
 
-        // Si le user a un rank_id
         if ($user->rank_id) {
             $rank = Rank::find($user->rank_id);
             if ($rank) {
@@ -297,7 +217,6 @@ class RankConditionChecker
             }
         }
 
-        // Si le user a un champ rank (string)
         if (is_string($user->rank)) {
             $rank = Rank::where('name', $user->rank)->first();
             if ($rank) {
@@ -308,11 +227,9 @@ class RankConditionChecker
         return 1;
     }
 
-    /**
-     * Vider le cache interne si nécessaire
-     */
     public function clearCache(): void
     {
+        $this->rankLevelCache = [];
         Cache::forget('rank_conditions_cache');
     }
 }

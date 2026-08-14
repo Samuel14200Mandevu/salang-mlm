@@ -1,9 +1,9 @@
 <?php
-// app/Console/Commands/RecalculateMonthlyPV.php
 
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\MLM\RankUpdateService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -11,27 +11,14 @@ use Illuminate\Support\Facades\Log;
 class RecalculateMonthlyPV extends Command
 {
     protected $signature = 'monthly:recalculate 
-                            {--user= : ID de l\'utilisateur spécifique}
-                            {--force : Forcer le recalcul même si déjà fait ce mois-ci}';
+                            {--user= : ID de l utilisateur specifique}
+                            {--force : Forcer le recalcul meme si deja fait ce mois-ci}';
     
     protected $description = 'Recalculer les PV mensuels pour tous les utilisateurs';
 
-    private function icon(string $type): string
+    public function handle(RankUpdateService $rankService)
     {
-        $icons = [
-            'info' => '<fg=blue>ℹ</>',
-            'success' => '<fg=green>✓</>',
-            'warning' => '<fg=yellow>⚠</>',
-            'error' => '<fg=red>✗</>',
-            'process' => '<fg=cyan>⟳</>',
-            'database' => '<fg=magenta>◉</>',
-        ];
-        return $icons[$type] ?? '';
-    }
-
-    public function handle()
-    {
-        $this->info($this->icon('database') . ' Recalcul des PV mensuels...');
+        $this->info('Recalcul des PV mensuels...');
 
         $isForce = $this->option('force');
         $userId = $this->option('user');
@@ -39,21 +26,20 @@ class RecalculateMonthlyPV extends Command
         if (!$isForce && !$userId) {
             $lastRecalc = cache('last_monthly_recalc');
             if ($lastRecalc && $lastRecalc->isCurrentMonth()) {
-                $this->warn($this->icon('warning') . ' Recalcul déjà effectué ce mois-ci. Utilisez --force pour forcer.');
+                $this->warn('Recalcul deja effectue ce mois-ci. Utilisez --force pour forcer.');
                 return 0;
             }
         }
 
-        // ✅ Inclure tous les utilisateurs (membres + clients)
         $query = User::where('is_active', true);
 
         if ($userId) {
             $query->where('id', $userId);
-            $this->info($this->icon('info') . " Utilisateur spécifique: ID {$userId}");
+            $this->info('Utilisateur specifique: ID ' . $userId);
         }
 
         $users = $query->get();
-        $this->info("{$users->count()} utilisateurs à traiter");
+        $this->info($users->count() . ' utilisateurs a traiter');
         
         $bar = $this->output->createProgressBar($users->count());
         $bar->start();
@@ -76,7 +62,7 @@ class RecalculateMonthlyPV extends Command
                         $updated++;
                         $totalPV += $newPV;
                         
-                        Log::info('PV mensuel recalculé', [
+                        Log::info('PV mensuel recalcule', [
                             'user_id' => $user->id,
                             'user_name' => $user->name,
                             'user_type' => $user->user_type,
@@ -102,14 +88,28 @@ class RecalculateMonthlyPV extends Command
             $bar->finish();
             $this->newLine(2);
 
-            $this->info($this->icon('success') . ' Recalcul terminé !');
+            $this->info('Recalcul termine');
             $this->line("   Total: {$users->count()}");
-            $this->line("   Mis à jour: {$updated}");
+            $this->line("   Mis a jour: {$updated}");
             $this->line("   Total PV: {$totalPV}");
-            $this->line("   Grades inchangés (basés sur PV cumulé)");
+
+            if ($updated > 0) {
+                $this->info('Recalcul des grades en cours...');
+                foreach ($users as $user) {
+                    try {
+                        $rankService->triggerRankUpdate($user, 'monthly_recalculate');
+                    } catch (\Exception $e) {
+                        Log::error('Erreur recalcul grade apres monthly', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                $this->info('Recalcul des grades termine');
+            }
             
             if (!empty($errors)) {
-                $this->warn($this->icon('warning') . ' Erreurs:');
+                $this->warn('Erreurs:');
                 foreach ($errors as $error) {
                     $this->line("   - {$error}");
                 }
@@ -117,7 +117,7 @@ class RecalculateMonthlyPV extends Command
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error($this->icon('error') . ' Erreur: ' . $e->getMessage());
+            $this->error('Erreur: ' . $e->getMessage());
             Log::error('Erreur critique recalcul PV mensuel', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

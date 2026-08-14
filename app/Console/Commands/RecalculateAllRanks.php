@@ -1,28 +1,27 @@
 <?php
-// app/Console/Commands/RecalculateAllRanks.php
 
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\MLM\RankUpdateService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class RecalculateAllRanks extends Command
 {
-    protected $signature = 'ranks:recalculate {--user= : ID de l\'utilisateur spécifique}';
+    protected $signature = 'ranks:recalculate {--user= : ID de l utilisateur specifique}';
     protected $description = 'Recalculer les grades de tous les utilisateurs';
 
-    public function handle(): void
+    public function handle(RankUpdateService $rankService)
     {
         $userId = $this->option('user');
 
         if ($userId) {
             $user = User::find($userId);
             if ($user) {
-                $updated = $user->calculateAndUpdateRank();
-                $this->info(($updated ? "✅" : "⚠️") . " Grade de {$user->name}: {$user->rank}");
+                $rankService->triggerRankUpdate($user, 'recalculate_command');
+                $this->info("Grade recalculé pour {$user->name}: {$user->rank_name}");
             } else {
-                $this->error("❌ Utilisateur ID {$userId} non trouvé");
+                $this->error("Utilisateur ID {$userId} non trouve");
             }
             return;
         }
@@ -30,17 +29,14 @@ class RecalculateAllRanks extends Command
         $this->info("Recalcul des grades pour tous les utilisateurs...");
         $users = User::where('is_active', true)->get();
         $bar = $this->output->createProgressBar($users->count());
-        $updated = 0;
 
         foreach ($users as $user) {
-            if ($user->calculateAndUpdateRank()) {
-                $updated++;
-            }
+            $rankService->triggerRankUpdate($user, 'recalculate_all');
             $bar->advance();
         }
 
         $bar->finish();
         $this->newLine();
-        $this->info("✅ {$updated} utilisateurs mis à jour sur {$users->count()}");
+        $this->info("Recalcul termine pour {$users->count()} utilisateurs");
     }
 }

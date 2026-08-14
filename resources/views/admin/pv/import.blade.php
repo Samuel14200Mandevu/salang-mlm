@@ -1,4 +1,7 @@
-{{-- resources/views/admin/pv/import.blade.php --}}
+<?php
+// resources/views/admin/pv/import.blade.php
+?>
+
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -142,12 +145,11 @@
     .text-2xl { font-size: 1.5rem; }
     .font-bold { font-weight: 700; }
     .font-semibold { font-weight: 600; }
-    .text-[var(--text-primary)] { color: var(--text-primary); }
-    .text-[var(--text-secondary)] { color: var(--text-secondary); }
     .text-primary-500 { color: var(--primary-500); }
     .text-green-500 { color: #22c55e; }
     .text-blue-500 { color: #3b82f6; }
     .text-red-500 { color: #ef4444; }
+    .text-secondary { color: var(--text-secondary); }
     .bg-green-500\/10 { background: rgba(34, 197, 94, 0.1); }
     .bg-blue-500\/10 { background: rgba(59, 130, 246, 0.1); }
     .bg-red-500\/10 { background: rgba(239, 68, 68, 0.1); }
@@ -163,8 +165,8 @@
     .p-4 { padding: 1rem; }
     .p-6 { padding: 1.5rem; }
     .whitespace-pre-line { white-space: pre-line; }
-    .bg-[var(--bg-secondary)] { background: var(--bg-secondary); }
-    .hover\:underline:hover { text-decoration: underline; }
+    .bg-secondary { background: var(--bg-secondary); }
+    .hover-underline:hover { text-decoration: underline; }
     .badge {
         display: inline-block;
         padding: 0.25rem 0.75rem;
@@ -213,6 +215,123 @@
         letter-spacing: 0.05em;
     }
     
+    /* Toast notification */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-width: 400px;
+        width: 100%;
+    }
+    .toast {
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius-md);
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        animation: slideInRight 0.4s ease;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .toast-success { background: #22c55e; }
+    .toast-error { background: #ef4444; }
+    .toast-warning { background: #f59e0b; }
+    .toast-info { background: #3b82f6; }
+    .toast .toast-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100px); }
+    }
+    
+    /* Custom Confirm Dialog */
+    .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    .confirm-overlay.active {
+        display: flex;
+    }
+    .confirm-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 480px;
+        width: 95%;
+        animation: modalIn 0.3s ease;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .confirm-box .icon {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .confirm-box h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .confirm-box p {
+        color: var(--text-secondary);
+        font-size: 0.938rem;
+        text-align: center;
+        margin-bottom: 0.25rem;
+    }
+    .confirm-box .warning-text {
+        color: #ef4444;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0.75rem 0 1.5rem 0;
+        padding: 0.75rem;
+        background: rgba(239, 68, 68, 0.08);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid #ef4444;
+    }
+    .confirm-box .btn-group {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .confirm-box .btn-group .btn {
+        min-width: 120px;
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.9) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    
+    .help-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    
     @media (max-width: 640px) {
         .grid-cols-2, .grid-cols-3 {
             grid-template-columns: 1fr;
@@ -231,6 +350,12 @@
         .user-info-card .avatar {
             margin: 0 auto;
         }
+        .toast-container {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
     }
 </style>
 @endpush
@@ -238,16 +363,18 @@
 @section('content')
 <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
     <h1 class="text-2xl font-bold text-[var(--text-primary)]">
-         Import des PV Mensuels
+        Import des PV Mensuels
     </h1>
+
+    <div id="toastContainer" class="toast-container"></div>
 
     @if(session('success'))
         <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 whitespace-pre-line">
             {{ session('success') }}
             @if(session('user_id'))
                 <br>
-                <a href="{{ route('admin.pv.show', session('user_id')) }}" class="text-primary-500 hover:underline font-semibold">
-                     Voir l'historique des PV de l'utilisateur
+                <a href="{{ route('admin.pv.show', session('user_id')) }}" class="text-primary-500 hover-underline font-semibold">
+                    Voir l'historique des PV de l'utilisateur
                 </a>
             @endif
         </div>
@@ -259,10 +386,9 @@
         </div>
     @endif
 
-    <!-- ÉTAPE 1: Rechercher un membre -->
+    <!-- Search Section -->
     <div class="card">
-        
-        <!-- Résultat de la recherche -->
+
         <div id="userResult" class="mt-4 {{ $user ? '' : 'hidden' }}">
             <div id="userInfo">
                 @if($user)
@@ -271,17 +397,17 @@
                         <div class="avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
                         <div class="flex-1">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <h3 class="text-lg font-bold text-[var(--text-primary)]">{{ $user->name }}</h3>
-                                <span class="badge badge-purple">{{ $user->rank_name ?? 'Distributeur' }} (Niv. {{ $user->rank_level ?? 1 }})</span>
+                                <h3 class="text-lg font-bold text-[var(--text-primary)]">{{ $user->name }}</h3><br>
+                                <span class="badge badge-purple">{{ $user->rank ?? 'Distributeur' }} (Niv. {{ $user->rank_level ?? 1 }})</span>
                                 <span class="badge badge-info">Code: {{ $user->sponsor_id ?? 'N/A' }}</span>
-                            </div>
+                            </div><br>
                             @if($user->parrain)
-                                <p class="text-sm text-[var(--text-secondary)]">
+                                <p class="text-sm text-secondary">
                                     Parrain: <span class="text-primary-500">{{ $user->parrain->name }}</span> 
                                     ({{ $user->parrain->sponsor_id }})
                                 </p>
                             @else
-                                <p class="text-sm text-[var(--text-secondary)]">Aucun parrain</p>
+                                <p class="text-sm text-secondary">Aucun parrain</p>
                             @endif
                         </div>
                     </div>
@@ -297,13 +423,13 @@
                         </div>
                         <div class="pv-stat border-l-4 border-l-blue-500">
                             <div class="value text-blue-500">{{ number_format($user->team_pv ?? 0, 1, ',', ' ') }}</div>
-                            <div class="label">PV Équipe</div>
+                            <div class="label">PV Equipe</div>
                         </div>
                     </div>
                     
                     <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
-                        <p class="text-sm text-[var(--text-secondary)]">
-                            <span class="font-semibold text-[var(--text-primary)]"> Membre sélectionné</span> 
+                        <p class="text-sm text-secondary">
+                            <span class="font-semibold text-[var(--text-primary)]">Membre sélectionne</span>
                             — Vous pouvez maintenant saisir les PV pour ce membre.
                         </p>
                     </div>
@@ -313,7 +439,7 @@
         </div>
     </div>
 
-    <!-- ÉTAPE 2: Saisir les PV (affiché après recherche) -->
+    <!-- PV Form Section -->
     <div id="pvFormSection" class="{{ $user ? '' : 'hidden' }}">
         <div class="card">
             <form id="addMonthlyForm" method="POST" action="{{ $user ? route('admin.pv.add-monthly', $user->id) : '' }}">
@@ -321,13 +447,13 @@
                 
                 <div class="grid-cols-3">
                     <div class="form-group">
-                        <label for="monthly_period">Période <span class="required">*</span></label>
+                        <label for="monthly_period">Periode <span class="required">*</span></label>
                         <input type="month" name="period" id="monthly_period" value="{{ date('Y-m') }}" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="monthly_amount">Montant PV <span class="required">*</span></label>
-                        <input type="number" name="amount" id="monthly_amount" step="0.1" required min="0.1" placeholder="Ex: 100.5">
+                        <input type="number" name="amount" id="monthly_amount" step="0.1" required min="0.1">
                         <small class="help-text">Saisir le montant en PV (ex: 100.5)</small>
                     </div>
                     
@@ -336,14 +462,14 @@
                         <select name="type" id="monthly_type">
                             <option value="personal">PV Personnel</option>
                             <option value="monthly">PV Mensuel</option>
-                            <option value="team">PV Équipe</option>
+                            <option value="team">PV Equipe</option>
                         </select>
-                        <small class="help-text">Type de PV à ajouter</small>
+                        <small class="help-text">Type de PV a ajouter</small>
                     </div>
                 </div>
                 
-                <div class="flex gap-4 mt-4">
-                    <button type="submit" class="btn btn-success">
+                <div class="flex gap-4 mt-4 flex-wrap">
+                    <button type="submit" class="btn btn-success" id="submitBtn">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -355,65 +481,111 @@
                         </svg>
                         Annuler
                     </button>
-                    @if($user)
-                    <a href="{{ route('admin.pv.show', $user->id) }}" class="btn btn-outline">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Retour au membre
-                    </a>
-                    @endif
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Lien vers l'import CSV -->
-    <div class="card">
-        <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4"> Import CSV</h2>
-        <p class="text-sm text-[var(--text-secondary)] mb-4">
-            Vous pouvez également importer plusieurs PV en une seule fois via un fichier CSV.
-        </p>
-        <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-            </svg>
-            Importer un fichier CSV
-        </a>
+    <!-- Custom Confirm Dialog -->
+    <div id="confirmDialog" class="confirm-overlay">
+        <div class="confirm-box">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Voulez-vous continuer ?</p>
+            <div class="warning-text" id="confirmWarning"></div>
+            <div class="btn-group">
+                <button onclick="closeConfirm()" class="btn btn-secondary">Annuler</button>
+                <button onclick="confirmAction()" class="btn btn-success" id="confirmBtn">Confirmer</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-// Variable pour stocker l'ID de l'utilisateur sélectionné
+// ============================================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    
+    let icon = '';
+    if (type === 'success') icon = '✓';
+    else if (type === 'error') icon = '✗';
+    else if (type === 'warning') icon = '⚠';
+    else icon = 'ℹ';
+    
+    toast.innerHTML = '<span class="toast-icon">' + icon + '</span> ' + message;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.4s ease forwards';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+// ============================================================
+// CUSTOM CONFIRM DIALOG
+// ============================================================
+let confirmCallback = null;
+
+function showConfirm(message, warning = '', callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmWarning').textContent = warning;
+    document.getElementById('confirmWarning').style.display = warning ? 'block' : 'none';
+    document.getElementById('confirmDialog').classList.add('active');
+    confirmCallback = callback;
+}
+
+function closeConfirm() {
+    document.getElementById('confirmDialog').classList.remove('active');
+    confirmCallback = null;
+}
+
+function confirmAction() {
+    if (typeof confirmCallback === 'function') {
+        confirmCallback();
+    }
+    closeConfirm();
+}
+
+// Fermer en cliquant à l'extérieur
+document.getElementById('confirmDialog').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirm();
+});
+
+// Raccourci ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeConfirm();
+});
+
+// ============================================================
+// SEARCH USER
+// ============================================================
 let selectedUserId = {{ $user->id ?? 'null' }};
 
-// Si un utilisateur est pré-sélectionné, configurer le formulaire
 document.addEventListener('DOMContentLoaded', function() {
     @if($user)
-        // Mettre à jour l'action du formulaire
         document.getElementById('addMonthlyForm').action = '/admin/pv/' + {{ $user->id }} + '/add-monthly';
-        // Afficher le formulaire
         document.getElementById('pvFormSection').classList.remove('hidden');
-        // Mettre le focus sur le champ montant
         document.getElementById('monthly_amount').focus();
     @endif
 });
 
 function searchUser() {
-    const query = document.getElementById('searchUser').value;
+    const query = document.getElementById('searchUser').value.trim();
     
     if (!query || query.length < 2) {
-        alert('Veuillez saisir au moins 2 caractères (nom, email ou code sponsor)');
+        showToast('Veuillez saisir au moins 2 caracteres (nom, email ou code sponsor)', 'warning');
         return;
     }
     
-    // Afficher un indicateur de chargement
     document.getElementById('userInfo').innerHTML = `
         <div class="user-info-card">
             <div class="flex items-center gap-4">
                 <div class="avatar">?</div>
                 <div>
-                    <p class="text-[var(--text-secondary)]">🔍 Recherche en cours...</p>
+                    <p class="text-secondary">Recherche en cours...</p>
                 </div>
             </div>
         </div>
@@ -437,7 +609,7 @@ function searchUser() {
             return response.json().then(data => {
                 throw new Error(data.error || 'Erreur ' + response.status);
             }).catch(() => {
-                throw new Error('Erreur ' + response.status + ' - ' + response.statusText);
+                throw new Error('Erreur ' + response.status);
             });
         }
         return response.json();
@@ -449,8 +621,8 @@ function searchUser() {
                     <div class="flex items-center gap-4">
                         <div class="avatar" style="background:#ef4444;">!</div>
                         <div>
-                            <p class="text-red-500 font-semibold"> ${data.error}</p>
-                            <p class="text-sm text-[var(--text-secondary)]">Veuillez essayer avec d'autres critères.</p>
+                            <p class="text-red-500 font-semibold">${data.error}</p>
+                            <p class="text-sm text-secondary">Veuillez essayer avec d'autres criteres.</p>
                         </div>
                     </div>
                 </div>
@@ -458,13 +630,9 @@ function searchUser() {
             return;
         }
         
-        // Stocker l'ID de l'utilisateur
         selectedUserId = data.id;
-        
-        // Mettre à jour l'action du formulaire
         document.getElementById('addMonthlyForm').action = '/admin/pv/' + data.id + '/add-monthly';
         
-        // Afficher les informations complètes du membre
         document.getElementById('userInfo').innerHTML = `
             <div class="user-info-card">
                 <div class="flex items-center gap-4">
@@ -475,7 +643,7 @@ function searchUser() {
                             <span class="badge badge-purple">${data.rank_name} (Niv. ${data.rank_level})</span>
                             <span class="badge badge-info">Code: ${data.sponsor_id}</span>
                         </div>
-                        ${data.parrain_name ? `<p class="text-sm text-[var(--text-secondary)]">Parrain: <span class="text-primary-500">${data.parrain_name}</span> (${data.parrain_sponsor_id})</p>` : '<p class="text-sm text-[var(--text-secondary)]">Aucun parrain</p>'}
+                        ${data.parrain_name ? `<p class="text-sm text-secondary">Parrain: <span class="text-primary-500">${data.parrain_name}</span> (${data.parrain_sponsor_id})</p>` : '<p class="text-sm text-secondary">Aucun parrain</p>'}
                     </div>
                 </div>
                 
@@ -490,34 +658,31 @@ function searchUser() {
                     </div>
                     <div class="pv-stat border-l-4 border-l-blue-500">
                         <div class="value text-blue-500">${data.team_pv}</div>
-                        <div class="label">PV Équipe</div>
+                        <div class="label">PV Equipe</div>
                     </div>
                 </div>
                 
                 <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
-                    <p class="text-sm text-[var(--text-secondary)]">
-                        <span class="font-semibold text-[var(--text-primary)]"> Membre sélectionné</span> 
+                    <p class="text-sm text-secondary">
+                        <span class="font-semibold text-[var(--text-primary)]">Membre selectionne</span>
                         — Vous pouvez maintenant saisir les PV pour ce membre.
                     </p>
                 </div>
             </div>
         `;
         
-        // Afficher le formulaire de saisie des PV
         document.getElementById('pvFormSection').classList.remove('hidden');
-        
-        // Mettre automatiquement le focus sur le champ montant
         document.getElementById('monthly_amount').focus();
     })
     .catch(err => {
-        console.error('Erreur détaillée:', err);
+        console.error('Erreur:', err);
         document.getElementById('userInfo').innerHTML = `
             <div class="user-info-card">
                 <div class="flex items-center gap-4">
                     <div class="avatar" style="background:#ef4444;">!</div>
                     <div>
-                        <p class="text-red-500 font-semibold"> Erreur: ${err.message}</p>
-                        <p class="text-sm text-[var(--text-secondary)]">Vérifiez que le serveur est accessible et que vous êtes connecté.</p>
+                        <p class="text-red-500 font-semibold">Erreur: ${err.message}</p>
+                        <p class="text-sm text-secondary">Verifiez que le serveur est accessible.</p>
                     </div>
                 </div>
             </div>
@@ -534,27 +699,36 @@ function resetForm() {
     selectedUserId = null;
 }
 
-// Soumission du formulaire avec confirmation
+// ============================================================
+// FORM SUBMISSION WITH CONFIRMATION
+// ============================================================
 document.getElementById('addMonthlyForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const amount = document.getElementById('monthly_amount').value;
     const period = document.getElementById('monthly_period').value;
-    const type = document.getElementById('monthly_type').options[document.getElementById('monthly_type').selectedIndex].text;
+    const typeSelect = document.getElementById('monthly_type');
+    const type = typeSelect.options[typeSelect.selectedIndex].text;
     
-    if (!amount || amount <= 0) {
-        alert('Veuillez saisir un montant PV valide (supérieur à 0)');
+    if (!amount || parseFloat(amount) <= 0) {
+        showToast('Veuillez saisir un montant PV valide (superieur a 0)', 'warning');
         return;
     }
     
-    if (!confirm(`Confirmez-vous l'ajout de ${amount} PV (${type}) pour la période ${period} ?`)) {
-        return;
-    }
-    
-    this.submit();
+    showConfirm(
+        'Ajouter ' + amount + ' PV (' + type + ') pour la periode ' + period + ' ?',
+        'Cette action est reversible via l\'historique.',
+        function() {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').innerHTML = 'Ajout en cours...';
+            document.getElementById('addMonthlyForm').submit();
+        }
+    );
 });
 
-// Recherche avec la touche Entrée
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
 document.getElementById('searchUser').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -562,7 +736,6 @@ document.getElementById('searchUser').addEventListener('keypress', function(e) {
     }
 });
 
-// Raccourci: Échap pour réinitialiser
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         resetForm();

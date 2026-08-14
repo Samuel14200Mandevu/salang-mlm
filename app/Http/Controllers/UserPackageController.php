@@ -12,6 +12,10 @@ use App\Models\OrderItem;
 use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\MLM\AdvancedRankCalculator;
+use App\Jobs\UpdateTeamPV;
+use App\Jobs\UpdateRanks;
+use App\Jobs\CalculatePVBV;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,13 +26,16 @@ class UserPackageController extends Controller
 {
     protected MonthlyCommissionService $commissionService;
     protected CommissionDistributor $commissionDistributor;
+    protected AdvancedRankCalculator $rankCalculator;
 
     public function __construct(
         MonthlyCommissionService $commissionService,
-        CommissionDistributor $commissionDistributor
+        CommissionDistributor $commissionDistributor,
+        AdvancedRankCalculator $rankCalculator
     ) {
         $this->commissionService = $commissionService;
         $this->commissionDistributor = $commissionDistributor;
+        $this->rankCalculator = $rankCalculator;
     }
 
     public function index()
@@ -103,12 +110,12 @@ class UserPackageController extends Controller
                 'completed_at' => now(),
             ]);
 
-            // Mise à jour du package et des PV
             $user->package_id = $package->id;
             $user->pv_balance = ($user->pv_balance ?? 0) + $package->pv_value;
             $user->bv_balance = ($user->bv_balance ?? 0) + $package->bv_value;
+            $user->monthly_pv = ($user->monthly_pv ?? 0) + $package->pv_value;
+            $user->monthly_bv = ($user->monthly_bv ?? 0) + $package->bv_value;
             
-            // ACTIVER LE COMPTE SI INACTIF
             $wasInactive = false;
             if (!$user->is_active) {
                 $wasInactive = true;
@@ -121,40 +128,49 @@ class UserPackageController extends Controller
             
             $user->save();
 
-            // Mettre à jour le Team PV
-            $user->updateTeamPVWithoutEvents();
-            $user->updateAllAncestorsWithoutEvents();
-
-            // Calculer les commissions
             $this->calculateCommissionsForPackage($user, $package);
-
-            // Mettre à jour le grade
-            $user->calculateAndUpdateRank();
-
-            // Vider le cache du user pour le dashboard
-            Cache::forget("user_rank_{$user->id}");
-            Cache::forget("user_{$user->id}");
-            Cache::forget("descendants_{$user->id}");
-            Cache::forget("descendants_count_{$user->id}");
-
-            // Rafraîchir l'utilisateur dans la session
-            Auth::setUser($user->fresh());
 
             DB::commit();
 
-            $message = "Package '{$package->name}' purchased successfully!";
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
+            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            dispatch(new CalculatePVBV($user->id))->onQueue('high');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $rankName = $user->rank_name ?? 'Distributeur';
+            $rankLevel = $user->rank_level ?? 1;
+
+            $message = "Package '{$package->name}' purchased successfully!\n";
+            $message .= "Grade actuel: {$rankName} (Niv. {$rankLevel})\n";
+            $message .= "PV Total: " . number_format($user->pv_balance, 1, ',', ' ') . "\n";
+            $message .= "Cumul PV: " . number_format(($user->pv_balance ?? 0) + ($user->team_pv ?? 0), 1, ',', ' ') . "\n";
+            
             if ($package->pv_value > 0) {
-                $message .= " You earned {$package->pv_value} PV and {$package->bv_value} BV.";
+                $message .= "You earned {$package->pv_value} PV and {$package->bv_value} BV.\n";
             }
             if ($wasInactive) {
-                $message .= " Your account has been activated!";
+                $message .= "Your account has been activated!\n";
             }
+            $message .= "Les recalculs complets sont en cours en arriere-plan.";
 
-            Log::info('Package purchase completed with activation', [
+            Log::info('Package purchase completed with jobs', [
                 'user_id' => $user->id,
                 'package_id' => $package->id,
                 'package_name' => $package->name,
                 'was_inactive' => $wasInactive,
+                'rank' => $rankName,
+                'rank_level' => $rankLevel,
             ]);
 
             return redirect()->route('subscriptions.index')
@@ -168,83 +184,6 @@ class UserPackageController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
             return back()->with('error', 'Error purchasing package: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * CALCUL DES COMMISSIONS POUR UN PACKAGE
-     */
-    private function calculateCommissionsForPackage(User $buyer, Package $package): void
-    {
-        try {
-            // Récupérer ou créer la période en cours
-            $period = CommissionPeriod::firstOrCreate(
-                ['period' => date('Y-m')],
-                [
-                    'start_date' => now()->startOfMonth(),
-                    'end_date' => now()->endOfMonth(),
-                    'status' => 'pending',
-                ]
-            );
-
-            // Créer un ordre fictif pour lier les commissions
-            $order = Order::create([
-                'user_id' => $buyer->id,
-                'order_number' => 'PKG-' . strtoupper(uniqid()),
-                'subtotal' => $package->price,
-                'tax' => 0,
-                'shipping' => 0,
-                'discount' => 0,
-                'total' => $package->price,
-                'status' => 'completed',
-                'payment_status' => 'completed',
-                'paid_at' => now(),
-            ]);
-
-            // Ajouter l'item de commande
-            OrderItem::create([
-                'order_id' => $order->id,
-                'package_id' => $package->id,
-                'name' => $package->name,
-                'sku' => 'PKG-' . $package->slug,
-                'quantity' => 1,
-                'price' => $package->price,
-                'total' => $package->price,
-                'pv_value' => $package->pv_value,
-                'bv_value' => $package->bv_value,
-                'options' => json_encode([
-                    'package_id' => $package->id,
-                    'package_name' => $package->name,
-                ]),
-            ]);
-
-            // Distribuer les commissions
-            $commissions = $this->commissionDistributor->distributeCommissions(
-                $buyer,
-                $package,
-                $order->id,
-                $period
-            );
-
-            $totalAmount = collect($commissions)->sum('amount');
-
-            Log::info('Commissions calculées pour l\'achat de package', [
-                'buyer_id' => $buyer->id,
-                'buyer_name' => $buyer->name,
-                'package_id' => $package->id,
-                'package_name' => $package->name,
-                'commissions_count' => count($commissions),
-                'total_amount' => $totalAmount,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur lors du calcul des commissions pour le package', [
-                'buyer_id' => $buyer->id,
-                'package_id' => $package->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            // ⚠️ Ne pas relancer l'exception pour ne pas bloquer l'achat
         }
     }
 
@@ -313,8 +252,9 @@ class UserPackageController extends Controller
             $user->package_id = $newPackage->id;
             $user->pv_balance = ($user->pv_balance ?? 0) + $pvDiff;
             $user->bv_balance = ($user->bv_balance ?? 0) + $bvDiff;
+            $user->monthly_pv = ($user->monthly_pv ?? 0) + $pvDiff;
+            $user->monthly_bv = ($user->monthly_bv ?? 0) + $bvDiff;
             
-            // Activer le compte si inactif
             $wasInactive = false;
             if (!$user->is_active) {
                 $wasInactive = true;
@@ -327,31 +267,48 @@ class UserPackageController extends Controller
             
             $user->save();
 
-            // Mettre à jour le Team PV
-            $user->updateTeamPVWithoutEvents();
-            $user->updateAllAncestorsWithoutEvents();
-
-            // Calculer les commissions
             $this->calculateCommissionsForPackage($user, $newPackage);
-
-            // Mettre à jour le grade
-            $user->calculateAndUpdateRank();
-
-            // Vider le cache
-            Cache::forget("user_rank_{$user->id}");
-            Cache::forget("user_{$user->id}");
-            Cache::forget("descendants_{$user->id}");
-            Cache::forget("descendants_count_{$user->id}");
-
-            // Rafraîchir l'utilisateur dans la session
-            Auth::setUser($user->fresh());
 
             DB::commit();
 
-            $message = "Package upgraded to '{$newPackage->name}' successfully! PV earned: {$pvDiff}";
-            if ($wasInactive) {
-                $message .= " Your account has been activated!";
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
+            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            dispatch(new CalculatePVBV($user->id))->onQueue('high');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
             }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $rankName = $user->rank_name ?? 'Distributeur';
+            $rankLevel = $user->rank_level ?? 1;
+
+            $message = "Package upgraded to '{$newPackage->name}' successfully!\n";
+            $message .= "Grade actuel: {$rankName} (Niv. {$rankLevel})\n";
+            $message .= "PV Total: " . number_format($user->pv_balance, 1, ',', ' ') . "\n";
+            $message .= "Cumul PV: " . number_format(($user->pv_balance ?? 0) + ($user->team_pv ?? 0), 1, ',', ' ') . "\n";
+            $message .= "PV earned: {$pvDiff}\n";
+            
+            if ($wasInactive) {
+                $message .= "Your account has been activated!\n";
+            }
+            $message .= "Les recalculs complets sont en cours en arriere-plan.";
+
+            Log::info('Package upgrade completed with jobs', [
+                'user_id' => $user->id,
+                'old_package_id' => $currentPackage?->id,
+                'new_package_id' => $newPackage->id,
+                'was_inactive' => $wasInactive,
+                'rank' => $rankName,
+                'rank_level' => $rankLevel,
+            ]);
 
             return redirect()->route('subscriptions.index')
                 ->with('success', $message);
@@ -364,6 +321,75 @@ class UserPackageController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
             return back()->with('error', 'Error upgrading package: ' . $e->getMessage());
+        }
+    }
+
+    private function calculateCommissionsForPackage(User $buyer, Package $package): void
+    {
+        try {
+            $period = CommissionPeriod::firstOrCreate(
+                ['period' => date('Y-m')],
+                [
+                    'start_date' => now()->startOfMonth(),
+                    'end_date' => now()->endOfMonth(),
+                    'status' => 'pending',
+                ]
+            );
+
+            $order = Order::create([
+                'user_id' => $buyer->id,
+                'order_number' => 'PKG-' . strtoupper(uniqid()),
+                'subtotal' => $package->price,
+                'tax' => 0,
+                'shipping' => 0,
+                'discount' => 0,
+                'total' => $package->price,
+                'status' => 'completed',
+                'payment_status' => 'completed',
+                'paid_at' => now(),
+            ]);
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'package_id' => $package->id,
+                'name' => $package->name,
+                'sku' => 'PKG-' . $package->slug,
+                'quantity' => 1,
+                'price' => $package->price,
+                'total' => $package->price,
+                'pv_value' => $package->pv_value,
+                'bv_value' => $package->bv_value,
+                'options' => json_encode([
+                    'package_id' => $package->id,
+                    'package_name' => $package->name,
+                ]),
+            ]);
+
+            $commissions = $this->commissionDistributor->distributeCommissions(
+                $buyer,
+                $package,
+                $order->id,
+                $period
+            );
+
+            $totalAmount = collect($commissions)->sum('amount');
+
+            Log::info('Commissions calculees pour l\'achat de package', [
+                'buyer_id' => $buyer->id,
+                'buyer_name' => $buyer->name,
+                'package_id' => $package->id,
+                'package_name' => $package->name,
+                'commissions_count' => count($commissions),
+                'total_amount' => $totalAmount,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du calcul des commissions pour le package', [
+                'buyer_id' => $buyer->id,
+                'package_id' => $package->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

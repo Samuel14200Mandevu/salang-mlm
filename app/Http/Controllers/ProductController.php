@@ -1,10 +1,10 @@
 <?php
-// app/Http/Controllers/ProductController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -69,7 +69,15 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        return view('products.show', compact('product', 'relatedProducts'));
+        // Vérifier si le produit est dans la wishlist de l'utilisateur connecté
+        $isInWishlist = false;
+        if (Auth::check()) {
+            $isInWishlist = Auth::user()->wishlist()
+                ->where('product_id', $product->id)
+                ->exists();
+        }
+
+        return view('products.show', compact('product', 'relatedProducts', 'isInWishlist'));
     }
 
     public function search(Request $request)

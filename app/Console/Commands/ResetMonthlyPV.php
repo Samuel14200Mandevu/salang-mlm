@@ -1,11 +1,10 @@
 <?php
-// app/Console/Commands/ResetMonthlyPV.php
 
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Models\Rank;
 use App\Models\OrderItem;
+use App\Services\MLM\RankUpdateService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,63 +13,48 @@ use Illuminate\Support\Facades\Cache;
 class ResetMonthlyPV extends Command
 {
     protected $signature = 'pv:reset-monthly 
-                            {--user= : ID de l\'utilisateur spécifique}
+                            {--user= : ID de l utilisateur specifique}
                             {--dry-run : Simuler sans effectuer les modifications}
-                            {--force : Forcer l\'exécution même si ce n\'est pas le 7}';
+                            {--force : Forcer l execution meme si ce n est pas le 7}';
     
-    protected $description = 'Réinitialiser les PV mensuels à 0 et recalculer correctement';
+    protected $description = 'Reinitialiser les PV mensuels et recalculer les grades';
 
-    private function icon(string $type): string
+    public function handle(RankUpdateService $rankService)
     {
-        $icons = [
-            'info' => '<fg=blue>ℹ</>',
-            'success' => '<fg=green>✓</>',
-            'warning' => '<fg=yellow>⚠</>',
-            'error' => '<fg=red>✗</>',
-            'process' => '<fg=cyan>⟳</>',
-            'clock' => '<fg=yellow>⌛</>',
-            'database' => '<fg=magenta>◉</>',
-        ];
-        return $icons[$type] ?? '';
-    }
-
-    public function handle()
-    {
-        $this->info($this->icon('process') . ' Réinitialisation des PV mensuels...');
+        $this->info('Reinitialisation des PV mensuels...');
 
         $isDryRun = $this->option('dry-run');
         $userId = $this->option('user');
         $isForce = $this->option('force');
 
         if (now()->day != 7 && !$userId && !$isForce) {
-            $this->warn($this->icon('warning') . ' Cette commande est conçue pour être exécutée le 7 de chaque mois.');
-            $this->line('   Utilisez --user=ID pour forcer sur un utilisateur spécifique.');
-            $this->line('   OU utilisez --force pour forcer l\'exécution.');
+            $this->warn('Cette commande est concue pour etre executee le 7 de chaque mois.');
+            $this->line('   Utilisez --user=ID pour forcer sur un utilisateur specifique.');
+            $this->line('   OU utilisez --force pour forcer l execution.');
             
-            if (!$this->confirm('Voulez-vous continuer quand même ?')) {
+            if (!$this->confirm('Voulez-vous continuer quand meme ?')) {
                 return 0;
             }
         }
 
-        // ✅ Inclure tous les utilisateurs (membres + clients)
         $query = User::where('is_active', true);
 
         if ($userId) {
             $query->where('id', $userId);
-            $this->info($this->icon('info') . " Utilisateur spécifique: ID {$userId}");
+            $this->info('Utilisateur specifique: ID ' . $userId);
         }
 
         $users = $query->get();
 
         if ($users->isEmpty()) {
-            $this->warn($this->icon('warning') . ' Aucun utilisateur trouvé');
+            $this->warn('Aucun utilisateur trouve');
             return 1;
         }
 
-        $this->info("{$users->count()} utilisateurs à traiter");
+        $this->info($users->count() . ' utilisateurs a traiter');
 
         if ($isDryRun) {
-            $this->warn($this->icon('warning') . ' Mode SIMULATION - Aucune modification');
+            $this->warn('Mode SIMULATION - Aucune modification');
             
             $headers = ['ID', 'Nom', 'Type', 'PV actuel', 'Nouveau PV', 'Grade'];
             $rows = [];
@@ -88,16 +72,13 @@ class ResetMonthlyPV extends Command
                     ->where('orders.payment_status', 'completed')
                     ->sum('order_items.pv_value');
                 
-                $rankName = $user->rank_name ?? 'Distributeur';
-                $userType = $user->user_type ?? 'member';
-                
                 $rows[] = [
                     $user->id,
                     $user->name,
-                    $userType,
-                    $user->monthly_pv,
+                    $user->user_type ?? 'member',
+                    $user->monthly_pv ?? 0,
                     (int) $totalPV,
-                    $rankName,
+                    $user->rank_name ?? 'Distributeur',
                 ];
                 $bar->advance();
             }
@@ -105,7 +86,7 @@ class ResetMonthlyPV extends Command
             $bar->finish();
             $this->newLine(2);
             $this->table($headers, $rows);
-            $this->info($this->icon('success') . ' Simulation terminée');
+            $this->info('Simulation terminee');
             return 0;
         }
 
@@ -136,9 +117,6 @@ class ResetMonthlyPV extends Command
                         ->where('orders.payment_status', 'completed')
                         ->sum('order_items.bv_value');
                     
-                    $oldPV = $user->monthly_pv;
-                    
-                    // ✅ Réinitialiser monthly_pv ET monthly_bv
                     $user->monthly_pv = (int) $totalPV;
                     $user->monthly_bv = (int) $totalBV;
                     $user->saveQuietly();
@@ -148,21 +126,10 @@ class ResetMonthlyPV extends Command
                     
                     $updated++;
                     $totalPVSum += $totalPV;
-                    
-                    if ($oldPV != $totalPV) {
-                        Log::info('PV mensuel réinitialisé', [
-                            'user_id' => $user->id,
-                            'user_name' => $user->name,
-                            'user_type' => $user->user_type,
-                            'old_monthly_pv' => $oldPV,
-                            'new_monthly_pv' => $totalPV,
-                            'month' => now()->format('Y-m'),
-                        ]);
-                    }
 
                 } catch (\Exception $e) {
-                    $errors[] = "Erreur pour l'utilisateur {$user->id} ({$user->name}): " . $e->getMessage();
-                    Log::error('Erreur réinitialisation PV mensuel', [
+                    $errors[] = "Erreur pour l'utilisateur {$user->id}: " . $e->getMessage();
+                    Log::error('Erreur reinitialisation PV mensuel', [
                         'user_id' => $user->id,
                         'error' => $e->getMessage(),
                     ]);
@@ -176,29 +143,36 @@ class ResetMonthlyPV extends Command
             $bar->finish();
             $this->newLine(2);
 
-            $this->info($this->icon('success') . ' Réinitialisation terminée');
-            $this->line("   Total traités: {$users->count()}");
-            $this->line("   Mis à jour: {$updated}");
-            $this->line("   Total PV cumulé: {$totalPVSum}");
-            $this->line("   Grades inchangés (basés sur PV cumulé)");
+            $this->info('Reinitialisation terminee');
+            $this->line("   Total traites: {$users->count()}");
+            $this->line("   Mis a jour: {$updated}");
+            $this->line("   Total PV cumule: {$totalPVSum}");
+
+            $this->info('Recalcul des grades en cours...');
+            foreach ($users as $user) {
+                try {
+                    $rankService->triggerRankUpdate($user, 'monthly_reset');
+                } catch (\Exception $e) {
+                    Log::error('Erreur recalcul grade apres reset', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $this->info('Recalcul des grades termine');
 
             if (!empty($errors)) {
-                $this->warn($this->icon('warning') . ' Détails des erreurs:');
+                $this->warn('Details des erreurs:');
                 foreach ($errors as $error) {
                     $this->line("   - {$error}");
                 }
             }
 
-            if ($totalPVSum > 0) {
-                $this->newLine();
-                $this->info($this->icon('info') . ' Des utilisateurs ont déjà des PV ce mois-ci !');
-                $this->line("   Total PV: {$totalPVSum}");
-            }
-
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error($this->icon('error') . ' Erreur lors de la réinitialisation: ' . $e->getMessage());
-            Log::error('Erreur critique réinitialisation PV mensuel', [
+            $this->error('Erreur: ' . $e->getMessage());
+            Log::error('Erreur critique reinitialisation PV mensuel', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

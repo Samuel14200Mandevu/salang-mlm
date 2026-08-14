@@ -1,7 +1,6 @@
 <?php
 // app/Http/Controllers/CartController.php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Product;
@@ -13,23 +12,31 @@ use App\Models\Wallet;
 use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\MLM\AdvancedRankCalculator;
+use App\Jobs\UpdateTeamPV;
+use App\Jobs\UpdateRanks;
+use App\Jobs\CalculatePVBV;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class CartController extends Controller
 {
     protected MonthlyCommissionService $commissionService;
     protected CommissionDistributor $commissionDistributor;
+    protected AdvancedRankCalculator $rankCalculator;
 
     public function __construct(
         MonthlyCommissionService $commissionService,
-        CommissionDistributor $commissionDistributor
+        CommissionDistributor $commissionDistributor,
+        AdvancedRankCalculator $rankCalculator
     ) {
         $this->commissionService = $commissionService;
         $this->commissionDistributor = $commissionDistributor;
+        $this->rankCalculator = $rankCalculator;
     }
 
     public function index()
@@ -104,11 +111,11 @@ class CartController extends Controller
             return response()->json([
                 'success' => true,
                 'count' => $count,
-                'message' => $product->name . ' ajouté au panier!'
+                'message' => $product->name . ' ajoute au panier!'
             ]);
         }
 
-        return back()->with('success', 'Produit ajouté au panier!');
+        return back()->with('success', 'Produit ajoute au panier!');
     }
 
     public function addPackage(Request $request)
@@ -120,14 +127,14 @@ class CartController extends Controller
         $package = Package::find($request->package_id);
 
         if (!$package) {
-            return back()->with('error', 'Package non trouvé');
+            return back()->with('error', 'Package non trouve');
         }
 
         $cart = Session::get('cart', []);
 
         foreach ($cart as $key => $item) {
             if ($item['type'] == 'package' && $item['id'] == $package->id) {
-                return back()->with('error', 'Ce package est déjà dans le panier');
+                return back()->with('error', 'Ce package est deja dans le panier');
             }
         }
 
@@ -144,7 +151,7 @@ class CartController extends Controller
         Session::put('cart', $cart);
         $count = array_sum(array_column($cart, 'quantity'));
 
-        return back()->with('success', 'Package ajouté au panier!');
+        return back()->with('success', 'Package ajoute au panier!');
     }
 
     public function remove($id)
@@ -154,10 +161,10 @@ class CartController extends Controller
         if (isset($cart[$id])) {
             unset($cart[$id]);
             Session::put('cart', $cart);
-            return back()->with('success', 'Article supprimé du panier');
+            return back()->with('success', 'Article supprime du panier');
         }
 
-        return back()->with('error', 'Article non trouvé');
+        return back()->with('error', 'Article non trouve');
     }
 
     public function update(Request $request)
@@ -172,16 +179,16 @@ class CartController extends Controller
         if (isset($cart[$request->id])) {
             $cart[$request->id]['quantity'] = $request->quantity;
             Session::put('cart', $cart);
-            return back()->with('success', 'Quantité mise à jour');
+            return back()->with('success', 'Quantite mise a jour');
         }
 
-        return back()->with('error', 'Article non trouvé');
+        return back()->with('error', 'Article non trouve');
     }
 
     public function clear()
     {
         Session::forget('cart');
-        return redirect()->route('cart.index')->with('success', 'Panier vidé');
+        return redirect()->route('cart.index')->with('success', 'Panier vide');
     }
 
     public function checkout(Request $request)
@@ -198,13 +205,12 @@ class CartController extends Controller
             $subtotal += $item['price'] * $item['quantity'];
         }
 
-        // ✅ PAS DE TVA - Livraison gratuite
         $total = $subtotal;
 
         $wallet = Wallet::where('user_id', $user->id)->first();
 
         if (!$wallet) {
-            return back()->with('error', 'Portefeuille non trouvé. Contactez le support.');
+            return back()->with('error', 'Portefeuille non trouve. Contactez le support.');
         }
 
         if ($wallet->balance < $total) {
@@ -263,7 +269,6 @@ class CartController extends Controller
                 $totalPV += $pvValue * $item['quantity'];
                 $totalBV += $bvValue * $item['quantity'];
 
-                // ✅ Collecter les items pour les commissions (PACKAGES ET PRODUITS)
                 $itemData = null;
                 if ($item['type'] == 'package') {
                     $itemData = Package::find($item['id']);
@@ -279,7 +284,6 @@ class CartController extends Controller
                     ];
                 }
 
-                // Mettre à jour le stock pour les produits
                 if ($item['type'] == 'product') {
                     $product = Product::find($item['id']);
                     if ($product) {
@@ -314,44 +318,52 @@ class CartController extends Controller
                 'completed_at' => now(),
             ]);
 
-            $user->updateTeamPVWithoutEvents();
-            $user->updateAllAncestorsWithoutEvents();
-            $user->calculateAndUpdateRank();
+            DB::commit();
 
-            // ✅ CALCULER LES COMMISSIONS SEULEMENT SI L'UTILISATEUR EST ACTIF
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
+            dispatch(new UpdateRanks($user->id))->onQueue('low');
+            dispatch(new CalculatePVBV($user->id))->onQueue('low');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
             if ($user->is_active) {
                 $this->calculateCommissionsForOrder($order, $user, $itemsForCommission);
-                Log::info('Commissions calculées pour la commande', [
-                    'order_id' => $order->id,
-                    'user_id' => $user->id,
-                    'user_status' => 'actif',
-                ]);
-            } else {
-                Log::info('Commissions NON calculées - compte inactif', [
-                    'order_id' => $order->id,
-                    'user_id' => $user->id,
-                    'user_status' => 'inactif',
-                    'items_count' => count($itemsForCommission),
-                ]);
             }
 
             Session::forget('cart');
-            DB::commit();
 
-            Log::info('Commande finalisée avec paiement', [
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $rankName = $user->rank_name ?? 'Distributeur';
+            $rankLevel = $user->rank_level ?? 1;
+
+            $message = "Commande passee avec succes !\n";
+            $message .= "Grade actuel: {$rankName} (Niv. {$rankLevel})\n";
+            $message .= "PV Total: " . number_format($user->pv_balance, 1, ',', ' ') . "\n";
+            $message .= "Cumul PV: " . number_format(($user->pv_balance ?? 0) + ($user->team_pv ?? 0), 1, ',', ' ') . "\n";
+            $message .= "$" . number_format($total, 2) . " debite de votre portefeuille.\n";
+            $message .= "Les recalculs complets sont en cours en arriere-plan.";
+
+            Log::info('Commande finalisee avec jobs', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
-                'user_is_active' => $user->is_active,
+                'rank_after' => $rankName,
+                'rank_level' => $rankLevel,
                 'total' => $total,
-                'wallet_balance_after' => $wallet->balance,
-                'items_count' => count($cart),
-                'commissions_items_count' => count($itemsForCommission),
-                'commissions_calculated' => $user->is_active,
+                'total_pv' => $totalPV,
             ]);
 
             return redirect()->route('orders.show', $order)
-                ->with('success', 'Commande passée avec succès! $' . number_format($total, 2) . ' débité de votre portefeuille.');
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -363,13 +375,9 @@ class CartController extends Controller
         }
     }
 
-    /**
-     * ✅ Calculer les commissions pour tous les items de la commande
-     */
     private function calculateCommissionsForOrder($order, $user, array $itemsForCommission): void
     {
         try {
-            // Récupérer ou créer la période de commission
             $period = CommissionPeriod::firstOrCreate(
                 ['period' => date('Y-m')],
                 [
@@ -387,7 +395,6 @@ class CartController extends Controller
                 $item = $itemData['data'];
                 $quantity = $itemData['quantity'] ?? 1;
 
-                // Pour chaque quantité, distribuer les commissions
                 for ($i = 0; $i < $quantity; $i++) {
                     $commissions = $this->commissionDistributor->distributeCommissions(
                         $user,
@@ -401,31 +408,16 @@ class CartController extends Controller
                         $totalCommissions += collect($commissions)->sum('amount');
                         $totalCommissionCount += count($commissions);
                     }
-
-                    Log::info('Commissions calculées pour l\'item', [
-                        'order_id' => $order->id,
-                        'item_type' => $itemData['type'],
-                        'item_name' => $item->name,
-                        'quantity' => $quantity,
-                        'commissions_count' => count($commissions),
-                        'amount' => collect($commissions)->sum('amount'),
-                    ]);
                 }
             }
 
-            Log::info('Total commissions calculées pour la commande', [
+            Log::info('Total commissions calculees pour la commande', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'total_commissions' => $totalCommissionCount,
                 'total_amount' => $totalCommissions,
-                'commissions_details' => collect($allCommissions)->groupBy('type')->map(function($group) {
-                    return [
-                        'count' => $group->count(),
-                        'total' => $group->sum('amount'),
-                    ];
-                })->toArray(),
             ]);
 
         } catch (\Exception $e) {

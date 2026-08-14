@@ -14,6 +14,8 @@ use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
+use setasign\Fpdi\TcpdfFpdi;
 
 class ReportController extends Controller
 {
@@ -277,180 +279,335 @@ class ReportController extends Controller
         ));
     }
 
-/**
- * ✅ Exporter un rapport en PDF avec support de pagination
- */
-public function exportPdf(Request $request, $type)
-{
-    try {
-        ini_set('max_execution_time', 120);
-        ini_set('memory_limit', '512M');
+    /**
+     * ✅ Exporter un rapport en PDF - VERSION OPTIMISÉE AVEC TCPDF
+     */
+    public function exportPdf(Request $request, $type)
+    {
+        try {
+            // Configurations pour éviter les timeouts
+            ini_set('max_execution_time', 600);
+            ini_set('memory_limit', '512M');
+            
+            switch ($type) {
+                case 'users':
+                    return $this->exportUsersPdf($request);
+                    
+                case 'commissions':
+                    return $this->exportCommissionsPdf($request);
+                    
+                case 'sales':
+                    return $this->exportSalesPdf($request);
+                    
+                case 'withdrawals':
+                    return $this->exportWithdrawalsPdf($request);
+                    
+                default:
+                    return redirect()->back()->with('error', 'Type de rapport invalide.');
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur export PDF: ' . $e->getMessage(), [
+                'type' => $type,
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ✅ Export des utilisateurs PDF avec CHUNK
+     */
+    private function exportUsersPdf($request)
+    {
+        // Récupérer le nombre total d'utilisateurs
+        $query = $this->buildUserQuery($request);
+        $totalUsers = $query->count();
         
-        $data = [];
-        
-        switch ($type) {
-            case 'users':
-                // ✅ Récupérer les paramètres
-                $page = $request->input('page', 1);
-                $perPage = $request->input('per_page', 500);
-                $sortBy = $request->input('sort_by', 'id_asc'); // Par défaut ID croissant
-                
-                $data = $this->getUsersData($request, $page, $perPage, $sortBy);
-                $view = 'admin.reports.pdf.users';
-                
-                // Nom du fichier avec l'option de tri
-                $sortLabel = $sortBy == 'sponsor_asc' ? 'par_code_parrainage' : 'par_id';
-                $filename = 'rapport_utilisateurs_' . date('Y-m-d') . '_' . $sortLabel . '_page_' . $page . '.pdf';
-                break;
-                
-            case 'commissions':
-                $data = $this->getCommissionsData($request);
-                $view = 'admin.reports.pdf.commissions';
-                $filename = 'rapport_commissions_' . date('Y-m-d') . '.pdf';
-                break;
-                
-            case 'sales':
-                $data = $this->getSalesData($request);
-                $view = 'admin.reports.pdf.sales';
-                $filename = 'rapport_ventes_' . date('Y-m-d') . '.pdf';
-                break;
-                
-            case 'withdrawals':
-                $data = $this->getWithdrawalsData($request);
-                $view = 'admin.reports.pdf.withdrawals';
-                $filename = 'rapport_retraits_' . date('Y-m-d') . '.pdf';
-                break;
-                
-            default:
-                return redirect()->back()->with('error', 'Type de rapport invalide.');
+        if ($totalUsers === 0) {
+            return redirect()->back()->with('error', 'Aucun utilisateur trouvé.');
         }
         
-        // Générer le PDF
-        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, $data);
+        // Si moins de 500 utilisateurs, générer un seul PDF
+        if ($totalUsers <= 500) {
+            return $this->generateSingleUsersPdf($request, $query);
+        }
+        
+        // Sinon, générer par lots
+        return $this->generateChunkedUsersPdf($request, $query, $totalUsers);
+    }
+
+    /**
+     * ✅ Construire la requête utilisateur
+     */
+    private function buildUserQuery($request)
+    {
+        $query = User::with(['rank', 'parrain'])
+            ->select([
+                'id',
+                'name',
+                'email',
+                'sponsor_id',
+                'parrain_id',
+                'rank_id',
+                'rank',
+                'rank_level',
+                'pv_balance',
+                'team_pv',
+                'is_active',
+                'kyc_status',
+                'created_at',
+                'user_type',
+                'package_id'
+            ]);
+
+        // Appliquer les filtres
+        if ($request->filled('rank_id')) {
+            $query->where('rank_id', $request->rank_id);
+        }
+        if ($request->filled('package_id')) {
+            $query->where('package_id', $request->package_id);
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active == '1');
+        }
+        if ($request->filled('kyc_status')) {
+            $query->where('kyc_status', $request->kyc_status);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('user_type')) {
+            $query->where('user_type', $request->user_type);
+        }
+        if ($request->filled('min_pv')) {
+            $query->where('pv_balance', '>=', $request->min_pv);
+        }
+        if ($request->filled('max_pv')) {
+            $query->where('pv_balance', '<=', $request->max_pv);
+        }
+
+        return $query;
+    }
+
+    /**
+     * ✅ Générer un seul PDF (pour < 500 utilisateurs)
+     */
+    private function generateSingleUsersPdf($request, $query)
+    {
+        $users = $query->orderBy('id', 'asc')->get();
+        
+        $stats = [
+            'total' => $users->count(),
+            'active' => $users->where('is_active', true)->count(),
+            'inactive' => $users->where('is_active', false)->count(),
+            'members' => $users->where('user_type', 'member')->count(),
+            'clients' => $users->where('user_type', 'client')->count(),
+            'totalPv' => $users->sum('pv_balance') ?? 0,
+            'totalTeamPv' => $users->sum('team_pv') ?? 0,
+            'withPackage' => $users->whereNotNull('package_id')->count(),
+            'withoutPackage' => $users->whereNull('package_id')->count(),
+        ];
+
+        $data = compact('users', 'stats');
+        
+        $pdf = Pdf::loadView('admin.reports.pdf.users', $data);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+        ]);
+        
+        return $pdf->download('rapport_utilisateurs_' . date('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * ✅ Générer un PDF par lots (pour > 500 utilisateurs)
+     */
+    private function generateChunkedUsersPdf($request, $query, $totalUsers)
+    {
+        $chunkSize = 250; // 250 utilisateurs par lot
+        
+        // Statistiques globales (une seule requête)
+        $allUsers = $query->get();
+        $stats = [
+            'total' => $allUsers->count(),
+            'active' => $allUsers->where('is_active', true)->count(),
+            'inactive' => $allUsers->where('is_active', false)->count(),
+            'members' => $allUsers->where('user_type', 'member')->count(),
+            'clients' => $allUsers->where('user_type', 'client')->count(),
+            'totalPv' => $allUsers->sum('pv_balance') ?? 0,
+            'totalTeamPv' => $allUsers->sum('team_pv') ?? 0,
+            'withPackage' => $allUsers->whereNotNull('package_id')->count(),
+            'withoutPackage' => $allUsers->whereNull('package_id')->count(),
+        ];
+        
+        // Libérer la mémoire
+        unset($allUsers);
+        
+        // Créer le dossier temporaire s'il n'existe pas
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        // Générer des PDF temporaires par lots
+        $tempFiles = [];
+        $page = 1;
+        $totalPages = ceil($totalUsers / $chunkSize);
+        
+        $query->orderBy('id', 'asc')->chunk($chunkSize, function($chunk) use (&$tempFiles, &$page, $stats, $totalPages, $totalUsers, $chunkSize, $tempDir) {
+            $users = $chunk;
+            
+            // Ajouter des informations de pagination
+            $pagination = [
+                'page' => $page,
+                'total_pages' => $totalPages,
+                'total_users' => $totalUsers,
+                'start' => (($page - 1) * $chunkSize) + 1,
+                'end' => min($page * $chunkSize, $totalUsers)
+            ];
+            
+            $data = compact('users', 'stats', 'pagination');
+            
+            // Générer le PDF temporaire
+            $pdf = Pdf::loadView('admin.reports.pdf.users_chunk', $data);
             $pdf->setPaper('A4', 'landscape');
             $pdf->setOptions([
                 'defaultFont' => 'sans-serif',
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => false,
             ]);
-            return $pdf->download($filename);
+            
+            // Sauvegarder temporairement
+            $tempFile = $tempDir . "/users_page_{$page}.pdf";
+            file_put_contents($tempFile, $pdf->output());
+            $tempFiles[] = $tempFile;
+            
+            $page++;
+            
+            // Libérer la mémoire
+            unset($users);
+            unset($pdf);
+            gc_collect_cycles();
+        });
+        
+        // Si un seul fichier, le retourner directement
+        if (count($tempFiles) === 1) {
+            $content = file_get_contents($tempFiles[0]);
+            unlink($tempFiles[0]);
+            return response($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="rapport_utilisateurs_' . date('Y-m-d') . '.pdf"',
+            ]);
         }
         
-        if (class_exists('\Dompdf\Dompdf')) {
-            $dompdf = new \Dompdf\Dompdf();
-            $html = view($view, $data)->render();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'landscape');
-            $dompdf->render();
-            return $dompdf->stream($filename);
+        // ✅ Fusionner tous les PDF avec TCPDF
+        try {
+            $finalPdf = $this->mergePdfFilesWithTcpdf($tempFiles);
+            
+            // Nettoyer les fichiers temporaires
+            foreach ($tempFiles as $file) {
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+            
+            return response($finalPdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="rapport_utilisateurs_complet_' . date('Y-m-d') . '.pdf"',
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur fusion PDF: ' . $e->getMessage());
+            
+            // ✅ En cas d'échec, proposer un ZIP
+            return $this->downloadAsZip($tempFiles, 'rapport_utilisateurs_' . date('Y-m-d'));
         }
-        
-        return redirect()->back()->with('error', 'Module PDF non installé.');
-        
-    } catch (\Exception $e) {
-        Log::error('Erreur export PDF: ' . $e->getMessage(), [
-            'type' => $type,
-            'trace' => $e->getTraceAsString()
-        ]);
-        return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
-    }
-}
-
-/**
- * ✅ Récupérer les données des utilisateurs pour le PDF avec pagination
- */
-private function getUsersData($request, $page = 1, $perPage = 500, $sortBy = 'id_asc')
-{
-    $query = User::with(['rank', 'parrain'])
-        ->select([
-            'id',
-            'name',
-            'sponsor_id',
-            'parrain_id',
-            'rank_id',
-            'rank',
-            'rank_level',
-            'pv_balance',
-            'team_pv',
-            'is_active',
-            'kyc_status',
-            'created_at'
-        ]);
-
-    // Appliquer les filtres
-    if ($request->filled('rank_id')) {
-        $query->where('rank_id', $request->rank_id);
-    }
-    if ($request->filled('package_id')) {
-        $query->where('package_id', $request->package_id);
-    }
-    if ($request->filled('is_active')) {
-        $query->where('is_active', $request->is_active == '1');
-    }
-    if ($request->filled('kyc_status')) {
-        $query->where('kyc_status', $request->kyc_status);
-    }
-    if ($request->filled('date_from')) {
-        $query->whereDate('created_at', '>=', $request->date_from);
-    }
-    if ($request->filled('date_to')) {
-        $query->whereDate('created_at', '<=', $request->date_to);
-    }
-    if ($request->filled('user_type')) {
-        $query->where('user_type', $request->user_type);
     }
 
-    // ✅ APPLIQUER LE TRI SELON LE CHOIX
-    switch ($sortBy) {
-        case 'sponsor_asc':
-            // Trier par code de parrainage (sponsor_id) croissant
-            $query->orderBy('sponsor_id', 'asc');
-            break;
-        case 'id_asc':
-        default:
-            // Trier par ID croissant (par défaut)
-            $query->orderBy('id', 'asc');
-            break;
-    }
-
-    // Pagination
-    $users = $query->paginate($perPage, ['*'], 'page', $page);
-
-    // Calculer les statistiques globales
-    $total = $query->count();
-    $active = $query->where('is_active', true)->count();
-    $inactive = $query->where('is_active', false)->count();
-    $members = $query->where('user_type', 'member')->count();
-    $clients = $query->where('user_type', 'client')->count();
-    $avgPv = $query->avg('pv_balance') ?? 0;
-    $totalPv = $query->sum('pv_balance') ?? 0;
-    $totalTeamPv = $query->sum('team_pv') ?? 0;
-    $withPackage = $query->whereNotNull('package_id')->count();
-    $withoutPackage = $query->whereNull('package_id')->count();
-
-    $stats = compact(
-        'total', 
-        'active', 
-        'inactive',
-        'members',
-        'clients',
-        'avgPv',
-        'totalPv',
-        'totalTeamPv',
-        'withPackage', 
-        'withoutPackage'
-    );
-
-    return compact('users', 'stats');
-}
     /**
-     * ✅ NOUVELLE MÉTHODE : Récupérer les données des commissions pour le PDF
+     * ✅ Fusionner plusieurs PDF avec TCPDF
      */
-    private function getCommissionsData($request)
+    private function mergePdfFilesWithTcpdf($files)
+    {
+        $pdf = new TcpdfFpdi();
+        
+        // Configuration du PDF
+        $pdf->SetCreator('Salang Group');
+        $pdf->SetAuthor('Salang Group');
+        $pdf->SetTitle('Rapport des utilisateurs');
+        $pdf->SetSubject('Liste des utilisateurs');
+        $pdf->SetKeywords('Salang, MLM, Ecommerce, Utilisateurs');
+        
+        // Supprimer les marges par défaut
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false, 0);
+        
+        foreach ($files as $file) {
+            if (!file_exists($file)) {
+                continue;
+            }
+            
+            $pageCount = $pdf->setSourceFile($file);
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $pdf->AddPage('L', 'A4'); // 'L' pour paysage
+                $tpl = $pdf->importPage($i);
+                $pdf->useTemplate($tpl);
+            }
+        }
+        
+        return $pdf->Output('S');
+    }
+
+    /**
+     * ✅ Télécharger plusieurs PDF en ZIP
+     */
+    private function downloadAsZip($files, $name)
+    {
+        $zip = new \ZipArchive();
+        $zipFileName = storage_path("app/temp/{$name}.zip");
+        
+        if ($zip->open($zipFileName, \ZipArchive::CREATE) !== true) {
+            throw new \Exception('Impossible de créer le ZIP');
+        }
+        
+        foreach ($files as $index => $file) {
+            if (file_exists($file)) {
+                $zip->addFile($file, "page_" . ($index + 1) . ".pdf");
+            }
+        }
+        $zip->close();
+        
+        // Nettoyer les fichiers temporaires
+        foreach ($files as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+            }
+        }
+        
+        $content = file_get_contents($zipFileName);
+        unlink($zipFileName);
+        
+        return response($content, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="' . $name . '.zip"',
+        ]);
+    }
+
+    /**
+     * ✅ Export des commissions PDF
+     */
+    private function exportCommissionsPdf($request)
     {
         $query = Commission::with(['user', 'fromUser']);
-
+        
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -467,25 +624,36 @@ private function getUsersData($request, $page = 1, $perPage = 500, $sortBy = 'id
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $commissions = $query->orderBy('created_at', 'desc')->get();
+        $commissions = $query->orderBy('created_at', 'desc')->limit(2000)->get();
+        
+        $stats = [
+            'total' => $commissions->sum('amount') ?? 0,
+            'count' => $commissions->count(),
+            'avg' => $commissions->avg('amount') ?? 0,
+            'totalPending' => $commissions->where('status', 'pending')->sum('amount') ?? 0,
+            'totalPaid' => $commissions->where('status', 'paid')->sum('amount') ?? 0,
+        ];
 
-        $total = $commissions->sum('amount') ?? 0;
-        $average = $commissions->avg('amount') ?? 0;
-        $totalPending = $commissions->where('status', 'pending')->sum('amount') ?? 0;
-        $totalPaid = $commissions->where('status', 'paid')->sum('amount') ?? 0;
-
-        $stats = compact('total', 'average', 'totalPending', 'totalPaid');
-
-        return compact('commissions', 'stats');
+        $data = compact('commissions', 'stats');
+        
+        $pdf = Pdf::loadView('admin.reports.pdf.commissions', $data);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+        ]);
+        
+        return $pdf->download('rapport_commissions_' . date('Y-m-d') . '.pdf');
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Récupérer les données des ventes pour le PDF
+     * ✅ Export des ventes PDF
      */
-    private function getSalesData($request)
+    private function exportSalesPdf($request)
     {
-        $query = Order::with(['user', 'items', 'items.package']);
-
+        $query = Order::with(['user', 'items']);
+        
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -499,26 +667,34 @@ private function getUsersData($request, $page = 1, $perPage = 500, $sortBy = 'id
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->get();
+        $orders = $query->orderBy('created_at', 'desc')->limit(2000)->get();
+        
+        $stats = [
+            'total' => $orders->sum('total') ?? 0,
+            'count' => $orders->count(),
+            'avg' => $orders->avg('total') ?? 0,
+        ];
 
-        $totalOrders = $orders->count();
-        $totalRevenue = $orders->sum('total') ?? 0;
-        $avgOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-        $totalTax = $orders->sum('tax') ?? 0;
-        $totalShipping = $orders->sum('shipping') ?? 0;
-
-        $stats = compact('totalOrders', 'totalRevenue', 'avgOrderValue', 'totalTax', 'totalShipping');
-
-        return compact('orders', 'stats');
+        $data = compact('orders', 'stats');
+        
+        $pdf = Pdf::loadView('admin.reports.pdf.sales', $data);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+        ]);
+        
+        return $pdf->download('rapport_ventes_' . date('Y-m-d') . '.pdf');
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Récupérer les données des retraits pour le PDF
+     * ✅ Export des retraits PDF
      */
-    private function getWithdrawalsData($request)
+    private function exportWithdrawalsPdf($request)
     {
         $query = Withdrawal::with(['user']);
-
+        
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -532,16 +708,27 @@ private function getUsersData($request, $page = 1, $perPage = 500, $sortBy = 'id
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $withdrawals = $query->orderBy('created_at', 'desc')->get();
+        $withdrawals = $query->orderBy('created_at', 'desc')->limit(2000)->get();
+        
+        $stats = [
+            'total' => $withdrawals->sum('amount') ?? 0,
+            'count' => $withdrawals->count(),
+            'pending' => $withdrawals->where('status', 'pending')->sum('amount') ?? 0,
+            'completed' => $withdrawals->where('status', 'completed')->sum('amount') ?? 0,
+            'failed' => $withdrawals->where('status', 'failed')->sum('amount') ?? 0,
+        ];
 
-        $pending = $withdrawals->where('status', 'pending')->sum('amount') ?? 0;
-        $completed = $withdrawals->where('status', 'completed')->sum('amount') ?? 0;
-        $failed = $withdrawals->where('status', 'failed')->sum('amount') ?? 0;
-        $total = $withdrawals->sum('amount') ?? 0;
-
-        $stats = compact('pending', 'completed', 'failed', 'total');
-
-        return compact('withdrawals', 'stats');
+        $data = compact('withdrawals', 'stats');
+        
+        $pdf = Pdf::loadView('admin.reports.pdf.withdrawals', $data);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+        ]);
+        
+        return $pdf->download('rapport_retraits_' . date('Y-m-d') . '.pdf');
     }
 
     public function exportUsers($request)

@@ -1,10 +1,10 @@
 <?php
-// app/Services/MLM/AdvancedRankCalculator.php
 
 namespace App\Services\MLM;
 
 use App\Models\User;
 use App\Models\Rank;
+use App\Models\RankHistory;
 use App\Models\QualifiedBranch;
 use App\Models\HigherRank;
 use Illuminate\Support\Facades\Log;
@@ -22,9 +22,6 @@ class AdvancedRankCalculator
         $this->conditionChecker = $conditionChecker;
     }
 
-    /**
-     * Calcule le grade avancé de l'utilisateur
-     */
     public function calculateAdvancedRank(User $user): ?Rank
     {
         if (!$user->is_active) {
@@ -32,13 +29,9 @@ class AdvancedRankCalculator
             return null;
         }
 
-        // Vider le cache pour ce calcul
         $this->clearCache();
 
-        // Récupérer tous les grades actifs triés par niveau descendant
-        $ranks = Rank::where('is_active', true)
-            ->orderBy('level', 'desc')
-            ->get();
+        $ranks = Rank::where('is_active', true)->orderBy('level', 'desc')->get();
 
         if ($ranks->isEmpty()) {
             Log::warning('No active ranks found');
@@ -50,10 +43,9 @@ class AdvancedRankCalculator
             'user_name' => $user->name,
             'pv_balance' => $user->pv_balance,
             'team_pv' => $user->team_pv,
-            'current_rank' => $user->rank_name ?? 'None',
+            'current_rank' => $user->rank ?? 'None',
         ]);
 
-        // Vérifier les grades du plus haut au plus bas
         foreach ($ranks as $rank) {
             if ($this->isEligibleForRank($user, $rank)) {
                 Log::info('Rank found for user', [
@@ -66,17 +58,192 @@ class AdvancedRankCalculator
             }
         }
 
-        // Si aucun grade trouvé, retourner le grade par défaut (niveau 1)
         Log::info('No rank found, returning default level 1', ['user_id' => $user->id]);
         return Rank::where('level', 1)->first();
     }
 
     /**
-     * Vérifie si l'utilisateur est éligible pour un grade spécifique
+     * RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS (RECURSIF)
      */
+    public function updateTeamPV(User $user): void
+    {
+        $teamData = $this->calculateTeamPVRecursive($user);
+        
+        $user->team_pv = $teamData['pv'];
+        $user->team_bv = $teamData['bv'];
+        $user->total_team = $teamData['total'];
+        $user->saveQuietly();
+        
+        Log::debug('Team PV mis a jour avec tous les descendants', [
+            'user_id' => $user->id,
+            'team_pv' => $teamData['pv'],
+            'total_team' => $teamData['total'],
+        ]);
+    }
+
+    /**
+     * CALCUL RECURSIF DU TEAM_PV AVEC TOUS LES DESCENDANTS
+     */
+    private function calculateTeamPVRecursive(User $user): array
+    {
+        $totalPV = $user->pv_balance ?? 0;
+        $totalBV = $user->bv_balance ?? 0;
+        $totalCount = 0;
+
+        $filleuls = User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($filleuls as $filleul) {
+            $childData = $this->calculateTeamPVRecursive($filleul);
+            $totalPV += $childData['pv'];
+            $totalBV += $childData['bv'];
+            $totalCount += 1 + $childData['total'];
+        }
+
+        return [
+            'pv' => $totalPV,
+            'bv' => $totalBV,
+            'total' => $totalCount,
+        ];
+    }
+
+    public function recalculateUserRank(User $user, ?string $reason = null): void
+    {
+        if (!$user->is_active) {
+            Log::info('User inactive, skipping rank recalculation', ['user_id' => $user->id]);
+            return;
+        }
+
+        try {
+            $oldRankId = $user->rank_id;
+            $oldRankName = $user->rank ?? 'Distributeur';
+
+            $this->updateTeamPV($user);
+
+            $newRank = $this->calculateAdvancedRank($user);
+
+            if ($newRank && $newRank->id != $oldRankId) {
+                $user->rank_id = $newRank->id;
+                $user->rank = $newRank->name;
+                $user->rank_level = $newRank->level;
+                $user->last_rank_update = now();
+                $user->saveQuietly();
+
+                RankHistory::create([
+                    'user_id' => $user->id,
+                    'old_rank_id' => $oldRankId,
+                    'new_rank_id' => $newRank->id,
+                    'old_rank_name' => $oldRankName,
+                    'new_rank_name' => $newRank->name,
+                    'pv_at_time' => $user->pv_balance,
+                    'bv_at_time' => $user->bv_balance,
+                    'monthly_pv_at_time' => $user->monthly_pv,
+                    'notes' => $reason ?? 'Recalcul automatique du grade',
+                ]);
+
+                Log::info('Grade mis a jour via recalcul centralise', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'old_rank' => $oldRankName,
+                    'new_rank' => $newRank->name,
+                    'new_level' => $newRank->level,
+                    'reason' => $reason,
+                ]);
+            }
+
+            $this->clearUserCache($user);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du recalcul du grade', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    public function recalculateUserRankLight(User $user, ?string $reason = null): void
+    {
+        if (!$user->is_active) {
+            Log::info('User inactive, skipping rank recalculation', ['user_id' => $user->id]);
+            return;
+        }
+
+        try {
+            $oldRankId = $user->rank_id;
+            $oldRankName = $user->rank ?? 'Distributeur';
+
+            $newRank = $this->calculateAdvancedRank($user);
+
+            if ($newRank && $newRank->id != $oldRankId) {
+                $user->rank_id = $newRank->id;
+                $user->rank = $newRank->name;
+                $user->rank_level = $newRank->level;
+                $user->last_rank_update = now();
+                $user->saveQuietly();
+
+                RankHistory::create([
+                    'user_id' => $user->id,
+                    'old_rank_id' => $oldRankId,
+                    'new_rank_id' => $newRank->id,
+                    'old_rank_name' => $oldRankName,
+                    'new_rank_name' => $newRank->name,
+                    'pv_at_time' => $user->pv_balance,
+                    'bv_at_time' => $user->bv_balance,
+                    'monthly_pv_at_time' => $user->monthly_pv,
+                    'notes' => $reason ?? 'Recalcul leger du grade',
+                ]);
+
+                Log::info('Grade mis a jour (recalcul leger)', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'old_rank' => $oldRankName,
+                    'new_rank' => $newRank->name,
+                    'new_level' => $newRank->level,
+                ]);
+            }
+
+            $this->clearUserCache($user);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du recalcul leger du grade', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function recalculateUserRankWithAncestors(User $user, int $ancestorDepth = 3, ?string $reason = null): void
+    {
+        $this->recalculateUserRank($user, $reason);
+
+        $current = $user->parrain;
+        $level = 1;
+        $processed = [];
+
+        while ($current && $level <= $ancestorDepth && !in_array($current->id, $processed)) {
+            $processed[] = $current->id;
+            $this->recalculateUserRank($current, $reason ? "Ancetre - {$reason}" : "Mise a jour automatique d'un descendant");
+            $current->refresh();
+            $this->clearUserCache($current);
+            $current = $current->parrain;
+            $level++;
+        }
+    }
+
+    private function clearUserCache(User $user): void
+    {
+        Cache::forget("user_rank_{$user->id}");
+        Cache::forget("rank_calculation_{$user->id}");
+        Cache::forget("descendants_{$user->id}");
+        Cache::forget("descendants_count_{$user->id}");
+        $this->clearCache();
+        $this->conditionChecker->clearCache();
+    }
+
     public function isEligibleForRank(User $user, Rank $rank): bool
     {
-        // Pour les niveaux 1 à 3, vérification simple
         if ($rank->level <= 3) {
             if ($rank->level == 2 && ($user->pv_balance ?? 0) < 100) {
                 return false;
@@ -86,14 +253,9 @@ class AdvancedRankCalculator
             }
             return true;
         }
-
-        // Pour les niveaux 4 à 9, vérifier les conditions complexes
         return $this->conditionChecker->checkConditions($user, $rank);
     }
 
-    /**
-     * Calcule les prix/récompenses pour un utilisateur selon son grade
-     */
     public function calculatePrizes(User $user): array
     {
         $prizes = [];
@@ -117,13 +279,9 @@ class AdvancedRankCalculator
         if ($rankLevel >= 9) {
             $prizes[] = ['level' => 9, 'prize' => 'Diamond Pearl - House'];
         }
-        
         return $prizes;
     }
 
-    /**
-     * Obtient la progression vers le prochain grade
-     */
     public function getProgress(User $user): array
     {
         $currentRank = $this->getUserRankObject($user);
@@ -176,9 +334,6 @@ class AdvancedRankCalculator
         ];
     }
 
-    /**
-     * Obtient le prochain grade
-     */
     private function getNextRank(Rank $currentRank): ?Rank
     {
         return Rank::where('level', '>', $currentRank->level)
@@ -187,19 +342,14 @@ class AdvancedRankCalculator
             ->first();
     }
 
-    /**
-     * Obtient l'objet Rank d'un utilisateur
-     */
     private function getUserRankObject(User $user): ?Rank
     {
         if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
             return $user->rank;
         }
-
         if ($user->rank_id) {
             return Rank::find($user->rank_id);
         }
-
         if (is_string($user->rank)) {
             $rank = Rank::where('name', $user->rank)->first();
             if ($rank) {
@@ -210,13 +360,9 @@ class AdvancedRankCalculator
                 return $rank;
             }
         }
-
         return Rank::where('level', 1)->first();
     }
 
-    /**
-     * Calcule les branches qualifiées pour un utilisateur
-     */
     public function calculateQualifiedBranches(User $user, string $period): array
     {
         $qualifiedBranches = [];
@@ -257,35 +403,20 @@ class AdvancedRankCalculator
         return $qualifiedBranches;
     }
 
-    /**
-     * Calcule le PV d'une branche (version optimisée)
-     * ✅ CORRECTION : retourne float au lieu de int
-     */
     protected function calculateBranchPVOptimized(User $branchRoot): float
     {
         $totalPV = $branchRoot->pv_balance ?? 0;
-
-        $children = User::where('parrain_id', $branchRoot->id)
-            ->where('is_active', true)
-            ->get();
-            
+        $children = User::where('parrain_id', $branchRoot->id)->where('is_active', true)->get();
         foreach ($children as $child) {
             $totalPV += $this->calculateBranchPVOptimized($child);
         }
-
         return $totalPV;
     }
 
-    /**
-     * Vérifie si un utilisateur est éligible à un grade supérieur
-     */
     public function checkHigherRankEligibility(User $user, string $period): array
     {
         $eligibleRanks = [];
-
-        $higherRanks = HigherRank::where('is_active', true)
-            ->orderBy('level', 'asc')
-            ->get();
+        $higherRanks = HigherRank::where('is_active', true)->orderBy('level', 'asc')->get();
 
         foreach ($higherRanks as $higherRank) {
             if ($this->isEligibleForHigherRank($user, $higherRank, $period)) {
@@ -298,53 +429,32 @@ class AdvancedRankCalculator
                 ];
             }
         }
-
         return $eligibleRanks;
     }
 
-    /**
-     * Vérifie si un utilisateur est éligible à un grade supérieur spécifique
-     */
     private function isEligibleForHigherRank(User $user, HigherRank $higherRank, string $period): bool
     {
         $level9Branches = $this->countLevel9Branches($user, $period);
         $diamondBranches = $this->countDiamondBranches($user, $period);
 
         switch ($higherRank->level) {
-            case 1: // Rubis
-                return $level9Branches >= 2;
-            case 2: // Saphir
-                return $level9Branches >= 3;
-            case 3: // Diamant 1
-                return $level9Branches >= 4;
-            case 4: // Diamant 2
-                return $level9Branches >= 5;
-            case 5: // Diamant 3
-                return $level9Branches >= 6;
-            case 6: // Diamant 4
-                return $level9Branches >= 7;
-            case 7: // Diamant 5
-                return $level9Branches >= 8;
-            case 8: // Actionnaire
-                return $diamondBranches >= 4;
-            default:
-                return false;
+            case 1: return $level9Branches >= 2;
+            case 2: return $level9Branches >= 3;
+            case 3: return $level9Branches >= 4;
+            case 4: return $level9Branches >= 5;
+            case 5: return $level9Branches >= 6;
+            case 6: return $level9Branches >= 7;
+            case 7: return $level9Branches >= 8;
+            case 8: return $diamondBranches >= 4;
+            default: return false;
         }
     }
 
-    /**
-     * Obtient le grade supérieur actuel d'un utilisateur
-     */
     public function getCurrentHigherRank(User $user): ?HigherRank
     {
-        return $user->higherRanks()
-            ->orderBy('level', 'desc')
-            ->first();
+        return $user->higherRanks()->orderBy('level', 'desc')->first();
     }
 
-    /**
-     * Compte les branches au niveau 9
-     */
     public function countLevel9Branches(User $user, string $period): int
     {
         return QualifiedBranch::where('user_id', $user->id)
@@ -353,9 +463,6 @@ class AdvancedRankCalculator
             ->count();
     }
 
-    /**
-     * Compte les branches Diamant
-     */
     public function countDiamondBranches(User $user, string $period): int
     {
         return QualifiedBranch::where('user_id', $user->id)
@@ -364,10 +471,7 @@ class AdvancedRankCalculator
             ->count();
     }
 
-    /**
-     * Vide le cache interne
-     */
-    protected function clearCache(): void
+    public function clearCache(): void
     {
         $this->branchPVCache = [];
         $this->descendantsCache = [];

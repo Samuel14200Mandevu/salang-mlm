@@ -23,7 +23,7 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    protected $rankCalculator;
+    protected AdvancedRankCalculator $rankCalculator;
 
     public function __construct(AdvancedRankCalculator $rankCalculator)
     {
@@ -34,7 +34,6 @@ class UserController extends Controller
     {
         $query = User::with(['rank', 'package']);
 
-        // ✅ RECHERCHE SERVER-SIDE (comme Cashier)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -71,7 +70,6 @@ class UserController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // ✅ Pagination avec les résultats de recherche
         $users = $query->orderBy('created_at', 'desc')->paginate(15);
 
         $stats = [
@@ -93,7 +91,6 @@ class UserController extends Controller
         $packages = Package::orderBy('price')->get();
         $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
 
-        // ✅ Garder les filtres pour l'affichage
         return view('admin.users.index', compact('users', 'stats', 'ranks', 'packages', 'kycStatuses'));
     }
 
@@ -329,7 +326,6 @@ class UserController extends Controller
 
                 if ($parrain) {
                     $parrain->increment('total_sponsors');
-                    $parrain->increment('total_team');
                     $this->updateTeamCounters($parrain);
                 }
 
@@ -373,6 +369,9 @@ class UserController extends Controller
         return view('admin.users.edit', compact('user', 'ranks', 'packages', 'users'));
     }
 
+    /**
+     * Mettre à jour un utilisateur - Version CORRIGÉE avec gestion complète du changement de parrain
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -409,7 +408,6 @@ class UserController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
-            // Si le rôle est cashier, supprimer les données MLM mais garder 'rank' avec une valeur
             if ($request->role === 'cashier') {
                 $data['sponsor_id'] = null;
                 $data['parrain_id'] = null;
@@ -428,34 +426,88 @@ class UserController extends Controller
                 $data['qualified_branches'] = 0;
                 $data['direct_sponsors_count'] = 0;
             } else {
-                // Gérer le parrain
+                // ============================================================
+                // GESTION DU CHANGEMENT DE PARRAIN (CRITIQUE)
+                // ============================================================
                 if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
-                    if ($user->parrain_id) {
-                        $oldParrain = User::find($user->parrain_id);
-                        if ($oldParrain) {
-                            $oldParrain->decrement('total_sponsors');
-                            $this->updateTeamCountersDec($oldParrain);
+                    $oldParrainId = $user->parrain_id;
+                    $newParrainId = $request->parrain_id ? (int) $request->parrain_id : null;
+
+                    $oldParrain = $oldParrainId ? User::find($oldParrainId) : null;
+                    $newParrain = $newParrainId ? User::find($newParrainId) : null;
+
+                    // ============================================================
+                    // 1. RECALCULER LE TEAM_PV DE L'ANCIEN PARRAIN ET SES ANCÊTRES
+                    // ============================================================
+                    if ($oldParrain) {
+                        // Recalculer le team_pv de l'ancien parrain
+                        $this->rankCalculator->updateTeamPV($oldParrain);
+                        $this->rankCalculator->recalculateUserRank($oldParrain, 'Changement parrain - ancien');
+
+                        // Recalculer tous les ancêtres de l'ancien parrain
+                        $ancestor = $oldParrain->parrain;
+                        $level = 0;
+                        $maxLevel = 10;
+                        while ($ancestor && $level < $maxLevel) {
+                            $this->rankCalculator->updateTeamPV($ancestor);
+                            $this->rankCalculator->recalculateUserRank($ancestor, 'Changement parrain - ancetre ancien');
+                            $ancestor = $ancestor->parrain;
+                            $level++;
                         }
+
+                        $oldParrain->decrement('total_sponsors');
                     }
 
-                    if ($request->parrain_id) {
-                        $newParrain = User::find($request->parrain_id);
-                        if ($newParrain && $newParrain->id != $user->id) {
-                            $newParrain->increment('total_sponsors');
-                            $this->updateTeamCounters($newParrain);
+                    // ============================================================
+                    // 2. RECALCULER LE TEAM_PV DU NOUVEAU PARRAIN ET SES ANCÊTRES
+                    // ============================================================
+                    if ($newParrain) {
+                        // Recalculer le team_pv du nouveau parrain
+                        $this->rankCalculator->updateTeamPV($newParrain);
+                        $this->rankCalculator->recalculateUserRank($newParrain, 'Changement parrain - nouveau');
+
+                        // Recalculer tous les ancêtres du nouveau parrain
+                        $ancestor = $newParrain->parrain;
+                        $level = 0;
+                        $maxLevel = 10;
+                        while ($ancestor && $level < $maxLevel) {
+                            $this->rankCalculator->updateTeamPV($ancestor);
+                            $this->rankCalculator->recalculateUserRank($ancestor, 'Changement parrain - ancetre nouveau');
+                            $ancestor = $ancestor->parrain;
+                            $level++;
                         }
+
+                        $newParrain->increment('total_sponsors');
                     }
 
-                    $data['parrain_id'] = $request->parrain_id;
+                    // ============================================================
+                    // 3. RECALCULER LE TEAM_PV DE L'UTILISATEUR LUI-MÊME
+                    // ============================================================
+                    $this->rankCalculator->updateTeamPV($user);
+                    $this->rankCalculator->recalculateUserRank($user, 'Changement parrain - utilisateur');
+
+                    // ============================================================
+                    // 4. METTRE À JOUR LA GÉNÉALOGIE
+                    // ============================================================
+                    $data['parrain_id'] = $newParrainId;
 
                     $genealogy = Genealogy::where('user_id', $user->id)->first();
                     if ($genealogy) {
-                        $newParrain = $request->parrain_id ? User::find($request->parrain_id) : null;
                         $genealogy->sponsor_id = $newParrain?->id;
                         $genealogy->parent_id = $newParrain?->id;
                         $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
                         $genealogy->save();
                     }
+
+                    Log::info('Changement de parrain effectué', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'old_parrain_id' => $oldParrainId,
+                        'old_parrain_name' => $oldParrain?->name,
+                        'new_parrain_id' => $newParrainId,
+                        'new_parrain_name' => $newParrain?->name,
+                        'admin_id' => auth()->id(),
+                    ]);
                 }
 
                 // Package et grade
@@ -657,22 +709,17 @@ class UserController extends Controller
     {
         $prefix = '51';
         
-        // Trouver le dernier code utilisé commençant par "51"
         $lastCode = User::where('sponsor_id', 'LIKE', '51%')
             ->orderBy('sponsor_id', 'desc')
             ->first();
         
         if ($lastCode) {
-            // Extraire les 4 derniers chiffres du dernier code
             $lastNumber = (int) substr($lastCode->sponsor_id, 2);
-            // Incrémenter de 1
             $newNumber = $lastNumber + 1;
         } else {
-            // Si aucun code n'existe, commencer à 1671 (pour 511671)
             $newNumber = 1671;
         }
         
-        // Vérifier si le code existe déjà
         $maxAttempts = 100;
         $attempts = 0;
         $sponsorCode = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
@@ -684,7 +731,6 @@ class UserController extends Controller
         }
         
         if ($attempts >= $maxAttempts) {
-            // En cas d'échec, générer aléatoirement
             $random = rand(1000, 9999);
             $sponsorCode = $prefix . $random;
             while (User::where('sponsor_id', $sponsorCode)->exists()) {

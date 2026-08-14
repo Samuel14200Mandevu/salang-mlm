@@ -1,4 +1,7 @@
-{{-- resources/views/admin/pv/search.blade.php --}}
+<?php
+// resources/views/admin/pv/search.blade.php
+?>
+
 @extends('admin.layouts.app')
 
 @push('styles')
@@ -165,6 +168,9 @@
         color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
+    .empty-state p {
+        margin-bottom: 0.25rem;
+    }
     
     .pagination-container {
         margin-top: 1.5rem;
@@ -174,6 +180,7 @@
     .pagination-container nav {
         display: inline-flex;
         gap: 0.25rem;
+        flex-wrap: wrap;
     }
     .pagination-container .page-link {
         padding: 0.5rem 0.75rem;
@@ -195,6 +202,38 @@
     .pagination-container .disabled .page-link {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+    
+    .text-primary-500 { color: var(--primary-500); }
+    .text-green-500 { color: #22c55e; }
+    .text-blue-500 { color: #3b82f6; }
+    .text-secondary { color: var(--text-secondary); }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .font-bold { font-weight: 700; }
+    .font-semibold { font-weight: 600; }
+    .flex { display: flex; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .text-center { text-align: center; }
+    .w-3 { width: 0.75rem; }
+    .w-4 { width: 1rem; }
+    .h-3 { height: 0.75rem; }
+    .h-4 { height: 1rem; }
+    .rounded-lg { border-radius: var(--radius-lg); }
+    .p-4 { padding: 1rem; }
+    .p-6 { padding: 1.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
     }
     
     @media (max-width: 768px) {
@@ -219,17 +258,37 @@
         .btn-sm {
             font-size: 0.65rem;
         }
+        .p-6 {
+            padding: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .users-table {
+            font-size: 0.7rem;
+        }
+        .users-table th,
+        .users-table td {
+            padding: 0.4rem 0.5rem;
+        }
+        .badge {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.5rem;
+        }
+        .search-container {
+            padding: 0.75rem;
+        }
     }
 </style>
 @endpush
 
 @section('content')
 <div class="search-container">
-    <!-- En-tête -->
+    <!-- Header -->
     <div class="search-header">
-        <h1>🔍 Recherche des membres</h1>
+        <h1>Recherche des membres</h1>
         <div class="search-form">
-            <form method="GET" action="{{ route('admin.pv.search') }}" style="display:flex;gap:0.5rem;flex:1;">
+            <form method="GET" action="{{ route('admin.pv.search') }}" style="display:flex;gap:0.5rem;flex:1;flex-wrap:wrap;">
                 <input type="text" name="search" placeholder="Nom, email ou code sponsor..." value="{{ $search ?? '' }}" required>
                 <button type="submit" class="btn btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,9 +306,9 @@
         </div>
     </div>
 
-    <!-- Résultats -->
+    <!-- Results -->
     @if(isset($results) && $results->count() > 0)
-        <div class="card" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden;">
+        <div class="card" style="overflow:hidden;">
             <table class="users-table">
                 <thead>
                     <tr>
@@ -259,7 +318,7 @@
                         <th>Grade</th>
                         <th>PV Total</th>
                         <th>PV Mensuel</th>
-                        <th>PV Équipe</th>
+                        <th>PV Equipe</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -270,27 +329,32 @@
                             <td>
                                 <div>
                                     <strong>{{ $user->name }}</strong>
-                                    <div class="text-xs text-[var(--text-secondary)]">{{ $user->email }}</div>
+                                    <div class="text-xs text-secondary">{{ $user->email }}</div>
                                 </div>
                             </td>
                             <td><code>{{ $user->sponsor_id ?? 'N/A' }}</code></td>
                             <td>
-                                <span class="badge badge-purple">{{ $user->rank_name ?? 'Distributeur' }}</span>
+                                <span class="badge badge-purple">{{ $user->rank ?? 'Distributeur' }}</span>
                             </td>
                             <td><strong class="text-primary-500">{{ number_format($user->pv_balance ?? 0, 1, ',', ' ') }}</strong></td>
                             <td><strong class="text-green-500">{{ number_format($user->monthly_pv ?? 0, 1, ',', ' ') }}</strong></td>
                             <td><strong class="text-blue-500">{{ number_format($user->team_pv ?? 0, 1, ',', ' ') }}</strong></td>
                             <td>
-                                <div class="flex gap-1" style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-                                    <a href="{{ url('/admin/pv/' . $user->id) }}" class="btn btn-sm btn-info">
+                                <div class="flex gap-1 flex-wrap">
+                                    <a href="{{ url('/admin/pv/' . $user->id) }}" class="btn btn-sm btn-info" title="Voir les PV">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
                                     </a>
-                                    <a href="{{ url('/admin/users/' . $user->id) }}" class="btn btn-sm btn-secondary">
+                                    <a href="{{ url('/admin/users/' . $user->id) }}" class="btn btn-sm btn-secondary" title="Voir le profil">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                    </a>
+                                    <a href="{{ url('/admin/pv/import?user_id=' . $user->id) }}" class="btn btn-sm btn-success" title="Importer des PV">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                         </svg>
                                     </a>
                                 </div>
@@ -307,20 +371,20 @@
             @endif
         </div>
     @else
-        <div class="card" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:2rem;">
+        <div class="card" style="padding:2rem;">
             <div class="empty-state">
                 <div class="icon">🔍</div>
-                <h3>Aucun résultat trouvé</h3>
-                <p>Aucun membre ne correspond à votre recherche.</p>
+                <h3>Aucun resultat trouve</h3>
+                <p>Aucun membre ne correspond a votre recherche.</p>
                 @if(isset($search) && $search)
-                    <p class="text-sm text-[var(--text-secondary)]">Recherche : "{{ $search }}"</p>
+                    <p class="text-sm text-secondary">Recherche : "{{ $search }}"</p>
                 @endif
                 <div style="margin-top:1rem;">
                     <a href="{{ url('/admin/pv') }}" class="btn btn-primary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
-                        Retour à la gestion des PV
+                        Retour a la gestion des PV
                     </a>
                 </div>
             </div>

@@ -13,24 +13,30 @@ use App\Models\Wallet;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\MLM\AdvancedRankCalculator;
+use App\Jobs\UpdateTeamPV;
+use App\Jobs\UpdateRanks;
+use App\Jobs\CalculatePVBV;
 use App\Notifications\ActivationCodeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class ActivationController extends Controller
 {
     protected CommissionDistributor $commissionDistributor;
+    protected AdvancedRankCalculator $rankCalculator;
 
-    public function __construct(CommissionDistributor $commissionDistributor)
-    {
+    public function __construct(
+        CommissionDistributor $commissionDistributor,
+        AdvancedRankCalculator $rankCalculator
+    ) {
         $this->commissionDistributor = $commissionDistributor;
+        $this->rankCalculator = $rankCalculator;
     }
 
-    /**
-     * Interface d'activation pour l'admin - Liste des utilisateurs inactifs
-     */
     public function index(Request $request)
     {
         $query = User::where('is_active', false)
@@ -63,19 +69,14 @@ class ActivationController extends Controller
         return view('admin.activations.index', compact('inactiveUsers', 'stats', 'packages'));
     }
 
-    /**
-     * Voir les détails d'un utilisateur pour activation
-     */
     public function show($userId)
     {
         $user = User::with(['rank', 'package', 'wallet', 'activationPackage'])
             ->findOrFail($userId);
 
-        // Récupérer les PV/BV actuels de l'utilisateur
         $currentPV = $user->pv_balance ?? 0;
         $currentBV = $user->bv_balance ?? 0;
         
-        // Calculer les PV/BV qui seront ajoutés avec le package d'activation
         $packagePV = 0;
         $packageBV = 0;
         $packageName = 'Aucun';
@@ -125,9 +126,6 @@ class ActivationController extends Controller
         ));
     }
 
-    /**
-     * Générer un code d'activation avec un package
-     */
     public function generateCodeWithPackage(Request $request, $userId)
     {
         $request->validate([
@@ -138,20 +136,17 @@ class ActivationController extends Controller
         $package = Package::findOrFail($request->package_id);
 
         if ($user->is_active) {
-            return back()->with('error', 'Ce compte est déjà actif.');
+            return back()->with('error', 'Ce compte est deja actif.');
         }
 
-        // Générer le code d'activation
         $code = 'ACT-' . strtoupper(substr(md5(uniqid() . time() . rand()), 0, 12));
 
-        // Associer le package au code
         $user->update([
             'activation_code' => $code,
             'activation_code_expires_at' => now()->addDays(7),
             'activation_package_id' => $package->id,
         ]);
 
-        // Envoyer le code par email avec le package
         try {
             $user->notify(new ActivationCodeNotification($code, $package));
         } catch (\Exception $e) {
@@ -166,28 +161,22 @@ class ActivationController extends Controller
         ]);
 
         return redirect()->route('admin.activations.show', $user->id)
-            ->with('success', "Code d'activation généré pour {$user->name} avec le package {$package->name}");
+            ->with('success', "Code d'activation genere pour {$user->name} avec le package {$package->name}");
     }
 
-    /**
-     * Activer manuellement un utilisateur (admin) - Utilise le package d'activation existant
-     * ✅ CORRIGÉ : Distribution automatique des commissions
-     */
     public function activateManually($userId)
     {
         try {
             $user = User::findOrFail($userId);
 
             if ($user->is_active) {
-                return back()->with('error', 'Ce compte est déjà actif.');
+                return back()->with('error', 'Ce compte est deja actif.');
             }
 
-            // Vérifier si l'utilisateur a un package d'activation
             if (!$user->activation_package_id) {
-                return back()->with('error', 'Cet utilisateur n\'a pas de package d\'activation associé. Veuillez d\'abord générer un code d\'activation.');
+                return back()->with('error', 'Cet utilisateur n\'a pas de package d\'activation associe. Veuillez d\'abord generer un code d\'activation.');
             }
 
-            // Récupérer le package
             $package = Package::find($user->activation_package_id);
             if (!$package) {
                 return back()->with('error', 'Le package d\'activation n\'existe plus.');
@@ -195,17 +184,45 @@ class ActivationController extends Controller
 
             DB::beginTransaction();
 
-            // 1. Ajouter les PV et BV
+            // =============================================
+            // AJOUT: Créditer le parrain en PV (10%)
+            // =============================================
+            $sponsorPV = 0;
+            $sponsorName = null;
+            
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
+                if ($sponsor && $sponsor->is_active) {
+                    $sponsorPV = $package->pv_value * 0.10;
+                    $sponsorBV = $package->bv_value * 0.10;
+                    
+                    $sponsor->pv_balance += $sponsorPV;
+                    $sponsor->monthly_pv += $sponsorPV;
+                    $sponsor->bv_balance += $sponsorBV;
+                    $sponsor->monthly_bv += $sponsorBV;
+                    $sponsor->saveQuietly();
+                    $sponsorName = $sponsor->name;
+                    
+                    Log::info('Parrain credite en PV lors de l activation manuelle', [
+                        'parrain_id' => $sponsor->id,
+                        'parrain_name' => $sponsor->name,
+                        'pv_credited' => $sponsorPV,
+                        'filleul_id' => $user->id,
+                        'filleul_name' => $user->name,
+                        'package' => $package->name,
+                    ]);
+                }
+            }
+
+            // Créditer le nouveau membre
             $user->addPV($package->pv_value, 'activation', $package->id);
             
-            // 2. Associer le package
             $user->package_id = $package->id;
             $user->activation_method = 'admin_manual';
             $user->activation_code = null;
             $user->activation_code_expires_at = null;
             $user->activation_package_id = $package->id;
             
-            // 3. Activer le compte
             $user->is_active = true;
             $user->activated_at = now();
             $user->save();
@@ -220,26 +237,58 @@ class ActivationController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            // 4. Mettre à jour le rang
-            if (method_exists($user, 'calculateAndUpdateRank')) {
-                $user->calculateAndUpdateRank();
-            }
-
-            // 5. Créer le wallet si nécessaire
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $user->id],
                 ['balance' => 0, 'currency' => 'USD']
             );
 
-            // ✅ 6. DISTRIBUER LES COMMISSIONS AUTOMATIQUEMENT
+            // Distribuer les commissions financières
             $this->distributeCommissionsForActivation($user, $package);
 
             DB::commit();
 
+            // =============================================
+            // AJOUT: Mettre à jour le grade du parrain
+            // =============================================
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
+                if ($sponsor) {
+                    $this->rankCalculator->recalculateUserRank($sponsor, 'Activation filleul');
+                }
+            }
+
+            // Jobs en arrière-plan
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
+            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            dispatch(new CalculatePVBV($user->id))->onQueue('high');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            // Message de succès
+            $user->refresh();
+            $rankName = $user->rank ?? 'Distributeur';
+            $rankLevel = $user->rank_level ?? 1;
+            
+            $message = "Compte de {$user->name} active avec succes !";
+            $message .= "\nPackage: {$package->name}";
+            $message .= "\nPV attribues: {$package->pv_value} PV et {$package->bv_value} BV";
+            
+            if ($sponsorPV > 0 && $sponsorName) {
+                $message .= "\n\nLe parrain {$sponsorName} a recu " . number_format($sponsorPV, 1) . " PV (10%)";
+            }
+            
+            $message .= "\nGrade: {$rankName} (Niv. {$rankLevel})";
+            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+
             return redirect()->route('admin.activations.show', $user->id)
-                ->with('success', "Compte de {$user->name} activé avec succès ! 
-                    Package {$package->name} attribué avec {$package->pv_value} PV et {$package->bv_value} BV.
-                    Le parrain a reçu sa commission de parrainage.");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -253,10 +302,6 @@ class ActivationController extends Controller
         }
     }
 
-    /**
-     * Activer un utilisateur avec un package spécifique (sélectionné dans la modale)
-     * ✅ CORRIGÉ : Distribution automatique des commissions
-     */
     public function activateWithPackage(Request $request, $userId)
     {
         try {
@@ -273,22 +318,50 @@ class ActivationController extends Controller
             $package = Package::findOrFail($validated['package_id']);
 
             if ($user->is_active) {
-                return redirect()->back()->with('error', 'Ce compte est déjà actif.');
+                return redirect()->back()->with('error', 'Ce compte est deja actif.');
             }
 
             DB::beginTransaction();
 
-            // 1. Ajouter les PV et BV
+            // =============================================
+            // AJOUT: Créditer le parrain en PV (10%)
+            // =============================================
+            $sponsorPV = 0;
+            $sponsorName = null;
+            
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
+                if ($sponsor && $sponsor->is_active) {
+                    $sponsorPV = $package->pv_value * 0.10;
+                    $sponsorBV = $package->bv_value * 0.10;
+                    
+                    $sponsor->pv_balance += $sponsorPV;
+                    $sponsor->monthly_pv += $sponsorPV;
+                    $sponsor->bv_balance += $sponsorBV;
+                    $sponsor->monthly_bv += $sponsorBV;
+                    $sponsor->saveQuietly();
+                    $sponsorName = $sponsor->name;
+                    
+                    Log::info('Parrain credite en PV lors de l activation avec package', [
+                        'parrain_id' => $sponsor->id,
+                        'parrain_name' => $sponsor->name,
+                        'pv_credited' => $sponsorPV,
+                        'filleul_id' => $user->id,
+                        'filleul_name' => $user->name,
+                        'package' => $package->name,
+                    ]);
+                }
+            }
+
+            // Créditer le nouveau membre
             $user->addPV($package->pv_value, 'activation_with_package', $package->id);
             
-            // 2. Associer le package
             $user->activation_package_id = $package->id;
             $user->activation_code = null;
             $user->activation_code_expires_at = null;
             $user->package_id = $package->id;
             $user->activation_method = 'admin_manual_with_package';
             
-            // 3. Activer le compte
             $user->is_active = true;
             $user->activated_at = now();
             $user->save();
@@ -303,25 +376,51 @@ class ActivationController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            // 4. Mettre à jour le rang
-            if (method_exists($user, 'calculateAndUpdateRank')) {
-                $user->calculateAndUpdateRank();
-            }
-
-            // 5. Créer le wallet si nécessaire
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $user->id],
                 ['balance' => 0, 'currency' => 'USD']
             );
 
-            // ✅ 6. DISTRIBUER LES COMMISSIONS AUTOMATIQUEMENT
             $this->distributeCommissionsForActivation($user, $package);
 
             DB::commit();
 
-            $message = "Compte de {$user->name} activé avec le package {$package->name} ! " . 
-                       "{$package->pv_value} PV et {$package->bv_value} BV attribués.
-                       Le parrain a reçu sa commission de parrainage.";
+            // =============================================
+            // AJOUT: Mettre à jour le grade du parrain
+            // =============================================
+            if ($user->parrain_id) {
+                $sponsor = User::find($user->parrain_id);
+                if ($sponsor) {
+                    $this->rankCalculator->recalculateUserRank($sponsor, 'Activation filleul');
+                }
+            }
+
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
+            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            dispatch(new CalculatePVBV($user->id))->onQueue('high');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $rankName = $user->rank ?? 'Distributeur';
+            $rankLevel = $user->rank_level ?? 1;
+
+            $message = "Compte de {$user->name} active avec le package {$package->name} !";
+            $message .= "\n{$package->pv_value} PV et {$package->bv_value} BV attribues";
+            
+            if ($sponsorPV > 0 && $sponsorName) {
+                $message .= "\n\nLe parrain {$sponsorName} a recu " . number_format($sponsorPV, 1) . " PV (10%)";
+            }
+            
+            $message .= "\nGrade: {$rankName} (Niv. {$rankLevel})";
+            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
 
             return redirect()->route('admin.users.show', $user->id)
                 ->with('success', $message);
@@ -346,13 +445,9 @@ class ActivationController extends Controller
         }
     }
 
-    /**
-     * ✅ DISTRIBUER LES COMMISSIONS POUR UNE ACTIVATION
-     */
     private function distributeCommissionsForActivation($user, $package): void
     {
         try {
-            // Vérifier si l'utilisateur a un parrain
             if (!$user->parrain_id) {
                 Log::info('Aucun parrain pour l\'activation, pas de commission', [
                     'user_id' => $user->id,
@@ -360,7 +455,6 @@ class ActivationController extends Controller
                 return;
             }
 
-            // Vérifier que le parrain existe et est actif
             $sponsor = User::find($user->parrain_id);
             if (!$sponsor || !$sponsor->is_active) {
                 Log::info('Le parrain n\'est pas actif, pas de commission', [
@@ -370,7 +464,6 @@ class ActivationController extends Controller
                 return;
             }
 
-            // Récupérer ou créer la période de commission
             $period = CommissionPeriod::firstOrCreate(
                 ['period' => date('Y-m')],
                 [
@@ -382,7 +475,6 @@ class ActivationController extends Controller
                 ]
             );
 
-            // ✅ CORRECTION : source = 'mlm' au lieu de 'activation'
             $order = Order::create([
                 'user_id' => $user->id,
                 'order_number' => 'ACT-' . strtoupper(uniqid()),
@@ -394,7 +486,7 @@ class ActivationController extends Controller
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'payment_method' => 'activation',
-                'source' => 'mlm', // ✅ CHANGÉ : 'activation' -> 'mlm'
+                'source' => 'mlm',
                 'paid_at' => now(),
             ]);
 
@@ -420,7 +512,6 @@ class ActivationController extends Controller
                 'period' => $period->period,
             ]);
 
-            // ✅ Distribuer les commissions
             $commissions = $this->commissionDistributor->distributeCommissions(
                 $user,
                 $package,
@@ -428,14 +519,13 @@ class ActivationController extends Controller
                 $period
             );
 
-            // ✅ Créditer le wallet du parrain pour les commissions sponsor
             foreach ($commissions as $commission) {
                 if ($commission->type === 'sponsor') {
                     $this->creditSponsorWallet($commission);
                 }
             }
 
-            Log::info('Commissions distribuées pour activation', [
+            Log::info('Commissions distribuees pour activation', [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'package' => $package->name,
@@ -453,9 +543,6 @@ class ActivationController extends Controller
         }
     }
 
-    /**
-     * Créditer le wallet du parrain
-     */
     private function creditSponsorWallet(Commission $commission): void
     {
         try {
@@ -482,14 +569,14 @@ class ActivationController extends Controller
                 'completed_at' => now(),
             ]);
 
-            Log::info('Wallet du parrain crédité', [
+            Log::info('Wallet du parrain credite', [
                 'sponsor_id' => $commission->user_id,
                 'amount' => $commission->amount,
                 'commission_id' => $commission->id,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erreur lors du crédit du wallet du parrain', [
+            Log::error('Erreur lors du credit du wallet du parrain', [
                 'sponsor_id' => $commission->user_id,
                 'commission_id' => $commission->id,
                 'error' => $e->getMessage(),
@@ -497,19 +584,16 @@ class ActivationController extends Controller
         }
     }
 
-    /**
-     * Renvoyer le code d'activation par email
-     */
     public function sendCode($userId)
     {
         $user = User::findOrFail($userId);
 
         if ($user->is_active) {
-            return back()->with('error', 'Ce compte est déjà actif.');
+            return back()->with('error', 'Ce compte est deja actif.');
         }
 
         if (!$user->activation_code) {
-            return back()->with('error', 'Aucun code d\'activation généré pour cet utilisateur.');
+            return back()->with('error', 'Aucun code d\'activation genere pour cet utilisateur.');
         }
 
         $package = null;
@@ -524,12 +608,9 @@ class ActivationController extends Controller
             return back()->with('error', 'Erreur lors de l\'envoi du code.');
         }
 
-        return back()->with('success', "Code d'activation renvoyé à {$user->email}");
+        return back()->with('success', "Code d'activation renvoye a {$user->email}");
     }
 
-    /**
-     * Vérifier les PV/BV de l'utilisateur (API)
-     */
     public function checkUserBalance($userId)
     {
         try {

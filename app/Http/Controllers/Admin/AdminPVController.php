@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/AdminPVController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -9,18 +8,25 @@ use App\Models\Package;
 use App\Models\Rank;
 use App\Models\PVHistory;
 use App\Models\Transaction;
+use App\Models\RankHistory;
+use App\Services\MLM\AdvancedRankCalculator;
 use App\Jobs\UpdateRanks;
 use App\Jobs\UpdateTeamPV;
 use App\Jobs\CalculatePVBV;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class AdminPVController extends Controller
 {
-    /**
-     * Afficher la gestion des PV pour un utilisateur spécifique
-     */
+    protected AdvancedRankCalculator $rankCalculator;
+
+    public function __construct(AdvancedRankCalculator $rankCalculator)
+    {
+        $this->rankCalculator = $rankCalculator;
+    }
+
     public function index(Request $request)
     {
         $user = null;
@@ -54,15 +60,12 @@ class AdminPVController extends Controller
 
         if (!$user) {
             return redirect()->route('admin.pv.search')
-                ->with('error', 'Aucun utilisateur trouvé. Veuillez effectuer une recherche.');
+                ->with('error', 'Aucun utilisateur trouve. Veuillez effectuer une recherche.');
         }
 
         return view('admin.pv.index', compact('user', 'packages', 'pvHistory'));
     }
 
-    /**
-     * Page de recherche d'utilisateur
-     */
     public function search(Request $request)
     {
         $results = null;
@@ -78,9 +81,6 @@ class AdminPVController extends Controller
         return view('admin.pv.search', compact('results', 'search'));
     }
 
-    /**
-     * Afficher les détails d'un utilisateur
-     */
     public function show($id)
     {
         $user = User::with(['package', 'rank'])->findOrFail($id);
@@ -92,9 +92,6 @@ class AdminPVController extends Controller
         return view('admin.pv.index', compact('user', 'packages', 'pvHistory'));
     }
 
-    /**
-     * Mettre à jour les PV d'un utilisateur (OPTIMISÉ)
-     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -109,9 +106,8 @@ class AdminPVController extends Controller
         DB::beginTransaction();
         try {
             $oldPv = $user->pv_balance;
-            $oldMonthlyPv = $user->monthly_pv;
-            $oldTeamPv = $user->team_pv;
             $oldPackageId = $user->package_id;
+            $oldRankName = $user->rank ?? 'Distributeur';
 
             $user->pv_balance = (float) $request->pv_balance;
             $user->monthly_pv = (float) $request->monthly_pv;
@@ -120,64 +116,109 @@ class AdminPVController extends Controller
                 $user->team_pv = (float) $request->team_pv;
             }
 
-            if ($request->package_id) {
+            $packageChanged = false;
+            if ($request->has('package_id') && $request->package_id != $oldPackageId) {
+                $packageChanged = true;
                 $user->package_id = $request->package_id;
-                $package = Package::find($request->package_id);
-                if ($package) {
-                    $user->bv_balance = $package->bv_value;
+                
+                if ($request->package_id) {
+                    $package = Package::find($request->package_id);
+                    if ($package) {
+                        $user->bv_balance = $package->bv_value;
+                    }
+                } else {
+                    $user->bv_balance = 0;
                 }
-            } else {
-                $user->package_id = null;
             }
 
             $user->saveQuietly();
 
-            // Utiliser vos jobs existants
-            $user->updateTeamPVOptimized();
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
+            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
 
             DB::commit();
 
-            Log::info('PV mis à jour', [
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
+            dispatch(new UpdateRanks($user->id))->onQueue('low');
+            dispatch(new CalculatePVBV($user->id))->onQueue('low');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $newRankName = $user->rank ?? 'Distributeur';
+            $newRankLevel = $user->rank_level ?? 1;
+            $newPackageName = $user->package?->name ?? 'Aucun';
+
+            $message = "PV de {$user->name} mis a jour avec succes.\n";
+            $message .= "Package: {$newPackageName}\n";
+            $message .= "Grade actuel: {$newRankName} (Niv. {$newRankLevel})\n";
+            $message .= "PV Total: " . number_format($user->pv_balance, 1, ',', ' ') . "\n";
+            
+            if ($packageChanged) {
+                $message .= "Package change !\n";
+            }
+            
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain) {
+                    $message .= "\nLe parrain {$parrain->name} a recu les PV dans son equipe.";
+                    $message .= "\nteam_pv du parrain: " . number_format($parrain->team_pv ?? 0, 1, ',', ' ');
+                }
+            }
+            
+            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+
+            Log::info('PV mis a jour avec jobs', [
                 'user_id' => $user->id,
                 'admin_id' => auth()->id(),
                 'old_pv' => $oldPv,
                 'new_pv' => $request->pv_balance,
+                'old_package_id' => $oldPackageId,
+                'new_package_id' => $user->package_id,
+                'old_rank' => $oldRankName,
+                'new_rank' => $newRankName,
+                'package_changed' => $packageChanged,
             ]);
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " PV de {$user->name} mis à jour avec succès. Les recalculs sont en cours en arrière-plan.");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur mise à jour PV: ' . $e->getMessage());
+            Log::error('Erreur mise a jour PV: ' . $e->getMessage());
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
-    /**
-     * RÉINITIALISATION COMPLÈTE - PV à 0 et Rang Distributeur
-     */
     public function reset(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
         DB::beginTransaction();
         try {
-            // 1. Trouver le rang "Distributeur"
             $rank = Rank::where('name', 'Distributeur')->first();
             
             if (!$rank) {
-                // Si le rang n'existe pas, prendre le premier rang (id = 1)
                 $rank = Rank::find(1);
                 if (!$rank) {
-                    throw new \Exception('Aucun rang trouvé dans la base de données !');
+                    throw new \Exception('Aucun rang trouve dans la base de donnees !');
                 }
             }
 
-            // 2. Sauvegarder les anciennes valeurs pour le log
             $oldValues = [
                 'pv_balance' => $user->pv_balance,
                 'monthly_pv' => $user->monthly_pv,
@@ -190,7 +231,6 @@ class AdminPVController extends Controller
                 'package_id' => $user->package_id,
             ];
 
-            // 3. Réinitialiser TOUS les PV à 0
             $user->pv_balance = 0;
             $user->monthly_pv = 0;
             $user->team_pv = 0;
@@ -204,37 +244,41 @@ class AdminPVController extends Controller
             $user->qualified_branches = 0;
             $user->direct_sponsors_count = 0;
             
-            // 4. Réinitialiser le rang à "Distributeur"
             $user->rank_id = $rank->id;
             $user->rank = $rank->name;
             $user->rank_level = $rank->level ?? 1;
-            
-            // 5. Réinitialiser le package
             $user->package_id = null;
-            
-            // 6. Marquer comme non mis à jour
             $user->rank_update_queued = 0;
             $user->last_rank_update = now();
-            
-            // 7. Sauvegarder sans déclencher d'événements
             $user->saveQuietly();
 
-            // 8. Supprimer l'historique des PV de cet utilisateur
+            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
+
             PVHistory::where('user_id', $user->id)->delete();
 
-            // 9. Dispatcher les jobs pour recalculer les ancêtres
+            DB::commit();
+
             dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
             dispatch(new UpdateRanks($user->id))->onQueue('high');
+            dispatch(new CalculatePVBV($user->id))->onQueue('high');
             
-            // 10. Mettre à jour les ancêtres
             if ($user->parrain_id) {
                 dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
                 dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
             }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+            Cache::forget("rank_calculation_{$user->id}");
 
-            DB::commit();
-
-            Log::info('PV et Rang réinitialisés', [
+            Log::info('PV et Rang reinitialises', [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'admin_id' => auth()->id(),
@@ -242,18 +286,15 @@ class AdminPVController extends Controller
             ]);
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " {$user->name} a été réinitialisé avec succès !");
+                ->with('success', "{$user->name} a ete reinitialise avec succes ! Grade: Distributeur (Niv. 1) Package: Aucun. Les recalculs complets sont en cours en arriere-plan.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur réinitialisation: ' . $e->getMessage());
+            Log::error('Erreur reinitialisation: ' . $e->getMessage());
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Ajouter des PV mensuels (OPTIMISÉ)
-     */
     public function addMonthly(Request $request, $id)
     {
         $request->validate([
@@ -262,42 +303,76 @@ class AdminPVController extends Controller
         ]);
 
         $user = User::findOrFail($id);
+        $amount = (float) $request->amount;
 
         DB::beginTransaction();
         try {
             $oldPv = $user->pv_balance;
-            $oldMonthlyPv = $user->monthly_pv;
 
-            $user->pv_balance += (float) $request->amount;
-            $user->monthly_pv += (float) $request->amount;
+            $user->pv_balance += $amount;
+            $user->monthly_pv += $amount;
+            $user->bv_balance += $amount;
+            $user->monthly_bv += $amount;
             $user->saveQuietly();
 
-            $user->updateTeamPVOptimized();
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
 
             DB::commit();
 
-            Log::info('PV mensuel ajouté', [
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
+            dispatch(new UpdateRanks($user->id))->onQueue('low');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $newRankName = $user->rank ?? 'Distributeur';
+            $newRankLevel = $user->rank_level ?? 1;
+
+            Log::info('PV mensuel ajoute avec jobs', [
                 'user_id' => $user->id,
-                'amount' => $request->amount,
+                'amount' => $amount,
                 'admin_id' => auth()->id(),
             ]);
 
+            $message = "{$amount} PV ajoutes a {$user->name}.\n";
+            $message .= "Grade actuel: {$newRankName} (Niv. {$newRankLevel})\n";
+            $message .= "PV Total: " . number_format($user->pv_balance, 1, ',', ' ') . "\n";
+            
+            if ($user->parrain_id) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain) {
+                    $message .= "\nLe parrain {$parrain->name} a recu {$amount} PV dans son equipe.";
+                    $message .= "\nteam_pv du parrain: " . number_format($parrain->team_pv ?? 0, 1, ',', ' ');
+                }
+            }
+            
+            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " {$request->amount} PV ajoutés à {$user->name}.");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Erreur ajout PV mensuel: ' . $e->getMessage());
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
-    
-
-    /**
-     * AJOUTER DES PV HISTORIQUES (OPTIMISÉ)
-     */
     public function addHistorical(Request $request, $id)
     {
         $request->validate([
@@ -309,12 +384,13 @@ class AdminPVController extends Controller
         ]);
 
         $user = User::findOrFail($id);
+        $amount = (float) $request->amount;
 
         DB::beginTransaction();
         try {
-            $history = PVHistory::create([
+            PVHistory::create([
                 'user_id' => $user->id,
-                'amount' => (float) $request->amount,
+                'amount' => $amount,
                 'date' => $request->date,
                 'period' => $request->period,
                 'type' => $request->type,
@@ -323,35 +399,63 @@ class AdminPVController extends Controller
             ]);
 
             if ($request->type === 'personal' || $request->type === 'monthly') {
-                $user->pv_balance += (float) $request->amount;
-                $user->monthly_pv += (float) $request->amount;
+                $user->pv_balance += $amount;
+                $user->monthly_pv += $amount;
+                $user->bv_balance += $amount;
+                $user->monthly_bv += $amount;
             }
 
             if ($request->type === 'team') {
-                $user->team_pv += (float) $request->amount;
+                $user->team_pv += $amount;
+                $user->team_bv += $amount;
             }
 
             $user->saveQuietly();
 
-            $user->updateTeamPVOptimized();
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
-
-            Transaction::create([
-                'user_id' => $user->id,
-                'type' => 'pv_historical',
-                'amount' => (float) $request->amount,
-                'description' => "Ajout historique de {$request->amount} PV pour la période {$request->period}",
-                'source_type' => 'admin',
-                'source_id' => auth()->id(),
-                'status' => 'completed',
-            ]);
+            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            if ($user->parrain_id && ($request->type === 'personal' || $request->type === 'monthly')) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
 
             DB::commit();
 
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
+            dispatch(new UpdateRanks($user->id))->onQueue('low');
+            dispatch(new CalculatePVBV($user->id))->onQueue('low');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+            $user = User::with(['rank', 'parrain'])->find($user->id);
+
+            $newRankName = $user->rank ?? 'Distributeur';
+            $newRankLevel = $user->rank_level ?? 1;
+
+            $message = "{$amount} PV ajoutes historiquement pour {$user->name} (periode: {$request->period}).\n";
+            $message .= "Grade actuel: {$newRankName} (Niv. {$newRankLevel})\n";
+            
+            if ($user->parrain_id && ($request->type === 'personal' || $request->type === 'monthly')) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain) {
+                    $message .= "\nLe parrain {$parrain->name} a recu {$amount} PV dans son equipe.";
+                    $message .= "\nteam_pv du parrain: " . number_format($parrain->team_pv ?? 0, 1, ',', ' ');
+                }
+            }
+            
+            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " {$request->amount} PV ajoutés historiquement pour {$user->name} (période: {$request->period})");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -360,9 +464,6 @@ class AdminPVController extends Controller
         }
     }
 
-    /**
-     * SUPPRIMER UN HISTORIQUE PV (OPTIMISÉ)
-     */
     public function deleteHistory($historyId)
     {
         $history = PVHistory::findOrFail($historyId);
@@ -371,31 +472,53 @@ class AdminPVController extends Controller
         DB::beginTransaction();
         try {
             $user = User::find($userId);
+            $amount = $history->amount;
             
             if ($history->type === 'personal' || $history->type === 'monthly') {
-                $user->pv_balance -= $history->amount;
-                $user->monthly_pv -= $history->amount;
+                $user->pv_balance -= $amount;
+                $user->monthly_pv -= $amount;
+                $user->bv_balance -= $amount;
+                $user->monthly_bv -= $amount;
             }
             if ($history->type === 'team') {
-                $user->team_pv -= $history->amount;
+                $user->team_pv -= $amount;
+                $user->team_bv -= $amount;
             }
             $user->saveQuietly();
 
-            $user->updateTeamPVOptimized();
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
+            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            if ($user->parrain_id && ($history->type === 'personal' || $history->type === 'monthly')) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
 
             $history->delete();
 
             DB::commit();
 
+            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
+            dispatch(new UpdateRanks($user->id))->onQueue('low');
+            
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
             return response()->json([
                 'success' => true,
-                'message' => 'Historique supprimé avec succès',
+                'message' => 'Historique supprime avec succes',
                 'user' => [
                     'pv_balance' => $user->pv_balance,
                     'monthly_pv' => $user->monthly_pv,
                     'team_pv' => $user->team_pv,
+                    'rank' => $user->rank ?? 'Distributeur',
+                    'rank_level' => $user->rank_level ?? 1,
                 ]
             ]);
 
@@ -410,28 +533,35 @@ class AdminPVController extends Controller
         }
     }
 
-    /**
-     * Recalculer le grade d'un utilisateur (dispatch un job)
-     */
     public function recalculateRank(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
         try {
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
             dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
+            dispatch(new UpdateRanks($user->id))->onQueue('high');
             
+            if ($user->parrain_id) {
+                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
+                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+            }
+            
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $message = "Recalcul du grade de {$user->name} en cours en arriere-plan.\n";
+            $message .= "Le resultat sera visible dans quelques instants.";
+
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', " Recalcul du grade de {$user->name} en cours. Le résultat sera visible dans quelques secondes.");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
+            Log::error('Erreur recalcul grade: ' . $e->getMessage());
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Exporter les données PV
-     */
     public function export(Request $request)
     {
         $query = User::with(['package', 'rank']);
@@ -458,7 +588,7 @@ class AdminPVController extends Controller
 
             fputcsv($file, [
                 'ID', 'Nom', 'Email', 'Code Sponsor', 'Grade', 'Package',
-                'PV Total', 'BV', 'PV Mensuel', 'PV Équipe', 'Cumul PV', 'Statut'
+                'PV Total', 'BV', 'PV Mensuel', 'PV Equipe', 'Cumul PV', 'Statut'
             ]);
 
             foreach ($users as $user) {
@@ -467,7 +597,7 @@ class AdminPVController extends Controller
                     $user->name,
                     $user->email,
                     $user->sponsor_id ?? '',
-                    $user->rank_name ?? 'Distributeur',
+                    $user->rank ?? 'Distributeur',
                     $user->package?->name ?? 'Aucun',
                     $user->pv_balance ?? 0,
                     $user->bv_balance ?? 0,
@@ -484,27 +614,27 @@ class AdminPVController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Récupérer les informations de grade
-     */
     public function getRankInfo($id)
     {
         $user = User::findOrFail($id);
         
+        $progress = $this->rankCalculator->getProgress($user);
+        
         return response()->json([
-            'current_rank' => $user->rank_name ?? 'Distributeur',
+            'current_rank' => $user->rank ?? 'Distributeur',
+            'rank_level' => $user->rank_level ?? 1,
             'pv_balance' => $user->pv_balance ?? 0,
             'team_pv' => $user->team_pv ?? 0,
             'cumul_pv' => ($user->pv_balance ?? 0) + ($user->team_pv ?? 0),
-            'next_rank' => null,
-            'progress_percentage' => 0,
-            'pv_needed' => 0,
+            'next_rank' => $progress['next_rank'] ?? null,
+            'next_level' => $progress['next_level'] ?? null,
+            'progress_percentage' => $progress['progress_percentage'] ?? 0,
+            'pv_needed' => $progress['pv_needed'] ?? 0,
+            'progress_pv' => $progress['progress_pv'] ?? 0,
+            'total_pv_needed' => $progress['total_pv_needed'] ?? 0,
         ]);
     }
 
-    /**
-     * Statistiques PV
-     */
     public function stats()
     {
         $stats = [
@@ -514,14 +644,16 @@ class AdminPVController extends Controller
             'total_monthly_pv' => User::where('is_active', 1)->sum('monthly_pv'),
             'users_with_pv' => User::where('is_active', 1)->where('pv_balance', '>', 0)->count(),
             'users_with_team' => User::where('is_active', 1)->where('team_pv', '>', 0)->count(),
+            'rank_distribution' => User::where('is_active', 1)
+                ->select('rank', DB::raw('count(*) as count'))
+                ->groupBy('rank')
+                ->get()
+                ->toArray(),
         ];
 
         return view('admin.pv.stats', compact('stats'));
     }
 
-    /**
-     * Historique des PV
-     */
     public function history($userId = null)
     {
         $query = PVHistory::with(['user', 'creator']);
@@ -534,5 +666,93 @@ class AdminPVController extends Controller
             ->paginate(50);
 
         return view('admin.pv.history', compact('history', 'userId'));
+    }
+
+    // ============================================================
+    // METHODES DE RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS ET ANCETRES
+    // ============================================================
+
+    /**
+     * Met à jour le team_pv du parrain et de TOUS ses ancêtres
+     */
+    private function updateParrainAndAncestorsTeamPV(User $parrain): void
+    {
+        try {
+            // 1. Mettre à jour le parrain direct
+            $this->updateParrainTeamPV($parrain);
+
+            // 2. Mettre à jour TOUS les ancêtres du parrain
+            $ancestor = $parrain->parrain;
+            $level = 0;
+            $maxLevel = 10;
+            
+            while ($ancestor && $level < $maxLevel) {
+                $this->updateParrainTeamPV($ancestor);
+                $ancestor = $ancestor->parrain;
+                $level++;
+            }
+
+            Log::info('team_pv mis a jour pour le parrain et tous ses ancetres', [
+                'parrain_id' => $parrain->id,
+                'parrain_name' => $parrain->name,
+                'ancestors_updated' => $level,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur mise a jour team_pv du parrain et ancetres', [
+                'parrain_id' => $parrain->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Met à jour le team_pv d'un seul parrain
+     */
+    private function updateParrainTeamPV(User $parrain): void
+    {
+        try {
+            $teamData = $this->calculateTeamPVRecursive($parrain);
+
+            $parrain->team_pv = $teamData['pv'];
+            $parrain->team_bv = $teamData['bv'];
+            $parrain->total_team = $teamData['total'];
+            $parrain->saveQuietly();
+
+            $this->rankCalculator->recalculateUserRank($parrain, 'Mise a jour team_pv');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur mise a jour team_pv du parrain', [
+                'parrain_id' => $parrain->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Calcul récursif du team_pv avec TOUS les descendants
+     */
+    private function calculateTeamPVRecursive(User $user): array
+    {
+        $totalPV = $user->pv_balance ?? 0;
+        $totalBV = $user->bv_balance ?? 0;
+        $totalCount = 0;
+
+        $filleuls = User::where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($filleuls as $filleul) {
+            $childData = $this->calculateTeamPVRecursive($filleul);
+            $totalPV += $childData['pv'];
+            $totalBV += $childData['bv'];
+            $totalCount += 1 + $childData['total'];
+        }
+
+        return [
+            'pv' => $totalPV,
+            'bv' => $totalBV,
+            'total' => $totalCount,
+        ];
     }
 }

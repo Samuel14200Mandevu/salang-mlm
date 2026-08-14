@@ -1,5 +1,4 @@
 <?php
-// app/Console/Commands/CheckMonthlyPVStatus.php
 
 namespace App\Console\Commands;
 
@@ -10,47 +9,31 @@ use Carbon\Carbon;
 
 class CheckMonthlyPVStatus extends Command
 {
-    protected $signature = 'pv:check-status {--user= : ID de l\'utilisateur spécifique}';
-    protected $description = 'Vérifier l\'état des PV mensuels';
-
-    private function icon(string $type): string
-    {
-        $icons = [
-            'info' => '<fg=blue>ℹ</>',
-            'success' => '<fg=green>✓</>',
-            'warning' => '<fg=yellow>⚠</>',
-            'database' => '<fg=magenta>◉</>',
-            'trophy' => '<fg=yellow>★</>',
-        ];
-        return $icons[$type] ?? '';
-    }
+    protected $signature = 'pv:check-status-detail {--user= : ID de l utilisateur specifique}';
+    protected $description = 'Verifier l etat des PV mensuels en detail';
 
     public function handle()
     {
-        $this->info($this->icon('database') . ' État des PV mensuels');
-        $this->line('   Date: ' . now()->toDateString());
-        $this->newLine();
-
         $userId = $this->option('user');
 
         if ($userId) {
             $user = User::find($userId);
             if (!$user) {
-                $this->error('✗ Utilisateur ID ' . $userId . ' non trouvé');
+                $this->error('Utilisateur ID ' . $userId . ' non trouve');
                 return 1;
             }
 
             $this->table(
-                ['Métrique', 'Valeur'],
+                ['Metrique', 'Valeur'],
                 [
                     ['ID', $user->id],
                     ['Nom', $user->name],
                     ['Type', $user->user_type ?? 'member'],
                     ['PV mensuel', $user->monthly_pv ?? 0],
                     ['BV mensuel', $user->monthly_bv ?? 0],
-                    ['PV cumulé', $user->pv_balance ?? 0],
-                    ['BV cumulé', $user->bv_balance ?? 0],
-                    ['PV d\'équipe', $user->team_pv ?? 0],
+                    ['PV cumule', $user->pv_balance ?? 0],
+                    ['BV cumule', $user->bv_balance ?? 0],
+                    ['PV d equipe', $user->team_pv ?? 0],
                     ['Grade', $user->rank_name ?? 'Distributeur'],
                     ['Niveau', $user->rank_level ?? 1],
                 ]
@@ -60,13 +43,10 @@ class CheckMonthlyPVStatus extends Command
 
         $totalUsers = User::where('is_active', true)->count();
         $usersWithPV = User::where('monthly_pv', '>', 0)->count();
-        
-        // ✅ Statistiques par type d'utilisateur
         $members = User::where('user_type', 'member')->where('is_active', true)->count();
         $clients = User::where('user_type', 'client')->where('is_active', true)->count();
         $membersWithPV = User::where('user_type', 'member')->where('monthly_pv', '>', 0)->count();
         $clientsWithPV = User::where('user_type', 'client')->where('monthly_pv', '>', 0)->count();
-        
         $totalPV = User::sum('monthly_pv');
         $totalBV = User::sum('monthly_bv');
         $currentPeriod = date('Y-m');
@@ -79,16 +59,16 @@ class CheckMonthlyPVStatus extends Command
             ->get(['id', 'name', 'monthly_pv', 'rank_id', 'user_type']);
 
         $this->table(
-            ['Métrique', 'Valeur'],
+            ['Metrique', 'Valeur'],
             [
-                ['Période', $currentPeriod],
-                ['Statut période', $period ? $period->status_label : 'Aucune'],
+                ['Periode', $currentPeriod],
+                ['Statut periode', $period ? $period->status_label : 'Aucune'],
                 ['Total utilisateurs actifs', $totalUsers],
-                ['  └ Membres MLM', $members],
-                ['  └ Clients POS', $clients],
+                ['  Membres MLM', $members],
+                ['  Clients POS', $clients],
                 ['Utilisateurs avec PV', $usersWithPV],
-                ['  └ Membres avec PV', $membersWithPV],
-                ['  └ Clients avec PV', $clientsWithPV],
+                ['  Membres avec PV', $membersWithPV],
+                ['  Clients avec PV', $clientsWithPV],
                 ['Total PV mensuel', number_format($totalPV, 0)],
                 ['Total BV mensuel', number_format($totalBV, 0)],
                 ['PV moyen (membres)', $membersWithPV > 0 ? number_format(User::where('user_type', 'member')->sum('monthly_pv') / $membersWithPV, 0) : 0],
@@ -100,7 +80,7 @@ class CheckMonthlyPVStatus extends Command
 
         if ($topUsers->isNotEmpty()) {
             $this->newLine();
-            $this->info($this->icon('trophy') . ' Top 10 des utilisateurs avec le plus de PV mensuel:');
+            $this->info('Top 10 des utilisateurs avec le plus de PV mensuel:');
             
             $this->table(
                 ['#', 'ID', 'Nom', 'Type', 'PV', 'Grade'],

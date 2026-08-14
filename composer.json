@@ -21,8 +21,10 @@
         "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/livewire": "^4.3",
         "phpoffice/phpspreadsheet": "^5.9",
+        "setasign/fpdi": "^2.6",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^8.0"
+        "spatie/laravel-permission": "^8.0",
+        "tecnickcom/tcpdf": "^7.0"
     },
     "require-dev": {
         "dshyam3001/laravel-boost-amazon-q": "^1.0",

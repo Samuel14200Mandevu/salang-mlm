@@ -1,5 +1,4 @@
 <?php
-// app/Console/Commands/CheckPVStatus.php
 
 namespace App\Console\Commands;
 
@@ -7,100 +6,91 @@ use App\Models\User;
 use App\Models\Rank;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CheckPVStatus extends Command
 {
-    protected $signature = 'pv:check-status';
-    protected $description = 'Vérifier l\'état des PV mensuels des utilisateurs';
+    protected $signature = 'pv:check-status {--user= : ID de l utilisateur specifique}';
+    protected $description = 'Verifier l etat des PV mensuels';
 
     public function handle()
     {
-        $this->info('📊 Vérification de l\'état des PV mensuels...');
+        $userId = $this->option('user');
 
-        $stats = [
-            'total_users' => User::where('is_active', true)->count(),
-            'users_with_pv' => User::where('is_active', true)->where('monthly_pv', '>', 0)->count(),
-            'users_with_zero_pv' => User::where('is_active', true)->where('monthly_pv', 0)->count(),
-            'total_pv' => User::where('is_active', true)->sum('monthly_pv'),
-            'date' => now()->format('Y-m-d H:i:s'),
-            'month' => now()->format('Y-m'),
-        ];
+        if ($userId) {
+            $user = User::find($userId);
+            if (!$user) {
+                $this->error('Utilisateur ID ' . $userId . ' non trouve');
+                return 1;
+            }
 
-        $this->info("📊 Statistiques du mois de {$stats['month']}:");
-        $this->line("   👥 Total utilisateurs actifs: {$stats['total_users']}");
-        $this->line("   📈 Avec PV > 0: {$stats['users_with_pv']}");
-        $this->line("   📉 Avec PV = 0: {$stats['users_with_zero_pv']}");
-        $this->line("   💰 Total PV cumulé: {$stats['total_pv']}");
+            $this->table(
+                ['Metrique', 'Valeur'],
+                [
+                    ['ID', $user->id],
+                    ['Nom', $user->name],
+                    ['Type', $user->user_type ?? 'member'],
+                    ['PV mensuel', $user->monthly_pv ?? 0],
+                    ['BV mensuel', $user->monthly_bv ?? 0],
+                    ['PV cumule', $user->pv_balance ?? 0],
+                    ['BV cumule', $user->bv_balance ?? 0],
+                    ['PV d equipe', $user->team_pv ?? 0],
+                    ['Grade', $user->rank_name ?? 'Distributeur'],
+                    ['Niveau', $user->rank_level ?? 1],
+                ]
+            );
+            return 0;
+        }
 
-        // Top 10 avec rank_id
-        $topUsers = User::where('is_active', true)
-            ->where('monthly_pv', '>', 0)
+        $totalUsers = User::where('is_active', true)->count();
+        $usersWithPV = User::where('monthly_pv', '>', 0)->count();
+        $members = User::where('user_type', 'member')->where('is_active', true)->count();
+        $clients = User::where('user_type', 'client')->where('is_active', true)->count();
+        $membersWithPV = User::where('user_type', 'member')->where('monthly_pv', '>', 0)->count();
+        $clientsWithPV = User::where('user_type', 'client')->where('monthly_pv', '>', 0)->count();
+        $totalPV = User::sum('monthly_pv');
+        $totalBV = User::sum('monthly_bv');
+        $currentPeriod = date('Y-m');
+
+        $topUsers = User::where('monthly_pv', '>', 0)
             ->orderBy('monthly_pv', 'desc')
             ->limit(10)
-            ->get(['id', 'name', 'email', 'monthly_pv', 'rank_id']);
+            ->get(['id', 'name', 'monthly_pv', 'rank_id', 'user_type']);
+
+        $this->table(
+            ['Metrique', 'Valeur'],
+            [
+                ['Periode', $currentPeriod],
+                ['Total utilisateurs actifs', $totalUsers],
+                ['  Membres MLM', $members],
+                ['  Clients POS', $clients],
+                ['Utilisateurs avec PV', $usersWithPV],
+                ['  Membres avec PV', $membersWithPV],
+                ['  Clients avec PV', $clientsWithPV],
+                ['Total PV mensuel', number_format($totalPV, 0)],
+                ['Total BV mensuel', number_format($totalBV, 0)],
+                ['PV moyen (membres)', $membersWithPV > 0 ? number_format(User::where('user_type', 'member')->sum('monthly_pv') / $membersWithPV, 0) : 0],
+                ['PV moyen (clients)', $clientsWithPV > 0 ? number_format(User::where('user_type', 'client')->sum('monthly_pv') / $clientsWithPV, 0) : 0],
+            ]
+        );
 
         if ($topUsers->isNotEmpty()) {
             $this->newLine();
-            $this->info('🏆 Top 10 utilisateurs par PV mensuel:');
-            foreach ($topUsers as $index => $user) {
-                // Récupérer le nom du grade via rank_id
-                $rankName = 'Distributeur';
-                if ($user->rank_id) {
-                    $rank = Rank::find($user->rank_id);
-                    if ($rank) {
-                        $rankName = $rank->name;
-                    }
-                }
-                $this->line("   " . ($index + 1) . ". {$user->name} - {$user->monthly_pv} PV - Grade: {$rankName}");
-            }
+            $this->info('Top 10 des utilisateurs avec le plus de PV mensuel:');
+            
+            $this->table(
+                ['#', 'ID', 'Nom', 'Type', 'PV', 'Grade'],
+                $topUsers->map(function ($user, $index) {
+                    return [
+                        $index + 1,
+                        $user->id,
+                        $user->name,
+                        $user->user_type ?? 'member',
+                        number_format($user->monthly_pv, 0),
+                        $user->rank_name ?? 'Distributeur',
+                    ];
+                })->toArray()
+            );
         }
-
-        // Répartition des grades avec rank_id
-        $this->newLine();
-        $this->info('📊 Répartition des grades:');
-        
-        // Récupérer tous les utilisateurs groupés par rank_id
-        $rankStats = User::where('is_active', true)
-            ->select('rank_id', DB::raw('count(*) as total'))
-            ->groupBy('rank_id')
-            ->orderBy('rank_id')
-            ->get();
-
-        if ($rankStats->isNotEmpty()) {
-            foreach ($rankStats as $stat) {
-                $rankName = 'Distributeur';
-                if ($stat->rank_id) {
-                    $rank = Rank::find($stat->rank_id);
-                    if ($rank) {
-                        $rankName = $rank->name;
-                    }
-                }
-                $this->line("   - {$rankName}: {$stat->total} utilisateurs");
-            }
-        } else {
-            $this->line("   Aucun grade attribué");
-        }
-
-        // Détail des utilisateurs avec leurs grades
-        $this->newLine();
-        $this->info('📋 Détail des utilisateurs:');
-        $users = User::where('is_active', true)
-            ->orderBy('id')
-            ->get(['id', 'name', 'email', 'monthly_pv', 'rank_id', 'pv_balance', 'team_pv']);
-
-        foreach ($users as $user) {
-            $rankName = 'Distributeur';
-            if ($user->rank_id) {
-                $rank = Rank::find($user->rank_id);
-                if ($rank) {
-                    $rankName = $rank->name;
-                }
-            }
-            $this->line("   ID: {$user->id} - {$user->name} - PV Mensuel: {$user->monthly_pv} - PV Cumulé: {$user->pv_balance} - Team PV: {$user->team_pv} - Grade: {$rankName}");
-        }
-
-        Log::info('État des PV mensuels', $stats);
 
         return 0;
     }

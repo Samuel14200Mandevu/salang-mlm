@@ -9,11 +9,11 @@ use Illuminate\Console\Command;
 class SyncHigherRanks extends Command
 {
     protected $signature = 'higher-ranks:sync';
-    protected $description = 'Synchroniser les grades supérieurs';
+    protected $description = 'Synchroniser les grades superieurs';
 
-    public function handle(AdvancedRankCalculator $calculator): void
+    public function handle(AdvancedRankCalculator $calculator)
     {
-        $this->info('Synchronisation des grades supérieurs...');
+        $this->info('Synchronisation des grades superieurs...');
         
         $period = now()->format('Y-m');
         $users = User::where('is_active', true)->get();
@@ -33,6 +33,6 @@ class SyncHigherRanks extends Command
             }
         }
 
-        $this->info("✅ {$updated} grades supérieurs synchronisés");
+        $this->info($updated . ' grades superieurs synchronises');
     }
 }
