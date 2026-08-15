@@ -428,6 +428,22 @@ class User extends Authenticatable
         }
     }
 
+/**
+ * Relation avec la wishlist
+ */
+public function wishlist()
+{
+    return $this->hasMany(Wishlist::class);
+}
+
+/**
+ * Relation directe avec les produits dans la wishlist
+ */
+public function wishlistProducts()
+{
+    return $this->belongsToMany(Product::class, 'wishlist')->withTimestamps();
+}
+
     /**
      * RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS (RECURSIF)
      */
