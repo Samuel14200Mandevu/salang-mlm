@@ -185,6 +185,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/downlines', [NetworkController::class, 'downlines'])->name('downlines');
         Route::get('/search', [NetworkController::class, 'search'])->name('search');
         Route::get('/stats', [NetworkController::class, 'apiStats'])->name('stats');
+        Route::get('/children/{id}', [NetworkController::class, 'getChildren'])->name('children');
     });
 
     // ============================================================
@@ -329,6 +330,15 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/customers/search', [CashierController::class, 'searchCustomer'])->name('customers.search');
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
     Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
+
+    // ============================================================
+    // CONSULTATIONS CASHIER
+    // ============================================================
+    Route::get('/consultations', [App\Http\Controllers\Cashier\ConsultationController::class, 'index'])->name('consultations.index');
+    Route::get('/consultations/create', [App\Http\Controllers\Cashier\ConsultationController::class, 'create'])->name('consultations.create');
+    Route::post('/consultations', [App\Http\Controllers\Cashier\ConsultationController::class, 'store'])->name('consultations.store');
+    Route::get('/consultations/{consultation}', [App\Http\Controllers\Cashier\ConsultationController::class, 'show'])->name('consultations.show');
+    Route::get('/consultations/{consultation}/print', [App\Http\Controllers\Cashier\ConsultationController::class, 'print'])->name('consultations.print');
     
     // ============================================================
     // MEMBRES - Gestion complète AVEC création
@@ -345,7 +355,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
     
     // ============================================================
-    // VÉRIFICATION DU PARRAIN (AJAX) - ✅ DÉPLACÉ ICI
+    // VÉRIFICATION DU PARRAIN 
     // ============================================================
     Route::get('/check-sponsor', [CashierController::class, 'checkSponsor'])->name('check-sponsor');
     
@@ -418,6 +428,14 @@ Route::prefix('admin')
             Route::post('/import', [AdminUserController::class, 'import'])->name('import');
         });
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
+
+        Route::prefix('consultations')->name('consultations.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\ConsultationController::class, 'index'])->name('index');
+            Route::get('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'show'])->name('show');
+            Route::put('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'update'])->name('update');
+            Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
+            Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
+        });
 
         // ============================================================
         // GESTION DES PV (Points de Volume) - ADMIN
@@ -653,6 +671,14 @@ Route::prefix('admin')
             Route::get('/withdrawals', [AdminReportController::class, 'withdrawals'])->name('withdrawals');
             Route::get('/export', [AdminReportController::class, 'export'])->name('export');
             Route::get('/pdf/{type}', [AdminReportController::class, 'exportPdf'])->name('pdf');
+            
+            // ═══════════════════════════════════════════════════════════════
+            // RAPPORT RÉSEAU UTILISATEUR
+            // ═══════════════════════════════════════════════════════════════
+            Route::get('/user-network/search', [AdminReportController::class, 'userNetworkSearch'])->name('user-network.search');
+            Route::get('/user-network', [AdminReportController::class, 'userNetwork'])->name('user-network');
+            Route::get('/user-network/{userId}', [AdminReportController::class, 'userNetwork'])->name('user-network.view');
+            Route::get('/user-network/{userId}/pdf', [AdminReportController::class, 'exportUserNetworkPdf'])->name('user-network.pdf');
         });
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
 

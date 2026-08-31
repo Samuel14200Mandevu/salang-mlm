@@ -20,10 +20,18 @@
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Rapport des utilisateurs</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse detaillee des utilisateurs</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Rapport des membres</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Analyse detaillee des membres</p>
         </div>
         <div class="flex flex-wrap gap-2">
+            <!-- ✅ LIEN VERS LE RAPPORT RÉSEAU -->
+            <a href="{{ route('admin.reports.user-network.search') }}" 
+               class="btn btn-info btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Réseau membre
+            </a>
             <a href="{{ route('admin.reports.pdf', ['type' => 'users']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
                class="btn btn-primary btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,6 +175,8 @@
                         <th class="text-xs sm:text-sm text-right">PV</th>
                         <th class="text-xs sm:text-sm">Statut</th>
                         <th class="text-xs sm:text-sm text-right hidden xl:table-cell">Inscrit</th>
+                        <!-- ✅ NOUVELLE COLONNE POUR LE RÉSEAU -->
+                        <th class="text-xs sm:text-sm text-center hidden lg:table-cell">Réseau</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -187,14 +197,25 @@
                             <td class="text-right text-[var(--text-secondary)] text-xs sm:text-sm hidden xl:table-cell">
                                 {{ $user->created_at->format('d/m/Y') }}
                             </td>
+                            <!-- ✅ BOUTON VOIR LE RÉSEAU -->
+                            <td class="text-center hidden lg:table-cell">
+                                <a href="{{ route('admin.reports.user-network.view', $user->id) }}" 
+                                   class="btn btn-info btn-xs" 
+                                   title="Voir le réseau de {{ $user->name }}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    Réseau
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
+                            <td colspan="8" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                Aucun utilisateur
+                                Aucun membre
                             </td>
                         </tr>
                     @endforelse

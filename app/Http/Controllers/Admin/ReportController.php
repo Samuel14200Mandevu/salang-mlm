@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use setasign\Fpdi\TcpdfFpdi;
+use setasign\Fpdi\Tcpdf\Fpdi;
 
 class ReportController extends Controller
 {
@@ -1065,5 +1066,408 @@ class ReportController extends Controller
         });
 
         return array_slice($activities, 0, 10);
+    }
+
+    /**
+     * Page de recherche d'utilisateur
+     */
+    public function userNetworkSearch(Request $request)
+    {
+        $query = User::select('id', 'name', 'email', 'sponsor_id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%")
+                ->orWhere('sponsor_id', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('name')->limit(100)->get();
+
+        return view('admin.reports.user_network_search', compact('users'));
+    }
+/**
+     * Affiche l'arbre réseau d'un utilisateur ou la vue de recherche.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|string|null  $userId
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function userNetwork(Request $request, $userId = null)
+    {
+        try {
+            $targetUserId = $userId ?? $request->get('user_id');
+
+            if (!$targetUserId) {
+                $query = User::select('id', 'name', 'email', 'sponsor_id', 'parrain_id');
+
+                if ($request->filled('search')) {
+                    $search = trim($request->search);
+
+                    if (is_numeric($search)) {
+                        $directUser = User::find($search);
+                        if ($directUser) {
+                            return redirect()->route('admin.reports.user-network.view', ['userId' => $directUser->id]);
+                        }
+                    }
+
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('email', 'LIKE', "%{$search}%")
+                          ->orWhere('sponsor_id', 'LIKE', "%{$search}%")
+                          ->orWhere('parrain_id', 'LIKE', "%{$search}%");
+                    });
+
+                    $users = $query->orderBy('name')->get();
+
+                    if ($users->count() === 1) {
+                        return redirect()->route('admin.reports.user-network.view', ['userId' => $users->first()->id]);
+                    }
+                } else {
+                    $users = $query->orderBy('name')->limit(100)->get();
+                }
+
+                return view('admin.reports.user_network_search', compact('users'));
+            }
+
+            $user = User::with(['rank', 'package', 'wallet'])->findOrFail($targetUserId);
+
+            // Construction de la structure networkData attendue par la vue
+            $treeData  = $this->getUserNetworkTree($user);
+            $ancestors = $this->getUserAncestors($user);
+            
+            $networkData = [
+                'ancestors' => $ancestors,
+                'children'  => $treeData['children'] ?? [],
+            ];
+            
+            $stats = $this->getNetworkStats($user);
+
+            return view('admin.reports.user_network', compact('user', 'networkData', 'stats'));
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning("Utilisateur introuvable pour le rapport réseau ID: {$targetUserId}");
+            return redirect()
+                ->route('admin.reports.user-network.search')
+                ->with('error', "Aucun membre trouvé avec l'identifiant {$targetUserId}.");
+
+        } catch (\Exception $e) {
+            Log::error('Erreur rapport réseau: ' . $e->getMessage(), [
+                'user_id' => $userId ?? $request->get('user_id'),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->route('admin.reports.user-network.search')
+                ->with('error', 'Erreur lors du chargement du réseau : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Exporter le rapport réseau en PDF
+     */
+public function exportUserNetworkPdf(Request $request, $userId)
+{
+    try {
+        // Augmenter temporairement les limites pour Dompdf sur les gros réseaux
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M'); // Passer à 1 Go si nécessaire
+
+        $user = User::with(['rank', 'package', 'wallet', 'parrain'])->findOrFail($userId);
+
+        $treeData  = $this->getUserNetworkTree($user);
+        $ancestors = $this->getUserAncestors($user);
+
+        $networkData = [
+            'ancestors' => $ancestors,
+            'children'  => $treeData['children'] ?? [],
+        ];
+
+        $stats = $this->getNetworkStats($user);
+
+        // Options d'optimisation pour Dompdf
+        $pdf = \Pdf::loadView('admin.reports.pdf.user_network', compact('user', 'networkData', 'stats'))
+                   ->setPaper('a4', 'portrait')
+                   ->setOptions([
+                       'isHtml5ParserEnabled' => true,
+                       'isRemoteEnabled'      => true,
+                       'enable_php'           => false,
+                   ]);
+
+        return $pdf->download("reseau-{$user->name}-{$user->id}.pdf");
+
+    } catch (\Exception $e) {
+        Log::error('Erreur export PDF réseau: ' . $e->getMessage());
+        return back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+    }
+}
+
+    /**
+     * Récupère la liste des parrains/ascendants d'un utilisateur jusqu'à la racine.
+     */
+    private function getUserAncestors($user)
+    {
+        $ancestors = [];
+        $current = $user;
+        $level = 0;
+
+        while ($current && $current->parrain_id) {
+            $parrain = User::with(['rank', 'package'])
+                ->select(['id', 'name', 'email', 'parrain_id', 'sponsor_id', 'rank_id', 'package_id'])
+                ->find($current->parrain_id);
+
+            // Prévention de boucle infinie
+            if (!$parrain || collect($ancestors)->pluck('user.id')->contains($parrain->id)) {
+                break;
+            }
+
+            $ancestors[] = [
+                'user' => [
+                    'id'         => $parrain->id,
+                    'name'       => $parrain->name,
+                    'email'      => $parrain->email,
+                    'sponsor_id' => $parrain->sponsor_id,
+                    'rank'       => $parrain->rank?->name ?? 'Distributeur',
+                    'package'    => $parrain->package?->name ?? 'Aucun',
+                ],
+                'relationship' => $this->getAncestorRelationship($level),
+            ];
+
+            $current = $parrain;
+            $level++;
+        }
+
+        return $ancestors;
+    }
+
+    /**
+     * Récupérer l'arbre généalogique complet d'un utilisateur sans dépasser la mémoire
+     */
+    private function getUserNetworkTree(User $user)
+{
+    $descendantIds = $this->getAllDescendantIds($user->id);
+
+    // Charger les utilisateurs
+    $allUsers = User::select(['id', 'name', 'email', 'parrain_id', 'sponsor_id', 'rank_id', 'package_id', 'pv_balance', 'team_pv', 'is_active'])
+        ->with(['rank:id,name', 'package:id,name'])
+        ->whereIn('id', array_merge([$user->id], $descendantIds))
+        ->get()
+        ->keyBy('id');
+
+    if ($allUsers->isEmpty()) {
+        return [];
+    }
+
+    $nodes = [];
+    foreach ($allUsers as $u) {
+        // Encapsulation sous la clé 'user' attendue par la vue Blade
+        $nodes[$u->id] = [
+            'user' => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'sponsor_id' => $u->sponsor_id,
+                'rank'       => $u->rank?->name ?? 'Distributeur',
+                'package'    => $u->package?->name ?? 'Starter',
+                'pv_balance' => $u->pv_balance ?? 0,
+                'team_pv'    => $u->team_pv ?? 0,
+                'is_active'  => $u->is_active ?? 1,
+            ],
+            'children' => [],
+        ];
+    }
+
+    foreach ($allUsers as $u) {
+        if ($u->parrain_id && isset($nodes[$u->parrain_id]) && $u->id !== $user->id) {
+            $nodes[$u->parrain_id]['children'][] = &$nodes[$u->id];
+        }
+    }
+
+    return $nodes[$user->id] ?? [];
+}
+
+    /**
+     * Récupérer les descendants d'un utilisateur (arbre récursif bridé par profondeur)
+     */
+    private function getUserDescendants($user, $depth = 0, $maxDepth = 10)
+    {
+        if ($depth > $maxDepth) return [];
+
+        $children = User::where('parrain_id', $user->id)
+            ->with(['rank', 'package'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $result = [];
+
+        foreach ($children as $child) {
+            $result[] = [
+                'user'           => $this->formatUserForTree($child),
+                'depth'          => $depth + 1,
+                'children'       => $this->getUserDescendants($child, $depth + 1, $maxDepth),
+                'total_children' => $this->countAllDescendants($child->id),
+                'is_direct'       => $depth === 0,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Formater un utilisateur pour l'arbre
+     */
+    private function formatUserForTree($user)
+    {
+        return [
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'sponsor_id'     => $user->sponsor_id,
+            'rank'           => $user->rank?->name ?? 'Distributeur',
+            'rank_level'     => $user->rank_level ?? 0,
+            'package'        => $user->package?->name ?? 'Aucun',
+            'pv_balance'     => $user->pv_balance ?? 0,
+            'team_pv'        => $user->team_pv ?? 0,
+            'is_active'      => $user->is_active,
+            'kyc_status'     => $user->kyc_status ?? 'not_submitted',
+            'created_at'     => $user->created_at?->format('d/m/Y'),
+            'total_earnings' => $user->total_earnings ?? 0,
+            'total_sponsors' => $user->total_sponsors ?? 0,
+            'user_type'      => $user->user_type ?? 'member',
+        ];
+    }
+
+    /**
+     * Statistiques du réseau
+     */
+    private function getNetworkStats(User $user)
+    {
+        $descendantIds = $this->getAllDescendantIds($user->id);
+        
+        $descendants = User::with('rank')
+            ->whereIn('id', $descendantIds)
+            ->get();
+
+        $totalMembers = $descendants->count();
+        $directChildren = User::where('parrain_id', $user->id)->count();
+        $activeCount = $descendants->where('is_active', 1)->count();
+        $inactiveCount = $totalMembers - $activeCount;
+        
+        $withPackageCount = $descendants->filter(function($u) {
+            return !empty($u->package_id);
+        })->count();
+
+        return [
+            'total_descendants'    => $totalMembers,
+            'total_members'        => $totalMembers,
+            'direct_children'      => $directChildren,
+            'direct_referrals'     => $directChildren,
+            'active_descendants'   => $activeCount,
+            'inactive_descendants' => $inactiveCount,
+            'with_package'         => $withPackageCount,
+            'max_depth'            => $this->getMaxDepth($user->id),
+            'total_pv'             => $descendants->sum('pv_balance'),
+            'total_team_pv'        => $descendants->sum('team_pv'),
+            'rank_distribution'    => $this->getRankDistribution($descendants),
+            'kyc_distribution'     => $this->getKycDistribution($descendants),
+        ];
+    }
+
+    /**
+     * Récupère tous les IDs des descendants de façon séquentielle (évite les fuites mémoire PHP & récursion SQL)
+     */
+    private function getAllDescendantIds($userId)
+    {
+        $allDescendants = [];
+        $currentParentIds = [$userId];
+
+        while (!empty($currentParentIds)) {
+            // Requête SQL optimisée retournant uniquement un tableau simple de nombres
+            $childrenIds = DB::table('users')
+                ->whereIn('parrain_id', $currentParentIds)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($childrenIds)) {
+                break;
+            }
+
+            // Protection anti-boucle en cas d'erreur de parrainage croisé dans la BDD
+            $newIds = array_diff($childrenIds, $allDescendants);
+            if (empty($newIds)) {
+                break;
+            }
+
+            $allDescendants = array_merge($allDescendants, $newIds);
+            $currentParentIds = $newIds;
+        }
+
+        return $allDescendants;
+    }
+
+    /**
+     * Compter tous les descendants
+     */
+    private function countAllDescendants($userId)
+    {
+        return count($this->getAllDescendantIds($userId));
+    }
+
+    /**
+     * Obtenir la profondeur maximale du réseau
+     */
+    private function getMaxDepth($userId, $currentDepth = 0)
+    {
+        $maxDepth = $currentDepth;
+        $children = DB::table('users')->where('parrain_id', $userId)->pluck('id');
+
+        foreach ($children as $childId) {
+            $depth = $this->getMaxDepth($childId, $currentDepth + 1);
+            if ($depth > $maxDepth) {
+                $maxDepth = $depth;
+            }
+        }
+
+        return $maxDepth;
+    }
+
+    /**
+     * Distribution des grades
+     */
+    private function getRankDistribution($descendants)
+    {
+        return $descendants->groupBy(function($user) {
+            return $user->rank?->name ?? 'Sans grade';
+        })->map(function($group) {
+            return $group->count();
+        })->toArray();
+    }
+
+    /**
+     * Distribution KYC
+     */
+    private function getKycDistribution($descendants)
+    {
+        return $descendants->groupBy('kyc_status')
+            ->map(function($group) {
+                return $group->count();
+            })->toArray();
+    }
+
+    /**
+     * Relation d'ancêtre
+     */
+    private function getAncestorRelationship($level)
+    {
+        $relationships = [
+            0 => 'Parrain direct',
+            1 => 'Grand parrain',
+            2 => 'Arrière grand parrain',
+        ];
+
+        return $relationships[$level] ?? 'Ancêtre niveau ' . ($level + 1);
     }
 }

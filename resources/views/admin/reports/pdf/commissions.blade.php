@@ -6,43 +6,41 @@
 
 @section('content')
 
-
-<!-- Tableau -->
-<table>
+<table class="data-table">
     <thead>
         <tr>
-            <th>#</th>
-            <th>Utilisateur</th>
-            <th>De</th>
-            <th>Type</th>
-            <th>Montant</th>
-            <th>%</th>
-            <th>Statut</th>
-            <th>Date</th>
+            <th style="width: 5%;">#</th>
+            <th style="width: 20%;">Bénéficiaire</th>
+            <th style="width: 20%;">Source</th>
+            <th style="width: 12%;">Type</th>
+            <th style="width: 13%;">Montant</th>
+            <th style="width: 8%;">%</th>
+            <th style="width: 10%;">Statut</th>
+            <th style="width: 12%;">Date</th>
         </tr>
     </thead>
     <tbody>
         @forelse($commissions ?? [] as $index => $commission)
             <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $commission->user?->name ?? 'N/A' }}</td>
+                <td style="text-align: center;">{{ $index + 1 }}</td>
+                <td><strong>{{ $commission->user?->name ?? 'N/A' }}</strong></td>
                 <td>{{ $commission->fromUser?->name ?? 'Système' }}</td>
                 <td>
                     <span class="badge badge-info">{{ ucfirst($commission->type) }}</span>
                 </td>
-                <td><strong>${{ number_format($commission->amount, 2) }}</strong></td>
+                <td style="color: #276749;"><strong>${{ number_format($commission->amount, 2) }}</strong></td>
                 <td>{{ $commission->percentage }}%</td>
                 <td>
                     <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }}">
-                        {{ ucfirst($commission->status) }}
+                        {{ $commission->status == 'paid' ? 'Payé' : ucfirst($commission->status) }}
                     </span>
                 </td>
                 <td>{{ $commission->created_at->format('d/m/Y H:i') }}</td>
             </tr>
         @empty
             <tr>
-                <td colspan="8" style="text-align:center; color:#999; padding:20px;">
-                    Aucune commission trouvée
+                <td colspan="8" style="text-align: center; color: #a0aec0; padding: 15px;">
+                    Aucune commission trouvée dans cette période.
                 </td>
             </tr>
         @endforelse
@@ -50,20 +48,31 @@
 </table>
 
 <!-- Récapitulatif par type -->
-<div style="margin-top:15px; padding:10px; background:#f9fafb; border-radius:4px; border:1px solid #e5e7eb;">
-    <h4 style="font-size:10px; color:#333; margin-bottom:5px;">Récapitulatif par type</h4>
-    @php
-        $types = [];
-        foreach ($commissions ?? [] as $c) {
-            $types[$c->type] = ($types[$c->type] ?? 0) + $c->amount;
-        }
-    @endphp
-    @foreach($types as $type => $amount)
-        <div style="display:flex; justify-content:space-between; font-size:9px; padding:2px 0; border-bottom:1px solid #f3f4f6;">
-            <span style="text-transform:capitalize;">{{ $type }}</span>
-            <span style="font-weight:600;">${{ number_format($amount, 2) }}</span>
-        </div>
-    @endforeach
-</div>
+@php
+    $types = [];
+    $totalAmount = 0;
+    foreach ($commissions ?? [] as $c) {
+        $types[$c->type] = ($types[$c->type] ?? 0) + $c->amount;
+        $totalAmount += $c->amount;
+    }
+@endphp
+
+@if(!empty($types))
+    <div class="summary-box">
+        <div class="summary-title">Récapitulatif par Type de Commission</div>
+        <table class="summary-table">
+            @foreach($types as $type => $amount)
+                <tr>
+                    <td style="text-transform: capitalize;"><strong>{{ $type }}</strong></td>
+                    <td style="text-align: right; font-weight: bold; color: #0E2F76;">${{ number_format($amount, 2) }}</td>
+                </tr>
+            @endforeach
+            <tr>
+                <td style="text-transform: uppercase; font-weight: bold; padding-top: 4px;">TOTAL GENERAL</td>
+                <td style="text-align: right; font-weight: bold; color: #8b0000; font-size: 9.5px; padding-top: 4px;">${{ number_format($totalAmount, 2) }}</td>
+            </tr>
+        </table>
+    </div>
+@endif
 
 @endsection

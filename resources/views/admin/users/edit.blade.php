@@ -137,7 +137,7 @@
                     Modifier {{ $user->name }}
                 </h1>
                 <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                    ID: #{{ $user->id }}
+                    ID: {{ $user->id }}
                 </p>
             </div>
             <div class="avatar-wrapper ml-auto flex-shrink-0">

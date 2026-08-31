@@ -142,30 +142,30 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet <span class="text-red-500">*</span></label>
-                    <input type="text" id="newNameModal" placeholder="Jean Dupont" class="input" required>
+                    <input type="text" id="newNameModal" class="input" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email <span class="text-red-500">*</span></label>
-                    <input type="email" id="newEmailModal" placeholder="client@email.com" class="input" required>
+                    <input type="email" id="newEmailModal"  class="input" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Téléphone</label>
-                    <input type="text" id="newPhoneModal" placeholder="+225 07 00 00 00 00" class="input">
+                    <input type="text" id="newPhoneModal"  class="input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
-                    <input type="text" id="newAddressModal" placeholder="Adresse complète" class="input">
+                    <input type="text" id="newAddressModal"  class="input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
-                    <input type="text" id="newCityModal" placeholder="Ville" class="input">
+                    <input type="text" id="newCityModal" class="input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
-                    <input type="text" id="newCountryModal" placeholder="Pays" class="input">
+                    <input type="text" id="newCountryModal"  class="input">
                 </div>
                 <div class="text-xs text-[var(--text-secondary)] bg-blue-500/5 p-2 rounded-lg border border-blue-500/10">
-                    <span class="text-yellow-500">ℹ️</span> Le client pourra être parrainé lors de sa première vente
+                    <span class="text-yellow-500"></span> Le client pourra être parrainé lors de sa première vente
                 </div>
             </div>
             <div class="mt-4 flex gap-2">

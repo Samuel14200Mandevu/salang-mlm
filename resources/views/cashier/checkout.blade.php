@@ -706,7 +706,7 @@
                                            id="sponsor_code" 
                                            name="sponsor_code" 
                                            class="input flex-1 @error('sponsor_code') input-error @enderror" 
-                                           placeholder="Ex: SALXXXXXX"
+                                           placeholder="Saisir le code de parrain"
                                            value="{{ old('sponsor_code') }}"
                                            required>
                                     <button type="button" onclick="checkSponsor()" class="btn btn-outline btn-sm flex-shrink-0">

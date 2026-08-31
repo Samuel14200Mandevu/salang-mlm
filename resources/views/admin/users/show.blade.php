@@ -300,7 +300,7 @@
                 Détails de l'utilisateur
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                ID: #{{ $user->id }}
+                ID: {{ $user->id }}
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
@@ -525,7 +525,7 @@
                     <tbody>
                         @foreach($filleuls as $filleul)
                         <tr>
-                            <td class="text-xs">#{{ $filleul->id }}</td>
+                            <td class="text-xs">{{ $filleul->id }}</td>
                             <td class="text-sm">{{ $filleul->name }}</td>
                             <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>
                             <td class="text-xs font-mono text-primary-500">{{ $filleul->sponsor_id }}</td>

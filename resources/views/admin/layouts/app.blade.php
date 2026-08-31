@@ -244,6 +244,46 @@
             box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
         }
 
+        /* ===== BADGE DE NOTIFICATION ===== */
+        .badge-notification {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            min-width: 20px;
+            text-align: center;
+            margin-left: 0.5rem;
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* ===== POINT DE NOTIFICATION ===== */
+        .notification-dot {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--bg-navbar);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 767px) {
             .confirm-dialog {
@@ -343,6 +383,30 @@
                         </a>
                     </li>
 
+                    <!-- Consultations -->
+                    <li>
+                        <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
+                            Consultations
+                        </div>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.consultations.index') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.consultations*') ? 'active' : '' }}">
+                            <div class="relative">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <!-- Petit point rouge -->
+                                <span id="adminConsultationDot" class="notification-dot" style="display:none;"></span>
+                            </div>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Consultations
+                                <span id="adminConsultationBadge" class="badge-notification" style="display:none;">0</span>
+                            </span>
+                        </a>
+                    </li>
+
                     <!-- Section Gestion -->
                     <li>
                         <div class="sidebar-section" :class="!sidebarOpen ? 'hidden' : ''">
@@ -362,7 +426,7 @@
                         </a>
                     </li>
 
-                    <!--  Gestion des Caissiers -->
+                    <!-- Gestion des Caissiers -->
                     <li>
                         <a href="{{ route('admin.cashiers.index') }}" 
                            class="sidebar-link {{ request()->routeIs('admin.cashiers*') ? 'active' : '' }}">
@@ -505,14 +569,16 @@
                     </li>
 
                     <li>
-    <a href="{{ route('admin.pos-reports.index') }}" 
-       class="sidebar-link {{ request()->routeIs('admin.pos-reports.*') ? 'active' : '' }}">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
-        </svg>
-        <span class="label">Rapports POS</span>
-    </a>
-</li>
+                        <a href="{{ route('admin.pos-reports.index') }}" 
+                           class="sidebar-link {{ request()->routeIs('admin.pos-reports.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                            </svg>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Rapports POS
+                            </span>
+                        </a>
+                    </li>
 
                     <!-- Section Administration -->
                     <li>
@@ -740,15 +806,14 @@
     
     @stack('scripts')
 
-    <!-- ===== CONFIRMATION LOGOUT SCRIPT ===== -->
+    <!-- ===== SCRIPTS ===== -->
     <script>
-    // Variables globales pour le dialogue
+    // ============================================================
+    // CONFIRMATION LOGOUT
+    // ============================================================
     let confirmCallback = null;
     let confirmForm = null;
 
-    /**
-     * Afficher le dialogue de confirmation
-     */
     function showConfirmDialog(options) {
         const dialog = document.getElementById('confirmDialog');
         const icon = dialog.querySelector('.icon');
@@ -756,7 +821,6 @@
         const message = dialog.querySelector('p');
         const confirmBtn = document.getElementById('confirmLogoutBtn');
         
-        // Configurer le dialogue
         icon.className = 'icon';
         icon.classList.add(options.type || 'danger');
         
@@ -792,29 +856,20 @@
             confirmBtn.classList.add('success');
         }
         
-        // Sauvegarder les callbacks
         confirmCallback = options.onConfirm || null;
         confirmForm = options.form || null;
         
-        // Afficher le dialogue
         dialog.classList.add('active');
     }
 
-    /**
-     * Fermer le dialogue de confirmation
-     */
     function closeConfirmDialog() {
         document.getElementById('confirmDialog').classList.remove('active');
         confirmCallback = null;
         confirmForm = null;
     }
 
-    /**
-     * Confirmer la déconnexion
-     */
     function confirmLogout(event) {
         event.preventDefault();
-        
         const form = event.target.closest('form');
         
         showConfirmDialog({
@@ -823,16 +878,13 @@
             message: 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
             confirmText: 'Se déconnecter',
             onConfirm: function() {
-                if (form) {
-                    form.submit();
-                }
+                if (form) form.submit();
                 closeConfirmDialog();
             },
             form: form
         });
     }
 
-    // Gestionnaire pour le bouton de confirmation
     document.addEventListener('DOMContentLoaded', function() {
         const confirmBtn = document.getElementById('confirmLogoutBtn');
         if (confirmBtn) {
@@ -846,24 +898,76 @@
             });
         }
 
-        // Fermer le dialogue avec la touche Escape
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeConfirmDialog();
-            }
+            if (e.key === 'Escape') closeConfirmDialog();
         });
 
-        // Fermer le dialogue en cliquant sur l'overlay
         document.getElementById('confirmDialog').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeConfirmDialog();
-            }
+            if (e.target === this) closeConfirmDialog();
         });
     });
-    </script>
 
-    <!-- ===== THEME TOGGLE ===== -->
-    <script>
+    // ============================================================
+    // COMPTEUR DE CONSULTATIONS EN ATTENTE
+    // ============================================================
+    (function() {
+        'use strict';
+        
+        function updateConsultationCount() {
+            const badge = document.getElementById('adminConsultationBadge');
+            const dot = document.getElementById('adminConsultationDot');
+            if (!badge) return;
+            
+            fetch('{{ route("admin.consultations.count") }}')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Erreur réseau');
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.count > 0) {
+                        // Mettre à jour le badge
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                        badge.style.animation = 'none';
+                        void badge.offsetHeight;
+                        badge.style.animation = 'pulse-badge 2s infinite';
+                        
+                        // Afficher le point rouge
+                        if (dot) {
+                            dot.style.display = 'block';
+                            dot.style.animation = 'none';
+                            void dot.offsetHeight;
+                            dot.style.animation = 'pulse-dot 2s infinite';
+                        }
+                    } else {
+                        badge.style.display = 'none';
+                        if (dot) dot.style.display = 'none';
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Erreur lors du chargement du compteur:', err);
+                });
+        }
+        
+        // Chargement initial
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateConsultationCount);
+        } else {
+            updateConsultationCount();
+        }
+        
+        // Mise à jour toutes les 30 secondes
+        setInterval(updateConsultationCount, 30000);
+        
+        // Mise à jour quand la page redevient visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) updateConsultationCount();
+        });
+    })();
+
+    // ============================================================
+    // THEME TOGGLE
+    // ============================================================
     (function() {
         'use strict';
         

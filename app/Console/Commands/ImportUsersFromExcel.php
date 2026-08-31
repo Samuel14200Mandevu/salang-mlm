@@ -18,9 +18,7 @@ class ImportUsersFromExcel extends Command
                             {--skip-header : Ignorer la première ligne (en-tête)}
                             {--force : Forcer l\'importation en production}
                             {--step1 : Importer uniquement les utilisateurs (sans parrain)}
-                            {--step2 : Mettre à jour uniquement les parrains}
-                            {--clear-first : Supprimer tous les utilisateurs avant l\'import}
-                            {--id-start=3 : ID de départ pour les utilisateurs}';
+                            {--step2 : Mettre à jour uniquement les parrains}';
     
     protected $description = 'Importe les utilisateurs depuis un fichier Excel avec gestion du parrainage en 2 étapes';
 
@@ -30,31 +28,6 @@ class ImportUsersFromExcel extends Command
     protected $parrainUpdated = 0;
     protected $parrainNotFound = 0;
     protected $userCodes = [];
-    protected $yearCounter = [
-        '2023' => 0,
-        '2024' => 0,
-        '2025' => 0,
-        '2026' => 0,
-    ];
-    protected $yearStartId = [
-        '2023' => null,
-        '2024' => null,
-        '2025' => null,
-        '2026' => null,
-    ];
-
-    // Liste des mots qui indiquent une ligne de titre/mois
-    protected $skipPatterns = [
-        '/^(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE)/i',
-        '/^ADHESION/i',
-        '/^N°\s+DATE/i',
-        '/^NOM/i',
-        '/^CODE/i',
-        '/^TOTAL/i',
-        '/^Récapitulatif/i',
-        '/^---/',
-        '/^\s*$/',
-    ];
 
     public function handle()
     {
@@ -78,14 +51,12 @@ class ImportUsersFromExcel extends Command
         }
 
         // === CHEMIN DU FICHIER ===
-        $defaultPath = '/home/samuel-mandevu/Téléchargements/ADHESION FICHE COMPLET 2023-2024 2025,2026.xlsx';
+        $defaultPath = storage_path('app/imports/LISTE DES MEMBRES SALANG_AOUT_2026.xlsx');
         $filePath = $this->argument('file') ?? $defaultPath;
         $dryRun = $this->option('dry-run');
         $skipHeader = $this->option('skip-header');
-        $clearFirst = $this->option('clear-first');
         $step1 = $this->option('step1');
         $step2 = $this->option('step2');
-        $idStart = (int) $this->option('id-start');
 
         if ($dryRun) {
             $this->warn('⚠️  MODE DRY-RUN - Aucune modification');
@@ -94,6 +65,7 @@ class ImportUsersFromExcel extends Command
 
         if (!file_exists($filePath)) {
             $this->error("❌ Fichier non trouvé : $filePath");
+            $this->info("📂 Vérifiez que le fichier existe dans : " . dirname($filePath));
             return 1;
         }
 
@@ -104,40 +76,59 @@ class ImportUsersFromExcel extends Command
             $worksheet = $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
-            $totalRows = count($rows);
-            $startRow = $skipHeader ? 1 : 0;
+            // === AFFICHER L'APERÇU ===
+            $this->line("📋 Aperçu des données :");
+            $this->line(str_repeat('-', 80));
+            for ($i = 0; $i < min(6, count($rows)); $i++) {
+                $row = $rows[$i];
+                $this->line(sprintf(
+                    "Ligne %d: Col0='%s' | Col1='%s' | Col2='%s' | Col3='%s' | Col4='%s'",
+                    $i+1,
+                    $row[0] ?? '', $row[1] ?? '', $row[2] ?? '', $row[3] ?? '', $row[4] ?? ''
+                ));
+            }
+            $this->line(str_repeat('-', 80));
+            $this->newLine();
 
-            // === FILTRER LES LIGNES VALIDES ===
-            $this->info("🔍 Filtrage des lignes valides...");
-            $validRows = $this->filterValidRows($rows, $startRow);
-            $rowsToProcess = count($validRows);
+            // === EXTRAIRE LES UTILISATEURS (format 2 lignes) ===
+            $this->info("🔍 Extraction des utilisateurs...");
+            $users = $this->extractUsersFromRows($rows, $skipHeader);
+            $rowsToProcess = count($users);
 
-            $this->info("✅ Lignes valides trouvées : " . number_format($rowsToProcess) . " utilisateurs");
-            $this->line("⏭️  Lignes ignorées (titres/mois) : " . number_format($totalRows - $rowsToProcess - $startRow));
+            $this->info("✅ Utilisateurs trouvés : " . number_format($rowsToProcess));
             $this->newLine();
 
             if ($rowsToProcess === 0) {
-                $this->error("❌ Aucune ligne valide trouvée dans le fichier");
+                $this->error("❌ Aucun utilisateur trouvé dans le fichier");
                 return 1;
             }
 
-            // === NETTOYAGE OPTIONNEL ===
-            if ($clearFirst && !$dryRun && $step1) {
-                if ($this->confirm("⚠️ Supprimer tous les utilisateurs (sauf admin) ?", false)) {
-                    $this->info("🗑️ Suppression des utilisateurs...");
-                    User::where('id', '>', 1)->delete();
-                    DB::statement('ALTER TABLE users AUTO_INCREMENT = ' . $idStart);
-                    $this->info("✅ Utilisateurs supprimés, AUTO_INCREMENT réinitialisé à " . $idStart);
-                    $this->newLine();
-                }
+            // Afficher les premiers utilisateurs extraits
+            $this->line("📋 Aperçu des utilisateurs extraits :");
+            $this->line(str_repeat('-', 80));
+            for ($i = 0; $i < min(5, count($users)); $i++) {
+                $u = $users[$i];
+                $this->line(sprintf(
+                    "  %d. %s | CODE: %s | Tél: %s | Parrain: %s (%s)",
+                    $i+1,
+                    $u['name'],
+                    $u['code'] ?? 'NULL',
+                    $u['phone'] ?? 'N/A',
+                    $u['sponsor_name'] ?? 'Aucun',
+                    $u['sponsor_code'] ?? 'Aucun'
+                ));
             }
+            if (count($users) > 5) {
+                $this->line("  ... et " . (count($users) - 5) . " autres");
+            }
+            $this->line(str_repeat('-', 80));
+            $this->newLine();
 
             // === ÉTAPE 1 : Importer les utilisateurs ===
             if ($step1 || (!$step1 && !$step2)) {
                 $this->info("🚀 ÉTAPE 1 : Importation des utilisateurs (sans parrain)...");
-                $this->info("📌 Les IDs seront attribués par année d'adhésion");
                 $this->newLine();
-                $this->importUsers($validRows, $dryRun, $idStart);
+                $this->importUsers($users, $dryRun);
                 $this->showStep1Summary($dryRun);
             }
 
@@ -146,7 +137,7 @@ class ImportUsersFromExcel extends Command
                 if ($this->inserted > 0 || $step2) {
                     $this->newLine();
                     $this->info("🚀 ÉTAPE 2 : Mise à jour des relations de parrainage...");
-                    $this->updateParrains($validRows, $dryRun);
+                    $this->updateParrains($users, $dryRun);
                     $this->showStep2Summary($dryRun);
                 } else {
                     $this->warn("⚠️ Aucun utilisateur importé, étape 2 ignorée");
@@ -160,101 +151,186 @@ class ImportUsersFromExcel extends Command
 
         } catch (\Exception $e) {
             $this->error("❌ Erreur : " . $e->getMessage());
-            $this->error("📄 Détails : " . $e->getTraceAsString());
             return 1;
         }
     }
 
     /**
-     * Filtre les lignes pour ne garder que les utilisateurs valides
+     * Extrait les utilisateurs du format 2 lignes
      */
-    protected function filterValidRows($rows, $startRow)
+    protected function extractUsersFromRows($rows, $skipHeader)
     {
-        $validRows = [];
+        $users = [];
+        $startIndex = $skipHeader ? 1 : 0;
 
-        foreach ($rows as $index => $row) {
-            if ($index < $startRow) continue;
-
+        for ($i = $startIndex; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            
+            // Colonnes selon votre fichier :
+            // Col 0: N° (vide pour les sponsors)
+            // Col 1: NOM (ou "Sponsor XXX")
+            // Col 2: CODE (ou code du sponsor)
+            // Col 3: ADRESSE
+            // Col 4: TELEPHONE
+            
             $firstCell = trim($row[0] ?? '');
-            $secondCell = trim($row[2] ?? '');
-            $thirdCell = trim($row[3] ?? '');
-
+            $nameCell = trim($row[1] ?? '');
+            $codeCell = trim($row[2] ?? '');
+            $addressCell = trim($row[3] ?? '');
+            $phoneCell = trim($row[4] ?? '');
+            
+            // Ignorer les lignes vides ou de mois
+            if (empty($nameCell) && empty($codeCell)) {
+                continue;
+            }
+            
             // Vérifier si c'est une ligne de mois/titre
-            $isSkip = false;
-            foreach ($this->skipPatterns as $pattern) {
-                if (preg_match($pattern, $firstCell) || preg_match($pattern, $secondCell)) {
-                    $isSkip = true;
-                    break;
-                }
+            if (preg_match('/^(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE)/i', $firstCell)) {
+                continue;
             }
 
-            $isNumber = is_numeric($firstCell) && $firstCell > 0;
-            $isMonth = preg_match('/^(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE)/i', $firstCell);
-            $hasCode = preg_match('/^\d{6}$/', $thirdCell);
+            // === CAS 1 : C'est une ligne d'utilisateur (commence par un N°) ===
+            if (is_numeric($firstCell) && !empty($nameCell)) {
+                // Nettoyer le code (enlever les espaces) ou NULL
+                $code = !empty($codeCell) ? $this->cleanCode($codeCell) : null;
+                
+                $userData = [
+                    'numero' => $firstCell,
+                    'name' => $this->cleanName($nameCell),
+                    'code' => $code,
+                    'address' => $addressCell,
+                    'phone' => $this->cleanPhone($phoneCell),
+                    'sponsor_name' => null,
+                    'sponsor_code' => null,
+                ];
 
-            if (!$isSkip && !$isMonth && !empty($secondCell) && ($isNumber || $hasCode)) {
-                $validRows[] = $row;
+                // Vérifier si la ligne suivante est le sponsor
+                if ($i + 1 < count($rows)) {
+                    $nextRow = $rows[$i + 1];
+                    $nextName = trim($nextRow[1] ?? '');
+                    $nextCode = trim($nextRow[2] ?? '');
+                    $nextPhone = trim($nextRow[4] ?? '');
+                    
+                    // La ligne suivante est un sponsor si elle contient "Sponsor" ou un code
+                    $isSponsor = (strpos(strtolower($nextName), 'sponsor') !== false || 
+                                  !empty($this->cleanCode($nextCode)));
+                    
+                    if ($isSponsor && !empty($nextName)) {
+                        // Extraire le nom du sponsor (enlever le mot "Sponsor")
+                        $sponsorName = str_ireplace('sponsor', '', $nextName);
+                        $sponsorName = str_ireplace('Sponsor', '', $sponsorName);
+                        $sponsorName = trim($sponsorName);
+                        
+                        $userData['sponsor_name'] = $this->cleanName($sponsorName);
+                        $userData['sponsor_code'] = !empty($nextCode) ? $this->cleanCode($nextCode) : null;
+                        
+                        $i++; // Sauter la ligne du sponsor
+                    }
+                }
+
+                // Garder TOUS les utilisateurs, même sans code
+                if (!empty($userData['name'])) {
+                    $users[] = $userData;
+                }
+            }
+            // === CAS 2 : C'est une ligne de sponsor sans utilisateur ===
+            else if (strpos(strtolower($nameCell), 'sponsor') !== false && empty($firstCell)) {
+                continue;
+            }
+            // === CAS 3 : C'est une ligne d'utilisateur sans N° ===
+            else if (!empty($nameCell) && !empty($codeCell)) {
+                $code = $this->cleanCode($codeCell);
+                
+                $userData = [
+                    'numero' => $firstCell,
+                    'name' => $this->cleanName($nameCell),
+                    'code' => $code,
+                    'address' => $addressCell,
+                    'phone' => $this->cleanPhone($phoneCell),
+                    'sponsor_name' => null,
+                    'sponsor_code' => null,
+                ];
+
+                // Vérifier si la ligne suivante est le sponsor
+                if ($i + 1 < count($rows)) {
+                    $nextRow = $rows[$i + 1];
+                    $nextName = trim($nextRow[1] ?? '');
+                    $nextCode = trim($nextRow[2] ?? '');
+                    
+                    if (strpos(strtolower($nextName), 'sponsor') !== false || !empty($this->cleanCode($nextCode))) {
+                        $sponsorName = str_ireplace('sponsor', '', $nextName);
+                        $sponsorName = str_ireplace('Sponsor', '', $sponsorName);
+                        $sponsorName = trim($sponsorName);
+                        
+                        $userData['sponsor_name'] = $this->cleanName($sponsorName);
+                        $userData['sponsor_code'] = !empty($nextCode) ? $this->cleanCode($nextCode) : null;
+                        
+                        $i++; // Sauter la ligne du sponsor
+                    }
+                }
+
+                if (!empty($userData['name'])) {
+                    $users[] = $userData;
+                }
+            }
+            // === CAS 4 : Ligne avec nom mais sans numéro ni code ===
+            else if (!empty($nameCell) && empty($firstCell) && empty($codeCell)) {
+                $userData = [
+                    'numero' => $firstCell,
+                    'name' => $this->cleanName($nameCell),
+                    'code' => null,
+                    'address' => $addressCell,
+                    'phone' => $this->cleanPhone($phoneCell),
+                    'sponsor_name' => null,
+                    'sponsor_code' => null,
+                ];
+
+                if (!empty($userData['name'])) {
+                    $users[] = $userData;
+                }
             }
         }
 
-        return $validRows;
+        return $users;
     }
 
     /**
-     * ÉTAPE 1 : Importer les utilisateurs avec gestion des IDs par année
+     * Nettoie le code (enlève les espaces, les tirets)
      */
-    protected function importUsers($rows, $dryRun, $idStart)
+    protected function cleanCode($code)
     {
-        $totalRows = count($rows);
+        if (empty($code)) return null;
+        $code = trim($code);
+        $code = str_replace(' ', '', $code);
+        $code = str_replace('-', '', $code);
+        $code = str_replace('—', '', $code);
+        return $code;
+    }
+
+    /**
+     * ÉTAPE 1 : Importer les utilisateurs
+     */
+    protected function importUsers($users, $dryRun)
+    {
+        $totalRows = count($users);
         $this->inserted = 0;
         $this->skipped = 0;
         $this->errors = [];
 
-        // Réinitialiser les compteurs par année
-        $this->yearCounter = [
-            '2023' => 0,
-            '2024' => 0,
-            '2025' => 0,
-            '2026' => 0,
-        ];
-
-        // Déterminer les IDs de départ pour chaque année
-        $currentId = $idStart;
-        foreach (['2023', '2024', '2025', '2026'] as $year) {
-            $this->yearStartId[$year] = $currentId;
-            // Réserver 500 IDs par année
-            $currentId += 500;
-        }
-
-        $this->info("📌 Plages d'IDs par année :");
-        foreach (['2023', '2024', '2025', '2026'] as $year) {
-            $this->line("   - $year : ID " . $this->yearStartId[$year] . " à " . ($this->yearStartId[$year] + 500));
-        }
-        $this->newLine();
+        // === ID DE DÉPART FORCÉ À 1453 ===
+        $startId = 1453;
 
         $bar = $this->output->createProgressBar($totalRows);
         $bar->start();
 
-        foreach ($rows as $index => $row) {
+        foreach ($users as $index => $data) {
             try {
-                $data = $this->extractUserData($row, $index);
+                // Vérifier si l'utilisateur existe déjà (par nom ou code)
+                $existingUser = null;
+                if (!empty($data['code'])) {
+                    $existingUser = User::where('sponsor_id', $data['code'])->first();
+                }
                 
-                // Vérifier si le nom est vide
-                if (empty($data['name'])) {
-                    $this->skipped++;
-                    $bar->advance();
-                    continue;
-                }
-
-                // Vérifier si le code est valide
-                if (empty($data['code']) || !preg_match('/^\d{6}$/', $data['code'])) {
-                    $this->skipped++;
-                    $bar->advance();
-                    continue;
-                }
-
-                // Vérifier si l'utilisateur existe déjà
-                $existingUser = User::where('sponsor_id', $data['code'])->first();
                 if ($existingUser) {
                     $this->skipped++;
                     $this->userCodes[$data['code']] = $existingUser->id;
@@ -263,20 +339,12 @@ class ImportUsersFromExcel extends Command
                 }
 
                 if (!$dryRun) {
-                    // Déterminer l'année et l'ID
-                    $year = $this->determineYear($data['date']);
-                    $userId = $this->getNextIdForYear($year);
-                    
+                    $userId = $startId + $this->inserted;
                     $user = $this->createUser($data, $userId);
                     if ($user) {
                         $this->inserted++;
-                        $this->userCodes[$data['code']] = $user->id;
-                        $this->yearCounter[$year]++;
-                        
-                        if ($this->inserted % 50 === 0) {
-                            $this->newLine();
-                            $this->line("✅ " . number_format($this->inserted) . " utilisateurs importés...");
-                            $this->line("   📊 Répartition : 2023: {$this->yearCounter['2023']} | 2024: {$this->yearCounter['2024']} | 2025: {$this->yearCounter['2025']} | 2026: {$this->yearCounter['2026']}");
+                        if (!empty($data['code'])) {
+                            $this->userCodes[$data['code']] = $user->id;
                         }
                     }
                 } else {
@@ -284,10 +352,16 @@ class ImportUsersFromExcel extends Command
                 }
 
             } catch (\Exception $e) {
-                $this->errors[] = "Ligne " . ($index + 1) . ": " . $e->getMessage();
+                $this->errors[] = "Ligne " . ($index + 1) . " - {$data['name']}: " . $e->getMessage();
             }
 
             $bar->advance();
+            
+            // Afficher la progression
+            if (($index + 1) % 50 === 0) {
+                $this->newLine();
+                $this->line("📌 Progression : " . ($index + 1) . "/" . $totalRows . " utilisateurs traités");
+            }
         }
 
         $bar->finish();
@@ -295,43 +369,9 @@ class ImportUsersFromExcel extends Command
     }
 
     /**
-     * Détermine l'année à partir de la date
-     */
-    protected function determineYear($date)
-    {
-        if (empty($date)) return '2023';
-        
-        $year = date('Y', strtotime($date));
-        
-        if ($year >= 2026) return '2026';
-        if ($year >= 2025) return '2025';
-        if ($year >= 2024) return '2024';
-        return '2023';
-    }
-
-    /**
-     * Récupère le prochain ID disponible pour une année
-     */
-    protected function getNextIdForYear($year)
-    {
-        static $yearCounters = [
-            '2023' => 0,
-            '2024' => 0,
-            '2025' => 0,
-            '2026' => 0,
-        ];
-
-        $startId = $this->yearStartId[$year] ?? 3;
-        $counter = $yearCounters[$year] ?? 0;
-        $yearCounters[$year] = $counter + 1;
-        
-        return $startId + $counter;
-    }
-
-    /**
      * ÉTAPE 2 : Mettre à jour les parrains
      */
-    protected function updateParrains($rows, $dryRun)
+    protected function updateParrains($users, $dryRun)
     {
         $this->parrainUpdated = 0;
         $this->parrainNotFound = 0;
@@ -346,25 +386,24 @@ class ImportUsersFromExcel extends Command
             }
         }
 
-        $totalRows = count($rows);
+        $totalRows = count($users);
         $bar = $this->output->createProgressBar($totalRows);
         $bar->start();
 
-        foreach ($rows as $index => $row) {
+        foreach ($users as $index => $data) {
             try {
-                $data = $this->extractUserData($row, $index);
+                // Vérifier si l'utilisateur a un sponsor
+                if (empty($data['sponsor_code'])) {
+                    $bar->advance();
+                    continue;
+                }
+
+                // Trouver l'ID de l'utilisateur
+                $userId = null;
+                if (!empty($data['code']) && isset($userCodeMap[$data['code']])) {
+                    $userId = $userCodeMap[$data['code']];
+                }
                 
-                if (empty($data['name']) || empty($data['parrain_code'])) {
-                    $bar->advance();
-                    continue;
-                }
-
-                if (!preg_match('/^\d{6}$/', $data['parrain_code'])) {
-                    $bar->advance();
-                    continue;
-                }
-
-                $userId = $userCodeMap[$data['code']] ?? null;
                 if (!$userId) {
                     $bar->advance();
                     continue;
@@ -376,15 +415,17 @@ class ImportUsersFromExcel extends Command
                     continue;
                 }
 
+                // Si l'utilisateur a déjà un parrain, vérifier si c'est le bon
                 if ($user->parrain_id !== null) {
-                    $parrain = User::find($user->parrain_id);
-                    if ($parrain && $parrain->sponsor_id === $data['parrain_code']) {
+                    $existingParrain = User::find($user->parrain_id);
+                    if ($existingParrain && $existingParrain->sponsor_id === $data['sponsor_code']) {
                         $bar->advance();
                         continue;
                     }
                 }
 
-                $parrainId = $userCodeMap[$data['parrain_code']] ?? null;
+                // Trouver le parrain par son code
+                $parrainId = isset($userCodeMap[$data['sponsor_code']]) ? $userCodeMap[$data['sponsor_code']] : null;
                 
                 if ($parrainId) {
                     if (!$dryRun) {
@@ -400,6 +441,9 @@ class ImportUsersFromExcel extends Command
                     $this->parrainUpdated++;
                 } else {
                     $this->parrainNotFound++;
+                    if ($this->parrainNotFound <= 20) {
+                        $this->warn("⚠️  Parrain non trouvé pour {$data['name']} (CODE: {$data['sponsor_code']})");
+                    }
                 }
 
             } catch (\Exception $e) {
@@ -411,21 +455,26 @@ class ImportUsersFromExcel extends Command
 
         $bar->finish();
         $this->newLine(2);
+        
+        if ($this->parrainNotFound > 20) {
+            $this->warn("⚠️ " . ($this->parrainNotFound - 20) . " autres parrains non trouvés...");
+        }
     }
 
     /**
-     * Crée un utilisateur avec un ID spécifique
+     * Crée un utilisateur
      */
     protected function createUser($data, $userId)
     {
+        // Générer un email unique
         $email = $this->generateUniqueEmail($data['name']);
 
         $userData = [
             'id' => $userId,
             'name' => $data['name'],
             'email' => $email,
-            'phone' => $data['phone'],
-            'sponsor_id' => $data['code'],
+            'phone' => $data['phone'] ?? null,
+            'sponsor_id' => $data['code'] ?? null,
             'parrain_id' => null,
             'rank' => 'Distributeur',
             'rank_id' => 1,
@@ -436,29 +485,12 @@ class ImportUsersFromExcel extends Command
             'user_type' => 'member',
             'kyc_status' => 'not_submitted',
             'password' => Hash::make('password123'),
-            'created_at' => $data['date'] ?: now(),
+            'created_at' => now(),
             'updated_at' => now(),
-            'last_login_at' => $data['date'] ?: null,
-            'last_rank_update' => $data['date'] ?: now()->toDateString(),
+            'last_rank_update' => now()->toDateString(),
         ];
 
         return User::create($userData);
-    }
-
-    /**
-     * Extrait les données d'une ligne
-     */
-    protected function extractUserData($row, $index)
-    {
-        return [
-            'numero' => trim($row[0] ?? ''),
-            'date' => $this->parseDate($row[1] ?? ''),
-            'name' => $this->cleanName($row[2] ?? ''),
-            'code' => trim($row[3] ?? ''),
-            'phone' => $this->cleanPhone($row[4] ?? ''),
-            'sponsor_name' => $this->cleanName($row[5] ?? ''),
-            'parrain_code' => trim($row[6] ?? ''),
-        ];
     }
 
     /**
@@ -521,6 +553,10 @@ class ImportUsersFromExcel extends Command
     protected function cleanName($name)
     {
         if (empty($name)) return '';
+        $name = str_ireplace('sponsor', '', $name);
+        $name = str_ireplace('Sponsor', '', $name);
+        $name = str_ireplace('SPONSOR', '', $name);
+        $name = str_ireplace(' SPR ', ' ', $name);
         return trim(preg_replace('/\s+/', ' ', trim($name)));
     }
 
@@ -530,42 +566,9 @@ class ImportUsersFromExcel extends Command
     protected function cleanPhone($phone)
     {
         if (empty($phone)) return null;
-        return preg_replace('/[^0-9+]/', '', trim($phone));
-    }
-
-    /**
-     * Parse une date Excel ou texte
-     */
-    protected function parseDate($date)
-    {
-        if (empty($date)) return null;
-
-        // Si c'est une date Excel (nombre)
-        if (is_numeric($date)) {
-            try {
-                return Date::excelToDateTimeObject($date)->format('Y-m-d');
-            } catch (\Exception $e) {
-                return null;
-            }
-        }
-
-        $dateStr = trim($date);
-        
-        // Si c'est juste une année (ex: "2023")
-        if (preg_match('/^\d{4}$/', $dateStr)) {
-            return $dateStr . '-01-01';
-        }
-        
-        // Essayer différents formats de date
-        $formats = ['d/m/Y', 'Y-m-d', 'd-m-Y', 'm/d/Y'];
-        foreach ($formats as $format) {
-            $dateObj = \DateTime::createFromFormat($format, $dateStr);
-            if ($dateObj !== false) {
-                return $dateObj->format('Y-m-d');
-            }
-        }
-
-        return null;
+        $phone = trim($phone);
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        return $phone;
     }
 
     /**
@@ -582,12 +585,6 @@ class ImportUsersFromExcel extends Command
         $this->line("✅ Utilisateurs importés : " . number_format($this->inserted));
         $this->line("⏭️  Lignes ignorées (doublons/vides) : " . number_format($this->skipped));
         $this->line("❌ Erreurs : " . number_format(count($this->errors)));
-        
-        $this->newLine();
-        $this->line("📊 Répartition par année :");
-        foreach (['2023', '2024', '2025', '2026'] as $year) {
-            $this->line("   - $year : " . number_format($this->yearCounter[$year] ?? 0) . " utilisateurs");
-        }
 
         if ($dryRun) {
             $this->warn("⚠️  Mode DRY-RUN - Aucune donnée modifiée");
@@ -642,19 +639,8 @@ class ImportUsersFromExcel extends Command
             $users = User::orderBy('id', 'desc')->limit(10)->get();
             foreach ($users as $user) {
                 $parrainName = $user->parrain ? $user->parrain->name : 'Aucun';
-                $this->line("  - ID: {$user->id} | NOM: {$user->name} | ANNÉE: " . date('Y', strtotime($user->created_at)) . " | PARRAIN: {$parrainName}");
+                $this->line("  - ID: {$user->id} | NOM: {$user->name} | PARRAIN: {$parrainName}");
             }
-        }
-
-        if (!empty($this->errors) && count($this->errors) <= 15) {
-            $this->newLine();
-            $this->line("📝 Détails des erreurs :");
-            foreach ($this->errors as $error) {
-                $this->error("  - $error");
-            }
-        } elseif (!empty($this->errors)) {
-            $this->newLine();
-            $this->warn("⚠️ " . count($this->errors) . " erreurs - Vérifiez les logs pour plus de détails");
         }
     }
 }

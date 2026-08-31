@@ -346,7 +346,7 @@
                             }
                         @endphp
                         <tr class="user-row" onclick="window.location='{{ route('admin.users.show', $user) }}'">
-                            <td class="font-mono text-xs sm:text-sm">#{{ $user->id }}</td>
+                            <td class="font-mono text-xs sm:text-sm">{{ $user->id }}</td>
                             <td>
                                 <div class="flex items-center gap-2">
                                     <div class="avatar-sm hidden sm:flex">
