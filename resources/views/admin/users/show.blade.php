@@ -2,350 +2,401 @@
 
 @push('styles')
 <style>
-    .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    .modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    .modal-box {
-        background: var(--bg-card);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        max-width: 500px;
-        width: 90%;
-        box-shadow: var(--shadow-xl);
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
-        border: 1px solid var(--border-color);
-    }
-    .modal-overlay.active .modal-box {
-        transform: scale(1);
-    }
-    .modal-icon {
-        width: 4rem;
-        height: 4rem;
-        border-radius: var(--radius-full);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-    }
-    .modal-icon-danger {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-    .modal-icon-warning {
-        background: rgba(245, 158, 11, 0.1);
-        color: #f59e0b;
-    }
-    .modal-icon-success {
-        background: rgba(34, 197, 94, 0.1);
-        color: #22c55e;
-    }
-    .modal-icon-info {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
-    }
-    .modal-title {
-        text-align: center;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-    }
-    .modal-text {
-        text-align: center;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-bottom: 1.5rem;
-        line-height: 1.6;
-    }
-    .modal-text strong {
-        color: var(--text-primary);
-    }
-    .modal-text .text-danger {
-        color: #ef4444;
-    }
-    .modal-text .text-warning {
-        color: #f59e0b;
-    }
-    .modal-text .text-success {
-        color: #22c55e;
-    }
-    .modal-text .text-info {
-        color: #3b82f6;
-    }
-    .modal-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: center;
-    }
-    .modal-actions .btn {
-        min-width: 100px;
-        justify-content: center;
-    }
-    
-    .code-display {
-        background: var(--bg-secondary);
-        border-radius: var(--radius-md);
-        padding: 0.75rem 1rem;
-        text-align: center;
-        font-family: monospace;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--primary-500);
-        letter-spacing: 2px;
-        border: 2px dashed var(--border-color);
-        margin: 1rem 0;
-        word-break: break-all;
-    }
-    
-    .info-row {
-        display: flex;
-        flex-direction: column;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-light);
-    }
-    .info-row:last-child {
-        border-bottom: none;
-    }
-    .info-row .label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-tertiary);
-    }
-    .info-row .value {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-top: 0.125rem;
-    }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
-    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-cashier { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-cashier-principal { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; font-weight: 700; }
-    .badge-gold { background: rgba(234, 179, 8, 0.12); color: #eab308; }
-    
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.5rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-    }
-    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
-    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
-    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
-    .btn-warning { background: var(--gradient-warning); color: white; }
-    .btn-success { background: var(--gradient-success); color: white; }
-    .btn-danger { background: var(--gradient-danger); color: white; }
-    .btn-info { background: var(--gradient-info); color: white; }
-    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
-    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
-    
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-    }
-    
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
-    .table thead th {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-secondary);
-        background: var(--bg-secondary);
-        border-bottom: 2px solid var(--border-color);
-    }
-    .table tbody td {
-        padding: 0.75rem 1rem;
-        color: var(--text-primary);
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border-light);
-    }
-    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
-    
-    .sponsor-card {
-        background: var(--bg-secondary);
-        border-radius: var(--radius-md);
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-    .sponsor-card:hover {
-        background: var(--bg-hover);
-    }
-    
-    .package-preview {
-        background: var(--bg-secondary);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        border: 2px solid var(--border-color);
-        transition: all 0.3s ease;
-        margin-top: 0.5rem;
-    }
-    .package-preview:hover {
-        border-color: var(--primary-500);
-    }
-    .package-preview .package-name {
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .package-preview .package-price {
-        font-weight: 700;
-        color: var(--primary-500);
-    }
-    .package-preview .package-detail {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    
-    /* ✅ NOUVEAU STYLE POUR LE LIEN PV */
-    .pv-link {
-        transition: all 0.3s ease;
-        cursor: pointer;
-        text-decoration: none;
-    }
-    .pv-link:hover .pv-value {
-        color: #8b5cf6;
-        transform: scale(1.05);
-    }
-    .pv-link .pv-value {
-        transition: all 0.3s ease;
-        display: inline-block;
-    }
-    .pv-link .pv-icon {
-        transition: all 0.3s ease;
-    }
-    .pv-link:hover .pv-icon {
-        transform: translateX(3px);
-    }
-    
-    @media (max-width: 640px) {
-        .modal-box { padding: 1.5rem; }
-        .modal-actions { flex-direction: column; }
-        .modal-actions .btn { width: 100%; }
-        .info-row .value { font-size: 0.85rem; }
-        .info-grid { grid-template-columns: 1fr !important; }
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .card { padding: 0.875rem; }
-        .sponsor-card { padding: 0.5rem 0.75rem; }
-        .code-display { font-size: 1rem; padding: 0.5rem 0.75rem; }
-        .package-preview { padding: 0.75rem; }
-    }
-    
-    @media (min-width: 641px) and (max-width: 1024px) {
-        .info-grid {
-            grid-template-columns: 1fr 1fr !important;
-        }
-    }
+:root {
+    --primary-blue: #0A2A6C;
+    --primary-blue-light: #1A3A7C;
+    --primary-blue-dark: #061B4A;
+    --primary-blue-bg: rgba(10, 42, 108, 0.08);
+    --primary-blue-border: rgba(10, 42, 108, 0.15);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-box {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.75rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    transform: scale(0.95);
+    transition: transform 0.25s ease;
+    border: 1px solid var(--border-color);
+}
+.modal-overlay.active .modal-box {
+    transform: scale(1);
+}
+.modal-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+.modal-icon-info {
+    background: var(--primary-blue-bg);
+    color: var(--primary-blue);
+}
+.modal-icon-danger {
+    background: rgba(185, 28, 28, 0.1);
+    color: #B91C1C;
+}
+.modal-icon-warning {
+    background: rgba(181, 71, 8, 0.1);
+    color: #B54708;
+}
+.modal-icon-success {
+    background: rgba(28, 126, 74, 0.1);
+    color: #1C7E4A;
+}
+.modal-title {
+    text-align: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+.modal-text {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+.modal-text strong {
+    color: var(--text-primary);
+}
+.modal-text .text-danger {
+    color: #B91C1C;
+}
+.modal-text .text-warning {
+    color: #B54708;
+}
+.modal-text .text-success {
+    color: #1C7E4A;
+}
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+.modal-actions .btn {
+    min-width: 100px;
+    justify-content: center;
+}
+
+.code-display {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 0.625rem 1rem;
+    text-align: center;
+    font-family: monospace;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    letter-spacing: 1.5px;
+    border: 2px dashed var(--border-color);
+    margin: 0.75rem 0;
+    word-break: break-all;
+}
+
+.info-row {
+    display: flex;
+    flex-direction: column;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.info-row .label {
+    font-size: 0.688rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+.info-row .value {
+    font-size: 0.938rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-top: 0.125rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+.badge-success { background: rgba(28, 126, 74, 0.12); color: #1C7E4A; border-color: rgba(28, 126, 74, 0.15); }
+.badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
+.badge-warning { background: rgba(181, 71, 8, 0.12); color: #B54708; border-color: rgba(181, 71, 8, 0.15); }
+.badge-info { background: var(--primary-blue-bg); color: var(--primary-blue); border-color: var(--primary-blue-border); }
+.badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
+.badge-purple { background: rgba(10, 42, 108, 0.12); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.15); }
+.badge-cashier { background: rgba(10, 42, 108, 0.08); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.12); }
+.badge-cashier-principal { background: rgba(10, 42, 108, 0.15); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.2); font-weight: 700; }
+.badge-gold { background: rgba(181, 71, 8, 0.12); color: #B54708; border-color: rgba(181, 71, 8, 0.15); }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.813rem;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+.btn:active {
+    transform: scale(0.97);
+}
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+.btn-md { padding: 0.5rem 1.25rem; font-size: 0.813rem; }
+
+.btn-primary {
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+}
+.btn-primary:hover {
+    background: var(--primary-blue-dark);
+    border-color: var(--primary-blue-dark);
+}
+
+.btn-success {
+    background: #1C7E4A;
+    color: white;
+    border-color: #1C7E4A;
+}
+.btn-success:hover {
+    background: #14633A;
+    border-color: #14633A;
+}
+
+.btn-danger {
+    background: #B91C1C;
+    color: white;
+    border-color: #B91C1C;
+}
+.btn-danger:hover {
+    background: #991B1B;
+    border-color: #991B1B;
+}
+
+.btn-warning {
+    background: #B54708;
+    color: white;
+    border-color: #B54708;
+}
+.btn-warning:hover {
+    background: #92400E;
+    border-color: #92400E;
+}
+
+.btn-info {
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+}
+.btn-info:hover {
+    background: var(--primary-blue-dark);
+    border-color: var(--primary-blue-dark);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.btn-outline:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-color);
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.table thead th {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-size: 0.688rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+.table tbody td {
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-light);
+}
+.table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
+
+.sponsor-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+}
+.sponsor-card:hover {
+    background: var(--bg-hover);
+}
+
+.package-preview {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 0.875rem;
+    border: 2px solid var(--border-color);
+    margin-top: 0.5rem;
+}
+.package-preview:hover {
+    border-color: var(--primary-blue);
+}
+.package-preview .package-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.package-preview .package-price {
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+.package-preview .package-detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp { animation: fadeInUp 0.3s ease forwards; }
+.delay-1 { animation-delay: 0.05s; }
+
+/* PV Link */
+.pv-link {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+.pv-link:hover .pv-value {
+    color: var(--primary-blue);
+}
+.pv-link .pv-value {
+    transition: color 0.2s ease;
+    display: inline-block;
+}
+.pv-link .pv-icon {
+    transition: transform 0.2s ease;
+}
+.pv-link:hover .pv-icon {
+    transform: translateX(3px);
+}
+
+@media (max-width: 640px) {
+    .modal-box { padding: 1.25rem; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .btn { width: 100%; }
+    .info-row .value { font-size: 0.85rem; }
+    .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
+    .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+    .card { padding: 0.875rem; }
+    .sponsor-card { padding: 0.5rem 0.75rem; }
+    .code-display { font-size: 1rem; padding: 0.5rem 0.75rem; }
+    .package-preview { padding: 0.75rem; }
+}
 </style>
 @endpush
 
 @section('content')
 <div class="p-4 sm:p-6">
-    
+
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Détails de l'utilisateur
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 ID: {{ $user->id }}
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
             <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 <span class="hidden xs:inline">Retour</span>
             </a>
-            
+
             @if(!$user->is_active)
-            <button type="button" 
-                    onclick="openGenerateCodeModal()" 
+            <button type="button"
+                    onclick="openGenerateCodeModal()"
                     class="btn btn-info btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                 </svg>
-                Générer code d'activation
+                Générer code
             </button>
             @endif
         </div>
     </div>
 
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
+        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm animate-fadeIn">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm animate-fadeIn">
             {{ session('error') }}
         </div>
     @endif
 
     @if(session('warning'))
-        <div class="p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-600 text-sm sm:text-base animate-fadeIn">
+        <div class="p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-600 text-sm animate-fadeIn">
             {{ session('warning') }}
         </div>
     @endif
 
     <!-- User Information -->
-    <div class="card p-3 sm:p-4 md:p-6 animate-fadeInUp delay-1">
-        <div class="info-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
-            
+    <div class="card p-3 sm:p-4 animate-fadeInUp delay-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
+
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
                     <span class="label">Nom complet</span>
@@ -370,7 +421,7 @@
                         </span>
                         @if(!$user->is_active && $user->activation_code)
                             <span class="text-xs text-[var(--text-tertiary)] block mt-1">
-                                Code: <span class="font-mono text-primary-500">{{ $user->activation_code }}</span>
+                                Code: <span class="font-mono text-primary-blue">{{ $user->activation_code }}</span>
                             </span>
                         @endif
                     </span>
@@ -382,7 +433,7 @@
                             $roleName = $user->getRoleNames()->first() ?? 'user';
                             $roleDisplay = 'Utilisateur';
                             $badgeClass = 'badge-neutral';
-                            
+
                             if($roleName === 'admin') {
                                 $roleDisplay = 'Administrateur';
                                 $badgeClass = 'badge-purple';
@@ -393,7 +444,7 @@
                                 $roleDisplay = 'Caissier Principal';
                                 $badgeClass = 'badge-cashier-principal';
                             }
-                            
+
                             if($user->hasRole('caissier_principal') && $roleName !== 'caissier_principal') {
                                 $roleDisplay = 'Caissier Principal';
                                 $badgeClass = 'badge-cashier-principal';
@@ -423,7 +474,7 @@
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row">
                     <span class="label">Code de parrainage</span>
-                    <span class="value font-mono text-primary-500 font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
+                    <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Parrain</span>
@@ -432,7 +483,7 @@
                             $parrain = App\Models\User::find($user->parrain_id);
                         @endphp
                         @if($parrain)
-                            <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-500 hover:underline font-semibold">
+                            <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-blue hover:underline font-semibold">
                                 {{ $parrain->name }}
                             </a>
                             <span class="text-xs text-[var(--text-tertiary)] block">
@@ -446,7 +497,6 @@
                     </span>
                 </div>
 
-                <!-- PACKAGE D'ACTIVATION -->
                 <div class="info-row">
                     <span class="label">Package d'activation</span>
                     <span class="value">
@@ -472,32 +522,32 @@
             </div>
         </div>
 
-        <!-- ✅ Statistics avec lien vers Gestion des PV -->
+        <!-- Statistics -->
         <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="text-center">
-                <p class="text-2xl font-bold text-primary-500">{{ $filleuls->count() ?? 0 }}</p>
+                <p class="text-2xl font-bold text-primary-blue">{{ $filleuls->count() ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Filleuls</p>
             </div>
             <div class="text-center">
-                <p class="text-2xl font-bold text-blue-500">{{ $commissionsCount ?? 0 }}</p>
+                <p class="text-2xl font-bold text-[#065F9C]">{{ $commissionsCount ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Commissions</p>
             </div>
             <div class="text-center">
-                <p class="text-2xl font-bold text-green-500">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                <p class="text-2xl font-bold text-[#1C7E4A]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Total Commissions</p>
             </div>
-            <!-- ✅ PV cliquable vers la gestion des PV -->
+            <!-- PV Link -->
             <div class="text-center">
                 <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
-                   class="pv-link block group" 
-                   title="Voir les détails PV de cet utilisateur dans la gestion des PV">
-                    <p class="text-2xl font-bold text-purple-500 pv-value group-hover:text-purple-600 transition-colors">
+                   class="pv-link block group"
+                   title="Voir les PV dans la gestion des PV">
+                    <p class="text-2xl font-bold text-primary-blue pv-value group-hover:text-[#061B4A] transition-colors">
                         {{ $user->pv_balance ?? 0 }}
                     </p>
                     <p class="text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1">
                         PV
-                        <svg class="w-3 h-3 text-[var(--text-tertiary)] pv-icon group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        <svg class="w-3 h-3 text-[var(--text-tertiary)] pv-icon group-hover:text-primary-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
                     </p>
                 </a>
@@ -528,7 +578,7 @@
                             <td class="text-xs">{{ $filleul->id }}</td>
                             <td class="text-sm">{{ $filleul->name }}</td>
                             <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>
-                            <td class="text-xs font-mono text-primary-500">{{ $filleul->sponsor_id }}</td>
+                            <td class="text-xs font-mono text-primary-blue">{{ $filleul->sponsor_id }}</td>
                             <td>
                                 <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
                                     {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
@@ -547,60 +597,60 @@
         </div>
         @endif
 
-        <!-- ✅ Actions avec bouton Gérer les PV -->
+        <!-- Actions -->
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)] flex flex-wrap gap-2 sm:gap-3">
-            
-            <!-- ✅ NOUVEAU : Bouton Gérer les PV -->
+
+            <!-- Gérer les PV -->
             <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
-               class="btn btn-info btn-sm sm:btn-md" 
+               class="btn btn-info btn-sm sm:btn-md"
                title="Gérer les Points de Volume de cet utilisateur">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 Gérer les PV
             </a>
-            
+
             @if($user->is_active)
-                <button type="button" 
-                        onclick="openDeactivateModal()" 
+                <button type="button"
+                        onclick="openDeactivateModal()"
                         class="btn btn-warning btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                     </svg>
                     Désactiver
                 </button>
             @else
-                <button type="button" 
-                        onclick="openActivateWithPackageModal()" 
+                <button type="button"
+                        onclick="openActivateWithPackageModal()"
                         class="btn btn-success btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
                     Activer avec package
                 </button>
-                
-                <button type="button" 
-                        onclick="openGenerateCodeModal()" 
+
+                <button type="button"
+                        onclick="openGenerateCodeModal()"
                         class="btn btn-info btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                     </svg>
                     Générer code
                 </button>
             @endif
 
             <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
                 Modifier
             </a>
 
-            <button type="button" 
-                    onclick="openDeleteModal()" 
+            <button type="button"
+                    onclick="openDeleteModal()"
                     class="btn btn-danger btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
                 Supprimer
             </button>
@@ -609,28 +659,28 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL GÉNÉRER CODE D'ACTIVATION AVEC CHOIX DU PACKAGE -->
+<!-- MODAL GÉNÉRER CODE D'ACTIVATION -->
 <!-- ============================================================ -->
 <div id="generateCodeModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-info">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
             </svg>
         </div>
         <h3 class="modal-title">Générer un code d'activation</h3>
         <p class="modal-text">
-            Choisissez le package à associer au code d'activation pour 
+            Choisissez le package à associer au code d'activation pour
             <strong>{{ $user->name }}</strong>.
             <br>
             L'utilisateur recevra ce package lors de l'activation.
         </p>
-        
+
         <form action="{{ route('admin.activations.generate-code', $user->id) }}" method="POST" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium mb-1">Package</label>
-                <select name="package_id" class="input w-full" required>
+                <select name="package_id" class="form-control w-full" required>
                     <option value="">Sélectionner un package</option>
                     @foreach($packages as $package)
                         <option value="{{ $package->id }}">
@@ -648,14 +698,14 @@
                 Code actuel (valable jusqu'au {{ \Carbon\Carbon::parse($user->activation_code_expires_at)->format('d/m/Y') }})
             </p>
             @endif
-            
+
             <div class="modal-actions">
                 <button type="button" onclick="closeGenerateCodeModal()" class="btn btn-outline btn-sm">
                     Annuler
                 </button>
                 <button type="submit" class="btn btn-info btn-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     Générer et envoyer
                 </button>
@@ -665,13 +715,13 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- NOUVEAU : MODAL ACTIVATION AVEC CHOIX DU PACKAGE -->
+<!-- MODAL ACTIVATION AVEC PACKAGE -->
 <!-- ============================================================ -->
 <div id="activateWithPackageModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-success">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
         <h3 class="modal-title">Activer avec un package</h3>
@@ -680,15 +730,15 @@
             <br>
             L'utilisateur recevra les PV/BV correspondants lors de l'activation.
         </p>
-        
+
         <form action="{{ route('admin.activations.activate-with-package', $user->id) }}" method="POST" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium mb-1">Package d'activation</label>
-                <select name="package_id" id="activationPackageSelect" class="input w-full" required>
+                <select name="package_id" id="activationPackageSelect" class="form-control w-full" required>
                     <option value="">Sélectionner un package</option>
                     @foreach($packages as $package)
-                        <option value="{{ $package->id }}" 
+                        <option value="{{ $package->id }}"
                                 data-name="{{ $package->name }}"
                                 data-price="{{ $package->price }}"
                                 data-pv="{{ $package->pv_value }}"
@@ -699,15 +749,15 @@
                     @endforeach
                 </select>
             </div>
-            
-            <!-- Aperçu du package sélectionné -->
+
+            <!-- Aperçu du package -->
             <div id="packagePreview" class="package-preview" style="display: none;">
                 <div class="flex items-center justify-between">
                     <div>
                         <span class="package-name" id="previewPackageName">Package</span>
                         <div class="package-detail">
-                            <span id="previewPackagePV">0</span> PV | 
-                            <span id="previewPackageBV">0</span> BV | 
+                            <span id="previewPackagePV">0</span> PV |
+                            <span id="previewPackageBV">0</span> BV |
                             Commission: <span id="previewPackageCommission">0</span>%
                         </div>
                     </div>
@@ -715,33 +765,33 @@
                 </div>
             </div>
 
-            <!-- Info sur les PV/BV actuels -->
+            <!-- Infos PV/BV -->
             <div class="text-sm text-[var(--text-secondary)] bg-[var(--bg-secondary)] p-3 rounded-lg">
                 <div class="flex justify-between">
                     <span>PV actuel:</span>
-                    <span class="font-bold text-primary-500">{{ $currentPV ?? 0 }}</span>
+                    <span class="font-bold text-primary-blue">{{ $currentPV ?? 0 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>BV actuel:</span>
-                    <span class="font-bold text-primary-500">{{ $currentBV ?? 0 }}</span>
+                    <span class="font-bold text-primary-blue">{{ $currentBV ?? 0 }}</span>
                 </div>
                 <div class="flex justify-between border-t border-[var(--border-light)] pt-2 mt-2">
                     <span>PV après activation:</span>
-                    <span class="font-bold text-green-500" id="newPVTotal">{{ $currentPV ?? 0 }}</span>
+                    <span class="font-bold text-[#1C7E4A]" id="newPVTotal">{{ $currentPV ?? 0 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>BV après activation:</span>
-                    <span class="font-bold text-green-500" id="newBVTotal">{{ $currentBV ?? 0 }}</span>
+                    <span class="font-bold text-[#1C7E4A]" id="newBVTotal">{{ $currentBV ?? 0 }}</span>
                 </div>
             </div>
-            
+
             <div class="modal-actions">
                 <button type="button" onclick="closeActivateWithPackageModal()" class="btn btn-outline btn-sm">
                     Annuler
                 </button>
                 <button type="submit" class="btn btn-success btn-sm" id="activatePackageBtn">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
                     Activer le compte
                 </button>
@@ -754,8 +804,8 @@
 <div id="deactivateModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-warning">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
             </svg>
         </div>
         <h3 class="modal-title">Confirmer la désactivation</h3>
@@ -779,8 +829,8 @@
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-danger">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
         <h3 class="modal-title">Confirmer la suppression</h3>
@@ -819,7 +869,7 @@ function closeGenerateCodeModal() {
 }
 
 // ============================================================
-// NOUVEAU : MODAL ACTIVATION AVEC PACKAGE
+// MODAL ACTIVATION AVEC PACKAGE
 // ============================================================
 function openActivateWithPackageModal() {
     document.getElementById('activateWithPackageModal').classList.add('active');
@@ -832,43 +882,41 @@ function closeActivateWithPackageModal() {
     document.body.style.overflow = '';
 }
 
-// Mise à jour de l'aperçu du package
-document.addEventListener('DOMContentLoaded', function() {
-    const select = document.getElementById('activationPackageSelect');
-    if (select) {
-        select.addEventListener('change', updatePackagePreview);
-    }
-});
-
 function updatePackagePreview() {
     const select = document.getElementById('activationPackageSelect');
     const preview = document.getElementById('packagePreview');
     const selectedOption = select.options[select.selectedIndex];
-    
+
     if (selectedOption && selectedOption.value) {
         const name = selectedOption.dataset.name || 'Package';
         const price = parseFloat(selectedOption.dataset.price) || 0;
         const pv = parseInt(selectedOption.dataset.pv) || 0;
         const bv = parseInt(selectedOption.dataset.bv) || 0;
         const commission = parseInt(selectedOption.dataset.commission) || 0;
-        
+
         document.getElementById('previewPackageName').textContent = name;
         document.getElementById('previewPackagePrice').textContent = '$' + price.toFixed(2);
         document.getElementById('previewPackagePV').textContent = pv;
         document.getElementById('previewPackageBV').textContent = bv;
         document.getElementById('previewPackageCommission').textContent = commission;
-        
-        // Mettre à jour les totaux
+
         const currentPV = {{ $currentPV ?? 0 }};
         const currentBV = {{ $currentBV ?? 0 }};
         document.getElementById('newPVTotal').textContent = currentPV + pv;
         document.getElementById('newBVTotal').textContent = currentBV + bv;
-        
+
         preview.style.display = 'block';
     } else {
         preview.style.display = 'none';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('activationPackageSelect');
+    if (select) {
+        select.addEventListener('change', updatePackagePreview);
+    }
+});
 
 // ============================================================
 // MODAL DÉSACTIVER

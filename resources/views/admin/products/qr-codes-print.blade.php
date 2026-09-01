@@ -7,50 +7,50 @@
     <title>Étiquettes QR Code - Salang Group</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Courier New', monospace; 
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 20px;
             background: white;
             color: #1a1a1a;
         }
-        
+
         .report-header {
             width: 100%;
-            border-bottom: 3px solid #0E2F76;
+            border-bottom: 3px solid #0A2A6C;
             padding-bottom: 12px;
             margin-bottom: 20px;
         }
-        
+
         .report-header table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .report-header table td {
             border: none;
             padding: 5px 10px;
             vertical-align: middle;
             text-align: center;
         }
-        
+
         .report-header .logo-cell {
             width: 200px;
             text-align: center;
         }
-        
+
         .report-header .logo-cell img {
             max-height: 80px;
             width: auto;
             display: inline-block;
         }
-        
+
         .report-header .header-center {
             text-align: center;
         }
         .report-header .header-center h1 {
             font-size: 18px;
-            font-weight: 900;
-            color: #0E2F76;
+            font-weight: 700;
+            color: #0A2A6C;
             letter-spacing: 2px;
             margin: 0;
         }
@@ -62,7 +62,7 @@
         .report-header .header-center .period {
             font-size: 13px;
             font-weight: 700;
-            color: #0E2F76;
+            color: #0A2A6C;
             margin-top: 4px;
         }
         .report-header .header-center .date {
@@ -75,14 +75,14 @@
             color: #666;
             line-height: 1.5;
         }
-        
+
         .label-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .label-item {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -91,7 +91,7 @@
             page-break-inside: avoid;
             background: white;
         }
-        
+
         .label-item .qr-image {
             width: 120px;
             height: 120px;
@@ -100,21 +100,21 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .label-item .qr-image img {
             max-width: 120px;
             max-height: 120px;
             width: auto;
             height: auto;
         }
-        
+
         .label-item .qr-image svg {
             max-width: 120px;
             max-height: 120px;
             width: auto;
             height: auto;
         }
-        
+
         .label-item .name {
             font-size: 11px;
             font-weight: 600;
@@ -123,12 +123,12 @@
         }
         .label-item .id {
             font-size: 10px;
-            color: #0E2F76;
+            color: #0A2A6C;
             font-weight: 700;
         }
         .label-item .price {
             font-size: 11px;
-            color: #22c55e;
+            color: #1C7E4A;
             font-weight: 700;
         }
         .label-item .sku {
@@ -136,7 +136,7 @@
             color: #999;
             margin-top: 3px;
         }
-        
+
         .report-footer {
             text-align: center;
             font-size: 7px;
@@ -150,7 +150,7 @@
             font-size: 8px;
             color: #666;
         }
-        
+
         @media print {
             body { padding: 10px; }
             .report-header { border-bottom-color: #000; }
@@ -159,15 +159,15 @@
             .label-grid { gap: 10px; }
             .label-item { border-color: #ccc; }
         }
-        
+
         @media (max-width: 768px) {
             .label-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        
+
         @media (max-width: 480px) {
             .label-grid { grid-template-columns: 1fr; }
         }
-        
+
         @media (max-width: 600px) {
             .report-header table td {
                 display: block;
@@ -186,7 +186,7 @@
 </head>
 <body>
 
-<!-- ✅ EN-TÊTE AVEC LOGOS -->
+<!-- EN-TÊTE -->
 <div class="report-header">
     <table>
         <tr>
@@ -213,7 +213,7 @@
     </table>
 </div>
 
-<!-- ✅ GRILLE DES QR CODES -->
+<!-- GRILLE DES QR CODES -->
 <div class="label-grid">
     @foreach($products as $product)
         @php
@@ -226,10 +226,10 @@
                 @if($hasQr)
                     <img src="{{ asset('storage/' . $qrPath) }}" alt="QR Code {{ $product->name }}">
                 @elseif(isset($product->metadata['qr_base64']))
-                    <img src="data:image/svg+xml;base64,{{ $product->metadata['qr_base64'] }}" 
+                    <img src="data:image/svg+xml;base64,{{ $product->metadata['qr_base64'] }}"
                          alt="QR Code {{ $product->name }}">
                 @else
-                    {!! QrCode::size(120)->color(14, 47, 118)->generate((string)$product->id) !!}
+                    {!! QrCode::size(120)->color(10, 42, 108)->generate((string)$product->id) !!}
                 @endif
             </div>
             <div class="name">{{ Str::limit($product->name, 20) }}</div>
@@ -240,7 +240,7 @@
     @endforeach
 </div>
 
-<!-- ✅ PIED DE PAGE -->
+<!-- PIED DE PAGE -->
 <div class="report-footer">
     <div>Ce rapport est généré automatiquement par le système Salang Group</div>
     <div class="signature">

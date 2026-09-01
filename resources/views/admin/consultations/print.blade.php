@@ -251,7 +251,7 @@
     Genre : {{ $consultation->genre_label ?? '' }} &nbsp;&nbsp;&nbsp; 
     Age : {{ $consultation->age ?? '' }} &nbsp;&nbsp;&nbsp; 
     Poids : {{ $consultation->poids ?? '' }} &nbsp;&nbsp;&nbsp; 
-    Tail : {{ $consultation->taille ?? '' }}cm<br>
+    Taille : {{ $consultation->taille ?? '' }} cm<br>
     Date de l'examen : {{ isset($consultation->date_examen) ? $consultation->date_examen->format('d/m/Y') : '' }}
 </div>
 
@@ -360,10 +360,10 @@
 <!-- CONSEILS -->
 <div class="advice-title">Conseils Hygiéno-diététiques</div>
 <ul class="advice-list">
-    <li>Buvez plus au moins 1litres d'eau par jour.</li>
-    <li>Consommez le sucre sel et cholesterol et/ou graisses et ses derivés avec moderation.</li>
-    <li>Plus des legumes et fruits à votre régime alimentaire .</li>
-    <li>Evitez les stress et reposez vous de fois .</li>
+    <li>Buvez au moins 1,5 litre d'eau par jour.</li>
+    <li>Consommez le sucre, le sel, le cholestérol et/ou les graisses avec modération.</li>
+    <li>Privilégiez les légumes et fruits dans votre régime alimentaire.</li>
+    <li>Évitez le stress et reposez-vous régulièrement.</li>
 </ul>
 
 <!-- PIED DE PAGE ET TAMPON -->

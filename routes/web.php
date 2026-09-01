@@ -737,6 +737,10 @@ Route::prefix('admin')
 
     }); // FIN DU GROUPE ADMIN
 
+Route::get('/mentions-legales', [LegalController::class, 'legal'])->name('legal.mentions');
+Route::get('/confidentialite', [LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/conditions-generales', [LegalController::class, 'terms'])->name('legal.terms');
+
 // ============================================================
 // AUTHENTIFICATION
 // ============================================================

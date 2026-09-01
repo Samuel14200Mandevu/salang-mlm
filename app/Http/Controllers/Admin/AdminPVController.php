@@ -678,28 +678,68 @@ class AdminPVController extends Controller
     private function updateParrainAndAncestorsTeamPV(User $parrain): void
     {
         try {
-            // 1. Mettre à jour le parrain direct
-            $this->updateParrainTeamPV($parrain);
+            // Récupérer les IDs de tous les ancêtres en 1 requête SQL
+            $ancestorIds = DB::select("
+                WITH RECURSIVE ancestors AS (
+                    SELECT id, parrain_id, 1 as level
+                    FROM users 
+                    WHERE id = ?
+                    
+                    UNION ALL
+                    
+                    SELECT u.id, u.parrain_id, a.level + 1
+                    FROM users u
+                    INNER JOIN ancestors a ON u.id = a.parrain_id
+                    WHERE u.is_active = true
+                )
+                SELECT id, level FROM ancestors ORDER BY level DESC
+            ", [$parrain->id]);
 
-            // 2. Mettre à jour TOUS les ancêtres du parrain
-            $ancestor = $parrain->parrain;
-            $level = 0;
-            $maxLevel = 10;
-            
-            while ($ancestor && $level < $maxLevel) {
-                $this->updateParrainTeamPV($ancestor);
-                $ancestor = $ancestor->parrain;
-                $level++;
+            if (empty($ancestorIds)) {
+                return;
             }
 
-            Log::info('team_pv mis a jour pour le parrain et tous ses ancetres', [
+            $ids = array_column($ancestorIds, 'id');
+            
+            // Mettre à jour le team_pv pour TOUS les ancêtres en 1 requête
+            DB::statement("
+                UPDATE users u
+                SET team_pv = (
+                    SELECT COALESCE(SUM(pv_balance + monthly_pv + team_pv), 0)
+                    FROM users
+                    WHERE parrain_id = u.id
+                    AND is_active = true
+                ),
+                team_bv = (
+                    SELECT COALESCE(SUM(bv_balance + monthly_bv + team_bv), 0)
+                    FROM users
+                    WHERE parrain_id = u.id
+                    AND is_active = true
+                ),
+                total_team = (
+                    SELECT COUNT(*)
+                    FROM users
+                    WHERE parrain_id = u.id
+                    AND is_active = true
+                )
+                WHERE u.id IN (" . implode(',', $ids) . ")
+            ");
+
+            // Recalculer les grades
+            foreach ($ids as $id) {
+                $user = User::find($id);
+                if ($user) {
+                    $this->rankCalculator->recalculateUserRank($user, 'Mise à jour team_pv');
+                }
+            }
+
+            Log::info('team_pv mis à jour pour tous les ancêtres (SQL CTE)', [
                 'parrain_id' => $parrain->id,
-                'parrain_name' => $parrain->name,
-                'ancestors_updated' => $level,
+                'ancestors_updated' => count($ids),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erreur mise a jour team_pv du parrain et ancetres', [
+            Log::error('Erreur mise à jour team_pv du parrain et ancetres', [
                 'parrain_id' => $parrain->id,
                 'error' => $e->getMessage(),
             ]);
