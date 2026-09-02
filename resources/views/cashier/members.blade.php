@@ -2,219 +2,70 @@
 
 @push('styles')
 <style>
-    .member-row {
-        transition: all 0.3s ease;
+    :root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
+        --bg-base: #F5F6F8;
+        --bg-card: #FFFFFF;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
     }
-    .member-row:hover {
-        background: var(--bg-hover);
-        transform: translateX(4px);
-    }
-    .search-box {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-    .search-box .input {
-        flex: 1;
-        min-width: 150px;
-    }
-    .filter-section {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    .filter-section select,
-    .filter-section input {
-        padding: 0.375rem 0.75rem;
+
+    /* ===== CARTES ===== */
+    .card {
+        background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        background: var(--bg-input);
-        color: var(--text-primary);
-        font-size: 0.813rem;
-        flex: 1;
-        min-width: 120px;
+        border-radius: 10px;
+        padding: 1.25rem;
+        transition: border-color 0.15s ease;
     }
-    .filter-section select:focus,
-    .filter-section input:focus {
-        border-color: var(--primary-500);
-        outline: none;
-        box-shadow: 0 0 0 3px var(--border-focus);
-    }
-    .filter-section .btn-filter {
-        padding: 0.375rem 1.5rem;
-        background: var(--primary-500);
-        color: white;
-        border: none;
-        border-radius: var(--radius-md);
-        font-weight: 500;
-        font-size: 0.813rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .filter-section .btn-filter:hover {
-        background: var(--primary-600);
-        transform: translateY(-1px);
-    }
-    .filter-section .btn-reset {
-        padding: 0.375rem 1.5rem;
-        background: transparent;
-        color: var(--text-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        font-weight: 500;
-        font-size: 0.813rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .filter-section .btn-reset:hover {
-        background: var(--bg-hover);
-    }
-    .avatar-sm {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.75rem;
-        background: var(--gradient-primary);
-        color: white;
-        flex-shrink: 0;
-    }
-    .rank-badge {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.55rem;
-        font-weight: 600;
-        background: rgba(90, 182, 56, 0.15);
-        color: var(--primary-500);
-        border: 1px solid rgba(90, 182, 56, 0.2);
-    }
-    .commission-badge {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.55rem;
-        font-weight: 600;
-        background: rgba(34, 197, 94, 0.15);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.2);
-    }
-    .badge-cashier {
-        background: rgba(34, 197, 94, 0.12);
-        color: #22c55e;
-    }
-    .badge-cashier-principal {
-        background: rgba(139, 92, 246, 0.12);
-        color: #8b5cf6;
-        font-weight: 700;
-    }
-    .badge-purple {
-        background: rgba(139, 92, 246, 0.12);
-        color: #8b5cf6;
-    }
-    .badge-neutral {
-        background: var(--bg-secondary);
-        color: var(--text-secondary);
-    }
-    .btn-icon {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.65rem;
-    }
-    
+
     .card-stats {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        padding: 1rem 1.25rem;
-        transition: all 0.3s ease;
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        transition: border-color 0.15s ease;
     }
-    .card-stats:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-    
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.5rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
+
+    /* ===== TABLE ===== */
+    .member-row {
+        transition: background 0.1s ease;
         cursor: pointer;
-        border: none;
-        text-decoration: none;
     }
-    .btn-sm {
-        padding: 0.375rem 1rem;
-        font-size: 0.75rem;
+    .member-row:hover {
+        background: var(--bg-hover);
     }
-    .btn-primary {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
-    }
-    .btn-success {
-        background: var(--gradient-success);
-        color: white;
-    }
-    .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(34, 197, 94, 0.4);
-    }
-    .btn-info {
-        background: var(--gradient-info);
-        color: white;
-    }
-    .btn-info:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
-    }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    
-    .table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
+
+    .table-wrap { overflow-x: auto; }
     .table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+        border-collapse: collapse;
         font-size: 0.875rem;
     }
     .table thead th {
-        padding: 0.75rem 1rem;
+        padding: 0.5rem 0.75rem;
         text-align: left;
-        font-size: 0.7rem;
-        font-weight: 700;
+        font-size: 0.688rem;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         color: var(--text-secondary);
         background: var(--bg-secondary);
         border-bottom: 2px solid var(--border-color);
     }
     .table tbody td {
-        padding: 0.75rem 1rem;
+        padding: 0.5rem 0.75rem;
         color: var(--text-primary);
         vertical-align: middle;
         border-bottom: 1px solid var(--border-light);
@@ -222,46 +73,327 @@
     .table-striped tbody tr:nth-child(even) {
         background: var(--bg-secondary);
     }
-    
-    .card {
-        background: var(--bg-card);
+
+    /* ===== BADGES ===== */
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .badge-success {
+        background: #E6F4EC;
+        color: #1F7B4D;
+        border-color: #B8DFCC;
+    }
+    .badge-danger {
+        background: #FDE8E8;
+        color: #B32A2A;
+        border-color: #F5C8C8;
+    }
+    .badge-warning {
+        background: #FEF1E6;
+        color: #A65A0E;
+        border-color: #FADCB8;
+    }
+    .badge-neutral {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+    }
+    .badge-admin {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+    }
+    .badge-cashier {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+    }
+    .badge-cashier-principal {
+        background: #D4DFED;
+        color: var(--primary-navy);
+        border-color: #B0C5DB;
+    }
+    .badge-user {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+    }
+    .badge-sponsor {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+        font-family: monospace;
+        font-size: 0.7rem;
+    }
+    .badge-commission {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        background: #E6F4EC;
+        color: #1F7B4D;
+        border-color: #B8DFCC;
+    }
+
+    .avatar-sm {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.75rem;
+        background: var(--primary-navy);
+        color: white;
+        flex-shrink: 0;
+    }
+
+    /* ===== BOUTONS ===== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+    .btn-md { padding: 0.5rem 1.25rem; font-size: 0.813rem; }
+    .btn-xs { padding: 0.15rem 0.5rem; font-size: 0.65rem; }
+
+    .btn-primary {
+        background: var(--primary-navy);
+        color: white;
+        border-color: var(--primary-navy);
+    }
+    .btn-primary:hover {
+        background: var(--primary-navy-dark);
+        border-color: var(--primary-navy-dark);
+    }
+
+    .btn-success {
+        background: #1F7B4D;
+        color: white;
+        border-color: #1F7B4D;
+    }
+    .btn-success:hover {
+        background: #16633D;
+        border-color: #16633D;
+    }
+
+    .btn-danger {
+        background: #B32A2A;
+        color: white;
+        border-color: #B32A2A;
+    }
+    .btn-danger:hover {
+        background: #8F2121;
+        border-color: #8F2121;
+    }
+
+    .btn-warning {
+        background: #A65A0E;
+        color: white;
+        border-color: #A65A0E;
+    }
+    .btn-warning:hover {
+        background: #87480B;
+        border-color: #87480B;
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+
+    .btn-icon {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        border-radius: 6px;
+    }
+
+    /* ===== RECHERCHE ===== */
+    .header-search .search-wrapper {
+        position: relative;
+    }
+
+    .header-search .search-wrapper .search-input {
+        padding: 0.375rem 0.75rem 0.375rem 2.25rem;
         border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        width: 220px;
+        transition: border-color 0.15s ease, width 0.2s ease;
+        outline: none;
     }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+
+    .header-search .search-wrapper .search-input:focus {
+        border-color: var(--primary-navy);
+        width: 280px;
     }
-    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.10s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.20s; }
-    
+
+    .header-search .search-wrapper .search-input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    /* ===== FILTRES ===== */
+    .filter-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .filter-section select,
+    .filter-section input[type="text"]:not(.search-input),
+    .filter-section input[type="date"] {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        flex: 1;
+        min-width: 120px;
+        transition: border-color 0.15s ease;
+        outline: none;
+    }
+
+    .filter-section select:focus,
+    .filter-section input[type="text"]:not(.search-input):focus,
+    .filter-section input[type="date"]:focus {
+        border-color: var(--primary-navy);
+    }
+
+    .filter-section .btn-filter {
+        padding: 0.375rem 1.5rem;
+        background: var(--primary-navy);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    .filter-section .btn-filter:hover {
+        background: var(--primary-navy-dark);
+    }
+
+    .filter-section .btn-reset {
+        padding: 0.375rem 1.5rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .filter-section .btn-reset:hover {
+        background: var(--bg-hover);
+    }
+
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 640px) {
+        .header-search .search-wrapper .search-input {
+            width: 100%;
+        }
+        .header-search .search-wrapper .search-input:focus {
+            width: 100%;
+        }
         .filter-section {
             flex-direction: column;
         }
         .filter-section select,
-        .filter-section input,
+        .filter-section input[type="text"]:not(.search-input),
+        .filter-section input[type="date"],
         .filter-section button {
             width: 100%;
             min-width: unset;
         }
-        .search-box {
-            flex-direction: column;
+        .table thead th, .table tbody td {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.7rem;
         }
-        .search-box .input {
-            width: 100%;
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.65rem;
         }
-        .card { padding: 0.875rem; }
-        .card-stats { padding: 0.75rem; }
-        .card-stats .text-2xl { font-size: 1.25rem; }
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .btn-icon { padding: 0.125rem 0.375rem; }
+        .btn-xs {
+            padding: 0.15rem 0.375rem;
+            font-size: 0.6rem;
+        }
+        .badge {
+            font-size: 0.6rem;
+            padding: 0.125rem 0.5rem;
+        }
+        .card-stats {
+            padding: 0.625rem;
+        }
+        .avatar-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 0.6rem;
+        }
+        .card {
+            padding: 0.875rem;
+        }
+        .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .btn-icon {
+            padding: 0.15rem 0.375rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 @endpush
@@ -270,86 +402,111 @@
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+
+    {{-- EN-TÊTE --}}
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                <svg class="inline-block w-6 h-6 text-primary-500 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                Membres
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+                Gestion des membres
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Gestion des membres du réseau
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                {{ $members->total() }} membres enregistrés
+                @if(request('search'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · Résultats pour "{{ request('search') }}"
+                    </span>
+                @endif
             </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Rechercher un membre"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
             <a href="{{ route('cashier.members.create') }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                Nouveau membre
+                <span class="hidden xs:inline">Nouveau membre</span>
             </a>
         </div>
     </div>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-1">
-        <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total membres</p>
-            <p class="text-xl sm:text-2xl font-bold text-primary-500">{{ $stats['total'] ?? 0 }}</p>
+    {{-- STATISTIQUES --}}
+    @php
+        $totalMembers = $members->total() ?? 0;
+        $activeMembers = isset($stats['active']) ? $stats['active'] : 0;
+        $inactiveMembers = isset($stats['inactive']) ? $stats['inactive'] : 0;
+        $withCommissions = isset($stats['with_commissions']) ? $stats['with_commissions'] : 0;
+        $totalOrders = isset($stats['orders']) ? $stats['orders'] : 0;
+    @endphp
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[var(--primary-navy)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</span>
+            </div>
+            <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">{{ $totalMembers }}</p>
         </div>
-        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-xl sm:text-2xl font-bold text-green-500">{{ $stats['active'] ?? 0 }}</p>
+
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[#1F7B4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</span>
+            </div>
+            <p class="text-lg sm:text-xl font-bold text-[#1F7B4D]">{{ $activeMembers }}</p>
         </div>
-        <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Avec commissions</p>
-            <p class="text-xl sm:text-2xl font-bold text-purple-500">{{ $stats['with_commissions'] ?? 0 }}</p>
+
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[#B32A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</span>
+            </div>
+            <p class="text-lg sm:text-xl font-bold text-[#B32A2A]">{{ $inactiveMembers }}</p>
         </div>
-        <div class="card-stats border-l-4 border-yellow-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Commandes</p>
-            <p class="text-xl sm:text-2xl font-bold text-yellow-500">{{ $stats['orders'] ?? 0 }}</p>
+
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[#A65A0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Commissions</span>
+            </div>
+            <p class="text-lg sm:text-xl font-bold text-[#A65A0E]">{{ $withCommissions }}</p>
         </div>
     </div>
 
-    <!-- Filtres -->
-    <div class="card animate-fadeInUp delay-2">
-        <form method="GET" action="{{ route('cashier.members') }}" class="filter-section">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher (nom, email, code)" class="flex-1">
-            <select name="status">
-                <option value="">Tous les statuts</option>
-                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actifs</option>
-                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactifs</option>
-            </select>
-            <select name="role">
-                <option value="">Tous les rôles</option>
-                <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>Utilisateur</option>
-                <option value="cashier" {{ request('role') == 'cashier' ? 'selected' : '' }}>Caissier</option>
-                <option value="caissier_principal" {{ request('role') == 'caissier_principal' ? 'selected' : '' }}>Caissier Principal</option>
-                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrateur</option>
-            </select>
-            <button type="submit" class="btn-filter">Filtrer</button>
-            <a href="{{ route('cashier.members') }}" class="btn-reset">↺ Réinitialiser</a>
-        </form>
-    </div>
-
-    <!-- Liste -->
-    <div class="card animate-fadeInUp delay-3">
-        <div class="table-wrap">
-            <table class="table table-striped">
+    {{-- LISTE --}}
+    <div class="card p-3 sm:p-4">
+        <div class="table-wrap" id="tableContainer">
+            <table class="table table-striped" id="membersTable">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">Membre</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Code</th>
-                        <th class="text-xs sm:text-sm">Rôle</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Total CASH</th>
-                        <th class="text-xs sm:text-sm text-right">Actions</th>
+                        <th>Membre</th>
+                        <th class="hidden sm:table-cell">Code sponsor</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th class="hidden md:table-cell">Total CASH</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($members ?? [] as $member)
                         <tr class="member-row">
                             <td>
@@ -358,7 +515,7 @@
                                         {{ strtoupper(substr($member->name, 0, 1)) }}
                                     </div>
                                     <div>
-                                        <div class="font-medium text-sm sm:text-base">{{ $member->name }}</div>
+                                        <div class="font-medium text-sm">{{ $member->name }}</div>
                                         <div class="text-xs text-[var(--text-secondary)]">{{ $member->email }}</div>
                                         @if($member->phone)
                                             <div class="text-xs text-[var(--text-secondary)]">{{ $member->phone }}</div>
@@ -366,7 +523,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="hidden sm:table-cell font-mono text-xs text-primary-500">
+                            <td class="hidden sm:table-cell font-mono text-xs text-[var(--primary-navy)]">
                                 {{ $member->sponsor_id ?? 'N/A' }}
                             </td>
                             <td>
@@ -374,11 +531,13 @@
                                     $roleName = $member->getRoleNames()->first() ?? 'user';
                                     $badgeClass = 'badge-neutral';
                                     if($roleName === 'admin') {
-                                        $badgeClass = 'badge-purple';
+                                        $badgeClass = 'badge-admin';
                                     } elseif($roleName === 'cashier') {
                                         $badgeClass = 'badge-cashier';
                                     } elseif($roleName === 'caissier_principal') {
                                         $badgeClass = 'badge-cashier-principal';
+                                    } elseif($roleName === 'user') {
+                                        $badgeClass = 'badge-user';
                                     }
                                 @endphp
                                 <span class="badge {{ $badgeClass }}">
@@ -394,37 +553,36 @@
                             </td>
                             <td class="hidden md:table-cell">
                                 @php
-                                    // ✅ UNIQUEMENT LES COMMISSIONS POS PAYÉES
                                     $totalCommissions = \App\Models\Commission::where('user_id', $member->id)
                                         ->where('source', 'pos')
                                         ->where('status', 'paid')
                                         ->sum('amount');
                                 @endphp
                                 @if($totalCommissions > 0)
-                                    <span class="commission-badge">${{ number_format($totalCommissions, 2) }}</span>
+                                    <span class="badge badge-commission">${{ number_format($totalCommissions, 2) }}</span>
                                 @else
                                     <span class="text-xs text-[var(--text-tertiary)]">Aucune</span>
                                 @endif
                             </td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('cashier.members.show', $member->id) }}" 
-                                       class="btn btn-primary btn-sm btn-icon" title="Voir">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    <a href="{{ route('cashier.members.show', $member->id) }}"
+                                       class="btn btn-primary btn-xs btn-icon" title="Voir">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
                                     </a>
-                                    <a href="{{ route('cashier.members.commissions', $member->id) }}" 
-                                       class="btn btn-success btn-sm btn-icon" title="Commissions POS">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <a href="{{ route('cashier.members.commissions', $member->id) }}"
+                                       class="btn btn-success btn-xs btn-icon" title="Commissions POS">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                     </a>
-                                    <a href="{{ route('cashier.members.orders', $member->id) }}" 
-                                       class="btn btn-info btn-sm btn-icon" title="Commandes">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    <a href="{{ route('cashier.members.orders', $member->id) }}"
+                                       class="btn btn-warning btn-xs btn-icon" title="Commandes">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                         </svg>
                                     </a>
                                 </div>
@@ -433,10 +591,10 @@
                     @empty
                         <tr>
                             <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun membre</p>
+                                <p class="text-base font-medium text-[var(--text-primary)]">Aucun membre</p>
                                 <p class="text-sm text-[var(--text-tertiary)]">Aucun membre trouvé</p>
                             </td>
                         </tr>
@@ -445,11 +603,38 @@
             </table>
         </div>
 
-        @if(isset($members) && $members->hasPages())
-            <div class="mt-3 sm:mt-4">
-                {{ $members->links() }}
+        @if($members->hasPages())
+            <div class="mt-3 sm:mt-4" id="paginationContainer">
+                {{ $members->appends(request()->query())->links() }}
             </div>
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            searchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                if (query) {
+                    url.searchParams.set('search', query);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                url.searchParams.set('page', '1');
+                window.location.href = url.toString();
+            }, 500);
+        });
+    }
+});
+</script>
+@endpush
 @endsection

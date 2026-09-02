@@ -120,6 +120,70 @@
 }
 .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
 
+/* ===== MODAL OVERLAY ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.active {
+    display: flex;
+}
+.modal-box {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.75rem;
+    max-width: 440px;
+    width: 90%;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.modal-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+.modal-icon-danger {
+    background: rgba(185, 28, 28, 0.1);
+    color: #B91C1C;
+}
+.modal-title {
+    text-align: center;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.375rem;
+}
+.modal-text {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+.modal-text strong {
+    color: var(--text-primary);
+}
+.modal-text .text-danger {
+    color: #B91C1C;
+}
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+.modal-actions .btn {
+    min-width: 90px;
+}
+
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -151,12 +215,21 @@
     .card {
         padding: 0.875rem;
     }
+    .modal-box {
+        padding: 1.25rem;
+    }
+    .modal-actions {
+        flex-direction: column;
+    }
+    .modal-actions .btn {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
     .table thead th, .table tbody td {
         padding: 0.25rem 0.375rem;
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
 }
 </style>
@@ -232,15 +305,15 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </a>
-                                    <form action="{{ route('admin.packages.destroy', $package) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Supprimer définitivement ce package ?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-outline btn-sm btn-icon btn-danger-icon" title="Supprimer">
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    <!-- ✅ Bouton Supprimer avec Modal -->
+                                    <button type="button"
+                                            onclick="openDeleteModal('{{ $package->id }}', '{{ $package->name }}')"
+                                            class="btn btn-outline btn-sm btn-icon btn-danger-icon"
+                                            title="Supprimer">
+                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -267,4 +340,81 @@
     </div>
 
 </div>
+
+<!-- ============================================================ -->
+<!-- DELETE MODAL -->
+<!-- ============================================================ -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-danger">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 class="modal-title">Confirmer la suppression</h3>
+        <p class="modal-text">
+            Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong>
+            le package <strong id="packageNameDisplay"></strong> ?
+            <br>
+            Cette action est <strong class="text-danger">irréversible</strong>.
+        </p>
+        <div class="modal-actions">
+            <button type="button" onclick="closeDeleteModal()" class="btn btn-outline btn-sm">
+                Annuler
+            </button>
+            <form id="deleteForm" action="" method="POST" class="inline">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Supprimer
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+// ============================================================
+// DELETE MODAL
+// ============================================================
+function openDeleteModal(packageId, packageName) {
+    document.getElementById('deleteModal').classList.add('active');
+    document.getElementById('packageNameDisplay').textContent = packageName;
+    document.getElementById('deleteForm').action = '/admin/packages/' + packageId;
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// ============================================================
+// CLOSE MODALS ON OUTSIDE CLICK
+// ============================================================
+document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// ============================================================
+// CLOSE MODALS WITH ESCAPE KEY
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+});
+</script>
+@endpush
 @endsection

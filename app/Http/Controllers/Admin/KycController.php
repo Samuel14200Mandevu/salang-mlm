@@ -16,38 +16,62 @@ class KycController extends Controller
         return config('kyc.required_documents', ['id_card', 'proof_of_address']);
     }
 
-    public function index()
+    /**
+     * Liste des documents KYC avec recherche et filtres
+     */
+    public function index(Request $request)
     {
-        $pendingDocs = KycDocument::where('status', 'pending')
-            ->with('user')
-            ->orderBy('created_at', 'asc')
-            ->paginate(15);
+        $query = KycDocument::with('user');
 
-        $stats = [
-            'pending' => KycDocument::where('status', 'pending')->count(),
-            'verified' => KycDocument::where('status', 'verified')->count(),
-            'rejected' => KycDocument::where('status', 'rejected')->count(),
-            'total' => KycDocument::count(),
-        ];
+        // Recherche par nom d'utilisateur
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-        return view('admin.kyc.index', compact('pendingDocs', 'stats'));
+        // Filtre par statut
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filtre par type de document
+        if ($request->filled('type')) {
+            $query->where('document_type', $request->type);
+        }
+
+        $documents = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Statistiques
+        $pendingCount = KycDocument::where('status', 'pending')->count();
+        $verifiedCount = KycDocument::where('status', 'verified')->count();
+        $rejectedCount = KycDocument::where('status', 'rejected')->count();
+        $verifiedUsersCount = User::where('kyc_status', 'verified')->count();
+
+        return view('admin.kyc.index', compact(
+            'documents',
+            'pendingCount',
+            'verifiedCount',
+            'rejectedCount',
+            'verifiedUsersCount'
+        ));
     }
 
+    /**
+     * Vérifier un document KYC
+     */
     public function verify(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|in:verified,rejected',
-            'rejection_reason' => 'required_if:status,rejected|string|nullable',
-        ]);
-
         $document = KycDocument::findOrFail($id);
 
         if ($document->status !== 'pending') {
-            return back()->with('error', 'This document has already been processed.');
+            return redirect()->route('admin.kyc.index')
+                ->with('error', 'Ce document a déjà été traité.');
         }
 
-        $document->status = $request->status;
-        $document->rejection_reason = $request->rejection_reason;
+        $document->status = 'verified';
         $document->verified_by = Auth::id();
         $document->verified_at = now();
         $document->save();
@@ -55,33 +79,39 @@ class KycController extends Controller
         $user = $document->user;
         $requiredDocs = $this->getRequiredKycDocuments();
 
-        if ($request->status === 'verified') {
-            $verifiedDocs = KycDocument::where('user_id', $user->id)
-                ->where('status', 'verified')
-                ->whereIn('document_type', $requiredDocs)
-                ->count();
+        $verifiedDocs = KycDocument::where('user_id', $user->id)
+            ->where('status', 'verified')
+            ->whereIn('document_type', $requiredDocs)
+            ->count();
 
-            if ($verifiedDocs >= count($requiredDocs)) {
-                $user->kyc_status = 'verified';
-                $user->kyc_verified_at = now();
-            } else {
-                $user->kyc_status = 'partial';
-            }
+        if ($verifiedDocs >= count($requiredDocs)) {
+            $user->kyc_status = 'verified';
+            $user->kyc_verified_at = now();
         } else {
-            $user->kyc_status = 'rejected';
+            $user->kyc_status = 'partial';
         }
         $user->save();
 
-        return back()->with('success', 'Document processed successfully.');
+        return redirect()->route('admin.kyc.index')
+            ->with('success', "Document de {$user->name} vérifié avec succès.");
     }
 
+    /**
+     * Rejeter un document KYC
+     */
     public function reject(Request $request, $id)
     {
         $request->validate([
-            'reason' => 'required|string|min:5',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         $document = KycDocument::findOrFail($id);
+
+        if ($document->status !== 'pending') {
+            return redirect()->route('admin.kyc.index')
+                ->with('error', 'Ce document a déjà été traité.');
+        }
+
         $document->status = 'rejected';
         $document->rejection_reason = $request->reason;
         $document->verified_by = Auth::id();
@@ -92,6 +122,7 @@ class KycController extends Controller
         $user->kyc_status = 'rejected';
         $user->save();
 
-        return back()->with('success', 'Document rejected.');
+        return redirect()->route('admin.kyc.index')
+            ->with('success', "Document de {$user->name} rejeté.");
     }
 }

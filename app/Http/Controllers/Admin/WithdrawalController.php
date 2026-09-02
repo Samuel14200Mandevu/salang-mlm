@@ -7,26 +7,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use App\Models\Wallet;
 use App\Models\Transaction;
-use App\Notifications\WithdrawalApprovedNotification;
-use App\Notifications\WithdrawalRejectedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WithdrawalController extends Controller
 {
+    /**
+     * Liste des retraits avec recherche et filtres
+     */
     public function index(Request $request)
     {
         $query = Withdrawal::with(['user', 'wallet']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('method')) {
-            $query->where('method', $request->method);
-        }
-
+        // Recherche par nom d'utilisateur
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('user', function($q) use ($search) {
@@ -35,14 +29,17 @@ class WithdrawalController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        // Filtre par statut
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        // Filtre par méthode
+        if ($request->filled('method')) {
+            $query->where('method', $request->method);
         }
 
+        // Filtre par montant min/max
         if ($request->filled('min_amount')) {
             $query->where('amount', '>=', $request->min_amount);
         }
@@ -51,28 +48,34 @@ class WithdrawalController extends Controller
             $query->where('amount', '<=', $request->max_amount);
         }
 
+        // Filtre par date
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
         $withdrawals = $query->orderBy('created_at', 'desc')->paginate(20);
 
+        // Statistiques
         $stats = [
-            'total' => Withdrawal::count(),
             'pending' => Withdrawal::where('status', 'pending')->count(),
             'processing' => Withdrawal::where('status', 'processing')->count(),
-            'completed' => Withdrawal::where('status', 'completed')->count(),
-            'failed' => Withdrawal::where('status', 'failed')->count(),
             'total_amount' => Withdrawal::where('status', 'completed')->sum('amount'),
             'total_fees' => Withdrawal::where('status', 'completed')->sum('fee'),
-            'avg_amount' => Withdrawal::where('status', 'completed')->avg('amount'),
-            'today_pending' => Withdrawal::where('status', 'pending')
-                ->whereDate('created_at', today())
-                ->count(),
         ];
 
-        $methods = Withdrawal::distinct()->pluck('method');
-        $statuses = ['pending', 'processing', 'completed', 'failed'];
+        // Méthodes disponibles pour le filtre
+        $methods = Withdrawal::distinct()->pluck('method')->filter()->values();
 
-        return view('admin.withdrawals.index', compact('withdrawals', 'stats', 'methods', 'statuses'));
+        return view('admin.withdrawals.index', compact('withdrawals', 'stats', 'methods'));
     }
 
+    /**
+     * Afficher les détails d'un retrait
+     */
     public function show($id)
     {
         $withdrawal = Withdrawal::with(['user', 'user.wallet', 'wallet'])
@@ -87,34 +90,16 @@ class WithdrawalController extends Controller
         return view('admin.withdrawals.show', compact('withdrawal', 'userWithdrawals'));
     }
 
-    public function process($id)
-    {
-        $withdrawal = Withdrawal::findOrFail($id);
-
-        if ($withdrawal->status !== 'pending') {
-            return back()->with('error', 'This withdrawal cannot be processed.');
-        }
-
-        $withdrawal->status = 'processing';
-        $withdrawal->processed_at = now();
-        $withdrawal->save();
-
-        Log::info('Withdrawal processing', [
-            'withdrawal_id' => $withdrawal->id,
-            'user_id' => $withdrawal->user_id,
-            'admin_id' => auth()->id(),
-        ]);
-
-        return redirect()->route('admin.withdrawals')
-            ->with('success', "Withdrawal #{$withdrawal->id} is now processing.");
-    }
-
+    /**
+     * Approuver un retrait
+     */
     public function approve(Request $request, $id)
     {
         $withdrawal = Withdrawal::findOrFail($id);
 
         if ($withdrawal->status !== 'pending' && $withdrawal->status !== 'processing') {
-            return back()->with('error', 'This withdrawal cannot be approved.');
+            return redirect()->route('admin.withdrawals.index')
+                ->with('error', 'Ce retrait ne peut pas être approuvé.');
         }
 
         DB::beginTransaction();
@@ -123,11 +108,11 @@ class WithdrawalController extends Controller
             $wallet = Wallet::find($withdrawal->wallet_id);
 
             if (!$wallet) {
-                return back()->with('error', 'Wallet not found.');
+                return back()->with('error', 'Portefeuille non trouvé.');
             }
 
             if ($wallet->balance < $withdrawal->amount) {
-                return back()->with('error', 'Insufficient balance for this withdrawal.');
+                return back()->with('error', 'Solde insuffisant pour ce retrait.');
             }
 
             $balanceBefore = $wallet->balance;
@@ -145,11 +130,10 @@ class WithdrawalController extends Controller
                 'balance_before' => $balanceBefore,
                 'balance_after' => $wallet->balance,
                 'status' => 'completed',
-                'description' => "Withdrawal approved via {$withdrawal->method}",
+                'description' => "Retrait approuvé via {$withdrawal->method}",
                 'metadata' => json_encode([
                     'withdrawal_id' => $withdrawal->id,
                     'admin_id' => auth()->id(),
-                    'admin_name' => auth()->user()->name,
                 ]),
                 'completed_at' => now(),
             ]);
@@ -157,45 +141,34 @@ class WithdrawalController extends Controller
             $withdrawal->status = 'completed';
             $withdrawal->processed_at = now();
             $withdrawal->completed_at = now();
-            $withdrawal->notes = $request->notes ?? 'Withdrawal approved by admin';
+            $withdrawal->notes = $request->notes ?? 'Retrait approuvé par l\'administrateur';
             $withdrawal->save();
 
             DB::commit();
 
-            try {
-                $withdrawal->user->notify(new WithdrawalApprovedNotification(
-                    $withdrawal->amount,
-                    $withdrawal->method,
-                    $withdrawal->net_amount,
-                    $withdrawal->id
-                ));
-            } catch (\Exception $e) {
-                Log::error('Error sending withdrawal approved notification', [
-                    'withdrawal_id' => $withdrawal->id,
-                    'error' => $e->getMessage()
-                ]);
-            }
-
-            Log::info('Withdrawal approved', [
+            Log::info('Retrait approuvé', [
                 'withdrawal_id' => $withdrawal->id,
                 'user_id' => $withdrawal->user_id,
                 'amount' => $withdrawal->amount,
                 'admin_id' => auth()->id(),
             ]);
 
-            return redirect()->route('admin.withdrawals')
-                ->with('success', "Withdrawal #{$withdrawal->id} approved successfully.");
+            return redirect()->route('admin.withdrawals.index')
+                ->with('success', "Retrait #{$withdrawal->id} approuvé avec succès.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error approving withdrawal', [
+            Log::error('Erreur approbation retrait', [
                 'withdrawal_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Rejeter un retrait
+     */
     public function reject(Request $request, $id)
     {
         $request->validate([
@@ -205,7 +178,8 @@ class WithdrawalController extends Controller
         $withdrawal = Withdrawal::findOrFail($id);
 
         if ($withdrawal->status !== 'pending' && $withdrawal->status !== 'processing') {
-            return back()->with('error', 'This withdrawal cannot be rejected.');
+            return redirect()->route('admin.withdrawals.index')
+                ->with('error', 'Ce retrait ne peut pas être rejeté.');
         }
 
         DB::beginTransaction();
@@ -228,7 +202,7 @@ class WithdrawalController extends Controller
                     'balance_before' => $balanceBefore,
                     'balance_after' => $wallet->balance,
                     'status' => 'completed',
-                    'description' => 'Refund for rejected withdrawal #' . $withdrawal->id,
+                    'description' => 'Remboursement pour retrait rejeté #' . $withdrawal->id,
                     'metadata' => json_encode([
                         'withdrawal_id' => $withdrawal->id,
                         'admin_id' => auth()->id(),
@@ -240,25 +214,12 @@ class WithdrawalController extends Controller
 
             $withdrawal->status = 'failed';
             $withdrawal->processed_at = now();
-            $withdrawal->notes = 'Rejected: ' . $request->reason;
+            $withdrawal->notes = 'Rejeté: ' . $request->reason;
             $withdrawal->save();
 
             DB::commit();
 
-            try {
-                $withdrawal->user->notify(new WithdrawalRejectedNotification(
-                    $withdrawal->amount,
-                    $request->reason,
-                    $withdrawal->id
-                ));
-            } catch (\Exception $e) {
-                Log::error('Error sending withdrawal rejected notification', [
-                    'withdrawal_id' => $withdrawal->id,
-                    'error' => $e->getMessage()
-                ]);
-            }
-
-            Log::info('Withdrawal rejected', [
+            Log::info('Retrait rejeté', [
                 'withdrawal_id' => $withdrawal->id,
                 'user_id' => $withdrawal->user_id,
                 'amount' => $withdrawal->amount,
@@ -266,19 +227,22 @@ class WithdrawalController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            return redirect()->route('admin.withdrawals')
-                ->with('success', "Withdrawal #{$withdrawal->id} rejected.");
+            return redirect()->route('admin.withdrawals.index')
+                ->with('success', "Retrait #{$withdrawal->id} rejeté.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error rejecting withdrawal', [
+            Log::error('Erreur rejet retrait', [
                 'withdrawal_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Exporter les retraits en CSV
+     */
     public function export(Request $request)
     {
         $query = Withdrawal::with(['user']);
@@ -298,8 +262,8 @@ class WithdrawalController extends Controller
         $withdrawals = $query->orderBy('created_at', 'desc')->get();
 
         $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="withdrawals_' . date('Y-m-d') . '.csv"',
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="retraits_' . date('Y-m-d') . '.csv"',
         ];
 
         $callback = function() use ($withdrawals) {
@@ -307,9 +271,16 @@ class WithdrawalController extends Controller
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($file, [
-                'ID', 'User', 'Email', 'Amount', 'Fee (2.5%)', 'Net',
-                'Method', 'Status', 'Created At', 'Processed At', 'Completed At'
+                'ID', 'Utilisateur', 'Email', 'Montant', 'Frais', 'Net',
+                'Méthode', 'Statut', 'Créé le', 'Traité le', 'Terminé le'
             ]);
+
+            $statusLabels = [
+                'pending' => 'En attente',
+                'processing' => 'En traitement',
+                'completed' => 'Terminé',
+                'failed' => 'Échoué',
+            ];
 
             foreach ($withdrawals as $w) {
                 fputcsv($file, [
@@ -320,10 +291,10 @@ class WithdrawalController extends Controller
                     number_format($w->fee, 2),
                     number_format($w->net_amount, 2),
                     $w->method,
-                    $w->status,
-                    $w->created_at->format('Y-m-d H:i'),
-                    $w->processed_at ? $w->processed_at->format('Y-m-d H:i') : 'Pending',
-                    $w->completed_at ? $w->completed_at->format('Y-m-d H:i') : 'Pending',
+                    $statusLabels[$w->status] ?? $w->status,
+                    $w->created_at->format('d/m/Y H:i'),
+                    $w->processed_at ? $w->processed_at->format('d/m/Y H:i') : 'En attente',
+                    $w->completed_at ? $w->completed_at->format('d/m/Y H:i') : 'En attente',
                 ]);
             }
 
@@ -331,36 +302,5 @@ class WithdrawalController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
-    }
-
-    public function stats()
-    {
-        $stats = [
-            'pending' => Withdrawal::where('status', 'pending')->count(),
-            'processing' => Withdrawal::where('status', 'processing')->count(),
-            'completed_today' => Withdrawal::where('status', 'completed')
-                ->whereDate('completed_at', today())
-                ->sum('amount'),
-            'completed_this_month' => Withdrawal::where('status', 'completed')
-                ->whereMonth('completed_at', now()->month)
-                ->whereYear('completed_at', now()->year)
-                ->sum('amount'),
-            'pending_amount' => Withdrawal::where('status', 'pending')->sum('amount'),
-            'total_fees' => Withdrawal::where('status', 'completed')->sum('fee'),
-            'avg_amount' => Withdrawal::where('status', 'completed')->avg('amount'),
-            'total_withdrawals' => Withdrawal::where('status', 'completed')->count(),
-            'total_amount' => Withdrawal::where('status', 'completed')->sum('amount'),
-        ];
-
-        $byMethod = Withdrawal::where('status', 'completed')
-            ->select('method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
-            ->groupBy('method')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'stats' => $stats,
-            'by_method' => $byMethod,
-        ]);
     }
 }

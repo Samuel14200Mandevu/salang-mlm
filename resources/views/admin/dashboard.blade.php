@@ -187,12 +187,12 @@
 .badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
 .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
 
-/* Graph bars */
+/* Graph bars - CORRIGÉ */
 .graph-container {
     display: flex;
     align-items: flex-end;
-    gap: 0.25rem;
-    height: 160px;
+    gap: 0.375rem;
+    height: 180px;
     padding-top: 0.75rem;
 }
 
@@ -207,17 +207,17 @@
 
 .graph-bar {
     width: 100%;
-    min-height: 4px;
+    min-height: 8px;
     border-radius: 4px 4px 0 0;
-    background: var(--primary-blue);
-    opacity: 0.7;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    max-width: 36px;
+    max-width: 48px;
     margin: 0 auto;
     position: relative;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    background: var(--primary-blue);
 }
 .graph-bar:hover {
     opacity: 1;
+    transform: scaleY(1.02);
 }
 
 .graph-bar .tooltip {
@@ -248,9 +248,9 @@
     text-align: center;
 }
 
-/* Progress bars */
+/* Progress bars - CORRIGÉ */
 .progress-item {
-    margin-bottom: 0.625rem;
+    margin-bottom: 0.75rem;
 }
 .progress-item:last-child {
     margin-bottom: 0;
@@ -260,7 +260,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.75rem;
-    margin-bottom: 0.125rem;
+    margin-bottom: 0.25rem;
 }
 .progress-item .progress-header .progress-label {
     color: var(--text-secondary);
@@ -273,7 +273,7 @@
 
 .progress-track {
     width: 100%;
-    height: 0.375rem;
+    height: 0.5rem;
     background: var(--bg-secondary);
     border-radius: 9999px;
     overflow: hidden;
@@ -284,6 +284,7 @@
     border-radius: 9999px;
     background: var(--primary-blue);
     transition: width 0.8s ease;
+    min-width: 6px;
 }
 
 /* Table */
@@ -353,12 +354,12 @@
         font-size: 0.55rem;
     }
     .graph-container {
-        height: 100px;
-        gap: 0.125rem;
+        height: 130px;
+        gap: 0.25rem;
     }
     .graph-bar {
-        max-width: 20px;
-        min-height: 3px;
+        max-width: 32px;
+        min-height: 6px;
     }
     .graph-label {
         font-size: 0.45rem;
@@ -405,6 +406,12 @@
         padding: 0.25rem 0.375rem;
         font-size: 0.75rem;
     }
+    .progress-item .progress-header {
+        font-size: 0.625rem;
+    }
+    .progress-track {
+        height: 0.375rem;
+    }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
@@ -412,7 +419,7 @@
         font-size: 1.25rem;
     }
     .graph-container {
-        height: 130px;
+        height: 150px;
     }
 }
 </style>
@@ -527,7 +534,7 @@
     <!-- Graph + Distribution -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
 
-        <!-- Monthly registrations -->
+        <!-- Monthly registrations - CORRIGÉ -->
         <div class="card lg:col-span-2 animate-fadeInUp delay-5">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                 <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
@@ -541,14 +548,18 @@
             <div class="graph-container">
                 @php
                     $max = max(array_column($monthlyData ?? [], 'users') ?: [1]);
+                    $colors = ['#0A2A6C', '#1C7E4A', '#065F9C', '#B54708'];
                 @endphp
 
-                @forelse($monthlyData ?? [] as $data)
+                @forelse($monthlyData ?? [] as $index => $data)
                     @php
                         $height = ($data->users / max($max, 1)) * 100;
+                        $displayHeight = max(12, $height);
+                        $color = $colors[$index % count($colors)];
                     @endphp
                     <div class="graph-bar-wrapper">
-                        <div class="graph-bar" style="height: {{ max(6, $height) }}%;">
+                        <div class="graph-bar" 
+                             style="height: {{ $displayHeight }}%; background: {{ $color }};">
                             <span class="tooltip">{{ $data->users }} inscription(s)</span>
                         </div>
                         <span class="graph-label">{{ substr($data->month, 0, 3) }}</span>
@@ -561,7 +572,7 @@
             </div>
         </div>
 
-        <!-- Package distribution -->
+        <!-- Package distribution - CORRIGÉ -->
         <div class="card animate-fadeInUp delay-6">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">
                 Distribution des packages
@@ -569,11 +580,14 @@
 
             @php
                 $totalPackageUsers = $packageDistribution->sum('users_count') ?? 0;
+                $progressColors = ['#0A2A6C', '#1C7E4A', '#065F9C', '#B54708'];
             @endphp
 
-            @forelse($packageDistribution ?? [] as $pkg)
+            @forelse($packageDistribution ?? [] as $index => $pkg)
                 @php
                     $percent = $totalPackageUsers > 0 ? ($pkg->users_count / $totalPackageUsers) * 100 : 0;
+                    $displayPercent = max(8, $percent);
+                    $color = $progressColors[$index % count($progressColors)];
                 @endphp
                 <div class="progress-item">
                     <div class="progress-header">
@@ -581,7 +595,7 @@
                         <span class="progress-value">{{ $pkg->users_count }}</span>
                     </div>
                     <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ $percent }}%;"></div>
+                        <div class="progress-fill" style="width: {{ $displayPercent }}%; background: {{ $color }};"></div>
                     </div>
                 </div>
             @empty

@@ -942,6 +942,7 @@ body {
     </div>
 </div>
 <br>
+
 <!-- Edit Form + Team PV Origin -->
 <div class="grid-2 animate-fadeInUp delay-2">
     <!-- Edit Form -->
@@ -1106,8 +1107,9 @@ body {
                             <td class="font-medium">{{ number_format($entry->amount, 1, ',', ' ') }}</td>
                             <td>{{ $entry->notes ?? '-' }}</td>
                             <td class="text-center">
+                                <!-- ✅ NOUVEAU : Bouton avec modal personnalisée -->
                                 <button type="button" class="btn btn-sm btn-danger" 
-                                        onclick="deleteHistory({{ $entry->id }})">
+                                        onclick="openDeleteHistoryModal({{ $entry->id }}, '{{ $entry->period ?? 'N/A' }}', {{ number_format($entry->amount, 1) }})">
                                     <svg class="icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
@@ -1125,14 +1127,35 @@ body {
     </div>
 </div>
 
-<!-- Footer -->
-<div class="footer-links">
-    <a href="{{ route('legal.terms') }}">Conditions générales d'utilisation</a>
-    <a href="{{ route('legal.privacy') }}">Politique de confidentialité</a>
-    <span>© {{ date('Y') }} — Tous droits réservés</span>
+<!-- ============================================================ -->
+<!-- MODAL SUPPRESSION HISTORIQUE PV -->
+<!-- ============================================================ -->
+<div id="deleteHistoryModal" class="confirm-overlay">
+    <div class="confirm-box">
+        <div class="icon">🗑️</div>
+        <h3>Confirmer la suppression</h3>
+        <p>
+            Êtes-vous sûr de vouloir supprimer cette entrée d'historique ?
+        </p>
+        <div class="warning" id="deleteHistoryWarning">
+            Période: <strong id="deleteHistoryPeriod">-</strong><br>
+            Montant: <strong id="deleteHistoryAmount">-</strong>
+        </div>
+        <div class="actions">
+            <button class="btn btn-outline" onclick="closeDeleteHistoryModal()">Annuler</button>
+            <button class="btn btn-danger" id="confirmDeleteHistoryBtn">
+                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Supprimer
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- Reset Modal -->
+<!-- ============================================================ -->
+<!-- RESET MODAL -->
+<!-- ============================================================ -->
 <div id="resetModal" class="confirm-overlay">
     <div class="confirm-box">
         <div class="icon">⚠</div>
@@ -1175,7 +1198,34 @@ function showToast(message, type) {
 }
 
 // ============================================================
-// Modal
+// MODAL SUPPRESSION HISTORIQUE PV
+// ============================================================
+var deleteHistoryId = null;
+
+function openDeleteHistoryModal(historyId, period, amount) {
+    deleteHistoryId = historyId;
+    document.getElementById('deleteHistoryPeriod').textContent = period;
+    document.getElementById('deleteHistoryAmount').textContent = amount + ' PV';
+    document.getElementById('deleteHistoryModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteHistoryModal() {
+    document.getElementById('deleteHistoryModal').classList.remove('active');
+    document.body.style.overflow = '';
+    deleteHistoryId = null;
+}
+
+// Confirmer la suppression
+document.getElementById('confirmDeleteHistoryBtn').addEventListener('click', function() {
+    if (deleteHistoryId) {
+        deleteHistory(deleteHistoryId);
+        closeDeleteHistoryModal();
+    }
+});
+
+// ============================================================
+// MODAL RÉINITIALISATION
 // ============================================================
 function openResetModal() {
     document.getElementById('resetModal').classList.add('active');
@@ -1197,6 +1247,7 @@ document.addEventListener('keydown', function(e) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
         });
+        deleteHistoryId = null;
     }
 });
 
@@ -1231,13 +1282,9 @@ function submitReset() {
 }
 
 // ============================================================
-// Delete History
+// DELETE HISTORY (AJAX)
 // ============================================================
 function deleteHistory(historyId) {
-    if (!confirm('Supprimer cette entrée d\'historique ?')) {
-        return;
-    }
-    
     showToast('Suppression en cours...', 'warning');
     
     var url = '{{ url('admin/pv/history') }}/' + historyId;

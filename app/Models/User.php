@@ -35,6 +35,19 @@ class User extends Authenticatable
         'activation_code_expires_at', 'activated_at', 'activation_method',
         'activation_package_id', 'activation_commission_used',
         'activation_commission_balance', 'email_verified_at', 'remember_token',
+        'birth_date',
+        'gender',
+        'profession',
+        'identity_number',
+        'bank_name',
+        'account_number',
+        'account_holder',
+        'mobile_money',
+        'signature_name',
+        'signature_date',
+        'signature_location',
+        'registered_by',
+        'registered_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -59,6 +72,10 @@ class User extends Authenticatable
         'activated_at' => 'datetime',
         'last_rank_update' => 'datetime',
         'rank_update_queued' => 'boolean',
+        'birth_date' => 'date',
+        'signature_date' => 'date',
+        'registered_at' => 'datetime',
+        'gender' => 'string',
     ];
 
     protected static function booted(): void

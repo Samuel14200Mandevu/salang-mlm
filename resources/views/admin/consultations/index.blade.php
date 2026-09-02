@@ -5,107 +5,69 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
+    --primary-navy: #0F2B4F;
+    --primary-navy-dark: #091E3B;
+    --bg-base: #F5F6F8;
+    --bg-card: #FFFFFF;
+    --bg-secondary: #EEF0F3;
+    --bg-hover: #E8EAEE;
+    --text-primary: #1A1A1E;
+    --text-secondary: #4A4A52;
+    --text-tertiary: #7A7A82;
+    --border-color: #DCDEE3;
+    --border-light: #E8EAEE;
+    --success: #1F7B4D;
+    --danger: #B32A2A;
+    --warning: #A65A0E;
 }
 
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+}
+
+/* ===== CARTES ===== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.15s ease;
+}
+
+/* ===== STATS ===== */
 .card-stats {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.875rem 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    transition: box-shadow 0.15s ease;
+    border-radius: 10px;
+    padding: 0.875rem 1.125rem;
+    transition: border-color 0.15s ease;
 }
 .card-stats:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-color: var(--primary-navy);
 }
 
+/* ===== TABLE ===== */
 .consultation-row {
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: background 0.1s ease;
 }
 .consultation-row:hover {
     background: var(--bg-hover);
 }
-.consultation-row:active {
-    transform: scale(0.99);
+.consultation-row-pending {
+    background: rgba(166, 90, 14, 0.04);
 }
-
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-.badge {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border-radius: 9999px;
-    font-size: 0.625rem;
-    font-weight: 600;
-    border: 1px solid transparent;
-}
-.badge-success { background: rgba(28, 126, 74, 0.12); color: #1C7E4A; border-color: rgba(28, 126, 74, 0.15); }
-.badge-warning { background: rgba(181, 71, 8, 0.12); color: #B54708; border-color: rgba(181, 71, 8, 0.15); }
-.badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
-.badge-info { background: rgba(6, 95, 156, 0.12); color: #065F9C; border-color: rgba(6, 95, 156, 0.15); }
-.badge-secondary { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.25rem;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.813rem;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-    cursor: pointer;
-    border: 1px solid transparent;
-    text-decoration: none;
-}
-.btn:active {
-    transform: scale(0.97);
-}
-.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
-
-.btn-primary {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
-}
-.btn-primary:hover {
-    background: var(--primary-blue-dark);
-    border-color: var(--primary-blue-dark);
-}
-
-.btn-success {
-    background: #1C7E4A;
-    color: white;
-    border-color: #1C7E4A;
-}
-.btn-success:hover {
-    background: #14633A;
-    border-color: #14633A;
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-.btn-outline:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-color);
+.consultation-row-pending:hover {
+    background: rgba(166, 90, 14, 0.08);
 }
 
 .table-wrap { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.875rem; 
+}
 .table thead th {
     padding: 0.5rem 0.75rem;
     text-align: left;
@@ -123,123 +85,239 @@
     vertical-align: middle;
     border-bottom: 1px solid var(--border-light);
 }
-.table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
+.table-striped tbody tr:nth-child(even) { 
+    background: var(--bg-secondary); 
+}
 
-/* ===== HEADER SEARCH ===== */
-.header-search {
+/* ===== BADGES ===== */
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+.badge-success {
+    background: #E6F4EC;
+    color: #1F7B4D;
+    border-color: #B8DFCC;
+}
+.badge-danger {
+    background: #FDE8E8;
+    color: #B32A2A;
+    border-color: #F5C8C8;
+}
+.badge-warning {
+    background: #FEF1E6;
+    color: #A65A0E;
+    border-color: #FADCB8;
+}
+.badge-info {
+    background: #E8EDF5;
+    color: var(--primary-navy);
+    border-color: #C8D4E3;
+}
+.badge-secondary {
+    background: #EEF0F3;
+    color: var(--text-secondary);
+    border-color: #DCDEE3;
+}
+
+/* ===== BOUTONS ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.813rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+
+.btn-primary {
+    background: var(--primary-navy);
+    color: white;
+    border-color: var(--primary-navy);
+}
+.btn-primary:hover {
+    background: var(--primary-navy-dark);
+    border-color: var(--primary-navy-dark);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.btn-outline:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-color);
+}
+
+.btn-icon {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+/* ===== INPUTS ===== */
+.input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease;
+    outline: none;
+}
+.input:focus {
+    border-color: var(--primary-navy);
+}
+.input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* ===== FILTRES ===== */
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A52' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+.filter-select:focus {
+    border-color: var(--primary-navy);
+}
+.filter-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== HEADER AVEC RECHERCHE À DROITE ===== */
+.header-with-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.header-left {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.header-right {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
-.header-search .search-wrapper {
+.search-wrapper {
     position: relative;
+    min-width: 200px;
+    max-width: 300px;
 }
 
-.header-search .search-wrapper .search-icon {
+.search-wrapper .search-icon {
     position: absolute;
     left: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--text-tertiary);
     pointer-events: none;
 }
 
-.header-search .search-wrapper .search-input {
-    padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+.search-wrapper .search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: var(--bg-input);
+    background: var(--bg-card);
     color: var(--text-primary);
-    font-size: 0.813rem;
-    width: 220px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, width 0.2s ease;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease;
     outline: none;
 }
-
-.header-search .search-wrapper .search-input:focus {
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px var(--primary-blue-border);
-    width: 280px;
+.search-wrapper .search-input:focus {
+    border-color: var(--primary-navy);
+}
+.search-wrapper .search-input::placeholder {
+    color: var(--text-tertiary);
 }
 
-.header-search .search-wrapper .search-input::placeholder {
-    color: var(--text-muted);
-}
-
-.header-search .search-wrapper .clear-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    display: none;
-    transition: background 0.15s ease;
-}
-.header-search .search-wrapper .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-.header-search .search-wrapper .clear-btn.visible {
-    display: block;
-}
-
-/* Alert */
-.alert {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    border: 1px solid transparent;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.alert-success {
-    background: rgba(28, 126, 74, 0.08);
-    border-color: rgba(28, 126, 74, 0.15);
-    color: #1C7E4A;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeInUp { animation: fadeInUp 0.3s ease forwards; }
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.1s; }
-.delay-3 { animation-delay: 0.15s; }
-.delay-4 { animation-delay: 0.2s; }
-
-@media (max-width: 640px) {
-    .card-stats { padding: 0.625rem; }
-    .card-stats .text-2xl { font-size: 1.25rem; }
-    .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.7rem; }
-    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-    .btn-sm svg { width: 0.875rem; height: 0.875rem; }
-    .card { padding: 0.875rem; }
-    .header-search {
-        width: 100%;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .header-with-search {
+        flex-direction: column;
+        align-items: stretch;
     }
-    .header-search .search-wrapper {
+    .header-right {
+        flex-wrap: wrap;
+    }
+    .search-wrapper {
         flex: 1;
+        min-width: 0;
+        max-width: none;
     }
-    .header-search .search-wrapper .search-input {
-        width: 100%;
-    }
-    .header-search .search-wrapper .search-input:focus {
-        width: 100%;
+    .filter-select {
+        flex: 1;
+        min-width: 120px;
     }
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
     }
+}
+
+@media (max-width: 640px) {
+    .table thead th, .table tbody td {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+    }
     .badge {
-        font-size: 0.55rem;
-        padding: 0.1rem 0.4rem;
+        font-size: 0.6rem;
+        padding: 0.125rem 0.5rem;
+    }
+    .card {
+        padding: 0.875rem;
+    }
+    .card-stats {
+        padding: 0.625rem 0.75rem;
+    }
+    .card-stats .text-xl {
+        font-size: 1.125rem;
+    }
+    .header-right {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-wrapper {
+        max-width: none;
     }
 }
 
@@ -251,10 +329,6 @@
         padding: 0.25rem 0.375rem;
         font-size: 0.6rem;
     }
-    .btn-sm {
-        padding: 0.125rem 0.375rem;
-        font-size: 0.6rem;
-    }
 }
 </style>
 @endpush
@@ -264,47 +338,56 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- Header with Search -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Fiches de Consultation
-            </h1>
+    <!-- En-tête avec recherche à droite -->
+    <div class="header-with-search">
+        <div class="header-left">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Fiches de consultation</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Gérer les consultations des patients
-                <span class="text-xs text-[var(--text-tertiary)] ml-2" id="resultsCount">
-                    ({{ $consultations->total() }} trouvés)
-                </span>
+                {{ $consultations->total() }} consultations
+                @if(request('search'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · Résultats pour "{{ request('search') }}"
+                    </span>
+                @endif
+                @if(request('status') && request('status') !== 'all')
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · Filtre: {{ ucfirst(request('status')) }}
+                    </span>
+                @endif
             </p>
         </div>
-        <div class="flex items-center gap-3">
-            <span class="px-3 py-1 bg-[#B54708]/20 text-[#B54708] rounded-full text-xs sm:text-sm font-semibold">
+        <div class="header-right">
+            <div class="search-wrapper">
+                <span class="search-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Rechercher patient, motif ou ID"
+                       class="search-input"
+                       value="{{ request('search') }}">
+            </div>
+            <select id="statusFilter" class="filter-select text-sm">
+                <option value="all" {{ request('status') == 'all' || !request('status') ? 'selected' : '' }}>Tous</option>
+                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>En attente</option>
+                <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>En traitement</option>
+                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Terminées</option>
+                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Annulées</option>
+            </select>
+            <button id="resetFilters" class="btn btn-outline btn-sm text-xs" title="Réinitialiser les filtres">
+                Réinitialiser
+            </button>
+            <span class="px-3 py-1 bg-[#FEF1E6] border border-[#FADCB8] rounded-lg text-[#A65A0E] text-sm font-medium whitespace-nowrap">
                 {{ $pendingCount ?? 0 }} en attente
             </span>
-            <div class="header-search">
-                <div class="search-wrapper">
-                    <span class="search-icon">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </span>
-                    <input type="text"
-                           id="searchInput"
-                           class="search-input"
-                           placeholder="Rechercher une consultation..."
-                           autocomplete="off">
-                    <button type="button" id="clearBtn" class="clear-btn">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
+    <!-- Messages flash -->
     @if(session('success'))
-        <div class="alert alert-success animate-fadeInUp">
+        <div class="p-3 sm:p-4 bg-[#E6F4EC] border border-[#B8DFCC] rounded-lg text-[#1F7B4D] text-sm flex items-center gap-2">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -312,50 +395,51 @@
         </div>
     @endif
 
-    <!-- Statistics -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats border-l-4 border-[var(--primary-blue)]">
+    <!-- Statistiques -->
+    <div class="stats-grid grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">{{ $consultations->total() }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">{{ $statusCounts['all'] ?? 0 }}</p>
         </div>
-        <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-2">
+        <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">{{ $pendingCount ?? 0 }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[#A65A0E]">{{ $statusCounts['pending'] ?? 0 }}</p>
         </div>
-        <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-3">
+        <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">{{ $consultations->where('status', 'processing')->count() }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">{{ $statusCounts['processing'] ?? 0 }}</p>
         </div>
-        <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-4">
+        <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Terminées</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">{{ $consultations->where('status', 'completed')->count() }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[#1F7B4D]">{{ $statusCounts['completed'] ?? 0 }}</p>
         </div>
     </div>
 
-    <!-- List -->
-    <div class="card animate-fadeInUp delay-3 p-3 sm:p-4">
+    <!-- Liste des consultations -->
+    <div class="card p-3 sm:p-4">
         <div class="table-wrap">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">ID</th>
-                        <th class="text-xs sm:text-sm">Caissier</th>
-                        <th class="text-xs sm:text-sm">Patient</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Motif</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Date</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
-                        <th class="text-xs sm:text-sm text-right">Action</th>
+                        <th>ID</th>
+                        <th>Caissier</th>
+                        <th>Patient</th>
+                        <th class="hidden sm:table-cell">Motif</th>
+                        <th class="hidden md:table-cell">Date</th>
+                        <th>Statut</th>
+                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
-                <tbody id="consultationsTable">
+                <tbody id="consultationsTableBody">
                     @forelse($consultations as $consultation)
-                        <tr class="consultation-row @if($consultation->status == 'pending') bg-[#B54708]/5 @endif"
-                            data-search="{{ strtolower($consultation->id . ' ' . $consultation->cashier?->name . ' ' . $consultation->nom_complet . ' ' . $consultation->reason) }}">
-                            <td class="font-mono text-xs sm:text-sm text-[var(--primary-blue)]">{{ $consultation->id }}</td>
+                        <tr class="consultation-row {{ $consultation->status == 'pending' ? 'consultation-row-pending' : '' }}">
+                            <td class="font-mono text-xs text-[var(--primary-navy)]">{{ $consultation->id }}</td>
                             <td class="text-sm">{{ $consultation->cashier?->name ?? 'N/A' }}</td>
-                            <td class="text-sm">{{ $consultation->nom_complet }}</td>
-                            <td class="text-sm hidden sm:table-cell max-w-[150px] truncate">{{ $consultation->reason ?? 'N/A' }}</td>
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
+                            <td class="text-sm font-medium">{{ $consultation->nom_complet }}</td>
+                            <td class="hidden sm:table-cell text-sm text-[var(--text-secondary)] max-w-[150px] truncate">
+                                {{ $consultation->reason ?? 'N/A' }}
+                            </td>
+                            <td class="hidden md:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $consultation->created_at->format('d/m/Y H:i') }}
                             </td>
                             <td>
@@ -369,8 +453,8 @@
                                     $statusLabels = [
                                         'pending' => 'En attente',
                                         'processing' => 'En traitement',
-                                        'completed' => 'Terminé',
-                                        'cancelled' => 'Annulé',
+                                        'completed' => 'Terminée',
+                                        'cancelled' => 'Annulée',
                                     ];
                                 @endphp
                                 <span class="badge {{ $statusClasses[$consultation->status] ?? 'badge-warning' }}">
@@ -379,22 +463,28 @@
                             </td>
                             <td class="text-right">
                                 <a href="{{ route('admin.consultations.show', $consultation) }}" class="btn btn-primary btn-sm">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                     Traiter
                                 </a>
                             </td>
                         </tr>
                     @empty
-                        <tr id="noResultsRow">
-                            <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucune fiche de consultation</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Les fiches apparaîtront ici</p>
+                                <p class="text-base sm:text-lg font-medium">Aucune consultation</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">
+                                    @if(request('search') || request('status'))
+                                        Aucun résultat pour ces critères
+                                    @else
+                                        Les consultations apparaitront ici
+                                    @endif
+                                </p>
                             </td>
                         </tr>
                     @endforelse
@@ -404,7 +494,7 @@
 
         @if($consultations->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $consultations->links() }}
+                {{ $consultations->appends(request()->query())->links() }}
             </div>
         @endif
     </div>
@@ -415,73 +505,134 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
-    const clearBtn = document.getElementById('clearBtn');
-    const rows = document.querySelectorAll('#consultationsTable tr');
+    const statusFilter = document.getElementById('statusFilter');
+    const resetBtn = document.getElementById('resetFilters');
+    let searchTimeout;
 
-    function filterRows() {
-        const search = searchInput.value.trim().toLowerCase();
-
-        let visibleCount = 0;
-
-        rows.forEach(function(row) {
-            if (row.id === 'noResultsRow') return;
-
-            const data = row.dataset.search || '';
-            const text = row.textContent.toLowerCase();
-            const match = !search || data.includes(search) || text.includes(search);
-
-            row.style.display = match ? '' : 'none';
-            if (match) visibleCount++;
+    // Recherche avec debounce
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            searchTimeout = setTimeout(() => {
+                fetchConsultations(query, statusFilter.value);
+            }, 300);
         });
-
-        // Gérer l'affichage "aucun résultat"
-        const noResultsRow = document.getElementById('noResultsRow');
-        if (noResultsRow) {
-            if (visibleCount === 0 && search.length > 0) {
-                noResultsRow.style.display = '';
-            } else {
-                noResultsRow.style.display = 'none';
-            }
-        }
-
-        clearBtn.classList.toggle('visible', search.length > 0);
     }
 
-    searchInput.addEventListener('input', filterRows);
+    // Filtre par statut
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const query = searchInput ? searchInput.value.trim() : '';
+            fetchConsultations(query, this.value);
+        });
+    }
 
-    // Bouton clear
-    clearBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        clearBtn.classList.remove('visible');
-        filterRows();
-        searchInput.focus();
-    });
+    // Réinitialisation
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            if (searchInput) searchInput.value = '';
+            if (statusFilter) statusFilter.value = 'all';
+            fetchConsultations('', 'all');
+        });
+    }
 
-    // Raccourci ESC pour effacer
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            this.value = '';
-            clearBtn.classList.remove('visible');
-            filterRows();
-            this.blur();
+    function fetchConsultations(query, status) {
+        const url = new URL(window.location.href);
+        
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
         }
-    });
+        
+        if (status && status !== 'all') {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        url.searchParams.set('page', '1');
 
-    // Raccourci / pour focus sur la recherche
-    document.addEventListener('keydown', function(e) {
-        if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            const active = document.activeElement;
-            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-                return;
+        const tableBody = document.getElementById('consultationsTableBody');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                    <div class="flex items-center justify-center gap-3">
+                        <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Recherche en cours…</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
-        }
-    });
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const newTableBody = doc.getElementById('consultationsTableBody');
+            const newPagination = doc.querySelector('.mt-3.sm\\:mt-4');
+            
+            if (newTableBody) {
+                document.getElementById('consultationsTableBody').innerHTML = newTableBody.innerHTML;
+            }
+            
+            if (newPagination) {
+                const paginationContainer = document.querySelector('.mt-3.sm\\:mt-4');
+                if (paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            }
 
-    // Recherche initiale si une valeur est présente
-    // (pas de recherche initiale automatique)
+            // Mise à jour du titre et du compte
+            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
+            if (subtitle) {
+                const totalMatch = html.match(/(\d+)\s+consultations?/);
+                if (totalMatch) {
+                    subtitle.textContent = totalMatch[0];
+                }
+            }
+
+            // Mise à jour des statistiques
+            const stats = doc.querySelectorAll('.card-stats .text-xl');
+            if (stats.length >= 4) {
+                document.querySelectorAll('.card-stats .text-xl').forEach((el, index) => {
+                    if (stats[index]) {
+                        el.textContent = stats[index].textContent;
+                    }
+                });
+            }
+
+            // Mise à jour du badge "en attente"
+            const pendingBadge = document.querySelector('.px-3.py-1.bg-\\[\\#FEF1E6\\]');
+            if (pendingBadge) {
+                const newPendingBadge = doc.querySelector('.px-3.py-1.bg-\\[\\#FEF1E6\\]');
+                if (newPendingBadge) {
+                    pendingBadge.textContent = newPendingBadge.textContent;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('consultationsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-[#B32A2A]">
+                        Une erreur est survenue lors de la recherche
+                    </td>
+                </tr>
+            `;
+        });
+    }
 });
 </script>
 @endpush

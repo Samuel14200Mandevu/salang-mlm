@@ -1,81 +1,434 @@
 {{-- resources/views/cashier/customers.blade.php --}}
 @extends('cashier.layouts.app')
 
+@push('styles')
+<style>
+    :root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
+        --bg-base: #F5F6F8;
+        --bg-card: #FFFFFF;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-tertiary);
+    }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-total { background: rgba(15, 43, 79, 0.10); color: var(--primary-navy); }
+    .stat-icon-active { background: rgba(34, 197, 94, 0.10); color: #1F7B4D; }
+    .stat-icon-sponsored { background: rgba(139, 92, 246, 0.10); color: #8b5cf6; }
+    .stat-icon-sponsors { background: rgba(245, 158, 11, 0.10); color: #A65A0E; }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-navy);
+        color: white;
+        border-color: var(--primary-navy);
+    }
+    .btn-primary:hover {
+        background: var(--primary-navy-dark);
+        border-color: var(--primary-navy-dark);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-md {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.813rem;
+    }
+
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .table thead th {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        font-size: 0.688rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .table tbody td {
+        padding: 0.5rem 0.75rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .table tbody tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .badge-success {
+        background: #E6F4EC;
+        color: #1F7B4D;
+        border-color: #B8DFCC;
+    }
+    .badge-danger {
+        background: #FDE8E8;
+        color: #B32A2A;
+        border-color: #F5C8C8;
+    }
+
+    .input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        transition: border-color 0.15s ease;
+        outline: none;
+    }
+    .input:focus {
+        border-color: var(--primary-navy);
+    }
+
+    /* ===== RECHERCHE ===== */
+    .header-search .search-wrapper {
+        position: relative;
+    }
+
+    .header-search .search-wrapper .search-input {
+        padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        width: 220px;
+        transition: border-color 0.15s ease, width 0.2s ease;
+        outline: none;
+    }
+
+    .header-search .search-wrapper .search-input:focus {
+        border-color: var(--primary-navy);
+        width: 280px;
+    }
+
+    .header-search .search-wrapper .search-input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: 10px;
+        padding: 1.5rem;
+        max-width: 500px;
+        width: 90%;
+        border: 1px solid var(--border-color);
+        transform: scale(0.95);
+        transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal-box {
+        transform: scale(1);
+    }
+    .modal-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    .modal-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .flex-1 { flex: 1; }
+
+    @media (max-width: 640px) {
+        .header-search .search-wrapper .search-input {
+            width: 100%;
+        }
+        .header-search .search-wrapper .search-input:focus {
+            width: 100%;
+        }
+        .stat-card { padding: 0.625rem; }
+        .stat-card .stat-value { font-size: 1.25rem; }
+        .stat-icon { width: 2rem; height: 2rem; }
+        .stat-icon svg { width: 1.25rem; height: 1.25rem; }
+        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.7rem; }
+        .card { padding: 0.875rem; }
+        .stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+        .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+        .modal-box { padding: 1rem; }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+        .table thead th, .table tbody td {
+            padding: 0.25rem 0.375rem;
+            font-size: 0.6rem;
+        }
+    }
+</style>
+@endpush
+
 @section('title', 'Clients POS')
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+
+    {{-- EN-TÊTE --}}
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Clients POS
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Liste des clients enregistrés au guichet
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                {{ $customers->total() ?? 0 }} clients
+                @if(request('search'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · Résultats pour "{{ request('search') }}"
+                    </span>
+                @endif
             </p>
         </div>
-        <button onclick="openNewCustomerModal()" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouveau client
-        </button>
-    </div>
-
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-1">
-        <div class="card-stats border-l-4 border-primary-500">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total clients</p>
-            <p class="text-xl sm:text-2xl font-bold text-primary-500">{{ $customers->total() ?? 0 }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-xl sm:text-2xl font-bold text-green-500">{{ $customers->where('is_active', true)->count() }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Avec parrain</p>
-            <p class="text-xl sm:text-2xl font-bold text-purple-500">{{ $customers->whereNotNull('parrain_id')->count() }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-orange-500 animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Parrains uniques</p>
-            <p class="text-xl sm:text-2xl font-bold text-orange-500">{{ $customers->whereNotNull('parrain_id')->unique('parrain_id')->count() }}</p>
+        <div class="flex items-center gap-2">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Rechercher un client"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
+            <button onclick="openNewCustomerModal()" class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouveau client
+            </button>
         </div>
     </div>
 
-    <!-- Liste -->
-    <div class="card animate-fadeInUp delay-3">
-        <div class="table-wrap">
-            <table class="table table-striped">
+    {{-- STATISTIQUES --}}
+    @php
+        $totalCustomers = $customers->total() ?? 0;
+        $activeCustomers = $customers->where('is_active', true)->count();
+        $sponsoredCustomers = $customers->whereNotNull('parrain_id')->count();
+        $uniqueSponsors = $customers->whereNotNull('parrain_id')->unique('parrain_id')->count();
+    @endphp
+
+    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Total clients</p>
+                    <p class="stat-value text-[var(--primary-navy)]">{{ $totalCustomers }}</p>
+                </div>
+                <div class="stat-icon stat-icon-total">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Actifs</p>
+                    <p class="stat-value text-[#1F7B4D]">{{ $activeCustomers }}</p>
+                </div>
+                <div class="stat-icon stat-icon-active">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Avec parrain</p>
+                    <p class="stat-value text-[#8b5cf6]">{{ $sponsoredCustomers }}</p>
+                </div>
+                <div class="stat-icon stat-icon-sponsored">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="stat-label">Parrains uniques</p>
+                    <p class="stat-value text-[#A65A0E]">{{ $uniqueSponsors }}</p>
+                </div>
+                <div class="stat-icon stat-icon-sponsors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- LISTE --}}
+    <div class="card p-3 sm:p-4">
+        <div class="table-wrap" id="tableContainer">
+            <table class="table table-striped" id="customersTable">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">#</th>
-                        <th class="text-xs sm:text-sm">Nom</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Téléphone</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Parrain</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Code client</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Inscrit</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
+                        <th>#</th>
+                        <th>Nom</th>
+                        <th class="hidden sm:table-cell">Téléphone</th>
+                        <th class="hidden md:table-cell">Parrain</th>
+                        <th class="hidden lg:table-cell">Code client</th>
+                        <th class="hidden lg:table-cell">Inscrit</th>
+                        <th>Statut</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($customers ?? [] as $customer)
                         <tr>
                             <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $customer->id }}</td>
                             <td>
-                                <div class="font-medium text-sm sm:text-base">{{ $customer->name }}</div>
+                                <div class="font-medium text-sm">{{ $customer->name }}</div>
                                 <div class="text-xs text-[var(--text-secondary)]">{{ $customer->email }}</div>
                                 @if($customer->address)
                                     <div class="text-[10px] text-[var(--text-tertiary)]">{{ $customer->address }}{{ $customer->city ? ', ' . $customer->city : '' }}</div>
                                 @endif
                             </td>
-                            <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
+                            <td class="hidden sm:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $customer->phone ?? 'N/A' }}
                             </td>
                             <td class="hidden md:table-cell">
                                 @if($customer->parrain)
-                                    <span class="text-sm text-primary-500">{{ $customer->parrain->name }}</span>
+                                    <span class="text-sm text-[var(--primary-navy)]">{{ $customer->parrain->name }}</span>
                                     <div class="text-xs text-[var(--text-secondary)]">Code: {{ $customer->parrain->sponsor_id }}</div>
                                 @else
                                     <span class="text-xs text-[var(--text-tertiary)]">Aucun</span>
@@ -84,7 +437,7 @@
                             <td class="hidden lg:table-cell font-mono text-xs text-[var(--text-secondary)]">
                                 {{ $customer->sponsor_id ?? 'N/A' }}
                             </td>
-                            <td class="hidden lg:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
+                            <td class="hidden lg:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $customer->created_at->format('d/m/Y') }}
                             </td>
                             <td>
@@ -96,14 +449,14 @@
                     @empty
                         <tr>
                             <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun client POS</p>
+                                <p class="text-base font-medium text-[var(--text-primary)]">Aucun client POS</p>
                                 <p class="text-sm text-[var(--text-tertiary)]">Les clients apparaîtront ici après leur première vente au guichet</p>
                                 <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm mt-3">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                     </svg>
                                     Faire une vente
                                 </a>
@@ -115,46 +468,46 @@
         </div>
 
         @if(isset($customers) && $customers->hasPages())
-            <div class="mt-3 sm:mt-4">
-                {{ $customers->links() }}
+            <div class="mt-3 sm:mt-4" id="paginationContainer">
+                {{ $customers->appends(request()->query())->links() }}
             </div>
         @endif
     </div>
 </div>
 
-<!-- Modal Nouveau Client -->
-<div id="customerModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" onclick="if(event.target === this) closeModal('customerModal')">
-    <div class="bg-[var(--bg-card)] rounded-lg p-6 max-w-md w-full border border-[var(--border-color)] shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-[var(--text-primary)]">
-                <svg class="inline-block w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+{{-- MODAL NOUVEAU CLIENT --}}
+<div id="customerModal" class="modal-overlay" onclick="if(event.target === this) closeModal('customerModal')">
+    <div class="modal-box">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="modal-title">
+                <svg class="inline-block w-5 h-5 mr-2 text-[var(--primary-navy)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                 </svg>
                 Nouveau client POS
             </h3>
-            <button onclick="closeModal('customerModal')" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <button onclick="closeModal('customerModal')" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
         <form id="customerFormModal">
             <div class="space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet <span class="text-[#B32A2A]">*</span></label>
                     <input type="text" id="newNameModal" class="input" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email <span class="text-red-500">*</span></label>
-                    <input type="email" id="newEmailModal"  class="input" required>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email <span class="text-[#B32A2A]">*</span></label>
+                    <input type="email" id="newEmailModal" class="input" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Téléphone</label>
-                    <input type="text" id="newPhoneModal"  class="input">
+                    <input type="text" id="newPhoneModal" class="input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
-                    <input type="text" id="newAddressModal"  class="input">
+                    <input type="text" id="newAddressModal" class="input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
@@ -162,204 +515,77 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
-                    <input type="text" id="newCountryModal"  class="input">
+                    <input type="text" id="newCountryModal" class="input">
                 </div>
-                <div class="text-xs text-[var(--text-secondary)] bg-blue-500/5 p-2 rounded-lg border border-blue-500/10">
-                    <span class="text-yellow-500"></span> Le client pourra être parrainé lors de sa première vente
+                <div class="text-xs text-[var(--text-secondary)] p-2 rounded-lg border border-[var(--border-color)]">
+                    Le client pourra être parrainé lors de sa première vente
                 </div>
             </div>
-            <div class="mt-4 flex gap-2">
-                <button type="submit" class="btn btn-primary flex-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('customerModal')" class="btn btn-outline">
+                    Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
                     Créer
-                </button>
-                <button type="button" onclick="closeModal('customerModal')" class="btn btn-outline flex-1">
-                    Annuler
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-@push('styles')
-<style>
-    .card-stats {
-        background: var(--bg-card);
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-    }
-    .card-stats:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-    .card-stats p:last-child {
-        margin-bottom: 0;
-    }
-    .table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-        min-width: 480px;
-    }
-    .table th {
-        text-align: left;
-        padding: 0.5rem 0.75rem;
-        color: var(--text-secondary);
-        font-weight: 600;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        border-bottom: 1px solid var(--border-color);
-        background: var(--bg-secondary);
-    }
-    .table td {
-        padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--border-color);
-        vertical-align: middle;
-    }
-    .table-striped tbody tr:nth-child(even) {
-        background: var(--bg-secondary);
-    }
-    .table-striped tbody tr:hover {
-        background: var(--bg-hover);
-    }
-    .badge {
-        display: inline-block;
-        padding: 0.1rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success {
-        background: rgba(34, 197, 94, 0.12);
-        color: #22c55e;
-    }
-    .badge-danger {
-        background: rgba(239, 68, 68, 0.12);
-        color: #ef4444;
-    }
-    .input {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-md);
-        background: var(--bg-input);
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-        outline: none;
-    }
-    .input:focus {
-        border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px var(--border-focus);
-    }
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-    }
-    .btn-sm {
-        padding: 0.25rem 0.75rem;
-        font-size: 0.75rem;
-    }
-    .btn-primary {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
-    }
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-    }
-    .btn-outline:hover {
-        border-color: var(--primary-500);
-        color: var(--primary-500);
-    }
-    .flex-1 {
-        flex: 1;
-    }
-    
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-    }
-    
-    @media (max-width: 640px) {
-        .card-stats {
-            padding: 0.75rem;
-        }
-        .card-stats .text-2xl {
-            font-size: 1.25rem;
-        }
-        .card {
-            padding: 0.875rem;
-        }
-        .table th,
-        .table td {
-            padding: 0.375rem 0.5rem;
-            font-size: 0.65rem;
-        }
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.65rem;
-        }
-    }
-</style>
-@endpush
-
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            searchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                if (query) {
+                    url.searchParams.set('search', query);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                url.searchParams.set('page', '1');
+                window.location.href = url.toString();
+            }, 500);
+        });
+    }
+});
+
 function openNewCustomerModal() {
     const modal = document.getElementById('customerModal');
-    modal.classList.add('flex');
-    modal.classList.remove('hidden');
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
     const modal = document.getElementById(id);
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    modal.classList.remove('active');
     document.body.style.overflow = '';
     document.getElementById('customerFormModal').reset();
 }
 
 document.getElementById('customerFormModal').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const submitBtn = this.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.innerHTML = `
-        <svg class="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        <svg class="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
         Création...
     `;
-    
+
     const data = {
         name: document.getElementById('newNameModal').value,
         email: document.getElementById('newEmailModal').value,
@@ -394,15 +620,14 @@ document.getElementById('customerFormModal').addEventListener('submit', function
     .finally(() => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
             Créer
         `;
     });
 });
 
-// Fermer la modal avec la touche Echap
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeModal('customerModal');

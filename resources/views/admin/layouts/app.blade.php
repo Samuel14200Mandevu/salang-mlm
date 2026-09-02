@@ -10,7 +10,7 @@
         {!! PwaKit::head() !!}
     @endif
 
-    <meta name="theme-color" content="#0A2A6C">
+    <meta name="theme-color" content="#0F2B4F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -31,32 +31,27 @@
         --sidebar-width: 260px;
         --sidebar-collapsed: 72px;
 
-        --primary-blue: #0A2A6C;
-        --primary-blue-dark: #061B4A;
-        --primary-blue-bg: rgba(10, 42, 108, 0.08);
-        --primary-blue-border: rgba(10, 42, 108, 0.12);
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
 
-        --bg-page: #F4F5F7;
+        --bg-page: #F5F6F8;
         --bg-card: #FFFFFF;
         --bg-input: #F8F9FA;
         --bg-navbar: #FFFFFF;
-        --bg-secondary: #F4F5F7;
-        --bg-hover: #EEF0F2;
-        --bg-footer: #EEF0F2;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --bg-footer: #E8EAEE;
 
-        --text-primary: #1A1D23;
-        --text-secondary: #5A626A;
-        --text-tertiary: #8E959C;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
 
-        --border-color: #DDE0E3;
-        --border-light: #E8EBEE;
-
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
 
         --radius: 8px;
-        --radius-lg: 12px;
-        --radius-full: 9999px;
+        --radius-lg: 10px;
 
         --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
@@ -76,9 +71,6 @@
 
         --border-color: #374151;
         --border-light: #2D333B;
-
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
     }
 
     * {
@@ -90,6 +82,7 @@
 
     html, body {
         height: 100%;
+        margin: 0;
     }
 
     body {
@@ -98,10 +91,12 @@
         transition: background 0.2s ease, color 0.2s ease;
         -webkit-font-smoothing: antialiased;
         line-height: 1.6;
+        display: flex;
+        flex-direction: column;
     }
 
     ::selection {
-        background: var(--primary-blue);
+        background: var(--primary-navy);
         color: white;
     }
 
@@ -118,6 +113,34 @@
     }
     ::-webkit-scrollbar-thumb:hover {
         background: var(--text-tertiary);
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    .app-container {
+        display: flex;
+        min-height: 100vh;
+        height: 100%;
+    }
+
+    .main-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 100vh;
+        transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
+    }
+
+    .main-content {
+        flex: 1 0 auto;
+        padding: 1rem;
+    }
+
+    .main-footer {
+        flex-shrink: 0;
+        background: var(--bg-footer);
+        border-top: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        margin-top: auto;
     }
 
     /* ===== SIDEBAR ===== */
@@ -165,7 +188,7 @@
     }
 
     .sidebar-link.active {
-        background: var(--primary-blue);
+        background: var(--primary-navy);
         color: white;
     }
 
@@ -175,12 +198,12 @@
 
     .sidebar-link .badge-count {
         display: inline-block;
-        background: #B91C1C;
+        background: #B32A2A;
         color: white;
         font-size: 0.6rem;
         font-weight: 700;
         padding: 0.1rem 0.4rem;
-        border-radius: var(--radius-full);
+        border-radius: 6px;
         min-width: 18px;
         text-align: center;
         line-height: 1.3;
@@ -202,7 +225,7 @@
         right: -4px;
         width: 8px;
         height: 8px;
-        background: #B91C1C;
+        background: #B32A2A;
         border-radius: 50%;
         border: 2px solid var(--bg-navbar);
     }
@@ -231,7 +254,6 @@
         max-width: 420px;
         width: 90%;
         border: 1px solid var(--border-color);
-        box-shadow: var(--shadow-md);
         transform: scale(0.95);
         transition: transform 0.25s ease;
     }
@@ -248,16 +270,16 @@
         margin: 0 auto 0.75rem;
     }
     .confirm-dialog .icon.danger {
-        background: rgba(185, 28, 28, 0.1);
-        color: #B91C1C;
+        background: #FDE8E8;
+        color: #B32A2A;
     }
     .confirm-dialog .icon.warning {
-        background: rgba(181, 71, 8, 0.1);
-        color: #B54708;
+        background: #FEF1E6;
+        color: #A65A0E;
     }
     .confirm-dialog .icon.success {
-        background: rgba(28, 126, 74, 0.1);
-        color: #1C7E4A;
+        background: #E6F4EC;
+        color: #1F7B4D;
     }
     .confirm-dialog h3 {
         font-size: 1.0625rem;
@@ -285,11 +307,8 @@
         font-size: 0.813rem;
         cursor: pointer;
         border: 1px solid transparent;
-        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        transition: background 0.15s ease, border-color 0.15s ease;
         min-width: 90px;
-    }
-    .confirm-dialog .actions .btn:active {
-        transform: scale(0.97);
     }
     .confirm-dialog .actions .btn-cancel {
         background: transparent;
@@ -301,21 +320,40 @@
         border-color: var(--border-color);
     }
     .confirm-dialog .actions .btn-confirm {
-        background: #B91C1C;
+        background: #B32A2A;
         color: white;
-        border-color: #B91C1C;
+        border-color: #B32A2A;
     }
     .confirm-dialog .actions .btn-confirm:hover {
-        background: #991B1B;
-        border-color: #991B1B;
+        background: #8F2121;
+        border-color: #8F2121;
     }
     .confirm-dialog .actions .btn-confirm.success {
-        background: #1C7E4A;
-        border-color: #1C7E4A;
+        background: #1F7B4D;
+        border-color: #1F7B4D;
     }
     .confirm-dialog .actions .btn-confirm.success:hover {
-        background: #14633A;
-        border-color: #14633A;
+        background: #16633D;
+        border-color: #16633D;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+    .footer-links a:hover {
+        color: var(--text-primary);
+        text-decoration: underline;
+    }
+
+    /* ===== PAGE TITLE ===== */
+    .page-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: color 0.2s ease;
     }
 
     /* ===== RESPONSIVE ===== */
@@ -342,12 +380,42 @@
         .confirm-dialog .actions {
             flex-wrap: wrap;
         }
+        .main-content {
+            padding: 0.75rem;
+        }
+        .main-footer {
+            padding: 0.5rem 0.75rem;
+        }
+        .main-footer .footer-links {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .footer-separator {
+            display: none;
+        }
+        .page-title {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-content {
+            padding: 0.5rem;
+        }
+        .main-footer {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        .page-title {
+            font-size: 0.875rem;
+        }
     }
     </style>
 </head>
-<body class="h-full bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 antialiased">
+<body>
 
-    <div class="min-h-screen flex"
+    <div class="app-container"
          x-data="{
             sidebarOpen: localStorage.getItem('sidebar_open') === 'true' ? true : (window.innerWidth > 1024),
             isMobile: window.innerWidth < 768
@@ -410,7 +478,8 @@
                     <!-- Dashboard -->
                     <li>
                         <a href="{{ route('admin.dashboard') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                           data-title="Accueil">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                             </svg>
@@ -425,7 +494,8 @@
 
                     <li>
                         <a href="{{ route('admin.users') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}"
+                           data-title="Utilisateurs">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
@@ -435,7 +505,8 @@
 
                     <li>
                         <a href="{{ route('admin.cashiers.index') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.cashiers*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.cashiers*') ? 'active' : '' }}"
+                           data-title="Caissiers">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
@@ -445,9 +516,10 @@
 
                     <li>
                         <a href="{{ route('admin.packages') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.packages*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.packages*') ? 'active' : '' }}"
+                           data-title="Packages">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">Packages</span>
                         </a>
@@ -455,7 +527,8 @@
 
                     <li>
                         <a href="{{ route('admin.products') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}"
+                           data-title="Produits">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
@@ -465,7 +538,8 @@
 
                     <li>
                         <a href="{{ route('admin.orders.index') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}"
+                           data-title="Commandes">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
@@ -475,7 +549,8 @@
 
                     <li>
                         <a href="{{ route('admin.kyc') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.kyc*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.kyc*') ? 'active' : '' }}"
+                           data-title="KYC">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
@@ -485,7 +560,8 @@
 
                     <li>
                         <a href="{{ route('admin.consultations.index') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.consultations*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.consultations*') ? 'active' : '' }}"
+                           data-title="Consultations">
                             <div class="relative">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -506,7 +582,8 @@
 
                     <li>
                         <a href="{{ route('admin.commissions') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.commissions*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.commissions*') ? 'active' : '' }}"
+                           data-title="Commissions">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -516,7 +593,8 @@
 
                     <li>
                         <a href="{{ route('admin.wallets') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.wallets*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.wallets*') ? 'active' : '' }}"
+                           data-title="Portefeuilles">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
@@ -526,7 +604,8 @@
 
                     <li>
                         <a href="{{ route('admin.withdrawals') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}"
+                           data-title="Retraits">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -541,7 +620,8 @@
 
                     <li>
                         <a href="{{ route('admin.ranks') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.ranks*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.ranks*') ? 'active' : '' }}"
+                           data-title="Gestion des Rangs">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                             </svg>
@@ -556,7 +636,8 @@
 
                     <li>
                         <a href="{{ route('admin.reports') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
+                           data-title="Rapports">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
@@ -566,7 +647,8 @@
 
                     <li>
                         <a href="{{ route('admin.pos-reports.index') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.pos-reports.*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.pos-reports.*') ? 'active' : '' }}"
+                           data-title="Rapports POS">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                             </svg>
@@ -581,7 +663,8 @@
 
                     <li>
                         <a href="{{ route('admin.settings') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
+                           class="sidebar-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
+                           data-title="Paramètres">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -592,7 +675,7 @@
 
                     <!-- Séparateur -->
                     <li class="pt-3 mt-3 border-t border-[var(--border-color)]">
-                        <a href="{{ route('dashboard') }}" class="sidebar-link">
+                        <a href="{{ route('dashboard') }}" class="sidebar-link" data-title="Voir le site">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                             </svg>
@@ -605,7 +688,7 @@
             <!-- Profil sidebar -->
             <div class="p-3 border-t border-[var(--border-color)] flex-shrink-0">
                 <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                    <div class="w-9 h-9 rounded-full bg-[var(--primary-blue)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+                    <div class="w-9 h-9 rounded-full bg-[var(--primary-navy)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
                         @auth
                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
@@ -629,14 +712,14 @@
         </aside>
 
         <!-- Contenu principal -->
-        <div class="flex-1 transition-all duration-250 ease-in-out w-full"
+        <div class="main-wrapper"
              :style="{
                 'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '4.5rem' : '0',
                 'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 4.5rem)' : '100%'
              }">
 
             <!-- Top Navigation -->
-            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40">
+            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
 
@@ -649,11 +732,7 @@
                             </button>
 
                             <div class="min-w-0 flex-1">
-                                @if(isset($header))
-                                    <div class="truncate text-sm sm:text-base">{{ $header }}</div>
-                                @else
-                                    <h1 class="text-base sm:text-lg font-semibold text-[var(--text-primary)] truncate">Administration</h1>
-                                @endif
+                                <h1 class="page-title" id="pageTitle">Administration</h1>
                             </div>
                         </div>
 
@@ -675,7 +754,7 @@
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[60px] md:max-w-[100px]">
                                             {{ Auth::user()->name }}
                                         </span>
-                                        <div class="w-8 h-8 rounded-full bg-[var(--primary-blue)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-[var(--primary-navy)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
                                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
                                                      alt="Avatar" class="w-8 h-8 rounded-full object-cover">
@@ -728,7 +807,7 @@
                                             @csrf
                                             <button type="button"
                                                     onclick="confirmLogout(event)"
-                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-hover)] text-sm text-[#B91C1C] transition-colors">
+                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-hover)] text-sm text-[#B32A2A] transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -746,19 +825,19 @@
             </nav>
 
             <!-- Contenu -->
-            <main class="p-3 sm:p-4 md:p-6 lg:p-8">
+            <main class="main-content">
                 @yield('content')
             </main>
 
-            <!-- Footer -->
-            <footer class="bg-[var(--bg-footer)] border-t border-[var(--border-color)] py-3 sm:py-4">
-                <div class="max-w-7xl mx-auto px-3 sm:px-4">
-                    <div class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)]">
-                        <span>&copy; {{ date('Y') }} Salang Group. Tous droits réservés.</span>
-                        <span class="hidden sm:inline text-[var(--text-tertiary)]">•</span>
-                        <a href="{{ route('legal.terms') }}" class="hover:text-[var(--text-primary)] hover:underline transition-colors">CGU</a>
-                        <span class="hidden sm:inline text-[var(--text-tertiary)]">•</span>
-                        <a href="{{ route('legal.privacy') }}" class="hover:text-[var(--text-primary)] hover:underline transition-colors">Confidentialité</a>
+            <!-- Footer fixe en bas -->
+            <footer class="main-footer">
+                <div class="max-w-7xl mx-auto">
+                    <div class="footer-links flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm text-[var(--text-secondary)]">
+                        <span>&copy; 2026 Salang Group. Tous droits réservés.</span>
+                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
+                        <a href="{{ route('legal.terms') }}">CGU</a>
+                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
+                        <a href="{{ route('legal.privacy') }}">Confidentialité</a>
                     </div>
                 </div>
             </footer>
@@ -888,6 +967,85 @@
 
         document.getElementById('confirmDialog').addEventListener('click', function(e) {
             if (e.target === this) closeConfirmDialog();
+        });
+
+        // ============================================================
+        // MISE À JOUR DU TITRE DYNAMIQUE (basé sur le menu actif)
+        // ============================================================
+        function updatePageTitle() {
+            const pageTitle = document.getElementById('pageTitle');
+            if (!pageTitle) return;
+
+            // Récupérer le lien actif dans la sidebar
+            const activeLink = document.querySelector('.sidebar-link.active');
+            
+            if (activeLink) {
+                // Utiliser l'attribut data-title
+                const title = activeLink.getAttribute('data-title');
+                if (title) {
+                    pageTitle.textContent = title;
+                    return;
+                }
+                
+                // Sinon, utiliser le texte du label
+                const label = activeLink.querySelector('.label');
+                if (label) {
+                    pageTitle.textContent = label.textContent.trim();
+                    return;
+                }
+            }
+
+            // Fallback : utiliser le titre de la page
+            const titleElement = document.querySelector('title');
+            if (titleElement) {
+                const fullTitle = titleElement.textContent;
+                const cleanTitle = fullTitle.replace(/\s*[-|]\s*Salang\s*MLM\s*$/, '').trim();
+                if (cleanTitle && cleanTitle !== 'Admin') {
+                    pageTitle.textContent = cleanTitle;
+                    return;
+                }
+            }
+
+            // Fallback final
+            pageTitle.textContent = 'Administration';
+        }
+
+        // Exécuter au chargement
+        updatePageTitle();
+
+        // Observer les changements dans le DOM
+        const observer = new MutationObserver(function() {
+            updatePageTitle();
+        });
+
+        const content = document.querySelector('.main-content');
+        if (content) {
+            observer.observe(content, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
+
+        // Écouter les événements Livewire
+        document.addEventListener('livewire:update', function() {
+            setTimeout(updatePageTitle, 100);
+        });
+
+        document.addEventListener('livewire:load', function() {
+            setTimeout(updatePageTitle, 100);
+        });
+
+        // Observer les changements de classe active dans la sidebar
+        const sidebarObserver = new MutationObserver(function() {
+            updatePageTitle();
+        });
+
+        document.querySelectorAll('.sidebar-link').forEach(function(link) {
+            sidebarObserver.observe(link, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
         });
     });
 

@@ -353,6 +353,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/members/{member}/orders', [CashierController::class, 'memberOrders'])->name('members.orders');
     Route::put('/members/{member}/commissions/update', [CashierController::class, 'updateMemberCommissions'])->name('members.commissions.update');
     Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
+        Route::get('/members/{id}/adhesion-pdf', [CashierController::class, 'generateAdhesionForm'])->name('members.adhesion-pdf');
     
     // ============================================================
     // VÉRIFICATION DU PARRAIN 

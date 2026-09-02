@@ -1,3 +1,4 @@
+{{-- resources/views/admin/users/_table_rows.blade.php --}}
 @forelse($users as $user)
     @php
         $roleName = $user->getRoleNames()->first() ?? 'user';
@@ -27,7 +28,12 @@
             $badgeClass = 'badge-admin';
         }
     @endphp
-    <tr class="user-row" data-href="{{ route('admin.users.show', $user) }}" onclick="window.location='{{ route('admin.users.show', $user) }}'">
+    <tr class="user-row" 
+        data-name="{{ strtolower($user->name) }}"
+        data-email="{{ strtolower($user->email) }}"
+        data-sponsor="{{ strtolower($user->sponsor_id ?? '') }}"
+        data-phone="{{ strtolower($user->phone ?? '') }}"
+        onclick="window.location='{{ route('admin.users.show', $user) }}'">
         <td class="font-mono text-xs sm:text-sm">{{ $user->id }}</td>
         <td>
             <div class="flex items-center gap-2">
@@ -102,8 +108,8 @@
             </svg>
             <p class="text-base sm:text-lg font-medium">Aucun utilisateur trouvé</p>
             <p class="text-sm text-[var(--text-tertiary)]">
-                @if(request('search') || request('role') || request('status') || request('package'))
-                    Aucun résultat ne correspond à vos critères de recherche
+                @if(request('search'))
+                    Aucun résultat ne correspond à votre recherche "{{ request('search') }}"
                 @else
                     Commencez par ajouter votre premier utilisateur
                 @endif

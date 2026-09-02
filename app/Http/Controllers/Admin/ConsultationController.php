@@ -12,17 +12,39 @@ use Illuminate\Support\Facades\Auth;
 class ConsultationController extends Controller
 {
     /**
-     * Liste des consultations (Admin)
+     * Liste des consultations (Admin) avec recherche
      */
-    public function index()
+    public function index(Request $request)
     {
-        $consultations = Consultation::with(['cashier', 'admin'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-            
-        $pendingCount = Consultation::where('status', 'pending')->count();
+        $query = Consultation::with(['cashier', 'admin']);
+
+        // Recherche par nom de patient
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nom_complet', 'like', "%{$search}%")
+                  ->orWhere('reason', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par statut
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $consultations = $query->orderBy('created_at', 'desc')->paginate(20);
         
-        return view('admin.consultations.index', compact('consultations', 'pendingCount'));
+        $pendingCount = Consultation::where('status', 'pending')->count();
+        $statusCounts = [
+            'all' => Consultation::count(),
+            'pending' => Consultation::where('status', 'pending')->count(),
+            'processing' => Consultation::where('status', 'processing')->count(),
+            'completed' => Consultation::where('status', 'completed')->count(),
+            'cancelled' => Consultation::where('status', 'cancelled')->count(),
+        ];
+
+        return view('admin.consultations.index', compact('consultations', 'pendingCount', 'statusCounts'));
     }
 
     /**
@@ -60,7 +82,6 @@ class ConsultationController extends Controller
         $recommendedProducts = [];
         if ($request->has('recommended_products') && is_array($request->recommended_products)) {
             foreach ($request->recommended_products as $item) {
-                // Ne garder que les lignes où un produit est sélectionné
                 if (!empty($item['product_id'])) {
                     $product = Product::find($item['product_id']);
                     if ($product) {
@@ -92,26 +113,17 @@ class ConsultationController extends Controller
         // METTRE À JOUR LA CONSULTATION
         // ============================================================
         $consultation->update([
-            // Consultation
             'reason' => $request->reason,
             'symptoms' => $request->symptoms,
             'observations' => $request->observations,
-            
-            // Produits recommandés
             'recommended_products' => $recommendedProducts,
-            
-            // Services supplémentaires
             'seances_ceragem' => $request->seances_ceragem ?? 0,
             'prix_ceragem' => $request->prix_ceragem ?? 0,
             'seances_detox' => $request->seances_detox ?? 0,
             'prix_detox' => $request->prix_detox ?? 0,
-            
-            // Totaux
             'total_produits' => $totalProduits,
             'total_services' => $totalServices,
             'total_general' => $totalGeneral,
-            
-            // Statut et admin
             'status' => $request->status,
             'admin_id' => Auth::id(),
         ]);

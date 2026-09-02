@@ -50,6 +50,8 @@
     .stat-icon-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .stat-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     .stat-icon-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-teal { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
     
     .badge {
         display: inline-block;
@@ -69,6 +71,10 @@
     .badge-info {
         background: rgba(59, 130, 246, 0.12);
         color: #3b82f6;
+    }
+    .badge-purple {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
     }
     
     .avatar {
@@ -127,6 +133,10 @@
     .input:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+    }
+    .input-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.813rem;
     }
     
     .btn {
@@ -207,6 +217,20 @@
     .animate-fadeInRight { animation: fadeInRight 0.6s ease forwards; }
     .delay-2 { animation-delay: 0.10s; }
     .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    
+    .field-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .field-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
     
     @media (max-width: 640px) {
         .card { padding: 0.875rem; }
@@ -397,33 +421,115 @@
                     @csrf @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <!-- Nom -->
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet</label>
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="input text-sm sm:text-base" required>
                         </div>
+                        
+                        <!-- Email (non modifiable) -->
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
                             <input type="email" value="{{ $user->email }}" class="input text-sm sm:text-base opacity-70 cursor-not-allowed" disabled>
                         </div>
+                        
+                        <!-- Téléphone -->
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Téléphone</label>
                             <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" class="input text-sm sm:text-base">
                         </div>
+                        
+                        <!-- Pays -->
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Pays</label>
                             <input type="text" name="country" value="{{ old('country', $user->country) }}" class="input text-sm sm:text-base">
                         </div>
+                        
+                        <!-- Ville -->
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Ville</label>
                             <input type="text" name="city" value="{{ old('city', $user->city) }}" class="input text-sm sm:text-base">
                         </div>
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Code postal</label>
-                            <input type="text" name="zip" value="{{ old('zip', $user->zip ?? '') }}" class="input text-sm sm:text-base">
-                        </div>
+                        
+                        <!-- Adresse -->
                         <div class="md:col-span-2">
                             <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Adresse</label>
                             <textarea name="address" rows="2" class="input text-sm sm:text-base">{{ old('address', $user->address) }}</textarea>
+                        </div>
+                        
+                        <!-- Date de naissance -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Date de naissance</label>
+                            <input type="date" name="birth_date" value="{{ old('birth_date', $user->birth_date) }}" class="input text-sm sm:text-base">
+                        </div>
+                        
+                        <!-- Sexe -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Sexe</label>
+                            <select name="gender" class="input text-sm sm:text-base">
+                                <option value="">Sélectionner</option>
+                                <option value="male" {{ old('gender', $user->gender) == 'male' ? 'selected' : '' }}>Masculin</option>
+                                <option value="female" {{ old('gender', $user->gender) == 'female' ? 'selected' : '' }}>Féminin</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Profession -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Profession</label>
+                            <input type="text" name="profession" value="{{ old('profession', $user->profession) }}" class="input text-sm sm:text-base">
+                        </div>
+                        
+                        <!-- Numéro d'identité -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Numéro d'identité</label>
+                            <input type="text" name="identity_number" value="{{ old('identity_number', $user->identity_number) }}" class="input text-sm sm:text-base">
+                        </div>
+                    </div>
+
+                    <div class="mt-3 sm:mt-4 flex justify-end">
+                        <button type="submit" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Coordonnées Bancaires -->
+            <div class="card animate-fadeInRight delay-2">
+                <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                    <div class="stat-icon stat-icon-purple">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Coordonnées Bancaires</h3>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Pour le paiement des bonus</p>
+                    </div>
+                </div>
+
+                <form action="{{ route('profile.update') }}" method="POST">
+                    @csrf @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nom de la banque</label>
+                            <input type="text" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}" class="input text-sm sm:text-base">
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Numéro de compte</label>
+                            <input type="text" name="account_number" value="{{ old('account_number', $user->account_number) }}" class="input text-sm sm:text-base">
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Titulaire du compte</label>
+                            <input type="text" name="account_holder" value="{{ old('account_holder', $user->account_holder) }}" class="input text-sm sm:text-base">
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Mobile Money</label>
+                            <input type="text" name="mobile_money" value="{{ old('mobile_money', $user->mobile_money) }}" class="input text-sm sm:text-base">
                         </div>
                     </div>
 
@@ -439,7 +545,7 @@
             </div>
 
             <!-- Change Password -->
-            <div class="card animate-fadeInRight delay-2">
+            <div class="card animate-fadeInRight delay-4">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-warning">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +588,7 @@
             </div>
 
             <!-- Danger Zone -->
-            <div class="card danger-zone animate-fadeInRight delay-3">
+            <div class="card danger-zone animate-fadeInRight delay-5">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-danger">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

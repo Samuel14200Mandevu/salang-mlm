@@ -25,17 +25,40 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $request->validate([
+            // Informations personnelles
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'country' => ['nullable', 'string', 'max:100'],
             'city' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
+            
+            // ✅ Nouveaux champs
+            'birth_date' => ['nullable', 'date'],
+            'gender' => ['nullable', 'string', 'in:male,female'],
+            'profession' => ['nullable', 'string', 'max:255'],
+            'identity_number' => ['nullable', 'string', 'max:100'],
+            
+            // Coordonnées bancaires
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'account_number' => ['nullable', 'string', 'max:100'],
+            'account_holder' => ['nullable', 'string', 'max:255'],
+            'mobile_money' => ['nullable', 'string', 'max:50'],
+            
+            // Signature
+            'signature_name' => ['nullable', 'string', 'max:255'],
+            'signature_date' => ['nullable', 'date'],
+            'signature_location' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user->update($request->only(['name', 'phone', 'country', 'city', 'address']));
+        $user->update($request->only([
+            'name', 'phone', 'country', 'city', 'address',
+            'birth_date', 'gender', 'profession', 'identity_number',
+            'bank_name', 'account_number', 'account_holder', 'mobile_money',
+            'signature_name', 'signature_date', 'signature_location'
+        ]));
 
         return redirect()->route('profile.index')
-            ->with('success', 'Profile updated successfully!');
+            ->with('success', 'Profil mis à jour avec succès !');
     }
 
     public function updateAvatar(Request $request)
@@ -59,7 +82,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar updated successfully!',
+            'message' => 'Avatar mis à jour avec succès !',
             'avatar_url' => asset('storage/avatars/' . $filename)
         ]);
     }
@@ -75,7 +98,7 @@ class ProfileController extends Controller
 
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors([
-                'current_password' => 'The current password is incorrect.'
+                'current_password' => 'Le mot de passe actuel est incorrect.'
             ]);
         }
 
@@ -83,7 +106,7 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.index')
-            ->with('success', 'Password updated successfully!');
+            ->with('success', 'Mot de passe mis à jour avec succès !');
     }
 
     public function deleteAvatar()
@@ -99,7 +122,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Avatar deleted successfully!'
+            'message' => 'Avatar supprimé avec succès !'
         ]);
     }
 
@@ -113,7 +136,7 @@ class ProfileController extends Controller
 
         if (!Hash::check($request->password, $user->password)) {
             return back()->withErrors([
-                'password' => 'The password is incorrect.'
+                'password' => 'Le mot de passe est incorrect.'
             ], 'userDeletion');
         }
 
@@ -128,6 +151,6 @@ class ProfileController extends Controller
         $user->delete();
         Auth::logout();
 
-        return redirect('/')->with('success', 'Your account has been deleted.');
+        return redirect('/')->with('success', 'Votre compte a été supprimé.');
     }
 }

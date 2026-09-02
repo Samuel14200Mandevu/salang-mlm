@@ -379,7 +379,7 @@
                 <tbody>
                     @forelse($cashiers as $cashier)
                         <tr class="cashier-row">
-                            <td class="font-mono text-xs">#{{ $cashier->id }}</td>
+                            <td class="font-mono text-xs">{{ $cashier->id }}</td>
                             <td class="font-medium text-sm">{{ $cashier->name }}</td>
                             <td class="hidden md:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
                                 {{ $cashier->email }}

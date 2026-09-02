@@ -45,10 +45,12 @@ class UpdateTeamPV implements ShouldQueue
                 try {
                     DB::beginTransaction();
 
-                    $this->calculateAndUpdateTeamPV($user);
+                    // ✅ Mettre à jour le team_pv avec CTE
+                    $this->updateTeamPVWithCTE($user);
 
                     if ($this->recursive) {
-                        $this->updateAncestorsTeamPV($user);
+                        // ✅ Mettre à jour TOUS les ancêtres avec CTE
+                        $this->updateAncestorsTeamPVWithCTE($user);
                     }
 
                     Cache::forget("descendants_{$user->id}");
@@ -78,99 +80,87 @@ class UpdateTeamPV implements ShouldQueue
         Log::info('UpdateTeamPV completed');
     }
 
-    private function calculateAndUpdateTeamPV(User $user): void
+    /**
+     * ✅ Met à jour le team_pv avec CTE (1 requête)
+     */
+    private function updateTeamPVWithCTE(User $user): void
     {
-        $teamPV = $this->calculateTeamPVRecursive($user);
-        $teamBV = $this->calculateTeamBVRecursive($user);
-        $totalTeam = $this->countDescendants($user);
+        $result = DB::select("
+            WITH RECURSIVE descendants AS (
+                SELECT id, pv_balance, bv_balance, 1 as depth
+                FROM users 
+                WHERE id = ?
+                
+                UNION ALL
+                
+                SELECT u.id, u.pv_balance, u.bv_balance, d.depth + 1
+                FROM users u
+                INNER JOIN descendants d ON u.parrain_id = d.id
+                WHERE u.is_active = true
+            )
+            SELECT 
+                COALESCE(SUM(pv_balance), 0) as total_pv,
+                COALESCE(SUM(bv_balance), 0) as total_bv,
+                COUNT(*) as total_members
+            FROM descendants
+        ", [$user->id]);
 
-        $user->team_pv = $teamPV;
-        $user->team_bv = $teamBV;
-        $user->total_team = $totalTeam;
-        $user->saveQuietly();
-
-        Cache::forget("descendants_{$user->id}");
-        Cache::forget("descendants_count_{$user->id}");
-    }
-
-    private function calculateTeamPVRecursive(User $user): int
-    {
-        $totalPV = $user->pv_balance ?? 0;
-        $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
-
-        foreach ($children as $child) {
-            $totalPV += $this->calculateTeamPVRecursive($child);
+        if ($result && isset($result[0])) {
+            $user->team_pv = $result[0]->total_pv ?? 0;
+            $user->team_bv = $result[0]->total_bv ?? 0;
+            $user->total_team = ($result[0]->total_members ?? 1) - 1;
+            $user->saveQuietly();
         }
-
-        return $totalPV;
     }
 
-    private function calculateTeamBVRecursive(User $user): int
+    /**
+     * ✅ Met à jour TOUS les ancêtres avec CTE (1 requête)
+     */
+    private function updateAncestorsTeamPVWithCTE(User $user): void
     {
-        $totalBV = $user->bv_balance ?? 0;
-        $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
+        $ancestorIds = DB::select("
+            WITH RECURSIVE ancestors AS (
+                SELECT id, parrain_id, 1 as level
+                FROM users 
+                WHERE id = ?
+                
+                UNION ALL
+                
+                SELECT u.id, u.parrain_id, a.level + 1
+                FROM users u
+                INNER JOIN ancestors a ON u.id = a.parrain_id
+                WHERE u.is_active = true
+            )
+            SELECT id, level FROM ancestors ORDER BY level DESC
+        ", [$user->id]);
 
-        foreach ($children as $child) {
-            $totalBV += $this->calculateTeamBVRecursive($child);
-        }
-
-        return $totalBV;
-    }
-
-    private function countDescendants(User $user): int
-    {
-        $count = 0;
-        $children = User::where('parrain_id', $user->id)->where('is_active', true)->get();
-
-        foreach ($children as $child) {
-            $count++;
-            $count += $this->countDescendants($child);
-        }
-
-        return $count;
-    }
-
-    private function updateAncestorsTeamPV(User $user): void
-    {
-        $lockKey = "ancestor_update_{$user->id}";
-
-        if (Cache::get($lockKey, false)) {
+        if (empty($ancestorIds)) {
             return;
         }
 
-        Cache::put($lockKey, true, 60);
+        $ids = array_column($ancestorIds, 'id');
 
-        try {
-            $current = $user->parrain;
-            $level = 1;
-            $maxLevel = 20;
-            $processed = [];
-
-            while ($current && $level <= $maxLevel) {
-                if (in_array($current->id, $processed)) {
-                    break;
-                }
-
-                $processed[] = $current->id;
-                $this->calculateAndUpdateTeamPV($current);
-
-                Cache::forget("descendants_{$current->id}");
-                Cache::forget("user_rank_{$current->id}");
-
-                $current->calculateAndUpdateRank();
-
-                Log::debug('Ancestor TeamPV updated', [
-                    'ancestor_id' => $current->id,
-                    'ancestor_name' => $current->name,
-                    'team_pv' => $current->team_pv,
-                    'rank' => $current->rank_name,
-                ]);
-
-                $current = $current->parrain;
-                $level++;
-            }
-        } finally {
-            Cache::forget($lockKey);
-        }
+        DB::statement("
+            UPDATE users u
+            SET team_pv = (
+                SELECT COALESCE(SUM(pv_balance + monthly_pv + team_pv), 0)
+                FROM users
+                WHERE parrain_id = u.id
+                AND is_active = true
+            ),
+            team_bv = (
+                SELECT COALESCE(SUM(bv_balance + monthly_bv + team_bv), 0)
+                FROM users
+                WHERE parrain_id = u.id
+                AND is_active = true
+            ),
+            total_team = (
+                SELECT COUNT(*)
+                FROM users
+                WHERE parrain_id = u.id
+                AND is_active = true
+            )
+            WHERE u.id IN (" . implode(',', $ids) . ")
+        ");
     }
 }

@@ -5,51 +5,115 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
+    --primary-navy: #0F2B4F;
+    --primary-navy-dark: #091E3B;
+    --primary-navy-light: #1A3F6A;
+    --bg-base: #F5F6F8;
+    --bg-card: #FFFFFF;
+    --bg-secondary: #EEF0F3;
+    --bg-hover: #E8EAEE;
+    --text-primary: #1A1A1E;
+    --text-secondary: #4A4A52;
+    --text-tertiary: #7A7A82;
+    --border-color: #DCDEE3;
+    --border-light: #E8EAEE;
+    --success: #1F7B4D;
+    --danger: #B32A2A;
+    --warning: #A65A0E;
 }
 
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+}
+
+/* ===== CARTES ===== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    transition: border-color 0.15s ease;
+}
+
+/* ===== TABLE ===== */
 .product-row {
-    transition: background 0.15s ease;
+    transition: background 0.1s ease;
 }
 .product-row:hover {
     background: var(--bg-hover);
 }
 
+.table-wrap { overflow-x: auto; }
+.table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.875rem; 
+}
+.table thead th {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-size: 0.688rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+.table tbody td {
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-light);
+}
+.table-striped tbody tr:nth-child(even) { 
+    background: var(--bg-secondary); 
+}
+
+/* ===== BADGES ===== */
 .badge {
     display: inline-block;
     padding: 0.2rem 0.6rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.625rem;
     font-weight: 600;
     border: 1px solid transparent;
 }
-.badge-success { background: rgba(28, 126, 74, 0.12); color: #1C7E4A; border-color: rgba(28, 126, 74, 0.15); }
-.badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
-.badge-warning { background: rgba(181, 71, 8, 0.12); color: #B54708; border-color: rgba(181, 71, 8, 0.15); }
-.badge-info { background: var(--primary-blue-bg); color: var(--primary-blue); border-color: var(--primary-blue-border); }
+.badge-success {
+    background: #E6F4EC;
+    color: #1F7B4D;
+    border-color: #B8DFCC;
+}
+.badge-danger {
+    background: #FDE8E8;
+    color: #B32A2A;
+    border-color: #F5C8C8;
+}
+.badge-warning {
+    background: #FEF1E6;
+    color: #A65A0E;
+    border-color: #FADCB8;
+}
+.badge-info {
+    background: #E8EDF5;
+    color: var(--primary-navy);
+    border-color: #C8D4E3;
+}
 
 .pv-badge {
     display: inline-block;
     padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.6rem;
     font-weight: 700;
-    background: var(--primary-blue-bg);
-    color: var(--primary-blue);
-    border: 1px solid var(--primary-blue-border);
+    background: #E8EDF5;
+    color: var(--primary-navy);
+    border: 1px solid #C8D4E3;
 }
 
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
+/* ===== BOUTONS ===== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -59,24 +123,21 @@
     border-radius: 8px;
     font-weight: 500;
     font-size: 0.813rem;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
     border: 1px solid transparent;
     text-decoration: none;
 }
-.btn:active {
-    transform: scale(0.97);
-}
 .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
 
 .btn-primary {
-    background: var(--primary-blue);
+    background: var(--primary-navy);
     color: white;
-    border-color: var(--primary-blue);
+    border-color: var(--primary-navy);
 }
 .btn-primary:hover {
-    background: var(--primary-blue-dark);
-    border-color: var(--primary-blue-dark);
+    background: var(--primary-navy-dark);
+    border-color: var(--primary-navy-dark);
 }
 
 .btn-outline {
@@ -99,53 +160,33 @@
     border-radius: 8px;
 }
 .btn-danger-icon {
-    color: #B91C1C;
+    color: #B32A2A;
 }
 .btn-danger-icon:hover {
-    background: rgba(185, 28, 28, 0.08);
-    color: #991B1B;
+    background: #FDE8E8;
+    color: #8F2121;
 }
 
-.table-wrap { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-.table thead th {
-    padding: 0.5rem 0.75rem;
-    text-align: left;
-    font-size: 0.688rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    border-bottom: 2px solid var(--border-color);
-}
-.table tbody td {
-    padding: 0.5rem 0.75rem;
-    color: var(--text-primary);
-    vertical-align: middle;
-    border-bottom: 1px solid var(--border-light);
-}
-.table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
-
+/* ===== RECHERCHE ===== */
 .input {
     width: 100%;
     padding: 0.5rem 0.75rem 0.5rem 2.25rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: var(--bg-input);
+    background: var(--bg-card);
     color: var(--text-primary);
     font-size: 0.875rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease;
     outline: none;
 }
 .input:focus {
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px var(--primary-blue-border);
+    border-color: var(--primary-navy);
 }
 .input::placeholder {
-    color: var(--text-muted);
+    color: var(--text-tertiary);
 }
 
+/* ===== MODAL ===== */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -164,12 +205,11 @@
 }
 .modal-box {
     background: var(--bg-card);
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 1.75rem;
     max-width: 440px;
     width: 90%;
     border: 1px solid var(--border-color);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     transform: scale(0.95);
     transition: transform 0.25s ease;
 }
@@ -186,8 +226,8 @@
     margin: 0 auto 0.75rem;
 }
 .modal-icon-danger {
-    background: rgba(185, 28, 28, 0.1);
-    color: #B91C1C;
+    background: #FDE8E8;
+    color: #B32A2A;
 }
 .modal-title {
     text-align: center;
@@ -207,7 +247,7 @@
     color: var(--text-primary);
 }
 .modal-text .text-danger {
-    color: #B91C1C;
+    color: #B32A2A;
 }
 .modal-actions {
     display: flex;
@@ -230,14 +270,22 @@
     flex-shrink: 0;
 }
 
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ===== FOOTER ===== */
+.footer-links {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
 }
-.animate-fadeInUp { animation: fadeInUp 0.3s ease forwards; }
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.1s; }
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.footer-links a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
 
+/* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
     .table thead th, .table tbody td {
         padding: 0.375rem 0.5rem;
@@ -246,10 +294,6 @@
     .btn-sm {
         padding: 0.25rem 0.5rem;
         font-size: 0.65rem;
-    }
-    .btn-sm svg {
-        width: 0.875rem;
-        height: 0.875rem;
     }
     .badge {
         font-size: 0.6rem;
@@ -289,11 +333,18 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <!-- En-tête -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Produits</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Gestion du catalogue produits</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Catalogue produits</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                {{ $products->total() }} produits référencés
+                @if(request('search'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · Résultats pour "{{ request('search') }}"
+                    </span>
+                @endif
+            </p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
@@ -306,19 +357,20 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                QR codes
+                Générer QR
             </a>
             <a href="{{ route('admin.products.qr-codes') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
                 Voir QR
             </a>
         </div>
     </div>
 
+    <!-- Messages flash -->
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm animate-fadeInUp flex items-center gap-2">
+        <div class="p-3 sm:p-4 bg-[#E6F4EC] border border-[#B8DFCC] rounded-lg text-[#1F7B4D] text-sm flex items-center gap-2">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -327,7 +379,7 @@
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm animate-fadeInUp flex items-center gap-2">
+        <div class="p-3 sm:p-4 bg-[#FDE8E8] border border-[#F5C8C8] rounded-lg text-[#B32A2A] text-sm flex items-center gap-2">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -335,8 +387,8 @@
         </div>
     @endif
 
-    <!-- Search -->
-    <div class="relative animate-fadeInUp delay-1 max-w-xs sm:max-w-sm">
+    <!-- Recherche -->
+    <div class="relative max-w-xs sm:max-w-sm">
         <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -344,24 +396,25 @@
         </span>
         <input type="text"
                id="searchInput"
-               placeholder="Rechercher un produit..."
-               class="input text-sm">
+               placeholder="Rechercher un produit"
+               class="input text-sm"
+               value="{{ request('search') }}">
     </div>
 
-    <!-- Product List -->
-    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
+    <!-- Liste des produits -->
+    <div class="card p-3 sm:p-4">
         <div class="table-wrap">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-xs sm:text-sm">ID</th>
-                        <th class="text-xs sm:text-sm">Nom</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Catégorie</th>
-                        <th class="text-xs sm:text-sm">PV</th>
-                        <th class="text-xs sm:text-sm">Prix</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Stock</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Statut</th>
-                        <th class="text-xs sm:text-sm text-right">Actions</th>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th class="hidden md:table-cell">Catégorie</th>
+                        <th>PV</th>
+                        <th>Prix</th>
+                        <th class="hidden sm:table-cell">Stock</th>
+                        <th class="hidden lg:table-cell">Statut</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="productsTableBody">
@@ -369,25 +422,25 @@
                         <tr class="product-row"
                             data-name="{{ strtolower($product->name) }}"
                             data-category="{{ strtolower($product->category ?? '') }}">
-                            <td class="font-mono text-xs sm:text-sm">{{ $product->id }}</td>
-                            <td class="font-medium text-sm truncate max-w-[80px] sm:max-w-[120px] md:max-w-none">{{ $product->name }}</td>
-                            <td class="hidden md:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">{{ $product->category ?? '-' }}</td>
+                            <td class="font-mono text-xs">{{ $product->id }}</td>
+                            <td class="font-medium text-sm">{{ $product->name }}</td>
+                            <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">{{ $product->category ?? '-' }}</td>
                             <td>
                                 <span class="pv-badge">{{ $product->pv_value ?? 0 }} PV</span>
                             </td>
-                            <td class="font-bold text-[var(--primary-blue)] text-sm">${{ number_format($product->price, 2) }}</td>
+                            <td class="font-bold text-[var(--primary-navy)] text-sm">{{ number_format($product->price, 2) }} $</td>
                             <td class="hidden sm:table-cell">
-                                <span class="badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }} text-[10px] sm:text-xs">
+                                <span class="badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }}">
                                     {{ $product->stock }}
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell">
                                 <div class="flex flex-wrap gap-1">
-                                    <span class="badge {{ $product->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
+                                    <span class="badge {{ $product->is_active ? 'badge-success' : 'badge-danger' }}">
                                         {{ $product->is_active ? 'Actif' : 'Inactif' }}
                                     </span>
                                     @if($product->is_featured)
-                                        <span class="badge badge-warning text-[10px] sm:text-xs">Vedette</span>
+                                        <span class="badge badge-warning">Vedette</span>
                                     @endif
                                 </div>
                             </td>
@@ -395,7 +448,7 @@
                                 <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.products.edit', $product->id) }}"
                                        class="btn btn-outline btn-sm btn-icon" title="Modifier">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </a>
@@ -403,11 +456,11 @@
                                        class="btn btn-outline btn-sm btn-icon"
                                        title="{{ $product->is_active ? 'Désactiver' : 'Activer' }}">
                                         @if($product->is_active)
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B54708]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-4 h-4 text-[#A65A0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                                             </svg>
                                         @else
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1C7E4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-4 h-4 text-[#1F7B4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                             </svg>
                                         @endif
@@ -416,7 +469,7 @@
                                             onclick="openDeleteModal('{{ $product->id }}', '{{ $product->name }}')"
                                             class="btn btn-outline btn-sm btn-icon btn-danger-icon"
                                             title="Supprimer">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
@@ -425,7 +478,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
+                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>
@@ -440,20 +493,14 @@
 
         @if($products->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $products->links() }}
+                {{ $products->appends(request()->query())->links() }}
             </div>
         @endif
     </div>
 
-    <!-- Footer -->
-    <div class="footer-links mt-4 pt-4 border-t border-[var(--border-color)] flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
-        <a href="{{ route('legal.terms') }}" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline">Conditions générales d'utilisation</a>
-        <a href="{{ route('legal.privacy') }}" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline">Politique de confidentialité</a>
-        <span>© {{ date('Y') }} — Tous droits réservés</span>
-    </div>
 </div>
 
-<!-- Delete Modal -->
+<!-- Modal de suppression -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-danger">
@@ -474,10 +521,7 @@
             </button>
             <form id="deleteForm" action="" method="POST" class="inline">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn btn-danger btn-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
+                <button type="submit" class="btn btn-primary btn-sm">
                     Supprimer
                 </button>
             </form>
@@ -489,18 +533,86 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('.product-row');
+    let searchTimeout;
 
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            searchTimeout = setTimeout(() => {
+                fetchProducts(query);
+            }, 300);
+        });
+    }
 
-            rows.forEach(function(row) {
-                const name = row.dataset.name || '';
-                const category = row.dataset.category || '';
-                const match = name.includes(query) || category.includes(query);
-                row.style.display = match ? '' : 'none';
-            });
+    function fetchProducts(query) {
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        url.searchParams.set('page', '1');
+
+        const tableBody = document.getElementById('productsTableBody');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
+                    <div class="flex items-center justify-center gap-3">
+                        <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Recherche en cours…</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const newTableBody = doc.getElementById('productsTableBody');
+            const newPagination = doc.querySelector('.mt-3.sm\\:mt-4');
+            
+            if (newTableBody) {
+                document.getElementById('productsTableBody').innerHTML = newTableBody.innerHTML;
+            }
+            
+            if (newPagination) {
+                const paginationContainer = document.querySelector('.mt-3.sm\\:mt-4');
+                if (paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            }
+
+            // Mise à jour du titre
+            const title = document.querySelector('h1');
+            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
+            if (title && subtitle) {
+                const totalMatch = html.match(/(\d+)\s+produits?/);
+                if (totalMatch) {
+                    subtitle.textContent = totalMatch[0];
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('productsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-8 text-[#B32A2A]">
+                        Une erreur est survenue lors de la recherche
+                    </td>
+                </tr>
+            `;
         });
     }
 });

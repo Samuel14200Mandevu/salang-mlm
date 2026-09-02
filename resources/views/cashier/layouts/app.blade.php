@@ -5,45 +5,131 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Reception - @yield('title', 'Salang MLM')</title>
-    
+    <title> @yield('title', 'Salang MLM')</title>
+
     <!-- Theme Color -->
-    <meta name="theme-color" content="#5ab638">
+    <meta name="theme-color" content="#0F2B4F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    
+
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    
-    <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
-    
+
+    <!-- Fonts : Inter élégante -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('styles')
 
     <style>
-        /* ===== VARIABLES ===== */
+        /* ============================================================
+           THEME – Couleurs Navy comme l'admin
+           ============================================================ */
         :root {
+            --bg-page: #F5F6F8;
+            --bg-primary: #F5F6F8;
+            --bg-secondary: #EEF0F3;
+            --bg-card: #FFFFFF;
+            --bg-navbar: #FFFFFF;
+            --bg-footer: #E8EAEE;
+            --text-primary: #1A1A1E;
+            --text-secondary: #4A4A52;
+            --text-tertiary: #7A7A82;
+            --border-color: #DCDEE3;
+            --primary: #0F2B4F;
+            --primary-hover: #091E3B;
+            --primary-light: #1A3F6A;
+            --radius-md: 8px;
+            --radius-lg: 10px;
             --sidebar-width: 250px;
             --sidebar-collapsed: 72px;
             --header-height: 64px;
             --mobile-nav-height: 64px;
         }
 
-        /* ===== SIDEBAR LINKS ===== */
+        /* Dark mode – fond anthracite #111827 */
+        .dark {
+            --bg-page: #111827;
+            --bg-primary: #111827;
+            --bg-secondary: #1F2937;
+            --bg-card: #1A1D23;
+            --bg-navbar: #111827;
+            --bg-footer: #111827;
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --text-tertiary: #6B7280;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================================
+           LAYOUT PRINCIPAL – Footer toujours en bas
+           ============================================================ */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            height: 100%;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 100vh;
+            transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
+        }
+
+        .main-content {
+            flex: 1 0 auto;
+            padding: 1rem;
+        }
+
+        .main-footer {
+            flex-shrink: 0;
+            background: var(--bg-footer);
+            border-top: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            margin-top: auto;
+        }
+
+        /* ============================================================
+           SIDEBAR – Liens sobres
+           ============================================================ */
         .sidebar-link {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.625rem 0.75rem;
-            border-radius: var(--radius-md, 0.5rem);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-md);
             color: var(--text-secondary);
-            transition: all 0.2s ease;
+            transition: background 0.15s ease, color 0.15s ease;
             text-decoration: none;
             font-size: 0.875rem;
             font-weight: 500;
@@ -62,7 +148,8 @@
             height: 1.25rem;
             flex-shrink: 0;
             min-width: 1.25rem;
-            transition: all 0.2s ease;
+            color: var(--text-tertiary);
+            transition: color 0.15s ease;
         }
 
         .sidebar-link .label {
@@ -77,38 +164,47 @@
             color: var(--text-primary);
         }
 
+        .sidebar-link:hover svg {
+            color: var(--text-primary);
+        }
+
         .sidebar-link.active {
-            background: var(--gradient-primary, #5ab638);
-            color: white;
-            box-shadow: 0 4px 12px rgba(90, 182, 56, 0.3);
+            background: var(--primary);
+            color: #FFFFFF;
         }
 
         .sidebar-link.active svg {
-            color: white;
+            color: #FFFFFF;
         }
 
         .sidebar-link.danger {
-            color: #ef4444;
+            color: #B32A2A;
         }
         .sidebar-link.danger:hover {
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(179, 42, 42, 0.08);
+            color: #B32A2A;
         }
         .sidebar-link.danger.active {
-            background: #ef4444;
-            color: white;
+            background: #B32A2A;
+            color: #FFFFFF;
+        }
+        .sidebar-link.danger.active svg {
+            color: #FFFFFF;
         }
 
         .sidebar-section {
-            font-size: 0.65rem;
-            font-weight: 700;
+            font-size: 0.625rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
             color: var(--text-tertiary);
-            padding: 0.75rem 0.75rem 0.5rem;
+            padding: 0.75rem 0.75rem 0.375rem;
             margin-top: 0.5rem;
         }
 
-        /* ===== MOBILE BOTTOM NAV ===== */
+        /* ============================================================
+           MOBILE BOTTOM NAV
+           ============================================================ */
         .mobile-bottom-nav {
             position: fixed;
             bottom: 0;
@@ -119,7 +215,6 @@
             border-top: 1px solid var(--border-color);
             display: none;
             padding: 0.25rem 0 env(safe-area-inset-bottom, 0.25rem) 0;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
             height: var(--mobile-nav-height);
         }
 
@@ -129,8 +224,8 @@
             align-items: center;
             justify-content: center;
             padding: 0.25rem 0;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
+            border-radius: var(--radius-md);
+            transition: color 0.15s ease;
             color: var(--text-secondary);
             text-decoration: none;
             flex: 1;
@@ -141,22 +236,16 @@
         .mobile-bottom-nav .nav-item svg {
             width: 24px;
             height: 24px;
-            transition: all 0.2s ease;
         }
 
         .mobile-bottom-nav .nav-item span {
             font-size: 10px;
             margin-top: 1px;
             font-weight: 500;
-            transition: all 0.2s ease;
         }
 
         .mobile-bottom-nav .nav-item.active {
-            color: var(--primary-500);
-        }
-
-        .mobile-bottom-nav .nav-item.active svg {
-            transform: scale(1.1);
+            color: var(--primary);
         }
 
         .mobile-bottom-nav .nav-item .badge-count {
@@ -164,8 +253,8 @@
             top: 0;
             right: 50%;
             transform: translateX(calc(50% + 14px));
-            background: #ef4444;
-            color: white;
+            background: #B32A2A;
+            color: #FFFFFF;
             font-size: 9px;
             font-weight: 700;
             min-width: 16px;
@@ -178,7 +267,9 @@
             border: 2px solid var(--bg-navbar);
         }
 
-        /* ===== SCROLLBAR ===== */
+        /* ============================================================
+           SCROLLBAR – Discrète
+           ============================================================ */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
@@ -190,19 +281,20 @@
             border-radius: 4px;
         }
 
-        /* ===== CONFIRMATION DIALOG ===== */
+        /* ============================================================
+           CONFIRMATION DIALOG
+           ============================================================ */
         .confirm-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(4px);
+            transition: opacity 0.25s ease, visibility 0.25s ease;
         }
         .confirm-overlay.active {
             opacity: 1;
@@ -211,55 +303,54 @@
         .confirm-dialog {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            padding: 2rem;
+            padding: 1.75rem;
             max-width: 420px;
             width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9) translateY(20px);
-            transition: all 0.3s ease;
             border: 1px solid var(--border-color);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
         }
         .confirm-overlay.active .confirm-dialog {
-            transform: scale(1) translateY(0);
+            transform: scale(1);
         }
         .confirm-dialog .icon {
-            width: 56px;
-            height: 56px;
+            width: 3rem;
+            height: 3rem;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-        }
-        .confirm-dialog .icon.warning {
-            background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
+            margin: 0 auto 0.75rem;
         }
         .confirm-dialog .icon.danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
+            background: #FDE8E8;
+            color: #B32A2A;
+        }
+        .confirm-dialog .icon.warning {
+            background: #FEF1E6;
+            color: #A65A0E;
         }
         .confirm-dialog .icon.success {
-            background: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
+            background: #E6F4EC;
+            color: #1F7B4D;
         }
         .confirm-dialog .icon svg {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
         }
         .confirm-dialog h3 {
-            font-size: 1.125rem;
-            font-weight: 700;
+            font-size: 1.0625rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-align: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.375rem;
         }
         .confirm-dialog p {
             font-size: 0.875rem;
             color: var(--text-secondary);
             text-align: center;
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
         }
         .confirm-dialog .actions {
             display: flex;
@@ -267,41 +358,45 @@
             justify-content: center;
         }
         .confirm-dialog .actions .btn {
-            padding: 0.5rem 1.5rem;
+            padding: 0.5rem 1.25rem;
             border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: 0.875rem;
+            font-weight: 500;
+            font-size: 0.813rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            min-width: 100px;
+            border: 1px solid transparent;
+            transition: background 0.15s ease, border-color 0.15s ease;
+            min-width: 90px;
         }
         .confirm-dialog .actions .btn-cancel {
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-color);
         }
         .confirm-dialog .actions .btn-cancel:hover {
             background: var(--bg-hover);
+            border-color: var(--border-color);
         }
         .confirm-dialog .actions .btn-confirm {
-            background: #ef4444;
+            background: #B32A2A;
             color: white;
+            border-color: #B32A2A;
         }
         .confirm-dialog .actions .btn-confirm:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            background: #8F2121;
+            border-color: #8F2121;
         }
         .confirm-dialog .actions .btn-confirm.success {
-            background: #22c55e;
+            background: #1F7B4D;
+            border-color: #1F7B4D;
         }
         .confirm-dialog .actions .btn-confirm.success:hover {
-            background: #16a34a;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            background: #16633D;
+            border-color: #16633D;
         }
 
-        /* ===== TOAST ===== */
+        /* ============================================================
+           TOAST
+           ============================================================ */
         .toast-container {
             position: fixed;
             bottom: 1.5rem;
@@ -324,10 +419,9 @@
         .toast-item {
             padding: 0.75rem 1rem;
             border-radius: var(--radius-md);
-            color: white;
+            color: #FFFFFF;
             font-weight: 500;
             font-size: 0.875rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             animation: toastIn 0.3s ease forwards;
             display: flex;
             align-items: center;
@@ -339,10 +433,10 @@
             transform: translateX(0);
             opacity: 1;
         }
-        .toast-item.success { background: #22c55e; }
-        .toast-item.error { background: #ef4444; }
-        .toast-item.warning { background: #f59e0b; }
-        .toast-item.info { background: #3b82f6; }
+        .toast-item.success { background: #1F7B4D; }
+        .toast-item.error { background: #B32A2A; }
+        .toast-item.warning { background: #A65A0E; }
+        .toast-item.info { background: #1A3F6A; }
         .toast-item .toast-icon {
             flex-shrink: 0;
             width: 1.25rem;
@@ -356,11 +450,11 @@
             cursor: pointer;
             padding: 0.25rem;
             border-radius: 50%;
-            transition: background 0.2s;
+            transition: background 0.15s;
             flex-shrink: 0;
         }
         .toast-item .toast-close:hover {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.12);
         }
         @keyframes toastIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -371,28 +465,46 @@
             to { transform: translateX(100%); opacity: 0; }
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* ============================================================
+           FOOTER LINKS
+           ============================================================ */
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .footer-links a:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+        .footer-separator {
+            color: var(--text-tertiary);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
         @media (max-width: 767px) {
             .mobile-bottom-nav {
                 display: flex;
             }
-            main {
+            .main-content {
                 padding-bottom: calc(var(--mobile-nav-height) + 1rem) !important;
             }
-            footer {
+            .main-footer {
                 padding-bottom: calc(var(--mobile-nav-height) + 1rem) !important;
             }
             .confirm-dialog {
-                padding: 1.5rem;
+                padding: 1.25rem;
                 max-width: 95%;
             }
             .confirm-dialog .icon {
-                width: 48px;
-                height: 48px;
+                width: 2.5rem;
+                height: 2.5rem;
             }
             .confirm-dialog .icon svg {
-                width: 28px;
-                height: 28px;
+                width: 24px;
+                height: 24px;
             }
             .confirm-dialog h3 {
                 font-size: 1rem;
@@ -402,18 +514,42 @@
             }
             .confirm-dialog .actions .btn {
                 padding: 0.375rem 1rem;
-                font-size: 0.813rem;
-                min-width: 80px;
+                font-size: 0.75rem;
+                min-width: 70px;
+            }
+            .main-content {
+                padding: 0.75rem;
+            }
+            .main-footer {
+                padding: 0.5rem 0.75rem;
+            }
+            .main-footer .footer-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.25rem;
+            }
+            .footer-separator {
+                display: inline;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            .main-footer {
+                padding: 0.375rem 0.5rem;
+                font-size: 0.7rem;
             }
         }
     </style>
 </head>
-<body class="h-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200 antialiased">
-    <div class="min-h-screen flex" 
-         x-data="{ 
-            sidebarOpen: window.innerWidth > 1024, 
+<body class="h-full bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased">
+    <div class="app-container"
+         x-data="{
+            sidebarOpen: window.innerWidth > 1024,
             isMobile: window.innerWidth < 768
-         }" 
+         }"
          x-init="
             sidebarOpen = window.innerWidth > 1024;
             isMobile = window.innerWidth < 768;
@@ -423,42 +559,42 @@
                 if (window.innerWidth < 768) sidebarOpen = false;
             });
          ">
-        
+
         <!-- Overlay mobile -->
-        <div x-show="sidebarOpen && isMobile" 
+        <div x-show="sidebarOpen && isMobile"
              @click="sidebarOpen = false"
-             class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-             x-transition:enter="transition-opacity ease-linear duration-300"
+             class="fixed inset-0 bg-black/40 z-40 lg:hidden"
+             x-transition:enter="transition-opacity ease-linear duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave="transition-opacity ease-linear duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              style="display: none;">
         </div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" 
-               class="fixed top-0 left-0 z-50 h-full transition-all duration-300 ease-in-out"
+        <aside id="sidebar"
+               class="fixed top-0 left-0 z-50 h-full transition-all duration-200 ease-in-out"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
                   'w-20': !sidebarOpen && !isMobile,
                   'w-64 translate-x-0': sidebarOpen && isMobile,
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
-            
+
             <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
-                
+
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
                     <a href="{{ route('cashier.dashboard') }}" class="flex items-center justify-center flex-1">
-                        <img src="{{ asset('images/salang_logo.png') }}" 
-                             alt="Salang" 
-                             class="logo-themeable transition-all duration-300"
+                        <img src="{{ asset('images/salang_logo.png') }}"
+                             alt="Salang"
+                             class="transition-all duration-200"
                              :class="sidebarOpen ? 'h-14 w-auto' : 'h-10 w-auto'">
                     </a>
-                    <button @click="sidebarOpen = false" 
-                            class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                    <button @click="sidebarOpen = false"
+                            class="lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                         <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -468,15 +604,16 @@
                 <!-- Menu -->
                 <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
                     <ul class="space-y-0.5">
-                        
+
                         <!-- Dashboard -->
                         <li>
-                            <a href="{{ route('cashier.dashboard') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.dashboard') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}"
+                               data-title="Tableau de bord">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Accueil
                                 </span>
@@ -485,20 +622,20 @@
 
                         <!-- Consultations -->
                         <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
-                                :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
+                            <div class="sidebar-section transition-opacity duration-200"
+                                 :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
                                 Consultations
                             </div>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.consultations.index') }}" 
-                            class="sidebar-link {{ request()->routeIs('cashier.consultations*') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.consultations.index') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.consultations*') ? 'active' : '' }}"
+                               data-title="Mes Consultations">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
-                                    :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
+                                <span class="label transition-opacity duration-200"
+                                      :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Mes Consultations
                                 </span>
                             </a>
@@ -506,71 +643,71 @@
 
                         <!-- Ventes -->
                         <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
+                            <div class="sidebar-section transition-opacity duration-200"
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
                                 Ventes
                             </div>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.pos') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.pos') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.pos') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.pos') ? 'active' : '' }}"
+                               data-title="Point de Vente">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Point de Vente
                                 </span>
                             </a>
                         </li>
-                        
                         <li>
-                            <a href="{{ route('cashier.orders') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.orders*') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.orders') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.orders*') ? 'active' : '' }}"
+                               data-title="Commandes">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Commandes
                                 </span>
                             </a>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.daily-sales') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.daily-sales') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.daily-sales') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.daily-sales') ? 'active' : '' }}"
+                               data-title="Ventes du jour">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Ventes du jour
                                 </span>
                             </a>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.commissions') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.commissions') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.commissions') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.commissions') ? 'active' : '' }}"
+                               data-title="Commissions">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Commissions
                                 </span>
                             </a>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.history') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.history') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.history') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.history') ? 'active' : '' }}"
+                               data-title="Historique">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Historique
                                 </span>
@@ -579,19 +716,19 @@
 
                         <!-- Clients -->
                         <li>
-                            <div class="sidebar-section transition-opacity duration-200" 
+                            <div class="sidebar-section transition-opacity duration-200"
                                  :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
                                 Clients
                             </div>
                         </li>
-
                         <li>
-                            <a href="{{ route('cashier.customers') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.customers') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.customers') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.customers') ? 'active' : '' }}"
+                               data-title="Clients">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Clients
                                 </span>
@@ -600,12 +737,13 @@
 
                         <!-- Membres -->
                         <li>
-                            <a href="{{ route('cashier.members') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.members') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.members') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.members') ? 'active' : '' }}"
+                               data-title="Membres">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Membres
                                 </span>
@@ -614,12 +752,13 @@
 
                         <!-- Profil -->
                         <li>
-                            <a href="{{ route('cashier.profile') }}" 
-                               class="sidebar-link {{ request()->routeIs('cashier.profile') ? 'active' : '' }}">
+                            <a href="{{ route('cashier.profile') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.profile') ? 'active' : '' }}"
+                               data-title="Mon Profil">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
-                                <span class="label transition-opacity duration-200" 
+                                <span class="label transition-opacity duration-200"
                                       :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                     Mon Profil
                                 </span>
@@ -630,19 +769,20 @@
                         @auth
                             @if(Auth::user()->hasRole('admin'))
                                 <li>
-                                    <div class="sidebar-section transition-opacity duration-200" 
+                                    <div class="sidebar-section transition-opacity duration-200"
                                          :class="sidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'">
                                         Administration
                                     </div>
                                 </li>
                                 <li>
-                                    <a href="{{ route('admin.dashboard') }}" 
-                                       class="sidebar-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.dashboard') }}"
+                                       class="sidebar-link {{ request()->routeIs('admin.*') ? 'active' : '' }}"
+                                       data-title="Panel Admin">
                                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         </svg>
-                                        <span class="label transition-opacity duration-200" 
+                                        <span class="label transition-opacity duration-200"
                                               :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                             Panel Admin
                                         </span>
@@ -659,7 +799,7 @@
                                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                     </svg>
-                                    <span class="label transition-opacity duration-200" 
+                                    <span class="label transition-opacity duration-200"
                                           :class="sidebarOpen ? 'opacity-100 inline-block' : 'opacity-0 hidden'">
                                         Déconnexion
                                     </span>
@@ -672,18 +812,18 @@
                 <!-- Sidebar Footer -->
                 <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                        <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
                                 @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                    <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
-                                         alt="Avatar" 
+                                    <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
+                                         alt="Avatar"
                                          class="w-8 h-8 rounded-full object-cover">
                                 @else
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 @endif
                             @endauth
                         </div>
-                        <div class="transition-all duration-300 overflow-hidden" 
+                        <div class="transition-all duration-200 overflow-hidden"
                              :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0'">
                             <p class="text-sm font-medium text-[var(--text-primary)] truncate whitespace-nowrap">
                                 @auth {{ Auth::user()->name }} @endauth
@@ -698,88 +838,88 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 transition-all duration-300 ease-in-out w-full"
+        <div class="main-wrapper"
              :style="{
-                'margin-left': (!isMobile && sidebarOpen) ? 'var(--sidebar-width)' : (!isMobile && !sidebarOpen) ? 'var(--sidebar-collapsed)' : '0',
-                'width': (!isMobile && sidebarOpen) ? 'calc(100% - var(--sidebar-width))' : (!isMobile && !sidebarOpen) ? 'calc(100% - var(--sidebar-collapsed))' : '100%'
+                'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '4.5rem' : '0',
+                'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 4.5rem)' : '100%'
              }">
-            
+
             <!-- Top Navigation -->
-            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 shadow-sm">
+            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
-                        
+
                         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
+                            <button @click="sidebarOpen = !sidebarOpen"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
                                 <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
-                            
+
                             <div class="min-w-0 flex-1">
                                 @if(isset($header) && $header)
                                     <div class="truncate">{{ $header }}</div>
                                 @else
-                                    <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">
+                                    <h1 id="pageTitle" class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">
                                         @yield('title', 'Dashboard Caissier')
                                     </h1>
                                 @endif
                             </div>
                         </div>
-                        
+
                         <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
-                            
+
                             <!-- Theme Toggle -->
-                            <button id="theme-toggle" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                            <button id="theme-toggle"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon"/>
                                 </svg>
                             </button>
 
                             <!-- Panier -->
-                            <button id="cartToggleBtn" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors relative">
+                            <button id="cartToggleBtn"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors relative">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden">0</span>
+                                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-[#B32A2A] text-white text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden">0</span>
                             </button>
 
                             <!-- Profile -->
                             @auth
                                 <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open" 
-                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                                    <button @click="open = !open"
+                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
                                             {{ Auth::user()->name }}
                                         </span>
-                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                                <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
-                                                     alt="Avatar" 
+                                                <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
+                                                     alt="Avatar"
                                                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover">
                                             @else
                                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                             @endif
                                         </div>
                                     </button>
-                                    
-                                    <div x-show="open" @click.away="open = false" 
-                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-secondary)] rounded-xl shadow-lg py-1 border border-[var(--border-color)] z-50"
-                                         x-transition:enter="transition ease-out duration-200"
+
+                                    <div x-show="open" @click.away="open = false"
+                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-card)] rounded-lg shadow-sm py-1 border border-[var(--border-color)] z-50"
+                                         x-transition:enter="transition ease-out duration-150"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
                                          style="display: none;">
-                                        
+
                                         <div class="px-4 py-2 border-b border-[var(--border-color)] sm:hidden">
                                             <p class="text-sm font-medium text-[var(--text-primary)]">{{ Auth::user()->name }}</p>
                                             <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()->email }}</p>
                                         </div>
-                                        
-                                        <a href="{{ route('cashier.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
+
+                                        <a href="{{ route('cashier.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
                                             <span class="flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -787,8 +927,8 @@
                                                 Dashboard
                                             </span>
                                         </a>
-                                        
-                                        <a href="{{ route('cashier.profile') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
+
+                                        <a href="{{ route('cashier.profile') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
                                             <span class="flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -796,10 +936,10 @@
                                                 Mon Profil
                                             </span>
                                         </a>
-                                        
+
                                         @if(Auth::user()->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
-                                            <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-primary-600 font-semibold transition-colors">
+                                            <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--primary)] transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -809,12 +949,12 @@
                                                 </span>
                                             </a>
                                         @endif
-                                        
+
                                         <hr class="border-[var(--border-color)]">
-                                        
+
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile" class="logout-form">
                                             @csrf
-                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
+                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[#B32A2A] transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -832,21 +972,29 @@
             </nav>
 
             <!-- Content -->
-            <main class="p-3 sm:p-4 md:p-6 lg:p-8">
+            <main class="main-content">
                 @yield('content')
             </main>
 
-            <!-- Footer -->
-            <footer class="bg-[var(--bg-footer)] border-t border-[var(--border-color)] py-3 sm:py-4">
-                <div class="max-w-7xl mx-auto px-3 sm:px-4 text-center text-[var(--text-secondary)] text-xs sm:text-sm">
-                    <span>&copy; {{ date('Y') }} Salang Group - Reception</span>
+            <!-- Footer fixe en bas -->
+            <footer class="main-footer">
+                <div class="max-w-7xl mx-auto">
+                    <div class="footer-links flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm text-[var(--text-secondary)]">
+                        <span>&copy; {{ date('Y') }} Salang Group. Tous droits réservés.</span>
+                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
+                        <a href="{{ route('legal.terms') }}">CGU</a>
+                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
+                        <a href="{{ route('legal.privacy') }}">Confidentialité</a>
+                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
+                        <a href="{{ route('legal.mentions') }}">Mentions légales</a>
+                    </div>
                 </div>
             </footer>
         </div>
 
         <!-- Mobile Bottom Nav -->
         <nav class="mobile-bottom-nav" id="mobileBottomNav">
-            <a href="{{ route('cashier.dashboard') }}" 
+            <a href="{{ route('cashier.dashboard') }}"
                class="nav-item {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -854,7 +1002,7 @@
                 <span>Accueil</span>
             </a>
 
-            <a href="{{ route('cashier.pos') }}" 
+            <a href="{{ route('cashier.pos') }}"
                class="nav-item {{ request()->routeIs('cashier.pos') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -862,7 +1010,7 @@
                 <span>POS</span>
             </a>
 
-            <a href="{{ route('cashier.orders') }}" 
+            <a href="{{ route('cashier.orders') }}"
                class="nav-item {{ request()->routeIs('cashier.orders*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -870,7 +1018,7 @@
                 <span>Commandes</span>
             </a>
 
-            <a href="{{ route('cashier.customers') }}" 
+            <a href="{{ route('cashier.customers') }}"
                class="nav-item {{ request()->routeIs('cashier.customers') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -889,12 +1037,12 @@
     </div>
 
     <!-- ===== CART SIDEBAR ===== -->
-    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[998] hidden"></div>
+    <div id="cartOverlay" class="fixed inset-0 bg-black/40 z-[998] hidden"></div>
 
-    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-[380px] bg-[var(--bg-card)] border-l border-[var(--border-color)] transform translate-x-full transition-transform duration-300 ease-in-out z-[999] flex flex-col shadow-[-4px_0_24px_rgba(0,0,0,0.1)]">
+    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-[380px] bg-[var(--bg-card)] border-l border-[var(--border-color)] transform translate-x-full transition-transform duration-200 ease-in-out z-[999] flex flex-col">
         <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center">
             <h3 class="font-bold text-[var(--text-primary)]">Panier</h3>
-            <button id="cartCloseBtn" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+            <button id="cartCloseBtn" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -913,24 +1061,23 @@
         <div id="cartFooter" class="p-4 border-t border-[var(--border-color)] bg-[var(--bg-secondary)] hidden">
             <div class="flex justify-between text-lg font-bold text-[var(--text-primary)]">
                 <span>Total</span>
-                <span id="cartTotal" class="text-primary-500">$0.00</span>
+                <span id="cartTotal" class="text-[var(--primary)]">$0.00</span>
             </div>
-            <!-- Bouton "Passer la commande" avec un lien direct, pas un formulaire -->
-            <a href="#" id="checkoutLink" class="btn btn-success w-full mt-3">
+            <a href="#" id="checkoutLink" class="w-full mt-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
                 Passer la commande
             </a>
-            <button id="clearCartBtn" class="btn btn-outline btn-sm w-full mt-2">
+            <button id="clearCartBtn" class="w-full mt-2 bg-transparent border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] font-medium py-2 px-4 rounded-md transition-colors">
                 Vider le panier
             </button>
         </div>
     </div>
 
     <!-- ===== MODAL VIDER LE PANIER ===== -->
-    <div id="clearCartModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center opacity-0 invisible transition-all duration-300">
-        <div class="bg-[var(--bg-card)] rounded-xl p-6 max-w-[420px] w-[90%] shadow-xl border border-[var(--border-color)] transform scale-90 transition-all duration-300">
+    <div id="clearCartModal" class="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center opacity-0 invisible transition-all duration-200">
+        <div class="bg-[var(--bg-card)] rounded-lg p-6 max-w-[420px] w-[90%] border border-[var(--border-color)] transform scale-90 transition-all duration-200">
             <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4 text-amber-500">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
@@ -943,8 +1090,8 @@
                 Cette action est <strong>irréversible</strong> et tous les articles seront supprimés.
             </p>
             <div class="flex gap-3 justify-center">
-                <button id="clearCartCancelBtn" class="btn btn-outline btn-sm">Annuler</button>
-                <button id="clearCartConfirmBtn" class="btn btn-danger btn-sm">
+                <button id="clearCartCancelBtn" class="px-4 py-2 border border-[var(--border-color)] rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] transition-colors font-medium">Annuler</button>
+                <button id="clearCartConfirmBtn" class="px-4 py-2 bg-[#B32A2A] hover:bg-[#8F2121] text-white rounded-md font-medium transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
@@ -964,11 +1111,11 @@
                     <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
                 </svg>
             </div>
-            <h3 id="confirmTitle">Confirmation de déconnexion</h3>
-            <p id="confirmMessage">Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.</p>
+            <h3 id="confirmTitle">Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr de vouloir continuer ?</p>
             <div class="actions">
                 <button type="button" id="confirmCancelBtn" class="btn btn-cancel">Annuler</button>
-                <button type="button" id="confirmDialogBtn" class="btn btn-confirm">Se déconnecter</button>
+                <button type="button" id="confirmDialogBtn" class="btn btn-confirm">Confirmer</button>
             </div>
         </div>
     </div>
@@ -978,20 +1125,85 @@
 
     @livewireScripts
     @vite(['resources/js/app.js'])
-    
+
     @stack('scripts')
 
     <script>
     // ================================================================
+    //  MISE À JOUR DU TITRE DYNAMIQUE (Solution 4)
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const pageTitle = document.getElementById('pageTitle');
+        if (!pageTitle) return;
+
+        function updatePageTitle() {
+            const activeLink = document.querySelector('.sidebar-link.active');
+            
+            if (activeLink) {
+                const dataTitle = activeLink.getAttribute('data-title');
+                if (dataTitle) {
+                    pageTitle.textContent = dataTitle;
+                    return;
+                }
+                
+                const label = activeLink.querySelector('.label');
+                if (label) {
+                    const text = label.textContent.trim();
+                    if (text) {
+                        pageTitle.textContent = text;
+                        return;
+                    }
+                }
+            }
+
+            const titleElement = document.querySelector('title');
+            if (titleElement) {
+                const fullTitle = titleElement.textContent;
+                const cleanTitle = fullTitle.replace(/\s*[-|]\s*Salang\s*MLM\s*$/, '').trim();
+                if (cleanTitle && cleanTitle !== 'Reception' && cleanTitle !== 'Dashboard Caissier') {
+                    pageTitle.textContent = cleanTitle;
+                }
+            }
+        }
+
+        setTimeout(updatePageTitle, 50);
+
+        const observer = new MutationObserver(function() {
+            updatePageTitle();
+        });
+
+        document.querySelectorAll('.sidebar-link').forEach(function(link) {
+            observer.observe(link, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        });
+
+        document.addEventListener('livewire:update', function() {
+            setTimeout(updatePageTitle, 100);
+        });
+
+        document.addEventListener('livewire:load', function() {
+            setTimeout(updatePageTitle, 100);
+        });
+
+        let lastUrl = window.location.href;
+        setInterval(function() {
+            if (window.location.href !== lastUrl) {
+                lastUrl = window.location.href;
+                setTimeout(updatePageTitle, 150);
+            }
+        }, 500);
+    });
+
+    // ================================================================
     //  DÉFINITION DES FONCTIONS GLOBALES
     // ================================================================
-    
+
     window.cart = [];
 
-    // Fonction pour construire l'URL de checkout avec les items
     window.buildCheckoutUrl = function() {
         if (window.cart.length === 0) return null;
-        // Construire la chaîne items=product:1,product:2,package:3
         const items = window.cart.map(item => item.type + ':' + item.id);
         return '{{ route('cashier.checkout') }}?items=' + items.join(',');
     };
@@ -1022,19 +1234,19 @@
             window.showToast('Quantité augmentée', 'success');
             return;
         }
-        
+
         let card;
         if (type === 'product') {
             card = document.querySelector(`.product-card[data-product-id="${itemId}"][data-type="product"]`);
         } else {
             card = document.querySelector(`.product-card[data-product-id="${itemId}"][data-type="package"]`);
         }
-        
+
         if (!card) {
             window.showToast('Erreur: article non trouvé', 'error');
             return;
         }
-        
+
         const name = card.querySelector('.product-name')?.textContent || 'Article';
         const priceText = card.querySelector('.product-price')?.textContent || '$0.00';
         const price = parseFloat(priceText.replace('$', '').replace(',', ''));
@@ -1045,7 +1257,7 @@
         const pvValue = pvBadge ? parseFloat(pvBadge.textContent.replace(' PV', '')) || 0 : 0;
         const bvBadge = card.querySelector('.pv-badge[style*="color:#8b5cf6"]');
         const bvValue = bvBadge ? parseFloat(bvBadge.textContent.replace(' BV', '')) || 0 : 0;
-        
+
         window.cart.push({
             id: itemId,
             type: type,
@@ -1058,7 +1270,7 @@
             bv_value: bvValue,
             quantity: 1
         });
-        
+
         window.saveCart();
         window.renderCart();
         window.showToast('Article ajouté au panier', 'success');
@@ -1089,11 +1301,11 @@
         const cartFooter = document.getElementById('cartFooter');
         const cartTotal = document.getElementById('cartTotal');
         const checkoutLink = document.getElementById('checkoutLink');
-        
+
         if (!cartItemsContainer) return;
-        
+
         cartItemsContainer.innerHTML = '';
-        
+
         if (window.cart.length === 0) {
             if (cartEmpty) cartEmpty.classList.remove('hidden');
             if (cartItemsContainer) cartItemsContainer.classList.add('hidden');
@@ -1101,20 +1313,20 @@
             window.updateCartCount();
             return;
         }
-        
+
         if (cartEmpty) cartEmpty.classList.add('hidden');
         if (cartItemsContainer) cartItemsContainer.classList.remove('hidden');
         if (cartFooter) cartFooter.classList.remove('hidden');
-        
+
         let total = 0;
         window.cart.forEach(item => {
             const subtotal = item.price * item.quantity;
             total += subtotal;
-            
+
             const div = document.createElement('div');
             div.className = 'flex gap-3 items-center py-3 border-b border-[var(--border-color)] last:border-b-0';
             div.innerHTML = `
-                <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--bg-secondary)]">
+                <div class="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-[var(--bg-secondary)]">
                     ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `
                         <svg class="w-full h-full p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
@@ -1128,24 +1340,23 @@
                     ${item.pv_value ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 ml-1">${item.pv_value} PV</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', -1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-primary-500 hover:text-white hover:border-primary-500 flex items-center justify-center text-xs">-</button>
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', -1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] flex items-center justify-center text-xs transition-colors">-</button>
                     <span class="w-5 text-center font-semibold text-sm">${item.quantity}</span>
-                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', 1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-primary-500 hover:text-white hover:border-primary-500 flex items-center justify-center text-xs">+</button>
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', 1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] flex items-center justify-center text-xs transition-colors">+</button>
                 </div>
-                <button onclick="window.removeFromCart(${item.id}, '${item.type}')" class="text-red-500 hover:text-red-600 text-lg leading-none">×</button>
+                <button onclick="window.removeFromCart(${item.id}, '${item.type}')" class="text-[#B32A2A] hover:text-[#8F2121] text-lg leading-none transition-colors">×</button>
             `;
             cartItemsContainer.appendChild(div);
         });
-        
+
         if (cartTotal) cartTotal.textContent = `$${total.toFixed(2)}`;
         window.updateCartCount();
-        
-        // Mettre à jour le lien "Passer la commande"
+
         if (checkoutLink) {
             const url = window.buildCheckoutUrl();
             if (url) {
                 checkoutLink.href = url;
-                checkoutLink.style.display = 'inline-flex';
+                checkoutLink.style.display = 'flex';
             } else {
                 checkoutLink.href = '#';
                 checkoutLink.style.display = 'none';
@@ -1157,7 +1368,7 @@
         const count = window.cart.reduce((sum, item) => sum + item.quantity, 0);
         const headerCartCount = document.getElementById('headerCartCount');
         const mobileCartCount = document.getElementById('mobileCartCount');
-        
+
         if (count > 0) {
             if (headerCartCount) {
                 headerCartCount.textContent = count;
@@ -1219,17 +1430,17 @@
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('toastContainer');
         if (!container) return;
-        
+
         const toast = document.createElement('div');
         toast.className = `toast-item ${type}`;
-        
+
         const icons = {
             success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
             error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
             warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
             info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
         };
-        
+
         toast.innerHTML = `
             <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 ${icons[type] || icons.info}
@@ -1241,13 +1452,13 @@
                 </svg>
             </button>
         `;
-        
+
         container.appendChild(toast);
-        
+
         requestAnimationFrame(() => {
             toast.classList.add('show');
         });
-        
+
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.style.animation = 'toastOut 0.3s ease forwards';
@@ -1268,10 +1479,10 @@
         const title = document.getElementById('confirmTitle');
         const message = document.getElementById('confirmMessage');
         const confirmBtn = document.getElementById('confirmDialogBtn');
-        
+
         icon.className = 'icon';
         icon.classList.add(options.type || 'danger');
-        
+
         if (options.type === 'success') {
             icon.innerHTML = `
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1294,19 +1505,19 @@
                 </svg>
             `;
         }
-        
+
         title.textContent = options.title || 'Confirmation';
         message.textContent = options.message || 'Êtes-vous sûr de vouloir continuer ?';
         confirmBtn.textContent = options.confirmText || 'Confirmer';
         confirmBtn.className = 'btn btn-confirm';
-        
+
         if (options.type === 'success') {
             confirmBtn.classList.add('success');
         }
-        
+
         confirmCallback = options.onConfirm || null;
         confirmForm = options.form || null;
-        
+
         dialog.classList.add('active');
         document.body.style.overflow = 'hidden';
     };
@@ -1343,7 +1554,7 @@
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         }
-        
+
         const toggle = document.getElementById('theme-toggle');
         const icon = document.getElementById('theme-icon');
         if (toggle && icon) {
@@ -1357,7 +1568,7 @@
                 }
                 updateIcon();
             }
-            
+
             function updateIcon() {
                 if (!icon) return;
                 if (document.documentElement.classList.contains('dark')) {
@@ -1366,9 +1577,9 @@
                     icon.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
                 }
             }
-            
+
             setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
-            
+
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
@@ -1382,59 +1593,48 @@
         // ================================================================
         //  CART - EVENT LISTENERS
         // ================================================================
-        
-        // Bouton d'ouverture du panier (header)
+
         document.getElementById('cartToggleBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.toggleCart();
         });
 
-        // Bouton d'ouverture du panier (mobile)
         document.getElementById('mobileCartToggleBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.toggleCart();
         });
 
-        // Bouton de fermeture du panier
         document.getElementById('cartCloseBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.toggleCart();
         });
 
-        // Overlay du panier
         document.getElementById('cartOverlay')?.addEventListener('click', function(e) {
             window.toggleCart();
         });
 
-        // Lien "Passer la commande" - déjà géré par l'URL
         document.getElementById('checkoutLink')?.addEventListener('click', function(e) {
             if (window.cart.length === 0) {
                 e.preventDefault();
                 window.showToast('Le panier est vide', 'error');
-                return;
             }
-            // Le lien a déjà le bon href, on le laisse faire
         });
 
-        // Bouton vider le panier
         document.getElementById('clearCartBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.openClearCartModal();
         });
 
-        // Modal vider le panier - Annuler
         document.getElementById('clearCartCancelBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.closeClearCartModal();
         });
 
-        // Modal vider le panier - Confirmer
         document.getElementById('clearCartConfirmBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.confirmClearCart();
         });
 
-        // Fermer la modal en cliquant sur l'overlay
         document.getElementById('clearCartModal')?.addEventListener('click', function(e) {
             if (e.target === this) {
                 window.closeClearCartModal();
@@ -1444,7 +1644,7 @@
         // ================================================================
         //  CONFIRMATION DIALOG - EVENT LISTENERS
         // ================================================================
-        
+
         document.getElementById('confirmCancelBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
             window.closeConfirmDialog();
@@ -1469,7 +1669,7 @@
         // ================================================================
         //  LOGOUT FORMS - EVENT LISTENERS
         // ================================================================
-        
+
         document.querySelectorAll('.logout-form').forEach(function(form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();

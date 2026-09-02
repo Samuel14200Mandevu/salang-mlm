@@ -228,9 +228,9 @@ class CommissionDistributor
     // ============================================================
     if ($sponsor && $sponsor->is_active && $itemPV > 0) {
         
-        // ✅ CAS 1 : Achat POS (client ou membre)
+        // CAS 1 : Achat POS (client ou membre)
         if ($isPosSource) {
-            // ✅ AJOUTER AU team_pv DU SPONSOR UNIQUEMENT
+            // AJOUTER AU team_pv DU SPONSOR UNIQUEMENT
             $sponsor->increment('team_pv', $itemPV);
             
             Log::info('PV ajouté au team_pv (source POS)', [
@@ -244,7 +244,7 @@ class CommissionDistributor
                 'new_team_pv' => $sponsor->team_pv,
             ]);
             
-            // ✅ SI L'ACHETEUR EST UN MEMBRE, IL REÇOIT AUSSI DES PV PERSONNELS
+            // SI L'ACHETEUR EST UN MEMBRE, IL REÇOIT AUSSI DES PV PERSONNELS
             if ($buyer->user_type === 'member') {
                 $buyer->increment('pv_balance', $itemPV);
                 $buyer->increment('monthly_pv', $itemPV);
@@ -259,13 +259,13 @@ class CommissionDistributor
             }
         }
         
-        // ✅ CAS 2 : Achat MLM (membre)
+        // CAS 2 : Achat MLM (membre)
         if ($isMlmSource && $buyer->user_type === 'member') {
-            // ✅ L'ACHETEUR REÇOIT SON PV PERSONNEL
+            // L'ACHETEUR REÇOIT SON PV PERSONNEL
             $buyer->increment('pv_balance', $itemPV);
             $buyer->increment('monthly_pv', $itemPV);
             
-            // ✅ LE PARRAIN REÇOIT LE PV AU team_pv
+            // LE PARRAIN REÇOIT LE PV AU team_pv
             $sponsor->increment('team_pv', $itemPV);
             
             Log::info('PV ajouté (source MLM)', [
@@ -313,7 +313,7 @@ class CommissionDistributor
     // ============================================================
     if ($buyer->user_type === 'member' && $buyer->is_active && $sponsor && $isMlmSource) {
         
-        // ✅ Sponsor Bonus
+        // Sponsor Bonus
         if ($isPackage && $sponsor->is_active) {
             $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
             
@@ -325,7 +325,7 @@ class CommissionDistributor
             }
         }
         
-        // ✅ Bonus Direct, Indirect, Leadership
+        // Bonus Direct, Indirect, Leadership
         $directs = $this->calculateDirectBonuses($buyer, $itemData, $orderId, $period);
         $commissions = array_merge($commissions, $directs);
         
