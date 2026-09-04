@@ -519,6 +519,14 @@ public function wishlistProducts()
     }
 
     /**
+     * Relation avec le grade (rank)
+     */
+    public function rankObject()
+    {
+        return $this->belongsTo(Rank::class, 'rank_id');
+    }
+
+    /**
      * MET A JOUR LE TEAM_PV DE TOUS LES ANCETRES
      */
     public function updateAllAncestorsTeamPV(): void

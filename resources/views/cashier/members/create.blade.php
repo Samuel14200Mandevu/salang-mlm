@@ -5,9 +5,8 @@
     :root {
         --primary-navy: #0F2B4F;
         --primary-navy-dark: #091E3B;
-        --primary-navy-light: #1A3F6A;
-        --bg-base: #F5F6F8;
-        --bg-card: #FCFCFD;
+        --bg-base: #F4F5F7;
+        --bg-card: #F8F9FA;
         --bg-secondary: #EEF0F3;
         --bg-hover: #E8EAEE;
         --text-primary: #1A1A1E;
@@ -57,7 +56,7 @@
         margin-bottom: 0.25rem;
     }
     .form-group label .required {
-        color: #B32A2A;
+        color: var(--danger);
     }
     .form-group .form-control {
         width: 100%;
@@ -74,10 +73,10 @@
         border-color: var(--primary-navy);
     }
     .form-group .form-control.is-invalid {
-        border-color: #B32A2A;
+        border-color: var(--danger);
     }
     .form-group .form-control.is-valid {
-        border-color: #1F7B4D;
+        border-color: var(--success);
     }
     .form-group .form-control:disabled {
         background: var(--bg-secondary);
@@ -85,7 +84,7 @@
         opacity: 0.8;
     }
     .form-group .invalid-feedback {
-        color: #B32A2A;
+        color: var(--danger);
         font-size: 0.75rem;
         margin-top: 0.25rem;
     }
@@ -132,7 +131,6 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        transition: background 0.15s ease;
         border-bottom: 1px solid var(--border-light);
     }
     .sponsor-select-wrapper .sponsor-results .result-item:hover {
@@ -155,12 +153,12 @@
         flex: 1;
         min-width: 0;
     }
-    .sponsor-select-wrapper .sponsor-results .result-item .result-info .result-name {
+    .sponsor-select-wrapper .sponsor-results .result-item .result-name {
         font-weight: 600;
         font-size: 0.875rem;
         color: var(--text-primary);
     }
-    .sponsor-select-wrapper .sponsor-results .result-item .result-info .result-detail {
+    .sponsor-select-wrapper .sponsor-results .result-item .result-detail {
         font-size: 0.75rem;
         color: var(--text-secondary);
     }
@@ -175,8 +173,8 @@
     }
 
     .sponsor-selected {
-        background: rgba(34, 197, 94, 0.06);
-        border: 1.5px solid #1F7B4D;
+        background: rgba(31, 123, 77, 0.06);
+        border: 1.5px solid var(--success);
         border-radius: 6px;
         padding: 0.75rem 1rem;
         display: none;
@@ -204,22 +202,21 @@
         flex: 1;
         min-width: 0;
     }
-    .sponsor-selected .sponsor-info-text .sponsor-name-text {
+    .sponsor-selected .sponsor-name-text {
         font-weight: 600;
         color: var(--text-primary);
     }
-    .sponsor-selected .sponsor-info-text .sponsor-detail-text {
+    .sponsor-selected .sponsor-detail-text {
         font-size: 0.813rem;
         color: var(--text-secondary);
     }
     .sponsor-selected .btn-remove-sponsor {
         background: none;
         border: none;
-        color: #B32A2A;
+        color: var(--danger);
         cursor: pointer;
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
-        transition: background 0.15s ease;
         flex-shrink: 0;
     }
     .sponsor-selected .btn-remove-sponsor:hover {
@@ -240,12 +237,12 @@
     }
     .badge-warning {
         background: #FEF1E6;
-        color: #A65A0E;
+        color: var(--warning);
         border-color: #FADCB8;
     }
     .badge-success {
         background: #E6F4EC;
-        color: #1F7B4D;
+        color: var(--success);
         border-color: #B8DFCC;
     }
     .badge-info {
@@ -263,7 +260,6 @@
         border-radius: 6px;
         font-weight: 500;
         font-size: 0.813rem;
-        transition: background 0.15s ease, border-color 0.15s ease;
         cursor: pointer;
         border: 1px solid transparent;
         text-decoration: none;
@@ -276,7 +272,6 @@
     }
     .btn-secondary:hover {
         background: var(--bg-hover);
-        border-color: var(--border-color);
     }
 
     .btn-submit {
@@ -289,7 +284,6 @@
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
-        transition: background 0.15s ease;
     }
     .btn-submit:hover {
         background: var(--primary-navy-dark);
@@ -300,8 +294,8 @@
     }
 
     .info-banner {
-        background: rgba(59, 130, 246, 0.06);
-        border: 1px solid rgba(59, 130, 246, 0.15);
+        background: rgba(10, 42, 108, 0.06);
+        border: 1px solid rgba(10, 42, 108, 0.15);
         border-radius: 6px;
         padding: 0.75rem 1rem;
         margin-bottom: 1rem;
@@ -314,7 +308,7 @@
     .info-banner svg {
         width: 1.25rem;
         height: 1.25rem;
-        color: #3b82f6;
+        color: var(--info);
         flex-shrink: 0;
         margin-top: 0.125rem;
     }
@@ -325,7 +319,6 @@
         border-radius: 8px;
         padding: 1.25rem;
         margin-bottom: 1.25rem;
-        position: relative;
     }
     .section-company .form-section-title {
         border-bottom-color: rgba(15, 43, 79, 0.15);
@@ -360,14 +353,14 @@
         display: block;
     }
     .code-validation.valid {
-        background: rgba(34, 197, 94, 0.06);
-        border: 1px solid rgba(34, 197, 94, 0.15);
-        color: #1F7B4D;
+        background: rgba(31, 123, 77, 0.06);
+        border: 1px solid rgba(31, 123, 77, 0.15);
+        color: var(--success);
     }
     .code-validation.invalid {
         background: rgba(179, 42, 42, 0.06);
         border: 1px solid rgba(179, 42, 42, 0.15);
-        color: #B32A2A;
+        color: var(--danger);
     }
     .code-validation .spinner {
         display: inline-block;
@@ -383,19 +376,12 @@
         to { transform: rotate(360deg); }
     }
 
-    /* ✅ Style pour l'aperçu du package */
     .package-preview {
-        animation: fadeIn 0.3s ease;
         border: 1px solid var(--border-color);
         background: var(--bg-secondary);
         border-radius: 6px;
         padding: 1rem;
         margin-top: 0.5rem;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-8px); }
-        to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 640px) {
@@ -429,15 +415,8 @@
     {{-- EN-TÊTE --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                <svg class="inline-block w-6 h-6 text-[var(--primary-navy)] mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                </svg>
-                Enregistrer un nouveau membre
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Saisie des informations du distributeur dans le système
-            </p>
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Enregistrer un nouveau membre</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Saisie des informations du distributeur</p>
         </div>
         <div class="flex gap-2">
             <span class="cashier-badge">
@@ -461,12 +440,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <div>
-            <strong>Formulaire d'adhésion physique :</strong>
-            Ce formulaire sert à enregistrer ses informations dans le système.
+            <strong>Formulaire d'adhésion :</strong> Enregistrement des informations du nouveau distributeur.
             <br>
-            <span class="text-xs text-[var(--text-tertiary)]">
-                Tous les champs marqués d'un <span class="text-[#B32A2A]">*</span> sont obligatoires.
-            </span>
+            <span class="text-xs text-[var(--text-tertiary)]">Les champs marqués d'un <span class="text-[var(--danger)]">*</span> sont obligatoires.</span>
         </div>
     </div>
 
@@ -474,19 +450,18 @@
     <form action="{{ route('cashier.members.store') }}" method="POST" id="memberForm">
         @csrf
 
-        {{-- Informations personnelles --}}
+        <!-- Informations personnelles -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                Informations personnelles du distributeur
+                Informations personnelles
             </div>
 
             <div class="form-group">
                 <label for="name">Nom complet <span class="required">*</span></label>
-                <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror"
-                       value="{{ old('name') }}">
+                <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}">
                 @error('name')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -508,15 +483,14 @@
             </div>
 
             <div class="form-group">
-                <label for="address">Adresse complète</label>
+                <label for="address">Adresse</label>
                 <input type="text" id="address" name="address" class="form-control" value="{{ old('address') }}">
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="phone">Téléphone <span class="required">*</span></label>
-                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror"
-                           value="{{ old('phone') }}">
+                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}">
                     @error('phone')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -539,7 +513,7 @@
             </div>
         </div>
 
-        {{-- Coordonnées bancaires --}}
+        <!-- Coordonnées bancaires -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -571,7 +545,7 @@
             </div>
         </div>
 
-        {{-- Sélection du package d'adhésion --}}
+        <!-- Package d'adhésion -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -580,50 +554,39 @@
                 Package d'adhésion <span class="required">*</span>
             </div>
 
-            <p class="text-sm text-[var(--text-secondary)] mb-3">
-                Sélectionnez le package qui déterminera le grade et les PV initiaux du nouveau membre.
-            </p>
+            <p class="text-sm text-[var(--text-secondary)] mb-3">Sélectionnez le package pour déterminer le grade et les PV initiaux.</p>
 
             <div class="form-group">
                 <label for="package_id">Package <span class="required">*</span></label>
-                    <select id="package_id" name="package_id" class="form-control @error('package_id') is-invalid @enderror" required>
-                        <option value="">-- Sélectionnez un package --</option>
-                        @foreach($packages as $package)
-                            @php
-                                // Calculer le grade en fonction du PV du package
-                                $rank = \App\Models\Rank::where('min_pv', '<=', ($package->pv_value ?? 0))
-                                    ->where('is_active', true)
-                                    ->orderBy('min_pv', 'desc')
-                                    ->first();
-                                $rankName = $rank->name ?? 'Distributeur';
-                                $rankLevel = $rank->level ?? 1;
-                            @endphp
-                            <option value="{{ $package->id }}" 
-                                    data-pv="{{ $package->pv_value ?? 0 }}"
-                                    data-bv="{{ $package->bv_value ?? 0 }}"
-                                    data-rank="{{ $rankName }}"
-                                    data-rank-level="{{ $rankLevel }}"
-                                    data-price="{{ $package->price ?? 0 }}"
-                                    {{ old('package_id') == $package->id ? 'selected' : '' }}>
-                                {{ $package->name }} 
-                                @if($package->price) - ${{ number_format($package->price, 2) }} @endif
-                                @if($package->pv_value) - {{ $package->pv_value }} PV @endif
-                                @if($rankName) - Grade: {{ $rankName }} (Niv. {{ $rankLevel }}) @endif
-                            </option>
-                        @endforeach
-                    </select>
+                <select id="package_id" name="package_id" class="form-control @error('package_id') is-invalid @enderror" required>
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach($packages as $package)
+                        @php
+                            $rank = \App\Models\Rank::where('min_pv', '<=', ($package->pv_value ?? 0))
+                                ->where('is_active', true)
+                                ->orderBy('min_pv', 'desc')
+                                ->first();
+                            $rankName = $rank->name ?? 'Distributeur';
+                            $rankLevel = $rank->level ?? 1;
+                        @endphp
+                        <option value="{{ $package->id }}" 
+                                data-pv="{{ $package->pv_value ?? 0 }}"
+                                data-rank="{{ $rankName }}"
+                                data-rank-level="{{ $rankLevel }}"
+                                data-price="{{ $package->price ?? 0 }}"
+                                {{ old('package_id') == $package->id ? 'selected' : '' }}>
+                            {{ $package->name }} 
+                            @if($package->price) - ${{ number_format($package->price, 2) }} @endif
+                            @if($package->pv_value) - {{ $package->pv_value }} PV @endif
+                            @if($rankName) - {{ $rankName }} @endif
+                        </option>
+                    @endforeach
+                </select>
                 @error('package_id')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                <div class="help-text">
-                    <svg class="inline-block w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Le package choisit détermine le grade et les PV/BV initiaux du membre.
-                </div>
             </div>
 
-            {{-- Aperçu du package sélectionné --}}
             <div id="packagePreview" class="package-preview" style="display: none;">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div>
@@ -632,7 +595,7 @@
                     </div>
                     <div>
                         <span class="text-xs text-[var(--text-secondary)]">Prix</span>
-                        <p class="font-semibold text-sm text-[#1F7B4D]" id="previewPrice">-</p>
+                        <p class="font-semibold text-sm text-[var(--success)]" id="previewPrice">-</p>
                     </div>
                     <div>
                         <span class="text-xs text-[var(--text-secondary)]">PV</span>
@@ -640,29 +603,27 @@
                     </div>
                     <div>
                         <span class="text-xs text-[var(--text-secondary)]">Grade</span>
-                        <p class="font-semibold text-sm text-[#4F46E5]" id="previewRank">-</p>
+                        <p class="font-semibold text-sm text-[var(--info)]" id="previewRank">-</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Sélection du parrain --}}
+        <!-- Sélection du parrain -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                Informations sur le parrain <span class="required">*</span>
+                Parrain <span class="required">*</span>
             </div>
 
-            <p class="text-sm text-[var(--text-secondary)] mb-3">
-                Recherchez et sélectionnez le parrain du nouveau membre par son code ou son nom.
-            </p>
+            <p class="text-sm text-[var(--text-secondary)] mb-3">Recherchez par code ou nom.</p>
 
             <div class="form-group sponsor-select-wrapper">
-                <label for="sponsor_search">Rechercher un parrain</label>
+                <label for="sponsor_search">Rechercher</label>
                 <div>
-                    <input type="text" id="sponsor_search" class="form-control" autocomplete="off" placeholder="Entrez le code du parrain ou son nom...">
+                    <input type="text" id="sponsor_search" class="form-control" autocomplete="off" placeholder="Code ou nom du parrain...">
                     <div id="sponsorResults" class="sponsor-results"></div>
                 </div>
                 <input type="hidden" id="sponsor_id" name="sponsor_code" value="{{ old('sponsor_code') }}">
@@ -677,7 +638,7 @@
                     <div class="sponsor-name-text" id="selectedName">-</div>
                     <div class="sponsor-detail-text" id="selectedDetail">-</div>
                 </div>
-                <button type="button" class="btn-remove-sponsor" onclick="clearSponsor()" title="Changer de parrain">
+                <button type="button" class="btn-remove-sponsor" onclick="clearSponsor()" title="Changer">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -685,17 +646,17 @@
             </div>
         </div>
 
-        {{-- Code membre --}}
+        <!-- Code membre -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
-                Code du nouveau membre <span class="required">*</span>
+                Code membre <span class="required">*</span>
             </div>
 
             <div class="form-group">
-                <label for="member_code">Code membre <span class="required">*</span></label>
+                <label for="member_code">Code</label>
                 <div class="form-row" style="gap: 0.5rem;">
                     <div style="flex: 1;">
                         <input type="text" id="member_code" name="member_code"
@@ -715,67 +676,57 @@
                     </button>
                 </div>
                 <div id="codeValidation" class="code-validation">
-                    <span id="codeValidationMessage">Vérification en cours...</span>
+                    <span id="codeValidationMessage">Vérification...</span>
                 </div>
-                <div class="help-text">
-                    <svg class="inline-block w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Le code doit être unique. Une validation en temps réel vérifie sa disponibilité.
-                </div>
+                <div class="help-text">Le code doit être unique et contenir 6 chiffres.</div>
             </div>
         </div>
 
-        {{-- Informations de signature --}}
+        <!-- Signature -->
         <div class="form-section">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
                 </svg>
-                Informations de signature (document physique)
+                Signature <span class="required">*</span>
             </div>
 
             <div class="form-row-3">
                 <div class="form-group">
                     <label for="signature_name">Nom du signataire <span class="required">*</span></label>
-                    <input type="text" id="signature_name" name="signature_name" class="form-control @error('signature_name') is-invalid @enderror"
-                           value="{{ old('signature_name') }}" required>
+                    <input type="text" id="signature_name" name="signature_name" class="form-control @error('signature_name') is-invalid @enderror" value="{{ old('signature_name') }}" required>
                     @error('signature_name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="form-group">
-                    <label for="signature_date">Date de signature <span class="required">*</span></label>
-                    <input type="date" id="signature_date" name="signature_date" class="form-control @error('signature_date') is-invalid @enderror"
-                           value="{{ old('signature_date', date('Y-m-d')) }}" required>
+                    <label for="signature_date">Date <span class="required">*</span></label>
+                    <input type="date" id="signature_date" name="signature_date" class="form-control @error('signature_date') is-invalid @enderror" value="{{ old('signature_date', date('Y-m-d')) }}" required>
                     @error('signature_date')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="form-group">
-                    <label for="signature_location">Lieu de signature</label>
-                    <input type="text" id="signature_location" name="signature_location" class="form-control"
-                           value="{{ old('signature_location', '') }}">
+                    <label for="signature_location">Lieu</label>
+                    <input type="text" id="signature_location" name="signature_location" class="form-control" value="{{ old('signature_location', '') }}">
                 </div>
             </div>
 
-            <div class="form-group" style="margin-top: 0.75rem;">
-                <div class="text-sm text-[var(--text-tertiary)]" style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
-                    <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Le membre a signé le document physique. Ces informations sont enregistrées pour référence.
-                </div>
+            <div class="text-sm text-[var(--text-tertiary)]" style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
+                <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Le membre a signé le document physique.
             </div>
         </div>
 
-        {{-- SECTION ENTREPRISE --}}
+        <!-- Entreprise -->
         <div class="section-company">
             <div class="form-section-title">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
-                Réservé pour l'entreprise
+                Réservé à l'entreprise
                 <span style="margin-left: auto; font-size: 0.7rem; font-weight: 400; color: var(--text-tertiary);">
                     Attribution par le caissier
                 </span>
@@ -788,16 +739,16 @@
                 </div>
                 <div class="form-group">
                     <label>Validation</label>
-                    <input type="text" class="form-control" value="Validé" disabled style="color: #1F7B4D; font-weight: 600;">
+                    <input type="text" class="form-control" value="Validé" disabled style="color: var(--success); font-weight: 600;">
                 </div>
                 <div class="form-group">
                     <label>Statut</label>
-                    <input type="text" class="form-control" value="Actif" disabled style="color: #1F7B4D; font-weight: 600;">
+                    <input type="text" class="form-control" value="Actif" disabled style="color: var(--success); font-weight: 600;">
                 </div>
             </div>
 
             <div class="form-group" style="margin-top: 0.5rem;">
-                <label>Responsable de l'enregistrement</label>
+                <label>Responsable</label>
                 <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(15, 43, 79, 0.06); border-radius: 6px; border: 1px solid rgba(15, 43, 79, 0.10);">
                     <div style="width: 2.5rem; height: 2.5rem; border-radius: 4px; background: var(--primary-navy); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; flex-shrink: 0;">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
@@ -820,12 +771,7 @@
                 <input type="hidden" name="cashier_id" value="{{ auth()->id() }}">
                 <input type="hidden" name="cashier_name" value="{{ auth()->user()->name }}">
                 <input type="hidden" name="cashier_email" value="{{ auth()->user()->email }}">
-                <div class="help-text">
-                    <svg class="inline-block w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Le caissier connecté est automatiquement enregistré comme responsable de cette adhésion.
-                </div>
+                <div class="help-text">Le caissier est automatiquement enregistré comme responsable.</div>
             </div>
         </div>
 
@@ -833,7 +779,7 @@
             <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            Enregistrer le membre dans le système
+            Enregistrer
         </button>
     </form>
 </div>
@@ -852,7 +798,6 @@ function generateMemberCode() {
     checkMemberCode(code);
 }
 
-// Aperçu du package sélectionné
 document.addEventListener('DOMContentLoaded', function() {
     const packageSelect = document.getElementById('package_id');
     const preview = document.getElementById('packagePreview');
@@ -864,7 +809,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (packageSelect) {
         packageSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
-            
             if (this.value) {
                 preview.style.display = 'block';
                 previewName.textContent = selectedOption.text.split(' - ')[0] || '-';
@@ -899,7 +843,7 @@ memberCodeInput.addEventListener('input', function() {
 
     if (!/^\d{6}$/.test(code)) {
         codeValidation.className = 'code-validation show invalid';
-        codeValidationMessage.innerHTML = ' Le code doit contenir exactement 6 chiffres (ex: 514548)';
+        codeValidationMessage.innerHTML = ' Le code doit contenir 6 chiffres';
         memberCodeInput.classList.remove('is-valid');
         memberCodeInput.classList.add('is-invalid');
         isCodeValid = false;
@@ -908,7 +852,7 @@ memberCodeInput.addEventListener('input', function() {
     }
 
     codeValidation.className = 'code-validation show';
-    codeValidationMessage.innerHTML = '<span class="spinner"></span> Vérification du code...';
+    codeValidationMessage.innerHTML = '<span class="spinner"></span> Vérification...';
     this.classList.remove('is-valid', 'is-invalid');
     isCodeValid = false;
 
@@ -936,10 +880,9 @@ function checkMemberCode(code) {
             }
             validateForm();
         })
-        .catch(error => {
-            console.error('Erreur:', error);
+        .catch(() => {
             codeValidation.className = 'code-validation show invalid';
-            codeValidationMessage.innerHTML = ' Erreur de vérification du code';
+            codeValidationMessage.innerHTML = ' Erreur de vérification';
             memberCodeInput.classList.remove('is-valid');
             memberCodeInput.classList.add('is-invalid');
             isCodeValid = false;
@@ -996,10 +939,9 @@ function searchSponsors(query) {
             resultsContainer.innerHTML = html;
             resultsContainer.classList.add('show');
         })
-        .catch(error => {
-            console.error('Erreur:', error);
+        .catch(() => {
             resultsContainer.innerHTML = `
-                <div class="result-item" style="justify-content:center; color: #B32A2A;">
+                <div class="result-item" style="justify-content:center; color: var(--danger);">
                     Erreur lors de la recherche
                 </div>
             `;
@@ -1094,13 +1036,13 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
 
     if (!packageId) {
         e.preventDefault();
-        alert('Veuillez sélectionner un package d\'adhésion.');
+        alert('Veuillez sélectionner un package.');
         return false;
     }
 
     if (!isCodeValid) {
         e.preventDefault();
-        alert('Le code membre n\'est pas valide ou déjà utilisé.');
+        alert('Le code membre est invalide ou déjà utilisé.');
         return false;
     }
 
@@ -1111,7 +1053,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        Enregistrement en cours...
+        Enregistrement...
     `;
 });
 </script>

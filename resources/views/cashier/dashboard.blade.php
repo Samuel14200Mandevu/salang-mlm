@@ -171,6 +171,22 @@
     }
 
     /* ============================================================
+       BADGE MEMBERSHIP
+       ============================================================ */
+    .badge-membership {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        background: rgba(139, 92, 246, 0.12);
+        color: #7c3aed;
+        border: 1px solid rgba(139, 92, 246, 0.15);
+    }
+
+    /* ============================================================
        TABLE – Sobriété
        ============================================================ */
     .table-wrap {
@@ -410,6 +426,7 @@
                     <tr>
                         <th>N° commande</th>
                         <th>Client</th>
+                        <th>Type</th>
                         <th class="text-right">Total</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
@@ -418,9 +435,23 @@
                 </thead>
                 <tbody>
                     @forelse($recentOrders ?? [] as $order)
+                        @php
+                            $isMembership = ($order->source ?? '') === 'membership' || isset($order->metadata['is_membership']);
+                        @endphp
                         <tr>
                             <td class="font-mono text-[var(--primary)] text-xs sm:text-sm">#{{ $order->order_number }}</td>
                             <td class="text-sm">{{ $order->user?->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($isMembership)
+                                    <span class="badge-membership">Adhésion</span>
+                                @elseif($order->source === 'pos')
+                                    <span class="badge badge-info">POS</span>
+                                @elseif($order->source === 'mlm')
+                                    <span class="badge badge-success">MLM</span>
+                                @else
+                                    <span class="badge badge-warning">{{ $order->source ?? 'N/A' }}</span>
+                                @endif
+                            </td>
                             <td class="text-right font-semibold text-sm">${{ number_format($order->total, 2) }}</td>
                             <td>
                                 @php
@@ -445,7 +476,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-[var(--text-tertiary)] text-sm">
+                            <td colspan="7" class="text-center py-4 text-[var(--text-tertiary)] text-sm">
                                 Aucune commande récente
                             </td>
                         </tr>

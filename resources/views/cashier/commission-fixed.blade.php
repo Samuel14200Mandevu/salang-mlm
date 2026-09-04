@@ -268,165 +268,54 @@
         display: none;
     }
 
-    .pdf-modal-overlay {
+    /* ✅ Style pour le loader d'impression */
+    .print-loader-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 99999;
+        z-index: 999999;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.25s ease, visibility 0.25s ease;
-        padding: 1rem;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
     }
-    .pdf-modal-overlay.active {
+    .print-loader-overlay.active {
         opacity: 1;
         visibility: visible;
     }
-    .pdf-modal-box {
-        background: var(--bg-card);
-        border-radius: var(--radius-md, 8px);
-        max-width: 1000px;
-        width: 100%;
-        max-height: 90vh;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--border-color);
-        transform: scale(0.95);
-        transition: transform 0.25s ease;
+    .print-loader-box {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem 3rem;
+        text-align: center;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
-    .pdf-modal-overlay.active .pdf-modal-box {
-        transform: scale(1);
+    .print-loader-box .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #b32a2a;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
     }
-    .pdf-modal-header {
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-shrink: 0;
-        background: var(--bg-secondary);
-        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
-    .pdf-modal-header h2 {
-        font-size: 1rem;
+    .print-loader-box h3 {
+        font-size: 1.1rem;
         font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .pdf-modal-header .close-btn {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--radius-md, 6px);
-        font-size: 1.25rem;
-        transition: background 0.2s ease;
-    }
-    .pdf-modal-header .close-btn:hover {
-        background: var(--bg-hover);
-    }
-    .pdf-modal-body {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1.25rem;
-        background: #ffffff;
-        border-radius: 0 0 var(--radius-md) var(--radius-md);
-    }
-    .pdf-modal-footer {
-        padding: 0.75rem 1.25rem;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-        flex-shrink: 0;
-        background: var(--bg-secondary);
-        border-radius: 0 0 var(--radius-md) var(--radius-md);
-    }
-    .pdf-modal-footer .btn {
-        min-width: 100px;
-        justify-content: center;
-    }
-
-    .pdf-report {
-        font-family: 'Courier New', monospace;
-        font-size: 11px;
         color: #1a1a1a;
-        background: #ffffff;
+        margin-bottom: 0.5rem;
     }
-    .pdf-report .report-header {
-        text-align: center;
-        border-bottom: 2px solid var(--primary);
-        padding-bottom: 0.75rem;
-        margin-bottom: 0.75rem;
-    }
-    .pdf-report .report-header h1 {
-        font-size: 18px;
-        font-weight: 900;
-        color: var(--primary);
-        letter-spacing: 1px;
-        margin: 0;
-    }
-    .pdf-report .report-header .period {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--primary);
-        margin-top: 4px;
-    }
-    .pdf-report .report-header .date {
-        font-size: 9px;
-        color: #888;
-        margin-top: 2px;
-    }
-    .pdf-report table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-    }
-    .pdf-report table th {
-        background: #f0f4f8;
-        color: var(--primary);
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 7px;
-        padding: 4px;
-        border: 1px solid #ddd;
-        text-align: center;
-    }
-    .pdf-report table td {
-        padding: 4px;
-        border: 1px solid #ddd;
-        text-align: center;
-        vertical-align: middle;
-    }
-    .pdf-report table tr:nth-child(even) {
-        background: #f9fafb;
-    }
-    .pdf-report .total-row td {
-        font-weight: 700;
-        background: #e8f0fe !important;
-        border-top: 2px solid var(--primary);
-    }
-    .pdf-report .amount-positive {
-        color: #16a34a;
-        font-weight: 700;
-    }
-    .pdf-report .amount-negative {
-        color: #b32a2a;
-        font-weight: 700;
-    }
-    .pdf-report .report-footer {
-        margin-top: 1rem;
-        text-align: center;
-        font-size: 8px;
-        color: #999;
-        border-top: 1px solid #ddd;
-        padding-top: 0.5rem;
+    .print-loader-box p {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 0;
     }
 
     @media (max-width: 640px) {
@@ -439,12 +328,9 @@
         .card { padding: 0.875rem; }
         .header-actions { flex-wrap: wrap; width: 100%; }
         .header-actions .btn { flex: 1; justify-content: center; }
-        .pdf-modal-box { max-height: 95vh; max-width: 100%; }
-        .pdf-modal-body { padding: 0.75rem; }
-        .pdf-modal-footer { flex-direction: column; }
-        .pdf-modal-footer .btn { width: 100%; }
         .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
         .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+        .print-loader-box { padding: 1.5rem; margin: 1rem; }
     }
 </style>
 @endpush
@@ -465,11 +351,12 @@
             </p>
         </div>
         <div class="flex gap-2 flex-wrap header-actions">
-            <button onclick="openPdfModal()" class="btn btn-pdf btn-sm">
+            {{-- ✅ Bouton pour imprimer directement sans fenêtre --}}
+            <button onclick="printPdfDirect()" class="btn btn-pdf btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Aperçu PDF
+                Imprimer PDF
             </button>
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -693,79 +580,15 @@
             <div class="mt-4">{{ $commissions->links() }}</div>
         @endif
     </div>
-
-    {{-- LÉGENDE --}}
-    <div class="card" style="background: rgba(34, 197, 94, 0.03); border-color: rgba(34, 197, 94, 0.10);">
-        <div class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <div>
-                <h4 class="font-semibold text-[var(--text-primary)] text-sm">Légende des commissions</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2 text-xs">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #16a34a;"></span>
-                        <span class="text-[var(--text-secondary)]">POS CASH</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #6366f1;"></span>
-                        <span class="text-[var(--text-secondary)]">Direct Bonus</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #2563eb;"></span>
-                        <span class="text-[var(--text-secondary)]">Indirect Bonus</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #d97706;"></span>
-                        <span class="text-[var(--text-secondary)]">Leadership Bonus</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background: #16a34a;"></span>
-                        <span class="text-[var(--text-secondary)]">Sponsor Bonus</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 </div>
 
-{{-- MODAL PDF --}}
-<div id="pdfModal" class="pdf-modal-overlay">
-    <div class="pdf-modal-box">
-        <div class="pdf-modal-header">
-            <h2>
-                <svg class="w-5 h-5 text-[#b32a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Aperçu du rapport des commissions
-            </h2>
-            <button onclick="closePdfModal()" class="close-btn">✕</button>
-        </div>
-        <div id="pdfModalBody" class="pdf-modal-body">
-            <div class="pdf-report" id="pdfReportContent">
-                <div class="text-center py-8">
-                    <svg class="w-12 h-12 mx-auto text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    <p class="mt-2 text-gray-500">Génération du rapport...</p>
-                </div>
-            </div>
-        </div>
-        <div class="pdf-modal-footer">
-            <button onclick="closePdfModal()" class="btn btn-outline btn-sm">Fermer</button>
-            <button onclick="downloadPdf()" class="btn btn-pdf btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Télécharger PDF
-            </button>
-            <button onclick="printPdf()" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                </svg>
-                Imprimer
-            </button>
-        </div>
+{{-- ✅ LOADER D'IMPRESSION (sans nouvelle fenêtre) --}}
+<div id="printLoader" class="print-loader-overlay">
+    <div class="print-loader-box">
+        <div class="spinner"></div>
+        <h3>Préparation du PDF...</h3>
+        <p>Veuillez patienter pendant la génération du rapport</p>
     </div>
 </div>
 
@@ -868,23 +691,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// MODAL PDF
+// IMPRIMER PDF DIRECTEMENT SANS NOUVELLE FENÊTRE
 // ============================================================
-let currentPdfUrl = '';
 
-function openPdfModal() {
-    const modal = document.getElementById('pdfModal');
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    generateReportContent();
-}
-
-function closePdfModal() {
-    document.getElementById('pdfModal').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-function generateReportContent() {
+function printPdfDirect() {
+    // Afficher le loader
+    const loader = document.getElementById('printLoader');
+    loader.classList.add('active');
+    
+    // Récupérer les filtres
     const params = new URLSearchParams();
     const type = document.getElementById('typeFilter')?.value;
     const status = document.getElementById('statusFilter')?.value;
@@ -905,50 +720,75 @@ function generateReportContent() {
     const year = now.getFullYear();
     if (!dateFrom && !dateTo) params.append('period', year + '-' + month);
 
-    currentPdfUrl = '{{ route('cashier.commissions.export-pdf') }}?' + params.toString();
+    const pdfUrl = '{{ route('cashier.commissions.export-pdf') }}?' + params.toString();
 
-    fetch(currentPdfUrl, {
-        headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById('pdfReportContent').innerHTML = html;
-    })
-    .catch(error => {
-        document.getElementById('pdfReportContent').innerHTML = `
-            <div class="text-center py-8 text-[#b32a2a]">
-                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p>Erreur lors du chargement du rapport</p>
-                <p class="text-sm text-gray-400">${error.message}</p>
-            </div>
-        `;
-    });
+    // ✅ Télécharger le PDF en arrière-plan
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', pdfUrl, true);
+    xhr.responseType = 'blob';
+    
+    xhr.onload = function() {
+        // Cacher le loader
+        loader.classList.remove('active');
+        
+        if (this.status === 200) {
+            // Créer un objet URL pour le blob
+            const blob = new Blob([this.response], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            
+            // ✅ Imprimer directement sans ouvrir de fenêtre
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.top = '-9999px';
+            iframe.style.left = '-9999px';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = 'none';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+            
+            iframe.onload = function() {
+                try {
+                    iframe.contentWindow.print();
+                    // Nettoyer après l'impression
+                    setTimeout(function() {
+                        document.body.removeChild(iframe);
+                        window.URL.revokeObjectURL(url);
+                    }, 5000);
+                } catch(e) {
+                    console.error('Erreur impression:', e);
+                    // Fallback: téléchargement
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'rapport_commissions_' + year + '-' + month + '.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(function() {
+                        window.URL.revokeObjectURL(url);
+                    }, 1000);
+                }
+            };
+            
+            iframe.src = url;
+            
+        } else {
+            alert('Erreur lors du chargement du PDF. Veuillez réessayer.');
+        }
+    };
+    
+    xhr.onerror = function() {
+        loader.classList.remove('active');
+        alert('Erreur de connexion. Veuillez réessayer.');
+    };
+    
+    xhr.send();
 }
 
-function downloadPdf() {
-    if (currentPdfUrl) {
-        const url = new URL(currentPdfUrl);
-        url.searchParams.set('download', 'true');
-        window.open(url.toString(), '_blank');
-    }
+// Fonction pour fermer le loader (si besoin)
+function closePrintLoader() {
+    document.getElementById('printLoader').classList.remove('active');
 }
-
-function printPdf() {
-    if (currentPdfUrl) {
-        const win = window.open(currentPdfUrl, '_blank');
-        win.onload = function() { win.print(); };
-    }
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closePdfModal();
-});
-
-document.getElementById('pdfModal').addEventListener('click', function(e) {
-    if (e.target === this) closePdfModal();
-});
 </script>
 @endpush
 @endsection

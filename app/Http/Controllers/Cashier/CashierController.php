@@ -12,6 +12,7 @@ use App\Models\Commission;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\CommissionPeriod;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Genealogy;
 use App\Models\Rank;
 use App\Jobs\UpdateTeamPV;
@@ -38,27 +39,34 @@ class CashierController extends Controller
         });
     }
 
-    /**
-     * Dashboard du caissier
-     */
-    public function dashboard()
-    {
-        $stats = [
-            'total_orders_today' => Order::whereDate('created_at', today())->where('source', 'pos')->count(),
-            'total_sales_today' => Order::whereDate('created_at', today())->where('source', 'pos')->sum('total'),
-            'customers_today' => User::whereDate('created_at', today())->where('user_type', 'client')->count(),
-            'pending_orders' => Order::where('status', 'pending')->where('source', 'pos')->count(),
-        ];
+/**
+ * Dashboard du caissier
+ */
+public function dashboard()
+{
+    $stats = [
+        'total_orders_today' => Order::whereDate('created_at', today())
+            ->whereIn('source', ['pos', 'membership']) // AJOUTER 'membership'
+            ->count(),
+        'total_sales_today' => Order::whereDate('created_at', today())
+            ->whereIn('source', ['pos', 'membership']) // AJOUTER 'membership'
+            ->sum('total'),
+        'customers_today' => User::whereDate('created_at', today())
+            ->where('user_type', 'client')
+            ->count(),
+        'pending_orders' => Order::where('status', 'pending')
+            ->whereIn('source', ['pos', 'membership']) // AJOUTER 'membership'
+            ->count(),
+    ];
 
-        $recentOrders = Order::with(['user'])
-            ->where('source', 'pos')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+    $recentOrders = Order::with(['user'])
+        ->whereIn('source', ['pos', 'membership']) // AJOUTER 'membership'
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get();
 
-        return view('cashier.dashboard', compact('stats', 'recentOrders'));
-    }
-
+    return view('cashier.dashboard', compact('stats', 'recentOrders'));
+}
     /**
      * Point de vente - Liste des produits
      */
@@ -379,6 +387,93 @@ class CashierController extends Controller
     }
 
     /**
+     * Exporter les commissions en PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $period = $request->input('period', date('Y-m'));
+        
+        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        
+        $commissions = Commission::with(['user', 'fromUser'])
+            ->where('period', $period)
+            ->where('status', 'paid')
+            ->whereNotIn('type', $excludedTypes)
+            ->get();
+
+        $members = [];
+        $totals = [
+            'sponsor' => 0,
+            'direct' => 0,
+            'indirect' => 0,
+            'leadership' => 0,
+            'cash_pos' => 0,
+            'grand_total' => 0,
+        ];
+
+        foreach ($commissions as $commission) {
+            $userId = $commission->user_id;
+            if (!isset($members[$userId])) {
+                $members[$userId] = [
+                    'user' => $commission->user,
+                    'period' => $period,
+                    'sponsor' => 0,
+                    'direct' => 0,
+                    'indirect' => 0,
+                    'leadership' => 0,
+                    'cash_pos' => 0,
+                    'monthly_pv' => $commission->user?->monthly_pv ?? 0,
+                ];
+            }
+
+            $type = $commission->type;
+            if (isset($members[$userId][$type])) {
+                $members[$userId][$type] += $commission->amount;
+                $totals[$type] += $commission->amount;
+                $totals['grand_total'] += $commission->amount;
+            }
+        }
+
+        foreach ($members as &$member) {
+            $member['total'] = $member['sponsor'] + $member['direct'] + 
+                               $member['indirect'] + $member['leadership'] + 
+                               $member['cash_pos'];
+        }
+
+        $logoPath = public_path('images/logo.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoContent = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
+        } else {
+            $logoBase64 = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><text x="10" y="30" font-family="Arial" font-size="20" fill="#0E2F76">Salang Group</text></svg>');
+        }
+
+        $date = now();
+
+        $html = view('cashier.commissions-pdf', compact(
+            'members',
+            'totals',
+            'period',
+            'logoBase64',
+            'date'
+        ))->render();
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('A4', 'landscape');
+        
+        $fileName = 'rapport_commissions_' . $period . '.pdf';
+        
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
+            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('Content-Length', strlen($pdf->output()))
+            ->header('Pragma', 'public')
+            ->header('Expires', '0');
+    }
+
+    /**
      * Créer une commande multi-produits avec commission CASH
      */
     public function createMultiOrder(Request $request)
@@ -600,7 +695,6 @@ class CashierController extends Controller
                 UpdateTeamPV::dispatch($sponsor->id, true);
                 $sponsor->calculateAndUpdateRank();
                 
-                // Sauvegarder les données pour l'impression
                 $this->saveOrderData($order, $commissionAmount);
                 
                 session()->forget('pos_cart');
@@ -752,6 +846,144 @@ class CashierController extends Controller
     }
 
     /**
+     * Afficher la fiche de paie d'un membre
+     */
+    public function memberPaySlip($id)
+    {
+        $member = User::where('user_type', 'member')
+            ->with(['package', 'parrain'])
+            ->findOrFail($id);
+        
+        $period = request()->input('period', date('Y-m'));
+        
+        $commissions = Commission::where('user_id', $member->id)
+            ->where('period', $period)
+            ->where('status', 'paid')
+            ->get();
+        
+        $totals = [
+            'sponsor' => $commissions->where('type', 'sponsor')->sum('amount'),
+            'direct' => $commissions->where('type', 'direct')->sum('amount'),
+            'indirect' => $commissions->where('type', 'indirect')->sum('amount'),
+            'leadership' => $commissions->where('type', 'leadership')->sum('amount'),
+            'cash_pos' => $commissions->where('type', 'cash_pos')->sum('amount'),
+        ];
+        
+        $totalCommissions = array_sum($totals);
+        $monthlyPv = $member->monthly_pv ?? 0;
+        $teamPv = $member->team_pv ?? 0;
+        $directSponsors = User::where('parrain_id', $member->id)->where('user_type', 'member')->count();
+        $posClients = User::where('parrain_id', $member->id)->where('user_type', 'client')->count();
+        
+        $commissionDetails = $commissions->groupBy('from_user_id')->map(function($items) {
+            $user = $items->first()->fromUser;
+            return [
+                'user' => $user,
+                'user_type' => $user?->user_type ?? 'inconnu',
+                'sponsor' => $items->where('type', 'sponsor')->sum('amount'),
+                'direct' => $items->where('type', 'direct')->sum('amount'),
+                'indirect' => $items->where('type', 'indirect')->sum('amount'),
+                'leadership' => $items->where('type', 'leadership')->sum('amount'),
+                'cash_pos' => $items->where('type', 'cash_pos')->sum('amount'),
+                'total' => $items->sum('amount'),
+            ];
+        });
+        
+        $periods = Commission::where('user_id', $member->id)
+            ->where('status', 'paid')
+            ->distinct()
+            ->pluck('period')
+            ->sort()
+            ->reverse()
+            ->values();
+        
+        return view('cashier.members.pay-slip', compact(
+            'member',
+            'period',
+            'totals',
+            'totalCommissions',
+            'monthlyPv',
+            'teamPv',
+            'directSponsors',
+            'posClients',
+            'commissionDetails',
+            'periods'
+        ));
+    }
+
+    /**
+     * Générer la fiche de paie en PDF
+     */
+    public function memberPaySlipPdf($id)
+    {
+        $member = User::where('user_type', 'member')
+            ->with(['package', 'parrain'])
+            ->findOrFail($id);
+        
+        $period = request()->input('period', date('Y-m'));
+        
+        $commissions = Commission::where('user_id', $member->id)
+            ->where('period', $period)
+            ->where('status', 'paid')
+            ->get();
+        
+        $totals = [
+            'sponsor' => $commissions->where('type', 'sponsor')->sum('amount'),
+            'direct' => $commissions->where('type', 'direct')->sum('amount'),
+            'indirect' => $commissions->where('type', 'indirect')->sum('amount'),
+            'leadership' => $commissions->where('type', 'leadership')->sum('amount'),
+            'cash_pos' => $commissions->where('type', 'cash_pos')->sum('amount'),
+        ];
+        
+        $totalCommissions = array_sum($totals);
+        $monthlyPv = $member->monthly_pv ?? 0;
+        $teamPv = $member->team_pv ?? 0;
+        $directSponsors = User::where('parrain_id', $member->id)->where('user_type', 'member')->count();
+        $posClients = User::where('parrain_id', $member->id)->where('user_type', 'client')->count();
+        
+        $commissionDetails = $commissions->groupBy('from_user_id')->map(function($items) {
+            $user = $items->first()->fromUser;
+            return [
+                'user' => $user,
+                'user_type' => $user?->user_type ?? 'inconnu',
+                'sponsor' => $items->where('type', 'sponsor')->sum('amount'),
+                'direct' => $items->where('type', 'direct')->sum('amount'),
+                'indirect' => $items->where('type', 'indirect')->sum('amount'),
+                'leadership' => $items->where('type', 'leadership')->sum('amount'),
+                'cash_pos' => $items->where('type', 'cash_pos')->sum('amount'),
+                'total' => $items->sum('amount'),
+            ];
+        });
+        
+        $logoPath = public_path('images/salang_logo.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoContent = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
+        }
+        
+        $date = now();
+        
+        $pdf = Pdf::loadView('cashier.members.pay-slip-pdf', compact(
+            'member',
+            'period',
+            'totals',
+            'totalCommissions',
+            'monthlyPv',
+            'teamPv',
+            'directSponsors',
+            'posClients',
+            'commissionDetails',
+            'logoBase64',
+            'date'
+        ));
+        
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->download('fiche_paie_' . $member->sponsor_id . '_' . $period . '.pdf');
+    }
+
+    /**
      * Page de checkout - Récupère les items depuis l'URL ou la session
      */
     public function checkout(Request $request)
@@ -892,7 +1124,6 @@ class CashierController extends Controller
                 return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
             }
             
-            // RÉCUPÉRER LE CLIENT
             $client = null;
             
             if ($request->filled('customer_id')) {
@@ -1415,7 +1646,7 @@ class CashierController extends Controller
     }
 
     // ============================================================
-    // GESTION DES MEMBRES (PARTIE CRITIQUE)
+    // GESTION DES MEMBRES - AVEC CommissionDistributor
     // ============================================================
 
     /**
@@ -1429,13 +1660,13 @@ class CashierController extends Controller
 
     /**
      * Enregistrer un nouveau membre (par le caissier)
+     * UTILISE UNIQUEMENT CommissionDistributor
      */
     public function memberStore(Request $request)
     {
         Log::info('=== MEMBER STORE START ===');
         Log::info('Données reçues:', $request->all());
 
-        // Validation
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users,phone',
@@ -1481,7 +1712,7 @@ class CashierController extends Controller
                     ->withInput();
             }
 
-            // 2. Récupérer le package sélectionné
+            // 2. Récupérer le package
             $package = Package::find($request->package_id);
             if (!$package) {
                 Log::error('Package non trouvé', ['package_id' => $request->package_id]);
@@ -1495,6 +1726,7 @@ class CashierController extends Controller
                 'id' => $package->id,
                 'name' => $package->name,
                 'pv_value' => $package->pv_value ?? 0,
+                'price' => $package->price ?? 0,
             ]);
 
             // 3. Générer un email si non fourni
@@ -1515,13 +1747,11 @@ class CashierController extends Controller
                 }
             }
 
-            // 4. Mot de passe
             $password = 'password123';
-
-            // 5. Déterminer le grade en fonction du PV du package (sans rank_id)
             $pvValue = $package->pv_value ?? 0;
-            
-            // Trouver le grade approprié selon le PV minimum requis
+            $bvValue = $package->bv_value ?? ($pvValue * 0.8);
+
+            // 4. Déterminer le grade
             $rank = Rank::where('min_pv', '<=', $pvValue)
                 ->where('is_active', true)
                 ->orderBy('min_pv', 'desc')
@@ -1532,28 +1762,15 @@ class CashierController extends Controller
                 $rankName = $rank->name;
                 $rankLevel = $rank->level;
             } else {
-                // Grade par défaut (Distributeur)
                 $rankId = 1;
                 $rankName = 'Distributeur';
                 $rankLevel = 1;
             }
 
-            Log::info('Grade déterminé', [
-                'rank_id' => $rankId,
-                'rank_name' => $rankName,
-                'rank_level' => $rankLevel,
-                'pv_value' => $pvValue,
-            ]);
-
-            // 6. PV/BV du package
-            $pvValue = $package->pv_value ?? 0;
-            $bvValue = $package->bv_value ?? ($pvValue * 0.8);
-
-            // 7. CRÉER LE MEMBRE AVEC TOUS LES CHAMPS
+            // 5. CRÉER LE MEMBRE
             Log::info('Tentative de création du membre...');
             
             $member = User::create([
-                // Informations de base
                 'name' => $request->name,
                 'email' => $email,
                 'phone' => $request->phone,
@@ -1563,14 +1780,10 @@ class CashierController extends Controller
                 'is_active' => true,
                 'user_type' => 'member',
                 'kyc_status' => 'pending',
-                
-                // Package et grade calculé
                 'package_id' => $package->id,
                 'rank' => $rankName,
                 'rank_id' => $rankId,
                 'rank_level' => $rankLevel,
-                
-                // PV/BV initiaux selon le package
                 'pv_balance' => $pvValue,
                 'bv_balance' => $bvValue,
                 'monthly_pv' => $pvValue,
@@ -1579,13 +1792,9 @@ class CashierController extends Controller
                 'team_bv' => 0,
                 'total_team' => 0,
                 'total_sponsors' => 0,
-                
-                // Adresse
                 'address' => $request->address,
                 'city' => $request->city ?? 'Goma',
                 'country' => $request->country ?? 'RDC',
-                
-                // Nouveaux champs
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
                 'profession' => $request->profession,
@@ -1599,27 +1808,11 @@ class CashierController extends Controller
                 'signature_location' => $request->signature_location,
                 'registered_by' => auth()->id(),
                 'registered_at' => now(),
-                
-                // Metadata pour compatibilité
                 'metadata' => [
-                    'birth_date' => $request->birth_date,
-                    'gender' => $request->gender,
-                    'profession' => $request->profession,
-                    'identity_number' => $request->identity_number,
-                    'bank_name' => $request->bank_name,
-                    'account_number' => $request->account_number,
-                    'account_holder' => $request->account_holder,
-                    'mobile_money' => $request->mobile_money,
-                    'signature_name' => $request->signature_name,
-                    'signature_date' => $request->signature_date,
-                    'signature_location' => $request->signature_location,
                     'package_name' => $package->name,
                     'package_pv' => $pvValue,
                     'rank_name' => $rankName,
                     'rank_level' => $rankLevel,
-                    'registered_by' => auth()->id(),
-                    'registered_by_name' => auth()->user()->name,
-                    'registered_at' => now()->toISOString(),
                     'sponsor_name' => $sponsor->name,
                     'sponsor_code' => $sponsor->sponsor_id,
                     'cashier_id' => auth()->id(),
@@ -1627,24 +1820,21 @@ class CashierController extends Controller
                 ],
             ]);
             
-            Log::info(' Membre créé avec succès!', [
+            Log::info('Membre créé avec succès!', [
                 'id' => $member->id,
                 'name' => $member->name,
                 'sponsor_id' => $member->sponsor_id,
-                'package_id' => $member->package_id,
                 'rank' => $member->rank,
-                'pv_balance' => $member->pv_balance,
             ]);
 
-            // 8. Assigner le rôle
+            // 6. Assigner le rôle
             try {
                 $member->assignRole('member');
-                Log::info('Rôle "member" assigné avec succès');
             } catch (\Exception $e) {
                 Log::error('Erreur assignation rôle: ' . $e->getMessage());
             }
 
-            // 9. Créer le wallet
+            // 7. Créer le wallet
             try {
                 Wallet::create([
                     'user_id' => $member->id,
@@ -1653,98 +1843,159 @@ class CashierController extends Controller
                     'currency' => 'USD',
                     'is_active' => true,
                 ]);
-                Log::info('Wallet créé avec succès');
             } catch (\Exception $e) {
                 Log::error('Erreur création wallet: ' . $e->getMessage());
             }
 
-            // 10. Créer l'entrée généalogique
-            if (class_exists('App\Models\Genealogy')) {
-                try {
-                    $level = ($sponsor->genealogy?->level ?? 0) + 1;
-                    
-                    Genealogy::create([
-                        'user_id' => $member->id,
-                        'sponsor_id' => $sponsor->id,
-                        'parent_id' => $sponsor->id,
-                        'level' => $level,
-                        'position' => $this->getPosition($sponsor),
-                        'left_count' => 0,
-                        'right_count' => 0,
-                        'total_children' => 0,
-                    ]);
-                    Log::info('Généalogie créée avec succès');
-                } catch (\Exception $e) {
-                    Log::error('Erreur création généalogie: ' . $e->getMessage());
-                }
+            // 8. Créer l'entrée généalogique
+            try {
+                $level = ($sponsor->genealogy?->level ?? 0) + 1;
+                Genealogy::create([
+                    'user_id' => $member->id,
+                    'sponsor_id' => $sponsor->id,
+                    'parent_id' => $sponsor->id,
+                    'level' => $level,
+                    'position' => $this->getPosition($sponsor),
+                    'left_count' => 0,
+                    'right_count' => 0,
+                    'total_children' => 0,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erreur création généalogie: ' . $e->getMessage());
             }
 
-            // 11. Mettre à jour les compteurs du sponsor
+            // 9. Mettre à jour les compteurs du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
             $sponsor->save();
-            Log::info('Compteurs du sponsor mis à jour');
 
-            // 12. Ajouter les PV du package au sponsor (team_pv)
-            if ($pvValue > 0) {
-                $sponsor->increment('team_pv', $pvValue);
-                Log::info('PV du package ajouté au sponsor', [
-                    'sponsor_id' => $sponsor->id,
-                    'pv_added' => $pvValue
-                ]);
-            }
-
-            // 13. Mettre à jour le team_pv du nouveau membre
+            // 10. Mettre à jour le team_pv
             if (method_exists($member, 'updateTeamPVOptimized')) {
                 try {
                     $member->updateTeamPVOptimized();
-                    Log::info('Team PV du membre mis à jour');
                 } catch (\Exception $e) {
                     Log::error('Erreur updateTeamPVOptimized: ' . $e->getMessage());
                 }
             }
             
-            // 14. Mettre à jour le team_pv de tous les ancêtres
             if (method_exists($member, 'updateAllAncestorsTeamPV')) {
                 try {
                     $member->updateAllAncestorsTeamPV();
-                    Log::info('Team PV des ancêtres mis à jour');
                 } catch (\Exception $e) {
                     Log::error('Erreur updateAllAncestorsTeamPV: ' . $e->getMessage());
                 }
             }
 
-            // 15. Mettre à jour le grade du sponsor
+            // 11. Mettre à jour le grade du sponsor
             if (method_exists($sponsor, 'updateRankAfterPVChange')) {
                 try {
                     $sponsor->updateRankAfterPVChange('new_member_with_package');
-                    Log::info('Grade du sponsor mis à jour');
                 } catch (\Exception $e) {
                     Log::error('Erreur updateRankAfterPVChange: ' . $e->getMessage());
                 }
             }
 
-            // 16. Commission pour le parrain
+            // ============================================================
+            // 12. COMMISSIONS VIA CommissionDistributor UNIQUEMENT
+            // ============================================================
             try {
-                Commission::create([
-                    'user_id' => $sponsor->id,
-                    'from_user_id' => $member->id,
-                    'period' => now()->format('Y-m'),
-                    'type' => 'new_member',
-                    'source' => 'membership',
-                    'amount' => $package->price ?? 0,
-                    'percentage' => 0,
-                    'description' => "Nouveau membre parrainé avec package {$package->name} - {$member->name}",
-                    'notes' => "Code: {$request->member_code} - Package: {$package->name} - PV: {$pvValue} - Parrain: {$sponsor->name}",
+                Log::info('🔄 Appel de CommissionDistributor pour adhésion...');
+
+                // Créer une période de commission
+                $period = CommissionPeriod::firstOrCreate(
+                    ['period' => date('Y-m')],
+                    [
+                        'start_date' => now()->startOfMonth(),
+                        'end_date' => now()->endOfMonth(),
+                        'status' => 'pending',
+                    ]
+                );
+
+                // CRÉER UNE COMMANDE POUR L'ADHÉSION
+                $order = Order::create([
+                    'user_id' => $member->id,
+                    'order_number' => 'MEM-' . strtoupper(uniqid()),
+                    'subtotal' => $package->price ?? 0,
+                    'tax' => 0,
+                    'shipping' => 0,
+                    'discount' => 0,
+                    'total' => $package->price ?? 0,
+                    'total_pv' => $pvValue,
+                    'total_bv' => $bvValue,
                     'status' => 'completed',
+                    'payment_status' => 'completed',
+                    'paid_at' => now(),
+                    'source' => 'membership', // SOURCE IMPORTANTE !
+                    'metadata' => [
+                        'cashier_id' => auth()->id(),
+                        'cashier_name' => auth()->user()->name,
+                        'sponsor_id' => $sponsor->id,
+                        'is_membership' => true,
+                        'cashier_registration' => true,
+                        'member_code' => $request->member_code,
+                    ],
                 ]);
-                Log::info('Commission créée avec succès');
+
+                // CRÉER L'ITEM DE LA COMMANDE
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'package_id' => $package->id,
+                    'name' => $package->name,
+                    'sku' => 'PKG-' . $package->slug,
+                    'quantity' => 1,
+                    'price' => $package->price ?? 0,
+                    'total' => $package->price ?? 0,
+                    'pv_value' => $pvValue,
+                    'bv_value' => $bvValue,
+                    'options' => json_encode([
+                        'package_id' => $package->id,
+                        'package_name' => $package->name,
+                        'membership_type' => 'cashier_registration',
+                    ]),
+                ]);
+
+                // ============================================================
+                // APPEL À CommissionDistributor
+                // ============================================================
+                $commissionDistributor = app(\App\Services\MLM\CommissionDistributor::class);
+                $commissions = $commissionDistributor->distributeCommissions(
+                    $member,      // L'acheteur (le nouveau membre)
+                    $package,      // Le package acheté
+                    $order->id,    // L'ID de la commande
+                    $period        // La période de commission
+                );
+
+                $totalAmount = collect($commissions)->sum('amount');
+
+                Log::info('✅ Commissions calculées par CommissionDistributor', [
+                    'user_id' => $member->id,
+                    'member_name' => $member->name,
+                    'package_id' => $package->id,
+                    'package_name' => $package->name,
+                    'commissions_count' => count($commissions),
+                    'total_amount' => $totalAmount,
+                    'commission_types' => collect($commissions)->pluck('type')->unique()->toArray(),
+                ]);
+
+                // Mettre à jour les jobs de classement
+                if (class_exists('App\Jobs\UpdateRanks')) {
+                    try {
+                        \App\Jobs\UpdateRanks::dispatch($member->id)->onQueue('high');
+                        \App\Jobs\UpdateRanks::dispatch($sponsor->id)->onQueue('high');
+                        Log::info('Jobs de mise à jour des rangs dispatchés');
+                    } catch (\Exception $e) {
+                        Log::error('Erreur dispatch UpdateRanks: ' . $e->getMessage());
+                    }
+                }
+
             } catch (\Exception $e) {
-                Log::error('Erreur création commission: ' . $e->getMessage());
+                Log::error('❌ Erreur CommissionDistributor: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
             }
 
             DB::commit();
-            Log::info(' Transaction DB validée avec succès!');
+            Log::info('✅ Transaction DB validée avec succès!');
 
             return redirect()->route('cashier.members.show', $member->id)
                 ->with('success', 'Membre enregistré avec succès !')
@@ -1757,11 +2008,11 @@ class CashierController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error(' ERREUR CRITIQUE création membre: ' . $e->getMessage());
+            Log::error('❌ ERREUR CRITIQUE: ' . $e->getMessage());
             Log::error('Trace:', $e->getTrace());
             
             return redirect()->back()
-                ->with('error', 'Erreur lors de l\'enregistrement: ' . $e->getMessage())
+                ->with('error', 'Erreur: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -1785,6 +2036,97 @@ class CashierController extends Controller
         return 'right';
     }
 
+ /**
+ * Historique des ventes POS et ADHÉSIONS
+ */
+public function history(Request $request)
+{
+    $query = Order::with(['user', 'cashier', 'items'])
+        ->whereIn('source', ['pos', 'membership'])
+        ->where('status', 'completed');
+    
+    if ($request->filled('date_from')) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+    
+    if ($request->filled('date_to')) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+    
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('order_number', 'LIKE', "%{$search}%")
+            ->orWhereHas('user', function($sub) use ($search) {
+                $sub->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        });
+    }
+    
+    $orders = $query->orderBy('created_at', 'desc')->paginate(20);
+    
+    // Statistiques incluant les adhésions
+    $allOrdersQuery = Order::with(['items'])
+        ->whereIn('source', ['pos', 'membership']) // AJOUTER 'membership'
+        ->where('status', 'completed');
+    
+    if ($request->filled('date_from')) {
+        $allOrdersQuery->whereDate('created_at', '>=', $request->date_from);
+    }
+    
+    if ($request->filled('date_to')) {
+        $allOrdersQuery->whereDate('created_at', '<=', $request->date_to);
+    }
+    
+    $allOrders = $allOrdersQuery->get();
+    $totalPvAll = 0;
+    foreach ($allOrders as $order) {
+        $totalPvAll += $order->items->sum(function($item) {
+            return ($item->pv_value ?? 0) * $item->quantity;
+        });
+    }
+    
+    $stats = [
+        'total_orders' => Order::whereIn('source', ['pos', 'membership'])->where('status', 'completed')->count(),
+        'total_sales' => Order::whereIn('source', ['pos', 'membership'])->where('status', 'completed')->sum('total'),
+        'total_pv' => $totalPvAll,
+        'total_commissions' => Commission::where('source', 'pos')
+            ->where('status', 'paid')
+            ->where('type', 'cash_pos')
+            ->sum('amount'),
+    ];
+    
+    return view('cashier.history', compact('orders', 'stats'));
+}
+
+    /**
+     * Ventes du jour
+     */
+    public function dailySales()
+    {
+        $sales = Order::whereDate('created_at', today())
+            ->where('status', 'completed')
+            ->with('user')
+            ->get();
+
+        $stats = [
+            'total_orders' => $sales->count(),
+            'total_amount' => $sales->sum('total'),
+            'average_order' => $sales->count() > 0 ? $sales->sum('total') / $sales->count() : 0,
+            'pos_count' => $sales->where('source', 'pos')->count(),
+            'mlm_count' => $sales->where('source', 'mlm')->count(),
+            'payment_methods' => $sales->groupBy('payment_method')->map(function($group) {
+                return [
+                    'count' => $group->count(),
+                    'total' => $group->sum('total'),
+                ];
+            }),
+        ];
+
+        return view('cashier.daily-sales', compact('sales', 'stats'));
+    }
+
     /**
      * Vérifier si un code membre est disponible (AJAX)
      */
@@ -1799,7 +2141,6 @@ class CashierController extends Controller
             ]);
         }
         
-        // Vérifier que le code n'existe pas déjà dans la colonne sponsor_id
         $exists = User::where('sponsor_id', $code)->exists();
         
         if ($exists) {
@@ -1871,7 +2212,7 @@ class CashierController extends Controller
         $stats = [
             'total' => User::where('user_type', 'member')->count(),
             'active' => User::where('user_type', 'member')->where('is_active', true)->count(),
-            'with_commissions' => Commission::where('source', 'pos')->where('status', 'paid')->distinct('user_id')->count('user_id'),
+            'with_commissions' => Commission::where('status', 'paid')->distinct('user_id')->count('user_id'),
             'orders' => Order::where('source', 'pos')->count(),
         ];
         
@@ -1886,7 +2227,6 @@ class CashierController extends Controller
         $member = User::where('user_type', 'member')->with(['package', 'orders'])->findOrFail($id);
         
         $commissionsQuery = Commission::where('user_id', $member->id)
-            ->where('source', 'pos')
             ->orderBy('created_at', 'desc');
         
         if (request()->filled('type')) {
@@ -1908,11 +2248,11 @@ class CashierController extends Controller
             ->paginate(20);
         
         $stats = [
-            'total_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'paid_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'pending_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'pending')->sum('amount'),
-            'approved_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'approved')->count(),
-            'cancelled_commissions' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'cancelled')->count(),
+            'total_commissions' => Commission::where('user_id', $member->id)->where('status', 'paid')->sum('amount'),
+            'paid_commissions' => Commission::where('user_id', $member->id)->where('status', 'paid')->sum('amount'),
+            'pending_commissions' => Commission::where('user_id', $member->id)->where('status', 'pending')->sum('amount'),
+            'approved_commissions' => Commission::where('user_id', $member->id)->where('status', 'approved')->count(),
+            'cancelled_commissions' => Commission::where('user_id', $member->id)->where('status', 'cancelled')->count(),
             'total_downlines' => $downlines->total(),
             'active_downlines' => User::where('parrain_id', $member->id)->where('is_active', true)->count(),
         ];
@@ -1941,179 +2281,18 @@ class CashierController extends Controller
         $member = User::where('user_type', 'member')->findOrFail($id);
         
         $commissions = Commission::where('user_id', $member->id)
-            ->where('source', 'pos')
             ->where('status', 'paid')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
         
         $stats = [
-            'total' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'paid' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'paid')->sum('amount'),
-            'pending' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'pending')->sum('amount'),
-            'approved' => Commission::where('user_id', $member->id)->where('source', 'pos')->where('status', 'approved')->count(),
+            'total' => Commission::where('user_id', $member->id)->where('status', 'paid')->sum('amount'),
+            'paid' => Commission::where('user_id', $member->id)->where('status', 'paid')->sum('amount'),
+            'pending' => Commission::where('user_id', $member->id)->where('status', 'pending')->sum('amount'),
+            'approved' => Commission::where('user_id', $member->id)->where('status', 'approved')->count(),
         ];
         
         return view('cashier.members.commissions', compact('member', 'commissions', 'stats'));
-    }
-
-    /**
-     * Mettre à jour les commissions d'un membre
-     */
-    public function updateMemberCommissions(Request $request, $id)
-    {
-        $member = User::where('user_type', 'member')->findOrFail($id);
-        
-        $request->validate([
-            'commission_amount' => 'required|numeric|min:0',
-            'commission_type' => 'required|string|in:bonus,commission,cash_pos',
-            'description' => 'nullable|string|max:255',
-        ]);
-        
-        try {
-            DB::beginTransaction();
-            
-            $commission = Commission::create([
-                'user_id' => $member->id,
-                'from_user_id' => auth()->id(),
-                'period' => now()->format('Y-m'),
-                'type' => $request->commission_type,
-                'source' => 'manual',
-                'amount' => $request->commission_amount,
-                'percentage' => 0,
-                'description' => $request->description ?? "Commission manuelle - " . $request->commission_type,
-                'notes' => "Ajoutée par le caissier: " . auth()->user()->name,
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
-            
-            $wallet = Wallet::firstOrCreate(
-                ['user_id' => $member->id],
-                [
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]
-            );
-            $wallet->increment('balance', $request->commission_amount);
-            
-            Transaction::create([
-                'user_id' => $member->id,
-                'type' => 'commission',
-                'amount' => $request->commission_amount,
-                'status' => 'completed',
-                'description' => $request->description ?? "Commission manuelle",
-                'reference' => 'MAN-' . Str::upper(Str::random(8)),
-                'metadata' => [
-                    'commission_id' => $commission->id,
-                    'cashier_id' => auth()->id(),
-                    'cashier_name' => auth()->user()->name,
-                ],
-            ]);
-            
-            DB::commit();
-            
-            return redirect()->back()->with('success', 'Commission ajoutée avec succès.');
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erreur updateMemberCommissions: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Payer toutes les commissions en attente d'un membre
-     */
-    public function payAllMemberCommissions($id)
-    {
-        $member = User::where('user_type', 'member')->findOrFail($id);
-        
-        $pendingCommissions = Commission::where('user_id', $member->id)
-            ->where('source', 'pos')
-            ->where('status', 'pending')
-            ->get();
-        
-        if ($pendingCommissions->isEmpty()) {
-            return redirect()->back()->with('info', 'Aucune commission en attente pour ce membre.');
-        }
-        
-        try {
-            DB::beginTransaction();
-            
-            $totalAmount = $pendingCommissions->sum('amount');
-            
-            $wallet = Wallet::firstOrCreate(
-                ['user_id' => $member->id],
-                [
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]
-            );
-            $wallet->increment('balance', $totalAmount);
-            
-            foreach ($pendingCommissions as $commission) {
-                $commission->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
-            }
-            
-            Transaction::create([
-                'user_id' => $member->id,
-                'type' => 'commission_batch',
-                'amount' => $totalAmount,
-                'status' => 'completed',
-                'description' => 'Paiement de ' . $pendingCommissions->count() . ' commissions en attente',
-                'reference' => 'BATCH-' . Str::upper(Str::random(8)),
-                'metadata' => [
-                    'commission_count' => $pendingCommissions->count(),
-                    'cashier_id' => auth()->id(),
-                    'cashier_name' => auth()->user()->name,
-                ],
-            ]);
-            
-            DB::commit();
-            
-            return redirect()->back()->with('success', $pendingCommissions->count() . ' commissions payées avec succès. Total: $' . number_format($totalAmount, 2));
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erreur payAllMemberCommissions: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Générer le formulaire d'adhésion en PDF
-     */
-    public function generateAdhesionForm($id)
-    {
-        try {
-            $member = User::where('user_type', 'member')->with('package')->findOrFail($id);
-            
-            $sponsor = null;
-            if ($member->parrain_id) {
-                $sponsor = User::find($member->parrain_id);
-            }
-            
-            $data = [
-                'member' => $member,
-                'sponsor' => $sponsor,
-                'date' => now(),
-            ];
-            
-            $pdf = Pdf::loadView('cashier.adhesion-pdf', $data);
-            $pdf->setPaper('a4', 'portrait');
-            
-            return $pdf->download('formulaire_adhesion_' . $member->sponsor_id . '.pdf');
-            
-        } catch (\Exception $e) {
-            Log::error('Erreur génération PDF: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
-        }
     }
 
     // ============================================================
@@ -2121,7 +2300,7 @@ class CashierController extends Controller
     // ============================================================
 
     /**
-     * Liste toutes les commissions POS
+     * Liste toutes les commissions
      */
     public function commissions(Request $request)
     {
@@ -2171,7 +2350,7 @@ class CashierController extends Controller
         })->get(['id', 'name', 'sponsor_id']);
         
         $types = Commission::whereNotIn('type', $excludedTypes)->distinct()->pluck('type');
-        $sources = ['pos' => 'POS', 'mlm' => 'MLM'];
+        $sources = ['pos' => 'POS', 'mlm' => 'MLM', 'membership' => 'Adhésion'];
         $statuses = ['pending' => 'En attente', 'approved' => 'Approuvée', 'paid' => 'Payée', 'rejected' => 'Rejetée', 'cancelled' => 'Annulée'];
         
         return view('cashier.commission-fixed', compact(
@@ -2192,6 +2371,22 @@ class CashierController extends Controller
         $commission = Commission::with(['user', 'fromUser', 'order'])
             ->findOrFail($id);
 
+        $member = $commission->user;
+        
+        $commissions = Commission::where('user_id', $member->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        $downlines = User::where('parrain_id', $member->id)
+            ->where('user_type', 'member')
+            ->with(['package'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        $orders = Order::where('user_id', $member->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         $parrain = User::find($commission->user->parrain_id ?? null);
 
         $similarCommissions = Commission::where('user_id', $commission->user_id)
@@ -2206,6 +2401,10 @@ class CashierController extends Controller
 
         return view('cashier.commissions-show', compact(
             'commission',
+            'member',
+            'commissions',
+            'downlines',
+            'orders',
             'parrain',
             'similarCommissions',
             'networkCommissions'
@@ -2325,6 +2524,54 @@ class CashierController extends Controller
         
         return redirect()->back()->with('success', 'Commission annulée.');
     }
+
+    /**
+ * Générer le formulaire d'adhésion en PDF
+ */
+public function generateAdhesionForm($id)
+{
+    try {
+        $member = User::where('user_type', 'member')->with(['package', 'parrain'])->findOrFail($id);
+        
+        $sponsor = null;
+        if ($member->parrain_id) {
+            $sponsor = User::find($member->parrain_id);
+        }
+        
+        // Récupérer les métadonnées
+        $metadata = $member->metadata ?? [];
+        
+        // Logo en base64 avec gestion d'erreur
+        $logoBase64 = '';
+        $logoPath = public_path('images/salang_logo.png');
+        if (file_exists($logoPath)) {
+            try {
+                $logoContent = file_get_contents($logoPath);
+                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
+            } catch (\Exception $e) {
+                Log::error('Erreur chargement logo: ' . $e->getMessage());
+                $logoBase64 = '';
+            }
+        }
+        
+        $data = [
+            'member' => $member,
+            'sponsor' => $sponsor,
+            'metadata' => $metadata,
+            'logoBase64' => $logoBase64,
+            'date' => now(),
+        ];
+        
+        $pdf = Pdf::loadView('cashier.adhesion-pdf', $data);
+        $pdf->setPaper('a4', 'portrait');
+        
+        return $pdf->download('formulaire_adhesion_' . $member->sponsor_id . '.pdf');
+        
+    } catch (\Exception $e) {
+        Log::error('Erreur génération PDF: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+    }
+}
 
     /**
      * Approuver plusieurs commissions en batch
@@ -2472,88 +2719,16 @@ class CashierController extends Controller
         ));
     }
 
-    /**
-     * Voir le réseau d'un membre
-     */
-    public function viewNetwork($userId)
-    {
-        $member = User::where('user_type', 'member')->findOrFail($userId);
-        
-        $directChildren = User::where('parrain_id', $member->id)
-            ->where('user_type', 'member')
-            ->get();
-        $network = $this->buildNetworkTree($member);
-        
-        $stats = [
-            'direct_children' => $directChildren->count(),
-            'total_network' => $this->countNetworkMembers($member->id),
-            'total_pv' => $member->team_pv ?? 0,
-            'total_bv' => $member->team_bv ?? 0,
-        ];
-        
-        return view('cashier.commissions-network', compact('member', 'network', 'stats', 'directChildren'));
-    }
-
-    /**
-     * Construire l'arbre du réseau (récursif)
-     */
-    private function buildNetworkTree($user, $level = 0, $maxLevel = 3)
-    {
-        if ($level > $maxLevel) {
-            return null;
-        }
-        
-        $children = User::where('parrain_id', $user->id)
-            ->where('user_type', 'member')
-            ->get();
-        
-        $tree = [
-            'user' => $user,
-            'level' => $level,
-            'children' => [],
-        ];
-        
-        foreach ($children as $child) {
-            $tree['children'][] = $this->buildNetworkTree($child, $level + 1, $maxLevel);
-        }
-        
-        return $tree;
-    }
-
-    /**
-     * Compter le nombre de membres dans le réseau (récursif)
-     */
-    private function countNetworkMembers($userId)
-    {
-        $count = 0;
-        $children = User::where('parrain_id', $userId)
-            ->where('user_type', 'member')
-            ->get();
-        
-        foreach ($children as $child) {
-            $count++;
-            $count += $this->countNetworkMembers($child->id);
-        }
-        
-        return $count;
-    }
-
     // ============================================================
-    // PROFIL ET STATISTIQUES
+    // PROFIL
     // ============================================================
 
-    /**
-     * Profil du caissier
-     */
     public function profile()
     {
         $user = auth()->user();
         return view('cashier.profile', compact('user'));
     }
 
-    /**
-     * Mettre à jour le profil
-     */
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
@@ -2571,9 +2746,6 @@ class CashierController extends Controller
         return back()->with('success', 'Profil mis à jour avec succès.');
     }
 
-    /**
-     * Mettre à jour le mot de passe du caissier
-     */
     public function updatePassword(Request $request)
     {
         $user = auth()->user();
@@ -2594,30 +2766,6 @@ class CashierController extends Controller
         return back()->with('success', 'Mot de passe mis à jour avec succès.');
     }
 
-    /**
-     * Supprimer le compte du caissier
-     */
-    public function destroyProfile(Request $request)
-    {
-        $user = auth()->user();
-        
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-        
-        if (!Hash::check($request->password, $user->password)) {
-            return back()->withErrors(['password' => 'Le mot de passe est incorrect.']);
-        }
-        
-        auth()->logout();
-        $user->delete();
-        
-        return redirect('/')->with('success', 'Votre compte a été supprimé.');
-    }
-
-    /**
-     * Mettre à jour l'avatar du caissier
-     */
     public function updateAvatar(Request $request)
     {
         $request->validate([
@@ -2643,9 +2791,6 @@ class CashierController extends Controller
         return response()->json(['success' => false, 'message' => 'Aucun fichier téléchargé.'], 400);
     }
 
-    /**
-     * Supprimer l'avatar du caissier
-     */
     public function deleteAvatar(Request $request)
     {
         $user = auth()->user();
@@ -2659,9 +2804,6 @@ class CashierController extends Controller
         return response()->json(['success' => true, 'message' => 'Avatar supprimé.']);
     }
 
-    /**
-     * Statistiques complètes
-     */
     public function stats()
     {
         $stats = [
@@ -2683,9 +2825,6 @@ class CashierController extends Controller
         return view('cashier.stats', compact('stats', 'salesByMonth'));
     }
 
-    /**
-     * Exporter les statistiques
-     */
     public function exportStats(Request $request)
     {
         $stats = [
@@ -2714,116 +2853,5 @@ class CashierController extends Controller
         };
         
         return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * Demander l'annulation d'une commande
-     */
-    public function requestCancellation(Request $request, $id)
-    {
-        $order = Order::findOrFail($id);
-        
-        if (!in_array($order->status, ['pending', 'processing', 'completed'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cette commande ne peut pas être annulée. Statut: ' . $order->status
-            ], 400);
-        }
-        
-        $createdAt = $order->created_at;
-        $now = now();
-        $diffInMinutes = $createdAt->diffInMinutes($now);
-        
-        if ($diffInMinutes > 10) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le délai de 10 minutes pour annuler cette commande est dépassé. (Créée il y a ' . $diffInMinutes . ' minutes)'
-            ], 400);
-        }
-        
-        if (isset($order->metadata['cancellation_request']) && 
-            $order->metadata['cancellation_request']['status'] == 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Une demande d\'annulation est déjà en attente.'
-            ], 400);
-        }
-        
-        $request->validate([
-            'reason' => 'required|string|min:10|max:500'
-        ]);
-        
-        $metadata = $order->metadata ?? [];
-        $metadata['cancellation_request'] = [
-            'status' => 'pending',
-            'reason' => $request->reason,
-            'requested_by' => auth()->id(),
-            'requested_at' => now()->toISOString(),
-        ];
-        
-        $order->metadata = $metadata;
-        $order->save();
-        
-        Log::info('Demande d\'annulation créée', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'user_id' => auth()->id(),
-            'reason' => $request->reason,
-            'time_elapsed' => $diffInMinutes . ' minutes',
-            'status' => $order->status
-        ]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande d\'annulation envoyée avec succès.'
-        ]);
-    }
-
-    /**
-     * Calculer le niveau d'un filleul par rapport à un parrain
-     */
-    private function getDownlineLevel($parrainId, $downlineId, $currentLevel = 1, $maxLevel = 10)
-    {
-        if ($currentLevel > $maxLevel) {
-            return $maxLevel;
-        }
-        
-        $downline = User::find($downlineId);
-        if (!$downline) {
-            return $currentLevel;
-        }
-        
-        if ($downline->parrain_id == $parrainId) {
-            return $currentLevel;
-        }
-        
-        $current = $downline;
-        $level = 0;
-        
-        while ($current && $current->parrain_id && $level < $maxLevel) {
-            $level++;
-            if ($current->parrain_id == $parrainId) {
-                return $level;
-            }
-            $current = User::find($current->parrain_id);
-        }
-        
-        return $maxLevel;
-    }
-    
-    /**
-     * Méthode pour récupérer le logo en base64
-     */
-    private function getLogoBase64()
-    {
-        $logoPath = public_path('images/salang_logo.png');
-        
-        if (file_exists($logoPath)) {
-            $imageData = file_get_contents($logoPath);
-            $base64 = base64_encode($imageData);
-            return 'data:image/png;base64,' . $base64;
-        }
-        
-        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     }
 }

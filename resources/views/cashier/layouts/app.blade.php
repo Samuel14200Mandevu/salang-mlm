@@ -46,6 +46,12 @@
             --primary: #0F2B4F;
             --primary-hover: #091E3B;
             --primary-light: #1A3F6A;
+            --success: #1F7B4D;
+            --success-hover: #16633D;
+            --danger: #B32A2A;
+            --danger-hover: #8F2121;
+            --warning: #A65A0E;
+            --radius-sm: 6px;
             --radius-md: 8px;
             --radius-lg: 10px;
             --sidebar-width: 250px;
@@ -120,6 +126,109 @@
         }
 
         /* ============================================================
+           BOUTONS – Visibles et cohérents
+           ============================================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+            min-height: 40px;
+            line-height: 1.2;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #FFFFFF;
+            border-color: var(--success);
+        }
+        .btn-success:hover {
+            background: var(--success-hover);
+            border-color: var(--success-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #FFFFFF;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            border-color: var(--danger-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        .btn-outline:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-outline-primary {
+            background: transparent;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: #FFFFFF;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            min-height: 32px;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.75rem;
+            font-size: 1rem;
+            min-height: 48px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+        }
+
+        .btn-icon.btn-sm {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* ============================================================
            SIDEBAR – Liens sobres
            ============================================================ */
         .sidebar-link {
@@ -178,14 +287,14 @@
         }
 
         .sidebar-link.danger {
-            color: #B32A2A;
+            color: var(--danger);
         }
         .sidebar-link.danger:hover {
             background: rgba(179, 42, 42, 0.08);
-            color: #B32A2A;
+            color: var(--danger);
         }
         .sidebar-link.danger.active {
-            background: #B32A2A;
+            background: var(--danger);
             color: #FFFFFF;
         }
         .sidebar-link.danger.active svg {
@@ -253,7 +362,7 @@
             top: 0;
             right: 50%;
             transform: translateX(calc(50% + 14px));
-            background: #B32A2A;
+            background: var(--danger);
             color: #FFFFFF;
             font-size: 9px;
             font-weight: 700;
@@ -324,15 +433,15 @@
         }
         .confirm-dialog .icon.danger {
             background: #FDE8E8;
-            color: #B32A2A;
+            color: var(--danger);
         }
         .confirm-dialog .icon.warning {
             background: #FEF1E6;
-            color: #A65A0E;
+            color: var(--warning);
         }
         .confirm-dialog .icon.success {
             background: #E6F4EC;
-            color: #1F7B4D;
+            color: var(--success);
         }
         .confirm-dialog .icon svg {
             width: 28px;
@@ -356,42 +465,6 @@
             display: flex;
             gap: 0.75rem;
             justify-content: center;
-        }
-        .confirm-dialog .actions .btn {
-            padding: 0.5rem 1.25rem;
-            border-radius: var(--radius-md);
-            font-weight: 500;
-            font-size: 0.813rem;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: background 0.15s ease, border-color 0.15s ease;
-            min-width: 90px;
-        }
-        .confirm-dialog .actions .btn-cancel {
-            background: transparent;
-            color: var(--text-primary);
-            border-color: var(--border-color);
-        }
-        .confirm-dialog .actions .btn-cancel:hover {
-            background: var(--bg-hover);
-            border-color: var(--border-color);
-        }
-        .confirm-dialog .actions .btn-confirm {
-            background: #B32A2A;
-            color: white;
-            border-color: #B32A2A;
-        }
-        .confirm-dialog .actions .btn-confirm:hover {
-            background: #8F2121;
-            border-color: #8F2121;
-        }
-        .confirm-dialog .actions .btn-confirm.success {
-            background: #1F7B4D;
-            border-color: #1F7B4D;
-        }
-        .confirm-dialog .actions .btn-confirm.success:hover {
-            background: #16633D;
-            border-color: #16633D;
         }
 
         /* ============================================================
@@ -433,10 +506,10 @@
             transform: translateX(0);
             opacity: 1;
         }
-        .toast-item.success { background: #1F7B4D; }
-        .toast-item.error { background: #B32A2A; }
-        .toast-item.warning { background: #A65A0E; }
-        .toast-item.info { background: #1A3F6A; }
+        .toast-item.success { background: var(--success); }
+        .toast-item.error { background: var(--danger); }
+        .toast-item.warning { background: var(--warning); }
+        .toast-item.info { background: var(--primary-light); }
         .toast-item .toast-icon {
             flex-shrink: 0;
             width: 1.25rem;
@@ -480,6 +553,133 @@
         .footer-separator {
             color: var(--text-tertiary);
         }
+
+        /* ============================================================
+           CARD – Style épuré
+           ============================================================ */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            transition: border-color 0.15s ease;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================
+           FORMULAIRE
+           ============================================================ */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.813rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.375rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 43, 79, 0.1);
+        }
+        .form-control::placeholder {
+            color: var(--text-tertiary);
+        }
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A7A82' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.25rem;
+        }
+        .form-control-sm {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* ============================================================
+           TABLE
+           ============================================================ */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .table thead {
+            background: var(--bg-secondary);
+        }
+        .table th {
+            padding: 0.625rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .table td {
+            padding: 0.625rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* ============================================================
+           BADGE
+           ============================================================ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.688rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .badge-success { background: #E6F4EC; color: var(--success); }
+        .badge-danger { background: #FDE8E8; color: var(--danger); }
+        .badge-warning { background: #FEF1E6; color: var(--warning); }
+        .badge-info { background: #E6EEF6; color: var(--primary); }
+        .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
 
         /* ============================================================
            RESPONSIVE
@@ -531,6 +731,19 @@
             .footer-separator {
                 display: inline;
             }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.813rem;
+                min-height: 36px;
+            }
+            .btn-lg {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.875rem;
+                min-height: 42px;
+            }
+            .card {
+                padding: 1rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -540,6 +753,19 @@
             .main-footer {
                 padding: 0.375rem 0.5rem;
                 font-size: 0.7rem;
+            }
+            .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.75rem;
+                min-height: 32px;
+            }
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.688rem;
+                min-height: 28px;
+            }
+            .card {
+                padding: 0.75rem;
             }
         }
     </style>
@@ -885,7 +1111,7 @@
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-[#B32A2A] text-white text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden">0</span>
+                                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-[var(--danger)] text-white text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden">0</span>
                             </button>
 
                             <!-- Profile -->
@@ -954,7 +1180,7 @@
 
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile" class="logout-form">
                                             @csrf
-                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[#B32A2A] transition-colors">
+                                            <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--danger)] transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -976,7 +1202,7 @@
                 @yield('content')
             </main>
 
-            <!-- Footer fixe en bas -->
+            <!-- Footer fixe en bas avec CGU et Confidentialité -->
             <footer class="main-footer">
                 <div class="max-w-7xl mx-auto">
                     <div class="footer-links flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm text-[var(--text-secondary)]">
@@ -1042,7 +1268,7 @@
     <div id="cartSidebar" class="fixed right-0 top-0 h-full w-[380px] bg-[var(--bg-card)] border-l border-[var(--border-color)] transform translate-x-full transition-transform duration-200 ease-in-out z-[999] flex flex-col">
         <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center">
             <h3 class="font-bold text-[var(--text-primary)]">Panier</h3>
-            <button id="cartCloseBtn" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
+            <button id="cartCloseBtn" class="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors p-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -1063,13 +1289,13 @@
                 <span>Total</span>
                 <span id="cartTotal" class="text-[var(--primary)]">$0.00</span>
             </div>
-            <a href="#" id="checkoutLink" class="w-full mt-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
+            <a href="#" id="checkoutLink" class="btn btn-primary btn-block mt-3">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
                 Passer la commande
             </a>
-            <button id="clearCartBtn" class="w-full mt-2 bg-transparent border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] font-medium py-2 px-4 rounded-md transition-colors">
+            <button id="clearCartBtn" class="btn btn-outline btn-block mt-2">
                 Vider le panier
             </button>
         </div>
@@ -1090,8 +1316,8 @@
                 Cette action est <strong>irréversible</strong> et tous les articles seront supprimés.
             </p>
             <div class="flex gap-3 justify-center">
-                <button id="clearCartCancelBtn" class="px-4 py-2 border border-[var(--border-color)] rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] transition-colors font-medium">Annuler</button>
-                <button id="clearCartConfirmBtn" class="px-4 py-2 bg-[#B32A2A] hover:bg-[#8F2121] text-white rounded-md font-medium transition-colors flex items-center gap-2">
+                <button id="clearCartCancelBtn" class="btn btn-outline">Annuler</button>
+                <button id="clearCartConfirmBtn" class="btn btn-danger flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
@@ -1114,8 +1340,8 @@
             <h3 id="confirmTitle">Confirmation</h3>
             <p id="confirmMessage">Êtes-vous sûr de vouloir continuer ?</p>
             <div class="actions">
-                <button type="button" id="confirmCancelBtn" class="btn btn-cancel">Annuler</button>
-                <button type="button" id="confirmDialogBtn" class="btn btn-confirm">Confirmer</button>
+                <button type="button" id="confirmCancelBtn" class="btn btn-outline">Annuler</button>
+                <button type="button" id="confirmDialogBtn" class="btn btn-primary">Confirmer</button>
             </div>
         </div>
     </div>
@@ -1130,7 +1356,7 @@
 
     <script>
     // ================================================================
-    //  MISE À JOUR DU TITRE DYNAMIQUE (Solution 4)
+    //  MISE À JOUR DU TITRE DYNAMIQUE
     // ================================================================
     document.addEventListener('DOMContentLoaded', function() {
         const pageTitle = document.getElementById('pageTitle');
@@ -1138,14 +1364,14 @@
 
         function updatePageTitle() {
             const activeLink = document.querySelector('.sidebar-link.active');
-            
+
             if (activeLink) {
                 const dataTitle = activeLink.getAttribute('data-title');
                 if (dataTitle) {
                     pageTitle.textContent = dataTitle;
                     return;
                 }
-                
+
                 const label = activeLink.querySelector('.label');
                 if (label) {
                     const text = label.textContent.trim();
@@ -1340,11 +1566,11 @@
                     ${item.pv_value ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 ml-1">${item.pv_value} PV</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', -1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] flex items-center justify-center text-xs transition-colors">-</button>
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', -1)" class="btn btn-outline btn-sm btn-icon">-</button>
                     <span class="w-5 text-center font-semibold text-sm">${item.quantity}</span>
-                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', 1)" class="w-6 h-6 rounded-full border border-[var(--border-color)] hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] flex items-center justify-center text-xs transition-colors">+</button>
+                    <button onclick="window.updateQuantity(${item.id}, '${item.type}', 1)" class="btn btn-outline btn-sm btn-icon">+</button>
                 </div>
-                <button onclick="window.removeFromCart(${item.id}, '${item.type}')" class="text-[#B32A2A] hover:text-[#8F2121] text-lg leading-none transition-colors">×</button>
+                <button onclick="window.removeFromCart(${item.id}, '${item.type}')" class="text-[var(--danger)] hover:text-[var(--danger-hover)] text-lg leading-none transition-colors p-1">×</button>
             `;
             cartItemsContainer.appendChild(div);
         });
@@ -1509,10 +1735,14 @@
         title.textContent = options.title || 'Confirmation';
         message.textContent = options.message || 'Êtes-vous sûr de vouloir continuer ?';
         confirmBtn.textContent = options.confirmText || 'Confirmer';
-        confirmBtn.className = 'btn btn-confirm';
+        confirmBtn.className = 'btn';
 
         if (options.type === 'success') {
-            confirmBtn.classList.add('success');
+            confirmBtn.classList.add('btn-success');
+        } else if (options.type === 'danger') {
+            confirmBtn.classList.add('btn-danger');
+        } else {
+            confirmBtn.classList.add('btn-primary');
         }
 
         confirmCallback = options.onConfirm || null;

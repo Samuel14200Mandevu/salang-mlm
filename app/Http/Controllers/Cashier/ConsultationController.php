@@ -14,14 +14,30 @@ use Illuminate\Support\Facades\Storage;
 class ConsultationController extends Controller
 {
     /**
-     * Liste des consultations du caissier
+     * Liste des consultations du caissier avec recherche
      */
-    public function index()
+    public function index(Request $request)
     {
-        $consultations = Consultation::with(['cashier', 'admin'])
-            ->where('cashier_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $query = Consultation::with(['cashier', 'admin'])
+            ->where('cashier_id', Auth::id());
+
+        // Recherche par nom de patient
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nom_complet', 'like', "%{$search}%")
+                  ->orWhere('code_id', 'like', "%{$search}%")
+                  ->orWhere('numero', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par statut
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $consultations = $query->orderBy('created_at', 'desc')->paginate(20);
         
         // Calculer les statistiques
         $stats = [
@@ -61,6 +77,9 @@ class ConsultationController extends Controller
             'poids' => 'nullable|numeric|min:0|max:500',
             'taille' => 'nullable|numeric|min:0|max:300',
             'date_examen' => 'nullable|date',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'adresse' => 'nullable|string|max:500',
         ]);
 
         // Créer la consultation avec seulement les informations patient
@@ -74,7 +93,18 @@ class ConsultationController extends Controller
             'poids' => $request->poids,
             'taille' => $request->taille,
             'date_examen' => $request->date_examen ?? now(),
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'adresse' => $request->adresse,
             'status' => 'pending', // En attente de traitement par l'admin
+            'recommended_products' => [],
+            'seances_ceragem' => 0,
+            'prix_ceragem' => 0,
+            'seances_detox' => 0,
+            'prix_detox' => 0,
+            'total_produits' => 0,
+            'total_services' => 0,
+            'total_general' => 0,
         ]);
 
         return redirect()
@@ -89,7 +119,7 @@ class ConsultationController extends Controller
     {
         // Vérifier que le caissier est propriétaire
         if ($consultation->cashier_id !== Auth::id()) {
-            abort(403);
+            abort(403, 'Vous n\'êtes pas autorisé à consulter cette fiche.');
         }
         
         return view('cashier.consultations.show', compact('consultation'));
@@ -102,7 +132,7 @@ class ConsultationController extends Controller
     {
         // Vérifier que le caissier est propriétaire
         if ($consultation->cashier_id !== Auth::id()) {
-            abort(403);
+            abort(403, 'Vous n\'êtes pas autorisé à imprimer cette fiche.');
         }
         
         // Vérifier que la consultation est complète (statut completed)

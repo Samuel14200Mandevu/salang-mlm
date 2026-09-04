@@ -132,6 +132,30 @@
         border: 1px solid rgba(245, 158, 11, 0.15);
     }
 
+    .badge-sponsor {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(31, 123, 77, 0.12);
+        color: #1F7B4D;
+        border: 1px solid rgba(31, 123, 77, 0.15);
+    }
+
+    .badge-membership {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(139, 92, 246, 0.12);
+        color: #7c3aed;
+        border: 1px solid rgba(139, 92, 246, 0.15);
+    }
+
     .total-pv {
         font-weight: 600;
         color: #16a34a;
@@ -140,6 +164,11 @@
     .commission-amount {
         font-weight: 600;
         color: #d97706;
+    }
+
+    .sponsor-amount {
+        font-weight: 600;
+        color: #1F7B4D;
     }
 
     .rest-amount.zero { color: #16a34a; }
@@ -332,17 +361,35 @@
                         <th>Date</th>
                         <th>N° commande</th>
                         <th>Client</th>
+                        <th>Package / Produit</th>
                         <th>Code parrain</th>
-                        <th class="text-right">Prix produits</th>
-                        <th class="text-right">Commission CASH</th>
+                        <th class="text-right">Prix</th>
+                        <th class="text-right">Commission</th>
                         <th class="text-right">Payé</th>
-                        <th class="text-right">Reste</th>
-                        <th class="text-right">PV gagnés</th>
+                        <th class="text-right">PV</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($orders ?? [] as $order)
                         @php
+                            // Récupérer le package ou le produit de la commande
+                            $packageName = null;
+                            $productName = null;
+                            $itemType = 'product';
+                            
+                            if ($order->items->isNotEmpty()) {
+                                $firstItem = $order->items->first();
+                                if ($firstItem->package_id) {
+                                    $package = \App\Models\Package::find($firstItem->package_id);
+                                    $packageName = $package ? $package->name : 'Package #'.$firstItem->package_id;
+                                    $itemType = 'package';
+                                } elseif ($firstItem->product_id) {
+                                    $product = \App\Models\Product::find($firstItem->product_id);
+                                    $productName = $product ? $product->name : 'Produit #'.$firstItem->product_id;
+                                    $itemType = 'product';
+                                }
+                            }
+                            
                             $totalProducts = $order->subtotal;
 
                             $sponsor = null;
@@ -350,11 +397,18 @@
                                 $sponsor = \App\Models\User::find($order->metadata['sponsor_id']);
                             }
 
-                            $commission = \App\Models\Commission::where('order_id', $order->id)
-                                ->where('source', 'pos')
+                            // Récupérer les commissions de cette commande
+                            $sponsorCommission = \App\Models\Commission::where('order_id', $order->id)
+                                ->where('type', 'sponsor')
+                                ->first();
+                            $sponsorAmount = $sponsorCommission ? $sponsorCommission->amount : 0;
+                            
+                            $cashCommission = \App\Models\Commission::where('order_id', $order->id)
                                 ->where('type', 'cash_pos')
                                 ->first();
-                            $commissionAmount = $commission ? $commission->amount : 0;
+                            $cashAmount = $cashCommission ? $cashCommission->amount : 0;
+                            
+                            $totalCommission = $sponsorAmount + $cashAmount;
 
                             $paidAmount = $totalProducts;
                             $rest = 0;
@@ -362,6 +416,16 @@
                             $totalPV = $order->items->sum(function($item) {
                                 return ($item->pv_value ?? 0) * $item->quantity;
                             });
+                            
+                            // Vérifier si c'est une adhésion
+                            $isMembership = ($order->source ?? '') === 'membership' || isset($order->metadata['is_membership']);
+                            
+                            // Récupérer le team_pv du sponsor pour les adhésions
+                            $teamPV = 0;
+                            if ($isMembership && isset($order->metadata['sponsor_id'])) {
+                                $sponsorUser = \App\Models\User::find($order->metadata['sponsor_id']);
+                                $teamPV = $sponsorUser ? $sponsorUser->team_pv : 0;
+                            }
                         @endphp
                         <tr>
                             <td class="whitespace-nowrap text-xs text-[var(--text-tertiary)]">
@@ -375,6 +439,35 @@
                                 <div class="text-xs text-[var(--text-secondary)]">{{ $order->user?->phone ?? 'N/A' }}</div>
                             </td>
                             <td>
+                                @if($isMembership)
+                                    <div class="flex items-center gap-1">
+                                        <span class="badge-membership">Adhésion</span>
+                                        @if($packageName)
+                                            <span class="text-sm font-medium text-[var(--primary)]">{{ $packageName }}</span>
+                                        @endif
+                                    </div>
+                                    @if($order->metadata['member_code'] ?? false)
+                                        <div class="text-xs text-[var(--text-secondary)]">Code: {{ $order->metadata['member_code'] }}</div>
+                                    @endif
+                                @elseif($packageName)
+                                    <div class="flex items-center gap-1">
+                                        <span class="badge-cash">Package</span>
+                                        <span class="text-sm font-medium text-[var(--primary)]">{{ $packageName }}</span>
+                                    </div>
+                                    <div class="text-xs text-[var(--text-secondary)]">Quantité: {{ $order->items->sum('quantity') }}</div>
+                                @elseif($productName)
+                                    <div class="flex items-center gap-1">
+                                        <span class="badge-cash">Produit</span>
+                                        <span class="text-sm font-medium text-[var(--primary)]">{{ $productName }}</span>
+                                    </div>
+                                    <div class="text-xs text-[var(--text-secondary)]">Quantité: {{ $order->items->sum('quantity') }}</div>
+                                @else
+                                    <span class="text-xs text-[var(--text-tertiary)]">
+                                        {{ $order->items->count() }} article(s)
+                                    </span>
+                                @endif
+                            </td>
+                            <td>
                                 @if($sponsor)
                                     <div class="font-mono text-xs text-[var(--primary)]">{{ $sponsor->sponsor_id ?? 'N/A' }}</div>
                                     <div class="text-xs text-[var(--text-secondary)]">{{ $sponsor->name }}</div>
@@ -386,8 +479,22 @@
                                 ${{ number_format($totalProducts, 2) }}
                             </td>
                             <td class="text-right">
-                                <span class="commission-amount">${{ number_format($commissionAmount, 2) }}</span>
-                                <span class="badge-commission ml-1">Commission</span>
+                                @if($totalCommission > 0)
+                                    @if($sponsorAmount > 0)
+                                        <div>
+                                            <span class="sponsor-amount">${{ number_format($sponsorAmount, 2) }}</span>
+                                            <span class="badge-sponsor ml-1">Sponsor</span>
+                                        </div>
+                                    @endif
+                                    @if($cashAmount > 0)
+                                        <div>
+                                            <span class="commission-amount">${{ number_format($cashAmount, 2) }}</span>
+                                            <span class="badge-commission ml-1">CASH</span>
+                                        </div>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-[var(--text-tertiary)]">—</span>
+                                @endif
                             </td>
                             <td class="text-right">
                                 <span class="text-[#16a34a] font-semibold">
@@ -396,12 +503,14 @@
                                 <span class="badge-paid ml-1">Payé</span>
                             </td>
                             <td class="text-right">
-                                <span class="rest-amount zero">
-                                    ${{ number_format($rest, 2) }}
-                                </span>
-                            </td>
-                            <td class="text-right">
-                                <span class="total-pv">{{ number_format($totalPV) }} PV</span>
+                                <div>
+                                    <span class="total-pv">{{ number_format($totalPV) }} PV</span>
+                                </div>
+                                @if($isMembership && $teamPV > 0)
+                                    <div class="text-xs text-[var(--text-secondary)]">
+                                        Sponsor: {{ number_format($teamPV) }} PV
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @empty

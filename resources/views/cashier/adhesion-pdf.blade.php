@@ -302,26 +302,20 @@
     <table class="form-grid">
         <tr>
             <td class="field-label" style="width:16%;">Package :</td>
-            <td class="field-line" style="width:24%;">
+            <td class="field-line" style="width:34%;">
                 <strong>{{ $member->package->name ?? $metadata['package_name'] ?? 'N/A' }}</strong>
             </td>
             <td class="field-label" style="width:10%; text-align:right; padding-right:4px;">Grade :</td>
-            <td class="field-line" style="width:20%;">
+            <td class="field-line" style="width:40%;">
                 <strong>{{ $member->rank ?? $metadata['rank'] ?? 'Distributeur' }}</strong>
                 <span style="font-size:11px; color:#555;">(Niv. {{ $member->rank_level ?? 1 }})</span>
             </td>
-            <td class="field-label" style="width:8%; text-align:right; padding-right:4px;">PV :</td>
-            <td class="field-line" style="width:12%;"><strong>{{ number_format($member->pv_balance ?? 0) }}</strong></td>
         </tr>
         <tr>
-            <td class="field-label">Prix :</td>
-            <td class="field-line"><strong>${{ number_format($member->package->price ?? $metadata['package_price'] ?? 0, 2) }}</strong></td>
-            <td class="field-label" style="text-align:right; padding-right:4px;">BV :</td>
-            <td class="field-line"><strong>{{ number_format($member->bv_balance ?? 0) }}</strong></td>
-            <td class="field-label" style="text-align:right; padding-right:4px;">Activation :</td>
-            <td class="field-line">
-                <strong>{{ isset($member->activated_at) ? \Carbon\Carbon::parse($member->activated_at)->format('d/m/Y') : (isset($member->created_at) ? \Carbon\Carbon::parse($member->created_at)->format('d/m/Y') : date('d/m/Y')) }}</strong>
-            </td>
+            <td class="field-label">PV :</td>
+            <td class="field-line" style="width:34%;"><strong>{{ number_format($member->pv_balance ?? 0) }} PV</strong></td>
+            <td class="field-label" style="width:10%; text-align:right; padding-right:4px;">Prix :</td>
+            <td class="field-line" style="width:40%;"><strong>${{ number_format($member->package->price ?? $metadata['package_price'] ?? 0, 2) }}</strong></td>
         </tr>
     </table>
 

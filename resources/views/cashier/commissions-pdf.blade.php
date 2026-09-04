@@ -1,324 +1,318 @@
+{{-- resources/views/cashier/commissions-pdf.blade.php --}}
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rapport des commissions - {{ $period }}</title>
+    <title>Rapport des Commissions - Salang Group</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Courier New', monospace; 
-            font-size: 10px; 
-            color: #1a1a1a; 
-            padding: 15px;
+            font-family: 'Times New Roman', Times, serif, Arial; 
+            font-size: 14px; 
+            color: #000; 
+            padding: 16px 25px;
             background: #fff;
         }
 
+        /* EN-TÊTE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) */
         .report-header {
             width: 100%;
-            border-bottom: 3px solid #0E2F76;
-            padding-bottom: 12px;
-            margin-bottom: 12px;
+            border-bottom: 2.5px solid #8b0000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
         }
-        
-        .report-header table {
+        .header-table {
             width: 100%;
             border-collapse: collapse;
         }
-        
-        .report-header table td {
-            border: none;
-            padding: 5px 10px;
+        .header-table td {
             vertical-align: middle;
+            padding: 2px 4px;
+        }
+        .logo-cell {
+            width: 80px;
             text-align: center;
         }
-        
-        .report-header .logo-cell {
-            width: 200px;  /* Augmenté pour accueillir un plus grand logo */
-            text-align: center;
-        }
-        
-        .report-header .logo-cell img {
-            max-height: 100px;  /* Augmenté de 55px à 80px */
+        .logo-cell img {
+            max-height: 55px;
             width: auto;
-            display: inline-block;
         }
-        
-        .report-header .header-center {
+        .header-center {
             text-align: center;
         }
-        .report-header .header-center h1 {
-            font-size: 18px;
-            font-weight: 900;
-            color: #0E2F76;
-            letter-spacing: 2px;
-            margin: 0;
+        .company-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #558b2f;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
         }
-        .report-header .header-center .sub {
-            font-size: 10px;
-            color: #666;
-            margin-top: 2px;
-        }
-        .report-header .header-center .period {
-            font-size: 13px;
-            font-weight: 700;
-            color: #0E2F76;
-            margin-top: 4px;
-        }
-        .report-header .header-center .date {
+        .header-text {
             font-size: 9px;
-            color: #888;
+            line-height: 1.3;
+            font-weight: bold;
+        }
+        .address {
+            font-size: 8.5px;
+            color: #000;
             margin-top: 2px;
+            line-height: 1.3;
+            font-weight: normal;
         }
-        
-        .report-summary {
-            display: flex;
-            justify-content: space-around;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-        .report-summary .item {
-            text-align: center;
-            padding: 4px 8px;
-        }
-        .report-summary .item .number {
-            font-size: 14px;
-            font-weight: 700;
+        .address .city {
+            font-weight: bold;
             color: #0E2F76;
         }
-        .report-summary .item .label {
-            font-size: 8px;
-            color: #666;
+
+        /* TITRE */
+        .main-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #0E2F76;
+            text-transform: uppercase;
+            text-decoration: underline;
+            margin-bottom: 6px;
+        }
+        .form-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding: 0 3px;
+        }
+
+        /* SECTIONS DE TITRE */
+        .section-header {
+            font-size: 14.5px;
+            font-weight: bold;
+            color: #558b2f;
+            border-bottom: 2px solid #8b0000;
+            padding-bottom: 2px;
+            margin: 10px 0 6px 0;
             text-transform: uppercase;
         }
-        
-        table {
+
+        /* TABLEAU DES DONNÉES */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
-        table th {
-            background: #0E2F76;
-            color: white;
-            font-weight: 700;
+        .data-table th {
+            background-color: #fff;
+            color: #000;
+            font-weight: bold;
             text-transform: uppercase;
-            font-size: 6.5px;
-            padding: 5px 4px;
-            border: 1px solid #0E2F76;
+            font-size: 11px;
+            padding: 5px 3px;
+            border: 1px solid #000;
             text-align: center;
         }
-        table td {
+        .data-table td {
             padding: 4px 3px;
-            border: 1px solid #ddd;
+            border-bottom: 1.5px dotted #000;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
             text-align: center;
             vertical-align: middle;
+            font-size: 12.5px;
         }
-        table td.text-left {
-            text-align: left;
-        }
-        table td.text-right {
-            text-align: right;
-        }
-        table tr:nth-child(even) {
-            background: #f9fafb;
-        }
-        table tr:hover {
-            background: #f0f7ff;
-        }
+        .data-table td.text-left { text-align: left; }
         
         .total-row td {
-            font-weight: 700;
-            background: #e8f0fe !important;
-            border-top: 2px solid #0E2F76;
+            font-weight: bold;
+            border-top: 2px solid #000 !important;
+            border-bottom: 2px solid #000 !important;
+            font-size: 13px;
+            background-color: #fff;
         }
-        
-        .report-footer {
-            margin-top: 12px;
-            text-align: center;
-            font-size: 7px;
-            color: #999;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
-        }
-        .report-footer .signature {
-            margin-top: 4px;
-            font-size: 8px;
-            color: #666;
-        }
-        
+
         .amount-positive {
-            color: #22c55e;
-            font-weight: 700;
+            color: #000;
+            font-weight: bold;
         }
         .amount-zero {
-            color: #999;
+            color: #666;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 30px 0;
-            color: #999;
+            color: #666;
+            font-size: 13.5px;
         }
-        .empty-state p {
-            font-size: 13px;
+
+        /* PIED DE PAGE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) */
+        .footer-container {
+            margin-top: 16px;
+            width: 100%;
         }
-        
+        .footer-left {
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: center;
+        }
+        .footer-line {
+            border-bottom: 1.5px solid #cbd5e0;
+            margin-top: 6px;
+        }
+
+        .page-content {
+            max-height: 100vh;
+            overflow: hidden;
+            background: #fff;
+        }
+
         @media print {
-            body { padding: 8px; }
-            .report-header { border-bottom-color: #000; }
-            .report-header .header-center h1 { color: #000; }
-            .report-header .header-center .period { color: #000; }
-            table th { background: #000; border-color: #000; }
-            .total-row td { background: #e8f0fe !important; }
-            .report-summary .item .number { color: #000; }
-        }
-        
-        @media (max-width: 600px) {
-            .report-header table td {
-                display: block;
-                width: 100% !important;
-                text-align: center !important;
-                padding: 5px 0;
-            }
-            .report-header .logo-cell {
-                width: 100% !important;
-            }
-            .report-header .logo-cell img {
-                max-height: 80px;  /* Augmenté pour mobile aussi */
-            }
-            
-            table {
-                font-size: 6px;
-            }
-            table th, table td {
-                padding: 3px 2px;
+            body { padding: 10px 20px; }
+            .no-print { display: none !important; }
+            @page { 
+                size: A4 portrait;
+                margin: 0.6cm 0.8cm; 
             }
         }
     </style>
 </head>
 <body>
-<!--  EN-TÊTE -->
-<div class="report-header">
-    <table>
-        <tr>
-            <td class="logo-cell" style="text-align: right; width: auto; padding-right: 5px;">
-                <img src="{{ $logoBase64 }}" alt="Salang Group" style="max-height: 50px; width: auto;">
-            </td>
-            <td class="header-center" style="padding: 0 5px; text-align: center;">
-                <h1>SALANG GROUP SARL</h1>
-                <div class="sub">E-COMMERCE &amp; MLM</div>
-                <div style="margin-top:2px; font-size:12px;">
-                <div class="signature">
-                N° ID.NAT: 22-7300-N634640 | N° RCCM: CD/BKVIRCM/20-8-001165001<br>
-                Rond Point CHIKUDU, Batiment KBS au 3eme Niveau<br>
-                Tel: +243 975 220 079 | Email: support@salanggroup.com
-                <div class="period">RAPPORT DES COMMISSIONS - {{ $period }}</div>
-                <div class="date">Généré le {{ $date->format('d/m/Y H:i') }}</div>
-            </td>
-            <td class="logo-cell" style="text-align: left; width: auto; padding-left: 5px;">
-                <img src="{{ $logoBase64 }}" alt="Salang Group" style="max-height: 50px; width: auto;">
-            </td>
-        </tr>
+
+<!-- PAGE CONTENT -->
+<div class="page-content">
+
+    <!-- EN-TÊTE -->
+    <div class="report-header">
+        <table class="header-table">
+            <tr>
+                <td class="logo-cell">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/salang_logo.png'))) }}" alt="Salang Logo">
+                </td>
+                <td class="header-center">
+                    <div class="company-title">SALANG GROUP SARL</div>
+                    <div class="header-text">
+                        N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116 &nbsp; N° IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
+                        Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
+                    </div>
+                    <div class="address">
+                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
+                        <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
+                        <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
+                    </div>
+                </td>
+                <td class="logo-cell">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/salang_logo.png'))) }}" alt="Salang Logo">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- TITRE + META -->
+    <div class="main-title">Rapport des Commissions</div>
+    <div class="form-meta">
+        <div>Période : <strong>{{ $period }}</strong></div>
+        <div>Généré le : <strong>{{ $date->format('d/m/Y') }}</strong></div>
+    </div>
+
+    <!-- SECTION : COMMISSIONS -->
+    <div class="section-header">Détails des Commissions par Membre</div>
+    
+    @if(count($members) > 0)
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:8%;">Période</th>
+                <th style="width:11%;">Code ID</th>
+                <th style="width:20%;">Nom Complet</th>
+                <th style="width:5%;">Niv.</th>
+                <th style="width:6%;">PV</th>
+                <th style="width:9%;">Sponsor</th>
+                <th style="width:9%;">Direct</th>
+                <th style="width:9%;">Indirect</th>
+                <th style="width:11%;">Leadership</th>
+                <th style="width:12%;">Cash POS</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($members as $member)
+            @php
+                $user = $member['user'];
+            @endphp
+            <tr>
+                <td>{{ $member['period'] ?? $period }}</td>
+                <td><strong>{{ $user?->sponsor_id ?? 'N/A' }}</strong></td>
+                <td class="text-left"><strong>{{ $user?->name ?? 'N/A' }}</strong></td>
+                <td>{{ $user?->rank_level ?? '-' }}</td>
+                <td>{{ $member['monthly_pv'] ?? 0 }}</td>
+                <td>
+                    @if(($member['sponsor'] ?? 0) > 0)
+                        <span class="amount-positive">${{ number_format($member['sponsor'], 2) }}</span>
+                    @else
+                        <span class="amount-zero">-</span>
+                    @endif
+                </td>
+                <td>
+                    @if(($member['direct'] ?? 0) > 0)
+                        <span class="amount-positive">${{ number_format($member['direct'], 2) }}</span>
+                    @else
+                        <span class="amount-zero">-</span>
+                    @endif
+                </td>
+                <td>
+                    @if(($member['indirect'] ?? 0) > 0)
+                        <span class="amount-positive">${{ number_format($member['indirect'], 2) }}</span>
+                    @else
+                        <span class="amount-zero">-</span>
+                    @endif
+                </td>
+                <td>
+                    @if(($member['leadership'] ?? 0) > 0)
+                        <span class="amount-positive">${{ number_format($member['leadership'], 2) }}</span>
+                    @else
+                        <span class="amount-zero">-</span>
+                    @endif
+                </td>
+                <td>
+                    @if(($member['cash_pos'] ?? 0) > 0)
+                        <span class="amount-positive">${{ number_format($member['cash_pos'], 2) }}</span>
+                    @else
+                        <span class="amount-zero">-</span>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="5" style="text-align:right; font-weight:bold;">TOTAUX :</td>
+                <td>${{ number_format($totals['sponsor'], 2) }}</td>
+                <td>${{ number_format($totals['direct'], 2) }}</td>
+                <td>${{ number_format($totals['indirect'], 2) }}</td>
+                <td>${{ number_format($totals['leadership'], 2) }}</td>
+                <td>${{ number_format($totals['cash_pos'], 2) }}</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="9" style="text-align:right; font-weight:bold; color:#0E2F76;">TOTAL GÉNÉRAL :</td>
+                <td style="color:#0E2F76; font-size:14px;"><strong>${{ number_format($totals['grand_total'], 2) }}</strong></td>
+            </tr>
+        </tfoot>
     </table>
-</div>
+    @else
+    <div class="empty-state">
+        <p>Aucune commission enregistrée pour la période {{ $period }}</p>
+    </div>
+    @endif
 
-<!-- TABLEAU DES COMMISSIONS -->
-@if($members->count() > 0)
-<table>
-    <thead>
-        <tr>
-            <th style="width:8%;">Période</th>
-            <th style="width:10%;">Code Parrain</th>
-            <th style="width:15%;">Nom</th>
-            <th style="width:5%;">Niv.</th>
-            <th style="width:7%;">PV</th>
-            <th style="width:10%;">Sponsor</th>
-            <th style="width:10%;">Direct</th>
-            <th style="width:10%;">Indirect</th>
-            <th style="width:10%;">Leadership</th>
-            <th style="width:10%;">CASH POS</th>
-            <th style="width:10%;">Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($members as $member)
-        @php
-            $user = $member['user'];
-            $totalMember = $member['sponsor'] + $member['direct'] + $member['indirect'] + $member['leadership'] + $member['cash_pos'];
-        @endphp
-        <tr>
-            <td>{{ $member['period'] ?? $period }}</td>
-            <td>{{ $user?->sponsor_id ?? 'N/A' }}</td>
-            <td class="text-left">{{ $user?->name ?? 'N/A' }}</td>
-            <td>{{ $user?->rank_level ?? '-' }}</td>
-            <td>{{ $member['monthly_pv'] ?? 0 }}</td>
-            <td>
-                @if(($member['sponsor'] ?? 0) > 0)
-                    <span class="amount-positive">${{ number_format($member['sponsor'], 2) }}</span>
-                @else
-                    <span class="amount-zero">-</span>
-                @endif
-            </td>
-            <td>
-                @if(($member['direct'] ?? 0) > 0)
-                    <span class="amount-positive">${{ number_format($member['direct'], 2) }}</span>
-                @else
-                    <span class="amount-zero">-</span>
-                @endif
-            </td>
-            <td>
-                @if(($member['indirect'] ?? 0) > 0)
-                    <span class="amount-positive">${{ number_format($member['indirect'], 2) }}</span>
-                @else
-                    <span class="amount-zero">-</span>
-                @endif
-            </td>
-            <td>
-                @if(($member['leadership'] ?? 0) > 0)
-                    <span class="amount-positive">${{ number_format($member['leadership'], 2) }}</span>
-                @else
-                    <span class="amount-zero">-</span>
-                @endif
-            </td>
-            <td>
-                @if(($member['cash_pos'] ?? 0) > 0)
-                    <span class="amount-positive">${{ number_format($member['cash_pos'], 2) }}</span>
-                @else
-                    <span class="amount-zero">-</span>
-                @endif
-            </td>
-            <td class="amount-positive">${{ number_format($totalMember, 2) }}</td>
-        </tr>
-        @endforeach
-    </tbody>
-    <tfoot>
-        <tr class="total-row">
-            <td colspan="5" style="text-align:right; font-weight:700; font-size:9px;">TOTAUX</td>
-            <td style="font-weight:700; text-align:center;">${{ number_format($totals['sponsor'], 2) }}</td>
-            <td style="font-weight:700; text-align:center;">${{ number_format($totals['direct'], 2) }}</td>
-            <td style="font-weight:700; text-align:center;">${{ number_format($totals['indirect'], 2) }}</td>
-            <td style="font-weight:700; text-align:center;">${{ number_format($totals['leadership'], 2) }}</td>
-            <td style="font-weight:700; text-align:center;">${{ number_format($totals['cash_pos'], 2) }}</td>
-            <td style="font-weight:700; text-align:center; color:#0E2F76; font-size:10px;">${{ number_format($totals['grand_total'], 2) }}</td>
-        </tr>
-    </tfoot>
-</table>
-@else
-<div class="empty-state">
-    <p>Aucune commission trouvée pour la période {{ $period }}</p>
-    <p style="font-size:10px; color:#aaa; margin-top:4px;">Aucune donnée à afficher</p>
-</div>
-@endif
+    <!-- BAS DE PAGE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) -->
+    <div class="footer-container">
+        <div class="footer-left">
+            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
+            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
+        </div>
+        <div class="footer-line"></div>
+    </div>
 
-<!-- PIED DE PAGE -->
-<div class="report-footer">
-    <div>Ce rapport est généré automatiquement par le système Salang Group</div>
 </div>
-
 </body>
 </html>

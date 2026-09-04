@@ -170,7 +170,7 @@
                 Commissions de {{ $member->name }}
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                ID: #{{ $member->id }} • Code: {{ $member->sponsor_id ?? 'N/A' }}
+                ID: {{ $member->id }} • Code: {{ $member->sponsor_id ?? 'N/A' }}
             </p>
         </div>
         <a href="{{ route('cashier.members.show', $member->id) }}" class="btn btn-outline btn-sm">
@@ -188,7 +188,7 @@
                 <svg class="w-4 h-4 text-[var(--primary-navy)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total CASH</span>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</span>
             </div>
             <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">${{ number_format($stats['total'] ?? 0, 2) }}</p>
         </div>
@@ -242,7 +242,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Type</th>
-                        <th class="hidden sm:table-cell">Source</th>
+                        <th>Source</th>
                         <th class="text-right">Montant</th>
                         <th>Statut</th>
                         <th class="hidden md:table-cell">Date</th>
@@ -254,18 +254,60 @@
                         <tr class="commission-row">
                             <td class="font-mono text-xs">#{{ $commission->id }}</td>
                             <td>
-                                <span class="type-badge type-badge-{{ $commission->type }}">
-                                    {{ $commission->type_label ?? ucfirst($commission->type) }}
+                                @php
+                                    $typeClass = 'type-badge-' . $commission->type;
+                                    if (!in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos'])) {
+                                        $typeClass = 'type-badge-default';
+                                    }
+                                    $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
+                                    if ($commission->type == 'cash_pos') { $typeLabel = 'CASH POS'; }
+                                @endphp
+                                <span class="type-badge {{ $typeClass }}">
+                                    {{ $typeLabel }}
                                 </span>
                             </td>
-                            <td class="hidden sm:table-cell text-xs text-[var(--text-secondary)]">
-                                {{ $commission->fromUser?->name ?? 'Système' }}
+                            <td>
+                                @if($commission->source == 'pos')
+                                    <span class="badge-status badge-active">POS</span>
+                                @elseif($commission->source == 'mlm')
+                                    <span class="badge-status" style="background: rgba(59,130,246,0.12); color:#3b82f6;">MLM</span>
+                                @elseif($commission->source == 'membership')
+                                    <span class="badge-status" style="background: rgba(139,92,246,0.12); color:#7C3AED;">ADHÉSION</span>
+                                @elseif($commission->source == 'manual')
+                                    <span class="badge-status" style="background: rgba(245,158,11,0.12); color:#A65A0E;">MANUEL</span>
+                                @else
+                                    <span class="badge-status" style="background: var(--bg-secondary); color:var(--text-secondary);">—</span>
+                                @endif
                             </td>
-                            <td class="text-right font-bold text-[#1F7B4D] text-sm">
-                                ${{ number_format($commission->amount, 2) }}
+                            <td class="text-right font-bold 
+                                @if($commission->amount > 0 && in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos']))
+                                    text-[#1F7B4D]
+                                @elseif($commission->amount > 0)
+                                    text-[#1F7B4D]
+                                @else
+                                    text-[#B32A2A]
+                                @endif
+                                text-sm">
+                                @if($commission->amount > 0)
+                                    @if(in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos']))
+                                        +${{ number_format($commission->amount, 2) }}
+                                    @else
+                                        ${{ number_format($commission->amount, 2) }}
+                                    @endif
+                                @else
+                                    ${{ number_format($commission->amount, 2) }}
+                                @endif
                             </td>
                             <td>
-                                <span class="badge badge-success">Payée</span>
+                                @if($commission->status == 'paid')
+                                    <span class="badge-status badge-active">Payée</span>
+                                @elseif($commission->status == 'pending')
+                                    <span class="badge-status badge-pending">En attente</span>
+                                @elseif($commission->status == 'approved')
+                                    <span class="badge-status" style="background:rgba(59,130,246,0.12); color:#3b82f6;">Approuvée</span>
+                                @else
+                                    <span class="badge-status badge-inactive">{{ ucfirst($commission->status) }}</span>
+                                @endif
                             </td>
                             <td class="hidden md:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $commission->created_at->format('d/m/Y H:i') }}
@@ -287,7 +329,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <p class="text-base font-medium text-[var(--text-primary)]">Aucune commission</p>
-                                <p class="text-sm text-[var(--text-tertiary)] mt-1">Ce membre n'a pas encore de commissions POS</p>
+                                <p class="text-sm text-[var(--text-tertiary)] mt-1">Ce membre n'a pas encore de commissions</p>
                             </td>
                         </tr>
                     @endforelse
