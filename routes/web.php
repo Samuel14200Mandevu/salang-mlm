@@ -47,12 +47,18 @@ use App\Http\Controllers\Admin\AdminPVImportController;
 
 // Controllers Cashier
 use App\Http\Controllers\Cashier\CashierController;
+use App\Http\Controllers\Cashier\PvDistributionController;
 use App\Http\Controllers\Admin\AdminCashierController;
 
 // Admin POS Reports Controller
 use App\Http\Controllers\Admin\AdminPOSReportController;
 
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Admin\AdminCommissionHistoryController;
+
+use App\Http\Controllers\Cashier\ConsultationController;
+
 
 // ============================================================
 // ROUTES PUBLIQUES
@@ -68,7 +74,7 @@ Route::view('/contact', 'pages.contact')->name('contact');
 Route::get('/check-email', [EmailCheckController::class, 'check'])->name('check.email');
 Route::get('/check-sponsor', [SponsorCheckController::class, 'check'])->name('check.sponsor');
 
-// ✅ NOUVELLE ROUTE : Vérification du code sponsor au format 51XXXX
+// NOUVELLE ROUTE : Vérification du code sponsor au format 51XXXX
 Route::post('/check-sponsor-code', [RegisteredUserController::class, 'checkSponsorCode'])
     ->name('check.sponsor.code');
 
@@ -308,7 +314,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/pos', [CashierController::class, 'pos'])->name('pos');
     Route::get('/pos/sale/{product}', [CashierController::class, 'posSale'])->name('pos.sale');
     Route::post('/pos/order', [CashierController::class, 'createOrder'])->name('pos.order');
-    Route::get('/sponsor/check', [CashierController::class, 'checkSponsor'])->name('sponsor.check');
+    Route::post('/pos/multi-order', [CashierController::class, 'createMultiOrder'])->name('pos.multi-order');
     Route::get('/product/find/{id}', [CashierController::class, 'findProduct'])->name('product.find');
     Route::get('/product/find-by-sku/{sku}', [CashierController::class, 'findProductBySku'])->name('product.find-by-sku');
     
@@ -331,18 +337,14 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
     Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
 
-    // ============================================================
-    // CONSULTATIONS CASHIER
-    // ============================================================
-    Route::get('/consultations', [App\Http\Controllers\Cashier\ConsultationController::class, 'index'])->name('consultations.index');
-    Route::get('/consultations/create', [App\Http\Controllers\Cashier\ConsultationController::class, 'create'])->name('consultations.create');
-    Route::post('/consultations', [App\Http\Controllers\Cashier\ConsultationController::class, 'store'])->name('consultations.store');
-    Route::get('/consultations/{consultation}', [App\Http\Controllers\Cashier\ConsultationController::class, 'show'])->name('consultations.show');
-    Route::get('/consultations/{consultation}/print', [App\Http\Controllers\Cashier\ConsultationController::class, 'print'])->name('consultations.print');
+    // Consultations
+    Route::get('/consultations', [ConsultationController::class, 'index'])->name('consultations.index');
+    Route::get('/consultations/create', [ConsultationController::class, 'create'])->name('consultations.create');
+    Route::post('/consultations', [ConsultationController::class, 'store'])->name('consultations.store');
+    Route::get('/consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
+    Route::get('/consultations/{consultation}/print', [ConsultationController::class, 'print'])->name('consultations.print');
     
-    // ============================================================
-    // MEMBRES - Gestion complète AVEC création
-    // ============================================================
+    // Membres
     Route::get('/members', [CashierController::class, 'members'])->name('members');
     Route::get('/members/create', [CashierController::class, 'memberCreate'])->name('members.create');  
     Route::post('/members', [CashierController::class, 'memberStore'])->name('members.store'); 
@@ -351,26 +353,19 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/members/{member}', [CashierController::class, 'memberShow'])->name('members.show');
     Route::get('/members/{member}/commissions', [CashierController::class, 'memberCommissions'])->name('members.commissions');
     Route::get('/members/{member}/orders', [CashierController::class, 'memberOrders'])->name('members.orders');
-    Route::put('/members/{member}/commissions/update', [CashierController::class, 'updateMemberCommissions'])->name('members.commissions.update');
-    Route::put('/members/{member}/commissions/pay-all', [CashierController::class, 'payAllMemberCommissions'])->name('members.commissions.pay-all');
     Route::get('/members/{id}/adhesion-pdf', [CashierController::class, 'generateAdhesionForm'])->name('members.adhesion-pdf');
     Route::get('/members/{id}/pay-slip', [CashierController::class, 'memberPaySlip'])->name('members.pay-slip');
     Route::get('/members/{id}/pay-slip-pdf', [CashierController::class, 'memberPaySlipPdf'])->name('members.pay-slip-pdf');
     Route::post('/members/{id}/force-pay-commissions', [CashierController::class, 'forcePayAllCommissions'])->name('members.force-pay');
     
-    // ============================================================
-    // VÉRIFICATION DU PARRAIN 
-    // ============================================================
+    // Vérification du parrain
     Route::get('/check-sponsor', [CashierController::class, 'checkSponsor'])->name('check-sponsor');
     
-    // Commissions - Routes statiques avant paramètres
+    // Commissions
     Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
     Route::get('/commissions/export', [CashierController::class, 'exportCommissions'])->name('commissions.export');
     Route::get('/commissions/export-pdf', [CashierController::class, 'exportPdf'])->name('commissions.export-pdf');
     Route::get('/commissions/stats', [CashierController::class, 'commissionsStats'])->name('commissions.stats');
-    Route::get('/commissions/network/{userId}', [CashierController::class, 'viewNetwork'])->name('commissions.network');
-    
-    // Routes avec paramètres (après les statiques)
     Route::get('/commissions/{id}', [CashierController::class, 'commissionShow'])->name('commissions.show');
     Route::post('/commissions/{id}/approve', [CashierController::class, 'approveCommission'])->name('commissions.approve');
     Route::post('/commissions/{id}/reject', [CashierController::class, 'rejectCommission'])->name('commissions.reject');
@@ -392,12 +387,22 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/profile', [CashierController::class, 'profile'])->name('profile');
     Route::put('/profile', [CashierController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [CashierController::class, 'updatePassword'])->name('profile.update-password');
-    Route::delete('/profile', [CashierController::class, 'destroyProfile'])->name('profile.destroy');
     Route::post('/profile/avatar', [CashierController::class, 'updateAvatar'])->name('profile.update-avatar');
     Route::delete('/profile/avatar', [CashierController::class, 'deleteAvatar'])->name('profile.delete-avatar');
     
     // Factures
     Route::get('/invoice/{order}/pdf', [CashierController::class, 'downloadInvoice'])->name('invoice.download');
+
+    // ============================================================
+    // GESTION DES PV - NOUVEAU
+    // ============================================================
+    Route::prefix('pv')->name('pv.')->group(function () {
+        Route::get('/', [PvDistributionController::class, 'index'])->name('dashboard');
+        Route::get('/distribute', [PvDistributionController::class, 'createDistribution'])->name('distribute');
+        Route::post('/distribute', [PvDistributionController::class, 'distribute'])->name('distribute.post');
+        Route::post('/approve/{allocation}', [PvDistributionController::class, 'approveAllocation'])->name('approve');
+        Route::get('/member/{member}', [PvDistributionController::class, 'getMemberPvDetails'])->name('member.details');
+    });
 });
 
 // ============================================================
@@ -440,71 +445,78 @@ Route::prefix('admin')
             Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
             Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
         });
+// ============================================================
+// GESTION DES PV (Points de Volume) - ADMIN
+// ============================================================
+Route::prefix('pv')->name('pv.')->group(function () {
+    
+    // ============================================================
+    // ROUTES STATIQUES (DOIVENT ÊTRE AVANT LES ROUTES DYNAMIQUES)
+    // ============================================================
+    
+    // Page principale = Page d'import
+    Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
+    
+    // ROUTES D'IMPORT
+    Route::prefix('import')->name('import.')->group(function () {
+        Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
+        Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
+        Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
+        Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
+    });
+    
+    // Page de recherche
+    Route::get('/search', [AdminPVController::class, 'search'])->name('search');
+    Route::get('/export', [AdminPVController::class, 'export'])->name('export');
+    
+    // Statistiques
+    Route::get('/stats', [AdminPVController::class, 'stats'])->name('stats');
+    Route::get('/history/{user?}', [AdminPVController::class, 'history'])->name('history');
+    
+    // ROUTES API STATIQUES
+    Route::get('/search-user', [AdminPVImportController::class, 'searchUser'])->name('search-user');
+    Route::get('/user-stats/{userId}', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
 
-        // ============================================================
-        // GESTION DES PV (Points de Volume) - ADMIN
-        // ============================================================
-        Route::prefix('pv')->name('pv.')->group(function () {
-            
-            // ============================================================
-            // ROUTES STATIQUES (DOIVENT ÊTRE AVANT LES ROUTES DYNAMIQUES)
-            // ============================================================
-            
-            // ✅ Page principale = Redirection vers l'import
-            Route::get('/', function() {
-                return redirect()->route('admin.pv.import.index');
-            })->name('index');
-            
-            // ✅ ROUTES D'IMPORT (la page principale)
-            Route::prefix('import')->name('import.')->group(function () {
-                Route::get('/', [AdminPVImportController::class, 'index'])->name('index');
-                Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
-                Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
-                Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
-            });
-            
-            // ✅ Page de recherche
-            Route::get('/search', [AdminPVController::class, 'search'])->name('search');
-            Route::get('/export', [AdminPVController::class, 'export'])->name('export');
-            
-            // Statistiques
-            Route::get('/stats', [AdminPVController::class, 'stats'])->name('stats');
-            Route::get('/history/{user?}', [AdminPVController::class, 'history'])->name('history');
-            
-            // ✅ ROUTES API STATIQUES
-            Route::get('/search-user', [AdminPVImportController::class, 'searchUser'])->name('search-user');
-            Route::get('/user-stats/{userId}', [AdminPVImportController::class, 'getUserStats'])->name('user-stats');
+    // GESTION DES PÉRIODES
+    Route::prefix('periods')->name('periods.')->group(function () {
+        Route::get('/', [AdminPVController::class, 'periods'])->name('index');
+        Route::post('/create', [AdminPVController::class, 'createPeriod'])->name('create');
+        Route::post('/{period}/process', [AdminPVController::class, 'processPeriod'])->name('process');
+        Route::post('/{period}/reset-monthly', [AdminPVController::class, 'resetMonthlyPV'])->name('reset-monthly');
+        Route::delete('/{period}/clean', [AdminPVController::class, 'cleanPeriod'])->name('clean');
+    });
 
-            // GESTION DES PÉRIODES
-            Route::prefix('periods')->name('periods.')->group(function () {
-                Route::get('/', [AdminPVController::class, 'periods'])->name('index');
-                Route::post('/create', [AdminPVController::class, 'createPeriod'])->name('create');
-                Route::post('/{period}/process', [AdminPVController::class, 'processPeriod'])->name('process');
-                Route::post('/{period}/reset-monthly', [AdminPVController::class, 'resetMonthlyPV'])->name('reset-monthly');
-                Route::delete('/{period}/clean', [AdminPVController::class, 'cleanPeriod'])->name('clean');
-            });
+    // ============================================================
+    // ROUTES POUR L'HISTORIQUE DES COMMISSIONS
+    // ============================================================
+    Route::prefix('commission-history')->name('commission-history.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'index'])->name('index');
+        Route::post('/recalculate', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'recalculate'])->name('recalculate');
+        Route::get('/{period}/details', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'details'])->name('details');
+        Route::get('/{period}/pdf', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'exportPDF'])->name('commission-history.pdf');
+    });
+    
+    // ============================================================
+    // ROUTES DYNAMIQUES (AVEC PARAMÈTRES) - APRÈS LES STATIQUES
+    // ============================================================
+    
+    // Gestion individuelle d'un utilisateur
+    Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
+    Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
+    Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
+    Route::post('/{user}/add-historical', [AdminPVController::class, 'addHistorical'])->name('add-historical');
+    Route::post('/{user}/add-monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('add-monthly');
+    Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
+    Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
+    Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
+    
+    // Routes avec paramètres dynamiques
+    Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
+    
+    // Attribution massive
+    Route::post('/bulk', [AdminPVController::class, 'bulkAssign'])->name('bulk');
 
-            // ============================================================
-            // ROUTES DYNAMIQUES (AVEC PARAMÈTRES) - APRÈS LES STATIQUES
-            // ============================================================
-            
-            // ✅ Gestion individuelle d'un utilisateur
-            Route::get('/{user}', [AdminPVController::class, 'show'])->name('show');
-            Route::put('/{user}', [AdminPVController::class, 'update'])->name('update');
-            Route::post('/{user}/monthly', [AdminPVController::class, 'addMonthly'])->name('monthly');
-            Route::post('/{user}/add-historical', [AdminPVController::class, 'addHistorical'])->name('add-historical');
-            Route::post('/{user}/add-monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('add-monthly');
-            Route::get('/{user}/rank-info', [AdminPVController::class, 'getRankInfo'])->name('rank-info');
-            Route::post('/{user}/recalculate-rank', [AdminPVController::class, 'recalculateRank'])->name('recalculate-rank');
-            Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
-            
-            // Routes avec paramètres dynamiques
-            Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
-            
-            // Attribution massive
-            Route::post('/bulk', [AdminPVController::class, 'bulkAssign'])->name('bulk');
-
-        }); // FIN GROUPE PV
+}); // FIN GROUPE PV
 
         Route::get('/pv', [AdminPVController::class, 'index'])->name('pv');
 
@@ -602,6 +614,7 @@ Route::prefix('admin')
             Route::post('/periods/{periodId}/step', [CommissionTriggerController::class, 'processPeriodStep'])->name('periods.step');
         });
         Route::get('/commissions', [AdminCommissionController::class, 'index'])->name('commissions');
+        Route::get('/export-pdf', [AdminCommissionController::class, 'exportPDF'])->name('commissions.export-pdf');
 
         // ============================================================
         // WALLETS ADMIN

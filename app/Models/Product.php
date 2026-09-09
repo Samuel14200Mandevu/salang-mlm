@@ -15,12 +15,18 @@ class Product extends Model
         'slug',
         'description',
         'price',
+        'half_price',
+        'half_pv',
+        'full_price',
+        'full_pv',
         'pv_value',
-        'bv_value',
         'cost',
         'stock',
         'sku',
         'category',
+        'unit',
+        'packaging',
+        'dosage',
         'image',
         'gallery',
         'is_active',
@@ -30,8 +36,11 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'half_price' => 'decimal:2',
+        'full_price' => 'decimal:2',
         'pv_value' => 'integer',
-        'bv_value' => 'integer',
+        'half_pv' => 'integer',
+        'full_pv' => 'integer',
         'cost' => 'decimal:2',
         'stock' => 'integer',
         'is_active' => 'boolean',
@@ -40,11 +49,14 @@ class Product extends Model
         'metadata' => 'array',
     ];
 
+    // Suppression de bv_value des casts car il n'existe pas
+
     public function getRouteKeyName()
     {
         return 'slug';
     }
 
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -65,34 +77,56 @@ class Product extends Model
         return $query->where('stock', '>', 0);
     }
 
+    // Accesseurs
     public function getFormattedPriceAttribute()
     {
         return '$' . number_format($this->price, 2);
     }
 
+    public function getDisplayPriceAttribute()
+    {
+        return $this->full_price ?? $this->price;
+    }
+
+    public function getDisplayPvAttribute()
+    {
+        return $this->full_pv ?? $this->pv_value;
+    }
+
     public function getStockLabelAttribute()
     {
         if ($this->stock > 10) {
-            return 'In Stock';
+            return 'En stock';
         } elseif ($this->stock > 0) {
-            return 'Low Stock';
+            return 'Stock faible';
         }
-        return 'Out of Stock';
+        return 'Rupture de stock';
     }
 
     public function getStockStatusClassAttribute()
     {
         if ($this->stock > 10) {
-            return 'text-green-600';
+            return 'badge-success';
         } elseif ($this->stock > 0) {
-            return 'text-yellow-600';
+            return 'badge-warning';
         }
-        return 'text-red-600';
+        return 'badge-danger';
     }
 
+    // Méthodes
     public function isInStock()
     {
         return $this->stock > 0;
+    }
+
+    public function hasHalfOption(): bool
+    {
+        return !is_null($this->half_price) && !is_null($this->half_pv);
+    }
+
+    public function hasFullOption(): bool
+    {
+        return !is_null($this->full_price) && !is_null($this->full_pv);
     }
 
     public function getProfitAttribute()
@@ -109,5 +143,50 @@ class Product extends Model
             return (($this->price - $this->cost) / $this->price) * 100;
         }
         return null;
+    }
+
+    // QR Code
+    public function getQrCodeUrlAttribute()
+    {
+        if (isset($this->metadata['qr_code_svg'])) {
+            return asset('storage/' . $this->metadata['qr_code_svg']);
+        }
+        return null;
+    }
+
+    public function getQrCodeBase64Attribute()
+    {
+        return $this->metadata['qr_base64'] ?? null;
+    }
+
+    // Relations
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function cart()
+    {
+        return $this->hasMany(Cart::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function isInWishlist($userId)
+    {
+        return $this->wishlist()->where('user_id', $userId)->exists();
+    }
+
+    public function getWishlistCountAttribute()
+    {
+        return $this->wishlist()->count();
+    }
+
+    public function getCartCountAttribute()
+    {
+        return $this->cart()->count();
     }
 }

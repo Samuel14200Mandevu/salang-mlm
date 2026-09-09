@@ -527,6 +527,20 @@ public function wishlistProducts()
     }
 
     /**
+     * Récupérer les commissions par type
+     */
+    public function commissionsByType($type = null)
+    {
+        $query = $this->commissions();
+        if ($type) {
+            $query->where('type', $type);
+        }
+        return $query;
+    }
+
+    
+
+    /**
      * MET A JOUR LE TEAM_PV DE TOUS LES ANCETRES
      */
     public function updateAllAncestorsTeamPV(): void

@@ -8,6 +8,22 @@
     --primary-blue-dark: #061B4A;
     --primary-blue-bg: rgba(10, 42, 108, 0.08);
     --primary-blue-border: rgba(10, 42, 108, 0.15);
+    
+    /* Couleurs des grades */
+    --grade-distributeur: #6B7280;
+    --grade-distributeur-bg: rgba(107, 114, 128, 0.12);
+    --grade-bronze: #CD7F32;
+    --grade-bronze-bg: rgba(205, 127, 50, 0.15);
+    --grade-argent: #8A8D91;
+    --grade-argent-bg: rgba(138, 141, 145, 0.15);
+    --grade-or: #D4AF37;
+    --grade-or-bg: rgba(212, 175, 55, 0.15);
+    --grade-platine: #A8B5C5;
+    --grade-platine-bg: rgba(168, 181, 197, 0.15);
+    --grade-diamant: #00BFFF;
+    --grade-diamant-bg: rgba(0, 191, 255, 0.15);
+    --grade-president: #8B0000;
+    --grade-president-bg: rgba(139, 0, 0, 0.12);
 }
 
 .modal-overlay {
@@ -155,7 +171,15 @@
 .badge-purple { background: rgba(10, 42, 108, 0.12); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.15); }
 .badge-cashier { background: rgba(10, 42, 108, 0.08); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.12); }
 .badge-cashier-principal { background: rgba(10, 42, 108, 0.15); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.2); font-weight: 700; }
-.badge-gold { background: rgba(181, 71, 8, 0.12); color: #B54708; border-color: rgba(181, 71, 8, 0.15); }
+
+/* Badges des grades */
+.badge-grade-distributeur { background: var(--grade-distributeur-bg); color: var(--grade-distributeur); border-color: rgba(107, 114, 128, 0.2); }
+.badge-grade-bronze { background: var(--grade-bronze-bg); color: var(--grade-bronze); border-color: rgba(205, 127, 50, 0.25); }
+.badge-grade-argent { background: var(--grade-argent-bg); color: var(--grade-argent); border-color: rgba(138, 141, 145, 0.25); }
+.badge-grade-or { background: var(--grade-or-bg); color: var(--grade-or); border-color: rgba(212, 175, 55, 0.25); }
+.badge-grade-platine { background: var(--grade-platine-bg); color: var(--grade-platine); border-color: rgba(168, 181, 197, 0.25); }
+.badge-grade-diamant { background: var(--grade-diamant-bg); color: var(--grade-diamant); border-color: rgba(0, 191, 255, 0.25); }
+.badge-grade-president { background: var(--grade-president-bg); color: var(--grade-president); border-color: rgba(139, 0, 0, 0.25); }
 
 .btn {
     display: inline-flex;
@@ -497,25 +521,43 @@
                     </span>
                 </div>
 
+                <!-- GRADE avec couleurs -->
                 <div class="info-row">
-                    <span class="label">Package d'activation</span>
+                    <span class="label">Grade</span>
                     <span class="value">
+                        @php
+                            $rank = $user->rank ?? 'Distributeur';
+                            $rankLevel = $user->rank_level ?? 1;
+                            
+                            $rankBadgeClass = 'badge-grade-distributeur';
+                            if($rank === 'Distributeur') {
+                                $rankBadgeClass = 'badge-grade-distributeur';
+                            } elseif($rank === 'Bronze') {
+                                $rankBadgeClass = 'badge-grade-bronze';
+                            } elseif($rank === 'Argent') {
+                                $rankBadgeClass = 'badge-grade-argent';
+                            } elseif($rank === 'Or') {
+                                $rankBadgeClass = 'badge-grade-or';
+                            } elseif($rank === 'Platine') {
+                                $rankBadgeClass = 'badge-grade-platine';
+                            } elseif($rank === 'Diamant') {
+                                $rankBadgeClass = 'badge-grade-diamant';
+                            } elseif($rank === 'Président') {
+                                $rankBadgeClass = 'badge-grade-president';
+                            }
+                        @endphp
+                        <span class="badge {{ $rankBadgeClass }}">
+                            {{ $rank }} (Niv. {{ $rankLevel }})
+                        </span>
                         @if($user->activation_package_id)
                             @php
                                 $activationPackage = App\Models\Package::find($user->activation_package_id);
                             @endphp
                             @if($activationPackage)
-                                <span class="badge badge-info">
-                                    {{ $activationPackage->name }}
-                                </span>
                                 <span class="text-xs text-[var(--text-tertiary)] block">
-                                    PV: {{ $activationPackage->pv_value }} | BV: {{ $activationPackage->bv_value }}
+                                    Package: {{ $activationPackage->name }}
                                 </span>
-                            @else
-                                <span class="text-[var(--text-tertiary)]">Package non trouvé</span>
                             @endif
-                        @else
-                            <span class="text-[var(--text-tertiary)]">Aucun package associé</span>
                         @endif
                     </span>
                 </div>
@@ -554,7 +596,7 @@
             </div>
         </div>
 
-        <!-- Downlines List -->
+        <!-- Downlines List with Grade Column -->
         @if(isset($filleuls) && $filleuls->count() > 0)
         <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
             <h4 class="text-sm font-semibold text-[var(--text-primary)] mb-3">
@@ -568,6 +610,7 @@
                             <th class="text-xs">Nom</th>
                             <th class="text-xs">Email</th>
                             <th class="text-xs">Code</th>
+                            <th class="text-xs">Grade</th>
                             <th class="text-xs">Statut</th>
                             <th class="text-xs">Action</th>
                         </tr>
@@ -579,6 +622,32 @@
                             <td class="text-sm">{{ $filleul->name }}</td>
                             <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>
                             <td class="text-xs font-mono text-primary-blue">{{ $filleul->sponsor_id }}</td>
+                            <td>
+                                @php
+                                    $rank = $filleul->rank ?? 'Distributeur';
+                                    $rankLevel = $filleul->rank_level ?? 1;
+                                    
+                                    $rankBadgeClass = 'badge-grade-distributeur';
+                                    if($rank === 'Distributeur') {
+                                        $rankBadgeClass = 'badge-grade-distributeur';
+                                    } elseif($rank === 'Bronze') {
+                                        $rankBadgeClass = 'badge-grade-bronze';
+                                    } elseif($rank === 'Argent') {
+                                        $rankBadgeClass = 'badge-grade-argent';
+                                    } elseif($rank === 'Or') {
+                                        $rankBadgeClass = 'badge-grade-or';
+                                    } elseif($rank === 'Platine') {
+                                        $rankBadgeClass = 'badge-grade-platine';
+                                    } elseif($rank === 'Diamant') {
+                                        $rankBadgeClass = 'badge-grade-diamant';
+                                    } elseif($rank === 'Président') {
+                                        $rankBadgeClass = 'badge-grade-president';
+                                    }
+                                @endphp
+                                <span class="badge {{ $rankBadgeClass }}">
+                                    {{ $rank }}
+                                </span>
+                            </td>
                             <td>
                                 <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
                                     {{ $filleul->is_active ? 'Actif' : 'Inactif' }}

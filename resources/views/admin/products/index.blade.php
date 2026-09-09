@@ -5,11 +5,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-    --primary-navy: #0F2B4F;
-    --primary-navy-dark: #091E3B;
-    --primary-navy-light: #1A3F6A;
     --bg-base: #F5F6F8;
-    --bg-card: #FFFFFF;
+    --bg-card: #F8F9FA;
     --bg-secondary: #EEF0F3;
     --bg-hover: #E8EAEE;
     --text-primary: #1A1A1E;
@@ -17,40 +14,32 @@
     --text-tertiary: #7A7A82;
     --border-color: #DCDEE3;
     --border-light: #E8EAEE;
+    --primary: #0A2A6C;
+    --primary-dark: #061B4A;
     --success: #1F7B4D;
     --danger: #B32A2A;
     --warning: #A65A0E;
 }
 
-body {
+* {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-base);
-    color: var(--text-primary);
 }
 
-/* ===== CARTES ===== */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 1.25rem;
-    transition: border-color 0.15s ease;
-}
-
-/* ===== TABLE ===== */
-.product-row {
-    transition: background 0.1s ease;
-}
-.product-row:hover {
-    background: var(--bg-hover);
 }
 
 .table-wrap { overflow-x: auto; }
+
 .table { 
     width: 100%; 
     border-collapse: collapse; 
     font-size: 0.875rem; 
 }
+
 .table thead th {
     padding: 0.5rem 0.75rem;
     text-align: left;
@@ -62,82 +51,87 @@ body {
     background: var(--bg-secondary);
     border-bottom: 2px solid var(--border-color);
 }
+
 .table tbody td {
     padding: 0.5rem 0.75rem;
     color: var(--text-primary);
     vertical-align: middle;
     border-bottom: 1px solid var(--border-light);
 }
+
 .table-striped tbody tr:nth-child(even) { 
     background: var(--bg-secondary); 
 }
 
-/* ===== BADGES ===== */
+.product-row {
+    transition: background 0.1s ease;
+}
+.product-row:hover {
+    background: var(--bg-hover);
+}
+
 .badge {
     display: inline-block;
     padding: 0.2rem 0.6rem;
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 0.625rem;
     font-weight: 600;
     border: 1px solid transparent;
 }
+
 .badge-success {
     background: #E6F4EC;
-    color: #1F7B4D;
+    color: var(--success);
     border-color: #B8DFCC;
 }
+
 .badge-danger {
     background: #FDE8E8;
-    color: #B32A2A;
+    color: var(--danger);
     border-color: #F5C8C8;
 }
+
 .badge-warning {
     background: #FEF1E6;
-    color: #A65A0E;
+    color: var(--warning);
     border-color: #FADCB8;
-}
-.badge-info {
-    background: #E8EDF5;
-    color: var(--primary-navy);
-    border-color: #C8D4E3;
 }
 
 .pv-badge {
     display: inline-block;
     padding: 0.125rem 0.5rem;
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 0.6rem;
     font-weight: 700;
-    background: #E8EDF5;
-    color: var(--primary-navy);
-    border: 1px solid #C8D4E3;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
-/* ===== BOUTONS ===== */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.5rem 1.25rem;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 500;
     font-size: 0.813rem;
-    transition: background 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
     border: 1px solid transparent;
     text-decoration: none;
+    transition: background 0.15s ease;
 }
 .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
 
 .btn-primary {
-    background: var(--primary-navy);
+    background: var(--primary);
     color: white;
-    border-color: var(--primary-navy);
+    border-color: var(--primary);
 }
 .btn-primary:hover {
-    background: var(--primary-navy-dark);
-    border-color: var(--primary-navy-dark);
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
 }
 
 .btn-outline {
@@ -157,36 +151,35 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 6px;
 }
+
 .btn-danger-icon {
-    color: #B32A2A;
+    color: var(--danger);
 }
 .btn-danger-icon:hover {
     background: #FDE8E8;
     color: #8F2121;
 }
 
-/* ===== RECHERCHE ===== */
 .input {
     width: 100%;
     padding: 0.5rem 0.75rem 0.5rem 2.25rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--bg-card);
     color: var(--text-primary);
     font-size: 0.875rem;
-    transition: border-color 0.15s ease;
     outline: none;
+    transition: border-color 0.15s ease;
 }
 .input:focus {
-    border-color: var(--primary-navy);
+    border-color: var(--primary);
 }
 .input::placeholder {
     color: var(--text-tertiary);
 }
 
-/* ===== MODAL ===== */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -205,7 +198,7 @@ body {
 }
 .modal-box {
     background: var(--bg-card);
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 1.75rem;
     max-width: 440px;
     width: 90%;
@@ -216,6 +209,7 @@ body {
 .modal-overlay.active .modal-box {
     transform: scale(1);
 }
+
 .modal-icon {
     width: 3rem;
     height: 3rem;
@@ -227,8 +221,9 @@ body {
 }
 .modal-icon-danger {
     background: #FDE8E8;
-    color: #B32A2A;
+    color: var(--danger);
 }
+
 .modal-title {
     text-align: center;
     font-size: 1.0625rem;
@@ -236,6 +231,7 @@ body {
     color: var(--text-primary);
     margin-bottom: 0.375rem;
 }
+
 .modal-text {
     text-align: center;
     font-size: 0.875rem;
@@ -243,12 +239,10 @@ body {
     margin-bottom: 1.25rem;
     line-height: 1.6;
 }
-.modal-text strong {
-    color: var(--text-primary);
-}
 .modal-text .text-danger {
-    color: #B32A2A;
+    color: var(--danger);
 }
+
 .modal-actions {
     display: flex;
     gap: 0.75rem;
@@ -258,19 +252,6 @@ body {
     min-width: 90px;
 }
 
-.product-image {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-/* ===== FOOTER ===== */
 .footer-links {
     font-size: 0.75rem;
     color: var(--text-tertiary);
@@ -285,7 +266,6 @@ body {
     text-decoration: underline;
 }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
     .table thead th, .table tbody td {
         padding: 0.375rem 0.5rem;
@@ -298,10 +278,6 @@ body {
     .badge {
         font-size: 0.6rem;
         padding: 0.125rem 0.5rem;
-    }
-    .product-image {
-        width: 1.75rem;
-        height: 1.75rem;
     }
     .modal-box {
         padding: 1.25rem;
@@ -333,7 +309,6 @@ body {
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- En-tête -->
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Catalogue produits</h1>
@@ -368,26 +343,18 @@ body {
         </div>
     </div>
 
-    <!-- Messages flash -->
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-[#E6F4EC] border border-[#B8DFCC] rounded-lg text-[#1F7B4D] text-sm flex items-center gap-2">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+        <div class="p-4 border border-green-300 rounded-lg bg-green-50 text-green-700 text-sm">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-[#FDE8E8] border border-[#F5C8C8] rounded-lg text-[#B32A2A] text-sm flex items-center gap-2">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+        <div class="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700 text-sm">
             {{ session('error') }}
         </div>
     @endif
 
-    <!-- Recherche -->
     <div class="relative max-w-xs sm:max-w-sm">
         <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -401,7 +368,6 @@ body {
                value="{{ request('search') }}">
     </div>
 
-    <!-- Liste des produits -->
     <div class="card p-3 sm:p-4">
         <div class="table-wrap">
             <table class="table table-striped">
@@ -428,7 +394,7 @@ body {
                             <td>
                                 <span class="pv-badge">{{ $product->pv_value ?? 0 }} PV</span>
                             </td>
-                            <td class="font-bold text-[var(--primary-navy)] text-sm">{{ number_format($product->price, 2) }} $</td>
+                            <td class="font-bold text-[var(--primary)] text-sm">{{ number_format($product->price, 2) }} $</td>
                             <td class="hidden sm:table-cell">
                                 <span class="badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }}">
                                     {{ $product->stock }}
@@ -456,11 +422,11 @@ body {
                                        class="btn btn-outline btn-sm btn-icon"
                                        title="{{ $product->is_active ? 'Désactiver' : 'Activer' }}">
                                         @if($product->is_active)
-                                            <svg class="w-4 h-4 text-[#A65A0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-4 h-4 text-[var(--warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                                             </svg>
                                         @else
-                                            <svg class="w-4 h-4 text-[#1F7B4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-4 h-4 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                             </svg>
                                         @endif
@@ -500,7 +466,6 @@ body {
 
 </div>
 
-<!-- Modal de suppression -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-icon modal-icon-danger">
@@ -510,10 +475,10 @@ body {
         </div>
         <h3 class="modal-title">Confirmer la suppression</h3>
         <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong>
+            Êtes-vous sûr de vouloir <span class="text-danger">supprimer définitivement</span>
             <strong id="productNameDisplay"></strong> ?
             <br>
-            Cette action est <strong class="text-danger">irréversible</strong>.
+            Cette action est <span class="text-danger">irréversible</span>.
         </p>
         <div class="modal-actions">
             <button type="button" onclick="closeDeleteModal()" class="btn btn-outline btn-sm">
@@ -560,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <tr>
                 <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
                     <div class="flex items-center justify-center gap-3">
-                        <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -594,21 +559,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Mise à jour du titre
-            const title = document.querySelector('h1');
             const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (title && subtitle) {
+            if (subtitle) {
                 const totalMatch = html.match(/(\d+)\s+produits?/);
                 if (totalMatch) {
                     subtitle.textContent = totalMatch[0];
                 }
             }
         })
-        .catch(error => {
+        .catch(function(error) {
             console.error('Erreur:', error);
             document.getElementById('productsTableBody').innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center py-8 text-[#B32A2A]">
+                    <td colspan="9" class="text-center py-8 text-[var(--danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>
