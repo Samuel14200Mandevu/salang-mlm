@@ -459,6 +459,8 @@ class CommissionDistributor
      * 
      * RÈGLES :
      * - Générations 1 à 7
+     * - Le bénéficiaire doit avoir un grade >= 3
+     * - Le descendant doit avoir un grade >= 3 (sinon pas de commission)
      * - Le bénéficiaire doit avoir un grade supérieur au descendant
      * - Si un descendant a un grade >= bénéficiaire, toute sa branche est exclue
      */
@@ -472,7 +474,13 @@ class CommissionDistributor
 
         $pvAmount = $this->getItemPV($item);
 
+        // Le bénéficiaire doit avoir un grade >= 3
         if ($pvAmount <= 0 || $buyerLevel < 3) {
+            return $commissions;
+        }
+
+        // Vérifier les conditions de PV du bénéficiaire
+        if (!$this->checkPVConditions($buyer, $buyerLevel)) {
             return $commissions;
         }
 
@@ -486,6 +494,11 @@ class CommissionDistributor
 
             // Si la branche est exclue, passer
             if ($isExcluded) {
+                Log::info('Branche exclue pour indirect', [
+                    'descendant_id' => $descendant->id,
+                    'descendant_name' => $descendant->name,
+                    'generation' => $generation,
+                ]);
                 continue;
             }
 
@@ -493,8 +506,16 @@ class CommissionDistributor
             $descendantLevel = $descendantRank ? $descendantRank->level : 1;
             $descendantRate = $this->getCommissionRate($descendantLevel);
 
-            // Vérifier les conditions de PV du bénéficiaire
-            if (!$this->checkPVConditions($buyer, $buyerLevel)) {
+            // ============================================================
+            // NOUVELLE RÈGLE : Le descendant doit avoir un grade >= 3
+            // Sinon, il ne génère pas de commission indirecte
+            // ============================================================
+            if ($descendantLevel < 3) {
+                Log::info('Descendant ignoré pour indirect - grade < 3', [
+                    'descendant_id' => $descendant->id,
+                    'descendant_name' => $descendant->name,
+                    'descendant_level' => $descendantLevel,
+                ]);
                 continue;
             }
 
@@ -510,7 +531,7 @@ class CommissionDistributor
                         $itemType = $this->getItemType($item);
                         $itemId = $this->getItemId($item);
 
-                        $commissions[] = Commission::create([
+                        $commission = Commission::create([
                             'user_id' => $buyer->id,
                             'from_user_id' => $descendant->id,
                             'commission_period_id' => $period->id,
@@ -527,12 +548,17 @@ class CommissionDistributor
                             'status' => 'pending',
                         ]);
 
-                        Log::info('Bonus indirect créé (corrigé)', [
+                        $commissions[] = $commission;
+
+                        Log::info('Bonus indirect créé', [
                             'buyer_id' => $buyer->id,
                             'buyer_name' => $buyer->name,
+                            'buyer_level' => $buyerLevel,
                             'descendant_id' => $descendant->id,
                             'descendant_name' => $descendant->name,
+                            'descendant_level' => $descendantLevel,
                             'generation' => $generation,
+                            'rate_difference' => $rateDifference,
                             'amount' => $amount,
                         ]);
                     }
@@ -589,7 +615,7 @@ class CommissionDistributor
                 $itemType = $this->getItemType($item);
                 $itemId = $this->getItemId($item);
 
-                $commissions[] = Commission::create([
+                $commission = Commission::create([
                     'user_id' => $buyer->id,
                     'from_user_id' => $descendant->id,
                     'commission_period_id' => $period->id,
@@ -606,12 +632,16 @@ class CommissionDistributor
                     'status' => 'pending',
                 ]);
 
-                Log::info('Leadership bonus créé (corrigé)', [
+                $commissions[] = $commission;
+
+                Log::info('Leadership bonus créé', [
                     'buyer_id' => $buyer->id,
                     'buyer_name' => $buyer->name,
+                    'buyer_level' => $buyerLevel,
                     'descendant_id' => $descendant->id,
                     'descendant_name' => $descendant->name,
                     'generation' => $generation,
+                    'rate' => $leadershipRate,
                     'amount' => $amount,
                 ]);
             }

@@ -187,6 +187,8 @@ class AdminCommissionHistoryController extends Controller
      * RÈGLES :
      * - Direct : PV personnel × Taux (Génération 0)
      * - Indirect : PV descendant × Différence de taux (Générations 1 à 7)
+     *   -> Le descendant doit avoir un grade >= 3
+     *   -> Le bénéficiaire doit avoir un grade > descendant
      * - Leadership : PV descendant × Taux leadership (Générations 1 à 7)
      * 
      * EXCLUSION : Si à N'IMPORTE QUELLE génération un descendant a un grade 
@@ -294,9 +296,13 @@ class AdminCommissionHistoryController extends Controller
             $descendantRate = $this->getDirectRate($descendantRank);
             
             // ============================================================
-            // INDIRECT - Générations 1 à 7 (uniquement si grade supérieur)
+            // INDIRECT - Générations 1 à 7
+            // RÈGLES : 
+            // - Bénéficiaire grade >= 3
+            // - Descendant grade >= 3
+            // - Bénéficiaire grade > Descendant grade
             // ============================================================
-            if ($pvOk && $userRank >= 3 && $userRank > $descendantRank) {
+            if ($pvOk && $userRank >= 3 && $descendantRank >= 3 && $userRank > $descendantRank) {
                 $rateDifference = max(0, $userRate - $descendantRate);
                 
                 if ($rateDifference > 0) {
