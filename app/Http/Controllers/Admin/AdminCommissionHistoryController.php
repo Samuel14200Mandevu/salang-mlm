@@ -621,4 +621,118 @@ class AdminCommissionHistoryController extends Controller
         
         return $pdf->stream("rapport_commissions_{$period}.pdf");
     }
+
+    /**
+     * Exporter le rapport GLOBAL des commissions en PDF
+     * (Tous les bénéficiaires pour une période)
+     */
+    public function exportGlobalPDF(Request $request, $period = 'all')
+    {
+        // Récupérer toutes les commissions pour la période
+        $query = CommissionHistory::with(['user', 'fromUser']);
+        
+        if ($period !== 'all') {
+            $query->where('period', $period);
+        }
+        
+        $commissions = $query->orderBy('user_id')
+            ->orderBy('type')
+            ->get();
+        
+        if ($commissions->isEmpty()) {
+            $pdf = Pdf::loadHTML('<h1 style="text-align:center; font-family:Arial;">Aucune commission trouvée pour la période ' . $period . '</h1>');
+            $pdf->setPaper('a4', 'portrait');
+            return $pdf->stream("rapport_global_commissions_{$period}.pdf");
+        }
+        
+        // Calculer les totaux globaux
+        $totals = [
+            'direct' => $commissions->where('type', 'direct')->sum('amount'),
+            'indirect' => $commissions->where('type', 'indirect')->sum('amount'),
+            'leadership' => $commissions->where('type', 'leadership')->sum('amount'),
+            'cash_pos' => $commissions->where('type', 'cash_pos')->sum('amount'),
+            'total' => $commissions->sum('amount'),
+        ];
+        
+        // Récupérer les PV de chaque membre pour la période
+        $userIds = $commissions->pluck('user_id')->unique()->toArray();
+        
+        $pvByUser = [];
+        if ($period !== 'all') {
+            $pvByUser = PVHistory::whereIn('user_id', $userIds)
+                ->where('period', $period)
+                ->select('user_id', DB::raw('SUM(amount) as total_pv'))
+                ->groupBy('user_id')
+                ->pluck('total_pv', 'user_id')
+                ->toArray();
+        }
+        
+        // Regrouper par bénéficiaire avec code membre et code parrain
+        $beneficiaires = $commissions->groupBy('user_id')->map(function($items, $userId) use ($pvByUser, $period) {
+            $user = $items->first()->user;
+            
+            // Récupérer le parrain (pour son code uniquement)
+            $parrain = $user?->parrain;
+            
+            // PV du bénéficiaire pour la période
+            if ($period !== 'all') {
+                $userPV = $pvByUser[$userId] ?? 0;
+            } else {
+                $userPV = $user?->pv_balance ?? 0;
+            }
+            
+            return [
+                'name' => $user?->name ?? 'N/A',
+                'id' => $userId,
+                'code' => $user?->sponsor_id ?? 'N/A',
+                'parrain_code' => $parrain?->sponsor_id ?? 'N/A',
+                'rank_level' => $user?->rank_level ?? 'N/A',
+                'pv' => $userPV,
+                'total' => $items->sum('amount'),
+                'details' => $items->map(function($item) {
+                    return [
+                        'type' => $item->type,
+                        'from_user' => $item->fromUser?->name ?? 'N/A',
+                        'amount' => $item->amount,
+                        'percentage' => $item->percentage,
+                        'pv_used' => $item->pv_used,
+                        'generation' => $item->generation,
+                        'description' => $item->description,
+                    ];
+                })->toArray(),
+            ];
+        });
+        
+        // Trier par total décroissant
+        $beneficiaires = $beneficiaires->sortByDesc('total');
+        
+        // Logo en base64
+        $logoBase64 = '';
+        $logoPath = public_path('images/salang_logo.png');
+        if (file_exists($logoPath) && filesize($logoPath) < 100000) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+        
+        $data = [
+            'period' => $period,
+            'commissions' => $commissions,
+            'totals' => $totals,
+            'beneficiaires' => $beneficiaires,
+            'logoBase64' => $logoBase64,
+            'date_generated' => now()->format('d/m/Y H:i'),
+        ];
+        
+        $pdf = Pdf::loadView('admin.pv.commission-global-pdf', $data);
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'defaultFont' => 'Times New Roman',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+            'isJavascriptEnabled' => false,
+            'isFontSubsettingEnabled' => true,
+        ]);
+        
+        return $pdf->stream("rapport_global_commissions_{$period}.pdf");
+    }
 }

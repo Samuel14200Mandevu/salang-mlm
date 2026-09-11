@@ -47,6 +47,7 @@ use App\Http\Controllers\Admin\AdminPVImportController;
 
 // Controllers Cashier
 use App\Http\Controllers\Cashier\CashierController;
+
 use App\Http\Controllers\Cashier\PvDistributionController;
 use App\Http\Controllers\Admin\AdminCashierController;
 
@@ -494,6 +495,7 @@ Route::prefix('pv')->name('pv.')->group(function () {
         Route::post('/recalculate', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'recalculate'])->name('recalculate');
         Route::get('/{period}/details', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'details'])->name('details');
         Route::get('/{period}/pdf', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'exportPDF'])->name('commission-history.pdf');
+        Route::get('/{period}/global-pdf', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'exportGlobalPDF'])->name('global-pdf');
     });
     
     // ============================================================
@@ -586,19 +588,30 @@ Route::prefix('pv')->name('pv.')->group(function () {
         // ============================================================
         Route::prefix('commissions')->name('commissions.')->group(function () {
             Route::get('/', [AdminCommissionController::class, 'index'])->name('index');
-            Route::get('/{id}', [AdminCommissionController::class, 'show'])->name('show');
-            Route::post('/{id}/approve', [AdminCommissionController::class, 'approve'])->name('approve');
-            Route::post('/{id}/reject', [AdminCommissionController::class, 'reject'])->name('reject');
+            
+            // ROUTES STATIQUES 
+            Route::get('/export', [AdminCommissionController::class, 'export'])->name('export');
+            Route::get('/export-pdf', [AdminCommissionController::class, 'exportPDF'])->name('export-pdf');
+            Route::get('/export-global-pdf', [AdminCommissionController::class, 'exportGlobalPDF'])->name('export-global-pdf');
+            Route::get('/stats', [AdminCommissionController::class, 'stats'])->name('stats');
+            
             Route::post('/batch-approve', [AdminCommissionController::class, 'batchApprove'])->name('batch-approve');
             Route::post('/recalculate', [CommissionTriggerController::class, 'recalculateAll'])->name('recalculate');
-            Route::get('/export', [AdminCommissionController::class, 'export'])->name('export');
-            Route::get('/stats', [AdminCommissionController::class, 'stats'])->name('stats');
-            Route::get('/network/{id}', [AdminCommissionController::class, 'viewNetwork'])->name('network');
+            
+            Route::post('/force-monthly', [CommissionTriggerController::class, 'forceMonthlyProcessing'])->name('force-monthly');
+            Route::get('/monthly-status', [CommissionTriggerController::class, 'getMonthlyStatus'])->name('monthly-status');
+            Route::post('/trigger-package', [CommissionTriggerController::class, 'triggerPackageCommission'])->name('trigger-package');
+            Route::post('/trigger-retail', [CommissionTriggerController::class, 'triggerRetailCommission'])->name('trigger-retail');
+            Route::get('/periods', [CommissionTriggerController::class, 'getPeriods'])->name('periods.list');
+            Route::post('/periods/{periodId}/step', [CommissionTriggerController::class, 'processPeriodStep'])->name('periods.step');
 
+            // ============================================================
+            // PÉRIODES DE COMMISSIONS
+            // ============================================================
             Route::prefix('periods')->name('periods.')->group(function () {
                 Route::get('/', [AdminCommissionPeriodController::class, 'index'])->name('index');
-                Route::get('/{id}', [AdminCommissionPeriodController::class, 'show'])->name('show');
                 Route::post('/create', [AdminCommissionPeriodController::class, 'create'])->name('create');
+                Route::get('/{id}', [AdminCommissionPeriodController::class, 'show'])->name('show');
                 Route::post('/{id}/process', [AdminCommissionPeriodController::class, 'process'])->name('process');
                 Route::post('/{id}/close', [AdminCommissionPeriodController::class, 'close'])->name('close');
                 Route::delete('/{id}', [AdminCommissionPeriodController::class, 'destroy'])->name('destroy');
@@ -606,15 +619,15 @@ Route::prefix('pv')->name('pv.')->group(function () {
                 Route::delete('/{period}/clean', [CommissionTriggerController::class, 'cleanPeriod'])->name('clean');
             });
 
-            Route::post('/force-monthly', [CommissionTriggerController::class, 'forceMonthlyProcessing'])->name('force-monthly');
-            Route::get('/monthly-status', [CommissionTriggerController::class, 'getMonthlyStatus'])->name('monthly-status');
-            Route::post('/trigger-package', [CommissionTriggerController::class, 'triggerPackageCommission'])->name('trigger-package');
-            Route::post('/trigger-retail', [CommissionTriggerController::class, 'triggerRetailCommission'])->name('trigger-retail');
-            Route::get('/periods', [CommissionTriggerController::class, 'getPeriods'])->name('periods.list');
-            Route::post('/periods/{periodId}/step', [CommissionTriggerController::class, 'processPeriodStep'])->name('periods.step');
+            // ROUTES DYNAMIQUES 
+            Route::get('/{id}', [AdminCommissionController::class, 'show'])->name('show');
+            Route::post('/{id}/approve', [AdminCommissionController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [AdminCommissionController::class, 'reject'])->name('reject');
+            Route::get('/network/{id}', [AdminCommissionController::class, 'viewNetwork'])->name('network');
         });
+
+        // Route alias (hors groupe pour compatibilité)
         Route::get('/commissions', [AdminCommissionController::class, 'index'])->name('commissions');
-        Route::get('/export-pdf', [AdminCommissionController::class, 'exportPDF'])->name('commissions.export-pdf');
 
         // ============================================================
         // WALLETS ADMIN

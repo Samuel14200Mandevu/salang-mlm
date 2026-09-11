@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Commission;
 use App\Models\User;
+use App\Models\PVHistory;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\CommissionPeriod;
@@ -308,7 +309,7 @@ class CommissionController extends Controller
     }
 
     /**
-     * Exporter les commissions en PDF
+     * Exporter les commissions en PDF (rapport individuel avec filtres)
      */
     public function exportPDF(Request $request)
     {
@@ -429,7 +430,171 @@ class CommissionController extends Controller
             'isFontSubsettingEnabled' => true,
         ]);
 
-         return $pdf->download('rapport_commissions_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('rapport_commissions_' . date('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Exporter le rapport GLOBAL des commissions en PDF
+     * (Tous les bénéficiaires avec filtres)
+     */
+    public function exportGlobalPDF(Request $request)
+    {
+        set_time_limit(300);
+
+        $query = Commission::with(['user', 'fromUser', 'period']);
+
+        // Exclure les types non souhaités
+        $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
+        $query->whereNotIn('type', $excludedTypes);
+
+        // Appliquer les filtres
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('sponsor_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('period')) {
+            $query->where('period', $request->period);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $commissions = $query->orderBy('user_id')->orderBy('type')->get();
+
+        // Si aucune commission
+        if ($commissions->isEmpty()) {
+            $pdf = Pdf::loadHTML('<h1 style="text-align:center; font-family:Arial; margin-top:50px;">Aucune commission trouvée</h1>');
+            $pdf->setPaper('a4', 'portrait');
+            return $pdf->stream("rapport_global_commissions.pdf");
+        }
+
+        // Calcul des totaux globaux
+        $totals = [
+            'direct' => $commissions->where('type', 'direct')->sum('amount'),
+            'indirect' => $commissions->where('type', 'indirect')->sum('amount'),
+            'leadership' => $commissions->where('type', 'leadership')->sum('amount'),
+            'cash_pos' => $commissions->where('type', 'cash_pos')->sum('amount'),
+            'sponsor' => $commissions->where('type', 'sponsor')->sum('amount'),
+            'retail' => $commissions->where('type', 'retail')->sum('amount'),
+            'total' => $commissions->sum('amount'),
+        ];
+
+        // Récupérer les PV de chaque membre pour la période (si filtrée)
+        $userIds = $commissions->pluck('user_id')->unique()->toArray();
+        $pvByUser = [];
+
+        if ($request->filled('period')) {
+            $pvByUser = PVHistory::whereIn('user_id', $userIds)
+                ->where('period', $request->period)
+                ->select('user_id', DB::raw('SUM(amount) as total_pv'))
+                ->groupBy('user_id')
+                ->pluck('total_pv', 'user_id')
+                ->toArray();
+        }
+
+        // Charger tous les utilisateurs et leurs parrains en une requête
+        $allUsers = User::whereIn('id', $userIds)->get()->keyBy('id');
+        $parrainIds = $allUsers->pluck('parrain_id')->filter()->unique()->toArray();
+        $parrains = User::whereIn('id', $parrainIds)->get()->keyBy('id');
+
+        // Regrouper par bénéficiaire
+        $beneficiaires = $commissions->groupBy('user_id')->map(function($items, $userId) use ($pvByUser, $allUsers, $parrains, $request) {
+            $user = $allUsers->get($userId) ?? $items->first()->user;
+            $parrain = $user?->parrain_id ? $parrains->get($user->parrain_id) : null;
+
+            // Code parrain
+            $parrainCode = 'N/A';
+            if ($parrain) {
+                $parrainCode = $parrain->sponsor_id ?? $parrain->id ?? 'N/A';
+            }
+
+            // Code membre
+            $userCode = $user?->sponsor_id ?? $user?->id ?? 'N/A';
+
+            // PV
+            if ($request->filled('period')) {
+                $userPV = $pvByUser[$userId] ?? 0;
+            } else {
+                $userPV = $user?->pv_balance ?? 0;
+            }
+
+            return [
+                'name' => $user?->name ?? 'N/A',
+                'id' => $userId,
+                'code' => $userCode,
+                'parrain_code' => $parrainCode,
+                'rank_level' => $user?->rank_level ?? 'N/A',
+                'pv' => $userPV,
+                'total' => $items->sum('amount'),
+                'details' => $items->map(function($item) {
+                    return [
+                        'type' => $item->type,
+                        'from_user' => $item->fromUser?->name ?? 'Système',
+                        'amount' => $item->amount,
+                        'percentage' => $item->percentage,
+                        'pv_used' => $item->pv_used,
+                        'generation' => $item->generation,
+                        'status' => $item->status,
+                        'description' => $item->description,
+                    ];
+                })->toArray(),
+            ];
+        });
+
+        $beneficiaires = $beneficiaires->sortByDesc('total');
+
+        // Logo
+        $logoBase64 = '';
+        $logoPath = public_path('images/salang_logo.png');
+        if (file_exists($logoPath) && filesize($logoPath) < 100000) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $data = [
+            'period' => $request->period ?? 'Toutes les périodes',
+            'commissions' => $commissions,
+            'totals' => $totals,
+            'beneficiaires' => $beneficiaires,
+            'filters' => [
+                'search' => $request->search,
+                'type' => $request->type,
+                'status' => $request->status,
+                'period' => $request->period,
+            ],
+            'logoBase64' => $logoBase64,
+            'date_generated' => now()->format('d/m/Y H:i'),
+        ];
+
+        $pdf = Pdf::loadView('admin.commissions.commission-global-pdf', $data);
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'defaultFont' => 'Times New Roman',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+            'isJavascriptEnabled' => false,
+            'isFontSubsettingEnabled' => true,
+        ]);
+
+        return $pdf->stream("rapport_global_commissions_" . now()->format('Y-m-d') . ".pdf");
     }
 
     /**
