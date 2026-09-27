@@ -323,7 +323,7 @@ body {
                 Gestion des utilisateurs
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $users->total() }} utilisateurs enregistrés
+                {{ $users->total() }} utilisateurs/membres enregistrés
                 @if(request('search'))
                     <span class="text-xs text-[var(--text-tertiary)] ml-2">
                         · Résultats pour "{{ request('search') }}"
@@ -350,6 +350,12 @@ body {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
                 <span class="hidden xs:inline">Ajouter</span>
+            </a>
+            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <span class="hidden xs:inline">Importer PV</span>
             </a>
         </div>
     </div>
@@ -447,8 +453,8 @@ body {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Utilisateur</th>
-                        <th class="hidden sm:table-cell">Code sponsor</th>
+                        <th>Utilisateur/Membre</th>
+                        <th class="hidden sm:table-cell">Code</th>
                         <th class="hidden md:table-cell">Rôle</th>
                         <th class="hidden lg:table-cell">Package</th>
                         <th class="hidden xl:table-cell">Inscrit</th>

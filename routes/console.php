@@ -411,3 +411,100 @@ Artisan::command('rank:promotions', function () {
 // ============================================================
 // FORMATAGE UTILITAIRE
 // ============================================================
+
+// ════════════════════════════════════════════════════════════════════
+// ✅ SCHEDULER LARAVEL 13 — AJOUTÉ ICI
+// ════════════════════════════════════════════════════════════════════
+
+// Réinitialisation PV mensuels le 7 de chaque mois
+Schedule::command('pv:reset-monthly')->monthlyOn(7, '00:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pv-reset-monthly.log'));
+
+Schedule::command('monthly:recalculate')->monthlyOn(7, '00:05')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pv-recalculate.log'));
+
+Schedule::command('ranks:update --all')->monthlyOn(7, '00:15')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ranks-after-pv-reset.log'));
+
+// ✅ Santé MLM (remplace les 4 jobs supprimés)
+Schedule::command('mlm:fix-team-pv --dry-run')->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/mlm-health.log'));
+
+// Maintenance journalière ranks
+Schedule::command('ranks:update --all')->dailyAt('00:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ranks-daily.log'));
+
+Schedule::command('ranks:fix-all')->dailyAt('00:45')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ranks-fix.log'));
+
+Schedule::command('team:recalculate')->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/team-recalculate.log'));
+
+Schedule::command('pv:update-monthly')->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pv-monthly.log'));
+
+// Commissions
+Schedule::command('commissions:process')->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/commissions-process.log'));
+
+Schedule::command('commissions:calculate --all')->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/commissions-calculate.log'));
+
+Schedule::command('mlm:process-monthly --steps=all')->monthlyOn(1, '02:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/mlm-monthly.log'));
+
+// Retraits
+Schedule::command('withdrawals:process')->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/withdrawals.log'));
+
+// Grades supérieurs
+Schedule::command('higher-ranks:sync')->dailyAt('05:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/higher-ranks.log'));
+
+// Maintenance
+Schedule::command('logs:clean --days=7')->dailyAt('04:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/cleanup.log'));
+
+Schedule::command('backup:run')->dailyAt('05:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/backup.log'));
+
+Schedule::command('report:generate')->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/report.log'));
+
+Schedule::command('packages:check-expiry')->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/packages.log'));
+
+Schedule::command('notifications:send-pending')->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/notifications.log'));
+
+Schedule::command('mlm:status')->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/status.log'));
+
+Schedule::command('pv:check-status')->dailyAt('23:55')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pv-check-status.log'));

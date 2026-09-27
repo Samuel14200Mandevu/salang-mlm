@@ -10,6 +10,7 @@ use App\Models\PVHistory;
 use App\Models\Transaction;
 use App\Models\RankHistory;
 use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\TeamPVCalculator;
 use App\Jobs\UpdateRanks;
 use App\Jobs\UpdateTeamPV;
 use App\Jobs\CalculatePVBV;
@@ -133,7 +134,7 @@ class AdminPVController extends Controller
 
             $user->saveQuietly();
 
-            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            // ✅ CORRECTION : Recalcul synchrone du parrain + ancêtres
             if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
@@ -143,15 +144,13 @@ class AdminPVController extends Controller
 
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
-            dispatch(new UpdateRanks($user->id))->onQueue('low');
-            dispatch(new CalculatePVBV($user->id))->onQueue('low');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
+            // ✅ Recalcul synchrone du user lui-même
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Mise à jour PV manuelle');
+
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
@@ -180,9 +179,9 @@ class AdminPVController extends Controller
                 }
             }
             
-            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+            $message .= "\nRecalcul effectue immediatement.";
 
-            Log::info('PV mis a jour avec jobs', [
+            Log::info('PV mis a jour', [
                 'user_id' => $user->id,
                 'admin_id' => auth()->id(),
                 'old_pv' => $oldPv,
@@ -252,7 +251,9 @@ class AdminPVController extends Controller
             $user->last_rank_update = now();
             $user->saveQuietly();
 
-            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            PVHistory::where('user_id', $user->id)->delete();
+
+            // ✅ CORRECTION : Recalcul synchrone du parrain + ancêtres
             if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
@@ -260,19 +261,8 @@ class AdminPVController extends Controller
                 }
             }
 
-            PVHistory::where('user_id', $user->id)->delete();
-
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
@@ -286,7 +276,7 @@ class AdminPVController extends Controller
             ]);
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
-                ->with('success', "{$user->name} a ete reinitialise avec succes ! Grade: Distributeur (Niv. 1) Package: Aucun. Les recalculs complets sont en cours en arriere-plan.");
+                ->with('success', "{$user->name} a ete reinitialise avec succes ! Grade: Distributeur (Niv. 1) Package: Aucun. Recalcul effectue immediatement.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -315,7 +305,7 @@ class AdminPVController extends Controller
             $user->monthly_bv += $amount;
             $user->saveQuietly();
 
-            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            // ✅ CORRECTION : Recalcul synchrone du parrain + ancêtres
             if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
@@ -325,14 +315,13 @@ class AdminPVController extends Controller
 
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
-            dispatch(new UpdateRanks($user->id))->onQueue('low');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
+            // ✅ Recalcul synchrone du user lui-même
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Ajout PV mensuel');
+
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
@@ -343,7 +332,7 @@ class AdminPVController extends Controller
             $newRankName = $user->rank ?? 'Distributeur';
             $newRankLevel = $user->rank_level ?? 1;
 
-            Log::info('PV mensuel ajoute avec jobs', [
+            Log::info('PV mensuel ajoute', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'admin_id' => auth()->id(),
@@ -361,7 +350,7 @@ class AdminPVController extends Controller
                 }
             }
             
-            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+            $message .= "\nRecalcul effectue immediatement.";
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
                 ->with('success', $message);
@@ -400,9 +389,13 @@ class AdminPVController extends Controller
 
             if ($request->type === 'personal' || $request->type === 'monthly') {
                 $user->pv_balance += $amount;
-                $user->monthly_pv += $amount;
                 $user->bv_balance += $amount;
-                $user->monthly_bv += $amount;
+
+                // ✅ monthly_pv uniquement si mois en cours
+                if ($request->period === date('Y-m')) {
+                    $user->monthly_pv += $amount;
+                    $user->monthly_bv += $amount;
+                }
             }
 
             if ($request->type === 'team') {
@@ -412,7 +405,7 @@ class AdminPVController extends Controller
 
             $user->saveQuietly();
 
-            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
+            // ✅ Recalcul synchrone du parrain + ancêtres
             if ($user->parrain_id && ($request->type === 'personal' || $request->type === 'monthly')) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
@@ -422,15 +415,13 @@ class AdminPVController extends Controller
 
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
-            dispatch(new UpdateRanks($user->id))->onQueue('low');
-            dispatch(new CalculatePVBV($user->id))->onQueue('low');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
+            // ✅ Recalcul synchrone du user lui-même
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Ajout PV historique');
+
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
@@ -452,7 +443,7 @@ class AdminPVController extends Controller
                 }
             }
             
-            $message .= "\nLes recalculs complets sont en cours en arriere-plan.";
+            $message .= "\nRecalcul effectue immediatement.";
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
                 ->with('success', $message);
@@ -464,6 +455,9 @@ class AdminPVController extends Controller
         }
     }
 
+    /**
+     * ✅ SUPPRESSION HISTORIQUE PV — CORRIGÉE
+     */
     public function deleteHistory($historyId)
     {
         $history = PVHistory::findOrFail($historyId);
@@ -473,42 +467,52 @@ class AdminPVController extends Controller
         try {
             $user = User::find($userId);
             $amount = $history->amount;
-            
+            $historyPeriod = $history->period;
+            $currentPeriod = date('Y-m');
+
+            // ✅ CORRECTION 1 : Protéger contre les valeurs négatives
             if ($history->type === 'personal' || $history->type === 'monthly') {
-                $user->pv_balance -= $amount;
-                $user->monthly_pv -= $amount;
-                $user->bv_balance -= $amount;
-                $user->monthly_bv -= $amount;
+                $user->pv_balance = max(0, ($user->pv_balance ?? 0) - $amount);
+                $user->bv_balance = max(0, ($user->bv_balance ?? 0) - ($amount * 0.8));
+
+                // ✅ monthly_pv : ne retirer QUE si le PV est du mois en cours
+                if ($historyPeriod === $currentPeriod) {
+                    $user->monthly_pv = max(0, ($user->monthly_pv ?? 0) - $amount);
+                    $user->monthly_bv = max(0, ($user->monthly_bv ?? 0) - ($amount * 0.8));
+                }
             }
             if ($history->type === 'team') {
-                $user->team_pv -= $amount;
-                $user->team_bv -= $amount;
+                $user->team_pv = max(0, ($user->team_pv ?? 0) - $amount);
+                $user->team_bv = max(0, ($user->team_bv ?? 0) - ($amount * 0.8));
             }
             $user->saveQuietly();
 
-            // Mettre à jour le team_pv du parrain et de tous ses ancêtres
-            if ($user->parrain_id && ($history->type === 'personal' || $history->type === 'monthly')) {
+            $history->delete();
+
+            DB::commit();
+
+            // ✅ CORRECTION 2 : Recalcul synchrone du user + ancêtres
+            $teamPVCalculator = app(TeamPVCalculator::class);
+
+            // 1. Recalculer le user lui-même
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Suppression historique PV');
+
+            // 2. Recalculer TOUS les ancêtres
+            if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
                     $this->updateParrainAndAncestorsTeamPV($parrain);
                 }
             }
 
-            $history->delete();
-
-            DB::commit();
-
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('low');
-            dispatch(new UpdateRanks($user->id))->onQueue('low');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
 
             return response()->json([
                 'success' => true,
@@ -538,20 +542,26 @@ class AdminPVController extends Controller
         $user = User::findOrFail($id);
 
         try {
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            
+            // ✅ Recalcul synchrone
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Recalcul manuel');
+
             if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
             }
-            
+
             Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
 
-            $message = "Recalcul du grade de {$user->name} en cours en arriere-plan.\n";
-            $message .= "Le resultat sera visible dans quelques instants.";
+            $message = "Recalcul du grade de {$user->name} effectue.\n";
+            $message .= "Nouveau grade: {$user->rank} (Niv. {$user->rank_level}).";
 
             return redirect()->route('admin.pv.index', ['user_id' => $user->id])
                 ->with('success', $message);
@@ -669,73 +679,41 @@ class AdminPVController extends Controller
     }
 
     // ============================================================
-    // METHODES DE RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS ET ANCETRES
+    // ✅ CORRECTION : Méthode unique de recalcul des ancêtres
     // ============================================================
 
     /**
      * Met à jour le team_pv du parrain et de TOUS ses ancêtres
+     * ✅ Utilise TeamPVCalculator (source unique de vérité)
      */
     private function updateParrainAndAncestorsTeamPV(User $parrain): void
     {
         try {
-            // Récupérer les IDs de tous les ancêtres en 1 requête SQL
-            $ancestorIds = DB::select("
-                WITH RECURSIVE ancestors AS (
-                    SELECT id, parrain_id, 1 as level
-                    FROM users 
-                    WHERE id = ?
-                    
-                    UNION ALL
-                    
-                    SELECT u.id, u.parrain_id, a.level + 1
-                    FROM users u
-                    INNER JOIN ancestors a ON u.id = a.parrain_id
-                    WHERE u.is_active = true
-                )
-                SELECT id, level FROM ancestors ORDER BY level DESC
-            ", [$parrain->id]);
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $rankCalculator = app(AdvancedRankCalculator::class);
 
-            if (empty($ancestorIds)) {
-                return;
+            // 1. Récupérer TOUS les ancêtres (récursif)
+            $ancestorIds = $teamPVCalculator->getAncestorIds($parrain);
+
+            // 2. Inclure le parrain lui-même
+            $allIds = array_unique(array_merge([$parrain->id], $ancestorIds));
+
+            // 3. Recalculer le team_pv de chaque ancêtre
+            foreach ($allIds as $userId) {
+                $user = User::find($userId);
+                if (!$user) continue;
+
+                $teamPVCalculator->updateUser($user);
+
+                // 4. Recalculer le grade
+                $rankCalculator->clearCache();
+                $rankCalculator->recalculateUserRank($user, 'Mise à jour team_pv');
             }
 
-            $ids = array_column($ancestorIds, 'id');
-            
-            // Mettre à jour le team_pv pour TOUS les ancêtres en 1 requête
-            DB::statement("
-                UPDATE users u
-                SET team_pv = (
-                    SELECT COALESCE(SUM(pv_balance + monthly_pv + team_pv), 0)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                ),
-                team_bv = (
-                    SELECT COALESCE(SUM(bv_balance + monthly_bv + team_bv), 0)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                ),
-                total_team = (
-                    SELECT COUNT(*)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                )
-                WHERE u.id IN (" . implode(',', $ids) . ")
-            ");
-
-            // Recalculer les grades
-            foreach ($ids as $id) {
-                $user = User::find($id);
-                if ($user) {
-                    $this->rankCalculator->recalculateUserRank($user, 'Mise à jour team_pv');
-                }
-            }
-
-            Log::info('team_pv mis à jour pour tous les ancêtres (SQL CTE)', [
+            Log::info('team_pv mis à jour pour tous les ancêtres', [
                 'parrain_id' => $parrain->id,
-                'ancestors_updated' => count($ids),
+                'ancestors_updated' => count($allIds),
+                'ancestor_ids' => $allIds,
             ]);
 
         } catch (\Exception $e) {
@@ -752,13 +730,8 @@ class AdminPVController extends Controller
     private function updateParrainTeamPV(User $parrain): void
     {
         try {
-            $teamData = $this->calculateTeamPVRecursive($parrain);
-
-            $parrain->team_pv = $teamData['pv'];
-            $parrain->team_bv = $teamData['bv'];
-            $parrain->total_team = $teamData['total'];
-            $parrain->saveQuietly();
-
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($parrain);
             $this->rankCalculator->recalculateUserRank($parrain, 'Mise a jour team_pv');
 
         } catch (\Exception $e) {
@@ -774,25 +747,7 @@ class AdminPVController extends Controller
      */
     private function calculateTeamPVRecursive(User $user): array
     {
-        $totalPV = $user->pv_balance ?? 0;
-        $totalBV = $user->bv_balance ?? 0;
-        $totalCount = 0;
-
-        $filleuls = User::where('parrain_id', $user->id)
-            ->where('is_active', true)
-            ->get();
-
-        foreach ($filleuls as $filleul) {
-            $childData = $this->calculateTeamPVRecursive($filleul);
-            $totalPV += $childData['pv'];
-            $totalBV += $childData['bv'];
-            $totalCount += 1 + $childData['total'];
-        }
-
-        return [
-            'pv' => $totalPV,
-            'bv' => $totalBV,
-            'total' => $totalCount,
-        ];
+        $teamPVCalculator = app(TeamPVCalculator::class);
+        return $teamPVCalculator->calculateForUser($user);
     }
 }

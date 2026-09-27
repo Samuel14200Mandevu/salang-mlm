@@ -3,40 +3,63 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Services\MLM\RankUpdateService;
+use App\Jobs\RecalculateAfterPVImport;
 use Illuminate\Console\Command;
 
 class RecalculateAllRanks extends Command
 {
-    protected $signature = 'ranks:recalculate {--user= : ID de l utilisateur specifique}';
-    protected $description = 'Recalculer les grades de tous les utilisateurs';
+    protected $signature = 'mlm:recalculate-all-ranks 
+                            {--chunk=100 : Nombre d\'users par batch}
+                            {--sync : Exécuter en synchrone au lieu de la queue}';
 
-    public function handle(RankUpdateService $rankService)
+    protected $description = 'Recalcule les grades de TOUS les utilisateurs actifs';
+
+    public function handle(): int
     {
-        $userId = $this->option('user');
+        $chunkSize = (int) $this->option('chunk');
+        $sync = $this->option('sync');
 
-        if ($userId) {
-            $user = User::find($userId);
-            if ($user) {
-                $rankService->triggerRankUpdate($user, 'recalculate_command');
-                $this->info("Grade recalculé pour {$user->name}: {$user->rank_name}");
-            } else {
-                $this->error("Utilisateur ID {$userId} non trouve");
-            }
-            return;
-        }
+        $total = User::where('is_active', true)->count();
+        $this->info("Recalcul de {$total} utilisateurs...");
 
-        $this->info("Recalcul des grades pour tous les utilisateurs...");
-        $users = User::where('is_active', true)->get();
-        $bar = $this->output->createProgressBar($users->count());
+        $bar = $this->output->createProgressBar($total);
+        $bar->start();
 
-        foreach ($users as $user) {
-            $rankService->triggerRankUpdate($user, 'recalculate_all');
-            $bar->advance();
-        }
+        $processed = 0;
+
+        User::where('is_active', true)
+            ->select('id')
+            ->chunkById($chunkSize, function ($users) use ($sync, $bar, &$processed) {
+                $userIds = $users->pluck('id')->toArray();
+
+                if ($sync) {
+                    foreach ($userIds as $userId) {
+                        $user = User::find($userId);
+                        if ($user) {
+                            app(\App\Services\MLM\AdvancedRankCalculator::class)
+                                ->recalculateUserRank($user, 'Bulk recalculate');
+                        }
+                        $bar->advance();
+                        $processed++;
+                    }
+                } else {
+                    RecalculateAfterPVImport::dispatch($userIds, date('Y-m'))
+                        ->onQueue('rank-recalculation');
+                    $bar->advance($userIds ? count($userIds) : 0);
+                    $processed += count($userIds);
+                }
+            });
 
         $bar->finish();
-        $this->newLine();
-        $this->info("Recalcul termine pour {$users->count()} utilisateurs");
+        $this->newLine(2);
+
+        $this->info("✅ {$processed} utilisateurs traités.");
+
+        if (!$sync) {
+            $this->warn("⚠️  Les jobs sont en queue. Assurez-vous qu'un worker tourne :");
+            $this->line("   php artisan queue:work --queue=rank-recalculation,default");
+        }
+
+        return self::SUCCESS;
     }
 }

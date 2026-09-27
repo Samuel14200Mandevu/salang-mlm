@@ -11,10 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\MLM\AdvancedRankCalculator;
-use App\Services\MLM\RankUpdateService;
-use App\Jobs\UpdateRanks;
-use App\Jobs\UpdateTeamPV;
-use App\Jobs\CalculatePVBV;
+use App\Services\MLM\TeamPVCalculator;
+use App\Jobs\RecalculateAfterPVImport;
 
 class User extends Authenticatable
 {
@@ -35,135 +33,139 @@ class User extends Authenticatable
         'activation_code_expires_at', 'activated_at', 'activation_method',
         'activation_package_id', 'activation_commission_used',
         'activation_commission_balance', 'email_verified_at', 'remember_token',
-        'birth_date',
-        'gender',
-        'profession',
-        'identity_number',
-        'bank_name',
-        'account_number',
-        'account_holder',
-        'mobile_money',
-        'signature_name',
-        'signature_date',
-        'signature_location',
-        'registered_by',
-        'registered_at',
+        'birth_date', 'gender', 'profession', 'identity_number',
+        'bank_name', 'account_number', 'account_holder', 'mobile_money',
+        'signature_name', 'signature_date', 'signature_location',
+        'registered_by', 'registered_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
 
+    // ══════════════════════════════════════════════════════════════
+    // ✅ CORRECTION 1 : decimal:1 → float (calculs fiables)
+    // ══════════════════════════════════════════════════════════════
     protected $casts = [
         'email_verified_at' => 'datetime',
         'package_expiry' => 'datetime',
         'kyc_verified_at' => 'datetime',
         'password' => 'hashed',
-        'pv_balance' => 'decimal:1',
-        'bv_balance' => 'decimal:1',
-        'monthly_pv' => 'decimal:1',
-        'monthly_bv' => 'decimal:1',
-        'team_pv' => 'decimal:1',
-        'team_bv' => 'decimal:1',
+
+        // ✅ PV/BV en float (PAS decimal:1)
+        'pv_balance' => 'float',
+        'bv_balance' => 'float',
+        'monthly_pv' => 'float',
+        'monthly_bv' => 'float',
+        'team_pv' => 'float',
+        'team_bv' => 'float',
+        'commission_balance' => 'float',
+        'total_earnings' => 'float',
+
+        // ✅ Entiers
         'qualified_branches' => 'integer',
         'direct_sponsors_count' => 'integer',
-        'commission_balance' => 'decimal:2',
-        'total_earnings' => 'decimal:2',
+        'total_team' => 'integer',
+        'total_sponsors' => 'integer',
+        'rank_level' => 'integer',
+        'rank_id' => 'integer',
+
+        // ✅ Booléens / dates
         'is_active' => 'boolean',
+        'rank_update_queued' => 'boolean',
         'activation_code_expires_at' => 'datetime',
         'activated_at' => 'datetime',
         'last_rank_update' => 'datetime',
-        'rank_update_queued' => 'boolean',
         'birth_date' => 'date',
         'signature_date' => 'date',
         'registered_at' => 'datetime',
         'gender' => 'string',
     ];
 
+    // ══════════════════════════════════════════════════════════════
+    // ✅ SYSTÈME UNIFIÉ : UN SEUL dispatch vers RecalculateAfterPVImport
+    // ══════════════════════════════════════════════════════════════
     protected static function booted(): void
     {
         static::created(function ($user) {
             try {
-                dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-                dispatch(new UpdateRanks($user->id))->onQueue('high');
-                Log::info('User created, jobs dispatched', ['user_id' => $user->id]);
+                RecalculateAfterPVImport::dispatch([$user->id], date('Y-m'))
+                    ->onQueue('rank-recalculation');
             } catch (\Exception $e) {
-                Log::error('Error in created event', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                Log::error('Error in User::created', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         });
 
         static::updated(function ($user) {
             try {
-                $fieldsToWatch = ['pv_balance', 'monthly_pv', 'parrain_id', 'is_active', 'rank_id', 'team_pv', 'bv_balance'];
+                $fieldsToWatch = [
+                    'pv_balance', 'monthly_pv', 'parrain_id', 'is_active',
+                    'rank_id', 'team_pv', 'bv_balance',
+                ];
+
                 $hasChange = false;
-                
                 foreach ($fieldsToWatch as $field) {
                     if ($user->wasChanged($field)) {
                         $hasChange = true;
                         break;
                     }
                 }
-                
+
                 if (!$hasChange) {
                     return;
                 }
-                
-                if ($user->wasChanged('pv_balance') || $user->wasChanged('bv_balance') || $user->wasChanged('monthly_pv')) {
-                    dispatch(new CalculatePVBV($user->id))->onQueue('high');
-                }
-                
-                if ($user->wasChanged('team_pv') || $user->wasChanged('pv_balance') || $user->wasChanged('bv_balance')) {
-                    dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-                    dispatch(new UpdateRanks($user->id))->onQueue('high');
-                    
-                    if ($user->parrain_id) {
-                        dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                        dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-                    }
-                }
-                
+
+                $userIds = [$user->id];
+
                 if ($user->wasChanged('parrain_id')) {
-                    if ($user->getOriginal('parrain_id')) {
-                        $oldParrain = User::find($user->getOriginal('parrain_id'));
-                        if ($oldParrain) {
-                            dispatch(new UpdateTeamPV($oldParrain->id, true))->onQueue('low');
-                            dispatch(new UpdateRanks($oldParrain->id))->onQueue('low');
-                        }
-                    }
-                    if ($user->parrain_id) {
-                        dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                        dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+                    $oldParrainId = $user->getOriginal('parrain_id');
+                    if ($oldParrainId) {
+                        $userIds[] = $oldParrainId;
                     }
                 }
-                
-                if ($user->wasChanged('is_active') && $user->parrain_id) {
-                    dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                    dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-                }
-                
+
+                RecalculateAfterPVImport::dispatch($userIds, date('Y-m'))
+                    ->onQueue('rank-recalculation');
+
             } catch (\Exception $e) {
-                Log::error('Error in updated event', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                Log::error('Error in User::updated', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         });
 
         static::deleted(function ($user) {
             try {
                 if ($user->parrain_id) {
-                    dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                    dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
+                    RecalculateAfterPVImport::dispatch([$user->parrain_id], date('Y-m'))
+                        ->onQueue('rank-recalculation');
                 }
+
                 Cache::forget("user_rank_{$user->id}");
                 Cache::forget("descendants_{$user->id}");
                 Cache::forget("descendants_count_{$user->id}");
+                Cache::forget("team_pv_{$user->id}");
             } catch (\Exception $e) {
-                Log::error('Error in deleted event', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                Log::error('Error in User::deleted', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         });
     }
 
-    // ============================================================
+    // ══════════════════════════════════════════════════════════════
     // RELATIONS
-    // ============================================================
+    // ══════════════════════════════════════════════════════════════
 
     public function rank()
+    {
+        return $this->belongsTo(Rank::class, 'rank_id');
+    }
+
+    public function rankObject()
     {
         return $this->belongsTo(Rank::class, 'rank_id');
     }
@@ -257,9 +259,19 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
-    // ============================================================
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function wishlistProducts()
+    {
+        return $this->belongsToMany(Product::class, 'wishlist')->withTimestamps();
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // SCOPES
-    // ============================================================
+    // ══════════════════════════════════════════════════════════════
 
     public function scopeMembers($query)
     {
@@ -296,9 +308,9 @@ class User extends Authenticatable
         return $query->where('is_active', true)->where('kyc_status', 'verified');
     }
 
-    // ============================================================
+    // ══════════════════════════════════════════════════════════════
     // ACCESSEURS
-    // ============================================================
+    // ══════════════════════════════════════════════════════════════
 
     public function getRankNameAttribute()
     {
@@ -320,15 +332,15 @@ class User extends Authenticatable
     public function getRankLevelAttribute()
     {
         if (isset($this->attributes['rank_level']) && $this->attributes['rank_level'] > 0) {
-            return $this->attributes['rank_level'];
+            return (int) $this->attributes['rank_level'];
         }
         if ($this->relationLoaded('rank') && $this->rank) {
-            return $this->rank->level ?? 1;
+            return (int) ($this->rank->level ?? 1);
         }
         if ($this->rank_id) {
             $rank = Rank::find($this->rank_id);
             if ($rank) {
-                return $rank->level ?? 1;
+                return (int) ($rank->level ?? 1);
             }
         }
         return 1;
@@ -377,194 +389,210 @@ class User extends Authenticatable
 
     public function getCumulPVAttribute()
     {
-        return ($this->pv_balance ?? 0) + ($this->team_pv ?? 0);
+        // ✅ team_pv inclut déjà pv_balance
+        return (float) ($this->team_pv ?? 0);
     }
 
-    // ============================================================
-    // METHODES PRINCIPALES
-    // ============================================================
+    public function getCachedRankAttribute()
+    {
+        return Cache::remember("user_rank_{$this->id}", 300, function () {
+            return $this->rankObject;
+        });
+    }
 
-    /**
-     * Met à jour le grade (synchrone)
-     */
+    // ══════════════════════════════════════════════════════════════
+    // MÉTHODES DE CALCUL — TOUTES VIA LES SERVICES UNIFIÉS
+    // ══════════════════════════════════════════════════════════════
+
+    public function updateTeamPVOptimized(): void
+    {
+        try {
+            $calculator = app(TeamPVCalculator::class);
+            $calculator->updateUser($this);
+
+            Log::debug('Team PV mis à jour via TeamPVCalculator', [
+                'user_id' => $this->id,
+                'team_pv' => $this->team_pv,
+                'total_team' => $this->total_team,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erreur updateTeamPVOptimized', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function updateTeamPVWithoutEvents(): void
+    {
+        $this->updateTeamPVOptimized();
+    }
+
+    public function updateTeamPV(): void
+    {
+        $this->updateTeamPVOptimized();
+
+        if ($this->parrain_id) {
+            $parrain = User::find($this->parrain_id);
+            if ($parrain) {
+                $parrain->updateTeamPVOptimized();
+            }
+        }
+    }
+
+    public function updateAllAncestorsTeamPV(): void
+    {
+        try {
+            $calculator = app(TeamPVCalculator::class);
+            $updated = $calculator->updateAncestors($this);
+
+            Log::debug('Team PV mis à jour pour tous les ancêtres', [
+                'user_id' => $this->id,
+                'ancestors_updated' => $updated,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erreur updateAllAncestorsTeamPV', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function updateAllAncestors(): void
+    {
+        $this->updateAllAncestorsTeamPV();
+    }
+
+    public function updateAllAncestorsWithoutEvents(): void
+    {
+        $this->updateAllAncestorsTeamPV();
+    }
+
+    public function recalculateAllAncestors(): void
+    {
+        $this->updateAllAncestorsTeamPV();
+    }
+
     public function updateRankSync(): bool
     {
         try {
             $calculator = app(AdvancedRankCalculator::class);
+            $oldRankId = $this->rank_id;
+            $oldRankName = $this->rank ?? 'Distributeur';
+            $oldRankLevel = $this->rank_level ?? 1;
+
             $newRank = $calculator->calculateAdvancedRank($this);
-            
+
             if (!$newRank) {
                 Log::warning('No rank found for user', ['user_id' => $this->id]);
                 return false;
             }
-            
-            if ($newRank->id != $this->rank_id) {
-                $oldRankId = $this->rank_id;
-                $oldRankName = $this->rank ?? 'Distributeur';
-                $oldRankLevel = $this->rank_level ?? 1;
-                
-                DB::beginTransaction();
-                
-                $this->rank_id = $newRank->id;
-                $this->rank = $newRank->name;
-                $this->rank_level = $newRank->level;
-                $this->last_rank_update = now();
-                $this->rank_update_queued = 0;
-                $this->saveQuietly();
-                $this->clearRankCache();
-                
-                RankHistory::create([
-                    'user_id' => $this->id,
-                    'old_rank_id' => $oldRankId,
-                    'new_rank_id' => $newRank->id,
-                    'old_rank_name' => $oldRankName,
-                    'old_rank_level' => $oldRankLevel,
-                    'new_rank_name' => $newRank->name,
-                    'new_rank_level' => $newRank->level,
-                    'pv_at_time' => $this->pv_balance ?? 0,
-                    'bv_at_time' => $this->bv_balance ?? 0,
-                    'notes' => 'Rank update from import/script',
-                ]);
-                
-                DB::commit();
-                
-                Log::info('Rank updated sync', [
-                    'user_id' => $this->id,
-                    'old_rank' => $oldRankName,
-                    'new_rank' => $newRank->name,
-                    'new_level' => $newRank->level,
-                ]);
-                
-                return true;
+
+            $needsUpdate = (
+                $newRank->id != $this->rank_id ||
+                $newRank->name != $this->rank ||
+                $newRank->level != $this->rank_level
+            );
+
+            if (!$needsUpdate) {
+                return false;
             }
-            return false;
+
+            DB::beginTransaction();
+
+            $this->rank_id = $newRank->id;
+            $this->rank = $newRank->name;
+            $this->rank_level = $newRank->level;
+            $this->last_rank_update = now();
+            $this->rank_update_queued = 0;
+            $this->saveQuietly();
+            $this->clearRankCache();
+
+            RankHistory::create([
+                'user_id' => $this->id,
+                'old_rank_id' => $oldRankId,
+                'new_rank_id' => $newRank->id,
+                'old_rank_name' => $oldRankName,
+                'old_rank_level' => $oldRankLevel,
+                'new_rank_name' => $newRank->name,
+                'new_rank_level' => $newRank->level,
+                'pv_at_time' => $this->pv_balance ?? 0,
+                'bv_at_time' => $this->bv_balance ?? 0,
+                'notes' => 'Rank update sync',
+            ]);
+
+            DB::commit();
+
+            Log::info('Rank updated sync', [
+                'user_id' => $this->id,
+                'old_rank' => $oldRankName,
+                'new_rank' => $newRank->name,
+            ]);
+
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating rank sync', ['user_id' => $this->id, 'error' => $e->getMessage()]);
+            Log::error('Error updating rank sync', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
 
-/**
- * Relation avec la wishlist
- */
-public function wishlist()
-{
-    return $this->hasMany(Wishlist::class);
-}
-
-/**
- * Relation directe avec les produits dans la wishlist
- */
-public function wishlistProducts()
-{
-    return $this->belongsToMany(Product::class, 'wishlist')->withTimestamps();
-}
-
-    /**
-     * RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS (RECURSIF)
-     */
-    public function updateTeamPVOptimized(): void
+    public function calculateAndUpdateRank(): bool
     {
         try {
-            $teamData = $this->calculateTeamPVRecursive();
-            
-            $this->team_pv = $teamData['pv'];
-            $this->team_bv = $teamData['bv'];
-            $this->total_team = $teamData['total'];
-            $this->saveQuietly();
-            
-            Cache::forget("descendants_{$this->id}");
-            Cache::forget("descendants_count_{$this->id}");
-            
-            Log::debug('Team PV mis a jour avec tous les descendants', [
-                'user_id' => $this->id,
-                'team_pv' => $teamData['pv'],
-                'total_team' => $teamData['total'],
-            ]);
-            
+            $calculator = app(AdvancedRankCalculator::class);
+            $oldRankId = $this->rank_id;
+
+            $calculator->recalculateUserRankLight($this, 'calculateAndUpdateRank');
+
+            return $this->rank_id != $oldRankId;
         } catch (\Exception $e) {
-            Log::error('Erreur updateTeamPVOptimized', [
+            Log::error('Erreur calculateAndUpdateRank', [
                 'user_id' => $this->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    public function updateRankAfterPVChange(string $reason = 'pv_updated'): void
+    {
+        try {
+            $calculator = app(AdvancedRankCalculator::class);
+            $calculator->recalculateUserRank($this, $reason);
+        } catch (\Exception $e) {
+            Log::error('Erreur updateRankAfterPVChange', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
-    /**
-     * CALCUL RECURSIF DU TEAM_PV AVEC TOUS LES DESCENDANTS
-     */
-    private function calculateTeamPVRecursive(): array
+    public function forceRankUpdate(): bool
     {
-        $totalPV = $this->pv_balance ?? 0;
-        $totalBV = $this->bv_balance ?? 0;
-        $totalCount = 0;
-
-        $filleuls = User::where('parrain_id', $this->id)
-            ->where('is_active', true)
-            ->get();
-
-        foreach ($filleuls as $filleul) {
-            $childData = $filleul->calculateTeamPVRecursive();
-            $totalPV += $childData['pv'];
-            $totalBV += $childData['bv'];
-            $totalCount += 1 + $childData['total'];
-        }
-
-        return [
-            'pv' => $totalPV,
-            'bv' => $totalBV,
-            'total' => $totalCount,
-        ];
+        $this->updateRankAfterPVChange('forced');
+        return true;
     }
 
-    /**
-     * Relation avec le grade (rank)
-     */
-    public function rankObject()
+    public function updateRankAsync(string $reason = 'bulk_import'): void
     {
-        return $this->belongsTo(Rank::class, 'rank_id');
+        RecalculateAfterPVImport::dispatch([$this->id], date('Y-m'))
+            ->onQueue('rank-recalculation');
     }
 
-    /**
-     * Récupérer les commissions par type
-     */
-    public function commissionsByType($type = null)
+    public function updateMonthlyPV(): void
     {
-        $query = $this->commissions();
-        if ($type) {
-            $query->where('type', $type);
-        }
-        return $query;
+        RecalculateAfterPVImport::dispatch([$this->id], date('Y-m'))
+            ->onQueue('rank-recalculation');
     }
 
-    
+    // ══════════════════════════════════════════════════════════════
+    // MÉTHODES MÉTIER
+    // ══════════════════════════════════════════════════════════════
 
-    /**
-     * MET A JOUR LE TEAM_PV DE TOUS LES ANCETRES
-     */
-    public function updateAllAncestorsTeamPV(): void
-    {
-        $ancestor = $this->parrain;
-        $level = 0;
-        $maxLevel = 10;
-        
-        while ($ancestor && $level < $maxLevel) {
-            $ancestor->updateTeamPVOptimized();
-            $ancestor->updateRankAfterPVChange('ancestor_update');
-            $ancestor = $ancestor->parrain;
-            $level++;
-        }
-        
-        Log::debug('Team PV mis à jour pour tous les ancêtres', [
-            'user_id' => $this->id,
-            'depth' => $level,
-        ]);
-    }
-
-    /**
-     * AJOUTER DES PV AVEC RECALCUL AUTOMATIQUE DE TOUS LES ANCETRES
-     */
     public function addPV(float $amount, string $source = 'pos_sale', ?int $sourceId = null): void
     {
         if ($amount <= 0 || $this->user_type === 'client') {
@@ -578,41 +606,23 @@ public function wishlistProducts()
             $this->bv_balance += $amount;
             $this->monthly_bv += $amount;
             $this->saveQuietly();
-
             DB::commit();
 
-            // Déclencher la mise à jour du grade de l'utilisateur
-            $this->updateRankAfterPVChange('add_pv');
-
-            // Mettre à jour TOUS les ancêtres
-            $this->updateAllAncestorsTeamPV();
-
-            Log::info('PV added with rank update', [
+            Log::info('PV added', [
                 'user_id' => $this->id,
                 'amount' => $amount,
                 'source' => $source,
-                'new_rank' => $this->rank,
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error adding PV', ['user_id' => $this->id, 'amount' => $amount, 'error' => $e->getMessage()]);
+            Log::error('Error adding PV', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
 
-    /**
-     * DECLENCHE LA MISE A JOUR DU GRADE
-     */
-    public function updateRankAfterPVChange(string $reason = 'pv_updated'): void
-    {
-        $service = app(RankUpdateService::class);
-        $service->triggerRankUpdate($this, $reason);
-    }
-
-    /**
-     * AJOUTER UNE COMMANDE COMPLETE AVEC RECALCUL DE TOUS LES ANCETRES
-     */
     public function addOrderWithRankUpdate(array $orderData, array $products): void
     {
         DB::beginTransaction();
@@ -670,75 +680,24 @@ public function wishlistProducts()
 
             DB::commit();
 
-            $this->updateRankAfterPVChange('order_import');
-
-            // Mettre à jour TOUS les ancêtres
-            $this->updateAllAncestorsTeamPV();
-
-            Log::info('Order imported with rank update', [
+            Log::info('Order imported', [
                 'user_id' => $this->id,
                 'order_id' => $order->id,
                 'total_pv' => $totalPV,
-                'new_rank' => $this->rank,
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error importing order', ['user_id' => $this->id, 'error' => $e->getMessage()]);
+            Log::error('Error importing order', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
 
-    /**
-     * AUTRES METHODES DE COMPATIBILITE
-     */
-    public function updateTeamPVWithoutEvents(): void
-    {
-        $this->updateTeamPVOptimized();
-    }
-
-    public function updateTeamPV(): void
-    {
-        $this->updateTeamPVOptimized();
-        if ($this->parrain_id) {
-            $parrain = User::find($this->parrain_id);
-            if ($parrain) {
-                $parrain->updateTeamPVOptimized();
-            }
-        }
-    }
-
-    public function updateAllAncestors(): void
-    {
-        $this->updateAllAncestorsTeamPV();
-    }
-
-    public function updateAllAncestorsWithoutEvents(): void
-    {
-        $this->updateAllAncestorsTeamPV();
-    }
-
-    public function recalculateAllAncestors(): void
-    {
-        $this->updateAllAncestorsTeamPV();
-    }
-
-    public function calculateAndUpdateRank(): bool
-    {
-        $this->updateRankAfterPVChange('manual');
-        return true;
-    }
-
-    public function forceRankUpdate(): bool
-    {
-        $this->updateRankAfterPVChange('forced');
-        return true;
-    }
-
-    public function updateMonthlyPV(): void
-    {
-        dispatch(new CalculatePVBV($this->id))->onQueue('high');
-    }
+    // ══════════════════════════════════════════════════════════════
+    // DESCENDANTS / CACHE
+    // ══════════════════════════════════════════════════════════════
 
     public function getAllDescendants(): \Illuminate\Support\Collection
     {
@@ -746,14 +705,26 @@ public function wishlistProducts()
         return Cache::remember($cacheKey, 3600, function () {
             $descendants = collect();
             $stack = collect([$this]);
+            $processed = [];
+
             while ($stack->isNotEmpty()) {
                 $current = $stack->pop();
-                $children = User::where('parrain_id', $current->id)->where('is_active', true)->get();
+
+                if (in_array($current->id, $processed)) {
+                    continue;
+                }
+                $processed[] = $current->id;
+
+                $children = User::where('parrain_id', $current->id)
+                    ->where('is_active', true)
+                    ->get();
+
                 foreach ($children as $child) {
                     $descendants->push($child);
                     $stack->push($child);
                 }
             }
+
             return $descendants;
         });
     }
@@ -763,43 +734,39 @@ public function wishlistProducts()
         if ($this->total_team > 0) {
             return $this->total_team;
         }
-        $cacheKey = "descendants_count_{$this->id}";
-        return Cache::remember($cacheKey, 3600, function () {
-            $count = 0;
-            $filleuls = $this->filleuls()->with(['filleuls'])->get();
-            foreach ($filleuls as $filleul) {
-                $count += 1 + ($filleul->total_team ?? 0);
-            }
-            return $count;
-        });
+        return $this->getAllDescendants()->count();
     }
 
     public function getTeamMonthlyPV(): float
     {
         try {
-            $total = 0;
-            $descendants = $this->getAllDescendants();
-            foreach ($descendants as $descendant) {
-                $total += $descendant->monthly_pv;
-            }
-            return $total;
+            return (float) $this->getAllDescendants()->sum('monthly_pv');
         } catch (\Exception $e) {
-            Log::error('Erreur getTeamMonthlyPV', ['user_id' => $this->id, 'error' => $e->getMessage()]);
+            Log::error('Erreur getTeamMonthlyPV', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
             return 0;
         }
     }
 
-    public function getCachedRankAttribute()
+    public function getDescendants()
     {
-        return Cache::remember("user_rank_{$this->id}", 300, function () {
-            return $this->rankObject;
-        });
+        return $this->getAllDescendants();
     }
 
     public function clearRankCache(): void
     {
         Cache::forget("user_rank_{$this->id}");
+        Cache::forget("rank_calculation_{$this->id}");
+        Cache::forget("descendants_{$this->id}");
+        Cache::forget("descendants_count_{$this->id}");
+        Cache::forget("team_pv_{$this->id}");
     }
+
+    // ══════════════════════════════════════════════════════════════
+    // AUTRES MÉTHODES
+    // ══════════════════════════════════════════════════════════════
 
     public function isQualifiedForPayment(): bool
     {
@@ -842,31 +809,36 @@ public function wishlistProducts()
 
     public function getQualifiedBranchesForPeriod(string $period)
     {
-        return QualifiedBranch::where('user_id', $this->id)->where('period', $period)->get();
+        return QualifiedBranch::where('user_id', $this->id)
+            ->where('period', $period)
+            ->get();
     }
 
     public function countQualifiedBranchesForPeriod(string $period, ?int $minLevel = null): int
     {
-        $query = QualifiedBranch::where('user_id', $this->id)->where('period', $period);
+        $query = QualifiedBranch::where('user_id', $this->id)
+            ->where('period', $period);
+
         if ($minLevel) {
             $query->where('branch_rank_level', '>=', $minLevel);
         }
+
         return $query->count();
     }
 
     public function getMonthlyRankForPeriod(string $period)
     {
-        return UserMonthlyRank::where('user_id', $this->id)->where('period', $period)->first();
+        return UserMonthlyRank::where('user_id', $this->id)
+            ->where('period', $period)
+            ->first();
     }
 
-    public function getDescendants()
+    public function commissionsByType($type = null)
     {
-        return $this->getAllDescendants();
-    }
-
-    public function updateRankAsync(string $reason = 'bulk_import'): void
-    {
-        $service = app(RankUpdateService::class);
-        $service->triggerRankUpdateAsync($this, $reason);
+        $query = $this->commissions();
+        if ($type) {
+            $query->where('type', $type);
+        }
+        return $query;
     }
 }

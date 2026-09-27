@@ -13,6 +13,8 @@ use App\Models\Commission;
 use App\Models\RankHistory;
 use App\Notifications\WelcomeNotification;
 use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\TeamPVCalculator;
+use App\Jobs\RecalculateAfterPVImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +32,6 @@ class UserController extends Controller
         $this->rankCalculator = $rankCalculator;
     }
 
-    /**
-     * Liste des utilisateurs avec filtres
-     */
     public function index(Request $request)
     {
         $query = User::with(['rank', 'package']);
@@ -97,9 +96,6 @@ class UserController extends Controller
         return view('admin.users.index', compact('users', 'stats', 'ranks', 'packages', 'kycStatuses'));
     }
 
-    /**
-     * Afficher les détails d'un utilisateur
-     */
     public function show($id)
     {
         $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
@@ -158,9 +154,6 @@ class UserController extends Controller
         ));
     }
 
-    /**
-     * Construire l'arbre généalogique
-     */
     private function buildTree($user, $level, $maxLevel)
     {
         if ($level > $maxLevel) {
@@ -178,9 +171,6 @@ class UserController extends Controller
         ];
     }
 
-    /**
-     * Formulaire de création
-     */
     public function create()
     {
         $ranks = Rank::orderBy('level')->get();
@@ -193,9 +183,6 @@ class UserController extends Controller
         return view('admin.users.create', compact('ranks', 'packages', 'users'));
     }
 
-    /**
-     * Créer un utilisateur
-     */
     public function store(Request $request)
     {
         $rules = [
@@ -264,10 +251,9 @@ class UserController extends Controller
 
                 DB::commit();
 
-                Log::info('Nouveau caissier créé (sans code de parrain)', [
+                Log::info('Nouveau caissier créé', [
                     'admin_id' => auth()->id(),
                     'cashier_id' => $user->id,
-                    'cashier_name' => $user->name,
                 ]);
 
                 return redirect()->route('admin.users')
@@ -341,7 +327,6 @@ class UserController extends Controller
 
                 if ($parrain) {
                     $parrain->increment('total_sponsors');
-                    $this->updateTeamCounters($parrain);
                 }
 
                 DB::commit();
@@ -370,9 +355,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Formulaire d'édition
-     */
     public function edit($id)
     {
         $user = User::with(['rank', 'package'])->findOrFail($id);
@@ -388,7 +370,11 @@ class UserController extends Controller
     }
 
     /**
-     * Mettre à jour un utilisateur - Version avec CTE pour les ancêtres
+     * Mettre à jour un utilisateur
+     *
+     * CORRECTION 1 : Ne plus écraser le grade si `rank_id` n'est pas fourni
+     * CORRECTION 2 : Ne plus recalculer le grade depuis le package
+     * CORRECTION 3 : Recalcul SYNCHRONE après changement de parrain
      */
     public function update(Request $request, $id)
     {
@@ -410,6 +396,10 @@ class UserController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        // Capturer l'ancien parrain AVANT la modification
+        $oldParrainId = $user->getOriginal('parrain_id');
+        $parrainChanged = false;
 
         DB::beginTransaction();
 
@@ -445,35 +435,30 @@ class UserController extends Controller
                 $data['direct_sponsors_count'] = 0;
             } else {
                 // ============================================================
-                // GESTION DU CHANGEMENT DE PARRAIN (VERSION CTE)
+                // GESTION DU CHANGEMENT DE PARRAIN
                 // ============================================================
                 if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
-                    $oldParrainId = $user->parrain_id;
+                    $parrainChanged = true;
                     $newParrainId = $request->parrain_id ? (int) $request->parrain_id : null;
 
-                    $oldParrain = $oldParrainId ? User::find($oldParrainId) : null;
-                    $newParrain = $newParrainId ? User::find($newParrainId) : null;
-
-                    // Recalculer l'ancien parrain et ses ancêtres
-                    if ($oldParrain) {
-                        $this->recalculateUserWithAncestors($oldParrain, 'Changement parrain - ancien');
-                        $oldParrain->decrement('total_sponsors');
-                    }
-
-                    // Recalculer le nouveau parrain et ses ancêtres
-                    if ($newParrain) {
-                        $this->recalculateUserWithAncestors($newParrain, 'Changement parrain - nouveau');
-                        $newParrain->increment('total_sponsors');
-                    }
-
-                    // Recalculer l'utilisateur lui-même
-                    $this->recalculateUserWithAncestors($user, 'Changement parrain - utilisateur');
-
-                    // Mettre à jour la généalogie
                     $data['parrain_id'] = $newParrainId;
+
+                    if ($oldParrainId) {
+                        $oldParrain = User::find($oldParrainId);
+                        if ($oldParrain) {
+                            $oldParrain->decrement('total_sponsors');
+                        }
+                    }
+                    if ($newParrainId) {
+                        $newParrain = User::find($newParrainId);
+                        if ($newParrain) {
+                            $newParrain->increment('total_sponsors');
+                        }
+                    }
 
                     $genealogy = Genealogy::where('user_id', $user->id)->first();
                     if ($genealogy) {
+                        $newParrain = $newParrainId ? User::find($newParrainId) : null;
                         $genealogy->sponsor_id = $newParrain?->id;
                         $genealogy->parent_id = $newParrain?->id;
                         $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
@@ -484,39 +469,32 @@ class UserController extends Controller
                         'user_id' => $user->id,
                         'user_name' => $user->name,
                         'old_parrain_id' => $oldParrainId,
-                        'old_parrain_name' => $oldParrain?->name,
                         'new_parrain_id' => $newParrainId,
-                        'new_parrain_name' => $newParrain?->name,
                         'admin_id' => auth()->id(),
                     ]);
                 }
 
-                // Package et grade
+                // PACKAGE — NE PLUS recalculer le grade
                 if ($request->has('package_id')) {
                     $data['package_id'] = $request->package_id;
-                    if ($request->package_id) {
-                        $package = Package::find($request->package_id);
-                        if ($package) {
-                            $rank = Rank::where('min_pv', '<=', $package->pv_value)
-                                ->orderBy('level', 'desc')
-                                ->first();
-                            if ($rank) {
-                                $data['rank_id'] = $rank->id;
-                                $data['rank'] = $rank->name;
-                                $data['rank_level'] = $rank->level;
-                            }
-                        }
-                    }
                 }
 
-                if ($request->has('rank_id')) {
-                    $data['rank_id'] = $request->rank_id;
-                    if ($request->rank_id) {
-                        $rank = Rank::find($request->rank_id);
-                        if ($rank) {
-                            $data['rank'] = $rank->name;
-                            $data['rank_level'] = $rank->level;
-                        }
+                // GRADE — Ne modifier QUE si explicitement fourni
+                $shouldUpdateRank = $request->filled('rank_id') && (int) $request->rank_id > 0;
+
+                if ($shouldUpdateRank) {
+                    $rank = Rank::find($request->rank_id);
+                    if ($rank) {
+                        $data['rank_id'] = $rank->id;
+                        $data['rank'] = $rank->name;
+                        $data['rank_level'] = $rank->level;
+
+                        Log::info('Grade modifié manuellement', [
+                            'user_id' => $user->id,
+                            'old_rank' => $user->rank,
+                            'new_rank' => $rank->name,
+                            'admin_id' => auth()->id(),
+                        ]);
                     }
                 }
 
@@ -527,7 +505,6 @@ class UserController extends Controller
 
             $user->update($data);
 
-            // Mettre à jour le rôle
             $newRole = $request->role;
             $currentRole = $user->roles->first()?->name ?? 'user';
             if ($currentRole !== $newRole) {
@@ -536,14 +513,19 @@ class UserController extends Controller
 
             DB::commit();
 
-            Log::info('User updated', [
-                'user_id' => $user->id,
-                'admin_id' => auth()->id(),
-                'new_role' => $newRole,
-            ]);
+            // Recalcul SYNCHRONE après changement de parrain
+            if ($parrainChanged) {
+                Log::info(' Recalcul synchrone après changement de parrain', [
+                    'user_id' => $user->id,
+                    'old_parrain_id' => $oldParrainId,
+                    'new_parrain_id' => $user->parrain_id,
+                ]);
+
+                $this->recalculateAfterParrainChange($user, $oldParrainId);
+            }
 
             return redirect()->route('admin.users.show', $user->id)
-                ->with('success', "Utilisateur {$user->name} mis à jour avec succès.");
+                ->with('success', "Utilisateur {$user->name} mis à jour avec succès." . ($parrainChanged ? " Team PV et grades recalculés immédiatement." : ""));
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -552,13 +534,69 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return back()->withInput()->with('error', '❌ Erreur: ' . $e->getMessage());
+            return back()->withInput()->with('error', ' Erreur: ' . $e->getMessage());
         }
     }
 
     /**
-     * Supprimer un utilisateur
+     * Recalcul synchrone après changement de parrain
      */
+    protected function recalculateAfterParrainChange(User $user, ?int $oldParrainId): void
+    {
+        $teamPVCalculator = app(TeamPVCalculator::class);
+        $rankCalculator = app(AdvancedRankCalculator::class);
+
+        $usersToRecalc = [$user->id];
+
+        if ($oldParrainId) {
+            $usersToRecalc[] = $oldParrainId;
+        }
+        if ($user->parrain_id) {
+            $usersToRecalc[] = $user->parrain_id;
+        }
+
+        $startTime = microtime(true);
+
+        foreach (array_unique($usersToRecalc) as $userId) {
+            $u = User::find($userId);
+            if (!$u) continue;
+
+            try {
+                // 1. Recalculer team_pv
+                $teamPVCalculator->updateUser($u);
+
+                // 2. Recalculer les ancêtres
+                $teamPVCalculator->updateAncestors($u);
+
+                // 3. Recalculer le grade
+                $u->refresh();
+                $rankCalculator->clearCache();
+                $rankCalculator->recalculateUserRank($u, "Changement de parrain");
+
+                // 4. Recalculer les grades des ancêtres
+                foreach ($teamPVCalculator->getAncestorIds($u) as $ancestorId) {
+                    $ancestor = User::find($ancestorId);
+                    if (!$ancestor) continue;
+                    $rankCalculator->clearCache();
+                    $rankCalculator->recalculateUserRank($ancestor, "Ancêtre - Changement parrain");
+                }
+
+            } catch (\Exception $e) {
+                Log::error('Erreur recalcul changement parrain', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $duration = round(microtime(true) - $startTime, 2);
+
+        Log::info(' Recalcul changement parrain terminé', [
+            'users_count' => count($usersToRecalc),
+            'duration_seconds' => $duration,
+        ]);
+    }
+
     public function destroy($id)
     {
         $user = User::findOrFail($id);
@@ -583,12 +621,19 @@ class UserController extends Controller
                 Storage::disk('public')->delete('avatars/' . $user->avatar);
             }
 
+            $affectedUserIds = [];
+
             if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain) {
                     $parrain->decrement('total_sponsors');
-                    $this->recalculateUserWithAncestors($parrain, 'Suppression filleul');
+                    $affectedUserIds[] = $parrain->id;
                 }
+            }
+
+            $filleuls = User::where('parrain_id', $user->id)->pluck('id')->toArray();
+            foreach ($filleuls as $filleulId) {
+                $affectedUserIds[] = $filleulId;
             }
 
             User::where('parrain_id', $user->id)->update(['parrain_id' => null]);
@@ -597,10 +642,16 @@ class UserController extends Controller
 
             DB::commit();
 
-            Log::info('User deleted', [
+            if (!empty($affectedUserIds)) {
+                RecalculateAfterPVImport::dispatch(
+                    array_unique($affectedUserIds),
+                    date('Y-m')
+                )->onQueue('rank-recalculation');
+            }
+
+            Log::info('User deleted + recalcul dispatché', [
                 'user_id' => $id,
-                'name' => $user->name,
-                'admin_id' => auth()->id(),
+                'affected_users' => count($affectedUserIds),
             ]);
 
             return redirect()->route('admin.users')
@@ -616,9 +667,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Activer/Désactiver un utilisateur
-     */
     public function toggleStatus($id)
     {
         $user = User::findOrFail($id);
@@ -639,19 +687,16 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users')
-            ->with('success', "Utilisateur {$status} avec succès.");
+            ->with('success', "Utilisateur {$status} avec succès. Recalcul en cours.");
     }
 
-    /**
-     * Réinitialiser le mot de passe
-     */
     public function resetPassword($id)
     {
         $user = User::findOrFail($id);
         $newPassword = Str::random(10);
 
         $user->password = Hash::make($newPassword);
-        $user->save();
+        $user->saveQuietly();
 
         Log::info('Password reset', [
             'user_id' => $user->id,
@@ -662,9 +707,6 @@ class UserController extends Controller
             ->with('success', "Mot de passe réinitialisé. Nouveau mot de passe: {$newPassword}");
     }
 
-    /**
-     * Assigner un package à un utilisateur
-     */
     public function assignPackage(Request $request, $id)
     {
         $request->validate([
@@ -679,26 +721,26 @@ class UserController extends Controller
         $user->bv_balance += $package->bv_value;
         $user->save();
 
-        $newRank = $this->rankCalculator->calculateAdvancedRank($user);
-        if ($newRank) {
-            $user->rank_id = $newRank->id;
-            $user->rank = $newRank->name;
-            $user->save();
-        }
+        // Recalcul SYNCHRONE immédiat
+        $teamPVCalculator = app(TeamPVCalculator::class);
+        $rankCalculator = app(AdvancedRankCalculator::class);
 
-        Log::info('Package assigned', [
+        $teamPVCalculator->updateUser($user);
+        $teamPVCalculator->updateAncestors($user);
+
+        $user->refresh();
+        $rankCalculator->clearCache();
+        $rankCalculator->recalculateUserRank($user, "Assignation package");
+
+        Log::info('Package assigned + recalcul synchrone', [
             'user_id' => $user->id,
             'package_id' => $package->id,
-            'admin_id' => auth()->id(),
         ]);
 
         return redirect()->route('admin.users.show', $id)
-            ->with('success', "Package {$package->name} assigné à {$user->name}.");
+            ->with('success', "Package {$package->name} assigné à {$user->name}. Grade recalculé.");
     }
 
-    /**
-     * Rechercher des utilisateurs (AJAX)
-     */
     public function search(Request $request)
     {
         $query = $request->get('q', '');
@@ -715,9 +757,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Exporter les utilisateurs en CSV
-     */
     public function export(Request $request)
     {
         $query = User::with(['rank', 'package']);
@@ -788,9 +827,6 @@ class UserController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Importer des utilisateurs depuis un CSV
-     */
     public function import(Request $request)
     {
         $request->validate([
@@ -865,7 +901,6 @@ class UserController extends Controller
         Log::info('User import', [
             'imported' => $imported,
             'errors' => count($errors),
-            'admin_id' => auth()->id(),
         ]);
 
         $message = "{$imported} users imported successfully.";
@@ -880,112 +915,6 @@ class UserController extends Controller
             ->with('success', $message);
     }
 
-    // ============================================================
-    // MÉTHODES PRIVÉES
-    // ============================================================
-
-    /**
-     * Recalculer le team_pv et le grade d'un utilisateur et de TOUS ses ancêtres
-     * Utilise la CTE récursive (MySQL 8.0+)
-     */
-    private function recalculateUserWithAncestors(User $user, string $reason = null): void
-    {
-        try {
-            // 1. Recalculer l'utilisateur lui-même
-            $this->rankCalculator->recalculateUserRank($user, $reason);
-
-            // 2. Récupérer TOUS les ancêtres avec CTE (sans limite)
-            $ancestorIds = DB::select("
-                WITH RECURSIVE ancestors AS (
-                    SELECT id, parrain_id, 1 as level
-                    FROM users 
-                    WHERE id = ?
-                    
-                    UNION ALL
-                    
-                    SELECT u.id, u.parrain_id, a.level + 1
-                    FROM users u
-                    INNER JOIN ancestors a ON u.id = a.parrain_id
-                    WHERE u.is_active = true
-                )
-                SELECT id, level FROM ancestors ORDER BY level DESC
-            ", [$user->id]);
-
-            if (empty($ancestorIds)) {
-                return;
-            }
-
-            $ids = array_column($ancestorIds, 'id');
-
-            // 3. Mettre à jour le team_pv pour TOUS les ancêtres en 1 requête
-            DB::statement("
-                UPDATE users u
-                SET team_pv = (
-                    SELECT COALESCE(SUM(pv_balance + monthly_pv + team_pv), 0)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                ),
-                team_bv = (
-                    SELECT COALESCE(SUM(bv_balance + monthly_bv + team_bv), 0)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                ),
-                total_team = (
-                    SELECT COUNT(*)
-                    FROM users
-                    WHERE parrain_id = u.id
-                    AND is_active = true
-                )
-                WHERE u.id IN (" . implode(',', $ids) . ")
-            ");
-
-            // 4. Recalculer les grades de tous les ancêtres
-            foreach ($ids as $id) {
-                $ancestor = User::find($id);
-                if ($ancestor) {
-                    $this->rankCalculator->recalculateUserRank($ancestor, $reason . ' - ancetre');
-                }
-            }
-
-            Log::info('Recalcul avec ancêtres (CTE)', [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'ancestors_updated' => count($ids),
-                'reason' => $reason,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur lors du recalcul avec ancêtres', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-    }
-
-    /**
-     * Mettre à jour les compteurs d'équipe (fallback si CTE non disponible)
-     */
-    private function updateTeamCounters(User $user): void
-    {
-        $currentUser = $user;
-        $level = 0;
-
-        while ($currentUser && $level < 10) {
-            $parrain = User::find($currentUser->parrain_id);
-            if (!$parrain) break;
-
-            $parrain->increment('total_team');
-            $currentUser = $parrain;
-            $level++;
-        }
-    }
-
-    /**
-     * Générer un code de parrainage unique au format 51XXXX (6 chiffres)
-     */
     private function generateSponsorCode(): string
     {
         $prefix = '51';

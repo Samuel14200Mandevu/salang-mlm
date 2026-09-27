@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Package;
 use App\Models\Product;
 use App\Models\Commission;
+use App\Models\CommissionHistory;
 use App\Models\CommissionPeriod;
 use App\Jobs\UpdateRanks;
 use Illuminate\Support\Facades\DB;
@@ -20,15 +21,15 @@ class CommissionDistributor
     private function getCommissionRate(int $level): float
     {
         $rates = [
-            1 => 0,   // Distributeur
-            2 => 0,   // Qualification
-            3 => 22,  // Cumul Directeur
-            4 => 26,  // Directeur
-            5 => 30,  // Manager Senior
-            6 => 34,  // Directeur Envolée
-            7 => 40,  // Saphire Manager
-            8 => 43,  // Diamant Bleu
-            9 => 45,  // Perle Diamant
+            1 => 0,
+            2 => 0,
+            3 => 22,
+            4 => 26,
+            5 => 30,
+            6 => 34,
+            7 => 40,
+            8 => 43,
+            9 => 45,
         ];
         return $rates[$level] ?? 0;
     }
@@ -50,6 +51,7 @@ class CommissionDistributor
 
     /**
      * Conditions de PV mensuel pour toucher les commissions
+     * ✅ ALIGNÉ avec AdminCommissionHistoryController
      */
     private function getMonthlyPVRequirements(): array
     {
@@ -68,17 +70,30 @@ class CommissionDistributor
 
     /**
      * Vérifier si un sponsor a déjà reçu le bonus pour ce filleul
+     * ✅ Vérifie dans les 2 tables : commissions ET commission_histories
      */
     private function hasReceivedSponsorBonus(User $sponsor, User $buyer): bool
     {
-        return Commission::where('user_id', $sponsor->id)
+        $existsInCommissions = Commission::where('user_id', $sponsor->id)
             ->where('from_user_id', $buyer->id)
             ->where('type', 'sponsor')
             ->exists();
+
+        if ($existsInCommissions) {
+            return true;
+        }
+
+        $existsInHistory = CommissionHistory::where('user_id', $sponsor->id)
+            ->where('from_user_id', $buyer->id)
+            ->where('type', 'sponsor')
+            ->exists();
+
+        return $existsInHistory;
     }
 
     /**
      * Vérifier les conditions de PV pour un utilisateur
+     * ✅ Utilise les valeurs fraîches du modèle (après refresh)
      */
     private function checkPVConditions(User $user, int $rankLevel): bool
     {
@@ -223,16 +238,20 @@ class CommissionDistributor
         if (!$order) {
             return 0;
         }
-        
+
         if (isset($order->metadata['commission_amount'])) {
             return (float) $order->metadata['commission_amount'];
         }
-        
+
         return 0;
     }
 
     /**
      * Distribuer les commissions pour un achat
+     *
+     * ✅ CORRECTION 1 : Ajout de refresh() après les increment()
+     * ✅ CORRECTION 2 : Bonus direct en mode "upsert" (1 seul par mois)
+     * ✅ CORRECTION 3 : cash_pos generation = 0
      */
     public function distributeCommissions(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
@@ -252,33 +271,37 @@ class CommissionDistributor
         $isPosSource = ($source === 'pos');
         $isMlmSource = ($source === 'mlm' || $source === 'web' || $source === 'online' || $source === 'membership');
 
-        // ============================================================
-        // 0. AJOUTER LE PV AU SPONSOR
-        // ============================================================
+        // ══════════════════════════════════════════════════════════
+        // 0. AJOUTER LE PV AU SPONSOR + BUYER
+        // ══════════════════════════════════════════════════════════
         if ($sponsor && $sponsor->is_active && $itemPV > 0) {
-            
+
             if ($isPosSource) {
                 $sponsor->increment('team_pv', $itemPV);
-                
+
                 if ($buyer->user_type === 'member') {
                     $buyer->increment('pv_balance', $itemPV);
                     $buyer->increment('monthly_pv', $itemPV);
                 }
             }
-            
+
             if ($isMlmSource && $buyer->user_type === 'member') {
                 $buyer->increment('pv_balance', $itemPV);
                 $buyer->increment('monthly_pv', $itemPV);
                 $sponsor->increment('team_pv', $itemPV);
             }
+
+            // ✅ CORRECTION : Rafraîchir les modèles après incrémentation
+            $buyer->refresh();
+            $sponsor->refresh();
         }
 
-        // ============================================================
+        // ══════════════════════════════════════════════════════════
         // 1. COMMISSION CASH POS
-        // ============================================================
+        // ══════════════════════════════════════════════════════════
         if ($isPosSource && $sponsor && $sponsor->is_active) {
             $commissionAmount = $this->getCommissionAmountFromOrder($orderId);
-            
+
             if ($commissionAmount > 0) {
                 $commission = Commission::create([
                     'user_id' => $sponsor->id,
@@ -292,25 +315,25 @@ class CommissionDistributor
                     'order_id' => $orderId,
                     'package_id' => $isPackage ? $this->getItemId($item) : null,
                     'product_id' => !$isPackage ? $this->getItemId($item) : null,
-                    'generation' => 1,
+                    'generation' => 0,  // ✅ CORRECTION : 0 au lieu de 1
                     'calculation_type' => 'automatic',
                     'status' => 'paid',
                     'paid_at' => now(),
                 ]);
-                
+
                 $commissions[] = $commission;
             }
         }
 
-        // ============================================================
+        // ══════════════════════════════════════════════════════════
         // 2. COMMISSIONS MLM - UNIQUEMENT POUR LES MEMBRES
-        // ============================================================
+        // ══════════════════════════════════════════════════════════
         if ($buyer->user_type === 'member' && $buyer->is_active && $sponsor && $isMlmSource) {
-            
-            // Sponsor Bonus
+
+            // Sponsor Bonus (une seule fois par filleul)
             if ($isPackage && $sponsor->is_active) {
                 $hasSponsorBonus = $this->hasReceivedSponsorBonus($sponsor, $buyer);
-                
+
                 if (!$hasSponsorBonus) {
                     $sponsorBonus = $this->calculateSponsorBonus($buyer, $itemData, $orderId, $period);
                     if ($sponsorBonus) {
@@ -318,17 +341,19 @@ class CommissionDistributor
                     }
                 }
             }
-            
-            // Bonus Direct, Indirect, Leadership (CORRIGÉS)
+
+            // Bonus Direct (upsert : 1 seul par mois)
             $directs = $this->calculateDirectBonuses($buyer, $itemData, $orderId, $period);
             $commissions = array_merge($commissions, $directs);
-            
+
+            // Bonus Indirect
             $indirects = $this->calculateIndirectBonusesCorrected($buyer, $itemData, $orderId, $period);
             $commissions = array_merge($commissions, $indirects);
-            
+
+            // Leadership
             $leaderships = $this->calculateLeadershipBonusesCorrected($buyer, $itemData, $orderId, $period);
             $commissions = array_merge($commissions, $leaderships);
-            
+
             $this->triggerRankUpdates($buyer);
         }
 
@@ -336,7 +361,7 @@ class CommissionDistributor
     }
 
     /**
-     * 1. SPONSOR BONUS (inchangé)
+     * 1. SPONSOR BONUS
      */
     private function calculateSponsorBonus(User $buyer, $item, $orderId, CommissionPeriod $period): ?Commission
     {
@@ -397,7 +422,10 @@ class CommissionDistributor
     }
 
     /**
-     * 2. BONUS DIRECT (inchangé)
+     * 2. BONUS DIRECT
+     *
+     * ✅ Upsert (1 seul bonus par mois pour le même user)
+     * ✅ Utilise $buyer->monthly_pv (frais, car refresh fait dans distributeCommissions)
      */
     private function calculateDirectBonuses(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
@@ -415,54 +443,86 @@ class CommissionDistributor
         }
 
         $buyerRate = $this->getCommissionRate($buyerLevel);
-        
+
         if ($buyerRate <= 0) {
             return $commissions;
         }
 
+        // ✅ Utilise la valeur fraîche (buyer a été refresh dans distributeCommissions)
         $buyerMonthlyPV = $buyer->monthly_pv ?? 0;
 
-        if ($buyerMonthlyPV > 0 && $buyerRate > 0) {
-            $amount = $buyerMonthlyPV * ($buyerRate / 100);
+        if ($buyerMonthlyPV <= 0) {
+            return $commissions;
+        }
 
-            if ($amount > 0) {
-                $itemName = $this->getItemName($item);
-                $itemType = $this->getItemType($item);
-                $itemId = $this->getItemId($item);
+        $amount = $buyerMonthlyPV * ($buyerRate / 100);
 
-                $commission = Commission::create([
-                    'user_id' => $buyer->id,
-                    'from_user_id' => $buyer->id,
-                    'commission_period_id' => $period->id,
-                    'period' => $period->period,
-                    'type' => 'direct',
-                    'amount' => $amount,
-                    'percentage' => $buyerRate,
-                    'description' => "Bonus Direct - {$buyerRate}% sur PV mensuel de {$buyerMonthlyPV} PV pour {$buyer->name}",
-                    'order_id' => $orderId,
-                    'package_id' => $itemType === 'package' ? $itemId : null,
-                    'product_id' => $itemType === 'product' ? $itemId : null,
-                    'generation' => 0,
-                    'calculation_type' => 'automatic',
-                    'status' => 'pending',
-                ]);
+        if ($amount <= 0) {
+            return $commissions;
+        }
 
-                $commissions[] = $commission;
-            }
+        // ✅ Upsert : chercher un bonus existant pour ce mois
+        $existingDirect = Commission::where('user_id', $buyer->id)
+            ->where('commission_period_id', $period->id)
+            ->where('type', 'direct')
+            ->where('generation', 0)
+            ->first();
+
+        $itemType = $this->getItemType($item);
+        $itemId = $this->getItemId($item);
+
+        if ($existingDirect) {
+            // Mettre à jour le bonus existant
+            $existingDirect->update([
+                'amount' => $amount,
+                'percentage' => $buyerRate,
+                'pv_used' => $buyerMonthlyPV,
+                'description' => "Bonus Direct Mensuel - {$buyerRate}% sur PV mensuel de {$buyerMonthlyPV} PV pour {$period->period}",
+                'package_id' => $itemType === 'package' ? $itemId : $existingDirect->package_id,
+                'product_id' => $itemType === 'product' ? $itemId : $existingDirect->product_id,
+            ]);
+
+            $commissions[] = $existingDirect;
+
+            Log::info('Bonus direct mis à jour', [
+                'user_id' => $buyer->id,
+                'amount' => $amount,
+                'pv_used' => $buyerMonthlyPV,
+            ]);
+        } else {
+            // Créer un nouveau bonus
+            $commission = Commission::create([
+                'user_id' => $buyer->id,
+                'from_user_id' => $buyer->id,
+                'commission_period_id' => $period->id,
+                'period' => $period->period,
+                'type' => 'direct',
+                'amount' => $amount,
+                'percentage' => $buyerRate,
+                'pv_used' => $buyerMonthlyPV,
+                'description' => "Bonus Direct Mensuel - {$buyerRate}% sur PV mensuel de {$buyerMonthlyPV} PV pour {$period->period}",
+                'order_id' => $orderId,
+                'package_id' => $itemType === 'package' ? $itemId : null,
+                'product_id' => $itemType === 'product' ? $itemId : null,
+                'generation' => 0,
+                'calculation_type' => 'automatic',
+                'status' => 'pending',
+            ]);
+
+            $commissions[] = $commission;
+
+            Log::info('Bonus direct créé', [
+                'user_id' => $buyer->id,
+                'amount' => $amount,
+                'pv_used' => $buyerMonthlyPV,
+            ]);
         }
 
         return $commissions;
     }
 
     /**
-     * 3. BONUS INDIRECT - CORRIGÉ
-     * 
-     * RÈGLES :
-     * - Générations 1 à 7
-     * - Le bénéficiaire doit avoir un grade >= 3
-     * - Le descendant doit avoir un grade >= 3 (sinon pas de commission)
-     * - Le bénéficiaire doit avoir un grade supérieur au descendant
-     * - Si un descendant a un grade >= bénéficiaire, toute sa branche est exclue
+     * 3. BONUS INDIRECT
      */
     private function calculateIndirectBonusesCorrected(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
@@ -474,17 +534,14 @@ class CommissionDistributor
 
         $pvAmount = $this->getItemPV($item);
 
-        // Le bénéficiaire doit avoir un grade >= 3
         if ($pvAmount <= 0 || $buyerLevel < 3) {
             return $commissions;
         }
 
-        // Vérifier les conditions de PV du bénéficiaire
         if (!$this->checkPVConditions($buyer, $buyerLevel)) {
             return $commissions;
         }
 
-        // Récupérer les descendants avec exclusion des branches
         $descendantsData = $this->getDescendantsWithExclusion($buyer, 7);
 
         foreach ($descendantsData as $data) {
@@ -492,13 +549,7 @@ class CommissionDistributor
             $descendant = $data['descendant'];
             $isExcluded = $data['is_excluded'];
 
-            // Si la branche est exclue, passer
             if ($isExcluded) {
-                Log::info('Branche exclue pour indirect', [
-                    'descendant_id' => $descendant->id,
-                    'descendant_name' => $descendant->name,
-                    'generation' => $generation,
-                ]);
                 continue;
             }
 
@@ -506,20 +557,10 @@ class CommissionDistributor
             $descendantLevel = $descendantRank ? $descendantRank->level : 1;
             $descendantRate = $this->getCommissionRate($descendantLevel);
 
-            // ============================================================
-            // NOUVELLE RÈGLE : Le descendant doit avoir un grade >= 3
-            // Sinon, il ne génère pas de commission indirecte
-            // ============================================================
             if ($descendantLevel < 3) {
-                Log::info('Descendant ignoré pour indirect - grade < 3', [
-                    'descendant_id' => $descendant->id,
-                    'descendant_name' => $descendant->name,
-                    'descendant_level' => $descendantLevel,
-                ]);
                 continue;
             }
 
-            // Le bénéficiaire doit avoir un grade supérieur au descendant
             if ($buyerLevel > $descendantLevel) {
                 $rateDifference = max(0, $buyerRate - $descendantRate);
 
@@ -527,7 +568,6 @@ class CommissionDistributor
                     $amount = $pvAmount * ($rateDifference / 100);
 
                     if ($amount > 0) {
-                        $itemName = $this->getItemName($item);
                         $itemType = $this->getItemType($item);
                         $itemId = $this->getItemId($item);
 
@@ -549,18 +589,6 @@ class CommissionDistributor
                         ]);
 
                         $commissions[] = $commission;
-
-                        Log::info('Bonus indirect créé', [
-                            'buyer_id' => $buyer->id,
-                            'buyer_name' => $buyer->name,
-                            'buyer_level' => $buyerLevel,
-                            'descendant_id' => $descendant->id,
-                            'descendant_name' => $descendant->name,
-                            'descendant_level' => $descendantLevel,
-                            'generation' => $generation,
-                            'rate_difference' => $rateDifference,
-                            'amount' => $amount,
-                        ]);
                     }
                 }
             }
@@ -570,13 +598,7 @@ class CommissionDistributor
     }
 
     /**
-     * 4. LEADERSHIP BONUS - CORRIGÉ
-     * 
-     * RÈGLES :
-     * - Générations 1 à 7
-     * - Le bénéficiaire doit avoir un grade >= 5
-     * - S'applique à tous les descendants (pas de condition de grade)
-     * - Pas d'exclusion de branche
+     * 4. LEADERSHIP BONUS
      */
     private function calculateLeadershipBonusesCorrected(User $buyer, $item, $orderId, CommissionPeriod $period): array
     {
@@ -591,7 +613,6 @@ class CommissionDistributor
             return $commissions;
         }
 
-        // Vérifier les conditions de PV du bénéficiaire
         if (!$this->checkPVConditions($buyer, $buyerLevel)) {
             return $commissions;
         }
@@ -601,7 +622,6 @@ class CommissionDistributor
             return $commissions;
         }
 
-        // Récupérer tous les descendants (sans exclusion pour le leadership)
         $descendantsData = $this->getAllDescendants($buyer, 7);
 
         foreach ($descendantsData as $data) {
@@ -611,7 +631,6 @@ class CommissionDistributor
             $amount = $pvAmount * ($leadershipRate / 100);
 
             if ($amount > 0) {
-                $itemName = $this->getItemName($item);
                 $itemType = $this->getItemType($item);
                 $itemId = $this->getItemId($item);
 
@@ -633,17 +652,6 @@ class CommissionDistributor
                 ]);
 
                 $commissions[] = $commission;
-
-                Log::info('Leadership bonus créé', [
-                    'buyer_id' => $buyer->id,
-                    'buyer_name' => $buyer->name,
-                    'buyer_level' => $buyerLevel,
-                    'descendant_id' => $descendant->id,
-                    'descendant_name' => $descendant->name,
-                    'generation' => $generation,
-                    'rate' => $leadershipRate,
-                    'amount' => $amount,
-                ]);
             }
         }
 
@@ -652,8 +660,6 @@ class CommissionDistributor
 
     /**
      * Récupérer les descendants avec exclusion des branches
-     * 
-     * RÈGLE : Si un descendant a un grade >= bénéficiaire, toute sa branche est exclue
      */
     private function getDescendantsWithExclusion(User $user, int $maxGenerations = 7): array
     {
@@ -683,7 +689,6 @@ class CommissionDistributor
                     continue;
                 }
 
-                // Trouver le parent
                 $parent = null;
                 foreach ($currentLevel as $p) {
                     if ($p['id'] == $child->parrain_id) {
@@ -699,7 +704,6 @@ class CommissionDistributor
                 $childRank = $child->rankObject;
                 $childLevel = $childRank ? $childRank->level : 1;
 
-                // RÈGLE D'EXCLUSION : Si le descendant a un grade >= bénéficiaire
                 $isExcluded = $parent['is_excluded'];
 
                 if (!$isExcluded && $childLevel >= $userLevel) {

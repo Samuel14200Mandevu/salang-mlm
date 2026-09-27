@@ -25,32 +25,20 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
 }
 
-* {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-body {
-    background: var(--bg-page);
-    color: var(--text-primary);
-}
+* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+body { background: var(--bg-page); color: var(--text-primary); }
 
 .page-header {
     padding: 2rem 0 1.5rem 0;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
 }
-
-.page-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-
-.page-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-top: 0.25rem;
-}
+.page-title { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; color: var(--text-primary); margin: 0; }
+.page-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem; }
 
 .card {
     background: var(--bg-card);
@@ -70,22 +58,9 @@ body {
     margin-bottom: 1rem;
 }
 
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-label {
-    display: block;
-    font-size: 0.813rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0.375rem;
-}
-
-.form-label .required {
-    color: var(--danger);
-    margin-left: 0.125rem;
-}
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; font-size: 0.813rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.375rem; }
+.form-label .required { color: var(--danger); margin-left: 0.125rem; }
 
 .form-control {
     width: 100%;
@@ -97,36 +72,12 @@ body {
     font-size: 0.875rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+.form-control:focus { border-color: var(--text-primary); outline: none; box-shadow: 0 0 0 3px var(--border-focus); }
+.form-control[readonly] { background: var(--bg-hover); cursor: default; }
+.form-help { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-muted); }
 
-.form-control:focus {
-    border-color: var(--text-primary);
-    outline: none;
-    box-shadow: 0 0 0 3px var(--border-focus);
-}
-
-.form-control[readonly] {
-    background: var(--bg-hover);
-    cursor: default;
-}
-
-.form-help {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
 
 .btn {
     display: inline-flex;
@@ -142,61 +93,16 @@ body {
     border: 1px solid transparent;
     text-decoration: none;
 }
-
-.btn-primary {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-.btn-primary:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-}
-
-.btn-success {
-    background: var(--success);
-    color: white;
-    border-color: var(--success);
-}
-
-.btn-success:hover {
-    background: var(--success-hover);
-    border-color: var(--success-hover);
-}
-
-.btn-secondary {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-.btn-secondary:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-color);
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-.btn-outline:hover {
-    background: var(--bg-hover);
-}
-
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.btn .icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-success { background: var(--success); color: white; border-color: var(--success); }
+.btn-success:hover { background: var(--success-hover); border-color: var(--success-hover); }
+.btn-secondary { background: transparent; color: var(--text-primary); border-color: var(--border-color); }
+.btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-color); }
+.btn-outline { background: transparent; color: var(--text-primary); border-color: var(--border-color); }
+.btn-outline:hover { background: var(--bg-hover); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+.btn .icon { width: 16px; height: 16px; flex-shrink: 0; }
 
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -238,29 +144,14 @@ body {
     border-radius: var(--radius);
     font-size: 0.875rem;
     border: 1px solid transparent;
+    white-space: pre-line;
+    margin-bottom: 1rem;
 }
-
-.alert-success {
-    background: #ECFDF3;
-    border-color: #A6F4C5;
-    color: #067647;
-}
-
-.alert-error {
-    background: #FEF3F2;
-    border-color: #FECDCA;
-    color: #B42318;
-}
-
-.alert .link {
-    color: var(--text-primary);
-    text-decoration: underline;
-    font-weight: 500;
-}
-
-.alert .link:hover {
-    text-decoration: none;
-}
+.alert-success { background: #ECFDF3; border-color: #A6F4C5; color: #067647; }
+.alert-error { background: #FEF3F2; border-color: #FECDCA; color: #B42318; }
+.alert-info { background: #EFF8FF; border-color: #B2DDFF; color: #175CD3; }
+.alert .link { color: var(--text-primary); text-decoration: underline; font-weight: 500; }
+.alert .link:hover { text-decoration: none; }
 
 /* User card */
 .user-card {
@@ -272,7 +163,6 @@ body {
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
 }
-
 .user-avatar {
     width: 48px;
     height: 48px;
@@ -286,29 +176,15 @@ body {
     font-size: 1rem;
     flex-shrink: 0;
 }
-
-.user-info .name {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--text-primary);
-}
-
-.user-info .meta {
-    font-size: 0.813rem;
-    color: var(--text-secondary);
-}
-
-.user-info .meta .sponsor {
-    color: var(--text-primary);
-}
-
+.user-info .name { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+.user-info .meta { font-size: 0.813rem; color: var(--text-secondary); }
+.user-info .meta .sponsor { color: var(--text-primary); }
 .user-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.75rem;
     margin-top: 0.75rem;
 }
-
 .stat-item {
     background: var(--bg-card);
     padding: 0.625rem 0.75rem;
@@ -316,13 +192,7 @@ body {
     border: 1px solid var(--border-color);
     text-align: center;
 }
-
-.stat-item .value {
-    font-weight: 600;
-    font-size: 1.125rem;
-    color: var(--text-primary);
-}
-
+.stat-item .value { font-weight: 600; font-size: 1.125rem; color: var(--text-primary); }
 .stat-item .label {
     font-size: 0.625rem;
     text-transform: uppercase;
@@ -331,9 +201,7 @@ body {
     margin-top: 0.125rem;
 }
 
-.spacer {
-    height: 1.5rem;
-}
+.spacer { height: 1.5rem; }
 
 /* Toast */
 .toast-container {
@@ -347,7 +215,6 @@ body {
     max-width: 380px;
     width: 100%;
 }
-
 .toast {
     padding: 0.75rem 1rem;
     border-radius: var(--radius);
@@ -361,7 +228,6 @@ body {
     align-items: center;
     gap: 0.625rem;
 }
-
 .toast-success { background: var(--success); }
 .toast-error { background: var(--danger); }
 .toast-warning { background: #B54708; }
@@ -370,7 +236,6 @@ body {
     from { opacity: 0; transform: translateX(20px); }
     to { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes slideOut {
     from { opacity: 1; transform: translateX(0); }
     to { opacity: 0; transform: translateX(20px); }
@@ -389,11 +254,7 @@ body {
     align-items: center;
     justify-content: center;
 }
-
-.confirm-overlay.active {
-    display: flex;
-}
-
+.confirm-overlay.active { display: flex; }
 .confirm-box {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
@@ -403,22 +264,8 @@ body {
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-md);
 }
-
-.confirm-box h3 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
-.confirm-box p {
-    color: var(--text-secondary);
-    font-size: 0.938rem;
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
+.confirm-box h3 { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); text-align: center; margin-bottom: 0.5rem; }
+.confirm-box p { color: var(--text-secondary); font-size: 0.938rem; text-align: center; margin-bottom: 0.5rem; }
 .confirm-box .warning {
     margin: 1rem 0 1.5rem 0;
     padding: 0.625rem 0.875rem;
@@ -428,16 +275,8 @@ body {
     font-size: 0.813rem;
     color: var(--danger);
 }
-
-.confirm-box .actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-}
-
-.confirm-box .actions .btn {
-    min-width: 100px;
-}
+.confirm-box .actions { display: flex; gap: 0.75rem; justify-content: center; }
+.confirm-box .actions .btn { min-width: 100px; }
 
 /* Footer */
 .footer-links {
@@ -449,135 +288,248 @@ body {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
-
-.footer-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-}
-
-.footer-links a:hover {
-    color: var(--text-primary);
-    text-decoration: underline;
-}
+.footer-links a { color: var(--text-secondary); text-decoration: none; }
+.footer-links a:hover { color: var(--text-primary); text-decoration: underline; }
 
 /* Responsive */
 @media (max-width: 640px) {
-    .grid-2, .grid-3 {
-        grid-template-columns: 1fr;
-    }
-    .user-stats {
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 0.5rem;
-    }
-    .user-card {
-        flex-direction: column;
-        text-align: center;
-    }
-    .user-info .meta {
-        font-size: 0.75rem;
-    }
-    .btn {
-        width: 100%;
-    }
-    .actions {
-        flex-direction: column;
-    }
-    .confirm-box .actions .btn {
-        min-width: auto;
-    }
-    .card {
-        padding: 1rem;
-    }
-    .page-title {
-        font-size: 1.25rem;
-    }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .user-stats { grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+    .user-card { flex-direction: column; text-align: center; }
+    .user-info .meta { font-size: 0.75rem; }
+    .btn { width: 100%; }
+    .actions { flex-direction: column; }
+    .confirm-box .actions .btn { min-width: auto; }
+    .card { padding: 1rem; }
+    .page-title { font-size: 1.25rem; }
+    .page-header { flex-direction: column; align-items: stretch; }
 }
 </style>
 @endpush
 
 @section('content')
+
+{{-- ============================================================ --}}
+{{-- DÉTECTION DE LA PROVENANCE POUR LE BOUTON RETOUR             --}}
+{{-- ============================================================ --}}
+@php
+    // ✅ Détecte si un user est pré-sélectionné
+    $hasPreselectedUser = !is_null($user ?? null);
+
+    // ✅ NOUVEAU : Si un user est pré-sélectionné, retour par défaut vers la page PV de ce user
+    if ($hasPreselectedUser) {
+        $backUrl = route('admin.pv.show', $user->id);
+        $backLabel = 'Retour aux PV';
+    } else {
+        $backUrl = route('admin.users');
+        $backLabel = 'Retour aux utilisateurs';
+    }
+
+    // ✅ Détection de la provenance via referer
+    $referer = request()->headers->get('referer');
+
+    if ($referer) {
+        if (preg_match('#/admin/users/(\d+)/edit#', $referer, $m)) {
+            $backUrl = url('/admin/users/' . $m[1] . '/edit');
+            $backLabel = 'Retour à l\'édition';
+        } elseif (preg_match('#/admin/users/(\d+)$#', $referer, $m)) {
+            $backUrl = url('/admin/users/' . $m[1]);
+            $backLabel = 'Retour au profil';
+        } elseif (preg_match('#/admin/pv/commission-history#', $referer) && $hasPreselectedUser) {
+            $backUrl = url('/admin/pv/commission-history?user_id=' . $user->id);
+            $backLabel = 'Retour aux commissions';
+        } elseif (preg_match('#/admin/pv/(\d+)$#', $referer, $m)) {
+            $backUrl = url('/admin/pv/' . $m[1]);
+            $backLabel = 'Retour aux PV';
+        } elseif (strpos($referer, '/admin/users') !== false) {
+            $backUrl = route('admin.users');
+            $backLabel = 'Retour aux utilisateurs';
+        }
+    }
+@endphp
+
 <div class="page-header">
-    <h1 class="page-title">Import des PV mensuels</h1>
-    <p class="page-subtitle">Ajoutez des PV à un membre via fichier CSV ou saisie manuelle</p>
+    <div>
+        <h1 class="page-title">
+            @if($hasPreselectedUser)
+                Ajout de PV pour {{ $user->name }}
+            @else
+                Import des PV mensuels
+            @endif
+        </h1>
+        <p class="page-subtitle">
+            @if($hasPreselectedUser)
+                Ajoutez manuellement des PV à ce membre
+            @else
+                Ajoutez des PV à un membre via fichier CSV ou saisie manuelle
+            @endif
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{{ $backUrl }}" class="btn btn-outline">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            {{ $backLabel }}
+        </a>
+    </div>
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
 
 @if(session('success'))
-    <div class="alert alert-success">
-        {!! nl2br(e(session('success'))) !!}
+    <div class="alert alert-success">{!! nl2br(e(session('success'))) !!}
         @if(session('user_id'))
-            <br>
-            <a href="{{ route('admin.pv.show', session('user_id')) }}" class="link">Voir l'historique</a>
+            <br><a href="{{ route('admin.pv.show', session('user_id')) }}" class="link">Voir l'historique</a>
         @endif
     </div>
+@endif
+
+@if(session('info'))
+    <div class="alert alert-info">{!! nl2br(e(session('info'))) !!}</div>
 @endif
 
 @if(session('error'))
-    <div class="alert alert-error">
-        {{ session('error') }}
-    </div>
+    <div class="alert alert-error">{{ session('error') }}</div>
 @endif
 
-<!-- Résultat -->
-<div id="userResult" class="{{ $user ? '' : 'hidden' }}">
-    <div id="userInfo">
-        @if($user)
-        <div class="card">
-            <div class="user-card">
-                <div class="user-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                <div class="user-info flex-1">
-                    <div class="name">{{ $user->name }}</div>
-                    <div class="meta">
-                        Code: <span class="sponsor">{{ $user->sponsor_id ?? 'N/A' }}</span>
-                        @if($user->rank)
-                            · Grade: {{ $user->rank }}
-                        @endif
-                    </div>
-                    @if($user->parrain)
-                        <div class="meta">Parrain: {{ $user->parrain->name }} ({{ $user->parrain->sponsor_id }})</div>
-                    @endif
-                </div>
+{{-- ============================================================ --}}
+{{-- SECTION 1 : IMPORT HISTORIQUE (affiché uniquement si PAS de user présélectionné) --}}
+{{-- ============================================================ --}}
+@if(!$hasPreselectedUser)
+
+<div class="card">
+    <div class="card-title">Import historique (Excel/CSV)</div>
+    <p class="text-sm text-secondary mb-4">
+        Importez un fichier contenant les colonnes <strong>ID</strong> (sponsor_id), <strong>NOMS</strong>, <strong>RANK</strong>, <strong>PV</strong>.
+        Les PV seront ajoutés à l'historique et aux soldes des membres concernés.
+    </p>
+
+    <form id="historicalForm" method="POST" action="{{ route('admin.pv.import.historical') }}" enctype="multipart/form-data">
+        @csrf
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label">Fichier Excel/CSV <span class="required">*</span></label>
+                <input type="file" name="excel_file" id="excel_file" class="form-control" accept=".csv,.txt,.xlsx,.xls" required>
+                <span class="form-help">Formats : .xlsx, .xls, .csv (max 20 Mo)</span>
             </div>
-            
-            <div class="user-stats">
-                <div class="stat-item">
-                    <div class="value">{{ number_format($user->pv_balance ?? 0, 1, ',', ' ') }}</div>
-                    <div class="label">PV Total</div>
-                </div>
-                <div class="stat-item">
-                    <div class="value">{{ number_format($user->monthly_pv ?? 0, 1, ',', ' ') }}</div>
-                    <div class="label">PV Mensuel</div>
-                </div>
-                <div class="stat-item">
-                    <div class="value">{{ number_format($user->team_pv ?? 0, 1, ',', ' ') }}</div>
-                    <div class="label">PV Équipe</div>
-                </div>
+
+            <div class="form-group">
+                <label class="form-label">Période <span class="required">*</span></label>
+                <input type="month" name="period" id="hist_period" class="form-control" value="{{ date('Y-m') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Lignes à sauter</label>
+                <input type="number" name="skip_first_rows" id="skip_rows" class="form-control" value="2" min="0" max="10">
+                <span class="form-help">Nombre de lignes d'en-tête à ignorer</span>
             </div>
         </div>
-        @endif
+
+        <div class="flex gap-4 mt-2 items-center">
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="update_rank" value="1" id="update_rank">
+                Mettre à jour le grade depuis le fichier
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="dry_run" value="1" id="dry_run">
+                <strong>Simulation</strong> (aucune modification)
+            </label>
+        </div>
+
+        <div class="flex gap-3 mt-4">
+            <button type="submit" class="btn btn-primary" id="histSubmitBtn">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Importer
+            </button>
+            <button type="reset" class="btn btn-secondary">Réinitialiser</button>
+        </div>
+    </form>
+</div>
+
+<hr style="border:0;border-top:1px solid var(--border-color);margin:2rem 0;">
+
+{{-- ============================================================ --}}
+{{-- SECTION 2 : RECHERCHE UTILISATEUR (affichée uniquement si PAS de user présélectionné) --}}
+{{-- ============================================================ --}}
+<div class="card">
+    <div class="card-title">Ajout manuel - Rechercher un membre</div>
+    <div class="flex gap-3">
+        <input type="text" id="searchUser" class="form-control flex-1" placeholder="Nom, email ou code sponsor (min. 2 caractères)" autocomplete="off">
+        <button type="button" onclick="searchUser()" class="btn btn-primary">Rechercher</button>
     </div>
 </div>
 
-<!-- Formulaire -->
-<div id="pvFormSection" class="{{ $user ? '' : 'hidden' }}">
+{{-- Résultat de recherche (affiché uniquement si PAS de user présélectionné) --}}
+<div id="userResult" class="hidden">
+    <div id="userInfo"></div>
+</div>
+
+@endif
+
+{{-- ============================================================ --}}
+{{-- SECTION 3 : USER PRÉ-SÉLECTIONNÉ (affiché si user présélectionné) --}}
+{{-- ============================================================ --}}
+@if($hasPreselectedUser)
+
+<div class="card">
+    <div class="user-card">
+        <div class="user-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+        <div class="user-info flex-1">
+            <div class="name">{{ $user->name }}</div>
+            <div class="meta">
+                Code: <span class="sponsor">{{ $user->sponsor_id ?? 'N/A' }}</span>
+                @if($user->rank)
+                    · Grade: {{ $user->rank }}
+                @endif
+            </div>
+            @if($user->parrain)
+                <div class="meta">Parrain: {{ $user->parrain->name }} ({{ $user->parrain->sponsor_id }})</div>
+            @endif
+        </div>
+    </div>
+
+    <div class="user-stats">
+        <div class="stat-item">
+            <div class="value">{{ number_format($user->pv_balance ?? 0, 1, ',', ' ') }}</div>
+            <div class="label">PV Total</div>
+        </div>
+        <div class="stat-item">
+            <div class="value">{{ number_format($user->monthly_pv ?? 0, 1, ',', ' ') }}</div>
+            <div class="label">PV Mensuel</div>
+        </div>
+        <div class="stat-item">
+            <div class="value">{{ number_format($user->team_pv ?? 0, 1, ',', ' ') }}</div>
+            <div class="label">PV Équipe</div>
+        </div>
+    </div>
+</div>
+
+@endif
+
+{{-- ============================================================ --}}
+{{-- SECTION 4 : FORMULAIRE D'AJOUT MANUEL                       --}}
+{{-- ============================================================ --}}
+<div id="pvFormSection" class="{{ $hasPreselectedUser ? '' : 'hidden' }}">
     <div class="card">
-        <div class="card-title">Ajouter des PV</div>
-        <form id="addMonthlyForm" method="POST" action="{{ $user ? route('admin.pv.add-monthly', $user->id) : '' }}">
+        <div class="card-title">Ajouter des PV manuellement</div>
+        <form id="addMonthlyForm" method="POST" action="{{ $hasPreselectedUser ? route('admin.pv.add-monthly', $user->id) : '' }}">
             @csrf
-            
+
             <div class="grid-3">
                 <div class="form-group">
                     <label class="form-label">Période <span class="required">*</span></label>
                     <input type="month" name="period" id="monthly_period" class="form-control" value="{{ date('Y-m') }}" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Montant PV <span class="required">*</span></label>
                     <input type="number" name="amount" id="monthly_amount" class="form-control" step="0.1" min="0.1" required>
                     <span class="form-help">Valeur en PV, minimum 0.1</span>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Type de PV <span class="required">*</span></label>
                     <select name="type" id="monthly_type" class="form-control">
@@ -588,7 +540,7 @@ body {
                     <span class="form-help">Les PV personnel et mensuel remontent aux parrains</span>
                 </div>
             </div>
-            
+
             <div class="flex gap-3 mt-4">
                 <button type="submit" class="btn btn-success" id="submitBtn">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -626,7 +578,7 @@ function showToast(message, type) {
     toast.className = 'toast toast-' + type;
     toast.textContent = message;
     container.appendChild(toast);
-    
+
     setTimeout(function() {
         toast.style.animation = 'slideOut 0.3s ease forwards';
         setTimeout(function() { toast.remove(); }, 400);
@@ -671,30 +623,31 @@ document.addEventListener('keydown', function(e) {
 
 // ========== Search ==========
 var selectedUserId = {{ $user->id ?? 'null' }};
+var hasPreselectedUser = {{ $hasPreselectedUser ? 'true' : 'false' }};
 
 document.addEventListener('DOMContentLoaded', function() {
-    @if($user)
-        document.getElementById('addMonthlyForm').action = '/admin/pv/' + {{ $user->id }} + '/add-monthly';
-        document.getElementById('pvFormSection').classList.remove('hidden');
-        document.getElementById('monthly_amount').focus();
-    @endif
+    // Si un user est pré-sélectionné, focus directement sur le montant
+    if (hasPreselectedUser) {
+        var amountInput = document.getElementById('monthly_amount');
+        if (amountInput) amountInput.focus();
+    }
 });
 
 function searchUser() {
     var query = document.getElementById('searchUser').value.trim();
-    
+
     if (!query || query.length < 2) {
         showToast('Saisissez au moins 2 caractères', 'warning');
         return;
     }
-    
+
     var info = document.getElementById('userInfo');
     info.innerHTML = '<div class="card"><p class="text-secondary">Recherche en cours...</p></div>';
     document.getElementById('userResult').classList.remove('hidden');
     document.getElementById('pvFormSection').classList.add('hidden');
-    
+
     var token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '{{ csrf_token() }}';
-    
+
     fetch('{{ url("admin/pv/search-user") }}?search=' + encodeURIComponent(query), {
         method: 'GET',
         headers: {
@@ -714,14 +667,14 @@ function searchUser() {
             info.innerHTML = '<div class="card"><p class="text-danger">' + data.error + '</p></div>';
             return;
         }
-        
+
         selectedUserId = data.id;
         document.getElementById('addMonthlyForm').action = '/admin/pv/' + data.id + '/add-monthly';
-        
+
         var sponsorInfo = data.parrain_name ? '<div class="meta">Parrain: ' + data.parrain_name + ' (' + data.parrain_sponsor_id + ')</div>' : '';
         var rankInfo = data.rank_name ? '· Grade: ' + data.rank_name : '';
-        
-        info.innerHTML = 
+
+        info.innerHTML =
             '<div class="card">' +
                 '<div class="user-card">' +
                     '<div class="user-avatar">' + data.name.charAt(0).toUpperCase() + '</div>' +
@@ -737,7 +690,7 @@ function searchUser() {
                     '<div class="stat-item"><div class="value">' + data.team_pv + '</div><div class="label">PV Équipe</div></div>' +
                 '</div>' +
             '</div>';
-        
+
         document.getElementById('pvFormSection').classList.remove('hidden');
         document.getElementById('monthly_amount').focus();
     })
@@ -748,6 +701,11 @@ function searchUser() {
 }
 
 function resetForm() {
+    if (hasPreselectedUser) {
+        // Si user pré-sélectionné, rediriger vers la page PV du user
+        window.location.href = '{{ $hasPreselectedUser ? route('admin.pv.show', $user->id) : route('admin.users') }}';
+        return;
+    }
     document.getElementById('userResult').classList.add('hidden');
     document.getElementById('pvFormSection').classList.add('hidden');
     document.getElementById('searchUser').value = '';
@@ -755,20 +713,20 @@ function resetForm() {
     selectedUserId = null;
 }
 
-// ========== Form submit ==========
+// ========== Form submit manuel ==========
 document.getElementById('addMonthlyForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     var amount = document.getElementById('monthly_amount').value;
     var period = document.getElementById('monthly_period').value;
     var typeSelect = document.getElementById('monthly_type');
     var type = typeSelect.options[typeSelect.selectedIndex].text;
-    
+
     if (!amount || parseFloat(amount) <= 0) {
         showToast('Saisissez un montant valide (supérieur à 0)', 'warning');
         return;
     }
-    
+
     showConfirm(
         'Ajouter ' + amount + ' PV (' + type + ') pour ' + period + ' ?',
         'Cette opération est traçable dans l\'historique.',
@@ -781,13 +739,52 @@ document.getElementById('addMonthlyForm').addEventListener('submit', function(e)
     );
 });
 
+// ========== Form submit historique ==========
+var historicalForm = document.getElementById('historicalForm');
+if (historicalForm) {
+    historicalForm.addEventListener('submit', function(e) {
+        var fileInput = document.getElementById('excel_file');
+        var file = fileInput.files[0];
+
+        if (!file) {
+            showToast('Sélectionnez un fichier', 'warning');
+            e.preventDefault();
+            return;
+        }
+
+        var dryRun = document.getElementById('dry_run').checked;
+        var period = document.getElementById('hist_period').value;
+
+        if (!dryRun) {
+            e.preventDefault();
+            showConfirm(
+                'Importer les PV du fichier "' + file.name + '" pour ' + period + ' ?',
+                'Cette opération modifiera les soldes de tous les membres concernés. Pensez à faire une simulation avant.',
+                function() {
+                    var btn = document.getElementById('histSubmitBtn');
+                    btn.disabled = true;
+                    btn.textContent = 'Import en cours...';
+                    document.getElementById('historicalForm').submit();
+                }
+            );
+        } else {
+            var btn = document.getElementById('histSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Simulation...';
+        }
+    });
+}
+
 // ========== Shortcuts ==========
-document.getElementById('searchUser').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        searchUser();
-    }
-});
+var searchUserInput = document.getElementById('searchUser');
+if (searchUserInput) {
+    searchUserInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchUser();
+        }
+    });
+}
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {

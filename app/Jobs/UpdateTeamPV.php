@@ -2,16 +2,20 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
+use App\Services\MLM\TeamPVCalculator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
+/**
+ * UpdateTeamPV - DÉPRÉCIÉ
+ * 
+ * Ce job est conservé pour compatibilité mais redirige vers TeamPVCalculator.
+ * Il sera supprimé quand tous les appelants auront été migrés.
+ */
 class UpdateTeamPV implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -19,7 +23,7 @@ class UpdateTeamPV implements ShouldQueue
     protected ?int $userId;
     protected bool $recursive;
     public int $timeout = 3600;
-    public int $tries = 3;
+    public int $tries = 1;
 
     public function __construct(?int $userId = null, bool $recursive = true)
     {
@@ -27,140 +31,28 @@ class UpdateTeamPV implements ShouldQueue
         $this->recursive = $recursive;
     }
 
-    public function handle(): void
+    public function handle(TeamPVCalculator $teamPVCalculator): void
     {
-        Log::info('UpdateTeamPV started', [
-            'user_id' => $this->userId ?? 'all',
-            'recursive' => $this->recursive
-        ]);
-
-        $query = User::where('is_active', true);
-
-        if ($this->userId) {
-            $query->where('id', $this->userId);
-        }
-
-        $query->chunk(100, function ($users) {
-            foreach ($users as $user) {
-                try {
-                    DB::beginTransaction();
-
-                    // ✅ Mettre à jour le team_pv avec CTE
-                    $this->updateTeamPVWithCTE($user);
-
-                    if ($this->recursive) {
-                        // ✅ Mettre à jour TOUS les ancêtres avec CTE
-                        $this->updateAncestorsTeamPVWithCTE($user);
-                    }
-
-                    Cache::forget("descendants_{$user->id}");
-                    Cache::forget("descendants_count_{$user->id}");
-                    Cache::forget("user_rank_{$user->id}");
-
-                    $user->calculateAndUpdateRank();
-
-                    DB::commit();
-
-                    Log::debug('TeamPV updated', [
-                        'user_id' => $user->id,
-                        'team_pv' => $user->team_pv,
-                        'rank' => $user->rank_name,
-                    ]);
-
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    Log::error('UpdateTeamPV error', [
-                        'user_id' => $user->id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
-        });
-
-        Log::info('UpdateTeamPV completed');
-    }
-
-    /**
-     * ✅ Met à jour le team_pv avec CTE (1 requête)
-     */
-    private function updateTeamPVWithCTE(User $user): void
-    {
-        $result = DB::select("
-            WITH RECURSIVE descendants AS (
-                SELECT id, pv_balance, bv_balance, 1 as depth
-                FROM users 
-                WHERE id = ?
-                
-                UNION ALL
-                
-                SELECT u.id, u.pv_balance, u.bv_balance, d.depth + 1
-                FROM users u
-                INNER JOIN descendants d ON u.parrain_id = d.id
-                WHERE u.is_active = true
-            )
-            SELECT 
-                COALESCE(SUM(pv_balance), 0) as total_pv,
-                COALESCE(SUM(bv_balance), 0) as total_bv,
-                COUNT(*) as total_members
-            FROM descendants
-        ", [$user->id]);
-
-        if ($result && isset($result[0])) {
-            $user->team_pv = $result[0]->total_pv ?? 0;
-            $user->team_bv = $result[0]->total_bv ?? 0;
-            $user->total_team = ($result[0]->total_members ?? 1) - 1;
-            $user->saveQuietly();
-        }
-    }
-
-    /**
-     * ✅ Met à jour TOUS les ancêtres avec CTE (1 requête)
-     */
-    private function updateAncestorsTeamPVWithCTE(User $user): void
-    {
-        $ancestorIds = DB::select("
-            WITH RECURSIVE ancestors AS (
-                SELECT id, parrain_id, 1 as level
-                FROM users 
-                WHERE id = ?
-                
-                UNION ALL
-                
-                SELECT u.id, u.parrain_id, a.level + 1
-                FROM users u
-                INNER JOIN ancestors a ON u.id = a.parrain_id
-                WHERE u.is_active = true
-            )
-            SELECT id, level FROM ancestors ORDER BY level DESC
-        ", [$user->id]);
-
-        if (empty($ancestorIds)) {
+        if (!$this->userId) {
             return;
         }
 
-        $ids = array_column($ancestorIds, 'id');
+        $user = \App\Models\User::find($this->userId);
+        if (!$user) {
+            return;
+        }
 
-        DB::statement("
-            UPDATE users u
-            SET team_pv = (
-                SELECT COALESCE(SUM(pv_balance + monthly_pv + team_pv), 0)
-                FROM users
-                WHERE parrain_id = u.id
-                AND is_active = true
-            ),
-            team_bv = (
-                SELECT COALESCE(SUM(bv_balance + monthly_bv + team_bv), 0)
-                FROM users
-                WHERE parrain_id = u.id
-                AND is_active = true
-            ),
-            total_team = (
-                SELECT COUNT(*)
-                FROM users
-                WHERE parrain_id = u.id
-                AND is_active = true
-            )
-            WHERE u.id IN (" . implode(',', $ids) . ")
-        ");
+        try {
+            $teamPVCalculator->updateUser($user);
+
+            if ($this->recursive) {
+                $teamPVCalculator->updateAncestors($user);
+            }
+        } catch (\Exception $e) {
+            Log::error('UpdateTeamPV (deprecated) error', [
+                'user_id' => $this->userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

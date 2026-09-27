@@ -14,22 +14,30 @@ use Illuminate\Support\Facades\Cache;
 class AdvancedRankCalculator
 {
     protected RankConditionChecker $conditionChecker;
-    protected array $branchPVCache = [];
-    protected array $descendantsCache = [];
+    protected TeamPVCalculator $teamPVCalculator;
 
-    public function __construct(RankConditionChecker $conditionChecker)
-    {
+    public function __construct(
+        RankConditionChecker $conditionChecker,
+        TeamPVCalculator $teamPVCalculator
+    ) {
         $this->conditionChecker = $conditionChecker;
+        $this->teamPVCalculator = $teamPVCalculator;
     }
 
     public function calculateAdvancedRank(User $user): ?Rank
     {
+        // ═══════════════════════════════════════════════════════════
+        // ✅ OPTIONNEL : Décommenter pour exclure Administrator (id=1)
+        //    du calcul MLM. Utile si c'est un compte système.
+        // ═══════════════════════════════════════════════════════════
+        // if ($user->id === 1) {
+        //     return Rank::where('level', 1)->first();
+        // }
+
         if (!$user->is_active) {
             Log::info('User inactive, skipping rank calculation', ['user_id' => $user->id]);
             return null;
         }
-
-        $this->clearCache();
 
         $ranks = Rank::where('is_active', true)->orderBy('level', 'desc')->get();
 
@@ -42,12 +50,27 @@ class AdvancedRankCalculator
             'user_id' => $user->id,
             'user_name' => $user->name,
             'pv_balance' => $user->pv_balance,
+            'pv_balance_type' => gettype($user->pv_balance),
             'team_pv' => $user->team_pv,
             'current_rank' => $user->rank ?? 'None',
         ]);
 
+        // ✅ CORRECTION : Logs de diagnostic complets
         foreach ($ranks as $rank) {
-            if ($this->isEligibleForRank($user, $rank)) {
+            $eligible = $this->isEligibleForRank($user, $rank);
+
+            Log::info('Rank check', [
+                'user_id' => $user->id,
+                'rank_level' => $rank->level,
+                'rank_name' => $rank->name,
+                'rank_is_active' => $rank->is_active,
+                'eligible' => $eligible,
+                'pv_balance' => $user->pv_balance,
+                'pv_balance_type' => gettype($user->pv_balance),
+                'team_pv' => $user->team_pv,
+            ]);
+
+            if ($eligible) {
                 Log::info('Rank found for user', [
                     'user_id' => $user->id,
                     'rank_id' => $rank->id,
@@ -62,50 +85,15 @@ class AdvancedRankCalculator
         return Rank::where('level', 1)->first();
     }
 
-    /**
-     * RECALCUL DU TEAM_PV AVEC TOUS LES DESCENDANTS (RECURSIF)
-     */
     public function updateTeamPV(User $user): void
     {
-        $teamData = $this->calculateTeamPVRecursive($user);
-        
-        $user->team_pv = $teamData['pv'];
-        $user->team_bv = $teamData['bv'];
-        $user->total_team = $teamData['total'];
-        $user->saveQuietly();
-        
-        Log::debug('Team PV mis a jour avec tous les descendants', [
+        $this->teamPVCalculator->updateUser($user);
+
+        Log::debug('Team PV mis à jour via TeamPVCalculator', [
             'user_id' => $user->id,
-            'team_pv' => $teamData['pv'],
-            'total_team' => $teamData['total'],
+            'team_pv' => $user->team_pv,
+            'total_team' => $user->total_team,
         ]);
-    }
-
-    /**
-     * CALCUL RECURSIF DU TEAM_PV AVEC TOUS LES DESCENDANTS
-     */
-    private function calculateTeamPVRecursive(User $user): array
-    {
-        $totalPV = $user->pv_balance ?? 0;
-        $totalBV = $user->bv_balance ?? 0;
-        $totalCount = 0;
-
-        $filleuls = User::where('parrain_id', $user->id)
-            ->where('is_active', true)
-            ->get();
-
-        foreach ($filleuls as $filleul) {
-            $childData = $this->calculateTeamPVRecursive($filleul);
-            $totalPV += $childData['pv'];
-            $totalBV += $childData['bv'];
-            $totalCount += 1 + $childData['total'];
-        }
-
-        return [
-            'pv' => $totalPV,
-            'bv' => $totalBV,
-            'total' => $totalCount,
-        ];
     }
 
     public function recalculateUserRank(User $user, ?string $reason = null): void
@@ -142,13 +130,10 @@ class AdvancedRankCalculator
                     'notes' => $reason ?? 'Recalcul automatique du grade',
                 ]);
 
-                Log::info('Grade mis a jour via recalcul centralise', [
+                Log::info('Grade mis à jour via recalcul centralisé', [
                     'user_id' => $user->id,
-                    'user_name' => $user->name,
                     'old_rank' => $oldRankName,
                     'new_rank' => $newRank->name,
-                    'new_level' => $newRank->level,
-                    'reason' => $reason,
                 ]);
             }
 
@@ -158,17 +143,13 @@ class AdvancedRankCalculator
             Log::error('Erreur lors du recalcul du grade', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
         }
     }
 
     public function recalculateUserRankLight(User $user, ?string $reason = null): void
     {
-        if (!$user->is_active) {
-            Log::info('User inactive, skipping rank recalculation', ['user_id' => $user->id]);
-            return;
-        }
+        if (!$user->is_active) return;
 
         try {
             $oldRankId = $user->rank_id;
@@ -192,24 +173,16 @@ class AdvancedRankCalculator
                     'pv_at_time' => $user->pv_balance,
                     'bv_at_time' => $user->bv_balance,
                     'monthly_pv_at_time' => $user->monthly_pv,
-                    'notes' => $reason ?? 'Recalcul leger du grade',
-                ]);
-
-                Log::info('Grade mis a jour (recalcul leger)', [
-                    'user_id' => $user->id,
-                    'user_name' => $user->name,
-                    'old_rank' => $oldRankName,
-                    'new_rank' => $newRank->name,
-                    'new_level' => $newRank->level,
+                    'notes' => $reason ?? 'Recalcul léger du grade',
                 ]);
             }
 
             $this->clearUserCache($user);
 
         } catch (\Exception $e) {
-            Log::error('Erreur lors du recalcul leger du grade', [
+            Log::error('Erreur lors du recalcul léger', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -224,7 +197,7 @@ class AdvancedRankCalculator
 
         while ($current && $level <= $ancestorDepth && !in_array($current->id, $processed)) {
             $processed[] = $current->id;
-            $this->recalculateUserRank($current, $reason ? "Ancetre - {$reason}" : "Mise a jour automatique d'un descendant");
+            $this->recalculateUserRank($current, $reason ? "Ancêtre - {$reason}" : "MAJ descendant");
             $current->refresh();
             $this->clearUserCache($current);
             $current = $current->parrain;
@@ -238,47 +211,27 @@ class AdvancedRankCalculator
         Cache::forget("rank_calculation_{$user->id}");
         Cache::forget("descendants_{$user->id}");
         Cache::forget("descendants_count_{$user->id}");
-        $this->clearCache();
+        Cache::forget("team_pv_{$user->id}");
+        $this->teamPVCalculator->clearCache($user);
         $this->conditionChecker->clearCache();
     }
 
     public function isEligibleForRank(User $user, Rank $rank): bool
     {
-        if ($rank->level <= 3) {
-            if ($rank->level == 2 && ($user->pv_balance ?? 0) < 100) {
-                return false;
-            }
-            if ($rank->level == 3 && ($user->pv_balance ?? 0) < 200) {
-                return false;
-            }
-            return true;
-        }
         return $this->conditionChecker->checkConditions($user, $rank);
     }
 
     public function calculatePrizes(User $user): array
     {
         $prizes = [];
-        $rankLevel = $user->rank_level ?? 1;
-        
-        if ($rankLevel >= 4) {
-            $prizes[] = ['level' => 4, 'prize' => 'Manager - Woofer'];
-        }
-        if ($rankLevel >= 5) {
-            $prizes[] = ['level' => 5, 'prize' => 'Directeur Principal - LCD TV'];
-        }
-        if ($rankLevel >= 6) {
-            $prizes[] = ['level' => 6, 'prize' => 'Soaring Manager - Moto'];
-        }
-        if ($rankLevel >= 7) {
-            $prizes[] = ['level' => 7, 'prize' => 'Saphire Manager - Petite voiture'];
-        }
-        if ($rankLevel >= 8) {
-            $prizes[] = ['level' => 8, 'prize' => 'Blue Diamond - Grande voiture'];
-        }
-        if ($rankLevel >= 9) {
-            $prizes[] = ['level' => 9, 'prize' => 'Diamond Pearl - House'];
-        }
+        $rankLevel = (int) ($user->rank_level ?? 1);
+
+        if ($rankLevel >= 4) $prizes[] = ['level' => 4, 'prize' => 'Manager - Woofer'];
+        if ($rankLevel >= 5) $prizes[] = ['level' => 5, 'prize' => 'Directeur Principal - LCD TV'];
+        if ($rankLevel >= 6) $prizes[] = ['level' => 6, 'prize' => 'Soaring Manager - Moto'];
+        if ($rankLevel >= 7) $prizes[] = ['level' => 7, 'prize' => 'Saphire Manager - Petite voiture'];
+        if ($rankLevel >= 8) $prizes[] = ['level' => 8, 'prize' => 'Blue Diamond - Grande voiture'];
+        if ($rankLevel >= 9) $prizes[] = ['level' => 9, 'prize' => 'Diamond Pearl - House'];
         return $prizes;
     }
 
@@ -286,6 +239,8 @@ class AdvancedRankCalculator
     {
         $currentRank = $this->getUserRankObject($user);
         $nextRank = $currentRank ? $this->getNextRank($currentRank) : Rank::where('level', 1)->first();
+
+        $cumulPV = (float) ($user->team_pv ?? 0);
 
         if (!$nextRank) {
             return [
@@ -297,25 +252,20 @@ class AdvancedRankCalculator
                 'progress_percentage' => 100,
                 'pv_needed' => 0,
                 'total_pv_needed' => 0,
-                'current_pv' => $user->pv_balance ?? 0,
-                'current_team_pv' => $user->team_pv ?? 0,
-                'cumul_pv' => ($user->pv_balance ?? 0) + ($user->team_pv ?? 0),
+                'current_pv' => (float) ($user->pv_balance ?? 0),
+                'current_team_pv' => (float) ($user->team_pv ?? 0),
+                'cumul_pv' => $cumulPV,
                 'current_min_pv' => $currentRank?->min_pv ?? 0,
                 'next_min_pv' => 0,
             ];
         }
 
-        $currentPV = $user->pv_balance ?? 0;
-        $currentTeamPV = $user->team_pv ?? 0;
-        $cumulPV = $currentPV + $currentTeamPV;
-        
-        $currentMinPV = $currentRank ? $currentRank->min_pv : 0;
-        $nextMinPV = $nextRank->min_pv;
+        $currentMinPV = $currentRank ? (float) $currentRank->min_pv : 0;
+        $nextMinPV = (float) $nextRank->min_pv;
 
         $pvNeeded = max(0, $nextMinPV - $cumulPV);
         $totalPVNeeded = max(1, $nextMinPV - $currentMinPV);
-
-        $progressPercentage = min(100, (($cumulPV - $currentMinPV) / $totalPVNeeded) * 100);
+        $progressPercentage = min(100, max(0, (($cumulPV - $currentMinPV) / $totalPVNeeded) * 100));
 
         return [
             'current_rank' => $currentRank?->name ?? 'Distributeur',
@@ -323,11 +273,11 @@ class AdvancedRankCalculator
             'next_rank' => $nextRank->name,
             'next_level' => $nextRank->level,
             'progress_pv' => max(0, $cumulPV - $currentMinPV),
-            'progress_percentage' => round(max(0, $progressPercentage), 2),
+            'progress_percentage' => round($progressPercentage, 2),
             'pv_needed' => $pvNeeded,
             'total_pv_needed' => $totalPVNeeded,
-            'current_pv' => $currentPV,
-            'current_team_pv' => $currentTeamPV,
+            'current_pv' => (float) ($user->pv_balance ?? 0),
+            'current_team_pv' => (float) ($user->team_pv ?? 0),
             'cumul_pv' => $cumulPV,
             'current_min_pv' => $currentMinPV,
             'next_min_pv' => $nextMinPV,
@@ -352,13 +302,9 @@ class AdvancedRankCalculator
         }
         if (is_string($user->rank)) {
             $rank = Rank::where('name', $user->rank)->first();
-            if ($rank) {
-                return $rank;
-            }
+            if ($rank) return $rank;
             $rank = Rank::where('slug', $user->rank)->first();
-            if ($rank) {
-                return $rank;
-            }
+            if ($rank) return $rank;
         }
         return Rank::where('level', 1)->first();
     }
@@ -405,12 +351,8 @@ class AdvancedRankCalculator
 
     protected function calculateBranchPVOptimized(User $branchRoot): float
     {
-        $totalPV = $branchRoot->pv_balance ?? 0;
-        $children = User::where('parrain_id', $branchRoot->id)->where('is_active', true)->get();
-        foreach ($children as $child) {
-            $totalPV += $this->calculateBranchPVOptimized($child);
-        }
-        return $totalPV;
+        $result = $this->teamPVCalculator->calculateForUser($branchRoot);
+        return $result['pv'];
     }
 
     public function checkHigherRankEligibility(User $user, string $period): array
@@ -473,7 +415,6 @@ class AdvancedRankCalculator
 
     public function clearCache(): void
     {
-        $this->branchPVCache = [];
-        $this->descendantsCache = [];
+        $this->conditionChecker->clearCache();
     }
 }

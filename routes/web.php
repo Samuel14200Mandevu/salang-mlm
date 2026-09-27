@@ -464,6 +464,7 @@ Route::prefix('pv')->name('pv.')->group(function () {
         Route::post('/csv', [AdminPVImportController::class, 'importCSV'])->name('csv');
         Route::post('/manual', [AdminPVImportController::class, 'importFromOrder'])->name('manual');
         Route::post('/monthly', [AdminPVImportController::class, 'addMonthlyPV'])->name('monthly');
+        Route::post('/historical', [AdminPVImportController::class, 'importHistoricalPV'])->name('historical');
     });
     
     // Page de recherche

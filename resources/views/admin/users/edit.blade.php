@@ -197,6 +197,14 @@
     padding: 0.75rem 1rem;
 }
 
+.warning-box {
+    background: rgba(217, 119, 6, 0.08);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #92400E;
+}
+
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -398,6 +406,28 @@
                     <span class="help-text">Code unique de parrain (non modifiable)</span>
                 </div>
 
+                {{-- ═══════════════════════════════════════════════════════════ --}}
+                {{-- ✅ NOUVEAU : GRADE (RANG) --}}
+                {{-- ═══════════════════════════════════════════════════════════ --}}
+                <div class="form-group" id="rankGroup">
+                    <label>Grade (Rang)</label>
+                    <select name="rank_id" class="form-control">
+                        <option value="">
+                            -- Laisser le système recalculer automatiquement --
+                        </option>
+                        @foreach($ranks ?? [] as $rank)
+                            <option value="{{ $rank->id }}"
+                                {{ (string) old('rank_id', $user->rank_id) === (string) $rank->id ? 'selected' : '' }}>
+                                {{ $rank->name }} (Niv. {{ $rank->level }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <span class="help-text">
+                        Grade actuel : <strong>{{ $user->rank ?? 'Distributeur' }}</strong>
+                        (Niv. {{ $user->rank_level ?? 1 }})
+                    </span>
+                </div>
+
                 <!-- Role -->
                 <div class="form-group md:col-span-2">
                     <label>Rôle de l'utilisateur <span class="required">*</span></label>
@@ -448,6 +478,18 @@
                         <option value="0" {{ !$user->is_active ? 'selected' : '' }}>Inactif</option>
                     </select>
                 </div>
+
+                <!-- KYC Status -->
+                <div class="form-group">
+                    <label>Statut KYC</label>
+                    <select name="kyc_status" class="form-control">
+                        <option value="not_submitted" {{ $user->kyc_status === 'not_submitted' ? 'selected' : '' }}>Non soumis</option>
+                        <option value="pending" {{ $user->kyc_status === 'pending' ? 'selected' : '' }}>En attente</option>
+                        <option value="partial" {{ $user->kyc_status === 'partial' ? 'selected' : '' }}>Partiel</option>
+                        <option value="verified" {{ $user->kyc_status === 'verified' ? 'selected' : '' }}>Vérifié</option>
+                        <option value="rejected" {{ $user->kyc_status === 'rejected' ? 'selected' : '' }}>Rejeté</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Info box -->
@@ -466,6 +508,24 @@
                             @else
                                 Un code de parrain unique a été généré. Il peut bénéficier du système MLM.
                             @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ⚠️ Warning box : grade -->
+            <div class="warning-box mt-3">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium">Important — Grade</p>
+                        <p class="text-sm">
+                            Si vous laissez le champ <strong>Grade vide</strong>, le système recalculera automatiquement
+                            le grade selon les PV de l'utilisateur (personnels et cumulés).
+                            <br>
+                            Pour <strong>forcer manuellement</strong> un grade, sélectionnez-le dans la liste.
                         </p>
                     </div>
                 </div>
@@ -495,6 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
+    const rankGroup = document.getElementById('rankGroup');
 
     const infoMessages = {
         user: 'Un code de parrain unique a été généré. Il peut bénéficier du système MLM et des commissions.',
@@ -508,9 +569,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (role === 'cashier') {
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
+            if (rankGroup) rankGroup.style.display = 'none';
         } else {
             if (packageGroup) packageGroup.style.display = 'block';
             if (sponsorGroup) sponsorGroup.style.display = 'block';
+            if (rankGroup) rankGroup.style.display = 'block';
         }
     }
 

@@ -1,5 +1,4 @@
 <?php
-// app/Services/MLM/RankConditionChecker.php
 
 namespace App\Services\MLM;
 
@@ -13,20 +12,16 @@ class RankConditionChecker
 {
     protected array $rankLevelCache = [];
     protected array $branchCache = [];
-    protected array $branchLevelCache = [];
 
     public function checkConditions(User $user, Rank $rank): bool
     {
-        $rankLevel = $rank->level;
+        $rankLevel = (int) $rank->level;
 
         Log::info('Checking conditions for rank', [
             'user_id' => $user->id,
-            'user_name' => $user->name,
             'target_rank_level' => $rankLevel,
-            'target_rank_name' => $rank->name,
             'pv_balance' => $user->pv_balance,
             'team_pv' => $user->team_pv,
-            'monthly_pv' => $user->monthly_pv,
             'cumul_pv' => $this->getCumulPV($user),
         ]);
 
@@ -45,7 +40,27 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 1 - DISTRIBUTEUR
+    // ✅ HELPER : Normalise une valeur PV en float
+    //    Gère : null, "", "715.0", "715,0", " 715 ", 715
+    // ============================================================
+    private function normalizePV($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $str = str_replace(',', '.', trim((string) $value));
+        $str = preg_replace('/\s+/', '', $str);
+
+        return is_numeric($str) ? (float) $str : 0.0;
+    }
+
+    // ============================================================
+    // NIVEAU 1 — DISTRIBUTEUR
     // ============================================================
     private function checkLevel1(User $user): bool
     {
@@ -53,54 +68,50 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 2 - QUALIFICATION
+    // NIVEAU 2 — QUALIFICATION : 100 PV PERSONNELS
     // ============================================================
     private function checkLevel2(User $user): bool
     {
-        return ($user->bv_balance ?? 0) >= 100;
+        $pv = $this->normalizePV($user->pv_balance);
+        return $pv >= 100;
     }
 
     // ============================================================
-    // NIVEAU 3 - CUMUL DIRECTEUR
+    // NIVEAU 3 — CUMUL DIRECTEUR : 200 PV PERSONNELS
     // ============================================================
     private function checkLevel3(User $user): bool
     {
-        return ($user->bv_balance ?? 0) >= 200;
+        $pv = $this->normalizePV($user->pv_balance);
+        return $pv >= 200;
     }
 
     // ============================================================
-    // NIVEAU 4 - DIRECTEUR
+    // NIVEAU 4 — DIRECTEUR
     // ============================================================
     private function checkLevel4(User $user): bool
     {
-        $cumulPV = $this->getCumulPV($user);
+        $pvPerso = $this->normalizePV($user->pv_balance);
 
-        if (($user->pv_balance ?? 0) >= 1000) {
+        if ($pvPerso >= 1000) {
             return true;
         }
 
-        // ✅ Version optimisée avec CTE
+        $cumulPV = $this->getCumulPV($user);
         $branchesManager = $this->countQualifiedBranchesOptimized($user, 3);
 
-        if ($branchesManager >= 3 && $cumulPV >= 1000) {
-            return true;
-        }
-
-        if ($branchesManager >= 2 && $cumulPV >= 2200) {
-            return true;
-        }
+        if ($branchesManager >= 3 && $cumulPV >= 1000) return true;
+        if ($branchesManager >= 2 && $cumulPV >= 2200) return true;
 
         return false;
     }
 
     // ============================================================
-    // NIVEAU 5 - MANAGER SENIOR
+    // NIVEAU 5 — MANAGER SENIOR
     // ============================================================
     private function checkLevel5(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
-        
-        // ✅ Version optimisée avec CTE
+
         $branchesDirecteur = $this->countQualifiedBranchesOptimized($user, 4);
         $branchesManager = $this->countQualifiedBranchesOptimized($user, 3);
 
@@ -113,12 +124,12 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 6 - DIRECTEUR ENVOLÉE
+    // NIVEAU 6 — DIRECTEUR ENVOLÉE
     // ============================================================
     private function checkLevel6(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
-        
+
         $branchesManagerSenior = $this->countQualifiedBranchesOptimized($user, 5);
         $branchesDirecteur = $this->countQualifiedBranchesOptimized($user, 4);
 
@@ -131,12 +142,12 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 7 - SAPHIRE MANAGER
+    // NIVEAU 7 — SAPHIRE MANAGER
     // ============================================================
     private function checkLevel7(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
-        
+
         $branchesDirecteurEnvolee = $this->countQualifiedBranchesOptimized($user, 6);
         $branchesManagerSenior = $this->countQualifiedBranchesOptimized($user, 5);
 
@@ -149,12 +160,12 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 8 - DIAMANT BLEU
+    // NIVEAU 8 — DIAMANT BLEU
     // ============================================================
     private function checkLevel8(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
-        
+
         $branchesSaphire = $this->countQualifiedBranchesOptimized($user, 7);
         $branchesDirecteurEnvolee = $this->countQualifiedBranchesOptimized($user, 6);
 
@@ -167,12 +178,12 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // NIVEAU 9 - DIAMOND PEARL
+    // NIVEAU 9 — PERLE DIAMANT
     // ============================================================
     private function checkLevel9(User $user): bool
     {
         $cumulPV = $this->getCumulPV($user);
-        
+
         $branchesDiamondBlue = $this->countQualifiedBranchesOptimized($user, 8);
         $branchesSaphire = $this->countQualifiedBranchesOptimized($user, 7);
 
@@ -185,39 +196,30 @@ class RankConditionChecker
     }
 
     // ============================================================
-    // MÉTHODES UTILITAIRES OPTIMISÉES
+    // MÉTHODES UTILITAIRES
     // ============================================================
 
-    /**
-     * Calcule le PV cumulé (personnel + équipe)
-     */
     private function getCumulPV(User $user): float
     {
-        return ($user->pv_balance ?? 0) + ($user->team_pv ?? 0);
+        return (float) ($user->team_pv ?? 0);
     }
 
-    /**
-     * ✅ Compte les branches qualifiées avec CTE (1 requête)
-     * Version OPTIMISÉE : une seule requête SQL pour tout le réseau
-     */
     private function countQualifiedBranchesOptimized(User $user, int $rankLevel): int
     {
         $cacheKey = "branches_{$user->id}_rank_{$rankLevel}";
-        
+
         if (isset($this->branchCache[$cacheKey])) {
             return $this->branchCache[$cacheKey];
         }
 
-        // ✅ Version CORRIGÉE : chaque filleul direct = une branche distincte
         $result = DB::select("
             WITH RECURSIVE descendants AS (
-                -- Point de départ : les filleuls directs (chaque branche distincte)
                 SELECT 
                     id, 
                     parrain_id, 
                     rank_id, 
                     1 as depth,
-                    id as branch_id,  -- Identifiant unique de la branche
+                    id as branch_id,
                     CAST(id AS CHAR(1000)) as path
                 FROM users 
                 WHERE parrain_id = ?
@@ -225,22 +227,20 @@ class RankConditionChecker
                 
                 UNION ALL
                 
-                -- Descendre récursivement dans chaque branche
                 SELECT 
                     u.id, 
                     u.parrain_id, 
                     u.rank_id, 
                     d.depth + 1,
-                    d.branch_id,  -- Garder l'identifiant de la branche racine
+                    d.branch_id,
                     CONCAT(d.path, ',', u.id)
                 FROM users u
                 INNER JOIN descendants d ON u.parrain_id = d.id
                 WHERE u.is_active = true
-                AND FIND_IN_SET(u.id, d.path) = 0  -- Éviter les cycles
-                AND d.depth < 50  -- Limite de sécurité
+                AND FIND_IN_SET(u.id, d.path) = 0
+                AND d.depth < 50
             ),
             branch_qualification AS (
-                -- Pour chaque branche DISTINCTE, vérifier si elle a le niveau requis
                 SELECT 
                     branch_id,
                     MAX(CASE 
@@ -249,56 +249,19 @@ class RankConditionChecker
                     END) as is_qualified
                 FROM descendants d
                 LEFT JOIN ranks r ON d.rank_id = r.id
-                GROUP BY branch_id  -- GROUP BY sur la branche racine
+                GROUP BY branch_id
             )
             SELECT COUNT(*) as qualified_count
             FROM branch_qualification
             WHERE is_qualified = 1
         ", [$user->id, $rankLevel]);
 
-        $count = $result[0]->qualified_count ?? 0;
+        $count = (int) ($result[0]->qualified_count ?? 0);
         $this->branchCache[$cacheKey] = $count;
-        
+
         return $count;
     }
-    /**
-     * Récupère le niveau de grade d'un utilisateur
-     */
-    private function getUserRankLevel(User $user): int
-    {
-        if (isset($this->rankLevelCache[$user->id])) {
-            return $this->rankLevelCache[$user->id];
-        }
 
-        if ($user->relationLoaded('rank') && $user->rank && !is_string($user->rank)) {
-            $level = $user->rank->level ?? 1;
-            $this->rankLevelCache[$user->id] = $level;
-            return $level;
-        }
-
-        if ($user->rank_id) {
-            $rank = Rank::find($user->rank_id);
-            if ($rank) {
-                $this->rankLevelCache[$user->id] = $rank->level;
-                return $rank->level;
-            }
-        }
-
-        if (is_string($user->rank)) {
-            $rank = Rank::where('name', $user->rank)->first();
-            if ($rank) {
-                $this->rankLevelCache[$user->id] = $rank->level;
-                return $rank->level;
-            }
-        }
-
-        $this->rankLevelCache[$user->id] = 1;
-        return 1;
-    }
-
-    /**
-     * Vide le cache
-     */
     public function clearCache(): void
     {
         $this->rankLevelCache = [];

@@ -15,6 +15,7 @@ use App\Services\MobileMoneyService;
 use App\Services\ImageUploadService;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
+use App\Services\MLM\TeamPVCalculator;
 use App\Services\MLM\CommissionDistributor;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Models\User;
@@ -31,17 +32,29 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // ══════════════════════════════════════════════════════════════
         // ✅ SERVICES MLM AVEC DÉPENDANCES
+        // ══════════════════════════════════════════════════════════════
+
+        // ✅ TeamPVCalculator (NOUVEAU - service unique de calcul team_pv)
+        $this->app->singleton(TeamPVCalculator::class, function ($app) {
+            return new TeamPVCalculator();
+        });
+
+        // ✅ RankConditionChecker
         $this->app->singleton(RankConditionChecker::class, function ($app) {
             return new RankConditionChecker();
         });
 
+        // ✅ AdvancedRankCalculator (2 dépendances maintenant)
         $this->app->singleton(AdvancedRankCalculator::class, function ($app) {
             return new AdvancedRankCalculator(
-                $app->make(RankConditionChecker::class)
+                $app->make(RankConditionChecker::class),
+                $app->make(TeamPVCalculator::class)
             );
         });
 
+        // ✅ CommissionDistributor
         $this->app->singleton(CommissionDistributor::class, function ($app) {
             return new CommissionDistributor();
         });
@@ -73,12 +86,14 @@ class AppServiceProvider extends ServiceProvider
             return new NetworkService();
         });
 
-        // ✅ Services Paiement - CORRIGÉ AVEC DÉPENDANCES
+        // ══════════════════════════════════════════════════════════════
+        // ✅ SERVICES PAIEMENT
+        // ══════════════════════════════════════════════════════════════
+
         $this->app->singleton(MobileMoneyService::class, function ($app) {
             return new MobileMoneyService();
         });
 
-        // ✅ PaymentService AVEC MobileMoneyService en paramètre
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
                 $app->make(MobileMoneyService::class)
@@ -89,18 +104,25 @@ class AppServiceProvider extends ServiceProvider
             return new CryptoPaymentService();
         });
 
-        // ✅ Services Utilitaires
+        // ══════════════════════════════════════════════════════════════
+        // ✅ SERVICES UTILITAIRES
+        // ══════════════════════════════════════════════════════════════
+
         $this->app->singleton(ImageUploadService::class, function ($app) {
             return new ImageUploadService();
         });
 
-        // ✅ Enregistrement des commandes Artisan personnalisées
+        // ══════════════════════════════════════════════════════════════
+        // ✅ COMMANDES ARTISAN PERSONNALISÉES
+        // ══════════════════════════════════════════════════════════════
+
         $this->commands([
             \App\Console\Commands\ProcessMonthlyCommissions::class,
             \App\Console\Commands\UpdateRanks::class,
             \App\Console\Commands\CalculateCommissions::class,
             \App\Console\Commands\ProcessPendingWithdrawals::class,
             \App\Console\Commands\RecalculateAllRanks::class,
+            \App\Console\Commands\FixTeamPVInconsistencies::class,  // ✅ AJOUTÉ
         ]);
     }
 
