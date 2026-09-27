@@ -27,3 +27,7 @@ Homestead.yaml
 Thumbs.db
 .vercel
 .env*
+
+# Backups BDD (ne JAMAIS versionner)
+storage/backups/
+*.sql
