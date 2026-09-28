@@ -998,7 +998,7 @@ function checkSponsor() {
     info.className = 'sponsor-info visible';
     info.innerHTML = '<span class="text-[var(--text-secondary)]">Vérification...</span>';
 
-    fetch(`{{ route('cashier.sponsor.check') }}?code=${encodeURIComponent(code)}`, {
+    fetch(`{{ route('cashier.check-sponsor') }}?code=${encodeURIComponent(code)}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',

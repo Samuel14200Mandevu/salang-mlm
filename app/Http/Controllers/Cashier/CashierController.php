@@ -1444,6 +1444,69 @@ public function createCheckoutOrder(Request $request)
     }
 }
 
+/**
+ * Supprimer définitivement le compte du caissier
+ */
+public function destroyProfile(Request $request)
+{
+    $request->validateWithBag('userDeletion', [
+        'password' => ['required', 'string', 'current_password'],
+    ]);
+    
+    $user = $request->user();
+    
+    // Vérifier que l'utilisateur est bien un caissier ou admin
+    if (!$user->hasRole('cashier') && !$user->hasRole('admin')) {
+        abort(403);
+    }
+    
+    // Sécurité : Empêcher un admin de se supprimer lui-même ?
+    // (à adapter selon votre logique métier)
+    // if ($user->hasRole('admin')) {
+    //     return back()->with('error', 'Un admin ne peut pas supprimer son compte.');
+    // }
+    
+    try {
+        DB::beginTransaction();
+        
+        // Déconnecter l'utilisateur
+        auth()->logout();
+        
+        // Supprimer les données liées (ordre important)
+        // Décommentez selon votre schéma
+        
+        // $user->wishlist()->delete();
+        // $user->cart()->delete();
+        // $user->notifications()->delete();
+        // if ($user->wallet) $user->wallet->delete();
+        // Commission::where('user_id', $user->id)->delete();
+        // Transaction::where('user_id', $user->id)->delete();
+        
+        // Supprimer l'avatar si existe
+        if ($user->avatar && file_exists(storage_path('app/public/avatars/' . $user->avatar))) {
+            unlink(storage_path('app/public/avatars/' . $user->avatar));
+        }
+        
+        // Supprimer l'utilisateur
+        $user->delete();
+        
+        DB::commit();
+        
+        // Invalider la session
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect()->route('home')
+            ->with('success', 'Votre compte a été supprimé avec succès.');
+            
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur suppression compte caissier: ' . $e->getMessage());
+        
+        return back()->with('error', 'Erreur lors de la suppression: ' . $e->getMessage());
+    }
+}
+
     /**
      * Liste des commandes (POS + En ligne + MLM)
      */

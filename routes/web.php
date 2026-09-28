@@ -390,6 +390,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::put('/profile/password', [CashierController::class, 'updatePassword'])->name('profile.update-password');
     Route::post('/profile/avatar', [CashierController::class, 'updateAvatar'])->name('profile.update-avatar');
     Route::delete('/profile/avatar', [CashierController::class, 'deleteAvatar'])->name('profile.delete-avatar');
+    Route::delete('/profile', [CashierController::class, 'destroyProfile'])->name('profile.destroy');
     
     // Factures
     Route::get('/invoice/{order}/pdf', [CashierController::class, 'downloadInvoice'])->name('invoice.download');
@@ -403,6 +404,37 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::post('/distribute', [PvDistributionController::class, 'distribute'])->name('distribute.post');
         Route::post('/approve/{allocation}', [PvDistributionController::class, 'approveAllocation'])->name('approve');
         Route::get('/member/{member}', [PvDistributionController::class, 'getMemberPvDetails'])->name('member.details');
+    });
+
+    // ============================================================
+    // DÉPENSES
+    // ============================================================
+    Route::prefix('expenses')->name('expenses.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Cashier\ExpenseController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Cashier\ExpenseController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Cashier\ExpenseController::class, 'store'])->name('store');
+        Route::get('/export', [\App\Http\Controllers\Cashier\ExpenseController::class, 'export'])->name('export');
+        Route::get('/stats', [\App\Http\Controllers\Cashier\ExpenseController::class, 'stats'])->name('stats');
+        Route::get('/search-members', [\App\Http\Controllers\Cashier\ExpenseController::class, 'searchMembers'])->name('search-members');
+        Route::get('/{expense}', [\App\Http\Controllers\Cashier\ExpenseController::class, 'show'])->name('show');
+        Route::get('/{expense}/edit', [\App\Http\Controllers\Cashier\ExpenseController::class, 'edit'])->name('edit');
+        Route::put('/{expense}', [\App\Http\Controllers\Cashier\ExpenseController::class, 'update'])->name('update');
+        Route::delete('/{expense}', [\App\Http\Controllers\Cashier\ExpenseController::class, 'destroy'])->name('destroy');
+    });
+
+    // ============================================================
+    // RAPPORTS JOURNALIERS
+    // ============================================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Cashier\CashierReportController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Cashier\CashierReportController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Cashier\CashierReportController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\Cashier\CashierReportController::class, 'show'])->name('show');
+        Route::get('/{id}/pdf', [\App\Http\Controllers\Cashier\CashierReportController::class, 'pdf'])->name('pdf');
+        Route::get('/{id}/print', [\App\Http\Controllers\Cashier\CashierReportController::class, 'print'])->name('print');
+        Route::post('/{id}/approve', [\App\Http\Controllers\Cashier\CashierReportController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [\App\Http\Controllers\Cashier\CashierReportController::class, 'reject'])->name('reject');
+        Route::delete('/{id}', [\App\Http\Controllers\Cashier\CashierReportController::class, 'destroy'])->name('destroy');
     });
 });
 
