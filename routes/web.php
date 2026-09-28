@@ -435,6 +435,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::post('/{id}/approve', [\App\Http\Controllers\Cashier\CashierReportController::class, 'approve'])->name('approve');
         Route::post('/{id}/reject', [\App\Http\Controllers\Cashier\CashierReportController::class, 'reject'])->name('reject');
         Route::delete('/{id}', [\App\Http\Controllers\Cashier\CashierReportController::class, 'destroy'])->name('destroy');
+        
     });
 });
 
