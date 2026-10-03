@@ -2,7 +2,6 @@
 
 namespace Tests\Browser;
 
-use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
@@ -11,10 +10,7 @@ class WalletTest extends DuskTestCase
 
     public function test_wallet_page_shows_balance_section(): void
     {
-        $user = User::factory()->create([
-            'is_active' => true,
-            'password' => bcrypt('password'),
-        ]);
+        $user = $this->duskUser();
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->visit('/login')

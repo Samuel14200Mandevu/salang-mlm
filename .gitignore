@@ -27,7 +27,10 @@ Homestead.yaml
 Thumbs.db
 .vercel
 .env*
+!.env.dusk.example
+!.env.testing.example
 
 # Backups BDD (ne JAMAIS versionner)
+database/dusk.sqlite
 storage/backups/
 *.sql

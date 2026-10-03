@@ -23,10 +23,13 @@ jobs:
       - name: Prepare Dusk environment
         run: |
           cp .env.dusk.example .env.dusk
+          sed -i "s|/chemin/absolu/vers/projet|${{ github.workspace }}|g" .env.dusk
+          php artisan config:clear --env=dusk
           php artisan key:generate --env=dusk --force
           rm -f database/dusk.sqlite
           touch database/dusk.sqlite
           php artisan migrate:fresh --force --env=dusk
+          php artisan db:seed --class=DuskSeeder --env=dusk
 
       - name: Install Chromium
         run: sudo apt-get update && sudo apt-get install -y chromium-browser
@@ -38,4 +41,6 @@ jobs:
         run: php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
 
       - name: Run Dusk
-        run: php artisan dusk tests/Browser/LoginTest.php tests/Browser/WalletTest.php tests/Browser/CommissionTest.php tests/Browser/PurchaseTest.php --without-tty
+        env:
+          DUSK_CHROME_BINARY: /usr/bin/chromium-browser
+        run: php artisan dusk --env=dusk tests/Browser/LoginTest.php tests/Browser/WalletTest.php tests/Browser/CommissionTest.php tests/Browser/PurchaseTest.php --without-tty
