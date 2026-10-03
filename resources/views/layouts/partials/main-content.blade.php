@@ -202,7 +202,7 @@
             </nav>
 
             <!-- Contenu -->
-            <main class="p-3 sm:p-4 md:p-6 lg:p-8">
+            <main id="main-content" class="p-3 sm:p-4 md:p-6 lg:p-8">
                 @yield('content')
             </main>
         </div>
