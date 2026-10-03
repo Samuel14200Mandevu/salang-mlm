@@ -53,6 +53,11 @@
     font-family: var(--font-family);
   }
 
+  *:focus-visible {
+    outline: 2px solid #5ab638;
+    outline-offset: 2px;
+  }
+
   .dark {
     /* ===== THÈME DARK ===== */
     --bg-page: #111827;
