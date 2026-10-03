@@ -6,6 +6,7 @@ use App\Models\Commission;
 use App\Models\CommissionHistory;
 use App\Models\CommissionPeriod;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 class CommissionHistoryToCommissionsSync
 {
 
@@ -50,15 +51,19 @@ class CommissionHistoryToCommissionsSync
     public function syncHistoryRow(CommissionHistory $history, ?int $commissionPeriodId, bool $dryRun = false): array
     {
         if ($dryRun) {
-            $exists = Commission::query()
-                ->where('source_commission_history_id', $history->id)
-                ->exists();
+            if ($this->hasSourceHistoryColumn()) {
+                $exists = Commission::query()
+                    ->where('source_commission_history_id', $history->id)
+                    ->exists();
 
-            return [
-                'created' => $exists ? 0 : 1,
-                'skipped' => $exists ? 1 : 0,
-                'errors' => 0,
-            ];
+                return [
+                    'created' => $exists ? 0 : 1,
+                    'skipped' => $exists ? 1 : 0,
+                    'errors' => 0,
+                ];
+            }
+
+            return ['created' => 1, 'skipped' => 0, 'errors' => 0];
         }
 
         if ($commissionPeriodId === null) {
@@ -182,10 +187,27 @@ class CommissionHistoryToCommissionsSync
         return ['periods' => $periodReports, 'totals' => $totals];
     }
 
+    public function hasSourceHistoryColumn(): bool
+    {
+        return Schema::hasColumn('commissions', 'source_commission_history_id');
+    }
+
     public function checksumForPeriod(string $periodValue): array
     {
         $historySum = (float) CommissionHistory::query()->where('period', $periodValue)->sum('amount');
         $historyCount = CommissionHistory::query()->where('period', $periodValue)->count();
+
+        if (! $this->hasSourceHistoryColumn()) {
+            return [
+                'period' => $periodValue,
+                'history_count' => $historyCount,
+                'history_sum' => $historySum,
+                'commission_synced_count' => 0,
+                'commission_synced_sum' => 0.0,
+                'aligned' => false,
+                'note' => 'Migration source_commission_history_id pending',
+            ];
+        }
 
         $commissionQuery = Commission::query()
             ->where('period', $periodValue)

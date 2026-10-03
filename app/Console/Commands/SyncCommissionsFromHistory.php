@@ -24,6 +24,10 @@ class SyncCommissionsFromHistory extends Command
 
         if ($dryRun) {
             $this->warn('MODE DRY-RUN — aucune écriture.');
+        } elseif (! $sync->hasSourceHistoryColumn()) {
+            $this->error('Migration 2026_10_03_150000 requise (source_commission_history_id absente).');
+
+            return self::FAILURE;
         }
 
         if (! $ensurePeriods && ! $dryRun) {
