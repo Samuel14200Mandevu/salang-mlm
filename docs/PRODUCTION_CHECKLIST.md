@@ -3,7 +3,14 @@
 ## Backend
 
 - [ ] Tests : `php artisan test` → 54/54
-- [ ] Tests Dusk : `php artisan dusk` → 4/4 (serveur sur `:8000`, Chrome/Chromedriver)
+- [ ] Tests Dusk : 4/4 (SQLite dédié, **pas** MySQL prod)
+
+```bash
+php artisan migrate:fresh --force --env=dusk
+php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
+php artisan dusk tests/Browser/LoginTest.php tests/Browser/WalletTest.php \
+  tests/Browser/CommissionTest.php tests/Browser/PurchaseTest.php
+```
 - [ ] Migrations : `php artisan migrate --force`
 - [ ] Cache : `php artisan config:cache route:cache view:cache`
 - [ ] Queue : `php artisan queue:restart`

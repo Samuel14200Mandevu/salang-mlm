@@ -3,13 +3,11 @@
 namespace Tests\Browser;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 class PurchaseTest extends DuskTestCase
 {
-    use DatabaseMigrations;
 
     public function test_shop_page_loads_for_authenticated_user(): void
     {

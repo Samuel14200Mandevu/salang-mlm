@@ -20,12 +20,13 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Prepare environment
+      - name: Prepare Dusk environment
         run: |
-          cp .env.example .env
-          php artisan key:generate
-          touch database/database.sqlite
-          php artisan migrate --force --env=testing
+          cp .env.dusk.example .env.dusk
+          php artisan key:generate --env=dusk --force
+          rm -f database/dusk.sqlite
+          touch database/dusk.sqlite
+          php artisan migrate:fresh --force --env=dusk
 
       - name: Install Chromium
         run: sudo apt-get update && sudo apt-get install -y chromium-browser
@@ -34,9 +35,7 @@ jobs:
         run: php artisan dusk:chrome-driver --detect
 
       - name: Start application server
-        run: php artisan serve --host=127.0.0.1 --port=8000 &
+        run: php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
 
       - name: Run Dusk
-        env:
-          APP_URL: http://127.0.0.1:8000
-        run: php artisan dusk --without-tty
+        run: php artisan dusk tests/Browser/LoginTest.php tests/Browser/WalletTest.php tests/Browser/CommissionTest.php tests/Browser/PurchaseTest.php --without-tty

@@ -11,6 +11,15 @@ use PHPUnit\Framework\Attributes\BeforeClass;
 
 abstract class DuskTestCase extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (config('database.default') !== 'sqlite') {
+            $this->markTestSkipped('Dusk requires sqlite (see .env.dusk.local).');
+        }
+    }
+
     /**
      * Prepare for Dusk test execution.
      */
