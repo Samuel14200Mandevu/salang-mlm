@@ -85,6 +85,8 @@ abstract class DuskTestCase extends BaseTestCase
             '--disable-smooth-scrolling',
             '--disable-dev-shm-usage',
             '--no-sandbox',
+            '--user-data-dir='.storage_path('dusk-chrome-profile'),
+            '--remote-debugging-port=9222',
         ])->unless($this->hasHeadlessDisabled(), function (Collection $items) {
             return $items->merge([
                 '--disable-gpu',

@@ -32,5 +32,6 @@ Thumbs.db
 
 # Backups BDD (ne JAMAIS versionner)
 database/dusk.sqlite
+storage/dusk-chrome-profile/
 storage/backups/
 *.sql
