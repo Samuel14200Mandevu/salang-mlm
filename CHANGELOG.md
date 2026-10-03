@@ -1,5 +1,11 @@
 # Changelog (corrections audit MLM)
 
+## [Unreleased]
+
+### Refactor
+- Layout caisse : `cashier/layouts/app.blade.php` → **11 lignes** (partials : head, sidebar, topbar, alerts, footer, scripts, bottom-nav, pos-interface, **modals**).
+- Pattern aligné sur le layout membre (`layouts/app.blade.php` → 13 lignes).
+
 ## 2026-10-03 — Phase 4 finale (caisse, Dusk CI, prod)
 
 - Layout caisse découpé (`cashier/layouts/app.blade.php` → 11 lignes, partials POS/panier conservés).
