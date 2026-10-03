@@ -1,5 +1,11 @@
 # Changelog (corrections audit MLM)
 
+## 2026-10-03 — Phase 4 finale (caisse, Dusk CI, prod)
+
+- Layout caisse découpé (`cashier/layouts/app.blade.php` → 11 lignes, partials POS/panier conservés).
+- Dusk : ChromeDriver flags CI, workflow GitHub Actions, skip links + aria-live toasts.
+- `docs/PRODUCTION_CHECKLIST.md`.
+
 ## 2026-10-03 — Phase 4 images, layouts, Dusk
 
 - Conversion WebP (`scripts/convert-webp.php`, `convert-images-to-webp.sh`) — ~5.6 MB PNG/JPEG → ~568 KB WebP.
