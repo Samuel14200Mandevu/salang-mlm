@@ -1,5 +1,13 @@
 # Changelog (corrections audit MLM)
 
+## 2026-10-03 — Phase 4 images, layouts, Dusk
+
+- Conversion WebP (`scripts/convert-webp.php`, `convert-images-to-webp.sh`) — ~5.6 MB PNG/JPEG → ~568 KB WebP.
+- Composant `<x-ui.image>` + preload LCP (`site.webp`) sur la landing.
+- Layout membre découpé en partials (`layouts/app.blade.php` → 13 lignes).
+- Laravel Dusk installé + 4 tests smoke Browser.
+- A11y : landmarks, `focus-visible`, footer légal.
+
 ## 2026-10-03 — Perf bundle frontend
 
 - Chart.js extrait dans `resources/js/charts.js` (entrée Vite séparée, import dynamique sur `admin/reports`).
