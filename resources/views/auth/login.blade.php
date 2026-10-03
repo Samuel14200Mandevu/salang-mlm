@@ -268,9 +268,7 @@
     <!-- Logo -->
     <div class="auth-logo">
         <a href="/" class="block">
-            <img src="{{ asset('images/salang_logo.png') }}" 
-                 alt="Salang" 
-                 class="mx-auto transition-transform hover:scale-105">
+            <x-ui.image :src="asset('images/salang_logo.png')" alt="Salang" class="mx-auto" :priority="true" :lazy="false" />
             <span class="brand-name">
                 Salang Group
             </span>

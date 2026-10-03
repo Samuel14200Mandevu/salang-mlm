@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Salang Group - Health Care International</title>
-    
+    @if (file_exists(public_path('images/site.webp')))
+        <link rel="preload" as="image" href="{{ asset('images/site.webp') }}" type="image/webp">
+    @else
+        <link rel="preload" as="image" href="{{ asset('images/site.png') }}">
+    @endif
 
     <style>
         :root {
@@ -78,7 +82,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: url('{{ asset("images/site.png") }}') center center / cover no-repeat;
+            background: url('{{ asset(file_exists(public_path('images/site.webp')) ? 'images/site.webp' : 'images/site.png') }}') center center / cover no-repeat;
             z-index: 0;
         }
         
@@ -735,10 +739,7 @@
                 
                 <!-- LOGO -->
                 <a href="/" class="logo-container">
-                    <img src="{{ asset('images/salang_logo.png') }}" 
-                         alt="Salang Group - Health Care International" 
-                         class="logo-image"
-                         onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-2xl font-bold text-primary-500\' style=\'font-size:1.5rem;\'>SG</span>'">
+                    <x-ui.image :src="asset('images/salang_logo.png')" alt="Salang Group - Health Care International" class="logo-image" :priority="true" :lazy="false" />
                     <div class="logo-text hidden sm:block">
                         <span class="brand-sub">Health Care International</span>
                     </div>
@@ -897,10 +898,7 @@
                 <!-- IMAGE : ÉQUIPE -->
                 <div class="grid grid-cols-1 gap-4">
                     <div class="image-wrapper">
-                        <img src="{{ asset('images/team.png') }}" 
-                             alt="Équipe Salang Group - Siège à Hong Kong" 
-                             class="image-cover"
-                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\'><span>📸 Équipe Salang</span><small>Ajoutez team.jpg dans resources/images/</small></div></div>'">
+                        <x-ui.image :src="asset('images/team.png')" alt="Équipe Salang Group - Siège à Hong Kong" class="image-cover" />
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="value-card">
@@ -948,10 +946,7 @@
                 <!-- Carte 1 -->
                 <div class="value-card text-left lg:col-span-3">
                     <div class="image-wrapper mb-3">
-                        <img src="{{ asset('images/natural-products.jpeg') }}" 
-                             alt="Produits naturels Salang" 
-                             class="image-cover"
-                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\' style=\'min-height:180px;\'><span>🌿 Produits naturels</span><small>Ajoutez natural-products.jpg</small></div></div>'">
+                        <x-ui.image :src="asset('images/natural-products.jpeg')" alt="Produits naturels Salang" class="image-cover" />
                     </div>
                     <div class="flex items-start gap-3">
                         <div class="icon-wrapper icon-natural" style="width: 2.5rem; height: 2.5rem;">
@@ -970,10 +965,7 @@
                 <!-- Carte 2 -->
                 <div class="value-card text-left">
                     <div class="image-wrapper mb-3">
-                        <img src="{{ asset('images/holistic-health.jpeg') }}" 
-                             alt="Approche holistique Salang" 
-                             class="image-cover"
-                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\' style=\'min-height:180px;\'><span>🧘 Approche holistique</span><small>Ajoutez holistic-health.jpg</small></div></div>'">
+                        <x-ui.image :src="asset('images/holistic-health.jpeg')" alt="Approche holistique Salang" class="image-cover" />
                     </div>
                     <div class="flex items-start gap-3">
                         <div class="icon-wrapper icon-primary" style="width: 2.5rem; height: 2.5rem;">
@@ -991,10 +983,7 @@
                 <!-- Carte 3 -->
                 <div class="value-card text-left">
                     <div class="image-wrapper mb-3">
-                        <img src="{{ asset('images/global-growth.jpg') }}" 
-                             alt="Croissance internationale Salang Group" 
-                             class="image-cover"
-                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\' style=\'min-height:180px;\'><span>🌍 Croissance internationale</span><small>Ajoutez global-growth.jpg</small></div></div>'">
+                        <x-ui.image :src="asset('images/global-growth.jpg')" alt="Croissance internationale Salang Group" class="image-cover" />
                     </div>
                     <div class="flex items-start gap-3">
                         <div class="icon-wrapper icon-company" style="width: 2.5rem; height: 2.5rem;">
@@ -1074,10 +1063,7 @@
             
             <!-- IMAGE : SCHÉMA FONCTIONNEMENT -->
             <div class="image-wrapper mb-8">
-                <img src="{{ asset('images/how-it-works.png') }}" 
-                     alt="Schéma du fonctionnement Salang - 5 étapes pour réussir" 
-                     class="w-full max-w-4xl mx-auto rounded-lg"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\'><span>📊 Schéma du fonctionnement</span><small>Ajoutez how-it-works.png</small></div></div>'">
+                <x-ui.image :src="asset('images/how-it-works.png')" alt="Schéma du fonctionnement Salang - 5 étapes pour réussir" class="w-full max-w-4xl mx-auto rounded-lg" />
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
@@ -1177,10 +1163,7 @@
             <!-- IMAGE : ORGANIGRAMME DES GRADES -->
             <div class="ranks-diagram-container mb-8">
                 <div class="image-wrapper">
-                    <img src="{{ asset('images/ranks-diagram.png') }}" 
-                         alt="Organigramme des grades Salang - Distributeur à Diamond Pearl" 
-                         class="w-full max-w-5xl mx-auto rounded-lg"
-                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\'><span>📈 Organigramme des grades</span><small>Ajoutez ranks-diagram.png</small></div></div>'">
+                    <x-ui.image :src="asset('images/ranks-diagram.png')" alt="Organigramme des grades Salang - Distributeur à Diamond Pearl" class="w-full max-w-5xl mx-auto rounded-lg" />
                 </div>
             </div>
             
@@ -1285,10 +1268,7 @@
             
             <!-- IMAGE : GRAPHIQUE DES BONUS -->
             <div class="image-wrapper mb-6">
-                <img src="{{ asset('images/bonus-chart.png') }}" 
-                     alt="Graphique des pourcentages de bonus Salang" 
-                     class="w-full max-w-4xl mx-auto rounded-lg"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'image-placeholder\'><div class=\'placeholder-text\'><span>📊 Graphique des bonus</span><small>Ajoutez bonus-chart.png</small></div></div>'">
+                <x-ui.image :src="asset('images/bonus-chart.png')" alt="Graphique des pourcentages de bonus Salang" class="w-full max-w-4xl mx-auto rounded-lg" />
             </div>
             
             <div class="overflow-x-auto">
@@ -1437,10 +1417,7 @@
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                 
                 <div class="flex items-center gap-2">
-                    <img src="{{ asset('images/salang_logo.png') }}" 
-                         alt="Salang Group - Logo" 
-                         class="h-10 sm:h-12 w-auto"
-                         onerror="this.style.display='none'">
+                    <x-ui.image :src="asset('images/salang_logo.png')" alt="Salang Group - Logo" class="h-10 sm:h-12 w-auto" :priority="true" :lazy="false" />
                     <div>
                         <span class="font-bold text-[var(--text-primary)] text-sm sm:text-base">Salang Group</span>
                         <span class="block text-[8px] text-[var(--text-tertiary)] uppercase tracking-widest">Health Care International</span>
