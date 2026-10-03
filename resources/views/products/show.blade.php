@@ -69,7 +69,7 @@
         font-size: 0.7rem;
         font-weight: 600;
         background: rgba(139,92,246,0.12);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     
     /* STYLES POUR LA WISHLIST */
@@ -611,7 +611,7 @@ function showToast(message, type) {
     } else if (type === 'warning') {
         toast.style.background = '#f59e0b';
     } else {
-        toast.style.background = '#6366f1';
+        toast.style.background = '#5ab638';
     }
     
     toast.textContent = message;

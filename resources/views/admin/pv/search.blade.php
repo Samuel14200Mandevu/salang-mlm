@@ -148,7 +148,7 @@
     }
     .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }

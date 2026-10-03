@@ -45,7 +45,7 @@
         font-size: 0.7rem;
         font-weight: 600;
     }
-    .type-badge-sponsor { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .type-badge-sponsor { background: rgba(90,182,56,0.15); color: #5ab638; }
     .type-badge-direct { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .type-badge-indirect { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .type-badge-leadership { background: rgba(34,197,94,0.15); color: #22c55e; }
@@ -333,7 +333,7 @@
         <div class="h-48 sm:h-56 flex items-end gap-1 sm:gap-2">
             @php 
                 $max = max(array_column($monthly ?? [], 'total') ?: [1]);
-                $colors = ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+                $colors = ['#5ab638', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#3d8a2a'];
             @endphp
             @foreach($monthly as $index => $data)
                 @php 

@@ -37,7 +37,7 @@
     }
     .icon-green { background: rgba(34, 197, 94, 0.10); color: #16a34a; }
     .icon-blue { background: rgba(59, 130, 246, 0.10); color: #2563eb; }
-    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #8b5cf6; }
+    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
     .icon-orange { background: rgba(245, 158, 11, 0.10); color: #d97706; }
 
     .commission-table {
@@ -246,7 +246,7 @@
         font-weight: 600;
     }
     .type-badge-cash_pos { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
-    .type-badge-direct { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+    .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
     .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
     .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #d97706; }
     .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #16a34a; }

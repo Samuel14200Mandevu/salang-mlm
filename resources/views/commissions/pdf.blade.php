@@ -11,12 +11,12 @@
         }
         .header {
             text-align: center;
-            border-bottom: 2px solid #6366f1;
+            border-bottom: 2px solid #5ab638;
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
         .header h1 {
-            color: #6366f1;
+            color: #5ab638;
             margin: 0;
             font-size: 24px;
         }
@@ -43,7 +43,7 @@
         .summary-item .value {
             font-size: 20px;
             font-weight: bold;
-            color: #6366f1;
+            color: #5ab638;
         }
         table {
             width: 100%;
@@ -51,7 +51,7 @@
             margin-top: 20px;
         }
         th {
-            background: #6366f1;
+            background: #5ab638;
             color: white;
             padding: 10px 12px;
             text-align: left;
@@ -91,7 +91,7 @@
             background: #f8fafc;
         }
         .total-row td {
-            border-top: 2px solid #6366f1;
+            border-top: 2px solid #5ab638;
         }
     </style>
 </head>

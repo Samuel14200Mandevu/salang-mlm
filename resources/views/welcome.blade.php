@@ -2,13 +2,10 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Salang Group - Health Care International</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
 
     <style>
         :root {
@@ -27,7 +24,7 @@
         }
         
         body {
-            font-family: 'Nunito', sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
             background: #f8fafc;
             color: #1a202c;
         }
@@ -262,7 +259,7 @@
         .icon-freedom { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
         .icon-natural { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
         .icon-globe { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-        .icon-company { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+        .icon-company { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
         .icon-primary { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
         
         .value-card {
@@ -669,7 +666,7 @@
         .border-green-400 { border-color: #34d399; }
         .border-teal-400 { border-color: #2dd4bf; }
         .border-purple-400 { border-color: #a78bfa; }
-        .border-indigo-400 { border-color: #818cf8; }
+        .border-primary-400 { border-color: #6fb542; }
         .border-pink-400 { border-color: #f472b6; }
         .text-white { color: #ffffff; }
         .bg-primary-500 { background: #d3ad32; }
@@ -947,9 +944,9 @@
                 <h2 class="section-title mt-3">Pourquoi Salang ?</h2>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <!-- Carte 1 -->
-                <div class="value-card text-left">
+                <div class="value-card text-left lg:col-span-3">
                     <div class="image-wrapper mb-3">
                         <img src="{{ asset('images/natural-products.jpeg') }}" 
                              alt="Produits naturels Salang" 
@@ -969,6 +966,7 @@
                     </div>
                 </div>
 
+                <div class="flex flex-col gap-6 lg:col-span-2">
                 <!-- Carte 2 -->
                 <div class="value-card text-left">
                     <div class="image-wrapper mb-3">
@@ -1009,6 +1007,7 @@
                             <p class="text-xs text-[var(--text-secondary)] mt-1">En pleine croissance à l'international</p>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -1248,7 +1247,7 @@
                         <strong>Bénéfice:</strong> BV * 40% + bonus indirect/leadership
                     </div>
                 </div>
-                <div class="rank-card border-l-4 border-indigo-400">
+                <div class="rank-card border border-neutral-200 rounded-lg">
                     <span class="rank-level">Niveau 8</span>
                     <div class="rank-name">8. Diamant Bleu</div>
                     <div class="rank-detail text-xs">
@@ -1470,7 +1469,6 @@
         </div>
     </footer>
 
-    @livewireScripts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <script>

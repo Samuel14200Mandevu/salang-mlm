@@ -56,7 +56,7 @@
 
     .stat-icon-total { background: rgba(15, 43, 79, 0.10); color: var(--primary-navy); }
     .stat-icon-active { background: rgba(34, 197, 94, 0.10); color: #1F7B4D; }
-    .stat-icon-sponsored { background: rgba(139, 92, 246, 0.10); color: #8b5cf6; }
+    .stat-icon-sponsored { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
     .stat-icon-sponsors { background: rgba(245, 158, 11, 0.10); color: #A65A0E; }
 
     .btn {
@@ -372,7 +372,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Avec parrain</p>
-                    <p class="stat-value text-[#8b5cf6]">{{ $sponsoredCustomers }}</p>
+                    <p class="stat-value text-[#3d8a2a]">{{ $sponsoredCustomers }}</p>
                 </div>
                 <div class="stat-icon stat-icon-sponsored">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

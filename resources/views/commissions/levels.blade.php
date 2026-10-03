@@ -27,7 +27,7 @@
         font-weight: 800;
         font-size: 1rem;
     }
-    .level-number-1 { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .level-number-1 { background: rgba(90,182,56,0.15); color: #5ab638; }
     .level-number-2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .level-number-3 { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .level-number-4 { background: rgba(34,197,94,0.15); color: #22c55e; }
@@ -242,7 +242,7 @@
         font-weight: 700;
         font-size: 1rem;
     }
-    .explanation-card .card-icon-level-1 { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .explanation-card .card-icon-level-1 { background: rgba(90,182,56,0.15); color: #5ab638; }
     .explanation-card .card-icon-level-2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .explanation-card .card-icon-level-3 { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .explanation-card .card-icon-level-4 { background: rgba(34,197,94,0.15); color: #22c55e; }
@@ -321,7 +321,7 @@
         font-size: 1.5rem;
         font-weight: 700;
     }
-    .modal-box .modal-icon-level-1 { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .modal-box .modal-icon-level-1 { background: rgba(90,182,56,0.15); color: #5ab638; }
     .modal-box .modal-icon-level-2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .modal-box .modal-icon-level-3 { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .modal-box .modal-icon-level-4 { background: rgba(34,197,94,0.15); color: #22c55e; }

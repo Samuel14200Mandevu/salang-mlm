@@ -4,7 +4,7 @@
 @push('styles')
 <style>
     .level-badge-4 {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        background: linear-gradient(135deg, #3d8a2a, #7c3aed);
         color: white;
         padding: 0.25rem 1rem;
         border-radius: 9999px;
@@ -57,7 +57,7 @@
         position: relative;
         z-index: 1;
     }
-    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .stat-icon-blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .stat-icon-green { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .stat-icon-orange { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
@@ -76,14 +76,14 @@
     .quick-action-4:hover {
         transform: translateY(-3px);
         box-shadow: var(--shadow-hover);
-        border-left-color: #8b5cf6;
+        border-left-color: #3d8a2a;
     }
     .quick-action-4 .icon {
         width: 1.5rem;
         height: 1.5rem;
         margin: 0 auto 0.25rem;
         display: block;
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     .quick-action-4 .label {
         font-size: 0.75rem;
@@ -92,7 +92,7 @@
     }
     
     .rank-progress-4 .fill {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        background: linear-gradient(135deg, #3d8a2a, #7c3aed);
     }
     .rank-progress-bar-4 {
         width: 100%;
@@ -139,8 +139,8 @@
     .network-level-4.l1 { border-right-color: #3b82f6; }
     .network-level-4.l2 { border-right-color: #22c55e; }
     .network-level-4.l3 { border-right-color: #f59e0b; }
-    .network-level-4.l4 { border-right-color: #8b5cf6; }
-    .network-level-4 .number { font-size: 1.5rem; font-weight: 700; color: #8b5cf6; }
+    .network-level-4.l4 { border-right-color: #3d8a2a; }
+    .network-level-4 .number { font-size: 1.5rem; font-weight: 700; color: #3d8a2a; }
     .network-level-4 .label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
     
     .activity-item-4 {
@@ -180,8 +180,8 @@
         font-weight: 700;
         flex-shrink: 0;
     }
-    .top-downline-4 .rank.purple { background: #8b5cf6; color: white; }
-    .top-downline-4 .rank.purple-light { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+    .top-downline-4 .rank.purple { background: #3d8a2a; color: white; }
+    .top-downline-4 .rank.purple-light { background: rgba(139, 92, 246, 0.2); color: #3d8a2a; }
     
     @media (max-width: 640px) {
         .stat-card-4 { padding: 0.75rem; }

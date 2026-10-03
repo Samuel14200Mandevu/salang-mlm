@@ -7,7 +7,7 @@
         width: 6rem;
         height: 6rem;
         margin: 0 auto 1rem;
-        color: #8b5cf6;
+        color: #3d8a2a;
         animation: float 3s ease-in-out infinite;
     }
     

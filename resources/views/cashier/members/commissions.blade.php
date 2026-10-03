@@ -38,10 +38,10 @@
         border: 1px solid transparent;
     }
     .type-badge-pos { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
-    .type-badge-direct { background: rgba(99, 102, 241, 0.12); color: #6366f1; border-color: #C8D4E3; }
+    .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; border-color: #C8D4E3; }
     .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: #C8D4E3; }
     .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #A65A0E; border-color: #FADCB8; }
-    .type-badge-purchase { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; border-color: #C8D4E3; }
+    .type-badge-purchase { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; border-color: #C8D4E3; }
     .type-badge-new_client { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
     .type-badge-pos_transaction { background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: #C8D4E3; }
     .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
@@ -205,12 +205,12 @@
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#8b5cf6]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[#3d8a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Transactions</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#8b5cf6]">{{ $commissions->total() ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[#3d8a2a]">{{ $commissions->total() ?? 0 }}</p>
         </div>
 
         <div class="card-stats">

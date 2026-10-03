@@ -249,7 +249,7 @@
                     </div>
                     <div id="dropZonePreview" class="hidden">
                         <div class="file-preview">
-                            <img id="filePreviewImage" src="" alt="Aperçu" class="w-full h-full object-cover">
+                            <img id="filePreviewImage" src="" alt="Aperçu" class="w-full h-full object-cover" loading="lazy">
                         </div>
                         <p id="filePreviewName" class="text-xs sm:text-sm font-medium text-[var(--text-primary)] mt-2"></p>
                         <p id="filePreviewSize" class="text-[10px] sm:text-xs text-[var(--text-secondary)]"></p>

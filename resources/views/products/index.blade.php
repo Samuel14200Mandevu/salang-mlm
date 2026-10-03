@@ -453,7 +453,7 @@
                                     <span class="pv-badge">{{ $product->pv_value }} PV</span>
                                 @endif
                                 @if($product->bv_value)
-                                    <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">{{ $product->bv_value }} BV</span>
+                                    <span class="pv-badge" style="background:rgba(139,92,246,0.12);color:#3d8a2a;">{{ $product->bv_value }} BV</span>
                                 @endif
                             </div>
                             
@@ -695,7 +695,7 @@ function showToast(message, type) {
     } else if (type === 'warning') {
         toast.style.background = '#f59e0b';
     } else {
-        toast.style.background = '#6366f1';
+        toast.style.background = '#5ab638';
     }
     
     toast.textContent = message;

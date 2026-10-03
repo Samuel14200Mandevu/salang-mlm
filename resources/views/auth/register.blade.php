@@ -249,7 +249,7 @@
         width: 14px;
         height: 14px;
         border: 2px solid #e5e7eb;
-        border-top: 2px solid #6366f1;
+        border-top: 2px solid #5ab638;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
         flex-shrink: 0;
@@ -272,7 +272,7 @@
         width: 14px;
         height: 14px;
         border: 2px solid #e5e7eb;
-        border-top: 2px solid #6366f1;
+        border-top: 2px solid #5ab638;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
         flex-shrink: 0;
@@ -351,7 +351,7 @@
         color: #111827;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
         border: 1px solid #e5e7eb;
-        border-left: 4px solid #6366f1;
+        border-left: 4px solid #5ab638;
         z-index: 9999;
         display: flex;
         align-items: flex-start;
@@ -426,8 +426,8 @@
     }
 
     .social-info-box {
-        background: rgba(99, 102, 241, 0.06);
-        border: 1px solid rgba(99, 102, 241, 0.15);
+        background: rgba(90, 182, 56, 0.06);
+        border: 1px solid rgba(90, 182, 56, 0.15);
         border-radius: var(--radius-md);
         padding: 1rem;
         margin-bottom: 1rem;
@@ -597,7 +597,7 @@
         @php $socialData = session('social_data'); @endphp
         <div class="social-info-box">
             @if(isset($socialData['avatar']))
-                <img src="{{ $socialData['avatar'] }}" alt="Avatar" class="avatar-social">
+                <img src="{{ $socialData['avatar'] }}" alt="Avatar" class="avatar-social" loading="lazy">
             @else
                 <div class="avatar-social" style="background: var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem;">
                     {{ substr($socialData['name'] ?? 'U', 0, 1) }}
@@ -891,7 +891,7 @@ function showToast(data) {
         error: '#ef4444',
         warning: '#f59e0b'
     };
-    toast.style.borderLeftColor = colors[data.type] || '#6366f1';
+    toast.style.borderLeftColor = colors[data.type] || '#5ab638';
     toast.style.borderLeftWidth = '4px';
     toast.style.borderLeftStyle = 'solid';
     

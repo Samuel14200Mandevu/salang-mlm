@@ -181,7 +181,7 @@
         <tr>
             <td class="logo-cell">
                 @if($logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                    <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
                 @endif
             </td>
             <td class="header-center">
@@ -198,7 +198,7 @@
             </td>
             <td class="logo-cell">
                 @if($logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                    <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
                 @endif
             </td>
         </tr>

@@ -50,7 +50,7 @@
     .stat-icon-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .stat-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
     .stat-icon-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .stat-icon-teal { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
     
     .badge {
@@ -74,7 +74,7 @@
     }
     .badge-purple {
         background: rgba(139, 92, 246, 0.12);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     
     .avatar {
@@ -605,7 +605,7 @@
                     Une fois votre compte supprimé, toutes les données associées seront définitivement perdues.
                 </p>
 
-                <button x-data="" 
+                <button type="button"
                         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
                         class="btn btn-danger text-sm sm:text-base py-2 sm:py-2.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

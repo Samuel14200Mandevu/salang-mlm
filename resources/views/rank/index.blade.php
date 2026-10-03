@@ -30,7 +30,7 @@
     }
     .rank-badge-purple {
         background: rgba(139, 92, 246, 0.15);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     .rank-badge-blue {
         background: rgba(59, 130, 246, 0.15);
@@ -149,12 +149,12 @@
         margin-bottom: 0.25rem;
     }
     .rank-grid .rank-card-item .rank-level-badge.level-1 { background: rgba(156,163,175,0.2); color: #6b7280; }
-    .rank-grid .rank-card-item .rank-level-badge.level-2 { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .rank-grid .rank-card-item .rank-level-badge.level-2 { background: rgba(90,182,56,0.15); color: #5ab638; }
     .rank-grid .rank-card-item .rank-level-badge.level-3 { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .rank-grid .rank-card-item .rank-level-badge.level-4 { background: rgba(16,185,129,0.15); color: #10b981; }
     .rank-grid .rank-card-item .rank-level-badge.level-5 { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .rank-grid .rank-card-item .rank-level-badge.level-6 { background: rgba(236,72,153,0.15); color: #ec4899; }
-    .rank-grid .rank-card-item .rank-level-badge.level-7 { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .rank-grid .rank-card-item .rank-level-badge.level-7 { background: rgba(139,92,246,0.15); color: #3d8a2a; }
     .rank-grid .rank-card-item .rank-level-badge.level-8 { background: rgba(34,197,94,0.15); color: #22c55e; }
     .rank-grid .rank-card-item .rank-level-badge.level-9 { background: rgba(234,179,8,0.15); color: #eab308; }
     
@@ -829,7 +829,7 @@
                     $percent = $total > 0 ? ($count / $total) * 100 : 0;
                     $colors = [
                         'Perle Diamant' => '#eab308',
-                        'Diamant Bleu' => '#8b5cf6',
+                        'Diamant Bleu' => '#3d8a2a',
                         'Saphire Manager' => '#3b82f6',
                         'Directeur Envolée' => '#22c55e',
                         'Manager Senior' => '#14b8a6',

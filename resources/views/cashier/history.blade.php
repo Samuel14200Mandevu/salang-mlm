@@ -22,7 +22,7 @@
     }
     .history-stat-card .number.green { color: #22c55e; }
     .history-stat-card .number.blue { color: #2563eb; }
-    .history-stat-card .number.purple { color: #8b5cf6; }
+    .history-stat-card .number.purple { color: #3d8a2a; }
     .history-stat-card .number.orange { color: #d97706; }
     .history-stat-card .number.red { color: #b32a2a; }
     .history-stat-card .label {
@@ -42,7 +42,7 @@
     }
     .icon-green { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
     .icon-blue { background: rgba(59, 130, 246, 0.10); color: #2563eb; }
-    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #8b5cf6; }
+    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
     .icon-orange { background: rgba(245, 158, 11, 0.10); color: #d97706; }
     .icon-red { background: rgba(179, 42, 42, 0.10); color: #b32a2a; }
 

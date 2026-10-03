@@ -1,19 +1,12 @@
-// Configuration simple sans dépendances externes
-// Ce fichier est requis par Laravel pour le chargement des assets
+import axios from 'axios';
 
-// Configuration pour les requêtes AJAX
-if (typeof window !== 'undefined') {
-    window.axios = {
-        defaults: {
-            headers: {
-                common: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                }
-            }
-        }
-    };
+window.axios = axios;
+
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+if (csrf) {
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf;
 }
 
-// Export pour compatibilité
 export default {};

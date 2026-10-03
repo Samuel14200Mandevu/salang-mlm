@@ -3,7 +3,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title> @yield('title', 'Salang MLM')</title>
 
@@ -20,12 +20,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
 
     <!-- Fonts : Inter élégante -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
     @stack('styles')
 
     <style>
@@ -1380,8 +1374,7 @@
     <!-- ===== TOAST CONTAINER ===== -->
     <div id="toastContainer" class="toast-container"></div>
 
-    @livewireScripts
-    @vite(['resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @stack('scripts')
 
@@ -1512,7 +1505,7 @@
         const sourceLabel = type === 'product' ? 'POS' : 'MLM';
         const pvBadge = card.querySelector('.pv-badge');
         const pvValue = pvBadge ? parseFloat(pvBadge.textContent.replace(' PV', '')) || 0 : 0;
-        const bvBadge = card.querySelector('.pv-badge[style*="color:#8b5cf6"]');
+        const bvBadge = card.querySelector('.pv-badge[style*="color:#3d8a2a"]');
         const bvValue = bvBadge ? parseFloat(bvBadge.textContent.replace(' BV', '')) || 0 : 0;
 
         window.cart.push({
@@ -1584,7 +1577,7 @@
             div.className = 'flex gap-3 items-center py-3 border-b border-[var(--border-color)] last:border-b-0';
             div.innerHTML = `
                 <div class="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-[var(--bg-secondary)]">
-                    ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `
+                    ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" loading="lazy">` : `
                         <svg class="w-full h-full p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                         </svg>
@@ -1682,46 +1675,6 @@
         window.renderCart();
         window.closeClearCartModal();
         window.showToast('Panier vidé avec succès', 'info');
-    };
-
-    window.showToast = function(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast-item ${type}`;
-
-        const icons = {
-            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
-            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
-            warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-        };
-
-        toast.innerHTML = `
-            <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${icons[type] || icons.info}
-            </svg>
-            <span>${message}</span>
-            <button class="toast-close" onclick="this.closest('.toast-item').remove()">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        `;
-
-        container.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.style.animation = 'toastOut 0.3s ease forwards';
-                setTimeout(() => toast.remove(), 400);
-            }
-        }, 3500);
     };
 
     // ================================================================

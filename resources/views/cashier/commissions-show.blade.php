@@ -121,7 +121,7 @@
         font-weight: 600;
     }
     .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; }
-    .type-badge-direct { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+    .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
     .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #A65A0E; }
     .type-badge-cash_pos { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; }

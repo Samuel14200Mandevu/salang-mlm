@@ -3,7 +3,6 @@
 @extends('admin.layouts.app')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
     --primary-blue: #0A2A6C;

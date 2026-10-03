@@ -42,7 +42,7 @@
         flex-shrink: 0;
     }
     .stat-icon-yellow { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .stat-icon-green { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .stat-icon-blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     

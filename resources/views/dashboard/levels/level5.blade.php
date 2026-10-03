@@ -59,7 +59,7 @@
     .stat-icon-gold { background: rgba(234, 179, 8, 0.12); color: #eab308; }
     .stat-icon-blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .stat-icon-green { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     
     .quick-action-5 {
         background: var(--bg-card);
@@ -116,7 +116,7 @@
     .network-level-5.l1 .number { color: #3b82f6; }
     .network-level-5.l2 .number { color: #22c55e; }
     .network-level-5.l3 .number { color: #f59e0b; }
-    .network-level-5.l4 .number { color: #8b5cf6; }
+    .network-level-5.l4 .number { color: #3d8a2a; }
     .network-level-5.l5 .number { color: #ef4444; }
     
     .leader-item-5 {

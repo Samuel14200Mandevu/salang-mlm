@@ -2,7 +2,6 @@
 @extends('admin.layouts.app')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
     --bg-base: #F5F6F8;
@@ -384,7 +383,7 @@ function previewImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            preview.innerHTML = '<img src="' + e.target.result + '" alt="Aperçu">';
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="Aperçu" loading="lazy">';
             preview.className = 'image-preview';
         };
         reader.readAsDataURL(input.files[0]);

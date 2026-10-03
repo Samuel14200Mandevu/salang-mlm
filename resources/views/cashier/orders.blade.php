@@ -117,7 +117,7 @@
     }
     .badge-source-web {
         background: #EDE8F5;
-        color: #8b5cf6;
+        color: #3d8a2a;
         border-color: #D4C8E3;
     }
 

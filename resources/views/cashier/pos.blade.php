@@ -56,11 +56,11 @@
     }
     .pv-15 { background: rgba(16, 185, 129, 0.12); color: #10b981; }
     .pv-20 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .pv-25 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .pv-25 { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .pv-30 { background: rgba(236, 72, 153, 0.12); color: #ec4899; }
     .pv-35 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .pv-40 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .pv-45 { background: rgba(168, 85, 247, 0.12); color: #8b5cf6; }
+    .pv-45 { background: rgba(168, 85, 247, 0.12); color: #3d8a2a; }
     .pv-50 { background: rgba(236, 72, 153, 0.12); color: #ec4899; }
     .pv-55 { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
     .pv-75 { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
@@ -74,7 +74,7 @@
         font-size: 0.55rem;
         font-weight: 600;
         background: rgba(139, 92, 246, 0.10);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
 
     /* ============================================================

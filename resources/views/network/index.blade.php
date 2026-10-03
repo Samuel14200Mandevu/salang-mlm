@@ -115,7 +115,7 @@
     /* Couleurs des avatars par grade (copié de ton code) */
     .avatar-rank-1 { background: linear-gradient(135deg, #6b7280, #4b5563); }
     .avatar-rank-2 { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
-    .avatar-rank-3 { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+    .avatar-rank-3 { background: linear-gradient(135deg, #a78bfa, #3d8a2a); }
     .avatar-rank-4 { background: linear-gradient(135deg, #34d399, #22c55e); }
     /* ... ajoute les autres grades ici ... */
 

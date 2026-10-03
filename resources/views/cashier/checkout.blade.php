@@ -407,7 +407,7 @@
     }
     .pv-badge-bv {
         background: rgba(139,92,246,0.12);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     
     @keyframes fadeInUp {
@@ -527,7 +527,7 @@
                                 <div class="checkout-item">
                                     <div class="item-image">
                                         @if(isset($item['image']) && $item['image'])
-                                            <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}">
+                                            <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" loading="lazy">
                                         @else
                                             <svg class="w-full h-full p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>

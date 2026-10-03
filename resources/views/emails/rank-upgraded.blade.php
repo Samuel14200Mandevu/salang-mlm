@@ -20,7 +20,7 @@
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
         }
         .email-header {
-            background: #8b5cf6;
+            background: #3d8a2a;
             padding: 24px 30px;
             text-align: center;
         }
@@ -53,7 +53,7 @@
             background: #f8fafc;
             border-radius: 8px;
             padding: 20px;
-            border-left: 4px solid #8b5cf6;
+            border-left: 4px solid #3d8a2a;
             margin: 16px 0;
             text-align: center;
         }
@@ -64,13 +64,13 @@
         }
         .rank-box .arrow {
             font-size: 24px;
-            color: #8b5cf6;
+            color: #3d8a2a;
             margin: 0 12px;
         }
         .rank-box .new-rank {
             font-size: 28px;
             font-weight: 800;
-            color: #8b5cf6;
+            color: #3d8a2a;
         }
         .rank-box .rank-level {
             font-size: 13px;
@@ -85,7 +85,7 @@
         .btn {
             display: inline-block;
             padding: 10px 24px;
-            background: #8b5cf6;
+            background: #3d8a2a;
             color: white;
             border-radius: 6px;
             text-decoration: none;
@@ -106,7 +106,7 @@
             margin: 0;
         }
         .email-footer a {
-            color: #8b5cf6;
+            color: #3d8a2a;
             text-decoration: none;
         }
         @media (max-width: 480px) {

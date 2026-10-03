@@ -2,7 +2,6 @@
 @extends('admin.layouts.app')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
     --primary-blue: #0A2A6C;
@@ -205,6 +204,33 @@
     color: #92400E;
 }
 
+.current-sponsor-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+.current-sponsor-box strong {
+    color: var(--text-primary);
+}
+
+.parrain-feedback {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    min-height: 1rem;
+}
+.parrain-feedback.success {
+    color: #1C7E4A;
+}
+.parrain-feedback.error {
+    color: #B91C1C;
+}
+.parrain-feedback.loading {
+    color: var(--text-tertiary);
+}
+
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -294,8 +320,19 @@
         </div>
     @endif
 
+    @if(session('success'))
+        <div class="animate-fadeInUp delay-1" style="background: rgba(28, 126, 74, 0.08); border: 1px solid rgba(28, 126, 74, 0.2); color: #1C7E4A; padding: 0.75rem 1rem; border-radius: 8px;">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm font-medium">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif
+
     <div class="card animate-fadeInUp delay-2 max-w-2xl p-3 sm:p-4">
-        <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+        <form action="{{ route('admin.users.update', $user->id) }}" method="POST" id="userEditForm">
             @csrf @method('PUT')
 
             <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -381,33 +418,51 @@
                     <span class="help-text">Sélectionnez un package pour cet utilisateur</span>
                 </div>
 
-                <!-- Sponsor -->
+                {{-- ═══════════════════════════════════════════════════════════ --}}
+                {{-- SPONSOR (PARRAIN) - SAISIE PAR CODE --}}
+                {{-- ═══════════════════════════════════════════════════════════ --}}
                 <div class="form-group" id="sponsorGroup">
                     <label>Sponsor (Parrain)</label>
-                    <select name="parrain_id" class="form-control">
-                        <option value="">Aucun</option>
-                        @foreach($users ?? [] as $sponsor)
-                            @if($sponsor->id != $user->id)
-                                <option value="{{ $sponsor->id }}"
-                                    {{ $user->parrain_id == $sponsor->id ? 'selected' : '' }}>
-                                    {{ $sponsor->name }} ({{ $sponsor->sponsor_id }})
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
-                    <span class="help-text">Sélectionnez le parrain pour cet utilisateur</span>
+                    <input type="text"
+                           name="parrain_code"
+                           id="parrainCode"
+                           value="{{ old('parrain_code') }}"
+                           class="form-control @error('parrain_code') form-control-error @enderror"
+                           autocomplete="off">
+                    <span class="help-text">
+                        Entrez le <strong>code de parrain</strong> pour changer de parrain.
+                        Laissez vide pour ne pas modifier.
+                    </span>
+
+                    <!-- Zone de feedback AJAX -->
+                    <div id="parrainFeedback" class="parrain-feedback"></div>
+
+                    <!-- Affichage du parrain actuel -->
+                    <div class="current-sponsor-box mt-2">
+                        @if($user->parrain)
+                            <strong>Parrain actuel :</strong>
+                            {{ $user->parrain->name }}
+                            (Code: <span style="font-family: monospace;">{{ $user->parrain->sponsor_id }}</span>)
+                        @else
+                            <strong>Parrain actuel :</strong> Aucun
+                        @endif
+                    </div>
+
+                    @error('parrain_code')
+                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Sponsor Code (read-only) -->
                 <div class="form-group">
-                    <label>Code de parrain</label>
+                    <label>Mon code de parrain</label>
                     <input type="text" value="{{ $user->sponsor_id ?? 'Aucun' }}"
                            class="form-control bg-[var(--bg-secondary)] cursor-not-allowed" disabled>
-                    <span class="help-text">Code unique de parrain (non modifiable)</span>
+                    <span class="help-text">Code unique de cet utilisateur (non modifiable)</span>
                 </div>
 
                 {{-- ═══════════════════════════════════════════════════════════ --}}
-                {{-- ✅ NOUVEAU : GRADE (RANG) --}}
+                {{-- ✅ GRADE (RANG) --}}
                 {{-- ═══════════════════════════════════════════════════════════ --}}
                 <div class="form-group" id="rankGroup">
                     <label>Grade (Rang)</label>
@@ -531,6 +586,23 @@
                 </div>
             </div>
 
+            <!-- ⚠️ Warning box : changement de parrain -->
+            <div class="warning-box mt-3">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium">Important — Changement de parrain</p>
+                        <p class="text-sm">
+                            Le changement de parrain <strong>impacte tout le réseau MLM</strong> (commissions, downline, grades).
+                            Vérifiez bien le code avant de valider. Assurez-vous que le nouveau parrain n'est pas déjà
+                            dans le réseau descendant de cet utilisateur (risque de cycle).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Buttons -->
             <div class="mt-4 flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary flex-1 sm:flex-none">
@@ -551,6 +623,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    /* ═══════════════════════════════════════════════════════════
+       GESTION DU RÔLE
+    ═══════════════════════════════════════════════════════════ */
     const roleOptions = document.querySelectorAll('.role-option');
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
@@ -596,6 +671,119 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    /* ═══════════════════════════════════════════════════════════
+       VÉRIFICATION AJAX DU CODE PARRAIN
+    ═══════════════════════════════════════════════════════════ */
+    const parrainInput = document.getElementById('parrainCode');
+    const parrainFeedback = document.getElementById('parrainFeedback');
+    const form = document.getElementById('userEditForm');
+    const currentUserId = {{ $user->id }};
+    const currentParrainId = {{ $user->parrain_id ?? 'null' }};
+
+    let parrainValide = false;
+    let parrainIdVerifie = null;
+
+    if (parrainInput) {
+        let debounceTimer;
+
+        parrainInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const code = this.value.trim();
+
+            // Reset
+            parrainValide = false;
+            parrainIdVerifie = null;
+
+            if (code === '') {
+                parrainFeedback.className = 'parrain-feedback';
+                parrainFeedback.innerHTML = '';
+                return;
+            }
+
+            // Debounce : attendre 500ms après la dernière frappe
+            debounceTimer = setTimeout(function() {
+                verifierCodeParrain(code);
+            }, 500);
+        });
+    }
+
+    function verifierCodeParrain(code) {
+        parrainFeedback.className = 'parrain-feedback loading';
+        parrainFeedback.innerHTML = '⏳ Vérification du code...';
+
+        const url = '{{ route("admin.users.verify-sponsor") }}?code=' + encodeURIComponent(code);
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.valid) {
+                // Vérifications locales supplémentaires
+                if (data.id === currentUserId) {
+                    parrainFeedback.className = 'parrain-feedback error';
+                    parrainFeedback.innerHTML = '✗ Un utilisateur ne peut pas être son propre parrain.';
+                    return;
+                }
+
+                if (data.id === currentParrainId) {
+                    parrainFeedback.className = 'parrain-feedback loading';
+                    parrainFeedback.innerHTML = 'ℹ Ce parrain est identique au parrain actuel.';
+                    parrainValide = true;
+                    parrainIdVerifie = data.id;
+                    return;
+                }
+
+                parrainValide = true;
+                parrainIdVerifie = data.id;
+                parrainFeedback.className = 'parrain-feedback success';
+                parrainFeedback.innerHTML = '✓ Parrain trouvé : <strong>' +
+                    escapeHtml(data.name) + '</strong> (Code: ' + escapeHtml(data.sponsor_id) + ')';
+            } else {
+                parrainFeedback.className = 'parrain-feedback error';
+                parrainFeedback.innerHTML = '✗ ' + escapeHtml(data.message || 'Code invalide');
+            }
+        })
+        .catch(error => {
+            parrainFeedback.className = 'parrain-feedback error';
+            parrainFeedback.innerHTML = '✗ Erreur de vérification. Réessayez.';
+            console.error('Erreur vérification parrain:', error);
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       VALIDATION AVANT SOUMISSION
+    ═══════════════════════════════════════════════════════════ */
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const code = parrainInput ? parrainInput.value.trim() : '';
+
+            if (code !== '' && !parrainValide) {
+                e.preventDefault();
+                parrainFeedback.className = 'parrain-feedback error';
+                parrainFeedback.innerHTML = '✗ Veuillez attendre la vérification du code parrain ou corriger le code.';
+                parrainInput.focus();
+                parrainInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+        });
+    }
 });
 </script>
 @endpush

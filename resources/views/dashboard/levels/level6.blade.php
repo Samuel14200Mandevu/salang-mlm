@@ -4,7 +4,7 @@
 @push('styles')
 <style>
     .level-badge-6 {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        background: linear-gradient(135deg, #3d8a2a, #7c3aed);
         color: white;
         padding: 0.25rem 1rem;
         border-radius: 9999px;
@@ -30,7 +30,7 @@
     .stat-card-6:hover {
         transform: translateY(-4px);
         box-shadow: var(--shadow-lg);
-        border-top-color: #8b5cf6;
+        border-top-color: #3d8a2a;
     }
     .stat-card-6 .stat-icon {
         width: 2.5rem;
@@ -41,7 +41,7 @@
         justify-content: center;
         flex-shrink: 0;
     }
-    .stat-icon-purple-6 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+    .stat-icon-purple-6 { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
     .stat-icon-blue-6 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .stat-icon-green-6 { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
     .stat-icon-orange-6 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
@@ -60,14 +60,14 @@
     .quick-action-6:hover {
         transform: translateY(-3px);
         box-shadow: var(--shadow-hover);
-        border-left-color: #8b5cf6;
+        border-left-color: #3d8a2a;
     }
     .quick-action-6 .icon {
         width: 1.5rem;
         height: 1.5rem;
         margin: 0 auto 0.25rem;
         display: block;
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     .quick-action-6 .label {
         font-size: 0.75rem;
@@ -76,7 +76,7 @@
     }
     
     .rank-progress-6 .fill {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        background: linear-gradient(135deg, #3d8a2a, #7c3aed);
     }
     .rank-progress-bar-6 {
         width: 100%;
@@ -108,9 +108,9 @@
     .network-level-6.l1 { border-bottom-color: #3b82f6; .number { color: #3b82f6; } }
     .network-level-6.l2 { border-bottom-color: #22c55e; .number { color: #22c55e; } }
     .network-level-6.l3 { border-bottom-color: #f59e0b; .number { color: #f59e0b; } }
-    .network-level-6.l4 { border-bottom-color: #8b5cf6; .number { color: #8b5cf6; } }
+    .network-level-6.l4 { border-bottom-color: #3d8a2a; .number { color: #3d8a2a; } }
     .network-level-6.l5 { border-bottom-color: #ec4899; .number { color: #ec4899; } }
-    .network-level-6.l6 { border-bottom-color: #8b5cf6; .number { color: #8b5cf6; } }
+    .network-level-6.l6 { border-bottom-color: #3d8a2a; .number { color: #3d8a2a; } }
     
     .activity-item-6 {
         display: flex;

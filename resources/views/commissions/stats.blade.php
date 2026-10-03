@@ -121,11 +121,11 @@
     }
     
     .color-map {
-        --color-primary: #6366f1;
+        --color-primary: #5ab638;
         --color-success: #22c55e;
         --color-warning: #f59e0b;
         --color-danger: #ef4444;
-        --color-purple: #8b5cf6;
+        --color-purple: #3d8a2a;
         --color-info: #3b82f6;
     }
     
@@ -243,18 +243,18 @@
                 @php
                     $totalAmount = $stats['total'] ?? 1;
                     $colorMap = [
-                        'primary' => '#6366f1',
+                        'primary' => '#5ab638',
                         'success' => '#22c55e',
                         'warning' => '#f59e0b',
                         'danger' => '#ef4444',
-                        'purple' => '#8b5cf6',
+                        'purple' => '#3d8a2a',
                         'info' => '#3b82f6'
                     ];
                 @endphp
                 @foreach($stats['by_type'] ?? [] as $type => $data)
                     @php
                         $percent = $totalAmount > 0 ? ($data['total'] / $totalAmount) * 100 : 0;
-                        $color = $colorMap[$data['color']] ?? '#6366f1';
+                        $color = $colorMap[$data['color']] ?? '#5ab638';
                     @endphp
                     <div>
                         <div class="flex justify-between text-xs sm:text-sm">

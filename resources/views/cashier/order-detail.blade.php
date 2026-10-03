@@ -16,7 +16,7 @@
     }
     .badge-source-web {
         background: rgba(139, 92, 246, 0.12);
-        color: #8b5cf6;
+        color: #3d8a2a;
     }
     .badge-source-mlm {
         background: rgba(59, 130, 246, 0.12);
@@ -325,7 +325,7 @@
         ">
             <span class="font-semibold
                 @if($order->source == 'pos') text-[#16a34a]
-                @elseif($order->source == 'web' || $order->source == 'online') text-[#8b5cf6]
+                @elseif($order->source == 'web' || $order->source == 'online') text-[#3d8a2a]
                 @else text-[#2563eb]
                 @endif
             ">
@@ -384,7 +384,7 @@
                                     <span class="ml-2 text-[#16a34a] font-medium">{{ $item->pv_value }} PV</span>
                                 @endif
                                 @if($item->bv_value > 0)
-                                    <span class="ml-2 text-[#8b5cf6] font-medium">{{ $item->bv_value }} BV</span>
+                                    <span class="ml-2 text-[#3d8a2a] font-medium">{{ $item->bv_value }} BV</span>
                                 @endif
                             </p>
                         </div>
@@ -408,7 +408,7 @@
                                 <span class="font-medium text-[#16a34a]">Total PV: {{ $totalPV }} PV</span>
                             @endif
                             @if($totalBV > 0)
-                                <span class="font-medium text-[#8b5cf6]">Total BV: {{ $totalBV }} BV</span>
+                                <span class="font-medium text-[#3d8a2a]">Total BV: {{ $totalBV }} BV</span>
                             @endif
                         </div>
                     </div>
@@ -503,7 +503,7 @@
                     <span class="text-[var(--text-secondary)]">Source</span>
                     <span class="font-medium
                         @if($order->source == 'pos') text-[#16a34a]
-                        @elseif($order->source == 'web' || $order->source == 'online') text-[#8b5cf6]
+                        @elseif($order->source == 'web' || $order->source == 'online') text-[#3d8a2a]
                         @else text-[#2563eb]
                         @endif
                     ">

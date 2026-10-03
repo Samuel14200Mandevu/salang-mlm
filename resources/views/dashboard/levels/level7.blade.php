@@ -106,9 +106,9 @@
     .network-level-7.l1 .number { color: #3b82f6; }
     .network-level-7.l2 .number { color: #22c55e; }
     .network-level-7.l3 .number { color: #f59e0b; }
-    .network-level-7.l4 .number { color: #8b5cf6; }
+    .network-level-7.l4 .number { color: #3d8a2a; }
     .network-level-7.l5 .number { color: #ec4899; }
-    .network-level-7.l6 .number { color: #8b5cf6; }
+    .network-level-7.l6 .number { color: #3d8a2a; }
     .network-level-7.l7 .number { color: #ec4899; }
     
     .leader-item-7 {

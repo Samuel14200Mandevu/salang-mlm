@@ -17,7 +17,7 @@
     }
     .method-card.selected {
         border-color: var(--primary-500);
-        background: rgba(99,102,241,0.05);
+        background: rgba(90,182,56,0.05);
     }
     .method-card .method-icon { font-size: 2rem; display: block; margin-bottom: 0.25rem; }
     .method-card .method-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); }

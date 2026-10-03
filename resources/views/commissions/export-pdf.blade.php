@@ -155,7 +155,7 @@
         }
         .stats-grid .stat-box .value.green { color: #22c55e; }
         .stats-grid .stat-box .value.yellow { color: #f59e0b; }
-        .stats-grid .stat-box .value.purple { color: #8b5cf6; }
+        .stats-grid .stat-box .value.purple { color: #3d8a2a; }
         .stats-grid .stat-box .value.blue { color: #3b82f6; }
         
         /* ===== DISTRIBUTION PAR TYPE EN COLONNES ===== */
@@ -190,7 +190,7 @@
             color: #a0aec0;
         }
         
-        .type-grid .type-box.type-sponsor { border-left: 3px solid #6366f1; }
+        .type-grid .type-box.type-sponsor { border-left: 3px solid #5ab638; }
         .type-grid .type-box.type-direct { border-left: 3px solid #3b82f6; }
         .type-grid .type-box.type-indirect { border-left: 3px solid #f59e0b; }
         .type-grid .type-box.type-leadership { border-left: 3px solid #22c55e; }
@@ -283,7 +283,7 @@
             white-space: nowrap;
             text-transform: uppercase;
         }
-        .badge-type-sponsor { background: rgba(99,102,241,0.15); color: #6366f1; }
+        .badge-type-sponsor { background: rgba(90,182,56,0.15); color: #5ab638; }
         .badge-type-direct { background: rgba(59,130,246,0.15); color: #3b82f6; }
         .badge-type-indirect { background: rgba(245,158,11,0.15); color: #f59e0b; }
         .badge-type-leadership { background: rgba(34,197,94,0.15); color: #22c55e; }
@@ -382,7 +382,7 @@
                         $logoPath = public_path('images/salang_logo.png');
                         if(file_exists($logoPath)):
                     @endphp
-                        <img src="{{ $logoPath }}" alt="SALANG GROUP">
+                        <img src="{{ $logoPath }}" alt="SALANG GROUP" loading="lazy">
                     @else
                         <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="#0E2F76" stroke-width="2">
                             <path d="M12 2L2 7l10 5 10-5-10-5z"/>

@@ -51,7 +51,7 @@
         font-size: 0.7rem;
         font-weight: 600;
     }
-    .type-badge-direct { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .type-badge-direct { background: rgba(90,182,56,0.15); color: #5ab638; }
     .type-badge-indirect { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .type-badge-leadership { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .type-badge-retail { background: rgba(34,197,94,0.15); color: #22c55e; }

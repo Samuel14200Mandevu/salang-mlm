@@ -10,11 +10,11 @@
         
         body { 
             font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 11px; 
+            font-size: 14px; 
             color: #000; 
-            padding: 10px 18px 45px 18px;
+            padding: 10px 18px 50px 18px;
             background: #fff;
-            line-height: 1.3;
+            line-height: 1.35;
         }
 
         /* PIED DE PAGE PERMANENT */
@@ -29,7 +29,7 @@
             padding: 4px 20px 6px 20px;
         }
         .footer-left {
-            font-size: 9px;
+            font-size: 11px;
             line-height: 1.3;
             text-align: center;
             color: #000;
@@ -39,7 +39,7 @@
             margin-top: 3px;
         }
         .footer-right {
-            font-size: 8px;
+            font-size: 10px;
             color: #666;
             text-align: right;
             margin-top: 1px;
@@ -61,18 +61,18 @@
             padding: 2px 4px;
         }
         .logo-cell {
-            width: 65px;
+            width: 70px;
             text-align: center;
         }
         .logo-cell img {
-            max-height: 45px;
+            max-height: 50px;
             width: auto;
         }
         .header-center {
             text-align: center;
         }
         .company-title {
-            font-size: 16px;
+            font-size: 19px;
             font-weight: bold;
             color: #558b2f;
             text-transform: uppercase;
@@ -80,12 +80,12 @@
             margin-bottom: 1px;
         }
         .header-text {
-            font-size: 7.5px;
+            font-size: 10px;
             line-height: 1.2;
             font-weight: bold;
         }
         .address {
-            font-size: 7px;
+            font-size: 9.5px;
             color: #000;
             margin-top: 1px;
             line-height: 1.2;
@@ -99,7 +99,7 @@
         /* TITRE ET META */
         .main-title {
             text-align: center;
-            font-size: 17px;
+            font-size: 20px;
             font-weight: bold;
             color: #0E2F76;
             text-transform: uppercase;
@@ -109,7 +109,7 @@
         .form-meta {
             width: 100%;
             margin-bottom: 4px;
-            font-size: 10.5px;
+            font-size: 13.5px;
             font-weight: bold;
             border-collapse: collapse;
         }
@@ -119,7 +119,7 @@
 
         /* SECTIONS NUMÉROTÉES */
         .section-header {
-            font-size: 11.5px;
+            font-size: 15px;
             font-weight: bold;
             color: #558b2f;
             border-bottom: 2px solid #8b0000;
@@ -139,18 +139,18 @@
             padding: 4px 8px;
             border: 1px solid #000;
             text-align: center;
-            font-size: 10.5px;
+            font-size: 13.5px;
             background-color: #f9f9f9;
         }
         .totals-grid .label {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 8.5px;
+            font-size: 11px;
             background-color: #f2f2f2;
         }
         .totals-grid .amount {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 15px;
         }
         .direct-color { color: #4F46E5; }
         .indirect-color { color: #2563EB; }
@@ -162,7 +162,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 3px 0 4px 0;
-            font-size: 9px;
+            font-size: 12px;
         }
         
         .global-table thead {
@@ -178,24 +178,24 @@
             color: #000;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 7.5px;
-            padding: 3px 4px;
+            font-size: 10px;
+            padding: 4px 5px;
             border: 1px solid #000;
             text-align: center;
         }
         .global-table td {
-            padding: 2px 4px;
+            padding: 3px 5px;
             border: 1px solid #000;
             text-align: center;
             vertical-align: middle;
-            font-size: 8.5px;
+            font-size: 11.5px;
         }
         .global-table td.text-left { text-align: left; }
         .global-table td.text-right { text-align: right; }
 
         .global-table .total-row td {
             font-weight: bold;
-            font-size: 9.5px;
+            font-size: 12.5px;
             background-color: #f9f9f9;
         }
 
@@ -204,22 +204,22 @@
             background-color: #0E2F76;
             color: #fff;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 13px;
             padding: 4px 8px;
             text-align: left;
         }
         .user-total-row td {
             background-color: #f9f9f9;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 12px;
         }
 
         /* BADGES */
         .badge {
             display: inline-block;
-            padding: 1px 5px;
+            padding: 2px 6px;
             border-radius: 2px;
-            font-size: 7px;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
         }
@@ -229,9 +229,9 @@
         .badge-cash { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
 
         @media print {
-            body { padding: 8px 15px 40px 15px; }
+            body { padding: 8px 15px 45px 15px; }
             @page { 
-                size: A4 portrait;
+                size: A4 landscape;
                 margin: 0.4cm 0.5cm; 
             }
         }
@@ -265,7 +265,7 @@
                             }
                         @endphp
                         @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
                         @endif
                     </td>
                     <td class="header-center">
@@ -282,7 +282,7 @@
                     </td>
                     <td class="logo-cell">
                         @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
                         @endif
                     </td>
                 </tr>

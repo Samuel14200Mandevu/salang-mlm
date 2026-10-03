@@ -37,7 +37,7 @@
 
     .stat-icon-orders { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
     .stat-icon-amount { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
-    .stat-icon-average { background: rgba(139, 92, 246, 0.10); color: #8b5cf6; }
+    .stat-icon-average { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
     .stat-icon-ratio { background: rgba(59, 130, 246, 0.10); color: #3b82f6; }
 
     .badge-source-pos {
@@ -266,7 +266,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Moyenne</p>
-                    <p class="stat-value text-[#8b5cf6]">${{ number_format($stats['average_order'] ?? 0, 2) }}</p>
+                    <p class="stat-value text-[#3d8a2a]">${{ number_format($stats['average_order'] ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-average">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
