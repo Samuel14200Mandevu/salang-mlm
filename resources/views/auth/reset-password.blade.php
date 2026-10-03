@@ -176,9 +176,15 @@
     
    <!-- Logo -->
 <div class="auth-logo">
-    <img src="{{ asset('images/salang_logo.png') }}" 
-         alt="Salang MLM" 
-         class="logo-themeable h-12 sm:h-16 w-auto mx-auto">
+    <x-ui.image
+        src="images/salang_logo.png"
+        alt="Salang MLM"
+        class="logo-themeable h-12 sm:h-16 w-auto mx-auto"
+        width="200"
+        height="64"
+        :priority="true"
+        :lazy="false"
+    />
     <span class="brand-name block mt-2">Salang Group</span>
 </div>
 

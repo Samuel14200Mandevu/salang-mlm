@@ -268,7 +268,15 @@
     <!-- Logo -->
     <div class="auth-logo">
         <a href="/" class="block">
-            <x-ui.image :src="asset('images/salang_logo.png')" alt="Salang" class="mx-auto" :priority="true" :lazy="false" />
+            <x-ui.image
+                src="images/salang_logo.png"
+                alt="Salang"
+                class="logo-themeable h-12 sm:h-16 w-auto mx-auto"
+                width="200"
+                height="64"
+                :priority="true"
+                :lazy="false"
+            />
             <span class="brand-name">
                 Salang Group
             </span>

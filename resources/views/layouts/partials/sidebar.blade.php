@@ -26,9 +26,11 @@
                 <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
                     <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1">
                         <x-ui.image
-                            :src="asset('images/salang_logo.png')"
+                            src="images/salang_logo.png"
                             alt="Salang"
                             class="logo-themeable transition-all duration-300 h-14 w-auto"
+                            width="200"
+                            height="56"
                             :priority="true"
                             :lazy="false"
                         />

@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Salang Group - Health Care International</title>
+    @if (file_exists(public_path('images/salang_logo.webp')))
+        <link rel="preload" as="image" href="{{ asset('images/salang_logo.webp') }}" type="image/webp" fetchpriority="high">
+    @elseif (file_exists(public_path('images/salang_logo.png')))
+        <link rel="preload" as="image" href="{{ asset('images/salang_logo.png') }}" fetchpriority="high">
+    @endif
     @if (file_exists(public_path('images/site.webp')))
         <link rel="preload" as="image" href="{{ asset('images/site.webp') }}" type="image/webp">
-    @else
+    @elseif (file_exists(public_path('images/site.png')))
         <link rel="preload" as="image" href="{{ asset('images/site.png') }}">
     @endif
 

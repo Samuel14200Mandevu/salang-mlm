@@ -154,7 +154,7 @@
     <!-- En-tête simplifié avec détection automatique -->
     <header class="legal-header">
         <div class="logo">
-            <img src="{{ asset('images/salang_logo.png') }}" alt="Salang">
+            <x-ui.image src="images/salang_logo.png" alt="Salang" width="200" height="48" :priority="true" :lazy="false" />
             <span>Salang Group</span>
         </div>
     </header>

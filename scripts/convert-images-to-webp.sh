@@ -1,83 +1,84 @@
 #!/usr/bin/env bash
-# Convertit PNG/JPEG de public/images en WebP (cwebp ou Node/sharp).
-
 set -euo pipefail
 
-IMAGES_DIR="${1:-public/images}"
-QUALITY="${2:-80}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-convert_with_cwebp() {
-    local file="$1"
-    local output="${file%.*}.webp"
-    if [[ -f "$output" && "$output" -nt "$file" ]]; then
-        echo "⏭️  Skip: $(basename "$file") (déjà converti)"
-        return 0
-    fi
-    local original_size new_size
-    original_size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
-    if cwebp -q "$QUALITY" "$file" -o "$output" -quiet 2>/dev/null; then
-        new_size=$(stat -c%s "$output" 2>/dev/null || stat -f%z "$output")
-        echo "✅ $(basename "$file"): $((original_size / 1024)) KB → $((new_size / 1024)) KB"
-    else
-        echo "❌ Erreur cwebp: $(basename "$file")"
-        return 1
-    fi
-}
+IMAGES_DIR="${1:-public/images}"
+QUALITY="${2:-80}"
+BACKUP_DIR="storage/backups/images-$(date +%Y%m%d_%H%M%S)"
 
-convert_with_sharp() {
-    node <<'NODE'
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
-
-const dir = process.env.IMAGES_DIR || 'public/images';
-const quality = Number(process.env.QUALITY || 80);
-
-async function run() {
-    const files = [];
-    function walk(d) {
-        for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
-            const p = path.join(d, ent.name);
-            if (ent.isDirectory()) walk(p);
-            else if (/\.(png|jpe?g)$/i.test(ent.name)) files.push(p);
-        }
-    }
-    walk(dir);
-    for (const file of files) {
-        const output = file.replace(/\.(png|jpe?g)$/i, '.webp');
-        if (fs.existsSync(output) && fs.statSync(output).mtimeMs > fs.statSync(file).mtimeMs) {
-            console.log(`⏭️  Skip: ${path.basename(file)}`);
-            continue;
-        }
-        const before = fs.statSync(file).size;
-        await sharp(file).webp({ quality }).toFile(output);
-        const after = fs.statSync(output).size;
-        console.log(`✅ ${path.basename(file)}: ${Math.round(before / 1024)} KB → ${Math.round(after / 1024)} KB`);
-    }
-}
-run().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
-NODE
-}
-
-echo "🖼️  Conversion WebP (qualité: $QUALITY) dans $IMAGES_DIR"
-echo ""
-
-if command -v cwebp >/dev/null 2>&1; then
-    find "$IMAGES_DIR" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) | while read -r file; do
-        convert_with_cwebp "$file" || true
-    done
-elif node -e "require('sharp')" 2>/dev/null; then
-    export IMAGES_DIR QUALITY
-    convert_with_sharp
-else
-    echo "❌ Installez webp (cwebp) ou exécutez: npm install --save-dev sharp"
+if [[ ! -d "$IMAGES_DIR" ]]; then
+    echo "❌ Dossier introuvable : $IMAGES_DIR"
     exit 1
 fi
 
+if command -v cwebp &>/dev/null; then
+    CONVERTER=cwebp
+elif php -r "exit(extension_loaded('gd') && function_exists('imagewebp') ? 0 : 1);" 2>/dev/null; then
+    CONVERTER=php
+else
+    echo "❌ Installez webp (cwebp) ou activez GD imagewebp en PHP."
+    exit 1
+fi
+
+echo "🖼️  Conversion WebP (qualité: $QUALITY, moteur: $CONVERTER)"
+echo "📂 Source : $IMAGES_DIR"
+echo "💾 Backup : $BACKUP_DIR"
 echo ""
-echo "🎉 Conversion terminée."
+
+mkdir -p "$BACKUP_DIR"
+
+if [[ "$CONVERTER" == php ]]; then
+    while IFS= read -r -d '' file; do
+        cp "$file" "$BACKUP_DIR/"
+    done < <(find "$IMAGES_DIR" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \) -print0)
+    php "$ROOT/scripts/convert-webp.php" "$IMAGES_DIR" "$QUALITY"
+    echo ""
+    echo "⚠️  Originaux backupés dans : $BACKUP_DIR"
+    exit 0
+fi
+
+count=0
+skipped=0
+saved=0
+
+while IFS= read -r -d '' file; do
+    output="${file%.*}.webp"
+
+    if [[ -f "$output" && "$output" -nt "$file" ]]; then
+        echo "⏭️  Skip : $(basename "$file")"
+        skipped=$((skipped + 1))
+        continue
+    fi
+
+    cp "$file" "$BACKUP_DIR/"
+
+    original_size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
+
+    if cwebp -q "$QUALITY" -m 6 -mt "$file" -o "$output" -quiet 2>/dev/null; then
+        new_size=$(stat -c%s "$output" 2>/dev/null || stat -f%z "$output")
+        gain=$((original_size - new_size))
+        saved=$((saved + gain))
+        count=$((count + 1))
+        pct=0
+        if [[ "$original_size" -gt 0 ]]; then
+            pct=$((gain * 100 / original_size))
+        fi
+        printf "✅ %-40s %5d KB → %5d KB (-%d%%)\n" \
+            "$(basename "$file")" \
+            "$((original_size / 1024))" \
+            "$((new_size / 1024))" \
+            "$pct"
+    else
+        echo "❌ Erreur : $(basename "$file")"
+    fi
+done < <(find "$IMAGES_DIR" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \) -print0)
+
+echo ""
+echo "🎉 Conversion terminée"
+echo "   Converties : $count"
+echo "   Skippées   : $skipped"
+echo "   Gain total : $((saved / 1024)) KB"
+echo ""
+echo "⚠️  Originaux backupés dans : $BACKUP_DIR"
