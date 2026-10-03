@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Package;
 use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
+use App\Services\MLM\UserCommissionDisplayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +19,10 @@ class CommissionController extends Controller
 {
     protected MonthlyCommissionService $commissionService;
 
-    public function __construct(MonthlyCommissionService $commissionService)
-    {
+    public function __construct(
+        MonthlyCommissionService $commissionService,
+        protected UserCommissionDisplayService $commissionDisplay
+    ) {
         $this->commissionService = $commissionService;
     }
 
@@ -31,6 +34,7 @@ class CommissionController extends Controller
         $user = Auth::user();
 
         $query = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->with(['fromUser', 'package', 'product', 'period', 'order']);
 
         // Filtres
@@ -61,6 +65,7 @@ class CommissionController extends Controller
 
         // Distribution par type
         $byType = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
@@ -96,6 +101,7 @@ class CommissionController extends Controller
 
         // Données mensuelles
         $monthly = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->where('status', 'paid')
             ->select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
@@ -107,7 +113,7 @@ class CommissionController extends Controller
             ->get();
 
         // Périodes disponibles pour les filtres
-        $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+        $periods = CommissionPeriod::visibleToMember()->orderBy('period', 'desc')->pluck('period');
         $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
 
         return view('commissions.index', compact(
@@ -771,18 +777,18 @@ class CommissionController extends Controller
      */
     private function getUserStats($userId)
     {
+        $bands = $this->commissionDisplay->summarize($userId);
+
         $stats = Commission::where('user_id', $userId)
+            ->visibleToMember()
             ->select(
                 DB::raw('SUM(amount) as total'),
-                DB::raw('SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END) as pending'),
-                DB::raw('SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END) as paid'),
-                DB::raw('COUNT(*) as total_count'),
-                DB::raw('COUNT(CASE WHEN status = "pending" THEN 1 END) as pending_count'),
-                DB::raw('COUNT(CASE WHEN status = "paid" THEN 1 END) as paid_count')
+                DB::raw('COUNT(*) as total_count')
             )
             ->first();
 
         $byType = Commission::where('user_id', $userId)
+            ->visibleToMember()
             ->where('status', 'paid')
             ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('type')
@@ -817,6 +823,7 @@ class CommissionController extends Controller
             });
 
         $monthly = Commission::where('user_id', $userId)
+            ->visibleToMember()
             ->where('status', 'paid')
             ->select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
@@ -831,6 +838,7 @@ class CommissionController extends Controller
             ->toArray();
 
         $recent = Commission::where('user_id', $userId)
+            ->visibleToMember()
             ->where('status', 'paid')
             ->with(['fromUser', 'package', 'product'])
             ->orderBy('created_at', 'desc')
@@ -839,11 +847,18 @@ class CommissionController extends Controller
 
         return [
             'total' => (float) ($stats->total ?? 0),
-            'pending' => (float) ($stats->pending ?? 0),
-            'paid' => (float) ($stats->paid ?? 0),
+            'pending' => (float) $bands['pending_payable'],
+            'paid' => (float) $bands['paid_total_visible'],
             'total_count' => (int) ($stats->total_count ?? 0),
-            'pending_count' => (int) ($stats->pending_count ?? 0),
-            'paid_count' => (int) ($stats->paid_count ?? 0),
+            'pending_count' => (int) $bands['pending_payable_count'],
+            'paid_count' => (int) $bands['paid_visible_count'],
+            'paid_offline_historical' => (float) $bands['paid_offline_historical'],
+            'paid_system' => (float) $bands['paid_system'],
+            'bands' => [
+                'historical_paid' => (float) $bands['paid_offline_historical'],
+                'system_paid' => (float) $bands['paid_system'],
+                'payable_pending' => (float) $bands['pending_payable'],
+            ],
             'by_type' => $byType,
             'monthly' => $monthly,
             'recent' => $recent,

@@ -24,14 +24,27 @@ use App\Http\Controllers\CommissionTriggerController;
 use App\Http\Controllers\PaymentController;
 
 // ============================================================
-// ROUTES PUBLIQUES API
+// AUTH API (Sanctum)
 // ============================================================
 
+Route::prefix('auth')->name('api.auth.')->group(function () {
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/password/email', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::get('/me', [AuthController::class, 'me'])->name('me');
+    });
+});
+
+// Aliases legacy (compatibilité clients existants)
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::post('/register', [AuthController::class, 'register'])->name('api.register');
 Route::post('/password/email', [AuthController::class, 'sendResetLinkEmail'])->name('api.password.email');
 Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('api.password.reset');
-Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('api.logout');
 
 // Products (public)
 Route::get('/products', [ProductController::class, 'index'])->name('api.products.index');
@@ -80,11 +93,11 @@ Route::middleware(['auth:sanctum', 'api.auth', 'active'])->group(function () {
     Route::get('/withdrawals/{id}', [WithdrawalController::class, 'show'])->name('api.withdrawals.show');
     Route::post('/withdrawals/{id}/cancel', [WithdrawalController::class, 'cancel'])->name('api.withdrawals.cancel');
 
-    // Commissions
-    Route::get('/commissions', [CommissionController::class, 'index'])->name('api.commissions.index');
-    Route::get('/commissions/stats', [CommissionController::class, 'stats'])->name('api.commissions.stats');
-    Route::get('/commissions/{id}', [CommissionController::class, 'show'])->name('api.commissions.show');
+    // Commissions (routes statiques avant {id})
     Route::get('/commissions/export', [CommissionController::class, 'export'])->name('api.commissions.export');
+    Route::get('/commissions/stats', [CommissionController::class, 'stats'])->name('api.commissions.stats');
+    Route::get('/commissions', [CommissionController::class, 'index'])->name('api.commissions.index');
+    Route::get('/commissions/{id}', [CommissionController::class, 'show'])->name('api.commissions.show');
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('api.orders.index');

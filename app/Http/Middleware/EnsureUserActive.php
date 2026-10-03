@@ -47,23 +47,28 @@ class EnsureUserActive
             Cache::forget("descendants_count_{$freshUser->id}");
         }
 
-        // Supprimer les anciens messages d'erreur
-        $request->session()->forget('error');
+        if ($request->hasSession()) {
+            $request->session()->forget('error');
+        }
 
         // Si le compte est actif, tout est autorisé
         if ($freshUser && $freshUser->is_active) {
-            // Supprimer le message d'avertissement si présent
-            $request->session()->forget('warning');
-            view()->share('account_inactive', false);
+            if ($request->hasSession()) {
+                $request->session()->forget('warning');
+            }
+            if (!$request->is('api/*')) {
+                view()->share('account_inactive', false);
+            }
             return $next($request);
         }
 
         // COMPTE INACTIF : ON NE BLOQUE PAS L'ACCÈS
-        view()->share('account_inactive', true);
-        
-        // Ajouter un message flash (non bloquant) si pas déjà présent
-        if (!$request->session()->has('warning')) {
-            session()->flash('warning', 'Votre compte est inactif. Activez-le pour recevoir des commissions.');
+        if (!$request->is('api/*')) {
+            view()->share('account_inactive', true);
+
+            if ($request->hasSession() && !$request->session()->has('warning')) {
+                session()->flash('warning', 'Votre compte est inactif. Activez-le pour recevoir des commissions.');
+            }
         }
 
         // PERMETTRE L'ACCÈS À TOUTES LES ROUTES

@@ -16,9 +16,13 @@ use App\Models\Rank;
 use App\Models\RankHistory;
 use App\Models\Withdrawal;
 use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\UserCommissionDisplayService;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected UserCommissionDisplayService $commissionDisplay
+    ) {}
     /**
      * Afficher le tableau de bord selon le niveau
      */
@@ -98,14 +102,10 @@ class DashboardController extends Controller
             $conditions = [];
         }
 
-        // STATISTIQUES DES COMMISSIONS
-        $totalCommission = Commission::where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount') ?? 0;
-
-        $pendingCommission = Commission::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->sum('amount') ?? 0;
+        // STATISTIQUES DES COMMISSIONS (bandes A/B visibles, C masquée)
+        $commissionBands = $this->commissionDisplay->summarize($user->id);
+        $totalCommission = $commissionBands['paid_total_visible'];
+        $pendingCommission = $commissionBands['pending_payable'];
 
         $totalWithdrawn = Withdrawal::where('user_id', $user->id)
             ->where('status', 'completed')
@@ -183,6 +183,7 @@ class DashboardController extends Controller
 
         // ACTIVITÉS RÉCENTES
         $recentActivities = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->where(function($query) {
             $query->where('type', 'direct')      // Bonus direct
               ->orWhere('type', 'indirect')   // Bonus indirect
@@ -197,6 +198,7 @@ class DashboardController extends Controller
         // STATISTIQUES DU JOUR
         $stats = [
             'today_earnings' => Commission::where('user_id', $user->id)
+                ->visibleToMember()
                 ->where('status', 'paid')
                 ->whereDate('created_at', today())
                 ->sum('amount') ?? 0,
@@ -207,6 +209,7 @@ class DashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $amount = Commission::where('user_id', $user->id)
+                ->visibleToMember()
                 ->where('status', 'paid')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
@@ -293,6 +296,7 @@ class DashboardController extends Controller
             'pvPersonnel' => $pvPersonnel,
             'pvCumul' => $pvCumul,
             'topDownlines' => $topDownlines,
+            'commissionBands' => $commissionBands,
         ];
 
         // Rediriger vers le bon dashboard selon le niveau
@@ -431,13 +435,12 @@ class DashboardController extends Controller
         $pvPersonnel = $user->pv_balance ?? 0;
         $pvCumul = $user->team_pv ?? 0;
 
+        $commissionPayload = $this->commissionDisplay->memberStatsPayload($user->id);
+
         $stats = [
-            'total_commission' => Commission::where('user_id', $user->id)
-                ->where('status', 'paid')
-                ->sum('amount') ?? 0,
-            'pending_commission' => Commission::where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->sum('amount') ?? 0,
+            'total_commission' => $commissionPayload['total_commission'],
+            'pending_commission' => $commissionPayload['pending_commission'],
+            'commission_bands' => $commissionPayload['bands'],
             'total_withdrawn' => Withdrawal::where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->sum('amount') ?? 0,
@@ -479,6 +482,7 @@ class DashboardController extends Controller
         for ($i = $months - 1; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $amount = Commission::where('user_id', $user->id)
+                ->visibleToMember()
                 ->where('status', 'paid')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)

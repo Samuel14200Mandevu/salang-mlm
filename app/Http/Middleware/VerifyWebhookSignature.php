@@ -8,42 +8,39 @@ use Illuminate\Support\Facades\Log;
 
 class VerifyWebhookSignature
 {
-    public function handle(Request $request, Closure $next, $provider = null)
+    public function handle(Request $request, Closure $next, string $provider = 'flexpay')
     {
-        $signature = $request->header('X-Webhook-Signature');
-        $payload = $request->getContent();
-        
-        // Vérifier selon le provider
-        switch ($provider) {
-            case 'flexpay':
-                $secret = config('services.flexpay.webhook_secret');
-                break;
-            case 'coinbase':
-                $secret = config('services.coinbase.webhook_secret');
-                break;
-            default:
-                $secret = config('app.key');
+        $secret = config("services.webhooks.{$provider}.secret");
+
+        if (empty($secret)) {
+            if (app()->environment('production')) {
+                Log::error('Webhook secret missing in production', ['provider' => $provider]);
+
+                return response()->json(['success' => false, 'message' => 'Webhook not configured'], 503);
+            }
+
+            return $next($request);
         }
-        
-        if (!$signature || !$secret) {
-            Log::warning('Webhook signature missing', [
+
+        $signature = $request->header('X-Webhook-Signature')
+            ?? $request->header('X-FlexPay-Signature')
+            ?? $request->header('Stripe-Signature');
+
+        if (!$signature) {
+            return response()->json(['success' => false, 'message' => 'Missing signature'], 401);
+        }
+
+        $expected = hash_hmac('sha256', $request->getContent(), $secret);
+
+        if (!hash_equals($expected, $signature) && !hash_equals($expected, trim($signature))) {
+            Log::warning('Invalid webhook signature', [
                 'provider' => $provider,
-                'headers' => $request->headers->all()
+                'ip' => $request->ip(),
             ]);
-            return response()->json(['error' => 'Signature manquante'], 401);
+
+            return response()->json(['success' => false, 'message' => 'Invalid signature'], 401);
         }
-        
-        $computed = hash_hmac('sha256', $payload, $secret);
-        
-        if (!hash_equals($computed, $signature)) {
-            Log::warning('Webhook signature invalid', [
-                'provider' => $provider,
-                'received' => $signature,
-                'computed' => $computed
-            ]);
-            return response()->json(['error' => 'Signature invalide'], 401);
-        }
-        
+
         return $next($request);
     }
 }

@@ -57,6 +57,22 @@ class CommissionController extends Controller
             $query->where('period', $request->period);
         }
 
+        if ($request->filled('band')) {
+            $band = $request->string('band')->lower()->toString();
+            $query->whereHas('period', function ($q) use ($band) {
+                match ($band) {
+                    'a', 'historical' => $q->where('is_historical', true),
+                    'b', 'payable' => $q->where('is_historical', false)->where('is_hidden', false),
+                    'c', 'hidden' => $q->where('is_hidden', true),
+                    default => $q,
+                };
+            });
+        }
+
+        if ($request->boolean('exclude_hidden')) {
+            $query->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+        }
+
         // Filtre par date
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -87,14 +103,21 @@ class CommissionController extends Controller
             ->filter()
             ->values();
 
-        // Périodes disponibles
+        // Périodes disponibles (admin : toutes)
         $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+
+        $periodBandCounts = [
+            'historical' => CommissionPeriod::where('is_historical', true)->count(),
+            'payable' => CommissionPeriod::where('is_historical', false)->where('is_hidden', false)->count(),
+            'hidden' => CommissionPeriod::where('is_hidden', true)->count(),
+        ];
 
         return view('admin.commissions.index', compact(
             'commissions',
             'stats',
             'types',
-            'periods'
+            'periods',
+            'periodBandCounts'
         ));
     }
 

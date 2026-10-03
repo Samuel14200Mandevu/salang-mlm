@@ -4,6 +4,7 @@ namespace Tests\Feature\API;
 
 use App\Models\User;
 use App\Models\Commission;
+use App\Models\CommissionPeriod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,8 +17,13 @@ class ApiCommissionTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test-token')->plainTextToken;
 
+        $period = CommissionPeriod::findOrCreateForValue('2024-09');
+        $period->update(['is_hidden' => false, 'is_historical' => false]);
+
         Commission::factory()->create([
             'user_id' => $user->id,
+            'commission_period_id' => $period->id,
+            'period' => $period->period,
             'amount' => 100,
             'status' => 'paid',
             'type' => 'direct',
@@ -46,8 +52,13 @@ class ApiCommissionTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test-token')->plainTextToken;
 
+        $period = CommissionPeriod::findOrCreateForValue('2024-09');
+        $period->update(['is_hidden' => false, 'is_historical' => false]);
+
         Commission::factory()->create([
             'user_id' => $user->id,
+            'commission_period_id' => $period->id,
+            'period' => $period->period,
             'amount' => 100,
             'status' => 'paid',
             'type' => 'direct',
@@ -55,6 +66,8 @@ class ApiCommissionTest extends TestCase
 
         Commission::factory()->create([
             'user_id' => $user->id,
+            'commission_period_id' => $period->id,
+            'period' => $period->period,
             'amount' => 50,
             'status' => 'pending',
             'type' => 'indirect',
@@ -85,7 +98,7 @@ class ApiCommissionTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
-        ])->get('/api/wallet/balance');
+        ])->get('/api/wallet');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([

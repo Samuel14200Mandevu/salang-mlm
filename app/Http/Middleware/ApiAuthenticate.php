@@ -14,10 +14,11 @@ class ApiAuthenticate
     {
         if (!auth()->check()) {
             Log::warning('Unauthenticated API access attempt', [
-                'ip' => $request->ip(),
                 'route' => $request->route()?->getName(),
-                'url' => $request->fullUrl(),
-                'headers' => $request->headers->all(),
+                'ip' => $request->ip(),
+                'user_id' => $request->user()?->id,
+                'user_agent' => $request->userAgent(),
+                'accept' => $request->header('Accept'),
             ]);
 
             return response()->json([
