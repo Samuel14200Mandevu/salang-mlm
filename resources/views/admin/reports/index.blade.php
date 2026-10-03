@@ -331,20 +331,24 @@
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('monthlyChart');
-    if (!ctx) return;
+<script type="module">
+    const chartModuleUrl = @json(Vite::asset('resources/js/charts.js'));
+    const { default: Chart } = await import(chartModuleUrl);
+
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) {
+        console.warn('monthlyChart canvas not found');
+    } else {
 
     const monthlyData = @json($monthlySales ?? []);
-    const labels = monthlyData.map(item => item.month);
-    const salesData = monthlyData.map(item => item.sales || 0);
-    const commissionsData = monthlyData.map(item => item.commissions || 0);
+    const labels = monthlyData.map((item) => item.month);
+    const salesData = monthlyData.map((item) => item.sales || 0);
+    const commissionsData = monthlyData.map((item) => item.commissions || 0);
 
-    new Chart(ctx, {
+    new Chart(canvas, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels,
             datasets: [
                 {
                     label: 'Ventes',
@@ -361,8 +365,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: '#1C7E4A',
                     borderWidth: 1,
                     borderRadius: 4,
-                }
-            ]
+                },
+            ],
         },
         options: {
             responsive: true,
@@ -373,37 +377,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     labels: {
                         boxWidth: 12,
                         padding: 10,
-                        font: { size: 11 }
-                    }
+                        font: { size: 11 },
+                    },
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
+                        label(context) {
+                            return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                        },
+                    },
+                },
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return '$' + value.toFixed(0);
+                        callback(value) {
+                            return `$${value.toFixed(0)}`;
                         },
-                        font: { size: 10 }
-                    }
+                        font: { size: 10 },
+                    },
                 },
                 x: {
                     ticks: {
                         font: { size: 9 },
                         maxRotation: 45,
-                        minRotation: 0
-                    }
-                }
-            }
-        }
+                        minRotation: 0,
+                    },
+                },
+            },
+        },
     });
-});
+    }
 </script>
 @endpush

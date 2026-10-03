@@ -1,5 +1,11 @@
 # Changelog (corrections audit MLM)
 
+## 2026-10-03 — Perf bundle frontend
+
+- Chart.js extrait dans `resources/js/charts.js` (entrée Vite séparée, import dynamique sur `admin/reports`).
+- Suppression de l’import global Flowbite (aucun usage `data-*` Flowbite dans les vues).
+- Bundle initial `app.js` ~97 KB ; chunk `charts.js` ~202 KB à la demande.
+
 ## 2026-10-03 — Frontend P1 + design anti-vibe-coding
 
 ### Phase 1 (critique)

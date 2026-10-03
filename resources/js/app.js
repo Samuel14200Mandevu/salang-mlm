@@ -1,11 +1,8 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
-import 'flowbite';
-import Chart from 'chart.js/auto';
 import api from './api';
 
 window.Alpine = Alpine;
-window.Chart = Chart;
 window.api = api;
 
 Alpine.start();
