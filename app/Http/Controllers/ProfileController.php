@@ -3,9 +3,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Genealogy;
+use App\Models\RankHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
@@ -148,8 +151,19 @@ class ProfileController extends Controller
             $user->wallet->delete();
         }
 
-        $user->delete();
+        RankHistory::where('user_id', $user->id)->delete();
+        Genealogy::where('user_id', $user->id)->orWhere('parent_id', $user->id)->delete();
+        $user->tokens()->delete();
+        if (method_exists($user, 'syncRoles')) {
+            $user->syncRoles([]);
+        }
+
+        $userId = $user->id;
+        DB::table('users')->where('id', $userId)->delete();
+
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/')->with('success', 'Votre compte a été supprimé.');
     }

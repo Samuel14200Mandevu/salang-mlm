@@ -15,9 +15,11 @@ class CryptoPaymentService
     protected $apiSecret;
     protected $webhookSecret;
     protected $baseUrl;
+    protected CommissionService $commissionService;
 
-    public function __construct()
+    public function __construct(CommissionService $commissionService)
     {
+        $this->commissionService = $commissionService;
         $this->apiKey = config('payment.crypto.api_key', '');
         $this->apiSecret = config('payment.crypto.api_secret', '');
         $this->webhookSecret = config('payment.crypto.webhook_secret', '');
@@ -213,10 +215,9 @@ class CryptoPaymentService
                 $order->paid_at = now();
                 $order->save();
 
-                $commissionService = new CommissionService();
                 foreach ($order->items as $item) {
                     if ($item->package_id) {
-                        $commissionService->calculatePackageCommission(
+                        $this->commissionService->calculatePackageCommission(
                             $user->id,
                             $item->package_id,
                             $order->id

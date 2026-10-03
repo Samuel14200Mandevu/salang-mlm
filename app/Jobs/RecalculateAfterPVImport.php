@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+
+use App\Support\MlmPeriod;
 use App\Models\User;
 use App\Models\RankHistory;
 use App\Services\MLM\AdvancedRankCalculator;
@@ -236,7 +238,7 @@ class RecalculateAfterPVImport implements ShouldQueue
      */
     protected function recalcMonthlyFromHistory(): void
     {
-        $currentPeriod = date('Y-m');
+        $currentPeriod = MlmPeriod::current();
 
         // Si la période importée est un mois passé, on NE recalcule PAS
         if ($this->period !== $currentPeriod) {

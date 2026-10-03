@@ -13,17 +13,17 @@ use App\Models\CommissionPeriod;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\CommissionDistributor;
 use App\Services\MLM\AdvancedRankCalculator;
-use App\Jobs\UpdateTeamPV;
-use App\Jobs\UpdateRanks;
-use App\Jobs\CalculatePVBV;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
+use App\Http\Controllers\Concerns\DispatchesMlmRecalculation;
+
 class UserPackageController extends Controller
 {
+    use DispatchesMlmRecalculation;
     protected MonthlyCommissionService $commissionService;
     protected CommissionDistributor $commissionDistributor;
     protected AdvancedRankCalculator $rankCalculator;
@@ -132,16 +132,9 @@ class UserPackageController extends Controller
 
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
-            Cache::forget("descendants_{$user->id}");
+                        $this->dispatchMlmRecalculation($user);
+
+Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
 
@@ -271,16 +264,9 @@ class UserPackageController extends Controller
 
             DB::commit();
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
-            Cache::forget("descendants_{$user->id}");
+                        $this->dispatchMlmRecalculation($user);
+
+Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
 
@@ -328,7 +314,7 @@ class UserPackageController extends Controller
     {
         try {
             $period = CommissionPeriod::firstOrCreate(
-                ['period' => date('Y-m')],
+                ['period' => MlmPeriod::current()],
                 [
                     'start_date' => now()->startOfMonth(),
                     'end_date' => now()->endOfMonth(),

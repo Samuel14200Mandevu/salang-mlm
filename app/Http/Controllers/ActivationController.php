@@ -12,17 +12,17 @@ use App\Services\MLM\AdvancedRankCalculator;
 use App\Models\CommissionPeriod;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Jobs\UpdateTeamPV;
-use App\Jobs\UpdateRanks;
-use App\Jobs\CalculatePVBV;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\Concerns\DispatchesMlmRecalculation;
+
 class ActivationController extends Controller
 {
+    use DispatchesMlmRecalculation;
     protected AdvancedRankCalculator $rankCalculator;
 
     public function __construct(AdvancedRankCalculator $rankCalculator)
@@ -138,16 +138,9 @@ class ActivationController extends Controller
                     }
                 }
                 
-                dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-                dispatch(new UpdateRanks($user->id))->onQueue('high');
-                dispatch(new CalculatePVBV($user->id))->onQueue('high');
-                
-                if ($user->parrain_id) {
-                    dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                    dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-                }
-                
-                Cache::forget("descendants_{$user->id}");
+                            $this->dispatchMlmRecalculation($user);
+
+Cache::forget("descendants_{$user->id}");
                 Cache::forget("descendants_count_{$user->id}");
                 Cache::forget("user_rank_{$user->id}");
             }
@@ -263,16 +256,9 @@ class ActivationController extends Controller
                 }
             }
 
-            dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-            dispatch(new UpdateRanks($user->id))->onQueue('high');
-            dispatch(new CalculatePVBV($user->id))->onQueue('high');
-            
-            if ($user->parrain_id) {
-                dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-            }
-            
-            Cache::forget("descendants_{$user->id}");
+                        $this->dispatchMlmRecalculation($user);
+
+Cache::forget("descendants_{$user->id}");
             Cache::forget("descendants_count_{$user->id}");
             Cache::forget("user_rank_{$user->id}");
 
@@ -401,16 +387,9 @@ class ActivationController extends Controller
                     }
                 }
                 
-                dispatch(new UpdateTeamPV($user->id, true))->onQueue('high');
-                dispatch(new UpdateRanks($user->id))->onQueue('high');
-                dispatch(new CalculatePVBV($user->id))->onQueue('high');
-                
-                if ($user->parrain_id) {
-                    dispatch(new UpdateTeamPV($user->parrain_id, true))->onQueue('low');
-                    dispatch(new UpdateRanks($user->parrain_id))->onQueue('low');
-                }
-                
-                Cache::forget("descendants_{$user->id}");
+                            $this->dispatchMlmRecalculation($user);
+
+Cache::forget("descendants_{$user->id}");
                 Cache::forget("descendants_count_{$user->id}");
                 Cache::forget("user_rank_{$user->id}");
             }
@@ -528,7 +507,7 @@ class ActivationController extends Controller
     {
         try {
             $period = CommissionPeriod::firstOrCreate(
-                ['period' => date('Y-m')],
+                ['period' => MlmPeriod::current()],
                 [
                     'start_date' => now()->startOfMonth(),
                     'end_date' => now()->endOfMonth(),

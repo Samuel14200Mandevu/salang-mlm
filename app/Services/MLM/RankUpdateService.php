@@ -2,6 +2,8 @@
 
 namespace App\Services\MLM;
 
+
+use App\Support\MlmPeriod;
 use App\Models\User;
 use App\Models\RankHistory;
 use App\Jobs\RecalculateAfterPVImport;
@@ -145,7 +147,7 @@ class RankUpdateService
 
     public function triggerRankUpdateAsync(User $user, string $reason = 'bulk_import'): void
     {
-        RecalculateAfterPVImport::dispatch([$user->id], date('Y-m'))
+        RecalculateAfterPVImport::dispatch([$user->id], MlmPeriod::current())
             ->onQueue('rank-recalculation');
 
         $this->clearCache($user);

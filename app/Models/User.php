@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+
+use App\Support\MlmPeriod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -87,7 +89,7 @@ class User extends Authenticatable
     {
         static::created(function ($user) {
             try {
-                RecalculateAfterPVImport::dispatch([$user->id], date('Y-m'))
+                RecalculateAfterPVImport::dispatch([$user->id], MlmPeriod::current())
                     ->onQueue('rank-recalculation');
             } catch (\Exception $e) {
                 Log::error('Error in User::created', [
@@ -125,7 +127,7 @@ class User extends Authenticatable
                     }
                 }
 
-                RecalculateAfterPVImport::dispatch($userIds, date('Y-m'))
+                RecalculateAfterPVImport::dispatch($userIds, MlmPeriod::current())
                     ->onQueue('rank-recalculation');
 
             } catch (\Exception $e) {
@@ -139,7 +141,7 @@ class User extends Authenticatable
         static::deleted(function ($user) {
             try {
                 if ($user->parrain_id) {
-                    RecalculateAfterPVImport::dispatch([$user->parrain_id], date('Y-m'))
+                    RecalculateAfterPVImport::dispatch([$user->parrain_id], MlmPeriod::current())
                         ->onQueue('rank-recalculation');
                 }
 
@@ -579,13 +581,13 @@ class User extends Authenticatable
 
     public function updateRankAsync(string $reason = 'bulk_import'): void
     {
-        RecalculateAfterPVImport::dispatch([$this->id], date('Y-m'))
+        RecalculateAfterPVImport::dispatch([$this->id], MlmPeriod::current())
             ->onQueue('rank-recalculation');
     }
 
     public function updateMonthlyPV(): void
     {
-        RecalculateAfterPVImport::dispatch([$this->id], date('Y-m'))
+        RecalculateAfterPVImport::dispatch([$this->id], MlmPeriod::current())
             ->onQueue('rank-recalculation');
     }
 
@@ -636,7 +638,7 @@ class User extends Authenticatable
                 'total_pv' => 0,
                 'total_bv' => 0,
                 'total_amount' => $orderData['total_amount'] ?? 0,
-                'period' => $orderData['period'] ?? date('Y-m'),
+                'period' => $orderData['period'] ?? MlmPeriod::current(),
                 'order_date' => $orderData['order_date'] ?? now(),
                 'status' => 'completed',
                 'created_by' => $orderData['created_by'] ?? null,
@@ -663,7 +665,7 @@ class User extends Authenticatable
                     'user_id' => $this->id,
                     'amount' => $pv,
                     'date' => $orderData['order_date'] ?? now(),
-                    'period' => $orderData['period'] ?? date('Y-m'),
+                    'period' => $orderData['period'] ?? MlmPeriod::current(),
                     'type' => 'personal',
                     'notes' => $product['code'] . ' - ' . $product['name'] . ' x ' . $product['quantity'],
                     'created_by' => $orderData['created_by'] ?? null,

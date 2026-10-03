@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+
+use App\Support\MlmPeriod;
 use App\Models\Order;
 use App\Jobs\RecalculateAfterPVImport;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +39,7 @@ class OrderObserver
 
         try {
             // ✅ UN SEUL job qui gère TOUT : team_pv + rank + ancêtres
-            RecalculateAfterPVImport::dispatch([$order->user_id], date('Y-m'))
+            RecalculateAfterPVImport::dispatch([$order->user_id], MlmPeriod::current())
                 ->onQueue('rank-recalculation');
 
             Log::info('Order completed, recalculation dispatched', [

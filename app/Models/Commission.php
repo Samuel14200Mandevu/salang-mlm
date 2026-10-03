@@ -93,9 +93,38 @@ class Commission extends Model
         return $query->where('status', 'paid');
     }
 
+    public function scopeVisibleToMember($query)
+    {
+        return $query->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+    }
+
+    public function scopePendingPayableViaSystem($query)
+    {
+        return $query
+            ->where('status', 'pending')
+            ->whereHas('period', fn ($q) => $q->where('is_hidden', false)->where('is_historical', false));
+    }
+
     public function scopeCancelled($query)
     {
         return $query->where('status', 'cancelled');
+    }
+
+    public function paymentSource(): string
+    {
+        if ($this->status !== 'paid') {
+            return 'pending';
+        }
+
+        $periodModel = $this->commission_period_id
+            ? $this->period()->first()
+            : null;
+
+        if ($periodModel?->is_historical) {
+            return 'offline_historical';
+        }
+
+        return 'system';
     }
 
     public function scopeApproved($query)

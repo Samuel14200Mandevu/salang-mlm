@@ -6,505 +6,209 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 // ============================================================
-// COMMANDES EXISTANTES
+// COMMANDES ARTISAN PERSONNALISÉES
 // ============================================================
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// ============================================================
-// COMMANDES PERSONNALISÉES
-// ============================================================
+// commissions:process et ranks:update → classes dans app/Console/Commands (évite doublons)
 
-/**
- * Command: php artisan commissions:process
- * 
- * Process monthly commissions for the given period
- * Usage: php artisan commissions:process [--period=2024-01] [--dry-run]
- */
-Artisan::command('commissions:process', function () {
-    $period = $this->option('period') ?? date('Y-m', strtotime('last month'));
-    $dryRun = $this->option('dry-run') ?? false;
-
-    $this->info('Processing commissions for period: ' . $period);
-    $this->info('Dry run: ' . ($dryRun ? 'YES' : 'NO'));
-
-    try {
-        $job = new \App\Jobs\ProcessMonthlyCommissions($period, $dryRun);
-        $job->handle(app(\App\Services\MLM\MonthlyCommissionService::class));
-
-        $this->info('Commissions processed successfully!');
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
-        return 1;
-    }
-
-    return 0;
-})->purpose('Process monthly commissions')
-    ->addOption('period', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Period to process (format: YYYY-MM)')
-    ->addOption('dry-run', null, \Symfony\Component\Console\Input\InputOption::VALUE_NONE, 'Run in dry run mode (no changes)');
-
-/**
- * Command: php artisan ranks:update
- * 
- * Update all user ranks based on current PV
- * Usage: php artisan ranks:update [--user=1]
- */
-Artisan::command('ranks:update', function () {
-    $userId = $this->option('user');
-
-    if ($userId) {
-        $this->info('Updating rank for user ID: ' . $userId);
-    } else {
-        $this->info('Updating ranks for all users');
-    }
-
-    try {
-        $job = new \App\Jobs\UpdateRanks($userId);
-        $job->handle(app(\App\Services\MLM\AdvancedRankCalculator::class));
-
-        $this->info('Ranks updated successfully!');
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
-        return 1;
-    }
-
-    return 0;
-})->purpose('Update user ranks based on current PV')
-    ->addOption('user', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Specific user ID to update');
-
-/**
- * Command: php artisan pv:calculate
- * 
- * Calculate monthly PV/BV for all users
- * Usage: php artisan pv:calculate [--period=2024-01]
- */
-Artisan::command('pv:calculate', function () {
-    $period = $this->option('period') ?? date('Y-m', strtotime('last month'));
-
-    $this->info('Calculating PV/BV for period: ' . $period);
-
-    try {
-        $job = new \App\Jobs\CalculatePVBV($period);
-        $job->handle();
-
-        $this->info('PV/BV calculated successfully!');
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
-        return 1;
-    }
-
-    return 0;
-})->purpose('Calculate monthly PV/BV for all users')
-    ->addOption('period', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Period to calculate (format: YYYY-MM)');
-
-/**
- * Command: php artisan commissions:process-withdrawals
- * 
- * Process pending withdrawals
- * Usage: php artisan commissions:process-withdrawals
- */
 Artisan::command('withdrawals:process', function () {
     $this->info('Processing pending withdrawals...');
-
     try {
         $job = new \App\Jobs\ProcessWithdrawals();
         $job->handle();
-
         $this->info('Withdrawals processed successfully!');
     } catch (\Exception $e) {
         $this->error('Error: ' . $e->getMessage());
         return 1;
     }
-
     return 0;
 })->purpose('Process pending withdrawals');
 
-/**
- * Command: php artisan commissions:remind
- * 
- * Send reminders for pending commissions
- * Usage: php artisan commissions:remind
- */
 Artisan::command('commissions:remind', function () {
     $this->info('Sending commission reminders...');
-
-    try {
-        $this->call('commissions:remind');
-        $this->info('Reminders sent successfully!');
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
-        return 1;
-    }
-
     return 0;
 })->purpose('Send reminders for pending commissions');
 
-/**
- * Command: php artisan db:backup
- * 
- * Backup the database
- * Usage: php artisan db:backup [--path=/backups]
- */
 Artisan::command('db:backup', function () {
     $path = $this->option('path') ?? storage_path('backups');
     $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
-
-    $this->info('Creating database backup...');
-
     try {
-        if (!is_dir($path)) {
-            mkdir($path, 0755, true);
-        }
-
+        if (!is_dir($path)) mkdir($path, 0755, true);
         $fullPath = $path . '/' . $filename;
-
-        $command = sprintf(
-            'mysqldump --user=%s --password=%s --host=%s %s > %s',
+        $cnfPath = $path . '/.my.cnf.' . getmypid();
+        file_put_contents($cnfPath, sprintf(
+            "[client]\nuser=%s\npassword=%s\nhost=%s\n",
             env('DB_USERNAME'),
             env('DB_PASSWORD'),
-            env('DB_HOST'),
-            env('DB_DATABASE'),
-            $fullPath
+            env('DB_HOST')
+        ));
+        chmod($cnfPath, 0600);
+
+        $command = sprintf(
+            'mysqldump --defaults-extra-file=%s %s > %s',
+            escapeshellarg($cnfPath),
+            escapeshellarg(env('DB_DATABASE')),
+            escapeshellarg($fullPath)
         );
-
         exec($command, $output, $returnCode);
-
-        if ($returnCode !== 0) {
-            throw new \Exception('Backup failed with code: ' . $returnCode);
-        }
-
-        $this->info('Backup created successfully: ' . $fullPath);
-        $this->info('Size: ' . $this->formatSizeUnits(filesize($fullPath)));
-
+        @unlink($cnfPath);
+        if ($returnCode !== 0) throw new \Exception('Backup failed: ' . $returnCode);
+        $this->info('Backup created: ' . $fullPath);
     } catch (\Exception $e) {
         $this->error('Error: ' . $e->getMessage());
         return 1;
     }
-
     return 0;
-})->purpose('Backup the database')
+})->purpose('Backup database')
     ->addOption('path', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Backup path', storage_path('backups'));
 
-/**
- * Command: php artisan db:optimize
- * 
- * Optimize database tables
- * Usage: php artisan db:optimize
- */
 Artisan::command('db:optimize', function () {
-    $this->info('Optimizing database tables...');
-
     try {
         $tables = \DB::select('SHOW TABLES');
-
         foreach ($tables as $table) {
-            $tableName = reset($table);
-            $this->line('Optimizing: ' . $tableName);
-            \DB::statement('OPTIMIZE TABLE ' . $tableName);
+            \DB::statement('OPTIMIZE TABLE ' . reset($table));
         }
-
-        $this->info('Database optimized successfully!');
+        $this->info('Database optimized!');
     } catch (\Exception $e) {
         $this->error('Error: ' . $e->getMessage());
         return 1;
     }
-
     return 0;
 })->purpose('Optimize database tables');
 
-/**
- * Command: php artisan log:clear
- * 
- * Clear all log files
- * Usage: php artisan log:clear
- */
 Artisan::command('log:clear', function () {
-    $this->info('Clearing log files...');
-
     try {
-        $logPath = storage_path('logs');
-        $files = glob($logPath . '/*.log');
-
-        foreach ($files as $file) {
-            $this->line('Deleting: ' . basename($file));
-            unlink($file);
-        }
-
-        $this->info('Log files cleared successfully!');
+        $files = glob(storage_path('logs') . '/*.log');
+        foreach ($files as $file) unlink($file);
+        $this->info('Log files cleared!');
     } catch (\Exception $e) {
         $this->error('Error: ' . $e->getMessage());
         return 1;
     }
-
     return 0;
-})->purpose('Clear all log files');
+})->purpose('Clear log files');
 
-/**
- * Command: php artisan commissions:status
- * 
- * Show commission processing status
- * Usage: php artisan commissions:status [--period=2024-01]
- */
 Artisan::command('commissions:status', function () {
-    $period = $this->option('period') ?? date('Y-m');
-
-    $this->info('Commission status for period: ' . $period);
-
-    try {
-        $periodObj = \App\Models\CommissionPeriod::where('period', $period)->first();
-
-        if (!$periodObj) {
-            $this->warn('Period not found: ' . $period);
-            return 1;
-        }
-
-        $stats = [
-            'Period' => $periodObj->period,
-            'Status' => $periodObj->status_label,
-            'Start Date' => $periodObj->start_date,
-            'End Date' => $periodObj->end_date,
-            'Calculation Date' => $periodObj->calculation_date,
-            'Payment Date' => $periodObj->payment_date,
-            'Total Commissions' => '$' . number_format($periodObj->total_commissions, 2),
-            'Total Paid' => '$' . number_format($periodObj->total_paid, 2),
-            'Progress' => number_format($periodObj->progress, 1) . '%',
-        ];
-
-        $this->table(array_keys($stats), [$stats]);
-
-        // Commission by type
-        $byType = \App\Models\Commission::where('commission_period_id', $periodObj->id)
-            ->select('type', \DB::raw('SUM(amount) as total'), \DB::raw('COUNT(*) as count'))
-            ->groupBy('type')
-            ->get();
-
-        if ($byType->count() > 0) {
-            $this->newLine();
-            $this->info('Commissions by type:');
-            $this->table(
-                ['Type', 'Total', 'Count'],
-                $byType->map(function ($item) {
-                    return [
-                        ucfirst($item->type),
-                        '$' . number_format($item->total, 2),
-                        $item->count,
-                    ];
-                })
-            );
-        }
-
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
+    $period = $this->option('period') ?? \App\Support\MlmPeriod::current();
+    $periodObj = \App\Models\CommissionPeriod::where('period', $period)->first();
+    if (!$periodObj) {
+        $this->warn('Period not found: ' . $period);
         return 1;
     }
-
+    $stats = [
+        'Period'      => $periodObj->period,
+        'Status'      => $periodObj->status_label,
+        'Start'       => $periodObj->start_date,
+        'End'         => $periodObj->end_date,
+        'Payment'     => $periodObj->payment_date,
+        'Total Comm.' => '$' . number_format($periodObj->total_commissions, 2),
+        'Total Paid'  => '$' . number_format($periodObj->total_paid, 2),
+        'Progress'    => number_format($periodObj->progress, 1) . '%',
+    ];
+    $this->table(array_keys($stats), [$stats]);
     return 0;
-})->purpose('Show commission processing status')
-    ->addOption('period', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Period to check (format: YYYY-MM)');
+})->purpose('Show commission status')
+    ->addOption('period', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Period (YYYY-MM)');
 
-/**
- * Command: php artisan user:find-sponsor
- * 
- * Find a user by sponsor ID or email
- * Usage: php artisan user:find-sponsor --value=SALDEBF71
- */
 Artisan::command('user:find-sponsor', function () {
     $value = $this->option('value');
-
     if (!$value) {
-        $this->error('Please provide a sponsor ID or email using --value');
+        $this->error('Provide --value');
         return 1;
     }
-
-    $this->info('Searching for: ' . $value);
-
-    try {
-        $user = \App\Models\User::where('sponsor_id', $value)
-            ->orWhere('email', $value)
-            ->orWhere('id', $value)
-            ->first();
-
-        if (!$user) {
-            $this->warn('No user found: ' . $value);
-            return 1;
-        }
-
-        $this->info('User found!');
-        $this->table(
-            ['ID', 'Name', 'Email', 'Sponsor ID', 'Rank', 'PV'],
-            [[
-                $user->id,
-                $user->name,
-                $user->email,
-                $user->sponsor_id,
-                $user->rank_name,
-                $user->pv_balance,
-            ]]
-        );
-
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
+    $user = \App\Models\User::where('sponsor_id', $value)
+        ->orWhere('email', $value)
+        ->orWhere('id', $value)
+        ->first();
+    if (!$user) {
+        $this->warn('Not found: ' . $value);
         return 1;
     }
-
+    $this->table(
+        ['ID', 'Name', 'Email', 'Sponsor', 'Rank', 'PV'],
+        [[$user->id, $user->name, $user->email, $user->sponsor_id, $user->rank_name, $user->pv_balance]]
+    );
     return 0;
-})->purpose('Find a user by sponsor ID or email')
-    ->addOption('value', null, \Symfony\Component\Console\Input\InputOption::VALUE_REQUIRED, 'Sponsor ID or email to search');
+})->purpose('Find user')
+    ->addOption('value', null, \Symfony\Component\Console\Input\InputOption::VALUE_REQUIRED, 'Value');
 
-/**
- * Command: php artisan rank:promotions
- * 
- * Show rank promotions history
- * Usage: php artisan rank:promotions [--user=1] [--limit=10]
- */
 Artisan::command('rank:promotions', function () {
     $userId = $this->option('user');
     $limit = $this->option('limit') ?? 10;
-
-    $this->info('Rank promotions history' . ($userId ? ' for user ID: ' . $userId : ''));
-
-    try {
-        $query = \App\Models\RankHistory::with(['user', 'oldRank', 'newRank'])
-            ->orderBy('created_at', 'desc')
-            ->limit($limit);
-
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
-
-        $history = $query->get();
-
-        if ($history->isEmpty()) {
-            $this->warn('No rank history found.');
-            return 1;
-        }
-
-        $this->table(
-            ['Date', 'User', 'Old Rank', 'New Rank', 'Type'],
-            $history->map(function ($item) {
-                $oldLevel = $item->oldRank ? $item->oldRank->level : 0;
-                $newLevel = $item->newRank ? $item->newRank->level : 0;
-                $type = $newLevel > $oldLevel ? 'Promotion' : ($newLevel < $oldLevel ? 'Demotion' : 'Update');
-
-                return [
-                    $item->created_at->format('Y-m-d H:i'),
-                    $item->user->name ?? 'N/A',
-                    $item->old_rank_name ?? 'N/A',
-                    $item->new_rank_name ?? 'N/A',
-                    $type,
-                ];
-            })
-        );
-
-    } catch (\Exception $e) {
-        $this->error('Error: ' . $e->getMessage());
+    $query = \App\Models\RankHistory::with(['user', 'oldRank', 'newRank'])
+        ->orderBy('created_at', 'desc')
+        ->limit($limit);
+    if ($userId) $query->where('user_id', $userId);
+    $history = $query->get();
+    if ($history->isEmpty()) {
+        $this->warn('No rank history.');
         return 1;
     }
-
+    $this->table(
+        ['Date', 'User', 'Old', 'New'],
+        $history->map(fn($i) => [
+            $i->created_at->format('Y-m-d H:i'),
+            $i->user->name ?? 'N/A',
+            $i->old_rank_name ?? 'N/A',
+            $i->new_rank_name ?? 'N/A',
+        ])
+    );
     return 0;
-})->purpose('Show rank promotions history')
-    ->addOption('user', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Filter by user ID')
-    ->addOption('limit', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Limit results', 10);
-
-// ============================================================
-// FORMATAGE UTILITAIRE
-// ============================================================
+})->purpose('Show rank promotions')
+    ->addOption('user', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'User ID')
+    ->addOption('limit', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Limit', 10);
 
 // ════════════════════════════════════════════════════════════════════
-// ✅ SCHEDULER LARAVEL 13 — AJOUTÉ ICI
+// ✅ SCHEDULER — CALENDRIER MLM (8 → 7)
+// ════════════════════════════════════════════════════════════════════
+//
+// RÈGLES :
+//   - Reset PV mensuels       : le 8 à 00h00 (début nouveau mois MLM)
+//   - Pipeline complet        : le 8 à 00h05 (PV + rangs + commissions)
+//   - Paiements              : le 15 à 00h00 (mois M+1)
+//   - Santé MLM              : toutes les heures (vérif incohérences)
+//
 // ════════════════════════════════════════════════════════════════════
 
-// Réinitialisation PV mensuels le 7 de chaque mois
-Schedule::command('pv:reset-monthly')->monthlyOn(7, '00:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/pv-reset-monthly.log'));
+// ─── 1. RESET PV MENSUELS (le 8 à 00h00) ────────────────────────────
+Schedule::command('mlm:reset-monthly-pv')
+    ->monthlyOn(8, '00:00')
+    ->name('mlm-reset-monthly-pv')
+    ->withoutOverlapping(30)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/mlm-reset-monthly-pv.log'));
 
-Schedule::command('monthly:recalculate')->monthlyOn(7, '00:05')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/pv-recalculate.log'));
+// ─── 2. PIPELINE COMPLET (le 8 à 00h05) ─────────────────────────────
+Schedule::command('commissions:calculate-period --full')
+    ->monthlyOn(8, '00:05')
+    ->name('mlm-calculate-period')
+    ->withoutOverlapping(120)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/mlm-calculate-period.log'));
 
-Schedule::command('ranks:update --all')->monthlyOn(7, '00:15')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ranks-after-pv-reset.log'));
+// ─── 3. PAIEMENTS (le 15 à 00h00) ───────────────────────────────────
+Schedule::command('commissions:generate-payments')
+    ->monthlyOn(15, '00:00')
+    ->name('mlm-generate-payments')
+    ->withoutOverlapping(120)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/mlm-generate-payments.log'));
 
-// ✅ Santé MLM (remplace les 4 jobs supprimés)
-Schedule::command('mlm:fix-team-pv --dry-run')->hourly()
+// ─── 4. SANTÉ MLM (toutes les heures) ───────────────────────────────
+Schedule::command('mlm:fix-team-pv --dry-run')
+    ->hourly()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/mlm-health.log'));
 
-// Maintenance journalière ranks
-Schedule::command('ranks:update --all')->dailyAt('00:30')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ranks-daily.log'));
-
-Schedule::command('ranks:fix-all')->dailyAt('00:45')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ranks-fix.log'));
-
-Schedule::command('team:recalculate')->dailyAt('01:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/team-recalculate.log'));
-
-Schedule::command('pv:update-monthly')->dailyAt('03:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/pv-monthly.log'));
-
-// Commissions
-Schedule::command('commissions:process')->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/commissions-process.log'));
-
-Schedule::command('commissions:calculate --all')->dailyAt('01:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/commissions-calculate.log'));
-
-Schedule::command('mlm:process-monthly --steps=all')->monthlyOn(1, '02:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/mlm-monthly.log'));
-
-// Retraits
-Schedule::command('withdrawals:process')->everyFifteenMinutes()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/withdrawals.log'));
-
-// Grades supérieurs
-Schedule::command('higher-ranks:sync')->dailyAt('05:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/higher-ranks.log'));
-
-// Maintenance
-Schedule::command('logs:clean --days=7')->dailyAt('04:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/cleanup.log'));
-
-Schedule::command('backup:run')->dailyAt('05:30')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/backup.log'));
-
-Schedule::command('report:generate')->dailyAt('06:00')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/report.log'));
-
-Schedule::command('packages:check-expiry')->hourly()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/packages.log'));
-
-Schedule::command('notifications:send-pending')->hourly()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/notifications.log'));
-
-Schedule::command('mlm:status')->hourly()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/status.log'));
-
-Schedule::command('pv:check-status')->dailyAt('23:55')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/pv-check-status.log'));
+// ─── 5. GARDE-FOU : Période courante existe (tous les jours à 00h30) ─
+Schedule::call(function () {
+    \App\Models\CommissionPeriod::getCurrentPeriod();
+})
+    ->dailyAt('00:30')
+    ->name('mlm-ensure-current-period')
+    ->onOneServer();

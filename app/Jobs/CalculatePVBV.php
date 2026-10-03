@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+
+use App\Support\MlmPeriod;
 use App\Services\MLM\TeamPVCalculator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +29,7 @@ class CalculatePVBV implements ShouldQueue
     public function __construct(?int $userId = null, string $period = null)
     {
         $this->userId = $userId;
-        $this->period = $period ?? date('Y-m');
+        $this->period = $period ?? MlmPeriod::current();
     }
 
     public function handle(): void

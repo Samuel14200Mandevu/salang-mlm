@@ -10,6 +10,7 @@ use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\RankHistory;
 use App\Models\CommissionPeriod;
+use App\Support\MlmPeriod;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
 use App\Services\MLM\CommissionDistributor;
@@ -48,41 +49,51 @@ class CommissionService
             return false;
         }
 
-        // Récupérer la période en cours
-        $period = CommissionPeriod::where('period', date('Y-m'))->first();
-        if (!$period) {
-            $period = $this->createCurrentPeriod();
+        $period = CommissionPeriod::getCurrentPeriod()
+            ?? CommissionPeriod::findOrCreateForValue(MlmPeriod::current());
+
+        if (!$orderId) {
+            Log::warning('calculatePackageCommission sans order_id', [
+                'user_id' => $userId,
+                'package_id' => $packageId,
+            ]);
         }
 
         DB::beginTransaction();
-        
-        try {
-            // 1. Mettre à jour les PV/BV
-            $this->updateUserPVBV($user, $package);
 
-            // 2. Calculer les commissions
+        try {
+            // PV + commissions temps réel : uniquement via CommissionDistributor
             $commissions = $this->commissionDistributor->distributeCommissions(
                 $user,
                 $package,
-                $orderId,
+                $orderId ?? 0,
                 $period
             );
 
-            // 3. Créditer les wallets immédiatement
             foreach ($commissions as $commission) {
-                $wallet = Wallet::where('user_id', $commission->user_id)->first();
-                if ($wallet) {
-                    $wallet->balance += $commission->amount;
-                    $wallet->save();
-                    
-                    $commission->status = 'paid';
-                    $commission->paid_at = now();
-                    $commission->save();
+                if ($commission->status === 'paid') {
+                    continue;
                 }
-            }
 
-            // 4. Mettre à jour les grades
-            $this->updateRanks($user);
+                $wallet = Wallet::firstOrCreate(
+                    ['user_id' => $commission->user_id],
+                    [
+                        'balance' => 0,
+                        'pending_balance' => 0,
+                        'total_withdrawn' => 0,
+                        'total_deposited' => 0,
+                        'currency' => 'USD',
+                        'is_active' => true,
+                    ]
+                );
+                $wallet->balance += $commission->amount;
+                $wallet->total_deposited += $commission->amount;
+                $wallet->save();
+
+                $commission->status = 'paid';
+                $commission->paid_at = now();
+                $commission->save();
+            }
 
             DB::commit();
             
@@ -102,58 +113,6 @@ class CommissionService
                 'trace' => $e->getTraceAsString()
             ]);
             return false;
-        }
-    }
-
-    /**
-     * Mettre à jour les PV/BV d'un utilisateur
-     */
-    private function updateUserPVBV(User $user, Package $package)
-    {
-        $user->pv_balance += $package->pv_value;
-        $user->bv_balance += $package->bv_value;
-        $user->monthly_pv += $package->pv_value;
-        $user->monthly_bv += $package->bv_value;
-        $user->save();
-
-        $this->updateNetworkPVBV($user, $package);
-    }
-
-    /**
-     * Mettre à jour les PV/BV du réseau (parrains)
-     */
-    private function updateNetworkPVBV(User $user, Package $package)
-    {
-        $current = $user->parrain;
-        $level = 1;
-
-        while ($current && $level <= 9) {
-            $current->team_pv += $package->pv_value;
-            $current->team_bv += $package->bv_value;
-            $current->save();
-            
-            $current = $current->parrain;
-            $level++;
-        }
-    }
-
-    /**
-     * Mettre à jour les grades
-     */
-    private function updateRanks(User $user)
-    {
-        $newRank = $this->rankCalculator->calculateAdvancedRank($user);
-        if ($newRank && $newRank->id != $user->rank_id) {
-            $this->updateUserRankInternal($user, $newRank);
-        }
-
-        $current = $user->parrain;
-        while ($current) {
-            $newRank = $this->rankCalculator->calculateAdvancedRank($current);
-            if ($newRank && $newRank->id != $current->rank_id) {
-                $this->updateUserRankInternal($current, $newRank);
-            }
-            $current = $current->parrain;
         }
     }
 
@@ -185,22 +144,6 @@ class CommissionService
             'user_id' => $user->id,
             'old_rank' => $oldRankName,
             'new_rank' => $newRank->name,
-        ]);
-    }
-
-    /**
-     * Créer la période en cours
-     */
-    private function createCurrentPeriod()
-    {
-        $now = now();
-        $period = $now->format('Y-m');
-        
-        return CommissionPeriod::create([
-            'period' => $period,
-            'start_date' => $now->copy()->startOfMonth(),
-            'end_date' => $now->copy()->endOfMonth(),
-            'status' => 'pending',
         ]);
     }
 

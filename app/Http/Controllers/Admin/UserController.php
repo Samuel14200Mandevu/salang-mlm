@@ -390,7 +390,7 @@ class UserController extends Controller
 
         if ($request->role !== 'cashier') {
             $rules['package_id'] = 'nullable|exists:packages,id';
-            $rules['parrain_id'] = 'nullable|exists:users,id|not_in:' . $id;
+            $rules['parrain_code'] = 'nullable|string|exists:users,sponsor_id';
             $rules['rank_id'] = 'nullable|exists:ranks,id';
             $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
         }
@@ -435,45 +435,52 @@ class UserController extends Controller
                 $data['direct_sponsors_count'] = 0;
             } else {
                 // ============================================================
-                // GESTION DU CHANGEMENT DE PARRAIN
+                // GESTION DU CHANGEMENT DE PARRAIN (par CODE)
                 // ============================================================
-                if ($request->has('parrain_id') && $request->parrain_id != $user->parrain_id) {
-                    $parrainChanged = true;
-                    $newParrainId = $request->parrain_id ? (int) $request->parrain_id : null;
+                if ($request->filled('parrain_code')) {
+                    $newParrain = User::where('sponsor_id', $request->parrain_code)->first();
 
-                    $data['parrain_id'] = $newParrainId;
+                    if ($newParrain && $newParrain->id != $user->parrain_id) {
+                        $parrainChanged = true;
+                        $newParrainId = $newParrain->id;
 
-                    if ($oldParrainId) {
-                        $oldParrain = User::find($oldParrainId);
-                        if ($oldParrain) {
-                            $oldParrain->decrement('total_sponsors');
+                        // Vérification anti-cycle : le nouveau parrain ne doit pas être un descendant
+                        if ($this->isDescendant($user, $newParrain)) {
+                            DB::rollBack();
+                            return back()->withInput()->withErrors([
+                                'parrain_code' => 'Impossible : ce parrain est déjà dans le réseau descendant de cet utilisateur (risque de cycle).',
+                            ]);
                         }
-                    }
-                    if ($newParrainId) {
-                        $newParrain = User::find($newParrainId);
-                        if ($newParrain) {
-                            $newParrain->increment('total_sponsors');
+
+                        $data['parrain_id'] = $newParrainId;
+
+                        if ($oldParrainId) {
+                            $oldParrain = User::find($oldParrainId);
+                            if ($oldParrain) {
+                                $oldParrain->decrement('total_sponsors');
+                            }
                         }
-                    }
 
-                    $genealogy = Genealogy::where('user_id', $user->id)->first();
-                    if ($genealogy) {
-                        $newParrain = $newParrainId ? User::find($newParrainId) : null;
-                        $genealogy->sponsor_id = $newParrain?->id;
-                        $genealogy->parent_id = $newParrain?->id;
-                        $genealogy->level = $newParrain ? ($newParrain->genealogy?->level ?? 0) + 1 : 0;
-                        $genealogy->save();
-                    }
+                        $newParrain->increment('total_sponsors');
 
-                    Log::info('Changement de parrain effectué', [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'old_parrain_id' => $oldParrainId,
-                        'new_parrain_id' => $newParrainId,
-                        'admin_id' => auth()->id(),
-                    ]);
+                        $genealogy = Genealogy::where('user_id', $user->id)->first();
+                        if ($genealogy) {
+                            $genealogy->sponsor_id = $newParrain->id;
+                            $genealogy->parent_id  = $newParrain->id;
+                            $genealogy->level      = ($newParrain->genealogy?->level ?? 0) + 1;
+                            $genealogy->save();
+                        }
+
+                        Log::info('Changement de parrain effectué (par code)', [
+                            'user_id'         => $user->id,
+                            'user_name'       => $user->name,
+                            'old_parrain_id'  => $oldParrainId,
+                            'new_parrain_id'  => $newParrainId,
+                            'new_parrain_code'=> $newParrain->sponsor_id,
+                            'admin_id'        => auth()->id(),
+                        ]);
+                    }
                 }
-
                 // PACKAGE — NE PLUS recalculer le grade
                 if ($request->has('package_id')) {
                     $data['package_id'] = $request->package_id;
@@ -536,6 +543,45 @@ class UserController extends Controller
             ]);
             return back()->withInput()->with('error', ' Erreur: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Vérifier un code de parrain en AJAX (pour le formulaire d'édition)
+     */
+    public function verifySponsor(Request $request)
+    {
+        $code = trim($request->query('code', ''));
+
+        if ($code === '') {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Veuillez saisir un code.',
+            ]);
+        }
+
+        $sponsor = User::where('sponsor_id', $code)->first();
+
+        if (!$sponsor) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Aucun utilisateur trouvé avec ce code de parrain.',
+            ]);
+        }
+
+        // Vérifier que ce n'est pas un caissier (pas éligible comme parrain)
+        if ($sponsor->hasRole('cashier')) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Un caissier ne peut pas être parrain.',
+            ]);
+        }
+
+        return response()->json([
+            'valid'      => true,
+            'id'         => $sponsor->id,
+            'name'       => $sponsor->name,
+            'sponsor_id' => $sponsor->sponsor_id,
+        ]);
     }
 
     /**
@@ -645,7 +691,7 @@ class UserController extends Controller
             if (!empty($affectedUserIds)) {
                 RecalculateAfterPVImport::dispatch(
                     array_unique($affectedUserIds),
-                    date('Y-m')
+                    MlmPeriod::current()
                 )->onQueue('rank-recalculation');
             }
 
@@ -913,6 +959,33 @@ class UserController extends Controller
 
         return redirect()->route('admin.users')
             ->with('success', $message);
+    }
+
+    /**
+     * Vérifie si $candidat est un descendant de $user (pour éviter les cycles MLM)
+     * Remonte la chaîne des parrains depuis $candidat.
+     * Si on retombe sur $user, c'est un cycle → true.
+     */
+    private function isDescendant(User $user, User $candidat): bool
+    {
+        // Un utilisateur ne peut pas être son propre descendant
+        if ($user->id === $candidat->id) {
+            return true;
+        }
+
+        $current = $candidat;
+        $maxDepth = 100; // sécurité anti-boucle infinie
+        $depth = 0;
+
+        while ($current && $current->parrain_id && $depth < $maxDepth) {
+            if ((int) $current->parrain_id === (int) $user->id) {
+                return true;
+            }
+            $current = User::find($current->parrain_id);
+            $depth++;
+        }
+
+        return false;
     }
 
     private function generateSponsorCode(): string

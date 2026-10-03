@@ -409,7 +409,16 @@ class MonthlyCommissionService
         try {
             $period = CommissionPeriod::findOrFail($periodId);
 
-            if ($period->status !== 'calculated') {
+            $blockReason = $period->paymentBlockReason();
+            if ($blockReason !== null) {
+                Log::warning('generatePayments refused', [
+                    'period' => $period->period,
+                    'reason' => $blockReason,
+                    'status' => $period->status,
+                    'is_historical' => $period->is_historical,
+                    'is_hidden' => $period->is_hidden,
+                ]);
+
                 return false;
             }
 

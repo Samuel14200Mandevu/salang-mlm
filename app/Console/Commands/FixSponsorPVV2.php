@@ -135,7 +135,7 @@ class FixSponsorPVV2 extends Command
                                     'user_id' => $parrain->id,
                                     'amount' => $detail['pv'],
                                     'date' => now(),
-                                    'period' => date('Y-m'),
+                                    'period' => MlmPeriod::current(),
                                     'type' => 'sponsor_commission',
                                     'notes' => "Correction: PV parrainage de {$detail['name']} (ID: {$detail['id']}) - Package: {$detail['package']}",
                                     'created_by' => $detail['id'],

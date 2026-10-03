@@ -3,6 +3,7 @@
 namespace App\Services\MLM;
 
 use App\Models\User;
+use App\Support\SqlDialect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +42,9 @@ class TeamPVCalculator
      */
     public function calculateForUser(User $user): array
     {
+        $appendPath = SqlDialect::appendToPath('d.path', 'u.id');
+        $notInPath = SqlDialect::notInPath('u.id', 'd.path');
+
         try {
             $result = DB::select("
                 WITH RECURSIVE descendants AS (
@@ -63,12 +67,12 @@ class TeamPVCalculator
                         u.pv_balance, 
                         u.bv_balance, 
                         d.depth + 1,
-                        CONCAT(d.path, ',', u.id)
+                        {$appendPath}
                     FROM users u
                     INNER JOIN descendants d ON u.parrain_id = d.id
                     WHERE u.is_active = true
                       AND d.depth < ?
-                      AND FIND_IN_SET(u.id, d.path) = 0
+                      AND {$notInPath}
                 )
                 SELECT
                     COALESCE(SUM(pv_balance), 0) as total_pv,
@@ -131,6 +135,8 @@ class TeamPVCalculator
     public function getAncestorIds(User $user, int $maxDepth = null): array
     {
         $maxDepth = $maxDepth ?? $this->maxDepth;
+        $appendPath = SqlDialect::appendToPath('a.path', 'u.id');
+        $notInPath = SqlDialect::notInPath('u.id', 'a.path');
 
         try {
             $result = DB::select("
@@ -149,12 +155,12 @@ class TeamPVCalculator
                         u.id, 
                         u.parrain_id, 
                         a.level + 1,
-                        CONCAT(a.path, ',', u.id)
+                        {$appendPath}
                     FROM users u
                     INNER JOIN ancestors a ON u.id = a.parrain_id
                     WHERE u.is_active = true
                       AND a.level < ?
-                      AND FIND_IN_SET(u.id, a.path) = 0
+                      AND {$notInPath}
                 )
                 SELECT id, level
                 FROM ancestors
@@ -188,6 +194,8 @@ class TeamPVCalculator
         }
 
         $placeholders = implode(',', array_fill(0, count($ancestorIds), '?'));
+        $appendPath = SqlDialect::appendToPath('d.path', 'x.id');
+        $notInPath = SqlDialect::notInPath('x.id', 'd.path');
 
         try {
             DB::statement("
@@ -212,12 +220,12 @@ class TeamPVCalculator
                                     x.id, 
                                     x.pv_balance, 
                                     d.depth + 1,
-                                    CONCAT(d.path, ',', x.id)
+                                    {$appendPath}
                                 FROM users x
                                 INNER JOIN desc d ON x.parrain_id = d.id
                                 WHERE x.is_active = true
                                   AND d.depth < ?
-                                  AND FIND_IN_SET(x.id, d.path) = 0
+                                  AND {$notInPath}
                             )
                             SELECT pv_balance FROM desc
                         ) d
@@ -241,12 +249,12 @@ class TeamPVCalculator
                                     x.id, 
                                     x.bv_balance, 
                                     d.depth + 1,
-                                    CONCAT(d.path, ',', x.id)
+                                    {$appendPath}
                                 FROM users x
                                 INNER JOIN desc d ON x.parrain_id = d.id
                                 WHERE x.is_active = true
                                   AND d.depth < ?
-                                  AND FIND_IN_SET(x.id, d.path) = 0
+                                  AND {$notInPath}
                             )
                             SELECT bv_balance FROM desc
                         ) d
@@ -268,12 +276,12 @@ class TeamPVCalculator
                                 SELECT 
                                     x.id, 
                                     d.depth + 1,
-                                    CONCAT(d.path, ',', x.id)
+                                    {$appendPath}
                                 FROM users x
                                 INNER JOIN desc d ON x.parrain_id = d.id
                                 WHERE x.is_active = true
                                   AND d.depth < ?
-                                  AND FIND_IN_SET(x.id, d.path) = 0
+                                  AND {$notInPath}
                             )
                             SELECT id FROM desc
                         ) d

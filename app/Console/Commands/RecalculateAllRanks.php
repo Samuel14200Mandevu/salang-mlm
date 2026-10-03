@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+
+use App\Support\MlmPeriod;
 use App\Models\User;
 use App\Jobs\RecalculateAfterPVImport;
 use Illuminate\Console\Command;
@@ -43,7 +45,7 @@ class RecalculateAllRanks extends Command
                         $processed++;
                     }
                 } else {
-                    RecalculateAfterPVImport::dispatch($userIds, date('Y-m'))
+                    RecalculateAfterPVImport::dispatch($userIds, MlmPeriod::current())
                         ->onQueue('rank-recalculation');
                     $bar->advance($userIds ? count($userIds) : 0);
                     $processed += count($userIds);

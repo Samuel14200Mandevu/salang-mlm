@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+
+use App\Support\MlmPeriod;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Package;
@@ -392,7 +394,7 @@ class AdminPVController extends Controller
                 $user->bv_balance += $amount;
 
                 // ✅ monthly_pv uniquement si mois en cours
-                if ($request->period === date('Y-m')) {
+                if ($request->period === MlmPeriod::current()) {
                     $user->monthly_pv += $amount;
                     $user->monthly_bv += $amount;
                 }
@@ -468,7 +470,7 @@ class AdminPVController extends Controller
             $user = User::find($userId);
             $amount = $history->amount;
             $historyPeriod = $history->period;
-            $currentPeriod = date('Y-m');
+            $currentPeriod = MlmPeriod::current();
 
             // ✅ CORRECTION 1 : Protéger contre les valeurs négatives
             if ($history->type === 'personal' || $history->type === 'monthly') {

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+
+use App\Support\MlmPeriod;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Order;
@@ -183,7 +185,7 @@ class AdminPVImportController extends Controller
                 $user->pv_balance += $totalPv;
                 $user->bv_balance += $totalPv * 0.8;
 
-                if ($period === date('Y-m')) {
+                if ($period === MlmPeriod::current()) {
                     $user->monthly_pv += $totalPv;
                     $user->monthly_bv += $totalPv * 0.8;
                 }
@@ -272,7 +274,7 @@ class AdminPVImportController extends Controller
         $updateRank = $request->boolean('update_rank', false);
         $dryRun = $request->boolean('dry_run', false);
 
-        $isCurrentMonth = ($period === date('Y-m'));
+        $isCurrentMonth = ($period === MlmPeriod::current());
 
         $startTime = microtime(true);
 
@@ -937,7 +939,7 @@ class AdminPVImportController extends Controller
         $user = User::with(['rank', 'parrain'])->findOrFail($userId);
         $amount = (float) $request->amount;
 
-        $isCurrentMonth = ($period === date('Y-m'));
+        $isCurrentMonth = ($period === MlmPeriod::current());
 
         DB::beginTransaction();
         try {

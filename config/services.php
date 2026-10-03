@@ -3,6 +3,13 @@
 
 return [
 
+    'webhooks' => [
+        'flexpay' => ['secret' => env('FLEXPAY_WEBHOOK_SECRET')],
+        'stripe' => ['secret' => env('STRIPE_WEBHOOK_SECRET')],
+        'crypto' => ['secret' => env('CRYPTO_WEBHOOK_SECRET')],
+        'mobile_money' => ['secret' => env('MOBILE_MONEY_WEBHOOK_SECRET')],
+        'payment' => ['secret' => env('PAYMENT_WEBHOOK_SECRET')],
+    ],
 
     'flexpay' => [
         'token' => env('FLEXPAY_TOKEN'),

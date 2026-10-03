@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Cashier;
 
+
+use App\Support\MlmPeriod;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Order;
@@ -15,7 +17,7 @@ use App\Models\CommissionPeriod;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Genealogy;
 use App\Models\Rank;
-use App\Jobs\UpdateTeamPV;
+use App\Http\Controllers\Concerns\DispatchesMlmRecalculation;
 use App\Notifications\CommissionPaidNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,8 @@ use App\Services\PvManagementService;
 
 class CashierController extends Controller
 {
+    use DispatchesMlmRecalculation;
+
     protected $pvService;
 
     public function __construct(PvManagementService $pvService)
@@ -427,7 +431,7 @@ public function createOrder(Request $request)
      */
     public function exportPdf(Request $request)
     {
-        $period = $request->input('period', date('Y-m'));
+        $period = $request->input('period', MlmPeriod::current());
         
         $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
         
@@ -906,7 +910,7 @@ public function createMultiOrder(Request $request)
             ->with(['package', 'parrain'])
             ->findOrFail($id);
         
-        $period = request()->input('period', date('Y-m'));
+        $period = request()->input('period', MlmPeriod::current());
         
         $commissions = Commission::where('user_id', $member->id)
             ->where('period', $period)
@@ -972,7 +976,7 @@ public function createMultiOrder(Request $request)
             ->with(['package', 'parrain'])
             ->findOrFail($id);
         
-        $period = request()->input('period', date('Y-m'));
+        $period = request()->input('period', MlmPeriod::current());
         
         $commissions = Commission::where('user_id', $member->id)
             ->where('period', $period)
@@ -2042,7 +2046,7 @@ public function destroyProfile(Request $request)
 
                 // Créer une période de commission
                 $period = CommissionPeriod::firstOrCreate(
-                    ['period' => date('Y-m')],
+                    ['period' => MlmPeriod::current()],
                     [
                         'start_date' => now()->startOfMonth(),
                         'end_date' => now()->endOfMonth(),
@@ -2116,16 +2120,7 @@ public function destroyProfile(Request $request)
                     'commission_types' => collect($commissions)->pluck('type')->unique()->toArray(),
                 ]);
 
-                // Mettre à jour les jobs de classement
-                if (class_exists('App\Jobs\UpdateRanks')) {
-                    try {
-                        \App\Jobs\UpdateRanks::dispatch($member->id)->onQueue('high');
-                        \App\Jobs\UpdateRanks::dispatch($sponsor->id)->onQueue('high');
-                        Log::info('Jobs de mise à jour des rangs dispatchés');
-                    } catch (\Exception $e) {
-                        Log::error('Erreur dispatch UpdateRanks: ' . $e->getMessage());
-                    }
-                }
+                $this->dispatchMlmRecalculation($member);
 
             } catch (\Exception $e) {
                 Log::error('❌ Erreur CommissionDistributor: ' . $e->getMessage(), [

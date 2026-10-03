@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+
+use App\Support\MlmPeriod;
 use App\Models\User;
 use App\Models\Rank;
 use Illuminate\Console\Command;
@@ -49,7 +51,7 @@ class CheckPVStatus extends Command
         $clientsWithPV = User::where('user_type', 'client')->where('monthly_pv', '>', 0)->count();
         $totalPV = User::sum('monthly_pv');
         $totalBV = User::sum('monthly_bv');
-        $currentPeriod = date('Y-m');
+        $currentPeriod = MlmPeriod::current();
 
         $topUsers = User::where('monthly_pv', '>', 0)
             ->orderBy('monthly_pv', 'desc')

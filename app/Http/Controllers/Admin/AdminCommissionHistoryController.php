@@ -15,6 +15,22 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class AdminCommissionHistoryController extends Controller
 {
     /**
+     * Nombre maximum de générations pour le bonus INDIRECT.
+     */
+    const MAX_GENERATIONS_INDIRECT = 8;
+
+    /**
+     * Nombre maximum de générations pour le bonus LEADERSHIP.
+     */
+    const MAX_GENERATIONS_LEADERSHIP = 12;
+
+    /**
+     * Nombre maximum absolu de générations parcourues dans l'arbre.
+     * Doit être égal au maximum entre INDIRECT et LEADERSHIP.
+     */
+    const MAX_TREE_GENERATIONS = 12;
+
+    /**
      * Afficher l'historique des commissions
      */
     public function index(Request $request)
@@ -75,7 +91,8 @@ class AdminCommissionHistoryController extends Controller
         $period = $request->input('period');
         $userId = $request->input('user_id');
 
-        set_time_limit(300);
+        set_time_limit(1800);
+        ini_set('memory_limit', '2048M');
 
         $query = PVHistory::with(['user']);
 
@@ -185,10 +202,13 @@ class AdminCommissionHistoryController extends Controller
     /**
      * Calculer les commissions pour un user et une période
      *
-     * ✅ CORRECTION : Bonus direct avec from_user_id = user_id et generation = 0
-     * ✅ CORRECTION : Utilise $userMonthlyPV (calculé depuis pv_history)
-     * ✅ CORRECTION : Suppression du check $existingDirectBonus
-     * ✅ Règles alignées avec CommissionDistributor
+     *  Bonus direct avec from_user_id = user_id et generation = 0
+     *  Utilise $userMonthlyPV (calculé depuis pv_history)
+     *  Suppression du check $existingDirectBonus
+     *  Règles alignées avec CommissionDistributor
+     *
+     *  INDIRECT   : générations 1 à 8
+     *  LEADERSHIP : générations 1 à 12
      */
     private function calculateCommissionsForUserAndPeriodOptimized($user, $period, $userMonthlyPV, $allUsers)
     {
@@ -235,10 +255,12 @@ class AdminCommissionHistoryController extends Controller
         }
 
         // ════════════════════════════════════════════════════════════
-        // 2. INDIRECT + LEADERSHIP - Générations 1 à 7
+        // 2. INDIRECT (1-8) + LEADERSHIP (1-12)
+        // On parcourt jusqu'à MAX_TREE_GENERATIONS (12) pour couvrir
+        // les deux cas, puis on filtre par type.
         // ════════════════════════════════════════════════════════════
 
-        $descendantsData = $this->getAllDescendantsWithAncestors($user, 7);
+        $descendantsData = $this->getAllDescendantsWithAncestors($user, self::MAX_TREE_GENERATIONS);
 
         if (empty($descendantsData)) {
             return $commissions;
@@ -279,8 +301,16 @@ class AdminCommissionHistoryController extends Controller
 
             $descendantRate = $this->getDirectRate($descendantRank);
 
-            // INDIRECT
-            if ($pvOkForIndirect && $userRank >= 3 && $descendantRank >= 3 && $userRank > $descendantRank) {
+            // ─────────────────────────────────────────────
+            // INDIRECT — uniquement jusqu'à 8 générations
+            // ─────────────────────────────────────────────
+            if (
+                $generation <= self::MAX_GENERATIONS_INDIRECT
+                && $pvOkForIndirect
+                && $userRank >= 3
+                && $descendantRank >= 3
+                && $userRank > $descendantRank
+            ) {
                 $rateDifference = max(0, $userRate - $descendantRate);
 
                 if ($rateDifference > 0) {
@@ -306,8 +336,14 @@ class AdminCommissionHistoryController extends Controller
                 }
             }
 
-            // LEADERSHIP
-            if ($pvOkForIndirect && $userRank >= 5) {
+            // ─────────────────────────────────────────────
+            // LEADERSHIP — jusqu'à 12 générations
+            // ─────────────────────────────────────────────
+            if (
+                $generation <= self::MAX_GENERATIONS_LEADERSHIP
+                && $pvOkForIndirect
+                && $userRank >= 5
+            ) {
                 $leadershipRate = $this->getLeadershipRate($userRank);
 
                 if ($leadershipRate > 0) {
@@ -338,9 +374,12 @@ class AdminCommissionHistoryController extends Controller
     }
 
     /**
-     * Récupérer tous les descendants avec leurs ancêtres pour l'exclusion
+     * Récupérer tous les descendants avec leurs ancêtres pour l'exclusion.
+     *
+     * @param User $user
+     * @param int $maxGenerations Nombre maximum de générations (12 par défaut)
      */
-    private function getAllDescendantsWithAncestors($user, $maxGenerations = 7)
+    private function getAllDescendantsWithAncestors($user, $maxGenerations = 12)
     {
         $descendants = [];
         $currentGeneration = 1;
@@ -448,22 +487,23 @@ class AdminCommissionHistoryController extends Controller
 
     /**
      * Conditions de PV mensuel pour toucher les commissions
-     * ✅ ALIGNÉ avec CommissionDistributor
+     * ALIGNÉ avec CommissionDistributor
      */
     private function getMonthlyPVRequirements(): array
     {
         return [
             1 => ['personal' => 0, 'group' => 0],
             2 => ['personal' => 10, 'group' => 0],
-            3 => ['personal' => 30, 'group' => 0],
-            4 => ['personal' => 40, 'group' => 0],
-            5 => ['personal' => 50, 'group' => 500],
-            6 => ['personal' => 75, 'group' => 1000],
+            3 => ['personal' => 20, 'group' => 0],
+            4 => ['personal' => 25, 'group' => 0],
+            5 => ['personal' => 30, 'group' => 500],
+            6 => ['personal' => 50, 'group' => 1000],
             7 => ['personal' => 100, 'group' => 2000],
-            8 => ['personal' => 200, 'group' => 3000],
+            8 => ['personal' => 180, 'group' => 3000],
             9 => ['personal' => 300, 'group' => 5000],
         ];
     }
+
 
     /**
      * Voir les détails par période

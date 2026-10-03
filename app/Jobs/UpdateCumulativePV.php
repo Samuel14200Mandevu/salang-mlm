@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+
+use App\Support\MlmPeriod;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,7 +36,7 @@ class UpdateCumulativePV implements ShouldQueue
             return;
         }
 
-        RecalculateAfterPVImport::dispatch([$this->userId], date('Y-m'))
+        RecalculateAfterPVImport::dispatch([$this->userId], MlmPeriod::current())
             ->onQueue('rank-recalculation');
     }
 }

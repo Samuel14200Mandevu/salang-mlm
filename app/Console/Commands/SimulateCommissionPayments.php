@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 class SimulateCommissionPayments extends Command
 {
     protected $signature = 'commissions:simulate-payments
-                            {--period= : Période YYYY-MM (sinon toutes les périodes calculated)}
+                            {--period= : Période YYYY-MM (sinon toutes les périodes payable via système)}
+                            {--include-hidden : Inclure périodes masquées / historiques (debug admin)}
                             {--respect-config : Utilise payment_validation + taxe + min (défaut)}';
 
     protected $description = 'Dry-run generatePayments (lecture seule, aucune écriture)';
@@ -20,15 +21,30 @@ class SimulateCommissionPayments extends Command
     public function handle(PaymentEligibilityChecker $checker): int
     {
         $periodFilter = $this->option('period');
+        $includeHidden = (bool) $this->option('include-hidden');
 
         $periods = CommissionPeriod::query()
             ->when($periodFilter, fn ($q) => $q->where('period', $periodFilter))
-            ->when(! $periodFilter, fn ($q) => $q->where('status', 'calculated'))
+            ->when(! $includeHidden, fn ($q) => $q->payableViaSystem())
+            ->when($includeHidden && ! $periodFilter, fn ($q) => $q->where('status', 'calculated'))
             ->orderBy('period')
             ->get();
 
         if ($periods->isEmpty()) {
-            $this->error('Aucune commission_period calculated trouvée.');
+            if ($periodFilter && ! $includeHidden) {
+                $blocked = CommissionPeriod::query()->where('period', $periodFilter)->first();
+                if ($blocked && $blocked->paymentBlockReason() !== null) {
+                    $this->error(sprintf(
+                        'Période %s non simulable : %s (utiliser --include-hidden pour debug admin).',
+                        $periodFilter,
+                        $blocked->paymentBlockReason()
+                    ));
+
+                    return self::FAILURE;
+                }
+            }
+
+            $this->error('Aucune commission_period payable via système trouvée.');
 
             return self::FAILURE;
         }
@@ -40,6 +56,12 @@ class SimulateCommissionPayments extends Command
         $byReason = [];
 
         foreach ($periods as $period) {
+            if ($includeHidden && $period->paymentBlockReason() !== null) {
+                $this->warn("Période {$period->period} — non payable ({$period->paymentBlockReason()}), simulation ignorée.");
+
+                continue;
+            }
+
             $this->info("Période {$period->period} (status={$period->status})");
 
             $aggregates = Commission::query()

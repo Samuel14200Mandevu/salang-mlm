@@ -380,7 +380,7 @@ class PvManagementService
             // ============================================================
             RecalculateAfterPVImport::dispatch(
                 [$filleul->id, $parrain->id],
-                date('Y-m')
+                MlmPeriod::current()
             )->onQueue('rank-recalculation');
 
             // ============================================================

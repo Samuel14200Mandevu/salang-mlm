@@ -54,7 +54,7 @@ class ProcessCommissions extends Command
         }
 
         // Cas 3: Par période (défaut)
-        $period = $this->option('period') ?? date('Y-m');
+        $period = $this->option('period') ?? MlmPeriod::current();
         $this->processCommissionsByPeriod($period);
         return 0;
     }

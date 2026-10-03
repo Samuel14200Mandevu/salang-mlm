@@ -3,7 +3,8 @@
 
 namespace App\Models;
 
-use App\Jobs\UpdateRanks;
+use App\Jobs\RecalculateAfterPVImport;
+use App\Support\MlmPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -148,7 +149,9 @@ class OrderItem extends Model
         if ($this->order && $this->order->user_id) {
             $user = $this->order->user;
             if ($user) {
-                dispatch(new UpdateRanks($user->id))->delay(now()->addSeconds(1));
+                RecalculateAfterPVImport::dispatch([$user->id], MlmPeriod::current())
+                    ->onQueue('rank-recalculation')
+                    ->delay(now()->addSeconds(1));
             }
         }
     }

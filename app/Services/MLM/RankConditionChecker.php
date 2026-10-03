@@ -4,6 +4,7 @@ namespace App\Services\MLM;
 
 use App\Models\User;
 use App\Models\Rank;
+use App\Support\SqlDialect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -212,6 +213,9 @@ class RankConditionChecker
             return $this->branchCache[$cacheKey];
         }
 
+        $appendPath = SqlDialect::appendToPath('d.path', 'u.id');
+        $notInPath = SqlDialect::notInPath('u.id', 'd.path');
+
         $result = DB::select("
             WITH RECURSIVE descendants AS (
                 SELECT 
@@ -233,11 +237,11 @@ class RankConditionChecker
                     u.rank_id, 
                     d.depth + 1,
                     d.branch_id,
-                    CONCAT(d.path, ',', u.id)
+                    {$appendPath}
                 FROM users u
                 INNER JOIN descendants d ON u.parrain_id = d.id
                 WHERE u.is_active = true
-                AND FIND_IN_SET(u.id, d.path) = 0
+                AND {$notInPath}
                 AND d.depth < 50
             ),
             branch_qualification AS (

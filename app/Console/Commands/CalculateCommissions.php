@@ -17,8 +17,8 @@ class CalculateCommissions extends Command
                             {--all : Calculer pour tous les utilisateurs}
                             {--period= : Période au format YYYY-MM}
                             {--dry-run : Simulation sans modification}';
-    
-    protected $description = 'Calculer les commissions pour les utilisateurs';
+
+    protected $description = 'Calculer les commissions pour les utilisateurs (legacy)';
 
     protected $commissionService;
 
@@ -30,21 +30,17 @@ class CalculateCommissions extends Command
 
     public function handle()
     {
-        $this->info('🔄 Calcul des commissions...');
+        $this->info('🔄 Calcul des commissions (legacy)...');
 
         $isDryRun = $this->option('dry-run');
         if ($isDryRun) {
             $this->warn('⚠️ Mode SIMULATION - Aucune modification');
         }
 
-        // Cas 1: Période spécifique
         if ($this->option('period')) {
-            $period = $this->option('period');
-            $this->info("📊 Période: {$period}");
-            return $this->processByPeriod($period, $isDryRun);
+            return $this->processByPeriod($this->option('period'), $isDryRun);
         }
 
-        // Cas 2: Utilisateur spécifique
         if ($this->option('user')) {
             $user = User::find($this->option('user'));
             if (!$user) {
@@ -54,32 +50,24 @@ class CalculateCommissions extends Command
             return $this->processUser($user, $isDryRun);
         }
 
-        // Cas 3: Tous les utilisateurs
         if ($this->option('all')) {
             return $this->processAllUsers($isDryRun);
         }
 
-        // Cas 4: Par défaut - Commissions en attente
         return $this->processPending($isDryRun);
     }
 
     private function processUser($user, $isDryRun = false)
     {
-        $this->info("📊 Traitement pour {$user->name}...");
-        
-        $pendingCommissions = Commission::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->get();
+        $pending = Commission::where('user_id', $user->id)->where('status', 'pending')->get();
 
-        if ($pendingCommissions->isEmpty()) {
+        if ($pending->isEmpty()) {
             $this->line("⏸️ Aucune commission en attente");
             return 0;
         }
 
         if ($isDryRun) {
-            $this->line("   🔍 Simulation: {$pendingCommissions->count()} commissions à traiter");
-            $total = $pendingCommissions->sum('amount');
-            $this->line("   💰 Total: {$total} USD");
+            $this->line("   🔍 Simulation: {$pending->count()} commissions ({$pending->sum('amount')} USD)");
             return 0;
         }
 
@@ -89,21 +77,15 @@ class CalculateCommissions extends Command
 
     private function processAllUsers($isDryRun = false)
     {
-        $users = User::whereHas('commissions', function($query) {
-            $query->where('status', 'pending');
-        })->get();
+        $users = User::whereHas('commissions', fn($q) => $q->where('status', 'pending'))->get();
 
         if ($users->isEmpty()) {
             $this->info('⏸️ Aucune commission en attente');
             return 0;
         }
 
-        $this->info("📊 {$users->count()} utilisateurs avec commissions en attente");
-
         if ($isDryRun) {
-            $total = Commission::where('status', 'pending')->sum('amount');
-            $count = Commission::where('status', 'pending')->count();
-            $this->line("   🔍 Simulation: {$count} commissions, {$total} USD");
+            $this->line("   🔍 Simulation: {$users->count()} utilisateurs");
             return 0;
         }
 
@@ -117,62 +99,28 @@ class CalculateCommissions extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info('✅ Calcul terminé pour tous les utilisateurs');
+        $this->info('✅ Terminé');
         return 0;
     }
 
     private function processPending($isDryRun = false)
     {
-        $users = User::whereHas('commissions', function($query) {
-            $query->where('status', 'pending');
-        })->get();
-
-        if ($users->isEmpty()) {
-            $this->info('⏸️ Aucune commission en attente');
-            return 0;
-        }
-
-        $this->info("📊 {$users->count()} utilisateurs avec commissions en attente");
-
-        if ($isDryRun) {
-            $total = Commission::where('status', 'pending')->sum('amount');
-            $this->line("   🔍 Simulation: {$total} USD à traiter");
-            return 0;
-        }
-
-        $bar = $this->output->createProgressBar($users->count());
-        $bar->start();
-
-        foreach ($users as $user) {
-            $this->calculateForUser($user);
-            $bar->advance();
-        }
-
-        $bar->finish();
-        $this->newLine();
-        $this->info('✅ Calcul terminé');
-        return 0;
+        return $this->processAllUsers($isDryRun);
     }
 
     private function processByPeriod($period, $isDryRun = false)
     {
-        $users = User::whereHas('commissions', function($query) use ($period) {
-            $query->where('period', $period)
-                  ->where('status', 'pending');
+        $users = User::whereHas('commissions', function ($q) use ($period) {
+            $q->where('period', $period)->where('status', 'pending');
         })->get();
 
         if ($users->isEmpty()) {
-            $this->info('⏸️ Aucune commission en attente pour cette période');
+            $this->info("⏸️ Aucune commission en attente pour {$period}");
             return 0;
         }
 
-        $this->info("📊 {$users->count()} utilisateurs pour la période {$period}");
-
         if ($isDryRun) {
-            $total = Commission::where('period', $period)
-                ->where('status', 'pending')
-                ->sum('amount');
-            $this->line("   🔍 Simulation: {$total} USD à traiter");
+            $this->line("   🔍 Simulation: {$users->count()} utilisateurs pour {$period}");
             return 0;
         }
 
@@ -186,24 +134,19 @@ class CalculateCommissions extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info('✅ Calcul terminé pour la période');
+        $this->info('✅ Terminé');
         return 0;
     }
 
     private function calculateForUser($user)
     {
         try {
-            $pendingCommissions = Commission::where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->get();
-
-            if ($pendingCommissions->isEmpty()) {
-                return;
-            }
+            $pending = Commission::where('user_id', $user->id)->where('status', 'pending')->get();
+            if ($pending->isEmpty()) return;
 
             $totalAmount = 0;
 
-            foreach ($pendingCommissions as $commission) {
+            foreach ($pending as $commission) {
                 $wallet = $user->wallet;
                 if (!$wallet) {
                     $wallet = Wallet::create([
@@ -223,15 +166,13 @@ class CalculateCommissions extends Command
                 $totalAmount += $commission->amount;
             }
 
-            // Mettre à jour le grade
             $this->commissionService->updateUserRank($user);
-
-            $this->line("   ✅ {$user->name}: {$pendingCommissions->count()} commission(s) - {$totalAmount} USD");
+            $this->line("   ✅ {$user->name}: {$pending->count()} commission(s) - {$totalAmount} USD");
 
         } catch (\Exception $e) {
             Log::error('Erreur calcul commission', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ]);
             $this->error("❌ Erreur pour {$user->name}: {$e->getMessage()}");
         }

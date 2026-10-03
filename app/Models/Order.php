@@ -3,11 +3,8 @@
 
 namespace App\Models;
 
-use App\Jobs\UpdateTeamPV;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-
 class Order extends Model
 {
     use HasFactory;
@@ -52,56 +49,7 @@ class Order extends Model
 
     protected static function booted(): void
     {
-        static::created(function ($order) {
-            if ($order->user_id) {
-                $user = User::find($order->user_id);
-                if ($user) {
-                    $user->updateMonthlyPV();
-                    dispatch(new UpdateTeamPV($user->id, true));
-                }
-            }
-        });
-
-        static::updated(function ($order) {
-            if ($order->wasChanged('status') || $order->wasChanged('payment_status')) {
-                if ($order->status === 'completed' || $order->payment_status === 'completed') {
-                    if ($order->user_id) {
-                        $user = User::find($order->user_id);
-                        if ($user) {
-                            $user->updateMonthlyPV();
-                            dispatch(new UpdateTeamPV($user->id, true));
-                            $user->calculateAndUpdateRank();
-                            
-                            Log::info('Order: Mise à jour des PV après commande', [
-                                'order_id' => $order->id,
-                                'user_id' => $user->id,
-                                'status' => $order->status,
-                            ]);
-                        }
-                    }
-                }
-            }
-            
-            if ($order->wasChanged('payment_status') && $order->payment_status === 'completed') {
-                if ($order->user_id) {
-                    $user = User::find($order->user_id);
-                    if ($user) {
-                        $user->updateMonthlyPV();
-                        dispatch(new UpdateTeamPV($user->id, true));
-                    }
-                }
-            }
-        });
-
-        static::deleted(function ($order) {
-            if ($order->user_id) {
-                $user = User::find($order->user_id);
-                if ($user) {
-                    $user->updateMonthlyPV();
-                    dispatch(new UpdateTeamPV($user->id, true));
-                }
-            }
-        });
+        // PV / team_pv / grades : OrderObserver + CommissionDistributor (évite double dispatch)
     }
 
     // ============================================================

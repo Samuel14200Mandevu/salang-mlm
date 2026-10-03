@@ -314,13 +314,17 @@ class GenealogyService
      */
     public function countDescendants(User $user): int
     {
-        $genealogy = $user->genealogy;
+        $directChildren = Genealogy::where('parent_id', $user->id)->get();
+        $count = 0;
 
-        if (!$genealogy) {
-            return 0;
+        foreach ($directChildren as $childGenealogy) {
+            $child = User::find($childGenealogy->user_id);
+            if ($child) {
+                $count += 1 + $this->countDescendants($child);
+            }
         }
 
-        return $genealogy->total_children ?? 0;
+        return $count;
     }
 
     /**
@@ -389,21 +393,12 @@ class GenealogyService
     {
         $genealogy = $user->genealogy;
 
-        if (!$genealogy) {
-            return [
-                'total_children' => 0,
-                'left_count' => 0,
-                'right_count' => 0,
-                'total_descendants' => 0,
-                'active_descendants' => 0,
-                'max_depth' => 0,
-            ];
-        }
+        $directChildren = Genealogy::where('parent_id', $user->id)->get();
 
         return [
-            'total_children' => $genealogy->total_children ?? 0,
-            'left_count' => $genealogy->left_count ?? 0,
-            'right_count' => $genealogy->right_count ?? 0,
+            'total_children' => $directChildren->count(),
+            'left_count' => $directChildren->where('position', 'left')->count(),
+            'right_count' => $directChildren->where('position', 'right')->count(),
             'total_descendants' => $this->countDescendants($user),
             'active_descendants' => $this->countActiveDescendants($user),
             'max_depth' => $this->getMaxDepth($user),

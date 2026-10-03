@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use App\Models\Rank;
 use App\Models\Package;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,6 +20,8 @@ class AdminUserTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(PermissionSeeder::class);
+
         $this->admin = User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@test.com',
@@ -29,6 +32,7 @@ class AdminUserTest extends TestCase
         $this->user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'user@test.com',
+            'is_active' => true,
         ]);
     }
 
@@ -68,15 +72,19 @@ class AdminUserTest extends TestCase
     public function test_admin_can_create_user(): void
     {
         $this->createRanks();
-        $response = $this->actingAs($this->admin)->post('/admin/users', [
+        $rank = Rank::first();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.users.store'), [
             'name' => 'New User',
             'email' => 'newuser@test.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
+            'role' => 'user',
+            'rank_id' => $rank?->id,
             'is_active' => 1,
         ]);
 
-        $response->assertRedirect('/admin/users');
+        $response->assertRedirect(route('admin.users'));
 
         $this->assertDatabaseHas('users', [
             'name' => 'New User',
@@ -87,13 +95,17 @@ class AdminUserTest extends TestCase
     public function test_admin_can_update_user(): void
     {
         $this->createRanks();
-        $response = $this->actingAs($this->admin)->put('/admin/users/' . $this->user->id, [
+        $rank = Rank::first();
+
+        $response = $this->actingAs($this->admin)->put(route('admin.users.update', $this->user), [
             'name' => 'Updated User',
             'email' => 'updated@test.com',
+            'role' => 'user',
+            'rank_id' => $rank?->id,
             'is_active' => 1,
         ]);
 
-        $response->assertRedirect('/admin/users');
+        $response->assertRedirect(route('admin.users.show', $this->user));
 
         $this->assertDatabaseHas('users', [
             'id' => $this->user->id,

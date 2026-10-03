@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+
+use App\Support\MlmPeriod;
 use App\Models\Genealogy;
 use App\Jobs\RecalculateAfterPVImport;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +24,7 @@ class GenealogyObserver
             }
 
             if (!empty($userIds)) {
-                RecalculateAfterPVImport::dispatch($userIds, date('Y-m'))
+                RecalculateAfterPVImport::dispatch($userIds, MlmPeriod::current())
                     ->onQueue('rank-recalculation');
             }
         } catch (\Exception $e) {

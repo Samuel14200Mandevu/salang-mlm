@@ -126,7 +126,7 @@ class CommissionTriggerController extends Controller
         ]);
 
         try {
-            $period = $request->input('period', date('Y-m'));
+            $period = $request->input('period', MlmPeriod::current());
 
             if ($request->filled('user_id')) {
                 return $this->recalculateUser($request->user_id, $period);
@@ -443,7 +443,7 @@ class CommissionTriggerController extends Controller
             ], 403);
         }
 
-        $period = $request->input('period', date('Y-m'));
+        $period = $request->input('period', MlmPeriod::current());
 
         try {
             $commissionPeriod = CommissionPeriod::where('period', $period)->first();

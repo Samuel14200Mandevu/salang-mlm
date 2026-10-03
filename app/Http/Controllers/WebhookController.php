@@ -10,6 +10,7 @@ use App\Services\MLM\MonthlyCommissionService;
 use App\Services\PaymentService;
 use App\Services\MobileMoneyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -34,11 +35,18 @@ class WebhookController extends Controller
      */
     public function flexpay(Request $request)
     {
-        Log::info('FlexPay Webhook received', $request->all());
-
         $data = $request->all();
+        Log::info('FlexPay Webhook received', [
+            'orderNumber' => $data['orderNumber'] ?? null,
+            'status' => $data['status'] ?? null,
+        ]);
 
         try {
+            $eventId = (string) ($data['reference'] ?? $data['orderNumber'] ?? '');
+            if ($eventId !== '' && !$this->markWebhookProcessed('flexpay', $eventId)) {
+                return response()->json(['message' => 'Already processed'], 200);
+            }
+
             // Valider les données FlexPay
             if (!isset($data['orderNumber']) || !isset($data['status'])) {
                 Log::error('FlexPay Webhook: Données invalides', $data);
@@ -595,5 +603,15 @@ class WebhookController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Idempotence : true si l'événement peut être traité, false si déjà vu.
+     */
+    protected function markWebhookProcessed(string $provider, string $eventId): bool
+    {
+        $key = 'webhook:'.$provider.':'.hash('sha256', $eventId);
+
+        return Cache::add($key, true, now()->addDays(7));
     }
 }

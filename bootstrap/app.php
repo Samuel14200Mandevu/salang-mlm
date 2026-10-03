@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -8,8 +9,6 @@ use Illuminate\Http\Request;
 // ============================================================
 // OPTIMISATIONS POUR LARAVEL CLOUD / PRODUCTION
 // ============================================================
-
-putenv('LOG_CHANNEL=null');
 
 if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') {
     putenv('DEBUGBAR_ENABLED=false');
@@ -47,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
             'active' => \App\Http\Middleware\EnsureUserActive::class,
             'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
+            'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
         ]);
         
         $middleware->validateCsrfTokens(except: [
@@ -67,13 +67,26 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                if ($e instanceof AuthenticationException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthenticated.',
+                        'error' => 'AuthenticationException',
+                    ], 401);
+                }
+
                 $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
-                $message = $e->getMessage() ?: 'Une erreur est survenue';
-                
+                $message = app()->environment('production')
+                    ? 'Une erreur est survenue'
+                    : ($e->getMessage() ?: 'Une erreur est survenue');
+                $error = app()->environment('production')
+                    ? null
+                    : class_basename($e);
+
                 return response()->json([
                     'success' => false,
                     'message' => $message,
-                    'error' => class_basename($e),
+                    'error' => $error,
                 ], $statusCode);
             }
             return null;

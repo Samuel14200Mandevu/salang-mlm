@@ -115,18 +115,22 @@ Route::view('/cookie-policy', 'pages.cookie-policy')->name('cookie-policy');
 // ============================================================
 Route::prefix('webhook')->group(function () {
     Route::post('/flexpay', [WebhookController::class, 'flexpay'])
+        ->middleware('webhook.verify:flexpay')
         ->name('webhook.flexpay')
         ->withoutMiddleware(['csrf']);
-    
+
     Route::post('/crypto', [WebhookController::class, 'crypto'])
+        ->middleware('webhook.verify:crypto')
         ->name('webhook.crypto')
         ->withoutMiddleware(['csrf']);
-    
+
     Route::post('/mobile-money', [WebhookController::class, 'mobileMoney'])
+        ->middleware('webhook.verify:mobile_money')
         ->name('webhook.mobile-money')
         ->withoutMiddleware(['csrf']);
-    
+
     Route::post('/payment', [WebhookController::class, 'payment'])
+        ->middleware('webhook.verify:payment')
         ->name('webhook.payment')
         ->withoutMiddleware(['csrf']);
 });
@@ -459,6 +463,7 @@ Route::prefix('admin')
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
             Route::post('/', [AdminUserController::class, 'store'])->name('store');
+            Route::get('/verify-sponsor', [AdminUserController::class, 'verifySponsor'])->name('verify-sponsor');
             Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [AdminUserController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
