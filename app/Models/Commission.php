@@ -11,6 +11,7 @@ class Commission extends Model
     use HasFactory;
 
     protected $fillable = [
+        'source_commission_history_id',
         'user_id',
         'from_user_id',
         'commission_period_id',
@@ -71,6 +72,11 @@ class Commission extends Model
     public function period()
     {
         return $this->belongsTo(CommissionPeriod::class, 'commission_period_id');
+    }
+
+    public function sourceCommissionHistory()
+    {
+        return $this->belongsTo(CommissionHistory::class, 'source_commission_history_id');
     }
 
     // ============================================================

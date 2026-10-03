@@ -371,8 +371,8 @@ return [
         'kyc_pending' => 'KYC non vérifié - paiement en attente de vérification',
         'monthly_pv_insufficient' => 'PV mensuel insuffisant ({pv} PV requis: {required} PV)',
         'amount_too_small' => 'Montant inférieur au minimum de paiement ({amount} < {min})',
-        'account_inactive' => 'Compte inactif - paiement ignoré',
-        'no_rank' => 'Aucun grade trouvé - paiement ignoré',
+        'account_inactive' => 'Compte inactif - paiement en attente',
+        'no_rank' => 'Aucun grade trouvé - paiement en attente',
     ],
 
     /*

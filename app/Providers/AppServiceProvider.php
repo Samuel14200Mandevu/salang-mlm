@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use App\Services\CommissionService;
 use App\Services\PaymentService;
-use App\Services\RankService;
 use App\Services\NetworkService;
 use App\Services\CryptoPaymentService;
 use App\Services\MobileMoneyService;
@@ -18,6 +17,9 @@ use App\Services\MLM\RankConditionChecker;
 use App\Services\MLM\TeamPVCalculator;
 use App\Services\MLM\CommissionDistributor;
 use App\Services\MLM\MonthlyCommissionService;
+use App\Services\MLM\PeriodCommissionCalculator;  // ✅ AJOUT
+use App\Services\MLM\PaymentEligibilityChecker;
+use App\Services\MLM\CommissionHistoryPaymentSync;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Genealogy;
@@ -36,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         // ✅ SERVICES MLM AVEC DÉPENDANCES
         // ══════════════════════════════════════════════════════════════
 
-        // ✅ TeamPVCalculator (NOUVEAU - service unique de calcul team_pv)
+        // ✅ TeamPVCalculator (service unique de calcul team_pv)
         $this->app->singleton(TeamPVCalculator::class, function ($app) {
             return new TeamPVCalculator();
         });
@@ -46,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
             return new RankConditionChecker();
         });
 
-        // ✅ AdvancedRankCalculator (2 dépendances maintenant)
+        // ✅ AdvancedRankCalculator (2 dépendances)
         $this->app->singleton(AdvancedRankCalculator::class, function ($app) {
             return new AdvancedRankCalculator(
                 $app->make(RankConditionChecker::class),
@@ -59,11 +61,20 @@ class AppServiceProvider extends ServiceProvider
             return new CommissionDistributor();
         });
 
-        // ✅ MonthlyCommissionService avec ses dépendances
+        // ✅ NOUVEAU : PeriodCommissionCalculator (service différé)
+        $this->app->singleton(PeriodCommissionCalculator::class, function ($app) {
+            return new PeriodCommissionCalculator();
+        });
+
+        // ✅ MonthlyCommissionService avec ses 3 dépendances
         $this->app->singleton(MonthlyCommissionService::class, function ($app) {
             return new MonthlyCommissionService(
                 $app->make(AdvancedRankCalculator::class),
-                $app->make(CommissionDistributor::class)
+                $app->make(CommissionDistributor::class),
+                $app->make(PeriodCommissionCalculator::class),
+                $app->make(TeamPVCalculator::class),
+                $app->make(PaymentEligibilityChecker::class),
+                $app->make(CommissionHistoryPaymentSync::class)
             );
         });
 
@@ -74,11 +85,6 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(RankConditionChecker::class),
                 $app->make(CommissionDistributor::class)
             );
-        });
-
-        // ✅ RankService (à garder pour compatibilité)
-        $this->app->singleton(RankService::class, function ($app) {
-            return new RankService();
         });
 
         // ✅ NetworkService
@@ -122,7 +128,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Console\Commands\CalculateCommissions::class,
             \App\Console\Commands\ProcessPendingWithdrawals::class,
             \App\Console\Commands\RecalculateAllRanks::class,
-            \App\Console\Commands\FixTeamPVInconsistencies::class,  // ✅ AJOUTÉ
+            \App\Console\Commands\FixTeamPVInconsistencies::class,
+
+            // ✅ NOUVELLES COMMANDES (calendrier MLM 8→7)
+            \App\Console\Commands\CalculatePeriodCommissions::class,
+            \App\Console\Commands\GenerateCommissionPayments::class,
+            \App\Console\Commands\ResetMonthlyPV::class,
+            \App\Console\Commands\SyncCommissionsFromHistory::class,
+            \App\Console\Commands\SimulateCommissionPayments::class,
         ]);
     }
 
