@@ -7,6 +7,20 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Tests (Salang MLM)
+
+```bash
+# Suite complète (SQLite en mémoire par défaut)
+php artisan config:clear && php artisan test
+
+# MySQL pour la CI / tests MLM natifs
+docker compose -f docker-compose.test.yml up -d
+# Copier les variables DB_* commentées dans .env.testing, puis :
+MLM_TEST_USE_MYSQL=true php artisan test tests/Unit/MLM tests/Feature/MLM
+```
+
+Voir `.env.testing` et `docker-compose.test.yml` pour la base `salang_mlm_test`.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
