@@ -13,10 +13,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
                 <span>Boutique</span>
-                @php $cartCount = session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0; @endphp
-                @if($cartCount > 0)
-                    <span class="badge-count">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
-                @endif
+                <x-ui.cart-badge variant="bottom-nav" />
             </a>
 
             <a href="{{ route('network.index') }}" 

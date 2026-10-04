@@ -37,14 +37,7 @@
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                @php
-                                    $cartCount = session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0;
-                                @endphp
-                                @if($cartCount > 0)
-                                    <span class="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full" id="cartCount">
-                                        {{ $cartCount > 99 ? '99+' : $cartCount }}
-                                    </span>
-                                @endif
+                                <x-ui.cart-badge variant="topbar" />
                             </a>
 
                             <!-- Notifications -->
