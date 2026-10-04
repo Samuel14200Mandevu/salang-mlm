@@ -6,19 +6,21 @@
              }">
             
             <!-- Barre de navigation supérieure -->
-            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 shadow-sm" aria-label="Barre supérieure">
+            <nav class="member-topbar" aria-label="Barre supérieure">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
                         
-                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
-                                <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <button type="button"
+                                    @click="sidebarOpen = !sidebarOpen" 
+                                    class="topbar-action flex-shrink-0"
+                                    aria-label="Ouvrir ou fermer le menu latéral">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
                             
-                            <div class="min-w-0 flex-1">
+                            <div class="topbar-title min-w-0 flex-1">
                                 @if(isset($header) && $header)
                                     <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">{{ $header }}</h1>
                                 @elseif(View::hasSection('title'))
@@ -29,12 +31,13 @@
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                        <div class="topbar-actions flex-shrink-0">
                             
                             <!-- Panier -->
                             <a href="{{ route('cart.index') }}" 
-                               class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors group">
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               class="topbar-action relative group"
+                               aria-label="Panier">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
                                 <x-ui.cart-badge variant="topbar" />
@@ -42,8 +45,11 @@
 
                             <!-- Notifications -->
                             <div class="relative" x-data="{ open: false, unreadCount: {{ auth()->user()->unreadNotifications()->count() ?? 0 }} }">
-                                <button @click="open = !open" 
-                                        class="relative p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                                <button type="button"
+                                        @click="open = !open" 
+                                        class="topbar-action relative"
+                                        aria-label="Notifications"
+                                        :aria-expanded="open">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                     </svg>
@@ -54,7 +60,7 @@
                                 </button>
 
                                 <div x-show="open" @click.away="open = false" 
-                                     class="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-[var(--bg-card)] rounded-xl shadow-lg py-2 border border-[var(--border-color)] max-h-[80vh] overflow-y-auto z-50"
+                                     class="topbar-dropdown absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 py-2 max-h-[80vh] overflow-y-auto z-50"
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="opacity-0 scale-95"
                                      x-transition:enter-end="opacity-100 scale-100"
@@ -90,10 +96,11 @@
                             </div>
 
                             <!-- Changement de thème -->
-                            <button id="theme-toggle" 
-                                    class="p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+                            <button type="button"
+                                    id="theme-toggle" 
+                                    class="topbar-action"
                                     aria-label="Changer de thème">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon" aria-hidden="true">
                                     <!-- Mode clair : affiche une lune (mode sombre) -->
                                     <!-- Mode sombre : affiche un soleil (mode clair) -->
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -104,12 +111,15 @@
                             <!-- Profil -->
                             @auth
                                 <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open" 
-                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+                                    <button type="button"
+                                            @click="open = !open" 
+                                            class="topbar-action topbar-profile-trigger flex items-center gap-1 sm:gap-2 !px-2 sm:!px-2.5"
+                                            aria-label="Menu profil"
+                                            :aria-expanded="open">
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
                                             {{ Auth::user()->name }}
                                         </span>
-                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                        <div class="topbar-profile-avatar w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
                                                      alt="Avatar" 
@@ -121,7 +131,7 @@
                                     </button>
                                     
                                     <div x-show="open" @click.away="open = false" 
-                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-secondary)] rounded-xl shadow-lg py-1 border border-[var(--border-color)] z-50"
+                                         class="topbar-dropdown absolute right-0 mt-2 w-48 sm:w-56 py-1 z-50"
                                          x-transition:enter="transition ease-out duration-200"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
