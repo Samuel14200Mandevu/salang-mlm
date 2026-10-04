@@ -40,75 +40,6 @@
             display: none !important;
         }
 
-        /* ===== MOBILE BOTTOM NAV ===== */
-        .mobile-bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: var(--bg-navbar);
-            border-top: 1px solid var(--border-color);
-            display: none;
-            padding: 0.25rem 0 env(safe-area-inset-bottom, 0.25rem) 0;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-        }
-
-        .mobile-bottom-nav .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.25rem 0;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            color: var(--text-secondary);
-            text-decoration: none;
-            flex: 1;
-            position: relative;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .mobile-bottom-nav .nav-item svg {
-            width: 24px;
-            height: 24px;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-bottom-nav .nav-item span {
-            font-size: 10px;
-            margin-top: 1px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-bottom-nav .nav-item.active {
-            color: var(--primary-500);
-        }
-
-        .mobile-bottom-nav .nav-item.active svg {
-            transform: scale(1.1);
-        }
-
-        .mobile-bottom-nav .nav-item .badge-count {
-            position: absolute;
-            top: 0;
-            right: 50%;
-            transform: translateX(calc(50% + 14px));
-            background: #ef4444;
-            color: white;
-            font-size: 9px;
-            font-weight: 700;
-            min-width: 16px;
-            height: 16px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 4px;
-            border: 2px solid var(--bg-navbar);
-        }
-
         /* ===== SCROLLBAR ===== */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -246,15 +177,6 @@
         }
 
         @media (max-width: 767px) {
-            .mobile-bottom-nav {
-                display: flex;
-            }
-            main {
-                padding-bottom: 80px !important;
-            }
-            footer {
-                padding-bottom: 80px !important;
-            }
             .confirm-dialog {
                 padding: 1.5rem;
                 max-width: 95%;
