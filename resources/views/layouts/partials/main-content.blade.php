@@ -20,7 +20,9 @@
                             
                             <div class="min-w-0 flex-1">
                                 @if(isset($header) && $header)
-                                    <div class="truncate">{{ $header }}</div>
+                                    <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">{{ $header }}</h1>
+                                @elseif(View::hasSection('title'))
+                                    <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">@yield('title')</h1>
                                 @else
                                     <h1 class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Accueil</h1>
                                 @endif
