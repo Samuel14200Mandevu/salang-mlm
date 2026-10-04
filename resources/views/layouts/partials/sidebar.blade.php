@@ -1,6 +1,6 @@
         <div x-show="sidebarOpen && isMobile" 
              @click="sidebarOpen = false"
-             class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+             class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
              x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -20,15 +20,16 @@
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
             
-            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+            <div class="member-sidebar h-full flex flex-col overflow-hidden bg-[var(--bg-navbar)]/95 backdrop-blur-md border-r border-[var(--border-color)] shadow-[4px_0_24px_rgba(0,0,0,0.06)]">
                 
                 <!-- Logo -->
-                <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)] flex-shrink-0">
-                    <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1">
+                <div class="sidebar-brand flex items-center justify-between h-16 px-4 flex-shrink-0">
+                    <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1 min-w-0">
                         <x-ui.image
                             src="images/salang_logo.png"
                             alt="Salang"
-                            class="logo-themeable transition-all duration-300 h-14 w-auto"
+                            class="logo-themeable transition-all duration-300 w-auto object-contain"
+                            :class="(!sidebarOpen && !isMobile) ? 'h-9 max-w-[2.75rem]' : 'h-10 sm:h-11'"
                             width="200"
                             height="56"
                             :priority="true"
@@ -44,7 +45,8 @@
                 </div>
 
                 <!-- Menu -->
-                <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
+                <nav class="sidebar-nav flex-1 overflow-y-auto py-3 px-2 custom-scrollbar"
+                     :class="{ 'sidebar-nav--icon-only': !sidebarOpen && !isMobile }">
                     <ul class="space-y-0.5">
                         
                         <!-- Accueil -->
@@ -233,14 +235,14 @@
                 </nav>
 
                 <!-- Pied de page de la sidebar -->
-                <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
+                <div class="sidebar-user flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                        <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        <div class="avatar-ring w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
                                 @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                     <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
                                          alt="Avatar" 
-                                         class="w-8 h-8 rounded-full object-cover">
+                                         class="w-9 h-9 rounded-full object-cover">
                                 @else
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 @endif

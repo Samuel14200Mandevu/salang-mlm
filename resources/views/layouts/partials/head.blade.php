@@ -40,63 +40,6 @@
             display: none !important;
         }
 
-        /* ===== SIDEBAR LINKS ===== */
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.625rem 0.75rem;
-            border-radius: var(--radius-md, 0.5rem);
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .sidebar-link svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            flex-shrink: 0;
-            min-width: 1.25rem;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-link .label {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .sidebar-link:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .sidebar-link.active {
-            background: var(--gradient-primary, #5ab638);
-            color: white;
-            box-shadow: 0 4px 12px rgba(90, 182, 56, 0.3);
-        }
-
-        .sidebar-link.active svg {
-            color: white;
-        }
-
-        .sidebar-section {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-tertiary);
-            padding: 0.75rem 0.75rem 0.5rem;
-            margin-top: 0.5rem;
-        }
-
         /* ===== MOBILE BOTTOM NAV ===== */
         .mobile-bottom-nav {
             position: fixed;
