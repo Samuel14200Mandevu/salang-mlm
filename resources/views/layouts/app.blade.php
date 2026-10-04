@@ -6,7 +6,6 @@
     @include('layouts.partials.sidebar')
     @include('layouts.partials.main-content')
     @include('layouts.partials.bottom-nav')
-    @include('layouts.partials.footer')
     @include('layouts.partials.confirm-dialog')
     @include('layouts.partials.scripts')
 </body>
