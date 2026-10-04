@@ -127,6 +127,41 @@ window.showToast = function (message, type = 'success', duration = 3500) {
     }, duration);
 };
 
+/**
+ * Marque toutes les notifications comme lues (dropdown shell membre).
+ * @param {(() => void)|undefined} onSuccess — ex. remise à zéro du badge Alpine
+ */
+window.markAllAsRead = async function (onSuccess) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!token) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/notifications/mark-all-read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok && !response.redirected) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        if (typeof onSuccess === 'function') {
+            onSuccess();
+        }
+
+        window.showToast?.('Toutes les notifications ont été marquées comme lues', 'success');
+    } catch {
+        window.showToast?.('Impossible de marquer les notifications', 'error');
+    }
+};
+
 window.isMobile = function () {
     return window.innerWidth <= 768;
 };
@@ -175,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 export default {
     showToast: window.showToast,
+    markAllAsRead: window.markAllAsRead,
     isMobile: window.isMobile,
     isTablet: window.isTablet,
     isDesktop: window.isDesktop,

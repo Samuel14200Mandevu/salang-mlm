@@ -86,7 +86,8 @@
                                     </div>
 
                                     <div class="px-3 sm:px-4 py-2 border-t border-[var(--border-color)] text-center">
-                                        <button @click="markAllAsRead()" 
+                                        <button type="button"
+                                                @click="window.markAllAsRead(() => { unreadCount = 0 })"
                                                 class="text-xs text-primary-500 hover:text-primary-600 transition font-medium hover:underline cursor-pointer">
                                             Tout marquer comme lu
                                         </button>
