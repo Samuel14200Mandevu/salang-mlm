@@ -8,12 +8,42 @@
 
 @layer base {
   :root {
+    /* ===== SALANG BRAND — source unique (alias Tailwind primary-*) ===== */
+    --color-primary-50: #f0f9eb;
+    --color-primary-100: #dcf0ce;
+    --color-primary-200: #bce1a2;
+    --color-primary-300: #93cc6d;
+    --color-primary-400: #6fb542;
+    --color-primary-500: #5ab638;
+    --color-primary-600: #3d8a2a;
+    --color-primary-700: #2f6a20;
+    --color-primary-800: #28541c;
+    --color-primary-900: #22471a;
+
+    --primary-50: var(--color-primary-50);
+    --primary-100: var(--color-primary-100);
+    --primary-200: var(--color-primary-200);
+    --primary-300: var(--color-primary-300);
+    --primary-400: var(--color-primary-400);
+    --primary-500: var(--color-primary-500);
+    --primary-600: var(--color-primary-600);
+    --primary-700: var(--color-primary-700);
+    --primary-800: var(--color-primary-800);
+    --primary-900: var(--color-primary-900);
+
+    --primary: var(--color-primary-500);
+    --primary-hover: var(--color-primary-600);
+    --primary-light: var(--color-primary-50);
+    --gradient-primary: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+
     /* ===== THÈME LIGHT ===== */
     --bg-page: #F4F5F7;
     --bg-card: #F8F9FA;
     --bg-input: #F8F9FA;
     --bg-hover: #EEF0F2;
     --bg-secondary: #F4F5F7;
+    --bg-navbar: var(--bg-card);
+    --bg-primary: var(--bg-page);
     
     --text-primary: #1A1D23;
     --text-secondary: #5A626A;
@@ -22,15 +52,11 @@
     
     --border-color: #DDE0E3;
     --border-light: #E8EBEE;
-    --border-focus: rgba(26, 29, 35, 0.12);
+    --border-focus: rgba(90, 182, 56, 0.22);
     
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
     --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
-    
-    --primary: #1A1D23;
-    --primary-hover: #2D333B;
-    --primary-light: #E8EAEC;
     
     --success: #1C7E4A;
     --success-hover: #14633A;
@@ -79,9 +105,14 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
     --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
     
-    --primary: #E5E7EB;
-    --primary-hover: #D1D5DB;
-    --primary-light: #374151;
+    --bg-navbar: var(--bg-card);
+    --bg-primary: var(--bg-page);
+
+    --primary: var(--color-primary-500);
+    --primary-hover: var(--color-primary-400);
+    --primary-light: rgba(90, 182, 56, 0.14);
+    --gradient-primary: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
+    --border-focus: rgba(90, 182, 56, 0.35);
     
     --success: #34D399;
     --success-hover: #6EE7B7;

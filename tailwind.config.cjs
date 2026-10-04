@@ -12,16 +12,16 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    50: '#f0f9eb',
-                    100: '#dcf0ce',
-                    200: '#bce1a2',
-                    300: '#93cc6d',
-                    400: '#6fb542',
-                    500: '#5ab638',
-                    600: '#3d8a2a',
-                    700: '#2f6a20',
-                    800: '#28541c',
-                    900: '#22471a',
+                    50: 'var(--color-primary-50)',
+                    100: 'var(--color-primary-100)',
+                    200: 'var(--color-primary-200)',
+                    300: 'var(--color-primary-300)',
+                    400: 'var(--color-primary-400)',
+                    500: 'var(--color-primary-500)',
+                    600: 'var(--color-primary-600)',
+                    700: 'var(--color-primary-700)',
+                    800: 'var(--color-primary-800)',
+                    900: 'var(--color-primary-900)',
                 },
                 neutral: {
                     50: '#F8F9FA',
