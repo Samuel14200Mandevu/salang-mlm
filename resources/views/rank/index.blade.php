@@ -1,6 +1,8 @@
 {{-- resources/views/rank/index.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Mon rang')
+
 @push('styles')
 <style>
     .rank-card {

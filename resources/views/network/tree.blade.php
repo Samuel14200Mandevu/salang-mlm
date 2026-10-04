@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Arbre du réseau')
+
 @push('styles')
 <style>
     .tree-node {

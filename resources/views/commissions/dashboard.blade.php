@@ -1,6 +1,8 @@
 {{-- resources/views/commissions/dashboard.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Tableau des commissions')
+
 @push('styles')
 <style>
     .stat-card {

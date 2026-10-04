@@ -1,6 +1,8 @@
 {{-- resources/views/subscriptions/index.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Packages')
+
 @push('styles')
 <style>
     .subscription-card {

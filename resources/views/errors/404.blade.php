@@ -1,6 +1,8 @@
 {{-- resources/views/errors/404.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Page introuvable')
+
 @push('styles')
 <style>
     .error-icon {

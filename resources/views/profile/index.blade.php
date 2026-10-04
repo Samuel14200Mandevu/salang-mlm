@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Profil')
+
 @push('styles')
 <style>
     .profile-avatar-container {

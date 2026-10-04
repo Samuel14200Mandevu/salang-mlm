@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Rapports')
+
 @push('styles')
 <style>
     .report-card {

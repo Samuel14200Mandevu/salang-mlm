@@ -1,6 +1,8 @@
 {{-- resources/views/errors/401.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Non autorisé')
+
 @push('styles')
 <style>
     .error-icon {

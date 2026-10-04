@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Conditions d\'utilisation')
+
 @push('styles')
 <style>
     .prose h2 {

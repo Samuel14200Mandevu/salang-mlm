@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Politique cookies')
+
 @push('styles')
 <style>
     .prose h2 {

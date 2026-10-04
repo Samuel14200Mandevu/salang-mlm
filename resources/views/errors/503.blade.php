@@ -1,6 +1,8 @@
 {{-- resources/views/errors/503.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Service indisponible')
+
 @push('styles')
 <style>
     .error-icon {

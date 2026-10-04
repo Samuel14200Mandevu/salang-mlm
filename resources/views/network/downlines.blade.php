@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Filiales')
+
 @push('styles')
 <style>
     .downline-row {

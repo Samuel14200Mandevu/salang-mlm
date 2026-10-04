@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Panier')
+
 @push('styles')
 <style>
     .cart-item {

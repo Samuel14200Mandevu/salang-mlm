@@ -1,6 +1,8 @@
 {{-- resources/views/commissions/stats.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Statistiques commissions')
+
 @push('styles')
 <style>
     .stat-card { transition: all 0.3s ease; }

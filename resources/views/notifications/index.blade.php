@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Notifications')
+
 @push('styles')
 <style>
     .notification-item {

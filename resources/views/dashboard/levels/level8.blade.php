@@ -1,6 +1,8 @@
 {{-- resources/views/dashboard/levels/level8.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Tableau de bord')
+
 @push('styles')
 <style>
     .level-badge-8 {

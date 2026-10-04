@@ -1,6 +1,8 @@
 {{-- resources/views/products/show.blade.php --}}
 @extends('layouts.app')
 
+@section('title', $product->name)
+
 @push('styles')
 <style>
     .product-gallery img {

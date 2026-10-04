@@ -1,6 +1,8 @@
 {{-- resources/views/commissions/levels.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Commissions par niveau')
+
 @push('styles')
 <style>
     .level-card {

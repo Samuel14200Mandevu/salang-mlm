@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Soumettre le KYC')
+
 @push('styles')
 <style>
     .document-type-card {

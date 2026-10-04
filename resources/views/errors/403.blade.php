@@ -1,6 +1,8 @@
 {{-- resources/views/errors/403.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Accès refusé')
+
 @push('styles')
 <style>
     .error-icon {

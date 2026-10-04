@@ -1,6 +1,8 @@
 {{-- resources/views/wallet/index.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Portefeuille')
+
 @push('styles')
 <style>
     .transaction-item:hover { transform: translateX(4px); }

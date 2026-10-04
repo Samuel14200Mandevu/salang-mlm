@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Liste du réseau')
+
 @push('styles')
 <style>
     @media (max-width: 640px) {

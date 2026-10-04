@@ -1,6 +1,8 @@
 {{-- resources/views/orders/index.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Mes commandes')
+
 @push('styles')
 <style>
     .order-row {

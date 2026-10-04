@@ -1,6 +1,8 @@
 {{-- resources/views/rank/history.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Historique des rangs')
+
 @push('styles')
 <style>
     .rank-history-item {

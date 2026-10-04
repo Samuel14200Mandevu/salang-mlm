@@ -1,6 +1,8 @@
 {{-- resources/views/errors/500.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Erreur serveur')
+
 @push('styles')
 <style>
     .error-icon {

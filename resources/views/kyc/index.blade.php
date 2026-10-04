@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Vérification KYC')
+
 @push('styles')
 <style>
     .kyc-status-card {

@@ -1,6 +1,8 @@
 {{-- resources/views/commissions/index.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Mes commissions')
+
 @push('styles')
 <style>
     .commission-row {

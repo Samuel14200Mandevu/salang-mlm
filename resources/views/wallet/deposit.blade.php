@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Dépôt')
+
 @push('styles')
 <style>
     .method-card {

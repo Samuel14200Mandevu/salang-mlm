@@ -1,6 +1,8 @@
 {{-- resources/views/orders/show.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Commande #' . $order->order_number)
+
 @push('styles')
 <style>
     .order-detail-card {

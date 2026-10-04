@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Produits')
+
 @push('styles')
 <style>
     .product-card {

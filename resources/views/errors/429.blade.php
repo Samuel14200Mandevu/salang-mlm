@@ -1,6 +1,8 @@
 {{-- resources/views/errors/429.blade.php --}}
 @extends('layouts.app')
 
+@section('title', 'Trop de requêtes')
+
 @push('styles')
 <style>
     .error-icon {

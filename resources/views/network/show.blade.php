@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', $member->name)
+
 @push('styles')
 <style>
     .profile-header {

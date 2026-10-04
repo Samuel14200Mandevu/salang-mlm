@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Mon réseau')
+
 @push('styles')
 {{-- Inclure le CSS de la librairie OrgChart --}}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/css/jquery.orgchart.min.css">

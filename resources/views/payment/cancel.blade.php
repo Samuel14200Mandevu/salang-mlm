@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Paiement annulé')
+
 @push('styles')
 <style>
     .payment-icon {

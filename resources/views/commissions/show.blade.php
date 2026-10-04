@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Commission #' . $commission->id)
+
 @push('styles')
 <style>
     .detail-card {
