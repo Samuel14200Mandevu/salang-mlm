@@ -36,6 +36,10 @@
     @stack('styles')
 
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
         /* ===== SIDEBAR LINKS ===== */
         .sidebar-link {
             display: flex;
