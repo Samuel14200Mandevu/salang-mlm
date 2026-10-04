@@ -25,16 +25,18 @@
                 <!-- Logo -->
                 <div class="sidebar-brand flex items-center justify-between h-16 px-4 flex-shrink-0">
                     <a href="{{ route('dashboard') }}" class="flex items-center justify-center flex-1 min-w-0">
-                        <x-ui.image
-                            src="images/salang_logo.png"
-                            alt="Salang"
-                            class="logo-themeable transition-all duration-300 w-auto object-contain"
-                            :class="(!sidebarOpen && !isMobile) ? 'h-9 max-w-[2.75rem]' : 'h-10 sm:h-11'"
-                            width="200"
-                            height="56"
-                            :priority="true"
-                            :lazy="false"
-                        />
+                        <span class="inline-flex items-center justify-center transition-all duration-300"
+                              x-bind:class="(!sidebarOpen && !isMobile) ? 'h-9 max-w-[2.75rem]' : 'h-10 sm:h-11'">
+                            <x-ui.image
+                                src="images/salang_logo.png"
+                                alt="Salang"
+                                class="logo-themeable w-auto h-full max-w-full object-contain"
+                                width="200"
+                                height="56"
+                                :priority="true"
+                                :lazy="false"
+                            />
+                        </span>
                     </a>
                     <button @click="sidebarOpen = false" 
                             class="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
