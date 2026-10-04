@@ -299,31 +299,14 @@ class DashboardController extends Controller
             'commissionBands' => $commissionBands,
         ];
 
-        // Rediriger vers le bon dashboard selon le niveau
-        $level = $currentRankLevel;
-        
-        switch($level) {
-    case 1:
-        return view('dashboard.levels.level1', $data);
-    case 2:
-        return view('dashboard.levels.level2', $data);
-    case 3:
-        return view('dashboard.levels.level3', $data);
-    case 4:
-        return view('dashboard.levels.level4', $data);
-    case 5:
-        return view('dashboard.levels.level5', $data);
-    case 6:
-        return view('dashboard.levels.level6', $data);
-    case 7:
-        return view('dashboard.levels.level7', $data);
-    case 8:
-        return view('dashboard.levels.level8', $data);
-    case 9:
-        return view('dashboard.levels.level9', $data);
-    default:
-        return view('dashboard.levels.level1', $data);
-}
+        $dashboardLevelNumber = (int) min(max($currentRankLevel, 1), 9);
+        $dashboardLevel = config('dashboard-levels.'.$dashboardLevelNumber)
+            ?? config('dashboard-levels.1');
+
+        $data['dashboardLevel'] = $dashboardLevel;
+        $data['dashboardLevelNumber'] = $dashboardLevelNumber;
+
+        return view('dashboard.index', $data);
     }
 
     /**
