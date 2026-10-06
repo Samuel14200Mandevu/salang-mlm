@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1rem;
 }
@@ -260,7 +253,7 @@
                            class="form-control @error('name') form-control-error @enderror"
                            placeholder="Jean Dupont" required>
                     @error('name')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -271,7 +264,7 @@
                            class="form-control @error('email') form-control-error @enderror"
                            placeholder="jean.dupont@email.com" required>
                     @error('email')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -283,7 +276,7 @@
                            placeholder="••••••••" required>
                     <span class="help-text">Minimum 8 caractères</span>
                     @error('password')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -302,7 +295,7 @@
                            class="form-control @error('phone') form-control-error @enderror"
                            placeholder="+225 07 00 00 00 00">
                     @error('phone')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -396,7 +389,7 @@
                         </label>
                     </div>
                     @error('role')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 

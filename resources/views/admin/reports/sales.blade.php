@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .sales-row {
     transition: background 0.15s ease;
 }
@@ -234,15 +227,15 @@
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Chiffre d'affaires</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">${{ number_format($stats['total_revenue'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">${{ number_format($stats['total_revenue'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Panier moyen</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">${{ number_format($stats['avg_order_value'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">${{ number_format($stats['avg_order_value'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-5 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">TVA totale</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">${{ number_format($stats['total_tax'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">${{ number_format($stats['total_tax'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[var(--primary-blue)] animate-fadeInUp delay-6 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Livraison</p>

@@ -122,7 +122,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
     .btn-primary:disabled {
         opacity: 0.5;
@@ -182,7 +182,7 @@
         color: #FFFFFF;
     }
     .btn-print-a4:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-block {
@@ -229,7 +229,7 @@
         border-radius: 4px;
         font-size: 0.6rem;
         font-weight: 600;
-        background: rgba(15, 43, 79, 0.10);
+        background: rgba(30, 93, 173, 0.10);
         color: var(--primary);
     }
     .sponsor-info .commission-info {
@@ -390,7 +390,7 @@
                     <span class="pv-badge">{{ $product->pv_value }} PV</span>
                 @endif
                 @if($product->bv_value)
-                    <span class="pv-badge" style="background:rgba(139,92,246,0.10);color:#3d8a2a;">{{ $product->bv_value }} BV</span>
+                    <span class="pv-badge" style="background:rgba(139,92,246,0.10);color:#e8940f;">{{ $product->bv_value }} BV</span>
                 @endif
                 <span class="source-badge source-badge-pos">POS</span>
             </div>

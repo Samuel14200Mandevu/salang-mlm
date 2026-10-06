@@ -28,6 +28,11 @@ class NewPasswordController extends Controller
             'token' => ['required'],
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.required' => 'L’adresse email est obligatoire.',
+            'email.email' => 'Saisissez une adresse email valide.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ]);
 
         $status = Password::reset(

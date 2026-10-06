@@ -192,6 +192,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // ============================================================
     Route::prefix('network')->name('network.')->group(function () {
         Route::get('/', [NetworkController::class, 'index'])->name('index');
+        Route::get('/show/{id}', [NetworkController::class, 'show'])->name('show')->whereNumber('id');
         Route::get('/tree', [NetworkController::class, 'treeData'])->name('tree');
         Route::get('/downlines', [NetworkController::class, 'downlines'])->name('downlines');
         Route::get('/search', [NetworkController::class, 'search'])->name('search');
@@ -342,11 +343,15 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/customers', [CashierController::class, 'createCustomer'])->name('customers.store');
     Route::get('/customers/{id}', [CashierController::class, 'showCustomer'])->name('customers.show');
 
+    Route::get('/workflow-pending-counts', [\App\Http\Controllers\WorkflowPendingCountController::class, 'cashier'])
+        ->name('workflow-pending-counts');
+
     // Consultations
     Route::get('/consultations', [ConsultationController::class, 'index'])->name('consultations.index');
     Route::get('/consultations/create', [ConsultationController::class, 'create'])->name('consultations.create');
     Route::post('/consultations', [ConsultationController::class, 'store'])->name('consultations.store');
     Route::get('/consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
+    Route::post('/consultations/{consultation}/checkout-selection', [ConsultationController::class, 'checkoutSelection'])->name('consultations.checkout-selection');
     Route::get('/consultations/{consultation}/print', [ConsultationController::class, 'print'])->name('consultations.print');
     
     // Membres
@@ -477,12 +482,15 @@ Route::prefix('admin')
         });
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
 
+        Route::get('/workflow-pending-counts', [\App\Http\Controllers\WorkflowPendingCountController::class, 'admin'])
+            ->name('workflow-pending-counts');
+
         Route::prefix('consultations')->name('consultations.')->group(function () {
+            Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
             Route::get('/', [App\Http\Controllers\Admin\ConsultationController::class, 'index'])->name('index');
+            Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
             Route::get('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'show'])->name('show');
             Route::put('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'update'])->name('update');
-            Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
-            Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
         });
 // ============================================================
 // GESTION DES PV (Points de Volume) - ADMIN

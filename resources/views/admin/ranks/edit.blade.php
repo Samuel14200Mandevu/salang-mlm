@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1rem;
 }
@@ -197,7 +190,7 @@
                     <input type="text" name="name" value="{{ old('name', $rank->name) }}"
                            class="form-control @error('name') form-control-error @enderror" required>
                     @error('name')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -208,7 +201,7 @@
                            class="form-control @error('slug') form-control-error @enderror" required>
                     <span class="help-text">Identifiant unique pour l'URL</span>
                     @error('slug')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -218,7 +211,7 @@
                     <input type="number" name="min_pv" value="{{ old('min_pv', $rank->min_pv) }}"
                            class="form-control @error('min_pv') form-control-error @enderror" required>
                     @error('min_pv')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -235,7 +228,7 @@
                     <input type="number" name="bonus_percentage" step="0.01" value="{{ old('bonus_percentage', $rank->bonus_percentage) }}"
                            class="form-control @error('bonus_percentage') form-control-error @enderror" required>
                     @error('bonus_percentage')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 

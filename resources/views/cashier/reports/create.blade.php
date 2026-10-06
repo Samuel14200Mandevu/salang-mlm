@@ -82,7 +82,7 @@
     .form-control:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(15, 43, 79, 0.08);
+        box-shadow: 0 0 0 2px rgba(30, 93, 173, 0.08);
     }
     .btn {
         display: inline-flex; align-items: center; justify-content: center;
@@ -91,7 +91,7 @@
         font-size: 0.875rem; cursor: pointer; border: none; text-decoration: none;
     }
     .btn-primary { background: var(--primary); color: #FFF; }
-    .btn-primary:hover { background: var(--primary-hover, #091E3B); }
+    .btn-primary:hover { background: var(--primary-hover, #134178); }
     .btn-outline {
         background: transparent; color: var(--text-primary);
         border: 1.5px solid var(--border-color);

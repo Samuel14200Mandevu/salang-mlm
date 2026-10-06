@@ -3,63 +3,6 @@
 
 @section('title', 'Historique des rangs')
 
-@push('styles')
-<style>
-    .rank-history-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.625rem 0.875rem;
-        border-radius: var(--radius-sm);
-        transition: all 0.2s ease;
-        border-left: 3px solid transparent;
-    }
-    .rank-history-item:hover {
-        background: var(--bg-hover);
-    }
-    .rank-history-item.promotion {
-        border-left-color: #22c55e;
-    }
-    .rank-history-item.demotion {
-        border-left-color: #ef4444;
-    }
-    .rank-history-item.update {
-        border-left-color: #3b82f6;
-    }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success {
-        background: rgba(34, 197, 94, 0.12);
-        color: #22c55e;
-    }
-    .badge-danger {
-        background: rgba(239, 68, 68, 0.12);
-        color: #ef4444;
-    }
-    .badge-info {
-        background: rgba(59, 130, 246, 0.12);
-        color: #3b82f6;
-    }
-    
-    @media (max-width: 640px) {
-        .rank-history-item {
-            flex-wrap: wrap;
-            padding: 0.5rem;
-        }
-        .rank-history-item .rank-badge {
-            font-size: 0.55rem;
-            padding: 0.125rem 0.5rem;
-        }
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     

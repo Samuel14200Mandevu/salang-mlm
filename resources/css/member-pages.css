@@ -1,0 +1,2178 @@
+/* Pages espace membre — composants partagés (Salang) */
+
+@keyframes memberFadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.member-app .animate-fadeInLeft {
+  animation: memberFadeInLeft 0.4s ease forwards;
+}
+
+@keyframes memberFadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.member-app .animate-fadeInRight {
+  animation: memberFadeInRight 0.4s ease forwards;
+}
+
+.member-app {
+  --member-accent-ring: color-mix(in srgb, var(--color-primary-500) 22%, transparent);
+}
+
+.member-app .member-page-intro h1 {
+  letter-spacing: -0.02em;
+}
+
+.member-app .member-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+}
+
+.member-app .member-alert--success {
+  background: var(--success-light);
+  border-color: color-mix(in srgb, var(--success) 25%, transparent);
+  color: var(--success);
+}
+
+.member-app .member-alert--error {
+  background: var(--danger-light);
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent);
+  color: var(--danger);
+}
+
+.member-app .member-alert--warning {
+  background: var(--warning-light);
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent);
+  color: var(--warning);
+}
+
+.member-app .card-stats {
+  border-radius: var(--radius-lg);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.member-app .card-stats:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.member-app .card-stats.border-l-4 {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.member-app .stats-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.member-app .table-striped tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+}
+
+.member-app .badge-info {
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+  color: var(--color-primary-600);
+  border-color: transparent;
+}
+
+.dark .member-app .badge-info {
+  color: var(--color-primary-300);
+}
+
+.member-app .badge-purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.member-app .type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.member-app .type-badge-sponsor {
+  background: color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+  color: var(--color-primary-600);
+}
+
+.member-app .type-badge-direct {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.member-app .type-badge-indirect {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-accent-700);
+}
+
+.member-app .type-badge-leadership {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.member-app .type-badge-retail {
+  background: rgba(236, 72, 153, 0.15);
+  color: #db2777;
+}
+
+.member-app .commission-row {
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.member-app .commission-row:hover {
+  background: var(--bg-hover);
+}
+
+.member-app .transaction-item {
+  transition: transform 0.15s ease;
+}
+
+.member-app .transaction-item:hover {
+  transform: translateX(4px);
+}
+
+.member-app .filters-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.member-app .member-empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: var(--text-secondary);
+}
+
+.member-app .member-empty svg {
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.45;
+}
+
+/* Modales (commissions, etc.) */
+.member-app .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.member-app .modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.member-app .modal-box {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  max-width: 700px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: scale(0.96) translateY(12px);
+  transition: transform 0.25s ease;
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.member-app .modal-overlay.active .modal-box {
+  transform: scale(1) translateY(0);
+}
+
+.member-app .modal-box .modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.member-app .modal-box .modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.member-app .modal-box .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Profil */
+.member-app .profile-avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.member-app .profile-avatar-container .avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.member-app .profile-avatar-container:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.member-app .profile-avatar-container .avatar-overlay span {
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.member-app .danger-zone {
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  background: var(--danger-light);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.2s ease;
+}
+
+.member-app .danger-zone:hover {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.member-app .stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.member-app .stat-icon-primary {
+  background: var(--primary-light);
+  color: var(--color-primary-600);
+}
+
+.member-app .stat-icon-warning {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.member-app .stat-icon-danger {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.member-app .stat-icon-info {
+  background: color-mix(in srgb, var(--color-primary-500) 12%, transparent);
+  color: var(--color-primary-600);
+}
+
+.member-app .stat-icon-purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.member-app .stat-icon-teal {
+  background: rgba(20, 184, 166, 0.12);
+  color: #0d9488;
+}
+
+.member-app .avatar-gradient {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+}
+
+.member-app .avatar-info {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+}
+
+.member-app .avatar-ring {
+  border: 3px solid var(--color-primary-500);
+  box-shadow: 0 0 0 4px var(--member-accent-ring);
+}
+
+.member-app .avatar-xl {
+  width: 6rem;
+  height: 6rem;
+  font-size: 2rem;
+}
+
+/* Réseau — org chart (page index) */
+.member-app #tree-container {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  height: 600px;
+  background-image: radial-gradient(var(--border-light) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.member-app .orgchart .node {
+  width: 150px;
+  border: 2px solid transparent;
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: var(--shadow-md);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.member-app .orgchart .node:hover,
+.member-app .orgchart .node.focused {
+  background-color: var(--bg-hover);
+  border-color: var(--color-primary-500);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.member-app .orgchart .node .title,
+.member-app .orgchart .node .content {
+  display: none;
+}
+
+.member-app .node-custom-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.member-app .node-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1.2rem;
+  border: 3px solid var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 8px;
+  position: relative;
+  background: var(--gradient-primary);
+}
+
+.member-app .status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.member-app .status-dot.online {
+  background-color: var(--success);
+}
+
+.member-app .status-dot.offline {
+  background-color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .member-app .card-stats {
+    padding: 0.875rem;
+  }
+
+  .member-app .card-stats .text-2xl,
+  .member-app .card-stats .text-3xl {
+    font-size: 1.35rem;
+  }
+
+  .member-app .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .member-app .wallet-actions {
+    flex-direction: column;
+  }
+
+  .member-app .wallet-actions .btn {
+    width: 100%;
+  }
+
+  .member-app .modal-box .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-app .type-badge,
+  .member-app .badge {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .member-app .stats-grid.stats-grid--2-mobile {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Portefeuille — dépôt / retrait */
+.member-app .method-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-align: center;
+  background: var(--bg-secondary);
+}
+
+.member-app .method-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+}
+
+.member-app .method-card.selected {
+  border-color: var(--color-primary-500);
+  background: var(--primary-light);
+}
+
+.member-app .method-card .method-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.member-app .method-card .method-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .member-app .method-card {
+    padding: 0.5rem;
+  }
+
+  .member-app .method-card .method-icon {
+    font-size: 1.5rem;
+  }
+
+  .member-app .method-card .method-label {
+    font-size: 0.6rem;
+  }
+}
+
+/* Caissier — gestion des membres (même charte) */
+.cashier-app .member-row {
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+
+.cashier-app .member-row:hover {
+  background: var(--bg-hover);
+}
+
+.cashier-app .detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cashier-app .detail-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.cashier-app .detail-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.cashier-app .detail-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0.2rem;
+}
+
+.cashier-app .commission-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.cashier-app .commission-summary .item {
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+}
+
+.cashier-app .commission-summary .item .number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary-700);
+  letter-spacing: -0.01em;
+}
+
+.cashier-app .commission-summary .item .label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.15rem;
+  display: block;
+}
+
+.cashier-app .avatar-lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  flex-shrink: 0;
+}
+
+.cashier-app .badge-status {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.cashier-app .badge-status-pending {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.cashier-app .badge-status-approved,
+.cashier-app .badge-status-paid {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.cashier-app .badge-status-rejected {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.cashier-app .badge-status-cancelled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.cashier-app .type-badge-pos,
+.cashier-app .type-badge-sponsor,
+.cashier-app .type-badge-new_client {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.cashier-app .type-badge-direct,
+.cashier-app .type-badge-indirect,
+.cashier-app .type-badge-pos_transaction {
+  background: color-mix(in srgb, var(--color-primary-500) 12%, transparent);
+  color: var(--color-primary-700);
+}
+
+.cashier-app .type-badge-leadership {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.cashier-app .type-badge-purchase {
+  background: rgba(139, 92, 246, 0.12);
+  color: #6d28d9;
+}
+
+/* Caissier — fiche membre (restauré) */
+* {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    :root {
+        --bg-base: #F4F5F7;
+        --bg-card: #F8F9FA;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #111827;
+        --text-secondary: #4B5563;
+        --text-tertiary: #6B7280;
+        --border-color: #D1D5DB;
+        --border-light: #E5E7EB;
+        --success: #0F7B3E;
+        --danger: #991B1B;
+        --warning: #9A5A0A;
+        --navy: #1E293B;
+        --navy-dark: #0F172A;
+        --slate: #475569;
+        --slate-light: #94A3B8;
+    }
+
+    .cashier-app .detail-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+        transition: background 0.15s ease;
+    }
+
+    .cashier-app .detail-card:hover {
+        background: #F8F9FA;
+    }
+
+    .cashier-app .detail-label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+        font-weight: 600;
+    }
+
+    .cashier-app .detail-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 0.2rem;
+    }
+
+    .cashier-app .avatar-lg {
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        background: var(--navy);
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .cashier-app .commission-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+    .cashier-app .commission-summary .item {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--bg-secondary);
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+    }
+    .cashier-app .commission-summary .item .number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--navy);
+        letter-spacing: -0.01em;
+    }
+    .cashier-app .commission-summary .item .label {
+        font-size: 0.6rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.15rem;
+        display: block;
+    }
+
+    .cashier-app .badge-status {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid transparent;
+    }
+    .cashier-app .badge-status-pending { background: #FEF3C7; color: #9A5A0A; border-color: #FDE68A; }
+    .cashier-app .badge-status-approved { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .badge-status-paid { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .cashier-app .badge-status-rejected { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+    .cashier-app .badge-status-cancelled { background: #F3F4F6; color: #6B7280; border-color: #D1D5DB; }
+
+    .cashier-app .type-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        letter-spacing: 0.02em;
+    }
+    .cashier-app .type-badge-pos { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .cashier-app .type-badge-direct { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .type-badge-indirect { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .type-badge-leadership { background: #FEF3C7; color: #9A5A0A; border-color: #FDE68A; }
+    .cashier-app .type-badge-purchase { background: #EDE9FE; color: #5B21B6; border-color: #DDD6FE; }
+    .cashier-app .type-badge-new_client { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .cashier-app .type-badge-pos_transaction { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .type-badge-sponsor { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+
+    .cashier-app .commission-row {
+        transition: background 0.1s ease;
+    }
+    .cashier-app .commission-row:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        letter-spacing: 0.02em;
+    }
+    .cashier-app .badge-success { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .cashier-app .badge-danger { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+    .cashier-app .badge-info { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .badge-warning { background: #FEF3C7; color: #9A5A0A; border-color: #FDE68A; }
+    .cashier-app .badge-secondary { background: #F3F4F6; color: #6B7280; border-color: #D1D5DB; }
+    .cashier-app .badge-primary { background: #E2E8F0; color: #1E293B; border-color: #CBD5E1; }
+
+    .cashier-app .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+    }
+    .cashier-app .btn-sm { padding: 0.2rem 0.6rem; font-size: 0.7rem; }
+    .cashier-app .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-primary {
+        background: var(--navy);
+        color: white;
+        border-color: var(--navy);
+    }
+    .cashier-app .btn-primary:hover {
+        background: var(--navy-dark);
+        border-color: var(--navy-dark);
+    }
+    .cashier-app .btn-success {
+        background: var(--success);
+        color: white;
+        border-color: var(--success);
+    }
+    .cashier-app .btn-success:hover {
+        background: #0A5C30;
+        border-color: #0A5C30;
+    }
+    .cashier-app .btn-danger {
+        background: var(--danger);
+        color: white;
+        border-color: var(--danger);
+    }
+    .cashier-app .btn-danger:hover {
+        background: #7F1D1D;
+        border-color: #7F1D1D;
+    }
+    .cashier-app .btn-success:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .cashier-app .btn .spinner {
+        display: inline-block;
+        width: 0.9rem;
+        height: 0.9rem;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .cashier-app .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .cashier-app .table-wrap { overflow-x: auto; }
+    .cashier-app .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+    .cashier-app .table thead th {
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .cashier-app .table tbody td {
+        padding: 0.4rem 0.6rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+
+    .cashier-app .filleul-row {
+        transition: background 0.1s ease;
+    }
+    .cashier-app .filleul-row:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .filter-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        align-items: center;
+    }
+    .filter-section select,
+    .cashier-app .filter-section input {
+        padding: 0.3rem 0.6rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.75rem;
+        flex: 1;
+        min-width: 120px;
+        transition: border-color 0.15s ease;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+    }
+    .filter-section select:focus,
+    .cashier-app .filter-section input:focus {
+        border-color: var(--navy);
+        outline: 2px solid rgba(30, 41, 59, 0.1);
+    }
+    .cashier-app .filter-section .btn-filter {
+        padding: 0.3rem 1.25rem;
+        background: var(--navy);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    .cashier-app .filter-section .btn-filter:hover {
+        background: var(--navy-dark);
+    }
+    .cashier-app .filter-section .btn-reset {
+        padding: 0.3rem 1.25rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .cashier-app .filter-section .btn-reset:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .badge-level {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        letter-spacing: 0.03em;
+    }
+    .cashier-app .badge-level-1 { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .cashier-app .badge-level-2 { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .cashier-app .badge-level-3 { background: #EDE9FE; color: #5B21B6; border-color: #DDD6FE; }
+    .cashier-app .badge-level-4 { background: #FEF3C7; color: #9A5A0A; border-color: #FDE68A; }
+    .cashier-app .badge-level-5 { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+
+    .cashier-app .alert-credentials {
+        background: #F0FDF4;
+        border: 2px solid #86EFAC;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .cashier-app .alert-credentials .alert-title {
+        color: #065F46;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    .cashier-app .alert-credentials .credentials-box {
+        background: #F8F9FA;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 0.75rem;
+        border: 1px solid #BBF7D0;
+    }
+    .cashier-app .alert-credentials .credentials-box .cred-label {
+        font-size: 0.65rem;
+        color: var(--text-tertiary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .cashier-app .alert-credentials .credentials-box .cred-value {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .cashier-app .alert-credentials .credentials-box .cred-value.text-danger { color: #DC2626; }
+    .cashier-app .alert-credentials .credentials-box .cred-value.text-primary { color: var(--navy); }
+    .cashier-app .alert-credentials .credentials-box .cred-value.text-success { color: #0F7B3E; }
+    .cashier-app .alert-credentials .alert-warning-text {
+        margin-top: 0.75rem;
+        color: #9A5A0A;
+        font-size: 0.8rem;
+        background: #FEF3C7;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        border-left: 3px solid #F59E0B;
+    }
+    .cashier-app .alert-credentials .alert-warning-text a {
+        color: var(--navy);
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    .cashier-app .pv-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.75rem;
+        margin: 0.75rem 0;
+    }
+    .cashier-app .pv-summary .pv-item {
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--bg-secondary);
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+    }
+    .cashier-app .pv-summary .pv-item .number {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--navy);
+        letter-spacing: -0.01em;
+    }
+    .cashier-app .pv-summary .pv-item .label {
+        font-size: 0.55rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+        margin-top: 0.1rem;
+    }
+
+    .cashier-app .pv-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .cashier-app .footer-links {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    .cashier-app .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+    .cashier-app .footer-links a:hover {
+        color: var(--navy);
+        text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+        .cashier-app .detail-card { padding: 0.875rem; }
+        .cashier-app .commission-summary { grid-template-columns: 1fr 1fr; }
+        .cashier-app .commission-summary .item .number { font-size: 0.95rem; }
+        .cashier-app .table thead th, .cashier-app .table tbody td { padding: 0.3rem 0.4rem; font-size: 0.6rem; }
+        .cashier-app .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
+        .cashier-app .type-badge { font-size: 0.55rem; padding: 0.1rem 0.35rem; }
+        .cashier-app .badge-status { font-size: 0.45rem; padding: 0.05rem 0.3rem; }
+        .cashier-app .table-wrap { margin: 0 -0.875rem; padding: 0 0.875rem; }
+        .cashier-app .filter-section { flex-direction: column; }
+        .cashier-app .filter-section select, .cashier-app .filter-section input, .cashier-app .filter-section button { width: 100%; min-width: unset; }
+        .cashier-app .card { padding: 0.875rem; }
+        .cashier-app .alert-credentials { padding: 0.875rem; }
+        .cashier-app .alert-credentials .credentials-box { padding: 0.75rem; }
+        .cashier-app .alert-credentials .credentials-box .cred-value { font-size: 0.85rem; }
+        .cashier-app .pv-summary { grid-template-columns: 1fr 1fr; }
+        .cashier-app .footer-links { flex-direction: column; align-items: center; gap: 0.75rem; }
+    }
+
+/* from resources/views/cashier/members.blade.php */
+:root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
+        --bg-base: #F5F6F8;
+        --bg-card: #FFFFFF;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
+    }
+
+    /* ===== CARTES ===== */
+    .cashier-app .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .cashier-app .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    /* ===== TABLE ===== */
+    .cashier-app .member-row {
+        transition: background 0.1s ease;
+        cursor: pointer;
+    }
+    .cashier-app .member-row:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .table-wrap { overflow-x: auto; }
+    .cashier-app .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .cashier-app .table thead th {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        font-size: 0.688rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .cashier-app .table tbody td {
+        padding: 0.5rem 0.75rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+
+    /* ===== BADGES ===== */
+    .cashier-app .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .cashier-app .badge-success {
+        background: #E6F4EC;
+        color: #1F7B4D;
+        border-color: #B8DFCC;
+    }
+    .cashier-app .badge-danger {
+        background: #FDE8E8;
+        color: #B32A2A;
+        border-color: #F5C8C8;
+    }
+    .cashier-app .badge-warning {
+        background: #FEF1E6;
+        color: #A65A0E;
+        border-color: #FADCB8;
+    }
+    .cashier-app .badge-neutral {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .badge-admin {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+    }
+    .cashier-app .badge-cashier {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+    }
+    .cashier-app .badge-cashier-principal {
+        background: #D4DFED;
+        color: var(--primary-navy);
+        border-color: #B0C5DB;
+    }
+    .cashier-app .badge-user {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .badge-sponsor {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+        font-family: monospace;
+        font-size: 0.7rem;
+    }
+    .cashier-app .badge-commission {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        background: #E6F4EC;
+        color: #1F7B4D;
+        border-color: #B8DFCC;
+    }
+
+    .cashier-app .avatar-sm {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.75rem;
+        background: var(--primary-navy);
+        color: white;
+        flex-shrink: 0;
+    }
+
+    /* ===== BOUTONS ===== */
+    .cashier-app .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .cashier-app .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+    .cashier-app .btn-md { padding: 0.5rem 1.25rem; font-size: 0.813rem; }
+    .cashier-app .btn-xs { padding: 0.15rem 0.5rem; font-size: 0.65rem; }
+
+    .cashier-app .btn-primary {
+        background: var(--primary-navy);
+        color: white;
+        border-color: var(--primary-navy);
+    }
+    .cashier-app .btn-primary:hover {
+        background: var(--primary-navy-dark);
+        border-color: var(--primary-navy-dark);
+    }
+
+    .cashier-app .btn-success {
+        background: #1F7B4D;
+        color: white;
+        border-color: #1F7B4D;
+    }
+    .cashier-app .btn-success:hover {
+        background: #16633D;
+        border-color: #16633D;
+    }
+
+    .cashier-app .btn-danger {
+        background: #B32A2A;
+        color: white;
+        border-color: #B32A2A;
+    }
+    .cashier-app .btn-danger:hover {
+        background: #8F2121;
+        border-color: #8F2121;
+    }
+
+    .cashier-app .btn-warning {
+        background: #A65A0E;
+        color: white;
+        border-color: #A65A0E;
+    }
+    .cashier-app .btn-warning:hover {
+        background: #87480B;
+        border-color: #87480B;
+    }
+
+    .cashier-app .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+
+    .cashier-app .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+
+    .cashier-app .btn-icon {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        border-radius: 6px;
+    }
+
+    /* ===== RECHERCHE ===== */
+    .cashier-app .header-search .search-wrapper {
+        position: relative;
+    }
+
+    .cashier-app .header-search .search-wrapper .search-input {
+        padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        width: 220px;
+        transition: border-color 0.15s ease, width 0.2s ease;
+        outline: none;
+    }
+
+    .cashier-app .header-search .search-wrapper .search-input:focus {
+        border-color: var(--primary-navy);
+        width: 280px;
+    }
+
+    .cashier-app .header-search .search-wrapper .search-input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    /* ===== FILTRES ===== */
+    .cashier-app .filter-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .filter-section select,
+    .filter-section input[type="text"]:not(.search-input),
+    .cashier-app .filter-section input[type="date"] {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        flex: 1;
+        min-width: 120px;
+        transition: border-color 0.15s ease;
+        outline: none;
+    }
+
+    .filter-section select:focus,
+    .filter-section input[type="text"]:not(.search-input):focus,
+    .cashier-app .filter-section input[type="date"]:focus {
+        border-color: var(--primary-navy);
+    }
+
+    .cashier-app .filter-section .btn-filter {
+        padding: 0.375rem 1.5rem;
+        background: var(--primary-navy);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    .cashier-app .filter-section .btn-filter:hover {
+        background: var(--primary-navy-dark);
+    }
+
+    .cashier-app .filter-section .btn-reset {
+        padding: 0.375rem 1.5rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .cashier-app .filter-section .btn-reset:hover {
+        background: var(--bg-hover);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+        .cashier-app .header-search .search-wrapper .search-input {
+            width: 100%;
+        }
+        .cashier-app .header-search .search-wrapper .search-input:focus {
+            width: 100%;
+        }
+        .cashier-app .filter-section {
+            flex-direction: column;
+        }
+        .filter-section select,
+        .filter-section input[type="text"]:not(.search-input),
+        .filter-section input[type="date"],
+        .cashier-app .filter-section button {
+            width: 100%;
+            min-width: unset;
+        }
+        .cashier-app .table thead th, .cashier-app .table tbody td {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        .cashier-app .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.65rem;
+        }
+        .cashier-app .btn-xs {
+            padding: 0.15rem 0.375rem;
+            font-size: 0.6rem;
+        }
+        .cashier-app .badge {
+            font-size: 0.6rem;
+            padding: 0.125rem 0.5rem;
+        }
+        .cashier-app .card-stats {
+            padding: 0.625rem;
+        }
+        .cashier-app .avatar-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 0.6rem;
+        }
+        .cashier-app .card {
+            padding: 0.875rem;
+        }
+        .cashier-app .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .cashier-app .btn-icon {
+            padding: 0.15rem 0.375rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .cashier-app .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .cashier-app .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+/* from resources/views/cashier/members/commissions.blade.php */
+:root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
+        --bg-base: #F5F6F8;
+        --bg-card: #FFFFFF;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
+    }
+
+    .cashier-app .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .cashier-app .type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+    .cashier-app .type-badge-pos { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
+    .cashier-app .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; border-color: #C8D4E3; }
+    .cashier-app .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: #C8D4E3; }
+    .cashier-app .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #A65A0E; border-color: #FADCB8; }
+    .cashier-app .type-badge-purchase { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; border-color: #C8D4E3; }
+    .cashier-app .type-badge-new_client { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
+    .cashier-app .type-badge-pos_transaction { background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: #C8D4E3; }
+    .cashier-app .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
+
+    .cashier-app .badge-status {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.55rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border: 1px solid transparent;
+    }
+    .cashier-app .badge-status-paid { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; border-color: #B8DFCC; }
+
+    .cashier-app .commission-row {
+        transition: background 0.1s ease;
+    }
+    .cashier-app .commission-row:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .cashier-app .table-wrap { overflow-x: auto; }
+    .cashier-app .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .cashier-app .table thead th {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        font-size: 0.688rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .cashier-app .table tbody td {
+        padding: 0.5rem 0.75rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+
+    .cashier-app .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+    .cashier-app .badge-success { background: #E6F4EC; color: #1F7B4D; border-color: #B8DFCC; }
+
+    .cashier-app .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .cashier-app .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+    .cashier-app .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-primary {
+        background: var(--primary-navy);
+        color: white;
+        border-color: var(--primary-navy);
+    }
+    .cashier-app .btn-primary:hover {
+        background: var(--primary-navy-dark);
+        border-color: var(--primary-navy-dark);
+    }
+
+    @media (max-width: 640px) {
+        .cashier-app .card { padding: 0.875rem; }
+        .cashier-app .card-stats { padding: 0.625rem; }
+        .cashier-app .card-stats .text-2xl { font-size: 1.25rem; }
+        .cashier-app .table thead th, .cashier-app .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
+        .cashier-app .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+        .cashier-app .type-badge { font-size: 0.6rem; padding: 0.1rem 0.4rem; }
+        .cashier-app .badge-status { font-size: 0.5rem; padding: 0.075rem 0.375rem; }
+        .cashier-app .card-stats .text-xl { font-size: 1.1rem; }
+        .cashier-app .table-wrap { margin: 0 -0.875rem; padding: 0 0.875rem; }
+    }
+
+/* from resources/views/cashier/members/orders.blade.php */
+:root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --primary-navy-light: #1A3F6A;
+        --bg-base: #F5F6F8;
+        --bg-card: #FFFFFF;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
+    }
+
+    .cashier-app .card-stats {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .cashier-app .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .cashier-app .table-wrap { overflow-x: auto; }
+    .cashier-app .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .cashier-app .table thead th {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        font-size: 0.688rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    .cashier-app .table tbody td {
+        padding: 0.5rem 0.75rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .table-striped tbody tr:nth-child(even) {
+        background: var(--bg-secondary);
+    }
+
+    .cashier-app .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+    .cashier-app .badge-success { background: #E6F4EC; color: #1F7B4D; border-color: #B8DFCC; }
+    .cashier-app .badge-warning { background: #FEF1E6; color: #A65A0E; border-color: #FADCB8; }
+    .cashier-app .badge-danger { background: #FDE8E8; color: #B32A2A; border-color: #F5C8C8; }
+    .cashier-app .badge-info { background: #E8EDF5; color: var(--primary-navy); border-color: #C8D4E3; }
+
+    .cashier-app .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .cashier-app .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+    .cashier-app .btn-outline {
+        background: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-primary {
+        background: var(--primary-navy);
+        color: white;
+        border-color: var(--primary-navy);
+    }
+    .cashier-app .btn-primary:hover {
+        background: var(--primary-navy-dark);
+        border-color: var(--primary-navy-dark);
+    }
+
+    @media (max-width: 640px) {
+        .cashier-app .card { padding: 0.875rem; }
+        .cashier-app .card-stats { padding: 0.625rem; }
+        .cashier-app .card-stats .text-2xl { font-size: 1.25rem; }
+        .cashier-app .table thead th, .cashier-app .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
+        .cashier-app .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+        .cashier-app .table-wrap { margin: 0 -0.875rem; padding: 0 0.875rem; }
+    }
+
+/* from resources/views/cashier/members/create.blade.php */
+:root {
+        --primary-navy: #0F2B4F;
+        --primary-navy-dark: #091E3B;
+        --bg-base: #F4F5F7;
+        --bg-card: #F8F9FA;
+        --bg-secondary: #EEF0F3;
+        --bg-hover: #E8EAEE;
+        --text-primary: #1A1A1E;
+        --text-secondary: #4A4A52;
+        --text-tertiary: #7A7A82;
+        --border-color: #DCDEE3;
+        --border-light: #E8EAEE;
+        --success: #1F7B4D;
+        --danger: #B32A2A;
+        --warning: #A65A0E;
+        --info: #0A2A6C;
+    }
+
+    .cashier-app .form-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .cashier-app .form-section-title {
+        font-size: 0.938rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .cashier-app .form-section-title svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--primary-navy);
+    }
+
+    .cashier-app .form-group {
+        margin-bottom: 1rem;
+    }
+    .cashier-app .form-group label {
+        display: block;
+        font-size: 0.813rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+    }
+    .cashier-app .form-group label .required {
+        color: var(--danger);
+    }
+    .cashier-app .form-group .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        transition: border-color 0.15s ease;
+        outline: none;
+    }
+    .cashier-app .form-group .form-control:focus {
+        border-color: var(--primary-navy);
+    }
+    .cashier-app .form-group .form-control.is-invalid {
+        border-color: var(--danger);
+    }
+    .cashier-app .form-group .form-control.is-valid {
+        border-color: var(--success);
+    }
+    .cashier-app .form-group .form-control:disabled {
+        background: var(--bg-secondary);
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    .cashier-app .form-group .invalid-feedback {
+        color: var(--danger);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    .cashier-app .form-group .help-text {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        margin-top: 0.25rem;
+    }
+
+    .cashier-app .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .cashier-app .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .cashier-app .sponsor-select-wrapper {
+        position: relative;
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results.show {
+        display: block;
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item:hover {
+        background: var(--bg-hover);
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item .avatar-sm {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.7rem;
+        background: var(--primary-navy);
+        color: white;
+        flex-shrink: 0;
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item .result-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item .result-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item .result-detail {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .cashier-app .sponsor-select-wrapper .sponsor-results .result-item .result-code {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--primary-navy);
+        background: rgba(15, 43, 79, 0.08);
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+
+    .cashier-app .sponsor-selected {
+        background: rgba(31, 123, 77, 0.06);
+        border: 1.5px solid var(--success);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        display: none;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+    .cashier-app .sponsor-selected.active {
+        display: flex;
+    }
+    .cashier-app .sponsor-selected .sponsor-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        background: var(--primary-navy);
+        color: white;
+        flex-shrink: 0;
+    }
+    .cashier-app .sponsor-selected .sponsor-info-text {
+        flex: 1;
+        min-width: 0;
+    }
+    .cashier-app .sponsor-selected .sponsor-name-text {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .cashier-app .sponsor-selected .sponsor-detail-text {
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+    }
+    .cashier-app .sponsor-selected .btn-remove-sponsor {
+        background: none;
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    .cashier-app .sponsor-selected .btn-remove-sponsor:hover {
+        background: rgba(179, 42, 42, 0.08);
+    }
+    .cashier-app .sponsor-selected .btn-remove-sponsor svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .cashier-app .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+    .cashier-app .badge-warning {
+        background: #FEF1E6;
+        color: var(--warning);
+        border-color: #FADCB8;
+    }
+    .cashier-app .badge-success {
+        background: #E6F4EC;
+        color: var(--success);
+        border-color: #B8DFCC;
+    }
+    .cashier-app .badge-info {
+        background: #E8EDF5;
+        color: var(--primary-navy);
+        border-color: #C8D4E3;
+    }
+
+    .cashier-app .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.813rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .cashier-app .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+    .cashier-app .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+    .cashier-app .btn-secondary:hover {
+        background: var(--bg-hover);
+    }
+
+    .cashier-app .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary-navy);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    .cashier-app .btn-submit:hover {
+        background: var(--primary-navy-dark);
+    }
+    .cashier-app .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .cashier-app .info-banner {
+        background: rgba(10, 42, 108, 0.06);
+        border: 1px solid rgba(10, 42, 108, 0.15);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    .cashier-app .info-banner svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--info);
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    .cashier-app .section-company {
+        background: rgba(15, 43, 79, 0.03);
+        border: 1.5px solid rgba(15, 43, 79, 0.15);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .cashier-app .section-company .form-section-title {
+        border-bottom-color: rgba(15, 43, 79, 0.15);
+        color: var(--primary-navy);
+    }
+    .cashier-app .section-company .form-control:disabled {
+        background: rgba(15, 43, 79, 0.04);
+        border-color: rgba(15, 43, 79, 0.10);
+        color: var(--text-primary);
+    }
+
+    .cashier-app .cashier-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(15, 43, 79, 0.08);
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--primary-navy);
+    }
+
+    .cashier-app .code-validation {
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.813rem;
+        display: none;
+    }
+    .cashier-app .code-validation.show {
+        display: block;
+    }
+    .cashier-app .code-validation.valid {
+        background: rgba(31, 123, 77, 0.06);
+        border: 1px solid rgba(31, 123, 77, 0.15);
+        color: var(--success);
+    }
+    .cashier-app .code-validation.invalid {
+        background: rgba(179, 42, 42, 0.06);
+        border: 1px solid rgba(179, 42, 42, 0.15);
+        color: var(--danger);
+    }
+    .cashier-app .code-validation .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(15, 43, 79, 0.15);
+        border-top-color: var(--primary-navy);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 0.5rem;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .cashier-app .package-preview {
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 640px) {
+        .cashier-app .form-row, .cashier-app .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+        .cashier-app .form-section {
+            padding: 1rem;
+        }
+        .cashier-app .section-company {
+            padding: 1rem;
+        }
+        .cashier-app .sponsor-selected {
+            flex-wrap: wrap;
+        }
+        .cashier-app .sponsor-select-wrapper .sponsor-results {
+            max-height: 180px;
+        }
+        .cashier-app .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+        .cashier-app .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+        .cashier-app .form-group .form-control { font-size: 0.813rem; padding: 0.4rem 0.6rem; }
+    }

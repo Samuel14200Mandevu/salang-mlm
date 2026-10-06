@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -219,7 +212,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total crédits</p>
-                    <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">
+                    <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">
                         ${{ number_format($stats['total_credited'] ?? 0, 2) }}
                     </p>
                 </div>
@@ -234,7 +227,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total débits</p>
-                    <p class="text-lg sm:text-xl font-bold text-[#B91C1C]">
+                    <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">
                         ${{ number_format($stats['total_debited'] ?? 0, 2) }}
                     </p>
                 </div>
@@ -249,7 +242,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Transactions</p>
-                    <p class="text-lg sm:text-xl font-bold text-[#065F9C]">
+                    <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">
                         {{ $stats['transaction_count'] ?? 0 }}
                     </p>
                 </div>

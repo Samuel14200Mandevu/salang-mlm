@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .order-detail-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -472,7 +465,7 @@
                 @if($order->discount > 0)
                 <div class="flex justify-between">
                     <span class="text-[var(--text-secondary)]">Réduction</span>
-                    <span class="font-medium text-[#B91C1C]">-${{ number_format($order->discount, 2) }}</span>
+                    <span class="font-medium text-[var(--ui-stat-danger)]">-${{ number_format($order->discount, 2) }}</span>
                 </div>
                 @endif
                 <div class="border-t border-[var(--border-color)] pt-2 mt-2">
@@ -562,7 +555,7 @@
             @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'pending')
                 <div class="cancellation-request-box">
                     <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-5 h-5 text-[#B54708]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <svg class="w-5 h-5 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                         <h4 class="font-semibold text-[var(--text-primary)] text-sm">Demande d'annulation</h4>
@@ -607,10 +600,10 @@
             @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'approved')
                 <div class="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                     <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#1C7E4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <svg class="w-5 h-5 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                         </svg>
-                        <span class="text-[#1C7E4A] font-medium">Annulation approuvée</span>
+                        <span class="text-[var(--ui-stat-success)] font-medium">Annulation approuvée</span>
                     </div>
                     <p class="text-xs text-[var(--text-secondary)] mt-1">
                         Traitée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
@@ -622,10 +615,10 @@
             @if(isset($order->metadata['cancellation_request']) && $order->metadata['cancellation_request']['status'] == 'rejected')
                 <div class="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                     <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#B91C1C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <svg class="w-5 h-5 text-[var(--ui-stat-danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
-                        <span class="text-[#B91C1C] font-medium">Annulation rejetée</span>
+                        <span class="text-[var(--ui-stat-danger)] font-medium">Annulation rejetée</span>
                     </div>
                     <p class="text-xs text-[var(--text-secondary)] mt-1">
                         Rejetée le {{ \Carbon\Carbon::parse($order->metadata['cancellation_request']['processed_at'])->format('d/m/Y H:i') }}
@@ -757,7 +750,7 @@
 
         <div class="mb-3">
             <label for="rejectReason" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                Motif du rejet <span class="text-[#B91C1C]">*</span>
+                Motif du rejet <span class="text-[var(--ui-stat-danger)]">*</span>
             </label>
             <textarea id="rejectReason"
                       class="input w-full p-2 border border-[var(--border-color)] rounded-md text-sm"

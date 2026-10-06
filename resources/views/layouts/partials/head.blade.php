@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -16,7 +14,7 @@
     <!-- ============================================ -->
     <!-- MÉTADONNÉES PWA MANUELLES (SÉCURITÉ)        -->
     <!-- ============================================ -->
-    <meta name="theme-color" content="#5ab638">
+    <meta name="theme-color" content="#1E5DAD">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -33,6 +31,47 @@
     <!-- ============================================ -->
     <!-- FONTS ET STYLES                              -->
     <!-- ============================================ -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('theme');
+            var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (dark) document.documentElement.classList.add('dark');
+        })();
+    </script>
+
+    <style>
+    html.shell-is-desktop.shell-sidebar-expanded .member-app .main-wrapper {
+        margin-left: 16rem;
+        width: calc(100% - 16rem);
+    }
+    html.shell-is-desktop.shell-sidebar-expanded .member-app #sidebar {
+        width: 16rem;
+    }
+    html.shell-is-desktop.shell-sidebar-rail .member-app .main-wrapper {
+        margin-left: 5rem;
+        width: calc(100% - 5rem);
+    }
+    html.shell-is-desktop.shell-sidebar-rail .member-app #sidebar {
+        width: 5rem;
+    }
+    html.shell-is-mobile .member-app .main-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+    html.shell-is-mobile .member-app #sidebar {
+        width: 16rem;
+    }
+    @media (max-width: 767px) {
+        .member-app #sidebar:not(.translate-x-0) {
+            transform: translateX(-100%);
+        }
+    }
+    </style>
+    @include('partials.shell.sidebar-rail-styles')
+    @include('partials.shell.sidebar-state')
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     @stack('styles')
 
     <style>

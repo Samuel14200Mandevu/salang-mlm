@@ -3,10 +3,10 @@
 
 @push('styles')
 <style>
-    :root {
-        --primary-navy: #0F2B4F;
-        --primary-navy-dark: #091E3B;
-        --primary-navy-light: #1A3F6A;
+    html:not(.dark) {
+        --primary-navy: #184f94;
+        --primary-navy-dark: #134178;
+        --primary-navy-light: #1e5dad;
         --bg-base: #F5F6F8;
         --bg-card: #FFFFFF;
         --bg-secondary: #EEF0F3;
@@ -54,9 +54,9 @@
         flex-shrink: 0;
     }
 
-    .stat-icon-total { background: rgba(15, 43, 79, 0.10); color: var(--primary-navy); }
+    .stat-icon-total { background: rgba(30, 93, 173, 0.10); color: var(--primary-navy); }
     .stat-icon-active { background: rgba(34, 197, 94, 0.10); color: #1F7B4D; }
-    .stat-icon-sponsored { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
+    .stat-icon-sponsored { background: rgba(139, 92, 246, 0.10); color: #e8940f; }
     .stat-icon-sponsors { background: rgba(245, 158, 11, 0.10); color: #A65A0E; }
 
     .btn {
@@ -358,7 +358,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Actifs</p>
-                    <p class="stat-value text-[#1F7B4D]">{{ $activeCustomers }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">{{ $activeCustomers }}</p>
                 </div>
                 <div class="stat-icon stat-icon-active">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -372,7 +372,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Avec parrain</p>
-                    <p class="stat-value text-[#3d8a2a]">{{ $sponsoredCustomers }}</p>
+                    <p class="stat-value text-[var(--ui-stat-accent)]">{{ $sponsoredCustomers }}</p>
                 </div>
                 <div class="stat-icon stat-icon-sponsored">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -386,7 +386,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Parrains uniques</p>
-                    <p class="stat-value text-[#A65A0E]">{{ $uniqueSponsors }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $uniqueSponsors }}</p>
                 </div>
                 <div class="stat-icon stat-icon-sponsors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -494,11 +494,11 @@
         <form id="customerFormModal">
             <div class="space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet <span class="text-[#B32A2A]">*</span></label>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Nom complet <span class="text-[var(--ui-stat-danger)]">*</span></label>
                     <input type="text" id="newNameModal" class="input" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email <span class="text-[#B32A2A]">*</span></label>
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email <span class="text-[var(--ui-stat-danger)]">*</span></label>
                     <input type="email" id="newEmailModal" class="input" required>
                 </div>
                 <div>

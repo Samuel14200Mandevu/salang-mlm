@@ -2,43 +2,6 @@
 
 @section('title', 'Dépôt')
 
-@push('styles')
-<style>
-    .method-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 0.75rem;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-md);
-        text-align: center;
-        background: var(--bg-secondary);
-    }
-    .method-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-hover);
-    }
-    .method-card.selected {
-        border-color: var(--primary-500);
-        background: rgba(90,182,56,0.05);
-    }
-    .method-card .method-icon { font-size: 2rem; display: block; margin-bottom: 0.25rem; }
-    .method-card .method-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); }
-    
-    @media (max-width: 640px) {
-        .card-stats { padding: 0.75rem; }
-        .card-stats .text-3xl { font-size: 1.5rem; }
-        .card { padding: 0.75rem; }
-        .method-card { padding: 0.5rem; }
-        .method-card .method-icon { font-size: 1.5rem; }
-        .method-card .method-label { font-size: 0.6rem; }
-        .btn { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .text-2xl { font-size: 1.25rem; }
-        .input { font-size: 0.813rem; padding: 0.5rem 0.75rem; }
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     <!-- En-tête -->

@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -230,7 +223,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">Commandes</p>
-                    <p class="number text-[#1C7E4A]">{{ number_format($stats['total_orders'] ?? 0) }}</p>
+                    <p class="number text-[var(--ui-stat-success)]">{{ number_format($stats['total_orders'] ?? 0) }}</p>
                 </div>
                 <div class="icon icon-green">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -258,7 +251,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">PV distribués</p>
-                    <p class="number text-[#B54708]">{{ number_format($stats['total_pv'] ?? 0) }}</p>
+                    <p class="number text-[var(--ui-stat-warning)]">{{ number_format($stats['total_pv'] ?? 0) }}</p>
                 </div>
                 <div class="icon icon-orange">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -272,7 +265,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">Caissiers</p>
-                    <p class="number text-[#065F9C]">{{ number_format($stats['total_cashiers'] ?? 0) }}</p>
+                    <p class="number text-[var(--ui-stat-info)]">{{ number_format($stats['total_cashiers'] ?? 0) }}</p>
                 </div>
                 <div class="icon icon-teal">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -286,7 +279,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">Aujourd'hui</p>
-                    <p class="number text-[#B91C1C]">${{ number_format($stats['today_sales'] ?? 0, 2) }}</p>
+                    <p class="number text-[var(--ui-stat-danger)]">${{ number_format($stats['today_sales'] ?? 0, 2) }}</p>
                     <p class="text-[10px] text-[var(--text-tertiary)]">{{ number_format($stats['today_orders'] ?? 0) }} commandes</p>
                 </div>
                 <div class="icon icon-red">
@@ -423,7 +416,7 @@
                                     $cashierName = $order->cashier_name;
                                 @endphp
                                 @if($cashierName != 'Système')
-                                    <span class="font-medium text-[#065F9C]">
+                                    <span class="font-medium text-[var(--ui-stat-info)]">
                                         {{ $cashierName }}
                                     </span>
                                 @else

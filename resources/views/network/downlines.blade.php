@@ -2,133 +2,16 @@
 
 @section('title', 'Filiales')
 
-@push('styles')
-<style>
-    .downline-row {
-        transition: all 0.2s ease;
-    }
-    .downline-row:hover {
-        background: var(--bg-hover);
-    }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
-    
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.5rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-    }
-    .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4); }
-    .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
-    .btn-outline:hover { border-color: var(--primary-500); color: var(--primary-500); }
-    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
-    .btn-md { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
-    
-    .input {
-        width: 100%;
-        padding: 0.625rem 1rem;
-        font-size: 0.875rem;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-md);
-        background: var(--bg-input);
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-        outline: none;
-    }
-    .input:focus { border-color: var(--primary-500); box-shadow: 0 0 0 4px var(--border-focus); }
-    
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-    }
-    
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
-    .table thead th {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-secondary);
-        background: var(--bg-secondary);
-        border-bottom: 2px solid var(--border-color);
-    }
-    .table tbody td {
-        padding: 0.75rem 1rem;
-        color: var(--text-primary);
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border-light);
-    }
-    .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
-    
-    .filters-wrapper {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.10s; }
-    .delay-3 { animation-delay: 0.15s; }
-    
-    @media (max-width: 640px) {
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .btn-sm svg { width: 0.875rem; height: 0.875rem; }
-        .card { padding: 0.875rem; }
-        .filters-wrapper { flex-direction: column; align-items: stretch; }
-        .filters-wrapper .input { width: 100% !important; }
-        .downline-header { flex-direction: column; align-items: flex-start !important; }
-    }
-    
-    @media (max-width: 480px) {
-        .card { padding: 0.75rem; }
-        .table thead th, .table tbody td { padding: 0.25rem 0.375rem; font-size: 0.6rem; }
-        .btn-sm { padding: 0.125rem 0.375rem; font-size: 0.6rem; }
-        .btn-sm svg { width: 0.75rem; height: 0.75rem; }
-    }
-</style>
-@endpush
+
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
     <!-- Header -->
     <div class="downline-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Filleuls</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Liste complète de votre réseau</p>
+        <div class="member-page-intro">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mes filleuls</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Tous les membres de votre généalogie</p>
         </div>
         <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +75,7 @@
                         <tr class="downline-row" 
                             data-name="{{ strtolower($member->name) }}" 
                             data-email="{{ strtolower($member->email) }}"
-                            data-level="{{ $member->genealogy?->level ?? 1 }}"
+                            data-level="{{ $member->level ?? $member->genealogy?->level ?? 1 }}"
                             data-status="{{ $member->is_active ? 1 : 0 }}">
                             <td class="font-mono text-xs sm:text-sm">#{{ $member->id }}</td>
                             <td class="font-medium text-sm sm:text-base">
@@ -204,7 +87,7 @@
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden sm:table-cell">{{ $member->email }}</td>
                             <td class="hidden md:table-cell">
-                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->genealogy?->level ?? 1 }}</span>
+                                <span class="badge badge-info text-[10px] sm:text-xs">Niv. {{ $member->level ?? $member->genealogy?->level ?? 1 }}</span>
                             </td>
                             <td class="hidden lg:table-cell text-sm sm:text-base">{{ $member->package?->name ?? 'Starter' }}</td>
                             <td class="text-sm sm:text-base">{{ number_format($member->pv_balance ?? 0) }}</td>
@@ -281,7 +164,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 show = false;
             }
 
-            if (level && rowLevel != level) {
+            if (level === '4') {
+                if (parseInt(rowLevel, 10) < 4) show = false;
+            } else if (level && rowLevel != level) {
                 show = false;
             }
 

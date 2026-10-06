@@ -70,8 +70,14 @@
                 <span class="text-xs text-[var(--text-tertiary)]">-</span>
             @endif
         </td>
-        <td class="hidden xl:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
-            {{ $user->created_at->format('d/m/Y') }}
+        <td class="hidden xl:table-cell">
+            @php
+                $rankLevel = (int) ($user->rank_level ?? 0);
+            @endphp
+            <span class="{{ \App\Support\MlmRank::badgeClass($rankLevel) }}">
+                {{ \App\Support\MlmRank::label($rankLevel) }}
+            </span>
+            <span class="text-xs text-[var(--text-tertiary)] ml-0.5">(Niv. {{ $rankLevel }})</span>
         </td>
         <td>
             <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">

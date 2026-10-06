@@ -1,0 +1,174 @@
+/* Admin — compléments (shell principal partagé via cashier-shell.css + .admin-app) */
+
+.admin-app .sidebar-link .badge-count {
+  display: inline-block;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.admin-app .notification-dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+  border: 2px solid var(--bg-navbar);
+}
+
+.admin-app .header-search .search-wrapper {
+  position: relative;
+}
+
+.admin-app .header-search .search-wrapper .search-input {
+  padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.813rem;
+  width: 220px;
+  transition: border-color 0.15s ease, width 0.2s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.admin-app .header-search .search-wrapper .search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--border-focus);
+  width: 280px;
+}
+
+.admin-app .header-search .search-wrapper .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.admin-app .card-stats {
+  padding: 0.875rem 1rem;
+}
+
+.admin-app .badge-sponsor {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+}
+
+/* Badges rôle (liste utilisateurs) */
+.admin-app .badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.admin-app .badge-admin {
+  background: #fde8e8;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.admin-app .badge-cashier {
+  background: var(--primary-blue-bg, var(--color-primary-50));
+  color: var(--color-primary-700);
+  border-color: var(--primary-blue-border, var(--color-primary-200));
+}
+
+.admin-app .badge-cashier-principal {
+  background: var(--color-primary-100);
+  color: var(--color-primary-800);
+  border-color: var(--color-primary-300);
+  font-weight: 700;
+}
+
+.admin-app .badge-user {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+/* Avatars initiales — bleu logo Salang (#1E5DAD) */
+.admin-app .avatar-sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  color: #fff;
+  background: var(--color-primary-500);
+  border: 1px solid var(--color-primary-600);
+}
+
+html.dark .admin-app .avatar-sm {
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-500);
+}
+
+html.dark .admin-app .badge-admin {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+@media (max-width: 640px) {
+  .admin-app .avatar-sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-app .header-search {
+    width: 100%;
+  }
+  .admin-app .header-search .search-wrapper {
+    flex: 1;
+  }
+  .admin-app .header-search .search-wrapper .search-input,
+  .admin-app .header-search .search-wrapper .search-input:focus {
+    width: 100%;
+  }
+}
+
+.admin-app .confirm-dialog .actions .btn {
+  min-width: 90px;
+}
+
+.admin-app .confirm-dialog .actions .btn-cancel {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.admin-app .confirm-dialog .actions .btn-cancel:hover {
+  background: var(--bg-hover);
+}
+
+.admin-app .confirm-dialog .actions .btn-confirm {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.admin-app .confirm-dialog .actions .btn-confirm:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+
+.admin-app .confirm-dialog .actions .btn-confirm.success {
+  background: var(--success);
+  border-color: var(--success);
+}

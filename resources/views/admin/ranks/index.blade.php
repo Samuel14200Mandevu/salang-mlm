@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .rank-row {
     transition: background 0.15s ease;
 }
@@ -267,11 +260,11 @@
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-2 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">{{ $stats['active'] ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $stats['active'] ?? 0 }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau max</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">{{ $ranks->max('min_pv') ?? 0 }} PV</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ $ranks->max('min_pv') ?? 0 }} PV</p>
         </div>
         <div class="card-stats border-l-4 border-[var(--primary-blue)] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Bonus max</p>
@@ -328,18 +321,18 @@
                                        class="btn btn-outline btn-sm btn-icon"
                                        title="{{ $rank->is_active ? 'Désactiver' : 'Activer' }}">
                                         @if($rank->is_active)
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B54708]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                                             </svg>
                                         @else
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1C7E4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                             </svg>
                                         @endif
                                     </a>
                                     <button type="button"
                                             onclick="openDeleteModal('{{ $rank->id }}', '{{ $rank->name }}', {{ $userCount }})"
-                                            class="btn btn-outline btn-sm btn-icon text-[#B91C1C] hover:text-[#991B1B]"
+                                            class="btn btn-outline btn-sm btn-icon text-[var(--ui-stat-danger)] hover:text-[#991B1B]"
                                             title="Supprimer">
                                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -379,7 +372,7 @@
             Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong>
             <strong id="rankNameDisplay"></strong> ?
             <br>
-            <span id="userCountWarning" class="text-[#B54708] font-semibold"></span>
+            <span id="userCountWarning" class="text-[var(--ui-stat-warning)] font-semibold"></span>
             Cette action est <strong class="text-danger">irréversible</strong>.
         </p>
         <div class="modal-actions">

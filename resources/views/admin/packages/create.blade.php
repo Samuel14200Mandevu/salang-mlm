@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1rem;
 }
@@ -147,7 +140,7 @@
                            class="form-control @error('name') form-control-error @enderror"
                            placeholder="Package Bronze" required>
                     @error('name')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -159,7 +152,7 @@
                            placeholder="package-bronze" required>
                     <span class="help-text">Identifiant unique pour l'URL (ex: package-bronze)</span>
                     @error('slug')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -170,7 +163,7 @@
                            class="form-control @error('price') form-control-error @enderror"
                            placeholder="99.99" required>
                     @error('price')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -181,7 +174,7 @@
                            class="form-control @error('pv_value') form-control-error @enderror"
                            placeholder="100" required>
                     @error('pv_value')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -200,7 +193,7 @@
                            class="form-control @error('commission_rate') form-control-error @enderror"
                            placeholder="30" required>
                     @error('commission_rate')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 

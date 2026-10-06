@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .detail-row {
     display: flex;
     justify-content: space-between;
@@ -274,11 +267,11 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">Montant</span>
-                    <span class="value font-bold text-[#1C7E4A]">${{ number_format($withdrawal->amount, 2) }}</span>
+                    <span class="value font-bold text-[var(--ui-stat-success)]">${{ number_format($withdrawal->amount, 2) }}</span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Frais (2.5%)</span>
-                    <span class="value text-[#B91C1C]">${{ number_format($withdrawal->fee, 2) }}</span>
+                    <span class="value text-[var(--ui-stat-danger)]">${{ number_format($withdrawal->fee, 2) }}</span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Montant net</span>
@@ -390,7 +383,7 @@
 <div id="rejectModal" class="modal-overlay">
     <div class="modal-box">
         <div class="text-center">
-            <svg class="w-12 h-12 mx-auto text-[#B91C1C] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <svg class="w-12 h-12 mx-auto text-[var(--ui-stat-danger)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
             <h3 class="modal-title">Rejeter le retrait</h3>

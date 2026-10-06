@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .commission-row {
     transition: background 0.15s ease;
 }
@@ -243,15 +236,15 @@
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moyenne</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">${{ number_format($stats['average'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">${{ number_format($stats['average'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">En attente</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">${{ number_format($stats['total_pending'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">${{ number_format($stats['total_pending'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-5 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Payées</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">${{ number_format($stats['total_paid'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">${{ number_format($stats['total_paid'] ?? 0, 2) }}</p>
         </div>
     </div>
 
@@ -278,7 +271,7 @@
                             <td class="hidden md:table-cell">
                                 <span class="badge badge-info text-[10px] sm:text-xs">{{ ucfirst($commission->type) }}</span>
                             </td>
-                            <td class="text-right font-bold text-[#1C7E4A] text-sm">+${{ number_format($commission->amount, 2) }}</td>
+                            <td class="text-right font-bold text-[var(--ui-stat-success)] text-sm">+${{ number_format($commission->amount, 2) }}</td>
                             <td class="hidden lg:table-cell text-sm">{{ $commission->percentage }}%</td>
                             <td>
                                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">

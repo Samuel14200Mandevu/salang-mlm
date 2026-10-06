@@ -4,6 +4,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use App\Services\CommissionService;
@@ -144,6 +145,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        App::setLocale(config('app.locale', env('APP_LOCALE', 'fr')));
+
         // Forcer HTTPS en production
         if ($this->app->environment('production')) {
             URL::forceScheme('https');

@@ -56,11 +56,11 @@
     }
     .pv-15 { background: rgba(16, 185, 129, 0.12); color: #10b981; }
     .pv-20 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .pv-25 { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
+    .pv-25 { background: rgba(139, 92, 246, 0.12); color: #e8940f; }
     .pv-30 { background: rgba(236, 72, 153, 0.12); color: #ec4899; }
     .pv-35 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
     .pv-40 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .pv-45 { background: rgba(168, 85, 247, 0.12); color: #3d8a2a; }
+    .pv-45 { background: rgba(168, 85, 247, 0.12); color: #e8940f; }
     .pv-50 { background: rgba(236, 72, 153, 0.12); color: #ec4899; }
     .pv-55 { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
     .pv-75 { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
@@ -74,7 +74,7 @@
         font-size: 0.55rem;
         font-weight: 600;
         background: rgba(139, 92, 246, 0.10);
-        color: #3d8a2a;
+        color: #e8940f;
     }
 
     /* ============================================================
@@ -151,7 +151,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
     .btn-primary:disabled {
         opacity: 0.5;
@@ -319,7 +319,7 @@
     }
     .scanner-container.scanning {
         border-color: var(--primary);
-        background: rgba(15, 43, 79, 0.04);
+        background: rgba(30, 93, 173, 0.04);
     }
 
     .qr-result {
@@ -488,7 +488,7 @@
                                  data-product-id="{{ $product->id }}"
                                  data-type="product">
 
-                                <div class="image-container" onclick="addToCart({{ $product->id }}, 'product')">
+                                <div class="image-container" onclick="posAddToCart({{ $product->id }}, 'product')">
                                     @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
                                         <img src="{{ asset('storage/products/' . $product->image) }}"
                                              alt="{{ $product->name }}"
@@ -550,7 +550,7 @@
 
                                     <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
                                         <span class="product-price text-sm sm:text-lg font-bold text-[var(--primary)]">${{ number_format($product->price, 2) }}</span>
-                                        <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-[#16a34a]' : ($product->stock > 0 ? 'text-[#d97706]' : 'text-[#b32a2a]') }}">
+                                        <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-[var(--ui-stat-success)]' : ($product->stock > 0 ? 'text-[var(--ui-stat-warning)]' : 'text-[var(--ui-stat-danger)]') }}">
                                             @if($product->stock > 10) En stock
                                             @elseif($product->stock > 0) {{ $product->stock }} restants
                                             @else Rupture
@@ -560,7 +560,7 @@
 
                                     <div class="mt-1 sm:mt-2">
                                         @if($product->stock > 0)
-                                            <button onclick="addToCart({{ $product->id }}, 'product')"
+                                            <button onclick="posAddToCart({{ $product->id }}, 'product')"
                                                     class="btn btn-primary btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
                                                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -602,7 +602,7 @@
                                  data-product-id="{{ $package->id }}"
                                  data-type="package">
 
-                                <div class="image-container" onclick="addToCart({{ $package->id }}, 'package')" style="background: rgba(59,130,246,0.05);">
+                                <div class="image-container" onclick="posAddToCart({{ $package->id }}, 'package')" style="background: rgba(59,130,246,0.05);">
                                     <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--primary)]">
                                         <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
@@ -650,13 +650,13 @@
 
                                     <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
                                         <span class="product-price text-sm sm:text-lg font-bold text-[var(--primary)]">${{ number_format($package->price, 2) }}</span>
-                                        <span class="text-[8px] sm:text-[10px] text-[#2563eb]">
+                                        <span class="text-[8px] sm:text-[10px] text-[var(--ui-stat-info)]">
                                             {{ $package->commission_rate ?? 30 }}% commission
                                         </span>
                                     </div>
 
                                     <div class="mt-1 sm:mt-2">
-                                        <button onclick="addToCart({{ $package->id }}, 'package')"
+                                        <button onclick="posAddToCart({{ $package->id }}, 'package')"
                                                 class="btn btn-gold btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -718,7 +718,7 @@ function showToast(message, isError) {
 // ================================================================
 //  AJOUTER AU PANIER
 // ================================================================
-function addToCart(productId, type) {
+function posAddToCart(productId, type) {
     const card = document.querySelector(`.product-card[data-product-id="${productId}"][data-type="${type}"]`);
     if (!card) {
         showToast('Produit non trouvé', true);
@@ -770,10 +770,12 @@ function addToCart(productId, type) {
     }
 }
 
+window.posAddToCart = posAddToCart;
+
 // ================================================================
 //  SWITCH TAB
 // ================================================================
-function switchTab(tab) {
+window.switchTab = function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
@@ -911,7 +913,7 @@ function findProductById(id) {
         if (data.success) {
             qrResult.className = 'qr-result show success';
             qrResult.innerHTML = ' ' + data.product.name + ' ajouté au panier!';
-            addToCart(data.product.id, 'product');
+            posAddToCart(data.product.id, 'product');
 
             const container = document.getElementById('scannerContainer');
             container.style.borderColor = '#22c55e';
@@ -951,7 +953,7 @@ function findProductBySku(sku) {
         if (data.success) {
             qrResult.className = 'qr-result show success';
             qrResult.innerHTML = ' ' + data.product.name + ' ajouté au panier!';
-            addToCart(data.product.id, 'product');
+            posAddToCart(data.product.id, 'product');
 
             const container = document.getElementById('scannerContainer');
             container.style.borderColor = '#22c55e';

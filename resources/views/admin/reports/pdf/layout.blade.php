@@ -19,15 +19,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        body {
-            font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
-            font-size: 9.5px;
-            color: #1a202c;
-            line-height: 1.4;
-            padding: 15px 20px;
-        }
-
-        /* ===== EN-TÊTE CORPORATE ===== */
+/* ===== EN-TÊTE CORPORATE ===== */
         .company-header {
             width: 100%;
             border-bottom: 2.5px solid #8b0000;

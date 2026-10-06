@@ -73,7 +73,7 @@
         font-size: 0.875rem; cursor: pointer; border: none; text-decoration: none;
     }
     .btn-primary { background: var(--primary); color: #FFF; }
-    .btn-primary:hover { background: var(--primary-hover, #091E3B); }
+    .btn-primary:hover { background: var(--primary-hover, #134178); }
     .btn-outline {
         background: transparent; color: var(--text-primary);
         border: 1.5px solid var(--border-color);
@@ -97,7 +97,7 @@
     .form-control:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(15, 43, 79, 0.08);
+        box-shadow: 0 0 0 2px rgba(30, 93, 173, 0.08);
     }
 
     .badge {
@@ -112,7 +112,7 @@
     .badge-success { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #d97706; }
     .badge-danger { background: rgba(179, 42, 42, 0.12); color: #b32a2a; }
-    .badge-info { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .badge-info { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .badge-secondary { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
 
     @media (max-width: 640px) {

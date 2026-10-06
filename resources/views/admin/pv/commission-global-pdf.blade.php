@@ -7,17 +7,7 @@
     <title>Rapport Global des Commissions - {{ $period }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 14px; 
-            color: #000; 
-            padding: 10px 18px 50px 18px;
-            background: #fff;
-            line-height: 1.35;
-        }
-
-        /* PIED DE PAGE PERMANENT */
+/* PIED DE PAGE PERMANENT */
         .footer-container {
             position: fixed;
             bottom: 0;

@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
 use App\Models\Product;
+use App\Notifications\ConsultationReviewedNotification;
+use App\Services\ConsultationSaleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -79,19 +81,25 @@ class ConsultationController extends Controller
         // ============================================================
         // TRAITER LES PRODUITS RECOMMANDÉS
         // ============================================================
+        $existingRows = $consultation->recommended_products ?? [];
         $recommendedProducts = [];
         if ($request->has('recommended_products') && is_array($request->recommended_products)) {
             foreach ($request->recommended_products as $item) {
                 if (!empty($item['product_id'])) {
                     $product = Product::find($item['product_id']);
                     if ($product) {
-                        $recommendedProducts[] = [
-                            'product_id' => (int)$product->id,
-                            'produit' => (string)$product->name,
-                            'posologie' => (string)($item['posologie'] ?? ''),
-                            'prix' => (float)$product->price,
-                            'observation' => (string)($item['observation'] ?? ''),
+                        $row = [
+                            'product_id' => (int) $product->id,
+                            'produit' => (string) $product->name,
+                            'posologie' => (string) ($item['posologie'] ?? ''),
+                            'prix' => (float) $product->price,
+                            'observation' => (string) ($item['observation'] ?? ''),
                         ];
+                        $recommendedProducts[] = ConsultationSaleService::mergeAdminProductRow(
+                            $existingRows,
+                            (int) $product->id,
+                            $row
+                        );
                     }
                 }
             }
@@ -108,6 +116,8 @@ class ConsultationController extends Controller
         $totalServices = ($request->seances_ceragem * $request->prix_ceragem) + 
                         ($request->seances_detox * $request->prix_detox);
         $totalGeneral = $totalProduits + $totalServices;
+
+        $previousStatus = $consultation->status;
 
         // ============================================================
         // METTRE À JOUR LA CONSULTATION
@@ -127,6 +137,13 @@ class ConsultationController extends Controller
             'status' => $request->status,
             'admin_id' => Auth::id(),
         ]);
+
+        if ($consultation->cashier_id && $request->status !== 'pending') {
+            if ($previousStatus === 'pending' || $previousStatus !== $request->status) {
+                $consultation->load('cashier');
+                $consultation->cashier?->notify(new ConsultationReviewedNotification($consultation->fresh()));
+            }
+        }
 
         return redirect()
             ->route('admin.consultations.index')

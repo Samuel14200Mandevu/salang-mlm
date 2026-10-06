@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .user-report-row {
     transition: background 0.15s ease;
 }
@@ -212,15 +205,15 @@
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-2 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">{{ number_format($stats['active'] ?? 0) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ number_format($stats['active'] ?? 0) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#B91C1C] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Inactifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B91C1C]">{{ number_format($stats['inactive'] ?? 0) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">{{ number_format($stats['inactive'] ?? 0) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV moyen</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">{{ number_format($stats['avg_pv'] ?? 0) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ number_format($stats['avg_pv'] ?? 0) }}</p>
         </div>
     </div>
 
@@ -232,15 +225,15 @@
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-2 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Gains totaux</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">${{ number_format($stats['total_earnings'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">${{ number_format($stats['total_earnings'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Avec package</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">{{ number_format($stats['with_package'] ?? 0) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ number_format($stats['with_package'] ?? 0) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#B91C1C] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Sans package</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B91C1C]">{{ number_format($stats['without_package'] ?? 0) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">{{ number_format($stats['without_package'] ?? 0) }}</p>
         </div>
     </div>
 

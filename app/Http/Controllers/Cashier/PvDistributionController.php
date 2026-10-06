@@ -27,36 +27,37 @@ class PvDistributionController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        // Récupérer le solde PV du membre
-        $balance = UserPvBalance::where('user_id', $user->id)->first();
-        
-        // Récupérer les allocations en attente
-        $pendingAllocations = PvAllocation::where('distributor_id', $user->id)
+        $authUser = Auth::user();
+        $subject = $this->resolvePvSubjectUser($request);
+        $viewingMember = $subject->id !== $authUser->id;
+
+        $balance = $subject->pvBalance;
+        $memberPv = $subject->pvSummary($balance);
+
+        $pendingAllocations = PvAllocation::where('distributor_id', $subject->id)
             ->where('status', 'pending')
             ->with(['user', 'order'])
             ->latest()
             ->get();
-            
-        // Récupérer les allocations approuvées
-        $approvedAllocations = PvAllocation::where('distributor_id', $user->id)
+
+        $approvedAllocations = PvAllocation::where('distributor_id', $subject->id)
             ->where('status', 'approved')
             ->with(['user', 'order', 'approver'])
             ->latest()
             ->paginate(20);
-            
-        // Récupérer les membres du réseau (parrainage)
-        $networkMembers = $this->getNetworkMembers($user);
-        
-        // Récupérer l'historique des transactions PV
-        $transactions = PvTransaction::where('user_id', $user->id)
+
+        $networkMembers = $this->getNetworkMembers($subject);
+
+        $transactions = PvTransaction::where('user_id', $subject->id)
             ->with(['order', 'allocation'])
             ->latest()
             ->paginate(30);
 
         return view('cashier.pv.dashboard', compact(
+            'subject',
+            'viewingMember',
             'balance',
+            'memberPv',
             'pendingAllocations',
             'approvedAllocations',
             'networkMembers',
@@ -69,15 +70,21 @@ class PvDistributionController extends Controller
      */
     public function createDistribution(Request $request)
     {
-        $user = Auth::user();
-        
-        // Récupérer le solde disponible
-        $balance = UserPvBalance::where('user_id', $user->id)->first();
-        
-        // Récupérer les membres du réseau
-        $networkMembers = $this->getNetworkMembers($user);
-        
-        return view('cashier.pv.distribute', compact('balance', 'networkMembers'));
+        $authUser = Auth::user();
+        $subject = $this->resolvePvSubjectUser($request);
+        $viewingMember = $subject->id !== $authUser->id;
+
+        $balance = $subject->pvBalance;
+        $memberPv = $subject->pvSummary($balance);
+        $networkMembers = $this->getNetworkMembers($subject);
+
+        return view('cashier.pv.distribute', compact(
+            'subject',
+            'viewingMember',
+            'balance',
+            'memberPv',
+            'networkMembers'
+        ));
     }
 
     /**
@@ -99,9 +106,9 @@ class PvDistributionController extends Controller
                 ->withInput();
         }
 
-        $user = Auth::user();
-        
-        $result = $this->pvService->distributePv($user, $request->distributions);
+        $distributor = $this->resolvePvSubjectUser($request);
+
+        $result = $this->pvService->distributePv($distributor, $request->distributions);
 
         if ($result['success'] > 0) {
             $message = "{$result['success']} distribution(s) effectuée(s) avec succès.";
@@ -113,7 +120,11 @@ class PvDistributionController extends Controller
                 $message .= ' Erreurs: ' . implode(', ', $result['errors']);
             }
             
-            return redirect()->route('cashier.pv.dashboard')
+            $redirectParams = $distributor->id !== Auth::id()
+                ? ['member_id' => $distributor->id]
+                : [];
+
+            return redirect()->route('cashier.pv.dashboard', $redirectParams)
                 ->with('success', $message);
         } else {
             return redirect()->back()
@@ -144,7 +155,7 @@ class PvDistributionController extends Controller
                 'email' => $sponsor->email,
                 'phone' => $sponsor->phone,
                 'level' => 1,
-                'pv_balance' => UserPvBalance::where('user_id', $sponsor->id)->value('total_pv') ?? 0,
+                'pv_balance' => (int) round((float) ($sponsor->pv_balance ?? 0)),
                 'sponsor_id' => $sponsor->sponsor_id,
             ];
             
@@ -159,7 +170,7 @@ class PvDistributionController extends Controller
                     'email' => $indirect->email,
                     'phone' => $indirect->phone,
                     'level' => 2,
-                    'pv_balance' => UserPvBalance::where('user_id', $indirect->id)->value('total_pv') ?? 0,
+                    'pv_balance' => (int) round((float) ($indirect->pv_balance ?? 0)),
                     'sponsor_id' => $indirect->sponsor_id,
                 ];
             }
@@ -198,28 +209,43 @@ class PvDistributionController extends Controller
      */
     public function getMemberPvDetails(Request $request, User $member)
     {
-        $balance = UserPvBalance::where('user_id', $member->id)->first();
-        
+        $member->loadMissing('pvBalance');
+        $summary = $member->pvSummary();
+
         return response()->json([
             'user' => [
                 'id' => $member->id,
                 'name' => $member->name,
             ],
-            'balance' => $balance ? [
-                'total_pv' => $balance->total_pv,
-                'available_pv' => $balance->available_pv,
-                'allocated_pv' => $balance->allocated_pv,
-                'pending_pv' => $balance->pending_pv,
-                'total_bv' => $balance->total_bv,
-                'available_bv' => $balance->available_bv,
-            ] : [
-                'total_pv' => 0,
-                'available_pv' => 0,
-                'allocated_pv' => 0,
-                'pending_pv' => 0,
-                'total_bv' => 0,
-                'available_bv' => 0,
-            ]
+            'balance' => [
+                'cumulative_pv' => $summary['cumulative_pv'],
+                'wallet_total_pv' => $summary['wallet_total_pv'],
+                'total_pv' => $summary['wallet_total_pv'],
+                'available_pv' => $summary['available_pv'],
+                'allocated_pv' => $summary['allocated_pv'],
+                'pending_pv' => $summary['pending_pv'],
+                'total_bv' => $summary['total_bv'],
+                'available_bv' => $summary['available_bv'],
+            ],
         ]);
+    }
+
+    /**
+     * Membre dont on consulte / distribue les PV (?member_id= depuis la fiche caisse).
+     */
+    private function resolvePvSubjectUser(Request $request): User
+    {
+        $authUser = Auth::user();
+
+        if ($request->filled('member_id')) {
+            return User::query()
+                ->where('user_type', 'member')
+                ->with('pvBalance')
+                ->findOrFail($request->integer('member_id'));
+        }
+
+        $authUser->loadMissing('pvBalance');
+
+        return $authUser;
     }
 }

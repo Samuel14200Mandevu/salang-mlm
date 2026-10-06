@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -247,7 +240,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">Total ventes</p>
-                    <p class="number text-[#1C7E4A]">${{ number_format($salesStats['total_amount'] ?? 0, 2) }}</p>
+                    <p class="number text-[var(--ui-stat-success)]">${{ number_format($salesStats['total_amount'] ?? 0, 2) }}</p>
                 </div>
                 <div class="icon icon-green">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -261,7 +254,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="label">PV distribués</p>
-                    <p class="number text-[#B54708]">{{ number_format($salesStats['total_pv'] ?? 0) }}</p>
+                    <p class="number text-[var(--ui-stat-warning)]">{{ number_format($salesStats['total_pv'] ?? 0) }}</p>
                 </div>
                 <div class="icon icon-orange">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -343,7 +336,7 @@
                             <td class="text-right">${{ number_format($order->subtotal, 2) }}</td>
                             <td class="text-right">${{ number_format($order->tax, 2) }}</td>
                             <td class="text-right font-bold text-[var(--primary-blue)]">${{ number_format($order->total, 2) }}</td>
-                            <td class="text-right text-[#1C7E4A] font-medium">{{ number_format($totalPV) }}</td>
+                            <td class="text-right text-[var(--ui-stat-success)] font-medium">{{ number_format($totalPV) }}</td>
                         </tr>
                     @empty
                         <tr>

@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .info-row {
     display: flex;
     flex-direction: column;
@@ -338,7 +331,7 @@
                                     <p class="stat-label">Commission</p>
                                 </div>
                                 <div class="package-stat">
-                                    <p class="stat-value text-[#1C7E4A]">Actif</p>
+                                    <p class="stat-value text-[var(--ui-stat-success)]">Actif</p>
                                     <p class="stat-label">Statut</p>
                                 </div>
                             </div>
@@ -371,11 +364,11 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
                 <p class="text-xs text-[var(--text-secondary)]">En attente</p>
-                <p class="text-xl sm:text-2xl font-bold text-[#B54708]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-warning)]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
             </div>
             <div>
                 <p class="text-xs text-[var(--text-secondary)]">Payées</p>
-                <p class="text-xl sm:text-2xl font-bold text-[#1C7E4A]">${{ number_format($paidCommissions ?? 0, 2) }}</p>
+                <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">${{ number_format($paidCommissions ?? 0, 2) }}</p>
             </div>
             <div>
                 <p class="text-xs text-[var(--text-secondary)]">Total gagné</p>
@@ -412,7 +405,7 @@
                             <tr>
                                 <td class="text-xs">#{{ $commission->id }}</td>
                                 <td class="text-sm">{{ ucfirst($commission->type) }}</td>
-                                <td class="text-[#1C7E4A] font-semibold text-sm">${{ number_format($commission->amount, 2) }}</td>
+                                <td class="text-[var(--ui-stat-success)] font-semibold text-sm">${{ number_format($commission->amount, 2) }}</td>
                                 <td>
                                     <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }}">
                                         {{ ucfirst($commission->status) }}

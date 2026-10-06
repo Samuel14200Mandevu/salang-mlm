@@ -7,15 +7,7 @@
     <title>Fiche de Consultation #{{ $consultation->id ?? '' }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 14px; 
-            color: #000; 
-            padding: 25px 35px;
-            background: #fff;
-        }
-
-        /* EN-TÊTE */
+/* EN-TÊTE */
         .report-header {
             width: 100%;
             border-bottom: 2.5px solid #8b0000;

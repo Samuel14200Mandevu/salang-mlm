@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .period-row {
     transition: background 0.15s ease;
 }
@@ -309,11 +302,11 @@
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-2 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">{{ $stats['pending'] ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $stats['pending'] ?? 0 }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payées</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">{{ $stats['paid'] ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $stats['paid'] ?? 0 }}</p>
         </div>
         <div class="card-stats border-l-4 border-[var(--primary-blue)] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Clôturées</p>

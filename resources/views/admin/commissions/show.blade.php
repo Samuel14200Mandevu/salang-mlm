@@ -4,13 +4,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .detail-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -751,7 +744,7 @@
                 Êtes-vous sûr de vouloir <strong>rejeter</strong> cette commission ?
                 <br>
                 <span class="text-xs text-[var(--text-secondary)]">
-                    Montant: <strong id="modalAmount" class="text-[#B91C1C]">${{ number_format($commission->amount, 2) }}</strong>
+                    Montant: <strong id="modalAmount" class="text-[var(--ui-stat-danger)]">${{ number_format($commission->amount, 2) }}</strong>
                 </span>
             `;
             confirmBtn.className = 'btn btn-danger';

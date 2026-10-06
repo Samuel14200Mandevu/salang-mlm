@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Rank;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class NetworkController extends Controller
@@ -23,7 +24,7 @@ class NetworkController extends Controller
 
         $parrain = User::find($user->parrain_id);
         
-        // Charger UNIQUEMENT le niveau 1 initialement
+        // Niveau 1 visible ; branches plus profondes via « Afficher filleuls »
         $tree = $this->buildTree($user, 0, 1);
         
         // Recuperer TOUS les descendants pour les statistiques
@@ -316,6 +317,31 @@ public function treeData()
     // METHODE DE RENDU DE L'ARBRE AVEC INDICATEUR D'EXPANSION
     // ============================================================
     
+    public function renderNetworkNodeCard(User $user, int $level, bool $isRoot, self $controller): string
+    {
+        $rankInfo = $controller->getUserRankInfo($user);
+        $rankName = e($rankInfo['name'] ?? 'Distributeur');
+        $avatarColor = e($controller->getAvatarColor($user));
+        $initials = e(strtoupper(substr($user->name, 0, 2)));
+        $statusClass = $user->is_active ? 'is-active' : 'is-inactive';
+
+        $attrs = $isRoot
+            ? ''
+            : ' role="button" tabindex="0" onclick="expandNode(' . (int) $user->id . ', this)"';
+
+        $subtitle = $isRoot
+            ? 'Compte racine'
+            : 'Niv. ' . $level . ' — ' . $rankName;
+
+        return '<div class="network-node-card' . ($isRoot ? ' is-root' : '') . '"' . $attrs . '>'
+            . '<div class="network-node-avatar ' . $avatarColor . '">' . $initials
+            . '<span class="network-node-status ' . $statusClass . '" aria-hidden="true"></span></div>'
+            . '<div class="network-node-body">'
+            . '<p class="network-node-name" title="' . e($user->name) . '">' . e($user->name) . '</p>'
+            . '<p class="network-node-sub">' . $subtitle . '</p>'
+            . '</div></div>';
+    }
+
     public function renderGenealogyTree($node, $controller)
     {
         if (!$node || !isset($node['user'])) {
@@ -323,83 +349,30 @@ public function treeData()
         }
 
         $user = $node['user'];
-        $level = $node['level'] ?? 0;
+        $level = (int) ($node['level'] ?? 0);
         $children = $node['children'] ?? [];
         $hasChildren = $node['has_children'] ?? false;
-        $childrenCount = $node['children_count'] ?? 0;
+        $childrenCount = (int) ($node['children_count'] ?? 0);
+        $isRoot = ($level === 0);
 
-        $rankInfo = $controller->getUserRankInfo($user);
-        $rankName = $rankInfo['name'];
-        $rankLevel = $rankInfo['level'];
-        $avatarColor = $controller->getAvatarColor($user);
+        $html = '<li class="network-branch" data-user-id="' . $user->id . '" data-level="' . $level . '">';
+        $html .= $controller->renderNetworkNodeCard($user, $level, $isRoot, $controller);
 
-        $levelClass = 'level-' . min($level, 9);
-        $isRoot = ($level == 0);
-
-        $html = '<div class="tree-branch" data-user-id="' . $user->id . '" data-level="' . $level . '" data-has-children="' . ($hasChildren ? 'true' : 'false') . '" data-children-count="' . $childrenCount . '">';
-
-        // Le noeud
-        $html .= '<div class="tree-node ' . $levelClass . ($isRoot ? ' active' : '') . '" onclick="expandNode(' . $user->id . ', this)">';
-        
-        $html .= '<div class="avatar-wrapper">';
-        $html .= '<div class="avatar ' . $avatarColor . '">';
-        $html .= strtoupper(substr($user->name, 0, 2));
-        $html .= '<span class="status-dot ' . ($user->is_active ? 'online' : 'offline') . '"></span>';
-        if ($level > 0) {
-            $badgeClass = 'lv-' . min($level, 10);
-            $html .= '<span class="level-badge ' . $badgeClass . '">' . $level . '</span>';
-        }
-        $html .= '</div>';
-        $html .= '</div>';
-
-        $html .= '<span class="node-name">' . e($user->name) . '</span>';
-        
-        if ($isRoot) {
-            $html .= '<span class="node-rank" style="background:rgba(90,182,56,0.12);color:#5ab638;font-weight:700;">Moi</span>';
-        } else {
-            $rankClass = 'rank-badge-' . min($rankLevel, 9);
-            $html .= '<span class="node-rank ' . $rankClass . '">' . e($rankName) . '</span>';
-        }
-        
-        // Afficher le PV
-        if (($user->pv_balance ?? 0) > 0) {
-            $html .= '<span class="node-pv">PV ' . number_format($user->pv_balance ?? 0) . '</span>';
-        }
-        
-        // Afficher le nombre d'enfants
-        if ($childrenCount > 0 && !$isRoot) {
-            $html .= '<span class="node-children-count">' . $childrenCount . ' filleuls</span>';
-        }
-        
-        $html .= '</div>';
-
-        // Les enfants deja charges
-        if (!empty($children) && is_array($children) && count($children) > 0) {
-            $html .= '<div class="tree-children-container">';
-
-            if (count($children) > 1) {
-                $html .= '<div class="horizontal-branch-line"></div>';
-            }
-
-            $html .= '<div class="tree-children">';
+        if (!empty($children) && is_array($children)) {
+            $html .= '<ul class="network-children-row">';
             foreach ($children as $child) {
                 $html .= $controller->renderGenealogyTree($child, $controller);
             }
-            $html .= '</div>';
-            $html .= '</div>';
-        } 
-        // Si l'utilisateur a des enfants mais qu'ils ne sont pas charges (niveau > maxDepth)
-        else if ($hasChildren && $childrenCount > 0) {
-            $html .= '<div class="tree-children-container">';
-            $html .= '<div class="expand-indicator">';
-            $html .= '<span class="expand-btn" data-user-id="' . $user->id . '" onclick="event.stopPropagation(); loadChildren(' . $user->id . ', this)">';
-            $html .= '<span class="expand-icon">+</span> ' . $childrenCount . ' filleul' . ($childrenCount > 1 ? 's' : '');
-            $html .= '</span>';
-            $html .= '</div>';
-            $html .= '</div>';
+            $html .= '</ul>';
+        } elseif ($hasChildren && $childrenCount > 0) {
+            $html .= '<div class="network-tree-expand">';
+            $html .= '<button type="button" class="network-tree-expand-btn" onclick="event.stopPropagation(); loadChildren(' . $user->id . ', this)">';
+            $html .= 'Développer · ' . $childrenCount . ' filleul' . ($childrenCount > 1 ? 's' : '');
+            $html .= '</button></div>';
         }
 
-        $html .= '</div>'; // Fin tree-branch
+        $html .= '</li>';
+
         return $html;
     }
 
@@ -440,10 +413,18 @@ public function treeData()
     public function downlines()
     {
         $user = Auth::user();
-        $downlines = User::where('parrain_id', $user->id)
-            ->with(['package', 'rank', 'genealogy'])
-            ->paginate(20);
-            
+        $all = collect($this->getAllDescendantsWithLevel($user->id, 1, 999));
+        $perPage = 20;
+        $page = max(1, (int) request()->query('page', 1));
+
+        $downlines = new LengthAwarePaginator(
+            $all->forPage($page, $perPage)->values(),
+            $all->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
         return view('network.downlines', compact('downlines'))->with('controller', $this);
     }
 

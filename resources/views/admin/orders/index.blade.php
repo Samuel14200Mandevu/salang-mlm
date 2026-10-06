@@ -3,25 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-navy: #0F2B4F;
-    --primary-navy-dark: #091E3B;
-    --primary-navy-light: #1A3F6A;
-    --bg-base: #F5F6F8;
-    --bg-card: #FFFFFF;
-    --bg-secondary: #EEF0F3;
-    --bg-hover: #E8EAEE;
-    --text-primary: #1A1A1E;
-    --text-secondary: #4A4A52;
-    --text-tertiary: #7A7A82;
-    --border-color: #DCDEE3;
-    --border-light: #E8EAEE;
-    --success: #1F7B4D;
-    --danger: #B32A2A;
-    --warning: #A65A0E;
-    --info: #0A2A6C;
-}
-
 .order-row {
     transition: background 0.1s ease;
 }
@@ -332,19 +313,19 @@
         </div>
         <div class="card-stats animate-fadeInUp delay-2">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl font-bold text-[#A65A0E]">{{ $pendingCount ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $pendingCount ?? 0 }}</p>
         </div>
         <div class="card-stats animate-fadeInUp delay-3">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</p>
-            <p class="text-lg sm:text-xl font-bold text-[#065F9C]">{{ $processingCount ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ $processingCount ?? 0 }}</p>
         </div>
         <div class="card-stats animate-fadeInUp delay-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Terminées</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1F7B4D]">{{ $completedCount ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $completedCount ?? 0 }}</p>
         </div>
         <div class="card-stats animate-fadeInUp delay-5">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Annulées</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B32A2A]">{{ $cancelledCount ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">{{ $cancelledCount ?? 0 }}</p>
         </div>
     </div>
 
@@ -593,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur de recherche:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-8 text-[#B32A2A]">
+                    <td colspan="8" class="text-center py-8 text-[var(--ui-stat-danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>

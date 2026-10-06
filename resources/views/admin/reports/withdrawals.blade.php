@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .withdrawal-row {
     transition: background 0.15s ease;
 }
@@ -237,15 +230,15 @@
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
         <div class="card-stats border-l-4 border-[#B54708] p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-3 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payés</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">${{ number_format($stats['completed'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">${{ number_format($stats['completed'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#B91C1C] animate-fadeInUp delay-4 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Échoués</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B91C1C]">${{ number_format($stats['failed'] ?? 0, 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">${{ number_format($stats['failed'] ?? 0, 2) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[var(--primary-blue)] animate-fadeInUp delay-5 p-3 sm:p-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>

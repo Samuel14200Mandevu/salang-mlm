@@ -3,23 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --bg-base: #F5F6F8;
-    --bg-card: #F8F9FA;
-    --bg-secondary: #EEF0F3;
-    --bg-hover: #E8EAEE;
-    --text-primary: #1A1A1E;
-    --text-secondary: #4A4A52;
-    --text-tertiary: #7A7A82;
-    --border-color: #DCDEE3;
-    --border-light: #E8EAEE;
-    --primary: #0A2A6C;
-    --primary-dark: #061B4A;
-    --success: #1F7B4D;
-    --danger: #B32A2A;
-    --warning: #A65A0E;
-}
-
 * {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }

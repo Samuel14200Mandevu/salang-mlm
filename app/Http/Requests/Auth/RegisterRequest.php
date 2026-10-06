@@ -28,13 +28,14 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Le nom est obligatoire.',
-            'email.required' => 'L\'email est obligatoire.',
-            'email.unique' => 'Cet email est déjà utilisé.',
+            'name.required' => 'Le nom complet est obligatoire.',
+            'email.required' => 'L’adresse email est obligatoire.',
+            'email.email' => 'Saisissez une adresse email valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
-            'sponsor_code.exists' => 'Le code de parrainage n\'est pas valide.',
+            'sponsor_code.exists' => 'Le code parrain est invalide.',
         ];
     }
 }

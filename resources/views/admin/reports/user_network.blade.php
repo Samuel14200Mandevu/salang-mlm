@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .tree-node {
     border-left: 2px solid var(--border-color);
     padding-left: 1.25rem;
@@ -239,11 +232,11 @@
                 </div>
                 <div>
                     <p class="text-[var(--text-secondary)]">PV équipe</p>
-                    <p class="font-bold text-[#1C7E4A]">{{ number_format($user->team_pv ?? 0) }}</p>
+                    <p class="font-bold text-[var(--ui-stat-success)]">{{ number_format($user->team_pv ?? 0) }}</p>
                 </div>
                 <div>
                     <p class="text-[var(--text-secondary)]">Gains totaux</p>
-                    <p class="font-bold text-[#B54708]">${{ number_format($user->total_earnings ?? 0, 2) }}</p>
+                    <p class="font-bold text-[var(--ui-stat-warning)]">${{ number_format($user->total_earnings ?? 0, 2) }}</p>
                 </div>
                 <div>
                     <p class="text-[var(--text-secondary)]">Parrainages</p>

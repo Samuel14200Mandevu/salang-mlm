@@ -3,29 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-navy: #0F2B4F;
-    --primary-navy-dark: #091E3B;
-    --bg-base: #F5F6F8;
-    --bg-card: #FFFFFF;
-    --bg-secondary: #EEF0F3;
-    --bg-hover: #E8EAEE;
-    --text-primary: #1A1A1E;
-    --text-secondary: #4A4A52;
-    --text-tertiary: #7A7A82;
-    --border-color: #DCDEE3;
-    --border-light: #E8EAEE;
-    --success: #1F7B4D;
-    --danger: #B32A2A;
-    --warning: #A65A0E;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-base);
-    color: var(--text-primary);
-}
-
 /* ===== CARTES ===== */
 .card {
     background: var(--bg-card);
@@ -378,7 +355,7 @@ body {
             <button id="resetFilters" class="btn btn-outline btn-sm text-xs" title="Réinitialiser les filtres">
                 Réinitialiser
             </button>
-            <span class="px-3 py-1 bg-[#FEF1E6] border border-[#FADCB8] rounded-lg text-[#A65A0E] text-sm font-medium whitespace-nowrap">
+            <span class="px-3 py-1 bg-[#FEF1E6] border border-[#FADCB8] rounded-lg text-[var(--ui-stat-warning)] text-sm font-medium whitespace-nowrap">
                 {{ $pendingCount ?? 0 }} en attente
             </span>
         </div>
@@ -386,7 +363,7 @@ body {
 
     <!-- Messages flash -->
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-[#E6F4EC] border border-[#B8DFCC] rounded-lg text-[#1F7B4D] text-sm flex items-center gap-2">
+        <div class="p-3 sm:p-4 salang-flash-success border rounded-lg text-sm flex items-center gap-2">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -402,7 +379,7 @@ body {
         </div>
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-xl sm:text-2xl font-bold text-[#A65A0E]">{{ $statusCounts['pending'] ?? 0 }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-warning)]">{{ $statusCounts['pending'] ?? 0 }}</p>
         </div>
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</p>
@@ -410,7 +387,7 @@ body {
         </div>
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Terminées</p>
-            <p class="text-xl sm:text-2xl font-bold text-[#1F7B4D]">{{ $statusCounts['completed'] ?? 0 }}</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">{{ $statusCounts['completed'] ?? 0 }}</p>
         </div>
     </div>
 
@@ -625,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur:', error);
             document.getElementById('consultationsTableBody').innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-8 text-[#B32A2A]">
+                    <td colspan="7" class="text-center py-8 text-[var(--ui-stat-danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>

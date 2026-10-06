@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
+use App\Notifications\ConsultationReviewedNotification;
 use App\Models\User;
 use App\Models\Product;
+use App\Services\ConsultationSaleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -38,7 +40,12 @@ class ConsultationController extends Controller
         }
 
         $consultations = $query->orderBy('created_at', 'desc')->paginate(20);
-        
+
+        auth()->user()->unreadNotifications()
+            ->where('type', ConsultationReviewedNotification::class)
+            ->get()
+            ->each->markAsRead();
+
         // Calculer les statistiques
         $stats = [
             'total' => Consultation::where('cashier_id', Auth::id())->count(),
@@ -121,8 +128,59 @@ class ConsultationController extends Controller
         if ($consultation->cashier_id !== Auth::id()) {
             abort(403, 'Vous n\'êtes pas autorisé à consulter cette fiche.');
         }
-        
-        return view('cashier.consultations.show', compact('consultation'));
+
+        $consultation->load(['orders' => fn ($q) => $q->latest()->limit(10)]);
+        $productLines = ConsultationSaleService::normalizedLines($consultation);
+        $productStats = ConsultationSaleService::productStats($consultation);
+        $canSell = ConsultationSaleService::canCashierSell($consultation);
+
+        return view('cashier.consultations.show', compact(
+            'consultation',
+            'productLines',
+            'productStats',
+            'canSell'
+        ));
+    }
+
+    /**
+     * Encaisser une sélection de produits recommandés (vente partielle).
+     */
+    public function checkoutSelection(Request $request, Consultation $consultation)
+    {
+        if ($consultation->cashier_id !== Auth::id()) {
+            abort(403, 'Vous n\'êtes pas autorisé à encaisser cette fiche.');
+        }
+
+        if (! ConsultationSaleService::canCashierSell($consultation)) {
+            return redirect()
+                ->route('cashier.consultations.show', $consultation)
+                ->with('error', 'Cette consultation n\'est pas encore prête pour l\'encaissement.');
+        }
+
+        $validated = $request->validate([
+            'line_keys' => 'required|array|min:1',
+            'line_keys.*' => 'required|string|max:64',
+        ]);
+
+        try {
+            $lines = ConsultationSaleService::resolvePendingLines($consultation, $validated['line_keys']);
+            $cart = ConsultationSaleService::buildCartItems($consultation, $lines);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()
+                ->route('cashier.consultations.show', $consultation)
+                ->with('error', $e->getMessage());
+        }
+
+        session()->put('pos_cart', $cart);
+        session()->put('consultation_checkout', [
+            'consultation_id' => $consultation->id,
+            'line_keys' => array_column($lines, 'line_key'),
+            'patient_name' => $consultation->nom_complet,
+        ]);
+
+        return redirect()
+            ->route('cashier.checkout')
+            ->with('success', count($cart) . ' produit(s) ajoutés au panier pour encaissement.');
     }
 
     /**

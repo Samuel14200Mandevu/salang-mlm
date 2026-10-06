@@ -7,17 +7,7 @@
     <title>Rapport des Commissions</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 11px; 
-            color: #000; 
-            padding: 10px 18px 45px 18px;
-            background: #fff;
-            line-height: 1.3;
-        }
-
-        /* PIED DE PAGE PERMANENT */
+/* PIED DE PAGE PERMANENT */
         .footer-container {
             position: fixed;
             bottom: 0;

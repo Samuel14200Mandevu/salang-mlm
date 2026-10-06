@@ -2,142 +2,7 @@
 
 @section('title', $member->name)
 
-@push('styles')
-<style>
-    .profile-header {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-    }
-    
-    .avatar-xxl {
-        width: 5rem;
-        height: 5rem;
-        font-size: 2rem;
-    }
-    
-    .downline-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .downline-card:hover {
-        border-color: var(--primary-500);
-        transform: translateX(4px);
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.1);
-    }
-    
-    .avatar {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-weight: 700;
-        flex-shrink: 0;
-        color: white;
-    }
-    .avatar-sm { width: 2rem; height: 2rem; font-size: 0.75rem; }
-    .avatar-md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
-    .avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
-    .avatar-xl { width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
-    .avatar-xxl { width: 5rem; height: 5rem; font-size: 2rem; }
-    
-    .avatar-gradient { background: var(--gradient-primary); }
-    .avatar-success { background: #22c55e; }
-    .avatar-danger { background: #ef4444; }
-    .avatar-info { background: #3b82f6; }
-    .avatar-purple { background: #3d8a2a; }
-    .avatar-warning { background: #f59e0b; }
-    .avatar-gold { background: #eab308; }
-    .avatar-neutral { background: #6b7280; }
-    
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.65rem;
-        font-weight: 600;
-    }
-    .badge-success { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .badge-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    .badge-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .badge-purple { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
-    .badge-warning { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
-    
-    .rank-level-1 { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
-    .rank-level-2 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-    .rank-level-3 { background: rgba(139, 92, 246, 0.12); color: #3d8a2a; }
-    .rank-level-4 { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
-    .rank-level-5 { background: rgba(234, 179, 8, 0.12); color: #eab308; }
-    .rank-level-6 { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-    .rank-level-7 { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-    
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.5rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        text-decoration: none;
-    }
-    .btn-primary {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
-    }
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border: 2px solid var(--border-color);
-    }
-    .btn-outline:hover {
-        border-color: var(--primary-500);
-        color: var(--primary-500);
-    }
-    .btn-sm { padding: 0.375rem 1rem; font-size: 0.75rem; }
-    
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeInUp { animation: fadeInUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.10s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.20s; }
-    
-    @media (max-width: 640px) {
-        .profile-header { padding: 1rem; }
-        .avatar-xxl { width: 3.5rem; height: 3.5rem; font-size: 1.2rem; }
-        .downline-card { padding: 0.5rem 0.75rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-    }
-</style>
-@endpush
+
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
@@ -281,10 +146,8 @@
 // ============================================================
 // NAVIGATION - CORRIGÉ
 // ============================================================
-const BASE_URL = '{{ url("/") }}';
-
 function navigateToUser(userId) {
-    window.location.href = BASE_URL + '/network/show/' + userId;
+    window.location.href = @json(url('/network/show')) + '/' + userId;
 }
 </script>
 @endpush

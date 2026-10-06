@@ -3,11 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-}
-
 .qr-container {
     background: white;
     padding: 2rem;

@@ -2,63 +2,6 @@
 
 @section('title', 'Arbre du réseau')
 
-@push('styles')
-<style>
-    .tree-node {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0.5rem;
-        position: relative;
-    }
-    .tree-node::before {
-        content: '';
-        position: absolute;
-        top: -1rem;
-        left: 50%;
-        width: 2px;
-        height: 1rem;
-        background: var(--border-color);
-    }
-    .tree-node:first-child::before { display: none; }
-    .tree-children {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 2px solid var(--border-color);
-        position: relative;
-    }
-    .tree-children::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: 50%;
-        width: 2px;
-        height: 1rem;
-        background: var(--border-color);
-    }
-    .tree-level-badge {
-        position: absolute;
-        top: -0.5rem;
-        right: -0.5rem;
-        font-size: 0.5rem;
-        padding: 0.1rem 0.4rem;
-        border-radius: var(--radius-full);
-        background: var(--primary-500);
-        color: white;
-    }
-    @media (max-width: 640px) {
-        .tree-children { flex-direction: column; align-items: center; gap: 0.5rem; }
-        .tree-children::before { display: none; }
-        .tree-node::before { display: none; }
-        .avatar-xl { width: 3.5rem; height: 3.5rem; font-size: 1.2rem; }
-        .avatar-lg { width: 2.5rem; height: 2.5rem; font-size: 0.8rem; }
-        .card { padding: 0.75rem; }
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     <!-- En-tête -->

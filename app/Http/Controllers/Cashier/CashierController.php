@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Support\MlmPeriod;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Consultation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -27,6 +28,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Services\ConsultationSaleService;
 use App\Services\PvManagementService;
 
 class CashierController extends Controller
@@ -1140,8 +1142,21 @@ public function createMultiOrder(Request $request)
         }
         
         Log::info('Affichage de la vue checkout avec ' . $cartItems->count() . ' articles');
-        
-        return view('cashier.checkout', compact('cartItems', 'total', 'totalPv', 'totalBv'));
+
+        $consultationCheckout = session('consultation_checkout');
+        $linkedConsultation = null;
+        if (! empty($consultationCheckout['consultation_id'])) {
+            $linkedConsultation = Consultation::find($consultationCheckout['consultation_id']);
+        }
+
+        return view('cashier.checkout', compact(
+            'cartItems',
+            'total',
+            'totalPv',
+            'totalBv',
+            'consultationCheckout',
+            'linkedConsultation'
+        ));
     }
 
 /**
@@ -1170,6 +1185,41 @@ public function createCheckoutOrder(Request $request)
         
         if (empty($cart)) {
             return redirect()->back()->with('error', 'Votre panier est vide.');
+        }
+
+        $consultationCheckout = session('consultation_checkout');
+        $consultationId = null;
+        $consultationForSale = null;
+        if (! empty($consultationCheckout['consultation_id'])) {
+            $consultationForSale = Consultation::find($consultationCheckout['consultation_id']);
+            if (! $consultationForSale || $consultationForSale->cashier_id !== auth()->id()) {
+                return redirect()->back()->with('error', 'Consultation liée invalide.');
+            }
+            if (! ConsultationSaleService::canCashierSell($consultationForSale)) {
+                return redirect()->back()->with('error', 'Cette consultation n\'accepte plus d\'encaissement.');
+            }
+
+            $expectedKeys = $consultationCheckout['line_keys'] ?? [];
+            $cartKeys = collect($cart)
+                ->pluck('consultation_line_key')
+                ->filter()
+                ->values()
+                ->all();
+
+            sort($expectedKeys);
+            sort($cartKeys);
+
+            if ($expectedKeys !== $cartKeys) {
+                return redirect()->back()->with('error', 'Le panier ne correspond pas à la sélection de la consultation.');
+            }
+
+            try {
+                ConsultationSaleService::resolvePendingLines($consultationForSale, $expectedKeys);
+            } catch (\InvalidArgumentException $e) {
+                return redirect()->back()->with('error', $e->getMessage());
+            }
+
+            $consultationId = $consultationForSale->id;
         }
         
         $sponsor = User::where('sponsor_id', $request->sponsor_code)
@@ -1201,9 +1251,14 @@ public function createCheckoutOrder(Request $request)
             if (!$request->filled('name') || !$request->filled('phone')) {
                 return redirect()->back()->with('error', 'Veuillez remplir le nom et le téléphone du client.');
             }
+
+            $clientName = $request->name;
+            if ($consultationForSale && ! $request->filled('name')) {
+                $clientName = $consultationForSale->nom_complet;
+            }
             
             $client = User::create([
-                'name' => $request->name,
+                'name' => $clientName,
                 'email' => $request->email ?? $request->phone . '@client.tmp',
                 'phone' => $request->phone,
                 'password' => bcrypt(Str::random(12)),
@@ -1276,6 +1331,7 @@ public function createCheckoutOrder(Request $request)
             $order = Order::create([
                 'user_id' => $client->id,
                 'cashier_id' => auth()->id(),
+                'consultation_id' => $consultationId,
                 'created_by' => auth()->id(),
                 'order_number' => $orderNumber,
                 'subtotal' => $subtotal,
@@ -1299,9 +1355,18 @@ public function createCheckoutOrder(Request $request)
                     'multi_products' => true,
                     'product_count' => count($cart),
                     'commission_amount' => $commissionAmount,
+                    'consultation_id' => $consultationId,
                 ],
                 'paid_at' => now(),
             ]);
+
+            if ($consultationId && $consultationForSale && ! empty($consultationCheckout['line_keys'])) {
+                ConsultationSaleService::markLinesPurchased(
+                    $consultationForSale,
+                    $consultationCheckout['line_keys'],
+                    $order->id
+                );
+            }
             
             foreach ($cart as $item) {
                 $product = Product::find($item['id']);
@@ -1429,11 +1494,17 @@ public function createCheckoutOrder(Request $request)
             $this->saveOrderData($order, $commissionAmount);
             
             session()->forget('pos_cart');
+            session()->forget('consultation_checkout');
             
             DB::commit();
+
+            $successMessage = 'Commande #' . $orderNumber . ' validée avec ' . count($cart) . ' produits ! PV disponibles pour distribution.';
+            if ($consultationId) {
+                $successMessage .= ' Liée à la consultation #' . $consultationId . '.';
+            }
             
             return redirect()->route('cashier.orders.invoice', $order->id)
-                ->with('success', 'Commande #' . $orderNumber . ' validée avec ' . count($cart) . ' produits ! PV disponibles pour distribution.')
+                ->with('success', $successMessage)
                 ->with('clear_cart', true);
                 
         } catch (\Exception $e) {
@@ -2324,10 +2395,11 @@ public function history(Request $request)
         
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('sponsor_id', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('sponsor_id', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
         
@@ -2341,7 +2413,7 @@ public function history(Request $request)
             $query->role($request->role);
         }
         
-        $members = $query->with('package')->paginate(20);
+        $members = $query->with('package')->orderByDesc('created_at')->paginate(20);
         
         $stats = [
             'total' => User::where('user_type', 'member')->count(),
@@ -2358,7 +2430,9 @@ public function history(Request $request)
      */
     public function memberShow($id)
     {
-        $member = User::where('user_type', 'member')->with(['package', 'orders'])->findOrFail($id);
+        $member = User::where('user_type', 'member')
+            ->with(['package', 'orders', 'parrain', 'pvBalance'])
+            ->findOrFail($id);
         
         $commissionsQuery = Commission::where('user_id', $member->id)
             ->orderBy('created_at', 'desc');
@@ -2391,7 +2465,9 @@ public function history(Request $request)
             'active_downlines' => User::where('parrain_id', $member->id)->where('is_active', true)->count(),
         ];
         
-        return view('cashier.members.show', compact('member', 'commissions', 'stats', 'downlines'));
+        $memberPv = $member->pvSummary();
+
+        return view('cashier.members.show', compact('member', 'commissions', 'stats', 'downlines', 'memberPv'));
     }
 
     /**

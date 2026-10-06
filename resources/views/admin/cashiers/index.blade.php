@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .cashier-row {
     transition: background 0.15s ease, transform 0.1s ease;
 }
@@ -335,19 +328,19 @@
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-2">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[#1C7E4A]">
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">
                 {{ $cashiers->where('is_active', true)->count() }}
             </p>
         </div>
         <div class="card-stats border-l-4 border-[#B91C1C] animate-fadeInUp delay-3">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B91C1C]">
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">
                 {{ $cashiers->where('is_active', false)->count() }}
             </p>
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Non vérifiés</p>
-            <p class="text-lg sm:text-xl font-bold text-[#B54708]">
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">
                 {{ $cashiers->where('kyc_status', 'not_submitted')->count() }}
             </p>
         </div>

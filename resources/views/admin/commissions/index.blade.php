@@ -3,29 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-navy: #0F2B4F;
-    --primary-navy-dark: #091E3B;
-    --bg-base: #F5F6F8;
-    --bg-card: #FFFFFF;
-    --bg-secondary: #EEF0F3;
-    --bg-hover: #E8EAEE;
-    --text-primary: #1A1A1E;
-    --text-secondary: #4A4A52;
-    --text-tertiary: #7A7A82;
-    --border-color: #DCDEE3;
-    --border-light: #E8EAEE;
-    --success: #1F7B4D;
-    --danger: #B32A2A;
-    --warning: #A65A0E;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-base);
-    color: var(--text-primary);
-}
-
 /* ===== CARTES ===== */
 .card {
     background: var(--bg-card);
@@ -474,7 +451,7 @@ body {
 
     <!-- Messages flash -->
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-[#E6F4EC] border border-[#B8DFCC] rounded-lg text-[#1F7B4D] text-sm flex items-center gap-2 animate-fadeInUp">
+        <div class="p-3 sm:p-4 salang-flash-success border rounded-lg text-sm flex items-center gap-2 animate-fadeInUp">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -483,7 +460,7 @@ body {
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-[#FDE8E8] border border-[#F5C8C8] rounded-lg text-[#B32A2A] text-sm flex items-center gap-2 animate-fadeInUp">
+        <div class="p-3 sm:p-4 salang-flash-error border rounded-lg text-sm flex items-center gap-2 animate-fadeInUp">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -495,19 +472,19 @@ body {
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total payé</p>
-            <p class="text-xl sm:text-2xl font-bold text-[#1F7B4D]">
+            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">
                 {{ number_format($stats['total_paid'] ?? 0, 2) }} $
             </p>
         </div>
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-xl sm:text-2xl font-bold text-[#A65A0E]">
+            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-warning)]">
                 {{ number_format($stats['total_pending'] ?? 0, 2) }} $
             </p>
         </div>
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Annulé</p>
-            <p class="text-xl sm:text-2xl font-bold text-[#B32A2A]">
+            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-danger)]">
                 {{ number_format($stats['total_cancelled'] ?? 0, 2) }} $
             </p>
         </div>
@@ -799,7 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur de recherche:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-8 text-[#B32A2A]">
+                    <td colspan="7" class="text-center py-8 text-[var(--ui-stat-danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>

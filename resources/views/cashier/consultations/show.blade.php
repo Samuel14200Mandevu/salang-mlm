@@ -121,7 +121,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -203,6 +203,17 @@
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
+
+    @if(session('success'))
+        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400 text-sm animate-fadeIn">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm animate-fadeIn">
+            {{ session('error') }}
+        </div>
+    @endif
 
     {{-- EN-TÊTE --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -320,10 +331,145 @@
     </div>
     @endif
 
-    {{-- PRODUITS RECOMMANDÉS --}}
-    @if($consultation->recommended_products && count($consultation->recommended_products) > 0)
+    {{-- PRODUITS RECOMMANDÉS (vente partielle) --}}
+    @if(!empty($productLines))
     <div class="card">
-        <h3 class="text-base font-semibold text-[var(--primary)] mb-3">Produits Recommandes</h3>
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div>
+                <h3 class="text-base font-semibold text-[var(--primary)]">Produits recommandés</h3>
+                <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Le patient peut n’en acheter qu’une partie lors d’une ou plusieurs ventes.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs">
+                <span class="badge badge-info">{{ $productStats['total'] ?? 0 }} recommandé(s)</span>
+                <span class="badge badge-success">{{ $productStats['purchased'] ?? 0 }} payé(s)</span>
+                <span class="badge badge-warning">{{ $productStats['pending'] ?? 0 }} à payer</span>
+                @if(($productStats['declined'] ?? 0) > 0)
+                    <span class="badge badge-secondary">{{ $productStats['declined'] }} refusé(s)</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div class="total-box py-3 px-4">
+                <div class="label">Total recommandé (produits)</div>
+                <div class="value text-xl">${{ number_format($productStats['recommended_amount'] ?? 0, 2) }}</div>
+            </div>
+            <div class="total-box py-3 px-4">
+                <div class="label">Total payé (produits)</div>
+                <div class="value text-xl">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</div>
+            </div>
+        </div>
+
+        @if($canSell && ($productStats['pending'] ?? 0) > 0)
+        <form action="{{ route('cashier.consultations.checkout-selection', $consultation) }}" method="POST" id="consultationCheckoutForm">
+            @csrf
+            <div class="table-wrap">
+                <table class="table" id="consultationProductsTable">
+                    <thead>
+                        <tr>
+                            <th class="w-10">
+                                <input type="checkbox" id="selectAllPending" class="rounded border-[var(--border-color)]" title="Tout sélectionner (à payer)">
+                            </th>
+                            <th>Produit</th>
+                            <th>Posologie</th>
+                            <th class="text-right">Prix ($)</th>
+                            <th>Statut</th>
+                            <th>Observation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($productLines as $line)
+                            @php
+                                $lineStatus = $line['status'] ?? 'pending';
+                                $isPending = $lineStatus === 'pending';
+                            @endphp
+                            <tr data-price="{{ (float) ($line['prix'] ?? 0) }}">
+                                <td>
+                                    @if($isPending)
+                                        <input type="checkbox"
+                                               name="line_keys[]"
+                                               value="{{ $line['line_key'] }}"
+                                               class="line-select rounded border-[var(--border-color)]"
+                                               data-price="{{ (float) ($line['prix'] ?? 0) }}">
+                                    @endif
+                                </td>
+                                <td>{{ $line['produit'] ?? '' }}</td>
+                                <td>{{ $line['posologie'] ?? '' }}</td>
+                                <td class="text-right font-semibold">${{ number_format($line['prix'] ?? 0, 2) }}</td>
+                                <td>
+                                    <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
+                                        {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
+                                    </span>
+                                    @if(!empty($line['order_id']))
+                                        <a href="{{ route('cashier.orders.show', $line['order_id']) }}" class="text-[10px] text-[var(--primary)] ml-1">Cmd #{{ $line['order_id'] }}</a>
+                                    @endif
+                                </td>
+                                <td>{{ $line['observation'] ?? '' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-[var(--border-color)]">
+                <p class="text-sm text-[var(--text-secondary)]">
+                    Sélection : <span class="font-semibold text-[var(--text-primary)]" id="selectionCount">0</span> produit(s) —
+                    <span class="font-semibold text-[var(--primary)]" id="selectionTotal">$0.00</span>
+                </p>
+                <button type="submit" class="btn btn-primary btn-sm" id="checkoutSelectionBtn" disabled>
+                    Encaisser la sélection
+                </button>
+            </div>
+        </form>
+        @else
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Posologie</th>
+                        <th class="text-right">Prix ($)</th>
+                        <th>Statut</th>
+                        <th>Observation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($productLines as $line)
+                        @php $lineStatus = $line['status'] ?? 'pending'; @endphp
+                        <tr>
+                            <td>{{ $line['produit'] ?? '' }}</td>
+                            <td>{{ $line['posologie'] ?? '' }}</td>
+                            <td class="text-right font-semibold">${{ number_format($line['prix'] ?? 0, 2) }}</td>
+                            <td>
+                                <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
+                                    {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
+                                </span>
+                                @if(!empty($line['order_id']))
+                                    <a href="{{ route('cashier.orders.show', $line['order_id']) }}" class="text-[10px] text-[var(--primary)] ml-1">Cmd #{{ $line['order_id'] }}</a>
+                                @endif
+                            </td>
+                            <td>{{ $line['observation'] ?? '' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @if(!$canSell)
+            <p class="text-xs text-[var(--text-secondary)] mt-3">
+                L’encaissement des produits est disponible lorsque la fiche est <strong>en traitement</strong> ou <strong>terminée</strong>.
+            </p>
+        @elseif(($productStats['pending'] ?? 0) === 0)
+            <p class="text-xs text-[var(--text-secondary)] mt-3">Tous les produits recommandés ont été traités (payés ou refusés).</p>
+        @endif
+        @endif
+    </div>
+    @elseif($consultation->recommended_products && count($consultation->recommended_products) > 0)
+    <div class="card">
+        <h3 class="text-base font-semibold text-[var(--primary)] mb-3">Produits recommandés</h3>
+        <p class="text-sm text-[var(--text-secondary)] mb-3">
+            Ces lignes ne sont pas liées au catalogue (sans identifiant produit) : encaissement partiel indisponible.
+        </p>
         <div class="table-wrap">
             <table class="table">
                 <thead>
@@ -346,8 +492,37 @@
                 </tbody>
             </table>
         </div>
-        <div class="text-right font-semibold mt-3 text-sm">
-            Total Produits: <span class="text-[var(--primary)]">${{ number_format($consultation->total_produits, 2) }}</span>
+    </div>
+    @endif
+
+    @if($consultation->orders && $consultation->orders->isNotEmpty())
+    <div class="card">
+        <h3 class="text-base font-semibold text-[var(--primary)] mb-3">Commandes liées</h3>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Commande</th>
+                        <th>Date</th>
+                        <th class="text-right">Montant</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($consultation->orders as $order)
+                    <tr>
+                        <td>
+                            <a href="{{ route('cashier.orders.show', $order->id) }}" class="text-[var(--primary)] font-medium">
+                                {{ $order->order_number ?? '#' . $order->id }}
+                            </a>
+                        </td>
+                        <td>{{ $order->created_at?->format('d/m/Y H:i') }}</td>
+                        <td class="text-right font-semibold">${{ number_format($order->total ?? 0, 2) }}</td>
+                        <td>{{ ucfirst($order->status ?? '—') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
     @endif
@@ -359,7 +534,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             @if($consultation->seances_ceragem > 0)
             <div class="service-box service-box-ceragem">
-                <div class="font-semibold text-[#d97706]">Ceragem</div>
+                <div class="font-semibold text-[var(--ui-stat-warning)]">Ceragem</div>
                 <p class="text-sm">
                     {{ $consultation->seances_ceragem }} seances × ${{ number_format($consultation->prix_ceragem, 2) }}
                     <br>
@@ -369,7 +544,7 @@
             @endif
             @if($consultation->seances_detox > 0)
             <div class="service-box service-box-detox">
-                <div class="font-semibold text-[#16a34a]">Detox</div>
+                <div class="font-semibold text-[var(--ui-stat-success)]">Detox</div>
                 <p class="text-sm">
                     {{ $consultation->seances_detox }} seances × ${{ number_format($consultation->prix_detox, 2) }}
                     <br>
@@ -384,17 +559,23 @@
     </div>
     @endif
 
-    {{-- TOTAL GENERAL --}}
+    {{-- SYNTHÈSE FINANCIÈRE --}}
     <div class="total-box">
-        <div class="flex flex-wrap justify-between items-center">
+        <div class="flex flex-wrap justify-between items-center gap-4">
             <div>
-                <div class="label">Total General</div>
+                <div class="label">Estimation globale (fiche)</div>
                 <div class="text-sm text-[var(--text-secondary)]">
-                    Produits + Services
+                    Produits recommandés + services (Ceragem / Detox). Ce montant n’est pas le total encaissé.
                 </div>
             </div>
             <div class="value">${{ number_format($consultation->total_general, 2) }}</div>
         </div>
+        @if(!empty($productStats))
+        <div class="mt-3 pt-3 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex flex-wrap gap-x-6 gap-y-1">
+            <span>Produits payés : <strong class="text-[var(--text-primary)]">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</strong></span>
+            <span>Produits restants à payer : <strong class="text-[var(--text-primary)]">${{ number_format(max(0, ($productStats['recommended_amount'] ?? 0) - ($productStats['paid_amount'] ?? 0)), 2) }}</strong></span>
+        </div>
+        @endif
     </div>
 
     {{-- NOTES ADMIN --}}
@@ -406,3 +587,56 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const form = document.getElementById('consultationCheckoutForm');
+    if (!form) return;
+
+    const selectAll = document.getElementById('selectAllPending');
+    const boxes = form.querySelectorAll('.line-select');
+    const countEl = document.getElementById('selectionCount');
+    const totalEl = document.getElementById('selectionTotal');
+    const submitBtn = document.getElementById('checkoutSelectionBtn');
+
+    function formatMoney(n) {
+        return '$' + n.toFixed(2);
+    }
+
+    function refresh() {
+        let count = 0;
+        let total = 0;
+        boxes.forEach(function (cb) {
+            if (cb.checked) {
+                count++;
+                total += parseFloat(cb.dataset.price || '0') || 0;
+            }
+        });
+        if (countEl) countEl.textContent = String(count);
+        if (totalEl) totalEl.textContent = formatMoney(total);
+        if (submitBtn) submitBtn.disabled = count === 0;
+        if (selectAll) {
+            const pending = boxes.length;
+            selectAll.checked = pending > 0 && count === pending;
+            selectAll.indeterminate = count > 0 && count < pending;
+        }
+    }
+
+    boxes.forEach(function (cb) {
+        cb.addEventListener('change', refresh);
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            boxes.forEach(function (cb) {
+                cb.checked = selectAll.checked;
+            });
+            refresh();
+        });
+    }
+
+    refresh();
+})();
+</script>
+@endpush

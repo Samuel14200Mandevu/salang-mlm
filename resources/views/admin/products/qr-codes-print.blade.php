@@ -7,14 +7,7 @@
     <title>Étiquettes QR Code - Salang Group</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 20px;
-            background: white;
-            color: #1a1a1a;
-        }
-
-        .report-header {
+.report-header {
             width: 100%;
             border-bottom: 3px solid #0A2A6C;
             padding-bottom: 12px;

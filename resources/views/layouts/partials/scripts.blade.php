@@ -1,5 +1,3 @@
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
     <!-- ============================================ -->
     <!-- PWA SCRIPTS - À GARDER À LA FIN              -->
     <!-- ============================================ -->
@@ -82,8 +80,6 @@
         document.getElementById('cookie-consent-banner').remove();
     }
     </script>
-    
-    @stack('scripts')
 
     <!-- ===== CONFIRMATION LOGOUT SCRIPT ===== -->
     <script>
@@ -269,4 +265,4 @@
         }
     })();
     </script>
-</body>
+    @stack('scripts')

@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1.25rem;
 }
@@ -226,7 +219,7 @@
                            class="form-control @error('level_1') form-control-error @enderror" required>
                     <span class="help-text">Distributeur - Starter (0%)</span>
                     @error('level_1')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -238,7 +231,7 @@
                            class="form-control @error('level_2') form-control-error @enderror" required>
                     <span class="help-text">Qualification - Supervisor (0%)</span>
                     @error('level_2')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -250,7 +243,7 @@
                            class="form-control @error('level_3') form-control-error @enderror" required>
                     <span class="help-text">Cumul Directeur - Commission directe</span>
                     @error('level_3')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -262,7 +255,7 @@
                            class="form-control @error('level_4') form-control-error @enderror" required>
                     <span class="help-text">Directeur - Commission indirecte</span>
                     @error('level_4')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -274,7 +267,7 @@
                            class="form-control @error('level_5') form-control-error @enderror" required>
                     <span class="help-text">Manager Senior - Leadership</span>
                     @error('level_5')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -286,7 +279,7 @@
                            class="form-control @error('level_6') form-control-error @enderror" required>
                     <span class="help-text">Directeur Envolée</span>
                     @error('level_6')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -298,7 +291,7 @@
                            class="form-control @error('level_7') form-control-error @enderror" required>
                     <span class="help-text">Saphire Manager</span>
                     @error('level_7')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -310,7 +303,7 @@
                            class="form-control @error('level_8') form-control-error @enderror" required>
                     <span class="help-text">Diamant Bleu</span>
                     @error('level_8')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -322,7 +315,7 @@
                            class="form-control @error('level_9') form-control-error @enderror" required>
                     <span class="help-text">Perle Diamant</span>
                     @error('level_9')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -339,7 +332,7 @@
                            class="form-control @error('leadership_5') form-control-error @enderror" required>
                     <span class="help-text">Manager Senior</span>
                     @error('leadership_5')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -350,7 +343,7 @@
                            class="form-control @error('leadership_6') form-control-error @enderror" required>
                     <span class="help-text">Directeur Envolée</span>
                     @error('leadership_6')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -361,7 +354,7 @@
                            class="form-control @error('leadership_7') form-control-error @enderror" required>
                     <span class="help-text">Saphire Manager</span>
                     @error('leadership_7')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -372,7 +365,7 @@
                            class="form-control @error('leadership_8') form-control-error @enderror" required>
                     <span class="help-text">Diamant Bleu</span>
                     @error('leadership_8')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -383,7 +376,7 @@
                            class="form-control @error('leadership_9') form-control-error @enderror" required>
                     <span class="help-text">Perle Diamant</span>
                     @error('leadership_9')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -399,7 +392,7 @@
                            class="form-control @error('retail_rate') form-control-error @enderror" required>
                     <span class="help-text">Profit sur les ventes de produits au détail</span>
                     @error('retail_rate')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -410,7 +403,7 @@
                            class="form-control @error('consumer_bonus') form-control-error @enderror" required>
                     <span class="help-text">Bonus consommateur sur achats personnels</span>
                     @error('consumer_bonus')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -421,7 +414,7 @@
                            class="form-control @error('global_bonus') form-control-error @enderror" required>
                     <span class="help-text">Distribution du pool de bonus global</span>
                     @error('global_bonus')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -457,7 +450,7 @@
                            class="form-control @error('leadership_min_pv') form-control-error @enderror" required>
                     <span class="help-text">PV minimum requis pour être leader</span>
                     @error('leadership_min_pv')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -468,7 +461,7 @@
                            class="form-control @error('leadership_max_levels') form-control-error @enderror" required>
                     <span class="help-text">Niveaux maximum pour la commission leadership</span>
                     @error('leadership_max_levels')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -479,7 +472,7 @@
                            class="form-control @error('withdrawal_fee') form-control-error @enderror" required>
                     <span class="help-text">Frais appliqués sur chaque retrait</span>
                     @error('withdrawal_fee')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -490,7 +483,7 @@
                            class="form-control @error('min_withdrawal') form-control-error @enderror" required>
                     <span class="help-text">Montant minimum autorisé pour un retrait</span>
                     @error('min_withdrawal')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>

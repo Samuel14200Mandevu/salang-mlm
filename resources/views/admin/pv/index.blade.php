@@ -3,48 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --bg-page: #F4F5F7;
-    --bg-card: #FFFFFF;
-    --bg-input: #F8F9FA;
-    --bg-hover: #EEF0F2;
-    --bg-secondary: #F4F5F7;
-    
-    --text-primary: #1A1D23;
-    --text-secondary: #5A626A;
-    --text-muted: #8E959C;
-    
-    --border-color: #DDE0E3;
-    --border-light: #E8EBEE;
-    --border-focus: rgba(26, 29, 35, 0.12);
-    
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-    
-    --primary: #1A1D23;
-    --primary-hover: #2D333B;
-    --primary-light: #E8EAEC;
-    
-    --success: #1C7E4A;
-    --success-hover: #14633A;
-    --success-light: #ECFDF3;
-    
-    --danger: #B91C1C;
-    --danger-light: #FEF3F2;
-    
-    --warning: #B54708;
-    --warning-light: #FFFAEB;
-    
-    --info: #065F9C;
-    --info-light: #EFF8FF;
-    
-    --radius: 8px;
-    --radius-lg: 12px;
-    --radius-full: 9999px;
-    
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
 * {
     font-family: var(--font-family);
 }

@@ -3,27 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --bg-page: #F4F5F7;
-    --bg-card: #F8F9FA;
-    --bg-hover: #EEF0F2;
-    --bg-input: #F8F9FA;
-    
-    --text-primary: #1A1D23;
-    --text-secondary: #5A626A;
-    --text-muted: #8E959C;
-    
-    --border-color: #DDE0E3;
-    --border-light: #E8EBEE;
-    
-    --radius: 6px;
-    
-    --direct-color: #4F46E5;
-    --indirect-color: #2563EB;
-    --leadership-color: #A65A0E;
-    --cash-color: #16a34a;
-}
-
 * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 body { background: var(--bg-page); color: var(--text-primary); }
 

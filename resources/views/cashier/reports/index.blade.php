@@ -25,7 +25,7 @@
         flex-shrink: 0;
     }
 
-    .stat-icon-today { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .stat-icon-today { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .stat-icon-month { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
     .stat-icon-pending { background: rgba(245, 158, 11, 0.10); color: #f59e0b; }
     .stat-icon-approved { background: rgba(34, 197, 94, 0.10); color: #16a34a; }
@@ -67,7 +67,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -165,7 +165,7 @@
     .badge-success { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
     .badge-warning { background: rgba(245, 158, 11, 0.12); color: #d97706; }
     .badge-danger { background: rgba(179, 42, 42, 0.12); color: #b32a2a; }
-    .badge-info { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .badge-info { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .badge-secondary { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
 
     /* ============================================================
@@ -186,7 +186,7 @@
     .form-control:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(15, 43, 79, 0.1);
+        box-shadow: 0 0 0 3px rgba(30, 93, 173, 0.1);
     }
 
     /* ============================================================
@@ -330,7 +330,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Ce mois</p>
-                    <p class="stat-value text-[#22c55e]">{{ $stats['month'] }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">{{ $stats['month'] }}</p>
                 </div>
                 <div class="stat-icon stat-icon-month">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -344,7 +344,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">En attente</p>
-                    <p class="stat-value text-[#f59e0b]">{{ $stats['pending'] }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $stats['pending'] }}</p>
                 </div>
                 <div class="stat-icon stat-icon-pending">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -358,7 +358,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Approuvés</p>
-                    <p class="stat-value text-[#16a34a]">{{ $stats['approved'] }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">{{ $stats['approved'] }}</p>
                 </div>
                 <div class="stat-icon stat-icon-approved">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -425,7 +425,7 @@
                             <td class="text-right text-xs">
                                 ${{ number_format($report->total_sales, 2) }}
                             </td>
-                            <td class="text-right text-xs text-[#b32a2a]">
+                            <td class="text-right text-xs text-[var(--ui-stat-danger)]">
                                 ${{ number_format($report->total_expenses, 2) }}
                             </td>
                             <td class="text-right font-semibold text-xs text-[var(--primary)]">

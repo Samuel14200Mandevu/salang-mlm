@@ -10,7 +10,15 @@
         {!! PwaKit::head() !!}
     @endif
 
-    <meta name="theme-color" content="#0F2B4F">
+    <meta name="theme-color" content="#1E5DAD">
+
+    <script>
+        (function () {
+            var stored = localStorage.getItem('theme');
+            var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (dark) document.documentElement.classList.add('dark');
+        })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -20,417 +28,68 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
 
-    @stack('styles')
-
+    {{-- Shell layout + logo avant Alpine (évite contenu sous le menu) --}}
     <style>
-    :root {
-        --sidebar-width: 260px;
-        --sidebar-collapsed: 72px;
-
-        --primary-navy: #0F2B4F;
-        --primary-navy-dark: #091E3B;
-        --primary-navy-light: #1A3F6A;
-
-        --bg-page: #F5F6F8;
-        --bg-card: #FFFFFF;
-        --bg-input: #F8F9FA;
-        --bg-navbar: #FFFFFF;
-        --bg-secondary: #EEF0F3;
-        --bg-hover: #E8EAEE;
-        --bg-footer: #E8EAEE;
-
-        --text-primary: #1A1A1E;
-        --text-secondary: #4A4A52;
-        --text-tertiary: #7A7A82;
-
-        --border-color: #DCDEE3;
-        --border-light: #E8EAEE;
-
-        --radius: 8px;
-        --radius-lg: 10px;
-
-        --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    html.shell-is-desktop.shell-sidebar-expanded .admin-app .main-wrapper {
+        margin-left: 16rem;
+        width: calc(100% - 16rem);
     }
-
-    .dark {
-        --bg-page: #111827;
-        --bg-card: #1A1D23;
-        --bg-input: #1F2937;
-        --bg-navbar: #111827;
-        --bg-secondary: #1F2937;
-        --bg-hover: #2D333B;
-        --bg-footer: #111827;
-
-        --text-primary: #F3F4F6;
-        --text-secondary: #9CA3AF;
-        --text-tertiary: #6B7280;
-
-        --border-color: #374151;
-        --border-light: #2D333B;
+    html.shell-is-desktop.shell-sidebar-expanded .admin-app #sidebar {
+        width: 16rem;
     }
-
-    * {
-        font-family: var(--font-family);
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+    html.shell-is-desktop.shell-sidebar-rail .admin-app .main-wrapper {
+        margin-left: 5rem;
+        width: calc(100% - 5rem);
     }
-
-    html, body {
-        height: 100%;
-        margin: 0;
+    html.shell-is-desktop.shell-sidebar-rail .admin-app #sidebar {
+        width: 5rem;
     }
-
-    body {
-        background: var(--bg-page);
-        color: var(--text-primary);
-        transition: background 0.2s ease, color 0.2s ease;
-        -webkit-font-smoothing: antialiased;
-        line-height: 1.6;
-        display: flex;
-        flex-direction: column;
+    html.shell-is-mobile .admin-app .main-wrapper {
+        margin-left: 0;
+        width: 100%;
     }
-
-    ::selection {
-        background: var(--primary-navy);
-        color: white;
+    html.shell-is-mobile .admin-app #sidebar {
+        width: 16rem;
     }
-
-    ::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
-    }
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--text-tertiary);
-    }
-
-    /* ===== LAYOUT PRINCIPAL ===== */
-    .app-container {
-        display: flex;
-        min-height: 100vh;
-        height: 100%;
-    }
-
-    .main-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 100vh;
-        transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
-    }
-
-    .main-content {
-        flex: 1 0 auto;
-        padding: 1rem;
-    }
-
-    .main-footer {
-        flex-shrink: 0;
-        background: var(--bg-footer);
-        border-top: 1px solid var(--border-color);
-        padding: 0.75rem 1rem;
-        margin-top: auto;
-    }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar-link {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 0.75rem;
-        border-radius: var(--radius);
-        color: var(--text-secondary);
-        transition: background 0.15s ease, color 0.15s ease;
-        text-decoration: none;
-        font-size: 0.813rem;
-        font-weight: 500;
-        position: relative;
-        white-space: nowrap;
-        overflow: hidden;
-        cursor: pointer;
-    }
-
-    .sidebar-link svg {
-        width: 1.25rem;
-        height: 1.25rem;
-        flex-shrink: 0;
-        min-width: 1.25rem;
-        color: var(--text-tertiary);
-        transition: color 0.15s ease;
-    }
-
-    .sidebar-link .label {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        transition: opacity 0.2s ease;
-    }
-
-    .sidebar-link:hover {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-    }
-
-    .sidebar-link:hover svg {
-        color: var(--text-primary);
-    }
-
-    .sidebar-link.active {
-        background: var(--primary-navy);
-        color: white;
-    }
-
-    .sidebar-link.active svg {
-        color: white;
-    }
-
-    .sidebar-link .badge-count {
-        display: inline-block;
-        background: #B32A2A;
-        color: white;
-        font-size: 0.6rem;
-        font-weight: 700;
-        padding: 0.1rem 0.4rem;
-        border-radius: 6px;
-        min-width: 18px;
-        text-align: center;
-        line-height: 1.3;
-        flex-shrink: 0;
-    }
-
-    .sidebar-section {
-        font-size: 0.625rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-tertiary);
-        padding: 0.75rem 0.75rem 0.375rem;
-    }
-
-    .notification-dot {
-        position: absolute;
-        top: -2px;
-        right: -4px;
-        width: 8px;
-        height: 8px;
-        background: #B32A2A;
-        border-radius: 50%;
-        border: 2px solid var(--bg-navbar);
-    }
-
-    /* ===== CONFIRM DIALOG ===== */
-    .confirm-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.25s ease, visibility 0.25s ease;
-    }
-    .confirm-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    .confirm-dialog {
-        background: var(--bg-card);
-        border-radius: var(--radius-lg);
-        padding: 1.75rem;
-        max-width: 420px;
-        width: 90%;
-        border: 1px solid var(--border-color);
-        transform: scale(0.95);
-        transition: transform 0.25s ease;
-    }
-    .confirm-overlay.active .confirm-dialog {
-        transform: scale(1);
-    }
-    .confirm-dialog .icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 0.75rem;
-    }
-    .confirm-dialog .icon.danger {
-        background: #FDE8E8;
-        color: #B32A2A;
-    }
-    .confirm-dialog .icon.warning {
-        background: #FEF1E6;
-        color: #A65A0E;
-    }
-    .confirm-dialog .icon.success {
-        background: #E6F4EC;
-        color: #1F7B4D;
-    }
-    .confirm-dialog h3 {
-        font-size: 1.0625rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: center;
-        margin-bottom: 0.375rem;
-    }
-    .confirm-dialog p {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        text-align: center;
-        margin-bottom: 1.25rem;
-        line-height: 1.6;
-    }
-    .confirm-dialog .actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: center;
-    }
-    .confirm-dialog .actions .btn {
-        padding: 0.5rem 1.25rem;
-        border-radius: var(--radius);
-        font-weight: 500;
-        font-size: 0.813rem;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: background 0.15s ease, border-color 0.15s ease;
-        min-width: 90px;
-    }
-    .confirm-dialog .actions .btn-cancel {
-        background: transparent;
-        color: var(--text-primary);
-        border-color: var(--border-color);
-    }
-    .confirm-dialog .actions .btn-cancel:hover {
-        background: var(--bg-hover);
-        border-color: var(--border-color);
-    }
-    .confirm-dialog .actions .btn-confirm {
-        background: #B32A2A;
-        color: white;
-        border-color: #B32A2A;
-    }
-    .confirm-dialog .actions .btn-confirm:hover {
-        background: #8F2121;
-        border-color: #8F2121;
-    }
-    .confirm-dialog .actions .btn-confirm.success {
-        background: #1F7B4D;
-        border-color: #1F7B4D;
-    }
-    .confirm-dialog .actions .btn-confirm.success:hover {
-        background: #16633D;
-        border-color: #16633D;
-    }
-
-    /* ===== FOOTER ===== */
-    .footer-links a {
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: color 0.15s ease;
-    }
-    .footer-links a:hover {
-        color: var(--text-primary);
-        text-decoration: underline;
-    }
-
-    /* ===== PAGE TITLE ===== */
-    .page-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        transition: color 0.2s ease;
-    }
-
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 767px) {
-        .confirm-dialog {
-            padding: 1.25rem;
-            max-width: 95%;
-        }
-        .confirm-dialog .icon {
-            width: 2.5rem;
-            height: 2.5rem;
-        }
-        .confirm-dialog h3 {
-            font-size: 1rem;
-        }
-        .confirm-dialog p {
-            font-size: 0.813rem;
-        }
-        .confirm-dialog .actions .btn {
-            padding: 0.375rem 1rem;
-            font-size: 0.75rem;
-            min-width: 70px;
-        }
-        .confirm-dialog .actions {
-            flex-wrap: wrap;
-        }
-        .main-content {
-            padding: 0.75rem;
-        }
-        .main-footer {
-            padding: 0.5rem 0.75rem;
-        }
-        .main-footer .footer-links {
-            flex-direction: column;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        .footer-separator {
-            display: none;
-        }
-        .page-title {
-            font-size: 1rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .main-content {
-            padding: 0.5rem;
-        }
-        .main-footer {
-            padding: 0.375rem 0.5rem;
-            font-size: 0.7rem;
-        }
-        .page-title {
-            font-size: 0.875rem;
+        .admin-app #sidebar:not(.translate-x-0) {
+            transform: translateX(-100%);
         }
     }
     </style>
+    @include('partials.shell.sidebar-rail-styles')
+    @include('partials.shell.sidebar-state')
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
-<body>
+<body class="admin-app public-body h-full bg-[var(--bg-page)] text-[var(--text-primary)] antialiased">
 
     <div class="app-container"
          x-data="{
-            sidebarOpen: localStorage.getItem('sidebar_open') === 'true' ? true : (window.innerWidth > 1024),
+            sidebarOpen: window.salangReadSidebarOpen(),
             isMobile: window.innerWidth < 768
          }"
          x-init="
-            sidebarOpen = localStorage.getItem('sidebar_open') === 'true' ? true : (window.innerWidth > 1024);
+            sidebarOpen = window.salangReadSidebarOpen();
             isMobile = window.innerWidth < 768;
             if (window.innerWidth < 768) sidebarOpen = false;
+            window.salangSyncSidebarShell(sidebarOpen);
             window.addEventListener('resize', () => {
                 isMobile = window.innerWidth < 768;
-                if (window.innerWidth > 1024) sidebarOpen = true;
-                if (window.innerWidth < 768) sidebarOpen = false;
+                if (window.innerWidth < 768) {
+                    sidebarOpen = false;
+                } else {
+                    sidebarOpen = window.salangReadSidebarOpen();
+                }
+                window.salangSyncSidebarShell(sidebarOpen);
             });
          "
-         @sidebar-toggle.window="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)">
+         @sidebar-toggle.window="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)">
 
         <!-- Mobile overlay -->
         <div x-show="sidebarOpen && isMobile"
-             @click="sidebarOpen = false; localStorage.setItem('sidebar_open', false)"
+             @click="sidebarOpen = false; window.salangPersistSidebarOpen(false)"
              class="fixed inset-0 bg-black/40 z-40 lg:hidden"
              x-transition:enter="transition-opacity ease-linear duration-250"
              x-transition:enter-start="opacity-0"
@@ -442,25 +101,31 @@
         </div>
 
         <!-- Sidebar -->
-        <aside id="sidebar"
-               class="fixed top-0 left-0 z-50 h-full transition-all duration-250 ease-in-out bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden"
+        <aside id="sidebar" aria-label="Navigation administration"
+               class="fixed top-0 left-0 z-50 h-full transition-all duration-200 ease-in-out"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
-                  'w-[72px]': !sidebarOpen && !isMobile,
+                  'w-20 sidebar-is-rail': !sidebarOpen && !isMobile,
                   'w-64 translate-x-0': sidebarOpen && isMobile,
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
 
+            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+                <div class="cashier-sidebar-accent" aria-hidden="true"></div>
+
             <!-- Logo -->
-            <div class="flex items-center justify-between h-14 px-3 border-b border-[var(--border-color)] flex-shrink-0">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-center flex-1">
+            <div class="sidebar-logo-bar flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
+                 :class="sidebarOpen ? 'px-4' : 'px-2'">
+                <a href="{{ route('admin.dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
                     <img src="{{ asset('images/salang_logo.png') }}"
                          alt="Salang"
-                         class="logo-themeable transition-all duration-250"
-                         :class="sidebarOpen ? 'h-12 w-auto' : 'h-8 w-auto'">
+                         width="160"
+                         height="56"
+                         decoding="async"
+                         class="sidebar-logo-img sidebar-logo-full logo-themeable">
                 </a>
-                <button @click="sidebarOpen = false; localStorage.setItem('sidebar_open', false)"
-                        class="lg:hidden p-1.5 rounded hover:bg-[var(--bg-hover)] transition-colors">
+                <button @click="sidebarOpen = false; window.salangPersistSidebarOpen(false)"
+                        class="lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                     <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -468,7 +133,7 @@
             </div>
 
             <!-- Menu -->
-            <nav class="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar">
+            <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
                 <ul class="space-y-0.5">
 
                     <!-- Dashboard -->
@@ -567,6 +232,23 @@
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
                                 Consultations
                                 <span id="adminConsultationBadge" class="badge-count" style="display:none;">0</span>
+                            </span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('cashier.reports.index', ['status' => 'submitted']) }}"
+                           class="sidebar-link {{ request()->routeIs('cashier.reports*') && request('status') === 'submitted' ? 'active' : '' }}"
+                           data-title="Rapports à valider">
+                            <div class="relative">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span id="adminReportDot" class="notification-dot" style="display:none;"></span>
+                            </div>
+                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
+                                Rapports caisse
+                                <span id="adminReportBadge" class="badge-count" style="display:none;">0</span>
                             </span>
                         </a>
                     </li>
@@ -684,7 +366,7 @@
             <!-- Profil sidebar -->
             <div class="p-3 border-t border-[var(--border-color)] flex-shrink-0">
                 <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                    <div class="w-9 h-9 rounded-full bg-[var(--primary-navy)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+                    <div class="w-9 h-9 rounded-full bg-[var(--primary)] flex items-center justify-center text-[var(--text-inverse)] font-medium text-sm flex-shrink-0">
                         @auth
                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
@@ -694,7 +376,7 @@
                             @endif
                         @endauth
                     </div>
-                    <div class="transition-all duration-250 overflow-hidden min-w-0"
+                    <div class="sidebar-user-text transition-all duration-250 overflow-hidden min-w-0"
                          :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 w-0'">
                         <p class="text-sm font-medium text-[var(--text-primary)] truncate">
                             @auth {{ Auth::user()->name }} @endauth
@@ -705,38 +387,54 @@
                     </div>
                 </div>
             </div>
+            </div>
         </aside>
 
         <!-- Contenu principal -->
         <div class="main-wrapper"
              :style="{
-                'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '4.5rem' : '0',
-                'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 4.5rem)' : '100%'
+                'margin-left': (!isMobile && sidebarOpen) ? '16rem' : (!isMobile && !sidebarOpen) ? '5rem' : '0',
+                'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
              }">
 
             <!-- Top Navigation -->
-            <nav class="bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
+            <nav class="cashier-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
 
                         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen; localStorage.setItem('sidebar_open', sidebarOpen)"
-                                    class="p-1.5 sm:p-2 rounded hover:bg-[var(--bg-hover)] transition-colors flex-shrink-0">
+                            <button @click="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
                                 <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
 
                             <div class="min-w-0 flex-1">
-                                <h1 class="page-title" id="pageTitle">Administration</h1>
+                                <h1 id="pageTitle" class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Administration</h1>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+
+                            @include('partials.shell.workflow-bell-dropdown', [
+                                'workflowBell' => [
+                                    'idPrefix' => 'adminWorkflow',
+                                    'panelTitle' => 'Validations en attente',
+                                    'consultationsUrl' => route('admin.consultations.index'),
+                                    'reportsUrl' => route('cashier.reports.index', ['status' => 'submitted']),
+                                    'consultationsLabel' => 'Consultations',
+                                    'reportsLabel' => 'Rapports caisse',
+                                    'consultationsHint' => 'Fiches envoyées par les caissiers',
+                                    'reportsHint' => 'Rapports journaliers soumis',
+                                    'emptyText' => 'Aucune validation en attente.',
+                                    'urgentLabel' => 'Traiter en priorité',
+                                ],
+                            ])
 
                             <!-- Theme Toggle -->
-                            <button id="theme-toggle"
-                                    class="p-1.5 sm:p-2 rounded hover:bg-[var(--bg-hover)] transition-colors">
+                            <button type="button" id="theme-toggle"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon"/>
                                 </svg>
@@ -746,11 +444,11 @@
                             @auth
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open"
-                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded hover:bg-[var(--bg-hover)] transition-colors">
+                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[60px] md:max-w-[100px]">
                                             {{ Auth::user()->name }}
                                         </span>
-                                        <div class="w-8 h-8 rounded-full bg-[var(--primary-navy)] flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-[var(--text-inverse)] font-medium text-sm flex-shrink-0">
                                             @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
                                                      alt="Avatar" class="w-8 h-8 rounded-full object-cover">
@@ -761,8 +459,8 @@
                                     </button>
 
                                     <div x-show="open" @click.away="open = false"
-                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-card)] rounded shadow-lg py-1 border border-[var(--border-color)] z-50"
-                                         x-transition:enter="transition ease-out duration-200"
+                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-card)] rounded-lg shadow-sm py-1 border border-[var(--border-color)] z-50"
+                                         x-transition:enter="transition ease-out duration-150"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
                                          style="display: none;">
@@ -803,7 +501,7 @@
                                             @csrf
                                             <button type="button"
                                                     onclick="confirmLogout(event)"
-                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-hover)] text-sm text-[#B32A2A] transition-colors">
+                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-hover)] text-sm text-[var(--ui-stat-danger)] transition-colors">
                                                 <span class="flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -821,22 +519,10 @@
             </nav>
 
             <!-- Contenu -->
-            <main class="main-content">
+            <main class="main-content" id="main-content">
                 @yield('content')
             </main>
 
-            <!-- Footer fixe en bas -->
-            <footer class="main-footer">
-                <div class="max-w-7xl mx-auto">
-                    <div class="footer-links flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm text-[var(--text-secondary)]">
-                        <span>&copy; 2026 Salang Group. Tous droits réservés.</span>
-                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
-                        <a href="{{ route('legal.terms') }}">CGU</a>
-                        <span class="footer-separator text-[var(--text-tertiary)]">•</span>
-                        <a href="{{ route('legal.privacy') }}">Confidentialité</a>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
@@ -857,8 +543,6 @@
             </div>
         </div>
     </div>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @if(class_exists('PwaKit'))
         {!! PwaKit::scripts() !!}
@@ -1044,51 +728,34 @@
             });
         });
     });
+    </script>
 
-    // ============================================================
-    // COMPTEUR DE CONSULTATIONS
-    // ============================================================
-    (function() {
-        'use strict';
+    @php
+        $workflowPollConfig = [
+            'url' => route('admin.workflow-pending-counts'),
+            'links' => [
+                'consultations' => route('admin.consultations.index'),
+                'reports' => route('cashier.reports.index', ['status' => 'submitted']),
+            ],
+            'consultations' => ['badge' => 'adminConsultationBadge', 'dot' => 'adminConsultationDot'],
+            'reports' => ['badge' => 'adminReportBadge', 'dot' => 'adminReportDot'],
+            'header' => ['badge' => 'adminWorkflowHeaderBadge', 'dot' => 'adminWorkflowHeaderDot'],
+            'dropdown' => [
+                'consultationCount' => 'adminWorkflowDropdownConsultationCount',
+                'reportCount' => 'adminWorkflowDropdownReportCount',
+                'totalMirror' => 'adminWorkflowHeaderBadgeMirror',
+                'empty' => 'adminWorkflowDropdownEmpty',
+                'items' => 'adminWorkflowDropdownItems',
+                'urgentWrap' => 'adminWorkflowUrgentWrap',
+                'urgentLink' => 'adminWorkflowUrgentLink',
+                'consultationRow' => 'adminWorkflowConsultationRow',
+                'reportRow' => 'adminWorkflowReportRow',
+            ],
+        ];
+    @endphp
+    @include('partials.shell.workflow-notification-poll')
 
-        function updateConsultationCount() {
-            const badge = document.getElementById('adminConsultationBadge');
-            const dot = document.getElementById('adminConsultationDot');
-            if (!badge) return;
-
-            fetch('{{ route("admin.consultations.count") }}')
-                .then(function(response) {
-                    if (!response.ok) throw new Error('Erreur réseau');
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data.count > 0) {
-                        badge.textContent = data.count;
-                        badge.style.display = 'inline-block';
-                        if (dot) dot.style.display = 'block';
-                    } else {
-                        badge.style.display = 'none';
-                        if (dot) dot.style.display = 'none';
-                    }
-                })
-                .catch(function(err) {
-                    console.error('Erreur compteur consultations:', err);
-                });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', updateConsultationCount);
-        } else {
-            updateConsultationCount();
-        }
-
-        setInterval(updateConsultationCount, 30000);
-
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) updateConsultationCount();
-        });
-    })();
-
+    <script>
     // ============================================================
     // THEME TOGGLE
     // ============================================================
@@ -1137,7 +804,14 @@
                 }
             });
 
-            setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+            var stored = localStorage.getItem('theme');
+            if (stored === 'dark' || stored === 'light') {
+                setTheme(stored);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                setTheme('dark');
+            } else {
+                setTheme('light');
+            }
         }
 
         if (document.readyState === 'loading') {

@@ -2,19 +2,6 @@
 
 @section('title', 'Liste du réseau')
 
-@push('styles')
-<style>
-    @media (max-width: 640px) {
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .badge { font-size: 0.55rem; padding: 0.1rem 0.4rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .btn-sm svg { width: 0.875rem; height: 0.875rem; }
-        .card { padding: 0.75rem; }
-        .text-2xl { font-size: 1.25rem; }
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     <!-- En-tête -->

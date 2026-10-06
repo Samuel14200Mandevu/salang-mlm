@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashierReport;
+use App\Notifications\CashierReportReviewedNotification;
 use App\Models\Commission;
 use App\Models\Expense;
 use App\Models\Order;
@@ -59,6 +60,13 @@ class CashierReportController extends Controller
         }
 
         $reports = $query->paginate(20)->withQueryString();
+
+        if (auth()->user()->hasRole('cashier') && ! auth()->user()->hasRole('admin')) {
+            auth()->user()->unreadNotifications()
+                ->where('type', CashierReportReviewedNotification::class)
+                ->get()
+                ->each->markAsRead();
+        }
 
         $baseQuery = CashierReport::query();
         if (auth()->user()->hasRole('cashier') && !auth()->user()->hasRole('admin')) {
@@ -299,6 +307,9 @@ class CashierReportController extends Controller
             'approved_at' => now(),
         ]);
 
+        $report->load('user');
+        $report->user?->notify(new CashierReportReviewedNotification($report->fresh()));
+
         return back()->with('success', 'Rapport approuvé avec succès.');
     }
 
@@ -321,6 +332,9 @@ class CashierReportController extends Controller
             'approved_at' => now(),
             'rejection_reason' => $request->rejection_reason,
         ]);
+
+        $report->load('user');
+        $report->user?->notify(new CashierReportReviewedNotification($report->fresh()));
 
         return back()->with('success', 'Rapport rejeté.');
     }

@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .setting-card {
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
@@ -302,7 +295,7 @@
                            class="form-control @error('site_name') form-control-error @enderror"
                            required>
                     @error('site_name')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -316,7 +309,7 @@
                            class="form-control @error('site_url') form-control-error @enderror"
                            required>
                     @error('site_url')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -338,7 +331,7 @@
                         <option value="Asia/Singapore" {{ config('app.timezone') == 'Asia/Singapore' ? 'selected' : '' }}>Asia/Singapore</option>
                     </select>
                     @error('timezone')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -352,7 +345,7 @@
                         <option value="fr" {{ config('app.locale') == 'fr' ? 'selected' : '' }}>Français</option>
                     </select>
                     @error('locale')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -421,7 +414,7 @@
             </div>
             <div class="flex justify-between py-1 border-b border-[var(--border-light)]">
                 <span class="text-[var(--text-secondary)]">Mode debug</span>
-                <span class="font-semibold {{ config('app.debug') ? 'text-[#B91C1C]' : 'text-[#1C7E4A]' }}">
+                <span class="font-semibold {{ config('app.debug') ? 'text-[var(--ui-stat-danger)]' : 'text-[var(--ui-stat-success)]' }}">
                     {{ config('app.debug') ? 'Activé' : 'Désactivé' }}
                 </span>
             </div>

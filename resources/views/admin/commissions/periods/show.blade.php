@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .stat-detail {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -357,15 +350,15 @@
         </div>
         <div class="stat-detail border-l-4 border-[#1C7E4A]">
             <p class="label">Payé</p>
-            <p class="value text-[#1C7E4A]">${{ number_format($period->total_paid, 2) }}</p>
+            <p class="value text-[var(--ui-stat-success)]">${{ number_format($period->total_paid, 2) }}</p>
         </div>
         <div class="stat-detail border-l-4 border-[#B54708]">
             <p class="label">En attente</p>
-            <p class="value text-[#B54708]">${{ number_format($stats['total_pending'] ?? 0, 2) }}</p>
+            <p class="value text-[var(--ui-stat-warning)]">${{ number_format($stats['total_pending'] ?? 0, 2) }}</p>
         </div>
         <div class="stat-detail border-l-4 border-[#065F9C]">
             <p class="label">Utilisateurs</p>
-            <p class="value text-[#065F9C]">{{ $stats['users_with_commissions'] ?? 0 }}</p>
+            <p class="value text-[var(--ui-stat-info)]">{{ $stats['users_with_commissions'] ?? 0 }}</p>
         </div>
     </div>
 
@@ -415,7 +408,7 @@
                         </p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-[#1C7E4A] text-sm">${{ number_format($earner['net'], 2) }}</p>
+                        <p class="font-bold text-[var(--ui-stat-success)] text-sm">${{ number_format($earner['net'], 2) }}</p>
                         <p class="text-xs text-[var(--text-tertiary)]">Net</p>
                     </div>
                 </div>
@@ -536,7 +529,7 @@
                             <td class="hidden sm:table-cell text-sm">
                                 <span class="badge badge-info">{{ ucfirst($commission->type) }}</span>
                             </td>
-                            <td class="font-bold text-[#1C7E4A] text-sm">${{ number_format($commission->amount, 2) }}</td>
+                            <td class="font-bold text-[var(--ui-stat-success)] text-sm">${{ number_format($commission->amount, 2) }}</td>
                             <td class="hidden md:table-cell">
                                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }}">
                                     {{ ucfirst($commission->status) }}

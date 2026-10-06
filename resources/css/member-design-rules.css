@@ -1,0 +1,102 @@
+/**
+ * Espace membre — garde-fous anti « vibe coding » (consignes produit Salang).
+ * Palette : bleu primary + neutres + sémantique sobre (succès / alerte).
+ */
+
+.member-app {
+  font-family: var(--font-family);
+}
+
+/* [3] Fonds teintés — pas de blanc pur sur les cartes héritées */
+.member-app .card,
+.member-app .dashboard-stat-card,
+.member-app .dashboard-band-card,
+.member-app .dashboard-welcome-card,
+.member-app .dashboard-quick-action {
+  background: var(--bg-card);
+}
+
+/* [1][5][8][22] Pas de glass, glow ni ombres empilées */
+.member-app .mobile-bottom-nav {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  background: var(--bg-navbar);
+  border-top: 1px solid var(--border-color);
+}
+
+.member-app .member-mobile-sheet-backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.member-app .member-mobile-sheet {
+  box-shadow: none;
+  border-radius: 10px 10px 0 0;
+}
+
+.member-app #sidebar {
+  box-shadow: none;
+}
+
+.member-app .dashboard-stat-card,
+.member-app .dashboard-band-card,
+.member-app .dashboard-welcome-card,
+.member-app .dashboard-quick-action,
+.member-app .card-stats {
+  box-shadow: none;
+}
+
+/* [28] Hover sobre — pas de lift sur cartes / tuiles */
+.member-app .dashboard-stat-card:hover,
+.member-app .dashboard-quick-action:hover,
+.member-app .card-stats:hover,
+.member-app .product-card:hover,
+.member-app .card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.member-app .dashboard-quick-action:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+/* [1] CTA principal : couleur unie */
+.member-app .btn-primary {
+  background: var(--color-primary-600);
+  box-shadow: none;
+}
+
+.member-app .btn-primary:hover {
+  background: var(--color-primary-700);
+  transform: none;
+  box-shadow: none;
+}
+
+.member-app .btn-outline:hover {
+  transform: none;
+}
+
+/* [19] Coins sobres sur la nav mobile */
+.member-app .mobile-bottom-nav .nav-item,
+.member-app .mobile-bottom-nav .nav-item--button {
+  border-radius: 8px;
+}
+
+.member-app .mobile-bottom-nav .nav-item.active,
+.member-app .mobile-bottom-nav .nav-item--button.active {
+  background: var(--bg-secondary);
+  color: var(--color-primary-600);
+}
+
+.member-app .downline-card:hover,
+.member-app .network-member-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.member-app .network-node-card:not(.is-root):hover {
+  transform: none;
+  box-shadow: none;
+}

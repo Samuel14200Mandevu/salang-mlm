@@ -37,7 +37,7 @@
     }
     .icon-green { background: rgba(34, 197, 94, 0.10); color: #16a34a; }
     .icon-blue { background: rgba(59, 130, 246, 0.10); color: #2563eb; }
-    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
+    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #e8940f; }
     .icon-orange { background: rgba(245, 158, 11, 0.10); color: #d97706; }
 
     .commission-table {
@@ -113,7 +113,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -217,7 +217,7 @@
         transition: background 0.2s ease;
     }
     .filter-section .btn-filter:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
     .filter-section .btn-reset {
         padding: 0.3rem 1.25rem;
@@ -246,7 +246,7 @@
         font-weight: 600;
     }
     .type-badge-cash_pos { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
-    .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
+    .type-badge-direct { background: rgba(30, 93, 173, 0.12); color: #1e5dad; }
     .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
     .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #d97706; }
     .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
@@ -286,7 +286,8 @@
         visibility: visible;
     }
     .print-loader-box {
-        background: white;
+        background: var(--bg-card);
+        color: var(--text-primary);
         border-radius: 12px;
         padding: 2rem 3rem;
         text-align: center;
@@ -526,7 +527,7 @@
                             </td>
                             <td class="commission-percentage">{{ $commission->percentage ?? 0 }}%</td>
                             <td>
-                                <span class="font-bold {{ $commission->amount > 0 ? 'text-[#16a34a]' : 'text-[#b32a2a]' }} text-sm">
+                                <span class="font-bold {{ $commission->amount > 0 ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }} text-sm">
                                     {{ $commission->amount > 0 ? '+' : '' }}${{ number_format($commission->amount, 2) }}
                                 </span>
                                 @if($commission->source == 'pos')

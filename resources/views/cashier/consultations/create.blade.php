@@ -90,7 +90,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -171,7 +171,7 @@
 
                 {{-- Nom complet --}}
                 <div>
-                    <label class="form-label">Nom complet <span class="text-[#b32a2a]">*</span></label>
+                    <label class="form-label">Nom complet <span class="text-[var(--ui-stat-danger)]">*</span></label>
                     <input type="text" name="nom_complet"
                            class="form-input @error('nom_complet') form-input-error @enderror"
                            value="{{ old('nom_complet') }}" required>

@@ -32,8 +32,8 @@ return [
         'quick_actions' => ['packages', 'products', 'withdrawal', 'team'],
     ],
     4 => [
-        'gradient' => '#8b5cf6',
-        'badge_color' => 'purple',
+        'gradient' => '#184f94',
+        'badge_color' => 'blue',
         'welcome_title' => 'Niveau supérieur atteint !',
         'welcome_message' => 'Vous êtes maintenant un leader confirmé.',
         'show_chart' => true,
@@ -52,8 +52,8 @@ return [
         'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
     ],
     6 => [
-        'gradient' => '#9333ea',
-        'badge_color' => 'purple',
+        'gradient' => '#1e5dad',
+        'badge_color' => 'blue',
         'welcome_title' => 'Niveau Élite !',
         'welcome_message' => 'Vous faites partie des meilleurs.',
         'show_chart' => true,

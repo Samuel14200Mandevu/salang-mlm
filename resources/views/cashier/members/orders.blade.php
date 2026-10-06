@@ -1,127 +1,5 @@
 @extends('cashier.layouts.app')
 
-@push('styles')
-<style>
-    :root {
-        --primary-navy: #0F2B4F;
-        --primary-navy-dark: #091E3B;
-        --primary-navy-light: #1A3F6A;
-        --bg-base: #F5F6F8;
-        --bg-card: #FFFFFF;
-        --bg-secondary: #EEF0F3;
-        --bg-hover: #E8EAEE;
-        --text-primary: #1A1A1E;
-        --text-secondary: #4A4A52;
-        --text-tertiary: #7A7A82;
-        --border-color: #DCDEE3;
-        --border-light: #E8EAEE;
-        --success: #1F7B4D;
-        --danger: #B32A2A;
-        --warning: #A65A0E;
-        --info: #0A2A6C;
-    }
-
-    .card-stats {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 0.875rem 1rem;
-        transition: border-color 0.15s ease;
-    }
-
-    .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.25rem;
-        transition: border-color 0.15s ease;
-    }
-
-    .table-wrap { overflow-x: auto; }
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-    }
-    .table thead th {
-        padding: 0.5rem 0.75rem;
-        text-align: left;
-        font-size: 0.688rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--text-secondary);
-        background: var(--bg-secondary);
-        border-bottom: 2px solid var(--border-color);
-    }
-    .table tbody td {
-        padding: 0.5rem 0.75rem;
-        color: var(--text-primary);
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border-light);
-    }
-    .table-striped tbody tr:nth-child(even) {
-        background: var(--bg-secondary);
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
-        font-size: 0.625rem;
-        font-weight: 600;
-        border: 1px solid transparent;
-    }
-    .badge-success { background: #E6F4EC; color: #1F7B4D; border-color: #B8DFCC; }
-    .badge-warning { background: #FEF1E6; color: #A65A0E; border-color: #FADCB8; }
-    .badge-danger { background: #FDE8E8; color: #B32A2A; border-color: #F5C8C8; }
-    .badge-info { background: #E8EDF5; color: var(--primary-navy); border-color: #C8D4E3; }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 0.813rem;
-        transition: background 0.15s ease, border-color 0.15s ease;
-        cursor: pointer;
-        border: 1px solid transparent;
-        text-decoration: none;
-    }
-    .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
-    .btn-outline {
-        background: transparent;
-        color: var(--text-primary);
-        border-color: var(--border-color);
-    }
-    .btn-outline:hover {
-        background: var(--bg-hover);
-        border-color: var(--border-color);
-    }
-    .btn-primary {
-        background: var(--primary-navy);
-        color: white;
-        border-color: var(--primary-navy);
-    }
-    .btn-primary:hover {
-        background: var(--primary-navy-dark);
-        border-color: var(--primary-navy-dark);
-    }
-
-    @media (max-width: 640px) {
-        .card { padding: 0.875rem; }
-        .card-stats { padding: 0.625rem; }
-        .card-stats .text-2xl { font-size: 1.25rem; }
-        .table thead th, .table tbody td { padding: 0.375rem 0.5rem; font-size: 0.65rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
-        .table-wrap { margin: 0 -0.875rem; padding: 0 0.875rem; }
-    }
-</style>
-@endpush
-
 @section('title', 'Commandes du membre')
 
 @section('content')
@@ -167,32 +45,32 @@
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#1F7B4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Terminées</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#1F7B4D]">{{ $orders->where('status', 'completed')->count() }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $orders->where('status', 'completed')->count() }}</p>
         </div>
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#A65A0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#A65A0E]">{{ $orders->where('status', 'pending')->count() }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $orders->where('status', 'pending')->count() }}</p>
         </div>
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#3d8a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[var(--ui-stat-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total dépensé</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#3d8a2a]">${{ number_format($orders->sum('total'), 2) }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-accent)]">${{ number_format($orders->sum('total'), 2) }}</p>
         </div>
     </div>
 

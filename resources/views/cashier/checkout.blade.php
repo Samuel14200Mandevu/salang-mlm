@@ -299,7 +299,7 @@
         border-radius: 9999px;
         font-size: 0.6rem;
         font-weight: 600;
-        background: rgba(90, 182, 56, 0.12);
+        background: rgba(30, 93, 173, 0.12);
         color: var(--primary-500);
     }
     
@@ -352,11 +352,11 @@
     .btn-primary {
         background: var(--gradient-primary);
         color: white;
-        box-shadow: 0 4px 20px rgba(90, 182, 56, 0.3);
+        box-shadow: 0 4px 20px rgba(30, 93, 173, 0.3);
     }
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(90, 182, 56, 0.4);
+        box-shadow: 0 8px 32px rgba(30, 93, 173, 0.4);
     }
     .btn-outline {
         background: transparent;
@@ -407,7 +407,7 @@
     }
     .pv-badge-bv {
         background: rgba(139,92,246,0.12);
-        color: #3d8a2a;
+        color: #e8940f;
     }
     
     @keyframes fadeInUp {
@@ -477,6 +477,30 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+        </div>
+    @endif
+
+    @if(!empty($consultationCheckout) && !empty($consultationCheckout['consultation_id']))
+        <div class="p-3 sm:p-4 bg-primary-500/10 border border-primary-500/25 rounded-lg text-sm sm:text-base animate-fadeIn">
+            <div class="flex flex-wrap items-start gap-2">
+                <svg class="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <div>
+                    <p class="font-semibold text-[var(--text-primary)]">
+                        Vente liée à la consultation #{{ $consultationCheckout['consultation_id'] }}
+                    </p>
+                    <p class="text-[var(--text-secondary)] mt-0.5">
+                        @if($linkedConsultation)
+                            Patient : {{ $linkedConsultation->nom_complet }}
+                            —
+                            <a href="{{ route('cashier.consultations.show', $linkedConsultation) }}" class="text-primary-500 hover:underline">Retour à la fiche</a>
+                        @else
+                            Seuls les produits sélectionnés sur la fiche seront enregistrés comme payés.
+                        @endif
+                    </p>
+                </div>
+            </div>
         </div>
     @endif
 
@@ -627,7 +651,7 @@
                                            name="name" 
                                            class="input @error('name') input-error @enderror" 
                                            placeholder="Nom du client"
-                                           value="{{ old('name') }}">
+                                           value="{{ old('name', data_get($consultationCheckout, 'patient_name', '')) }}">
                                     @error('name')
                                         <p class="error-text">{{ $message }}</p>
                                     @enderror

@@ -6,13 +6,7 @@
     <title>Rapport POS - {{ date('d/m/Y') }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Arial', sans-serif; 
-            padding: 20px; 
-            color: #333; 
-            font-size: 11px;
-        }
-        .header { 
+.header { 
             text-align: center; 
             border-bottom: 2px solid #0E2F76; 
             padding-bottom: 10px; 

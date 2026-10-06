@@ -12,6 +12,7 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'cashier_id',
+        'consultation_id',
         'created_by',
         'order_number',
         'subtotal',
@@ -77,6 +78,11 @@ class Order extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(Consultation::class);
     }
 
     /**

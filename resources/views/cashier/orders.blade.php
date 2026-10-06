@@ -3,10 +3,10 @@
 
 @push('styles')
 <style>
-    :root {
-        --primary-navy: #0F2B4F;
-        --primary-navy-dark: #091E3B;
-        --primary-navy-light: #1A3F6A;
+    html:not(.dark) {
+        --primary-navy: #184f94;
+        --primary-navy-dark: #134178;
+        --primary-navy-light: #1e5dad;
         --bg-base: #F5F6F8;
         --bg-card: #FFFFFF;
         --bg-secondary: #EEF0F3;
@@ -117,7 +117,7 @@
     }
     .badge-source-web {
         background: #EDE8F5;
-        color: #3d8a2a;
+        color: #e8940f;
         border-color: #D4C8E3;
     }
 
@@ -379,12 +379,12 @@
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#1F7B4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">POS</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#1F7B4D]">{{ $posCount }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $posCount }}</p>
         </div>
 
         <div class="card-stats">
@@ -399,12 +399,12 @@
 
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#A65A0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-4 h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</span>
             </div>
-            <p class="text-lg sm:text-xl font-bold text-[#A65A0E]">{{ $pendingCount }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $pendingCount }}</p>
         </div>
     </div>
 

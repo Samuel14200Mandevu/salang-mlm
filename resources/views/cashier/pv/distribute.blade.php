@@ -33,7 +33,7 @@
         justify-content: center;
         font-weight: 600;
         font-size: 0.75rem;
-        background: #0F2B4F;
+        background: #184f94;
         color: #fff;
         flex-shrink: 0;
     }
@@ -94,7 +94,7 @@
         outline: none;
     }
     .input-sm:focus {
-        border-color: #0F2B4F;
+        border-color: #184f94;
     }
 
     .btn {
@@ -132,8 +132,8 @@
     }
     .btn-outline:hover {
         background: var(--bg-hover, #E8EAEE);
-        border-color: #0F2B4F;
-        color: #0F2B4F;
+        border-color: #184f94;
+        color: #184f94;
     }
 
     .card {
@@ -158,33 +158,47 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
+    @php
+        $pvQuery = !empty($viewingMember) ? ['member_id' => $subject->id] : [];
+    @endphp
+
     {{-- EN-TÊTE --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Distribuer des PV</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Répartissez vos Points de Volume dans votre réseau</p>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                @if(!empty($viewingMember))
+                    Portefeuille de {{ $subject->name }} — répartition dans son réseau
+                @else
+                    Répartissez vos Points de Volume dans votre réseau
+                @endif
+            </p>
         </div>
-        <a href="{{ route('cashier.pv.dashboard') }}" class="btn btn-outline btn-sm">Retour</a>
+        <a href="{{ route('cashier.pv.dashboard', $pvQuery) }}" class="btn btn-outline btn-sm">Retour</a>
     </div>
 
     {{-- SOLDE --}}
     <div class="card flex items-center justify-between flex-wrap gap-3">
         <div>
             <p class="text-sm text-[var(--text-secondary)]">PV disponibles à distribuer</p>
-            <p class="text-2xl font-bold text-[#0F2B4F]">{{ number_format($balance?->available_pv ?? 0) }} PV</p>
-            @if($balance?->available_bv > 0)
-                <p class="text-xs text-[var(--text-tertiary)]">BV: {{ number_format($balance?->available_bv) }}</p>
+            <p class="text-2xl font-bold text-[var(--ui-stat-primary)]">{{ number_format($memberPv['available_pv'] ?? 0) }} PV</p>
+            @if(($memberPv['available_bv'] ?? 0) > 0)
+                <p class="text-xs text-[var(--text-tertiary)]">BV: {{ number_format($memberPv['available_bv']) }}</p>
             @endif
         </div>
         <div class="text-right">
-            <p class="text-sm text-[var(--text-secondary)]">PV total</p>
-            <p class="text-xl font-bold text-[var(--text-primary)]">{{ number_format($balance?->total_pv ?? 0) }} PV</p>
+            <p class="text-sm text-[var(--text-secondary)]">PV cumulés (grade)</p>
+            <p class="text-xl font-bold text-[var(--text-primary)]">{{ number_format($memberPv['cumulative_pv'] ?? 0) }} PV</p>
+            <p class="text-xs text-[var(--text-tertiary)]">Portefeuille: {{ number_format($memberPv['wallet_total_pv'] ?? 0) }} PV</p>
         </div>
     </div>
 
     {{-- FORMULAIRE --}}
     <form action="{{ route('cashier.pv.distribute.post') }}" method="POST">
         @csrf
+        @if(!empty($viewingMember))
+            <input type="hidden" name="member_id" value="{{ $subject->id }}">
+        @endif
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
             {{-- Sélection --}}
@@ -205,7 +219,7 @@
                                     <div class="name">{{ $member['name'] }}</div>
                                     <div class="detail">Niveau {{ $member['level'] }} • {{ $member['phone'] ?? 'N/A' }}</div>
                                 </div>
-                                <div class="pv-info">{{ $member['pv_balance'] }} PV</div>
+                                <div class="pv-info">{{ number_format($member['pv_balance']) }} PV</div>
                             </div>
                         @endforeach
                     @endif
@@ -238,7 +252,7 @@
 @push('scripts')
 <script>
 let distributions = [];
-const maxAvailablePv = {{ $balance?->available_pv ?? 0 }};
+const maxAvailablePv = {{ $memberPv['available_pv'] ?? 0 }};
 
 function addMember(element) {
     const id = element.dataset.id;
@@ -330,9 +344,9 @@ function updateSubmitButton() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const memberId = new URLSearchParams(window.location.search).get('member_id');
-    if (memberId) {
-        const el = document.querySelector(`.member-item[data-id="${memberId}"]`);
+    const recipientId = new URLSearchParams(window.location.search).get('recipient_id');
+    if (recipientId) {
+        const el = document.querySelector(`.member-item[data-id="${recipientId}"]`);
         if (el) { addMember(el); el.classList.add('selected'); }
     }
 });

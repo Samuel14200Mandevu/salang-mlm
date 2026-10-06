@@ -101,6 +101,11 @@ class Consultation extends Model
         return $this->belongsTo(User::class, 'client_id');
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     // ============================================================
     // MÉTHODES UTILITAIRES
     // ============================================================

@@ -97,11 +97,28 @@ class AuthController extends Controller
             'device_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']])) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (!$user) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
+
+        if (\App\Support\UserPassword::usesLegacyMd5($user)) {
+            return $this->error(config('legacy-auth.login_error'), 403, [
+                'legacy_password' => true,
+                'info_url' => route('login.legacy-info'),
+            ]);
+        }
+
+        if (!\App\Support\UserPassword::verify($user, $credentials['password'])) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        Auth::login($user);
 
         /** @var User $user */
         $user = Auth::user();

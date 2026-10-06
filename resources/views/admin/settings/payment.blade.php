@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1.25rem;
 }
@@ -322,7 +315,7 @@
                            class="form-control @error('crypto_fee') form-control-error @enderror" required>
                     <span class="help-text">Frais appliqués sur les transactions crypto</span>
                     @error('crypto_fee')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -393,7 +386,7 @@
                            class="form-control @error('mobile_money_fee') form-control-error @enderror" required>
                     <span class="help-text">Frais appliqués sur les transactions Mobile Money</span>
                     @error('mobile_money_fee')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>

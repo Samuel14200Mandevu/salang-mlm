@@ -32,12 +32,12 @@
     flex-shrink: 0;
 }
 
-.stat-icon-primary { background: rgba(10, 42, 108, 0.08); color: #0A2A6C; }
-.stat-icon-success { background: rgba(28, 126, 74, 0.08); color: #1C7E4A; }
-.stat-icon-purple { background: rgba(10, 42, 108, 0.08); color: #0A2A6C; }
-.stat-icon-info { background: rgba(6, 95, 156, 0.08); color: #065F9C; }
-.stat-icon-warning { background: rgba(181, 71, 8, 0.08); color: #B54708; }
-.stat-icon-danger { background: rgba(185, 28, 28, 0.08); color: #B91C1C; }
+.stat-icon-primary { background: rgba(30, 93, 173, 0.1); color: var(--color-primary-600); }
+.stat-icon-success { background: rgba(28, 126, 74, 0.08); color: var(--success); }
+.stat-icon-purple { background: rgba(30, 93, 173, 0.1); color: var(--color-primary-600); }
+.stat-icon-info { background: rgba(37, 99, 235, 0.08); color: var(--ui-stat-info); }
+.stat-icon-warning { background: rgba(245, 166, 35, 0.12); color: var(--color-accent-600); }
+.stat-icon-danger { background: rgba(185, 28, 28, 0.08); color: var(--danger); }
 
 .stat-card .stat-value {
     font-size: 1.375rem;
@@ -477,7 +477,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Commissions</p>
-                    <p class="stat-value text-[#1C7E4A]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-success">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -515,7 +515,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Packages</p>
-                    <p class="stat-value text-[#065F9C]">{{ number_format($totalPackages ?? 0) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-info)]">{{ number_format($totalPackages ?? 0) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-info">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

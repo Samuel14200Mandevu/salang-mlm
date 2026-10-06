@@ -35,7 +35,7 @@
         flex-shrink: 0;
     }
 
-    .stat-icon-total { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .stat-icon-total { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .stat-icon-pending { background: rgba(245, 158, 11, 0.10); color: #f59e0b; }
     .stat-icon-processing { background: rgba(59, 130, 246, 0.10); color: #3b82f6; }
     .stat-icon-completed { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
@@ -128,7 +128,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -282,7 +282,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">En attente</p>
-                    <p class="stat-value text-[#d97706]">{{ $stats['pending'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $stats['pending'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-pending">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -296,7 +296,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">En traitement</p>
-                    <p class="stat-value text-[#2563eb]">{{ $stats['processing'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-info)]">{{ $stats['processing'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-processing">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -310,7 +310,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Terminées</p>
-                    <p class="stat-value text-[#16a34a]">{{ $stats['completed'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">{{ $stats['completed'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-completed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

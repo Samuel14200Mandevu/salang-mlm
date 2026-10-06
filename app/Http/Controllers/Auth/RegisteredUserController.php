@@ -38,7 +38,7 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
             ]);
             return back()->withErrors([
-                'email' => 'Too many registration attempts. Please try again later.'
+                'general' => 'Trop de tentatives d’inscription. Réessayez dans quelques minutes.',
             ]);
         }
 
@@ -57,10 +57,15 @@ class RegisteredUserController extends Controller
             'sponsor_id' => ['required', 'string'],
             'terms' => ['required', 'accepted'],
         ], [
-            'email.unique' => 'This email address is already used by another account.',
-            'sponsor_id.required' => 'Sponsor ID is required.',
-            'terms.required' => 'You must accept the terms and conditions.',
-            'terms.accepted' => 'You must accept the terms and conditions.',
+            'name.required' => 'Le nom complet est obligatoire.',
+            'email.required' => 'L’adresse email est obligatoire.',
+            'email.email' => 'Saisissez une adresse email valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'sponsor_id.required' => 'Le code parrain est obligatoire.',
+            'terms.required' => 'Vous devez accepter les conditions générales.',
+            'terms.accepted' => 'Vous devez accepter les conditions générales.',
         ]);
 
         // ✅ Vérifier le format du code sponsor (doit commencer par "51" et faire 6 chiffres)
@@ -68,7 +73,7 @@ class RegisteredUserController extends Controller
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'sponsor_id' => 'Invalid sponsor code format. Must start with 51 and have 6 digits (e.g., 511739).'
+                    'sponsor_id' => 'Format de code parrain invalide : 6 chiffres commençant par 51 (ex. 511739).',
                 ]);
         }
 
@@ -92,7 +97,7 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'sponsor_id' => 'Invalid sponsor ID. Please check the code.'
+                        'sponsor_id' => 'Code parrain introuvable. Vérifiez le code auprès de votre parrain.',
                     ]);
             }
 
@@ -100,7 +105,7 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'sponsor_id' => 'This sponsor account is currently inactive.'
+                        'sponsor_id' => 'Le compte de ce parrain est inactif. Demandez un autre code.',
                     ]);
             }
 
@@ -108,7 +113,7 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'This email address is already used by another account.'
+                        'email' => 'Cette adresse email est déjà utilisée.',
                     ]);
             }
 
@@ -224,14 +229,14 @@ class RegisteredUserController extends Controller
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors([
-                        'email' => 'This email address is already used by another account.'
+                        'email' => 'Cette adresse email est déjà utilisée.',
                     ]);
             }
 
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'email' => 'An error occurred during registration. Please try again.'
+                    'general' => 'Une erreur est survenue lors de l’inscription. Réessayez.',
                 ]);
 
         } catch (\Exception $e) {
@@ -244,7 +249,7 @@ class RegisteredUserController extends Controller
             return back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors([
-                    'email' => 'An error occurred. Please try again later.'
+                    'general' => 'Une erreur est survenue. Réessayez plus tard.',
                 ]);
         }
     }

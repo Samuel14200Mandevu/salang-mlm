@@ -59,7 +59,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: #091E3B;
+        background: #134178;
         color: #FFFFFF;
     }
     .btn-outline {
@@ -121,7 +121,7 @@
         font-weight: 600;
     }
     .type-badge-sponsor { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; }
-    .type-badge-direct { background: rgba(90, 182, 56, 0.12); color: #5ab638; }
+    .type-badge-direct { background: rgba(30, 93, 173, 0.12); color: #1e5dad; }
     .type-badge-indirect { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
     .type-badge-leadership { background: rgba(245, 158, 11, 0.12); color: #A65A0E; }
     .type-badge-cash_pos { background: rgba(34, 197, 94, 0.12); color: #1F7B4D; }

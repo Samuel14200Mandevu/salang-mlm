@@ -2,30 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-light: #1A3A7C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-    
-    /* Couleurs des grades */
-    --grade-distributeur: #6B7280;
-    --grade-distributeur-bg: rgba(107, 114, 128, 0.12);
-    --grade-bronze: #CD7F32;
-    --grade-bronze-bg: rgba(205, 127, 50, 0.15);
-    --grade-argent: #8A8D91;
-    --grade-argent-bg: rgba(138, 141, 145, 0.15);
-    --grade-or: #D4AF37;
-    --grade-or-bg: rgba(212, 175, 55, 0.15);
-    --grade-platine: #A8B5C5;
-    --grade-platine-bg: rgba(168, 181, 197, 0.15);
-    --grade-diamant: #00BFFF;
-    --grade-diamant-bg: rgba(0, 191, 255, 0.15);
-    --grade-president: #8B0000;
-    --grade-president-bg: rgba(139, 0, 0, 0.12);
-}
-
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -154,6 +130,10 @@
     color: var(--text-primary);
     margin-top: 0.125rem;
 }
+.info-row .value .badge-level,
+.table td .badge-level {
+    vertical-align: middle;
+}
 
 .badge {
     display: inline-block;
@@ -171,95 +151,6 @@
 .badge-purple { background: rgba(10, 42, 108, 0.12); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.15); }
 .badge-cashier { background: rgba(10, 42, 108, 0.08); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.12); }
 .badge-cashier-principal { background: rgba(10, 42, 108, 0.15); color: var(--primary-blue); border-color: rgba(10, 42, 108, 0.2); font-weight: 700; }
-
-/* Badges des grades */
-.badge-grade-distributeur { background: var(--grade-distributeur-bg); color: var(--grade-distributeur); border-color: rgba(107, 114, 128, 0.2); }
-.badge-grade-bronze { background: var(--grade-bronze-bg); color: var(--grade-bronze); border-color: rgba(205, 127, 50, 0.25); }
-.badge-grade-argent { background: var(--grade-argent-bg); color: var(--grade-argent); border-color: rgba(138, 141, 145, 0.25); }
-.badge-grade-or { background: var(--grade-or-bg); color: var(--grade-or); border-color: rgba(212, 175, 55, 0.25); }
-.badge-grade-platine { background: var(--grade-platine-bg); color: var(--grade-platine); border-color: rgba(168, 181, 197, 0.25); }
-.badge-grade-diamant { background: var(--grade-diamant-bg); color: var(--grade-diamant); border-color: rgba(0, 191, 255, 0.25); }
-.badge-grade-president { background: var(--grade-president-bg); color: var(--grade-president); border-color: rgba(139, 0, 0, 0.25); }
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.25rem;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.813rem;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-    cursor: pointer;
-    border: 1px solid transparent;
-    text-decoration: none;
-}
-.btn:active {
-    transform: scale(0.97);
-}
-.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
-.btn-md { padding: 0.5rem 1.25rem; font-size: 0.813rem; }
-
-.btn-primary {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
-}
-.btn-primary:hover {
-    background: var(--primary-blue-dark);
-    border-color: var(--primary-blue-dark);
-}
-
-.btn-success {
-    background: #1C7E4A;
-    color: white;
-    border-color: #1C7E4A;
-}
-.btn-success:hover {
-    background: #14633A;
-    border-color: #14633A;
-}
-
-.btn-danger {
-    background: #B91C1C;
-    color: white;
-    border-color: #B91C1C;
-}
-.btn-danger:hover {
-    background: #991B1B;
-    border-color: #991B1B;
-}
-
-.btn-warning {
-    background: #B54708;
-    color: white;
-    border-color: #B54708;
-}
-.btn-warning:hover {
-    background: #92400E;
-    border-color: #92400E;
-}
-
-.btn-info {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
-}
-.btn-info:hover {
-    background: var(--primary-blue-dark);
-    border-color: var(--primary-blue-dark);
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-.btn-outline:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-color);
-}
 
 .card {
     background: var(--bg-card);
@@ -378,7 +269,7 @@
                 ID: {{ $user->id }}
             </p>
         </div>
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-2 flex-wrap justify-end">
             <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -386,16 +277,61 @@
                 <span class="hidden xs:inline">Retour</span>
             </a>
 
-            @if(!$user->is_active)
-            <button type="button"
-                    onclick="openGenerateCodeModal()"
-                    class="btn btn-info btn-sm sm:btn-md">
+            <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
+               class="btn btn-info btn-sm sm:btn-md"
+               title="Gérer les Points de Volume de cet utilisateur">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
-                Générer code
-            </button>
+                <span class="hidden sm:inline">Gérer les PV</span>
+                <span class="sm:hidden">PV</span>
+            </a>
+
+            @if($user->is_active)
+                <button type="button"
+                        onclick="openDeactivateModal()"
+                        class="btn btn-warning btn-sm sm:btn-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                    <span class="hidden sm:inline">Désactiver</span>
+                </button>
+            @else
+                <button type="button"
+                        onclick="openActivateWithPackageModal()"
+                        class="btn btn-success btn-sm sm:btn-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="hidden md:inline">Activer avec package</span>
+                    <span class="md:hidden">Activer</span>
+                </button>
+
+                <button type="button"
+                        onclick="openGenerateCodeModal()"
+                        class="btn btn-info btn-sm sm:btn-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Générer code</span>
+                </button>
             @endif
+
+            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                <span class="hidden xs:inline">Modifier</span>
+            </a>
+
+            <button type="button"
+                    onclick="openDeleteModal()"
+                    class="btn btn-danger btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <span class="hidden xs:inline">Supprimer</span>
+            </button>
         </div>
     </div>
 
@@ -526,29 +462,12 @@
                     <span class="label">Grade</span>
                     <span class="value">
                         @php
-                            $rank = $user->rank ?? 'Distributeur';
-                            $rankLevel = $user->rank_level ?? 1;
-                            
-                            $rankBadgeClass = 'badge-grade-distributeur';
-                            if($rank === 'Distributeur') {
-                                $rankBadgeClass = 'badge-grade-distributeur';
-                            } elseif($rank === 'Bronze') {
-                                $rankBadgeClass = 'badge-grade-bronze';
-                            } elseif($rank === 'Argent') {
-                                $rankBadgeClass = 'badge-grade-argent';
-                            } elseif($rank === 'Or') {
-                                $rankBadgeClass = 'badge-grade-or';
-                            } elseif($rank === 'Platine') {
-                                $rankBadgeClass = 'badge-grade-platine';
-                            } elseif($rank === 'Diamant') {
-                                $rankBadgeClass = 'badge-grade-diamant';
-                            } elseif($rank === 'Président') {
-                                $rankBadgeClass = 'badge-grade-president';
-                            }
+                            $rankLevel = (int) ($user->rank_level ?? 0);
+                            $rankLabel = \App\Support\MlmRank::label($rankLevel);
+                            $rankBadgeClass = \App\Support\MlmRank::badgeClass($rankLevel);
                         @endphp
-                        <span class="badge {{ $rankBadgeClass }}">
-                            {{ $rank }} (Niv. {{ $rankLevel }})
-                        </span>
+                        <span class="{{ $rankBadgeClass }}">{{ $rankLabel }}</span>
+                        <span class="text-xs text-[var(--text-tertiary)] font-normal ml-1">(Niv. {{ $rankLevel }})</span>
                         @if($user->activation_package_id)
                             @php
                                 $activationPackage = App\Models\Package::find($user->activation_package_id);
@@ -571,11 +490,11 @@
                 <p class="text-xs text-[var(--text-secondary)]">Filleuls</p>
             </div>
             <div class="text-center">
-                <p class="text-2xl font-bold text-[#065F9C]">{{ $commissionsCount ?? 0 }}</p>
+                <p class="text-2xl font-bold text-[var(--ui-stat-info)]">{{ $commissionsCount ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Commissions</p>
             </div>
             <div class="text-center">
-                <p class="text-2xl font-bold text-[#1C7E4A]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                <p class="text-2xl font-bold text-[var(--ui-stat-success)]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Total Commissions</p>
             </div>
             <!-- PV Link -->
@@ -611,6 +530,7 @@
                             <th class="text-xs">Email</th>
                             <th class="text-xs">Code</th>
                             <th class="text-xs">Grade</th>
+                            <th class="text-xs hidden sm:table-cell">PV</th>
                             <th class="text-xs">Statut</th>
                             <th class="text-xs">Action</th>
                         </tr>
@@ -624,29 +544,15 @@
                             <td class="text-xs font-mono text-primary-blue">{{ $filleul->sponsor_id }}</td>
                             <td>
                                 @php
-                                    $rank = $filleul->rank ?? 'Distributeur';
-                                    $rankLevel = $filleul->rank_level ?? 1;
-                                    
-                                    $rankBadgeClass = 'badge-grade-distributeur';
-                                    if($rank === 'Distributeur') {
-                                        $rankBadgeClass = 'badge-grade-distributeur';
-                                    } elseif($rank === 'Bronze') {
-                                        $rankBadgeClass = 'badge-grade-bronze';
-                                    } elseif($rank === 'Argent') {
-                                        $rankBadgeClass = 'badge-grade-argent';
-                                    } elseif($rank === 'Or') {
-                                        $rankBadgeClass = 'badge-grade-or';
-                                    } elseif($rank === 'Platine') {
-                                        $rankBadgeClass = 'badge-grade-platine';
-                                    } elseif($rank === 'Diamant') {
-                                        $rankBadgeClass = 'badge-grade-diamant';
-                                    } elseif($rank === 'Président') {
-                                        $rankBadgeClass = 'badge-grade-president';
-                                    }
+                                    $rankLevel = (int) ($filleul->rank_level ?? 0);
                                 @endphp
-                                <span class="badge {{ $rankBadgeClass }}">
-                                    {{ $rank }}
+                                <span class="{{ \App\Support\MlmRank::badgeClass($rankLevel) }}">
+                                    {{ \App\Support\MlmRank::label($rankLevel) }}
                                 </span>
+                                <span class="text-xs text-[var(--text-tertiary)]">(Niv. {{ $rankLevel }})</span>
+                            </td>
+                            <td class="hidden sm:table-cell text-sm font-medium font-mono text-[var(--ui-stat-success)]">
+                                {{ number_format((float) ($filleul->pv_balance ?? 0)) }}
                             </td>
                             <td>
                                 <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
@@ -665,65 +571,6 @@
             </div>
         </div>
         @endif
-
-        <!-- Actions -->
-        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)] flex flex-wrap gap-2 sm:gap-3">
-
-            <!-- Gérer les PV -->
-            <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
-               class="btn btn-info btn-sm sm:btn-md"
-               title="Gérer les Points de Volume de cet utilisateur">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                Gérer les PV
-            </a>
-
-            @if($user->is_active)
-                <button type="button"
-                        onclick="openDeactivateModal()"
-                        class="btn btn-warning btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                    </svg>
-                    Désactiver
-                </button>
-            @else
-                <button type="button"
-                        onclick="openActivateWithPackageModal()"
-                        class="btn btn-success btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Activer avec package
-                </button>
-
-                <button type="button"
-                        onclick="openGenerateCodeModal()"
-                        class="btn btn-info btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                    </svg>
-                    Générer code
-                </button>
-            @endif
-
-            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                Modifier
-            </a>
-
-            <button type="button"
-                    onclick="openDeleteModal()"
-                    class="btn btn-danger btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                Supprimer
-            </button>
-        </div>
     </div>
 </div>
 
@@ -846,11 +693,11 @@
                 </div>
                 <div class="flex justify-between border-t border-[var(--border-light)] pt-2 mt-2">
                     <span>PV après activation:</span>
-                    <span class="font-bold text-[#1C7E4A]" id="newPVTotal">{{ $currentPV ?? 0 }}</span>
+                    <span class="font-bold text-[var(--ui-stat-success)]" id="newPVTotal">{{ $currentPV ?? 0 }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>BV après activation:</span>
-                    <span class="font-bold text-[#1C7E4A]" id="newBVTotal">{{ $currentBV ?? 0 }}</span>
+                    <span class="font-bold text-[var(--ui-stat-success)]" id="newBVTotal">{{ $currentBV ?? 0 }}</span>
                 </div>
             </div>
 

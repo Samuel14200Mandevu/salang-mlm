@@ -1,0 +1,1110 @@
+/* Cashier UI shell — aligné marque Salang (bleu / orange) */
+
+[x-cloak] {
+  display: none !important;
+}
+
+.cashier-app .sidebar-link .badge-count, .admin-app .sidebar-link .badge-count, .member-app .sidebar-link .badge-count {
+  display: inline-block;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.cashier-app .notification-dot, .admin-app .notification-dot, .member-app .notification-dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+  border: 2px solid var(--bg-navbar);
+}
+
+.workflow-notify-total-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.workflow-notify-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  padding: 0.125rem 0.4rem;
+  border-radius: 9999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.workflow-notify-row-priority {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.workflow-notify-row-priority .workflow-notify-row-icon {
+  color: var(--primary);
+}
+
+.salang-cart-root .cart-dropdown-backdrop,
+.salang-cart-root .cart-dropdown-panel {
+  display: none;
+}
+
+.salang-cart-root.salang-cart-root--open .cart-dropdown-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: rgb(0 0 0 / 0.35);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.salang-cart-root.salang-cart-root--open .cart-dropdown-panel {
+  display: flex;
+  position: fixed;
+  z-index: 9991;
+  top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  left: auto;
+  width: min(24rem, calc(100vw - 1.5rem));
+  max-height: min(70vh, 32rem);
+  margin: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.18);
+  transform-origin: top right;
+}
+
+@media (min-width: 640px) {
+  .salang-cart-root.salang-cart-root--open .cart-dropdown-panel {
+    top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+}
+
+.salang-cart-root .cart-dropdown-panel .btn-block {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.salang-cart-root .cart-dropdown-panel #cartItems > div {
+  gap: 0.5rem;
+}
+
+.salang-cart-root .cart-dropdown-panel #cartItems .btn-icon {
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .salang-cart-root.salang-cart-root--open .cart-dropdown-panel {
+    max-height: min(65vh, 28rem);
+  }
+}
+
+/* Logo sidebar — sidebar-rail-styles.blade.php (full + favicon mark) */
+
+/* Layout shell — 1er paint (complété par script head + Alpine) */
+html.shell-is-desktop.shell-sidebar-expanded .cashier-app .main-wrapper,
+html.shell-is-desktop.shell-sidebar-expanded .admin-app .main-wrapper,
+html.shell-is-desktop.shell-sidebar-expanded .member-app .main-wrapper {
+  margin-left: 16rem;
+  width: calc(100% - 16rem);
+}
+
+html.shell-is-desktop.shell-sidebar-expanded .cashier-app #sidebar,
+html.shell-is-desktop.shell-sidebar-expanded .admin-app #sidebar,
+html.shell-is-desktop.shell-sidebar-expanded .member-app #sidebar {
+  width: 16rem;
+}
+
+html.shell-is-desktop.shell-sidebar-rail .cashier-app .main-wrapper,
+html.shell-is-desktop.shell-sidebar-rail .admin-app .main-wrapper,
+html.shell-is-desktop.shell-sidebar-rail .member-app .main-wrapper {
+  margin-left: 5rem;
+  width: calc(100% - 5rem);
+}
+
+html.shell-is-desktop.shell-sidebar-rail .cashier-app #sidebar,
+html.shell-is-desktop.shell-sidebar-rail .admin-app #sidebar,
+html.shell-is-desktop.shell-sidebar-rail .member-app #sidebar {
+  width: 5rem;
+}
+
+html.shell-is-mobile .cashier-app .main-wrapper,
+html.shell-is-mobile .admin-app .main-wrapper,
+html.shell-is-mobile .member-app .main-wrapper {
+  margin-left: 0;
+  width: 100%;
+}
+
+html.shell-is-mobile .cashier-app #sidebar,
+html.shell-is-mobile .admin-app #sidebar,
+html.shell-is-mobile .member-app #sidebar {
+  width: 16rem;
+}
+
+@media (max-width: 767px) {
+  .cashier-app #sidebar:not(.translate-x-0), .admin-app #sidebar:not(.translate-x-0), .member-app #sidebar:not(.translate-x-0) {
+    transform: translateX(-100%);
+  }
+}
+
+.cashier-app, .admin-app, .member-app {
+  --bg-footer: #E8EAEE;
+  --text-tertiary: var(--text-muted);
+  --primary: var(--color-primary-600);
+  --primary-hover: var(--color-primary-700);
+  --primary-light: var(--color-primary-500);
+  --accent-brand: var(--color-accent-500);
+  --primary-navy: var(--color-primary-600);
+  --primary-navy-dark: var(--color-primary-700);
+  --primary-navy-light: var(--color-primary-500);
+  --sidebar-width: 250px;
+  --sidebar-collapsed: 72px;
+  --header-height: 64px;
+  --mobile-nav-height: 64px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  --cashier-stat-primary: var(--color-primary-600);
+  --cashier-stat-success: #1f7b4d;
+  --cashier-stat-danger: #b32a2a;
+  --cashier-stat-warning: var(--color-accent-600);
+}
+
+html.dark .cashier-app, html.dark .admin-app {
+  --bg-footer: var(--bg-secondary);
+  --text-tertiary: var(--text-muted);
+  --bg-base: var(--bg-page);
+  --bg-primary: var(--bg-page);
+  --primary-navy: var(--color-primary-500);
+  --primary-navy-dark: var(--color-primary-700);
+  --primary-navy-light: var(--color-primary-400);
+  --navy: var(--color-primary-500);
+  --navy-dark: var(--color-primary-700);
+  --slate: var(--text-secondary);
+  --slate-light: var(--text-muted);
+  --info: var(--color-primary-400);
+  --border-light: var(--border-color);
+  --cashier-stat-primary: var(--color-primary-400);
+  --cashier-stat-success: #34d399;
+  --cashier-stat-danger: #f87171;
+  --cashier-stat-warning: var(--color-accent-400);
+}
+
+html.dark .cashier-app .detail-card:hover, html.dark .admin-app .detail-card:hover, html.dark .member-app .detail-card:hover {
+  background: var(--bg-hover);
+}
+
+html.dark .cashier-app .alert-credentials, html.dark .admin-app .alert-credentials, html.dark .member-app .alert-credentials {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+html.dark .cashier-app .alert-credentials .alert-title, html.dark .admin-app .alert-credentials .alert-title, html.dark .member-app .alert-credentials .alert-title {
+  color: var(--success);
+}
+
+html.dark .cashier-app .alert-credentials .credentials-box, html.dark .admin-app .alert-credentials .credentials-box, html.dark .member-app .alert-credentials .credentials-box {
+  background: var(--bg-input);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+html.dark .cashier-app .alert-credentials .alert-warning-text, html.dark .admin-app .alert-credentials .alert-warning-text, html.dark .member-app .alert-credentials .alert-warning-text {
+  color: var(--text-secondary);
+}
+
+html.dark .cashier-app .badge-primary, .member-app .badge-primary,
+html.dark .cashier-app .badge-secondary, html.dark .admin-app .badge-secondary, html.dark .member-app .badge-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .cashier-app .badge-status-cancelled, html.dark .admin-app .badge-status-cancelled, html.dark .member-app .badge-status-cancelled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+html.dark .cashier-app .input, .member-app .input,
+html.dark .cashier-app .form-control, .member-app .form-control,
+html.dark .cashier-app select.input, html.dark .admin-app select.input {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+html.dark .cashier-app .sidebar-section, html.dark .admin-app .sidebar-section, html.dark .member-app .sidebar-section, html.dark .member-app .sidebar-section {
+  color: var(--color-accent-400);
+}
+
+.cashier-sidebar-accent {
+  height: 3px;
+  flex-shrink: 0;
+  background: var(--gradient-brand);
+}
+
+.cashier-topbar {
+  position: relative;
+  overflow: visible;
+}
+
+.cashier-topbar > div {
+  overflow: visible;
+}
+
+.cashier-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-600) 0%,
+    var(--color-primary-500) 48%,
+    var(--color-accent-500) 100%
+  );
+}
+
+/* ============================================================
+   LAYOUT PRINCIPAL – Footer toujours en bas
+   ============================================================ */
+.cashier-app .app-container, .admin-app .app-container, .member-app .app-container {
+    display: flex;
+    min-height: 100vh;
+    height: 100%;
+}
+
+.cashier-app .main-wrapper, .admin-app .main-wrapper, .member-app .main-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100vh;
+    transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
+}
+
+.cashier-app .main-content, .admin-app .main-content, .member-app .main-content {
+    flex: 1 0 auto;
+    padding: 1rem;
+}
+
+.cashier-app .main-footer, .admin-app .main-footer, .member-app .main-footer {
+    flex-shrink: 0;
+    background: var(--bg-footer);
+    border-top: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    margin-top: auto;
+}
+
+/* ============================================================
+   BOUTONS – Visibles et cohérents
+   ============================================================ */
+.cashier-app .btn, .admin-app .btn, .member-app .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    min-height: 40px;
+    line-height: 1.2;
+}
+
+.cashier-app .btn:focus-visible, .admin-app .btn:focus-visible, .member-app .btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.cashier-app .btn-primary, .admin-app .btn-primary, .member-app .btn-primary {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+}
+.cashier-app .btn-primary:hover, .admin-app .btn-primary:hover, .member-app .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 4px 14px rgba(245, 166, 35, 0.22);
+}
+
+.cashier-app .btn-success, .admin-app .btn-success, .member-app .btn-success {
+    background: var(--success);
+    color: #FFFFFF;
+    border-color: var(--success);
+}
+.cashier-app .btn-success:hover, .admin-app .btn-success:hover, .member-app .btn-success:hover {
+    background: var(--success-hover);
+    border-color: var(--success-hover);
+}
+
+.cashier-app .btn-danger, .admin-app .btn-danger, .member-app .btn-danger {
+    background: var(--danger);
+    color: #FFFFFF;
+    border-color: var(--danger);
+}
+.cashier-app .btn-danger:hover, .admin-app .btn-danger:hover, .member-app .btn-danger:hover {
+    background: var(--danger-hover);
+    border-color: var(--danger-hover);
+}
+
+.cashier-app .btn-warning, .admin-app .btn-warning, .member-app .btn-warning {
+    background: var(--color-accent-500);
+    color: #FFFFFF;
+    border-color: var(--color-accent-500);
+}
+.cashier-app .btn-warning:hover, .admin-app .btn-warning:hover, .member-app .btn-warning:hover {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-600);
+    box-shadow: 0 4px 14px rgba(245, 166, 35, 0.28);
+}
+
+.cashier-app .btn-info, .admin-app .btn-info, .member-app .btn-info {
+    background: var(--color-primary-500);
+    color: #FFFFFF;
+    border-color: var(--color-primary-500);
+}
+.cashier-app .btn-info:hover, .admin-app .btn-info:hover, .member-app .btn-info:hover {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    box-shadow: 0 4px 14px rgba(30, 93, 173, 0.22);
+}
+
+html.dark .cashier-app .btn-warning, html.dark .admin-app .btn-warning, html.dark .member-app .btn-warning {
+    background: var(--color-accent-500);
+    color: #0c1017;
+    border-color: var(--color-accent-500);
+}
+html.dark .cashier-app .btn-warning:hover, html.dark .admin-app .btn-warning:hover, html.dark .member-app .btn-warning:hover {
+    background: var(--color-accent-400);
+    border-color: var(--color-accent-400);
+    color: #0c1017;
+}
+
+html.dark .cashier-app .btn-info, html.dark .admin-app .btn-info, html.dark .member-app .btn-info {
+    background: var(--color-primary-500);
+    color: #FFFFFF;
+    border-color: var(--color-primary-600);
+}
+html.dark .cashier-app .btn-info:hover, html.dark .admin-app .btn-info:hover, html.dark .member-app .btn-info:hover {
+    background: var(--color-primary-400);
+    border-color: var(--color-primary-400);
+}
+
+html.dark .cashier-app .btn-danger, html.dark .admin-app .btn-danger, html.dark .member-app .btn-danger {
+    color: #0c1017;
+}
+html.dark .cashier-app .btn-danger:hover, html.dark .admin-app .btn-danger:hover, html.dark .member-app .btn-danger:hover {
+    color: #0c1017;
+}
+
+.cashier-app .btn-outline, .admin-app .btn-outline, .member-app .btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.cashier-app .btn-outline:hover, .admin-app .btn-outline:hover, .member-app .btn-outline:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+html.dark .cashier-app .btn-outline, html.dark .admin-app .btn-outline, html.dark .member-app .btn-outline {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background: var(--bg-input);
+}
+html.dark .cashier-app .btn-outline:hover, html.dark .admin-app .btn-outline:hover, html.dark .member-app .btn-outline:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-primary-500);
+    color: var(--text-primary);
+}
+
+.cashier-app .btn-outline-primary, .admin-app .btn-outline-primary, .member-app .btn-outline-primary {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+.cashier-app .btn-outline-primary:hover, .admin-app .btn-outline-primary:hover, .member-app .btn-outline-primary:hover {
+    background: var(--primary);
+    color: #FFFFFF;
+}
+
+.cashier-app .btn-sm, .admin-app .btn-sm, .member-app .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    min-height: 32px;
+}
+
+.cashier-app .btn-lg, .admin-app .btn-lg, .member-app .btn-lg {
+    padding: 0.75rem 1.75rem;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+.cashier-app .btn-block, .admin-app .btn-block, .member-app .btn-block {
+    width: 100%;
+}
+
+.cashier-app .btn-icon, .admin-app .btn-icon, .member-app .btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.cashier-app .btn-icon.btn-sm, .admin-app .btn-icon.btn-sm, .member-app .btn-icon.btn-sm {
+    width: 32px;
+    height: 32px;
+}
+
+/* ============================================================
+   SIDEBAR – Liens sobres
+   ============================================================ */
+.cashier-app .sidebar-link, .admin-app .sidebar-link, .member-app .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    transition: background 0.15s ease, color 0.15s ease;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.cashier-app .sidebar-link svg, .admin-app .sidebar-link svg, .member-app .sidebar-link svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    min-width: 1.25rem;
+    color: var(--text-tertiary);
+    transition: color 0.15s ease;
+}
+
+.cashier-app .sidebar-link .label, .admin-app .sidebar-link .label, .member-app .sidebar-link .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cashier-app .sidebar-link:hover, .admin-app .sidebar-link:hover, .member-app .sidebar-link:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.cashier-app .sidebar-link:hover svg, .admin-app .sidebar-link:hover svg, .member-app .sidebar-link:hover svg {
+    color: var(--text-primary);
+}
+
+.cashier-app .sidebar-link.active, .admin-app .sidebar-link.active, .member-app .sidebar-link.active {
+    background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+    color: #FFFFFF;
+    box-shadow: inset 3px 0 0 var(--color-accent-500);
+}
+
+.cashier-app .sidebar-link.active svg, .admin-app .sidebar-link.active svg, .member-app .sidebar-link.active svg {
+    color: #FFFFFF;
+}
+
+.cashier-app .sidebar-link.danger, .admin-app .sidebar-link.danger, .member-app .sidebar-link.danger {
+    color: var(--danger);
+}
+.cashier-app .sidebar-link.danger:hover, .admin-app .sidebar-link.danger:hover, .member-app .sidebar-link.danger:hover {
+    background: rgba(179, 42, 42, 0.08);
+    color: var(--danger);
+}
+.cashier-app .sidebar-link.danger.active, .admin-app .sidebar-link.danger.active, .member-app .sidebar-link.danger.active {
+    background: var(--danger);
+    color: #FFFFFF;
+}
+.cashier-app .sidebar-link.danger.active svg, .admin-app .sidebar-link.danger.active svg, .member-app .sidebar-link.danger.active svg {
+    color: #FFFFFF;
+}
+
+/* Menu replié — voir partials/shell/sidebar-rail-styles.blade.php (+ Vite) */
+html.shell-is-desktop.shell-sidebar-rail .cashier-app #sidebar li:has(.sidebar-section),
+html.shell-is-desktop.shell-sidebar-rail .admin-app #sidebar li:has(.sidebar-section),
+html.shell-is-desktop.shell-sidebar-rail .member-app #sidebar li:has(.sidebar-section),
+.cashier-app #sidebar.sidebar-is-rail li:has(.sidebar-section),
+.admin-app #sidebar.sidebar-is-rail li:has(.sidebar-section),
+.member-app #sidebar.sidebar-is-rail li:has(.sidebar-section) {
+  display: none !important;
+}
+
+html.shell-is-desktop.shell-sidebar-rail .cashier-app #sidebar .sidebar-link .label,
+html.shell-is-desktop.shell-sidebar-rail .admin-app #sidebar .sidebar-link .label,
+html.shell-is-desktop.shell-sidebar-rail .member-app #sidebar .sidebar-link .label,
+.cashier-app #sidebar.sidebar-is-rail .sidebar-link .label,
+.admin-app #sidebar.sidebar-is-rail .sidebar-link .label,
+.member-app #sidebar.sidebar-is-rail .sidebar-link .label {
+  display: none !important;
+}
+
+.cashier-app .sidebar-section, .admin-app .sidebar-section, .member-app .sidebar-section {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent-600);
+    padding: 0.75rem 0.75rem 0.375rem;
+    margin-top: 0.5rem;
+}
+
+/* ============================================================
+   MOBILE BOTTOM NAV
+   ============================================================ */
+.cashier-app .mobile-bottom-nav, .member-app .mobile-bottom-nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-navbar);
+    border-top: 1px solid var(--border-color);
+    display: none;
+    padding: 0.25rem 0 env(safe-area-inset-bottom, 0.25rem) 0;
+    height: var(--mobile-nav-height);
+}
+
+.cashier-app .mobile-bottom-nav .nav-item, .member-app .mobile-bottom-nav .nav-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0;
+    border-radius: var(--radius-md);
+    transition: color 0.15s ease;
+    color: var(--text-secondary);
+    text-decoration: none;
+    flex: 1;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cashier-app .mobile-bottom-nav .nav-item svg, .member-app .mobile-bottom-nav .nav-item svg{
+    width: 24px;
+    height: 24px;
+}
+
+.cashier-app .mobile-bottom-nav .nav-item span, .member-app .mobile-bottom-nav .nav-item span{
+    font-size: 10px;
+    margin-top: 1px;
+    font-weight: 500;
+}
+
+.cashier-app .mobile-bottom-nav .nav-item.active, .member-app .mobile-bottom-nav .nav-item.active{
+    color: var(--primary);
+}
+
+.cashier-app .mobile-bottom-nav .nav-item .badge-count, .member-app .mobile-bottom-nav .nav-item .badge-count{
+    position: absolute;
+    top: 0;
+    right: 50%;
+    transform: translateX(calc(50% + 14px));
+    background: var(--danger);
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--bg-navbar);
+}
+
+/* ============================================================
+   SCROLLBAR – Discrète
+   ============================================================ */
+.cashier-app .custom-scrollbar::-webkit-scrollbar, .admin-app .custom-scrollbar::-webkit-scrollbar, .member-app .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.cashier-app .custom-scrollbar::-webkit-scrollbar-track, .admin-app .custom-scrollbar::-webkit-scrollbar-track, .member-app .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.cashier-app .custom-scrollbar::-webkit-scrollbar-thumb, .admin-app .custom-scrollbar::-webkit-scrollbar-thumb, .member-app .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+/* ============================================================
+   CONFIRMATION DIALOG
+   ============================================================ */
+.cashier-app .confirm-overlay, .admin-app .confirm-overlay, .member-app .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.cashier-app .confirm-overlay.active, .admin-app .confirm-overlay.active, .member-app .confirm-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.cashier-app #clearCartModal, .member-app #clearCartModal{
+    pointer-events: none;
+}
+
+.cashier-app #clearCartModal:not(.invisible), .member-app #clearCartModal:not(.invisible){
+    pointer-events: auto;
+}
+
+.cashier-app #cartOverlay.hidden, .member-app #cartOverlay.hidden{
+    pointer-events: none;
+}
+.cashier-app .confirm-dialog, .admin-app .confirm-dialog, .member-app .confirm-dialog {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    max-width: 420px;
+    width: 90%;
+    border: 1px solid var(--border-color);
+    transform: scale(0.95);
+    transition: transform 0.25s ease;
+}
+.cashier-app .confirm-overlay.active .confirm-dialog, .admin-app .confirm-overlay.active .confirm-dialog, .member-app .confirm-overlay.active .confirm-dialog {
+    transform: scale(1);
+}
+.cashier-app .confirm-dialog .icon, .admin-app .confirm-dialog .icon, .member-app .confirm-dialog .icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+.cashier-app .confirm-dialog .icon.danger, .admin-app .confirm-dialog .icon.danger, .member-app .confirm-dialog .icon.danger {
+    background: #FDE8E8;
+    color: var(--danger);
+}
+.cashier-app .confirm-dialog .icon.warning, .admin-app .confirm-dialog .icon.warning, .member-app .confirm-dialog .icon.warning {
+    background: #FEF1E6;
+    color: var(--warning);
+}
+.cashier-app .confirm-dialog .icon.success, .admin-app .confirm-dialog .icon.success, .member-app .confirm-dialog .icon.success {
+    background: #E6F4EC;
+    color: var(--success);
+}
+.cashier-app .confirm-dialog .icon svg, .admin-app .confirm-dialog .icon svg, .member-app .confirm-dialog .icon svg {
+    width: 28px;
+    height: 28px;
+}
+.cashier-app .confirm-dialog h3, .admin-app .confirm-dialog h3, .member-app .confirm-dialog h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 0.375rem;
+}
+.cashier-app .confirm-dialog p, .admin-app .confirm-dialog p, .member-app .confirm-dialog p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+.cashier-app .confirm-dialog .actions, .admin-app .confirm-dialog .actions, .member-app .confirm-dialog .actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.cashier-app .cashier-toast-container, .member-app .cashier-toast-container{
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 400px;
+    width: min(400px, calc(100vw - 2rem));
+    height: auto;
+    pointer-events: none;
+}
+@media (max-width: 640px) {
+    .cashier-app .cashier-toast-container, .member-app .cashier-toast-container{
+        bottom: calc(var(--mobile-nav-height) + 1rem);
+        right: 1rem;
+        width: min(400px, calc(100vw - 2rem));
+        max-width: none;
+    }
+}
+.cashier-app .toast-item, .member-app .toast-item{
+    pointer-events: auto;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    color: #FFFFFF;
+    font-weight: 500;
+    font-size: 0.875rem;
+    animation: toastIn 0.3s ease forwards;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateX(100%);
+    opacity: 0;
+}
+.cashier-app .toast-item.show, .member-app .toast-item.show{
+    transform: translateX(0);
+    opacity: 1;
+}
+.cashier-app .toast-item.success, .member-app .toast-item.success{ background: var(--success); }
+.cashier-app .toast-item.error, .member-app .toast-item.error{ background: var(--danger); }
+.cashier-app .toast-item.warning, .member-app .toast-item.warning{ background: var(--warning); }
+.cashier-app .toast-item.info, .member-app .toast-item.info{ background: var(--primary-light); }
+.cashier-app .toast-item .toast-icon, .member-app .toast-item .toast-icon{
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+.cashier-app .toast-item .toast-close, .member-app .toast-item .toast-close{
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.cashier-app .toast-item .toast-close:hover, .member-app .toast-item .toast-close:hover{
+    background: rgba(255,255,255,0.12);
+}
+@keyframes toastIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toastOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ============================================================
+   FOOTER LINKS
+   ============================================================ */
+.cashier-app .footer-links a, .admin-app .footer-links a, .member-app .footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.cashier-app .footer-links a:hover, .admin-app .footer-links a:hover, .member-app .footer-links a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+.cashier-app .footer-separator, .admin-app .footer-separator, .member-app .footer-separator {
+    color: var(--text-tertiary);
+}
+
+/* ============================================================
+   CARD – Style épuré
+   ============================================================ */
+.cashier-app .card, .admin-app .card, .member-app .card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    transition: border-color 0.15s ease;
+}
+.cashier-app .card-header, .admin-app .card-header, .member-app .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.cashier-app .card-title, .admin-app .card-title, .member-app .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.cashier-app .card-subtitle, .admin-app .card-subtitle, .member-app .card-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================================
+   FORMULAIRE
+   ============================================================ */
+.cashier-app .form-group, .admin-app .form-group, .member-app .form-group {
+    margin-bottom: 1rem;
+}
+.cashier-app .form-label, .admin-app .form-label, .member-app .form-label {
+    display: block;
+    font-size: 0.813rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
+}
+.cashier-app .form-control, .admin-app .form-control, .member-app .form-control {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+}
+.cashier-app .form-control:focus, .admin-app .form-control:focus, .member-app .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 93, 173, 0.12);
+}
+.cashier-app .form-control::placeholder, .admin-app .form-control::placeholder, .member-app .form-control::placeholder {
+    color: var(--text-tertiary);
+}
+.cashier-app .form-select, .admin-app .form-select, .member-app .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A7A82' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+}
+.cashier-app .form-control-sm, .admin-app .form-control-sm, .member-app .form-control-sm {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.cashier-app .table-wrapper, .admin-app .table-wrapper, .member-app .table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+.cashier-app .table, .admin-app .table, .member-app .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+.cashier-app .table thead, .admin-app .table thead, .member-app .table thead {
+    background: var(--bg-secondary);
+}
+.cashier-app .table th, .admin-app .table th, .member-app .table th {
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-color);
+}
+.cashier-app .table td, .admin-app .table td, .member-app .table td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+.cashier-app .table tbody tr:last-child td, .admin-app .table tbody tr:last-child td, .member-app .table tbody tr:last-child td {
+    border-bottom: none;
+}
+.cashier-app .table tbody tr:hover, .admin-app .table tbody tr:hover, .member-app .table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+/* ============================================================
+   BADGE
+   ============================================================ */
+.cashier-app .badge, .admin-app .badge, .member-app .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.688rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.cashier-app .badge-success, .admin-app .badge-success, .member-app .badge-success { background: #E6F4EC; color: var(--success); }
+.cashier-app .badge-danger, .admin-app .badge-danger, .member-app .badge-danger { background: #FDE8E8; color: var(--danger); }
+.cashier-app .badge-warning, .admin-app .badge-warning, .member-app .badge-warning { background: #FEF1E6; color: var(--warning); }
+.cashier-app .badge-info, .admin-app .badge-info, .member-app .badge-info { background: #E6EEF6; color: var(--primary); }
+.cashier-app .badge-neutral, .admin-app .badge-neutral, .member-app .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 767px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+    .main-content {
+        padding-bottom: calc(var(--mobile-nav-height) + 1rem) !important;
+    }
+    .main-footer {
+        padding-bottom: calc(var(--mobile-nav-height) + 1rem) !important;
+    }
+    .confirm-dialog {
+        padding: 1.25rem;
+        max-width: 95%;
+    }
+    .confirm-dialog .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    .confirm-dialog .icon svg {
+        width: 24px;
+        height: 24px;
+    }
+    .confirm-dialog h3 {
+        font-size: 1rem;
+    }
+    .confirm-dialog p {
+        font-size: 0.813rem;
+    }
+    .confirm-dialog .actions .btn {
+        padding: 0.375rem 1rem;
+        font-size: 0.75rem;
+        min-width: 70px;
+    }
+    .main-content {
+        padding: 0.75rem;
+    }
+    .main-footer {
+        padding: 0.5rem 0.75rem;
+    }
+    .main-footer .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+    .footer-separator {
+        display: inline;
+    }
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.813rem;
+        min-height: 36px;
+    }
+    .btn-lg {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        min-height: 42px;
+    }
+    .card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.5rem;
+    }
+    .main-footer {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        min-height: 32px;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.688rem;
+        min-height: 28px;
+    }
+    .card {
+        padding: 0.75rem;
+    }
+}
+
+.cashier-app .card--brand, .admin-app .card--brand, .member-app .card--brand {
+  position: relative;
+  overflow: hidden;
+}
+
+.cashier-app .card--brand::before, .admin-app .card--brand::before, .member-app .card--brand::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-brand);
+}
+
+.cashier-app .page-kicker, .admin-app .page-kicker, .member-app .page-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-accent-600);
+}
+
+.cashier-app .page-kicker::before, .admin-app .page-kicker::before, .member-app .page-kicker::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--gradient-brand);
+}

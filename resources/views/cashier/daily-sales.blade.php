@@ -35,9 +35,9 @@
         flex-shrink: 0;
     }
 
-    .stat-icon-orders { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .stat-icon-orders { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .stat-icon-amount { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
-    .stat-icon-average { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
+    .stat-icon-average { background: rgba(139, 92, 246, 0.10); color: #e8940f; }
     .stat-icon-ratio { background: rgba(59, 130, 246, 0.10); color: #3b82f6; }
 
     .badge-source-pos {
@@ -69,7 +69,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -252,7 +252,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Total encaissé</p>
-                    <p class="stat-value text-[#22c55e]">${{ number_format($stats['total_amount'] ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($stats['total_amount'] ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-amount">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -266,7 +266,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Moyenne</p>
-                    <p class="stat-value text-[#3d8a2a]">${{ number_format($stats['average_order'] ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-accent)]">${{ number_format($stats['average_order'] ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-average">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -280,7 +280,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">POS / MLM</p>
-                    <p class="stat-value text-[#3b82f6]">
+                    <p class="stat-value text-[var(--ui-stat-info)]">
                         {{ $stats['pos_count'] ?? 0 }} / {{ $stats['mlm_count'] ?? 0 }}
                     </p>
                 </div>

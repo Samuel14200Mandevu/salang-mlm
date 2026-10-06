@@ -2,216 +2,448 @@
 
 @section('title', 'Mon réseau')
 
-@push('styles')
-{{-- Inclure le CSS de la librairie OrgChart --}}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/css/jquery.orgchart.min.css">
-<style>
-    /* ============================================================
-       VARIABLES & THEME BASE (Basé sur ton style)
-    ============================================================ */
-    :root {
-        --node-bg: var(--bg-card);
-        --node-border: var(--border-color);
-        --node-text: var(--text-primary);
-        --radius-node: 12px;
-    }
-
-    /* Conteneur principal de l'arbre */
-    #tree-container {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        position: relative;
-        height: 600px; /* Hauteur fixe pour le scroll interne */
-        background-image: radial-gradient(var(--border-light) 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-
-    /* Style personnalisé pour les noeuds OrgChart */
-    .orgchart .node {
-        width: 150px; /* Largeur fixe pour l'uniformité */
-        border: 2px solid transparent;
-        background-color: var(--node-bg);
-        border-radius: var(--radius-node);
-        padding: 10px;
-        box-shadow: var(--shadow-md);
-        transition: all 0.3s ease;
-    }
-
-    .orgchart .node:hover, .orgchart .node.focused {
-        background-color: var(--bg-hover);
-        border-color: var(--primary-500);
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-    }
-
-    /* Masquer les éléments par défaut d'OrgChart qu'on ne veut pas */
-    .orgchart .node .title, .orgchart .node .content {
-        display: none;
-    }
-
-    /* ============================================================
-       STYLE PERSONNALISÉ INTÉRIEUR DU NOEUD
-    ============================================================ */
-    .node-custom-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .node-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        color: white;
-        font-size: 1.2rem;
-        border: 3px solid var(--bg-card);
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 8px;
-        position: relative;
-    }
-
-    .status-dot {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid var(--bg-card);
-    }
-    .status-dot.online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-    .status-dot.offline { background-color: #6b7280; }
-
-    .node-name {
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: var(--node-text);
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .node-rank {
-        font-size: 0.65rem;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        background-color: var(--bg-secondary);
-        color: var(--text-secondary);
-        margin-top: 4px;
-    }
-
-    .node-info {
-        font-size: 0.6rem;
-        color: var(--text-tertiary);
-        margin-top: 4px;
-    }
-
-    /* Couleurs des avatars par grade (copié de ton code) */
-    .avatar-rank-1 { background: linear-gradient(135deg, #6b7280, #4b5563); }
-    .avatar-rank-2 { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
-    .avatar-rank-3 { background: linear-gradient(135deg, #a78bfa, #3d8a2a); }
-    .avatar-rank-4 { background: linear-gradient(135deg, #34d399, #22c55e); }
-    /* ... ajoute les autres grades ici ... */
-
-    /* Style des lignes de connexion */
-    .orgchart .line {
-        background-color: var(--border-color);
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="space-y-4">
+@php
+    $rankInfo = $controller->getUserRankInfo($user);
+    $referralUrl = url('/register?ref=' . $user->sponsor_id);
+@endphp
+<div class="space-y-4 sm:space-y-6 network-page">
 
-    {{-- HEADER (Garder ton header actuel, il est bien) --}}
-    <div class="card p-6 animate-fadeInUp">
-        {{-- ... Ton code de header actuel (titre, stats) ... --}}
+    <div class="member-page-intro animate-fadeInUp">
+        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mon réseau</h1>
+        <p class="text-sm text-[var(--text-secondary)] mt-0.5">Votre généalogie, vos filleuls et votre lien de parrainage</p>
     </div>
 
-    {{-- TOOLBAR (Simplifié, OrgChart gère le zoom/pan) --}}
-    <div class="card p-3 flex items-center justify-between gap-3 animate-fadeInUp delay-1">
-        <h3 class="font-semibold text-sm">Vue Arborescente</h3>
-        <div class="flex gap-2">
-            <button onclick="initTree()" class="btn btn-outline btn-sm">Réinitialiser l'arbre</button>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+        <div class="card-stats p-3 border-l-4 border-primary-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total équipe</p>
+            <p class="text-lg sm:text-xl font-bold text-primary-500">{{ $stats['total'] ?? 0 }}</p>
+        </div>
+        <div class="card-stats p-3 border-l-4 border-blue-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 1</p>
+            <p class="text-lg sm:text-xl font-bold text-blue-500">{{ $stats['level_1'] ?? 0 }}</p>
+        </div>
+        <div class="card-stats p-3 border-l-4 border-purple-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 2</p>
+            <p class="text-lg sm:text-xl font-bold text-purple-500">{{ $stats['level_2'] ?? 0 }}</p>
+        </div>
+        <div class="card-stats p-3 border-l-4 border-green-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Niveau 3</p>
+            <p class="text-lg sm:text-xl font-bold text-green-500">{{ $stats['level_3'] ?? 0 }}</p>
+        </div>
+        <div class="card-stats p-3 border-l-4 border-yellow-500">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actifs (N1)</p>
+            <p class="text-lg sm:text-xl font-bold text-yellow-600">{{ $stats['active'] ?? 0 }}</p>
+        </div>
+        <div class="card-stats p-3 border-l-4 border-slate-500 col-span-2 sm:col-span-1">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV équipe</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{{ number_format($stats['total_pv'] ?? 0) }}</p>
         </div>
     </div>
 
-    {{-- CONTENEUR DE L'ARBRE --}}
-    <div id="tree-container" class="animate-fadeInUp delay-2">
-        {{-- OrgChart chargera l'arbre ici --}}
-        <div id="chart-container"></div>
+    <div class="card network-referral-card animate-fadeInUp delay-2">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-xs text-[var(--text-secondary)]">Votre code parrain</p>
+                <p class="text-base font-mono font-semibold text-primary-500">{{ $user->sponsor_id }}</p>
+                <p class="text-xs text-[var(--text-tertiary)] mt-1 break-all" id="sponsorLink">{{ $referralUrl }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2 shrink-0">
+                <button type="button" onclick="copyReferralLink()" class="btn btn-primary btn-sm">Copier le lien</button>
+                <a href="{{ route('network.downlines') }}" class="btn btn-outline btn-sm">Tous les filleuls</a>
+            </div>
+        </div>
+    </div>
+
+    @if($parrain)
+        <div class="card p-3 sm:p-4 animate-fadeInUp delay-2">
+            <p class="text-xs text-[var(--text-secondary)]">Mon parrain</p>
+            <p class="text-sm font-medium text-[var(--text-primary)]">{{ $parrain->name }}</p>
+            <p class="text-xs font-mono text-[var(--text-tertiary)]">Code {{ $parrain->sponsor_id }}</p>
+        </div>
+    @endif
+
+    <div class="network-view-tabs animate-fadeInUp delay-3" role="tablist" aria-label="Vue du réseau">
+        <button type="button" class="network-view-tab is-active" id="treeViewBtn" onclick="setNetworkView('tree')" aria-selected="true">Arbre</button>
+        <button type="button" class="network-view-tab" id="listViewBtn" onclick="setNetworkView('list')" aria-selected="false">Filleuls directs</button>
+    </div>
+
+    <div id="treeView" class="card network-genealogy-card">
+        <div class="network-tree-panel-head">
+            <div>
+                <h2>Généalogie de parrainage</h2>
+                <p>Cliquez sur une carte pour ouvrir le profil. Utilisez « Afficher filleuls » pour développer une branche.</p>
+            </div>
+            <div class="network-tree-toolbar">
+                <span class="network-tree-legend">
+                    <span class="network-tree-legend-dot" aria-hidden="true"></span> Actif
+                    <span class="network-tree-legend-dot is-off" aria-hidden="true"></span> Inactif
+                </span>
+                <button type="button" class="network-tree-toolbar-btn" onclick="centerNetworkTree()">Centrer l’arbre</button>
+            </div>
+        </div>
+        <div class="network-genealogy-scroll" id="genealogyScroll">
+            <div class="network-org-chart-wrap" id="networkTreeMount">
+                <svg class="network-tree-svg" id="networkTreeSvg" aria-hidden="true"></svg>
+                <ul class="network-tree-chart">
+                    @if(!empty($tree))
+                        {!! $controller->renderGenealogyTree($tree, $controller) !!}
+                    @endif
+                </ul>
+            </div>
+            @if(($stats['total'] ?? 0) === 0)
+                <p class="network-tree-empty-hint">Aucun filleul pour le moment. Partagez votre lien de parrainage pour agrandir l’organigramme.</p>
+            @endif
+        </div>
+    </div>
+
+    <div id="listView" class="hidden animate-fadeInUp delay-4 space-y-3">
+        <div class="relative">
+            <label for="searchMember" class="sr-only">Rechercher un filleul</label>
+            <input type="search" id="searchMember" placeholder="Rechercher par nom ou e-mail…" class="input pl-9 text-sm" autocomplete="off">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+        </div>
+
+        <div class="md:hidden space-y-2" id="memberListMobile">
+            @forelse($filleuls as $member)
+                @php
+                    $mRank = $controller->getUserRankInfo($member);
+                    $mAvatar = $controller->getAvatarColor($member);
+                @endphp
+                <a href="{{ route('network.show', $member->id) }}" class="network-member-card" data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
+                    <div class="avatar avatar-md {{ $mAvatar }}">{{ strtoupper(substr($member->name, 0, 2)) }}</div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-sm truncate">{{ $member->name }}</p>
+                        <p class="text-xs text-[var(--text-secondary)]">{{ number_format($member->pv_balance ?? 0) }} PV · {{ $member->downline_count ?? 0 }} filleul(s)</p>
+                    </div>
+                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px]">{{ $member->is_active ? 'Actif' : 'Inactif' }}</span>
+                </a>
+            @empty
+                <div class="card network-empty-state">Aucun filleul direct.</div>
+            @endforelse
+        </div>
+
+        <div class="card hidden md:block">
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Rang</th>
+                            <th>PV</th>
+                            <th>Filleuls</th>
+                            <th>Statut</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberList">
+                        @forelse($filleuls as $member)
+                            @php $mRank = $controller->getUserRankInfo($member); @endphp
+                            <tr data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
+                                <td class="font-medium">{{ $member->name }}</td>
+                                <td><span class="badge badge-neutral text-xs">{{ $mRank['name'] }}</span></td>
+                                <td>{{ number_format($member->pv_balance ?? 0) }}</td>
+                                <td>{{ $member->downline_count ?? 0 }}</td>
+                                <td>
+                                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-xs">
+                                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                                    </span>
+                                </td>
+                                <td class="text-right">
+                                    <a href="{{ route('network.show', $member->id) }}" class="btn btn-outline btn-sm">Voir</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">Aucun filleul direct.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 </div>
-@endsection
 
 @push('scripts')
-{{-- Inclure jQuery et la librairie OrgChart --}}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/js/jquery.orgchart.min.js"></script>
-
 <script>
-    const BASE_URL = '{{ url("/") }}';
-    let oc; // Variable pour stocker l'instance OrgChart
-
-    // Template personnalisé pour le rendu d'un noeud
-    const nodeTemplate = function(data) {
-        return `
-            <div class="node-custom-content">
-                <div class="node-avatar ${data.avatar_color}">
-                    ${data.avatar_text}
-                    <span class="status-dot ${data.is_active ? 'online' : 'offline'}"></span>
-                </div>
-                <div class="node-name">${data.name}</div>
-                <div class="node-rank">${data.rank_name}</div>
-                <div class="node-info">PV: ${data.pv_balance} | ID: #${data.id}</div>
-            </div>
-        `;
+(function () {
+    const networkShowUrl = @json(url('/network/show'));
+    const childrenUrl = @json(url('/network/children'));
+    window.networkShowUrlFor = function (id) {
+        return networkShowUrl + '/' + id;
     };
 
-    // Fonction d'initialisation de l'arbre
-    function initTree() {
-        // Détruire l'instance existante si nécessaire
-        if (oc) {
-            oc.destroy();
+    window.expandNode = function (userId, nodeEl) {
+        const branch = nodeEl.closest('.network-branch');
+        const level = parseInt(branch?.dataset.level || '0', 10);
+        if (level === 0) {
+            return;
+        }
+        window.location.href = networkShowUrlFor(userId);
+    };
+
+    function drawNetworkTreeLines() {
+        const scroll = document.getElementById('genealogyScroll');
+        const mount = document.getElementById('networkTreeMount');
+        const svg = document.getElementById('networkTreeSvg');
+        if (!scroll || !mount || !svg) {
+            return;
         }
 
-        // Configuration d'OrgChart
-        $('#chart-container').orgchart({
-            'data' : BASE_URL + '/network/tree-data', // URL qui renvoie le JSON initial (racine + niveau 1)
-            'nodeTemplate': nodeTemplate, // Utiliser notre template personnalisé
-            'nodeId': 'id', // Clé unique pour le noeud
-            'toggleSiblingsResp': true, // Masquer les frères/soeurs lors de l'expansion
-            'depth': 2, // Profondeur initiale chargée
-            'pan': true, // Activer le déplacement (Drag)
-            'zoom': true, // Activer le zoom
-            'initCompleted': function() {
-                // Centrer l'arbre après le chargement initial
-                const $chart = $('#chart-container');
-                $chart.scrollLeft(($chart[0].scrollWidth - $chart.width()) / 2);
-            }
-        });
+        const w = mount.offsetWidth;
+        const h = mount.offsetHeight;
+        svg.setAttribute('width', String(w));
+        svg.setAttribute('height', String(h));
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+        svg.innerHTML = '';
 
-        oc = $('#chart-container').data('orgchart');
+        const mountRect = mount.getBoundingClientRect();
+        const stem = 22;
+        const elbow = 14;
+
+        mount.querySelectorAll('.network-children-row').forEach(function (row) {
+            const parentBranch = row.closest('.network-branch');
+            if (!parentBranch) {
+                return;
+            }
+            const parentCard = parentBranch.querySelector(':scope > .network-node-card');
+            if (!parentCard) {
+                return;
+            }
+            const parentR = parentCard.getBoundingClientRect();
+            const px = parentR.left + parentR.width / 2 - mountRect.left;
+            const py = parentR.bottom - mountRect.top;
+
+            const childCards = row.querySelectorAll(':scope > .network-branch > .network-node-card');
+            if (!childCards.length) {
+                return;
+            }
+
+            const points = [];
+            childCards.forEach(function (card) {
+                const r = card.getBoundingClientRect();
+                points.push({
+                    x: r.left + r.width / 2 - mountRect.left,
+                    y: r.top - mountRect.top,
+                });
+            });
+
+            points.sort(function (a, b) {
+                return a.x - b.x;
+            });
+
+            const railY = py + stem;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = 'M ' + px + ' ' + py + ' V ' + railY;
+
+            if (points.length === 1) {
+                d += ' V ' + points[0].y;
+            } else {
+                d += ' M ' + points[0].x + ' ' + railY + ' H ' + points[points.length - 1].x;
+                points.forEach(function (p) {
+                    d += ' M ' + p.x + ' ' + railY + ' V ' + (p.y - elbow) + ' V ' + p.y;
+                });
+            }
+
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('class', 'network-tree-path');
+            svg.appendChild(path);
+        });
     }
 
-    // Charger l'arbre au chargement de la page
-    $(function() {
-        initTree();
+    window.loadChildren = async function (userId, btn) {
+        if (btn.dataset.loading === '1') {
+            return;
+        }
+        btn.dataset.loading = '1';
+        btn.setAttribute('aria-busy', 'true');
 
-        // Gestion du clic sur un noeud pour rediriger vers le profil
-        $('#chart-container').on('click', '.node', function() {
-            const userId = $(this).attr('id');
-            window.location.href = BASE_URL + '/network/show/' + userId;
+        try {
+            const res = await fetch(childrenUrl + '/' + userId, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const payload = await res.json();
+            if (!payload.success || !payload.children?.length) {
+                btn.textContent = 'Aucun filleul';
+                return;
+            }
+
+            const slot = btn.closest('.network-tree-expand');
+            const ul = document.createElement('ul');
+            ul.className = 'network-children-row';
+            payload.children.forEach(function (child) {
+                ul.appendChild(buildOrgLi(child));
+            });
+            slot.replaceWith(ul);
+            requestAnimationFrame(drawNetworkTreeLines);
+        } catch (e) {
+            btn.textContent = 'Erreur — réessayer';
+            btn.dataset.loading = '0';
+        }
+    };
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function buildOrgLi(child) {
+        const level = child.level || 1;
+        const li = document.createElement('li');
+        li.className = 'network-branch';
+        li.dataset.userId = child.id;
+        li.dataset.level = level;
+
+        const initials = escapeHtml(
+            (child.avatar || (child.name ? child.name.substring(0, 2) : '?')).toUpperCase()
+        );
+        const avatarClass = escapeHtml(child.avatar_color || 'avatar-rank-1');
+        const statusClass = child.is_active ? 'is-active' : 'is-inactive';
+        const rankName = escapeHtml((child.rank && child.rank.name) ? child.rank.name : 'Distributeur');
+        const safeName = escapeHtml(child.name || '');
+
+        let inner =
+            '<div class="network-node-card" role="button" tabindex="0" onclick="expandNode(' +
+            child.id +
+            ', this)">' +
+            '<div class="network-node-avatar ' +
+            avatarClass +
+            '">' +
+            initials +
+            '<span class="network-node-status ' +
+            statusClass +
+            '"></span></div>' +
+            '<div class="network-node-body">' +
+            '<p class="network-node-name" title="' +
+            safeName +
+            '">' +
+            safeName +
+            '</p>' +
+            '<p class="network-node-sub">Niveau ' +
+            level +
+            ' · ' +
+            rankName +
+            '</p></div></div>';
+
+        if (child.has_children) {
+            inner +=
+                '<div class="network-tree-expand"><button type="button" class="network-tree-expand-btn" onclick="event.stopPropagation(); loadChildren(' +
+                child.id +
+                ', this)">Développer · ' +
+                (child.children_count || 0) +
+                ' filleul' +
+                ((child.children_count || 0) > 1 ? 's' : '') +
+                '</button></div>';
+        }
+
+        li.innerHTML = inner;
+        return li;
+    }
+
+    window.centerNetworkTree = function () {
+        const el = document.getElementById('genealogyScroll');
+        if (!el) return;
+        const root = el.querySelector('.network-node-card.is-root');
+        if (root) {
+            root.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        } else {
+            el.scrollTo({ left: (el.scrollWidth - el.clientWidth) / 2, top: 0, behavior: 'smooth' });
+        }
+    };
+
+    window.setNetworkView = function (view) {
+        const treeView = document.getElementById('treeView');
+        const listView = document.getElementById('listView');
+        const treeBtn = document.getElementById('treeViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+        const isTree = view === 'tree';
+        treeView.classList.toggle('hidden', !isTree);
+        listView.classList.toggle('hidden', isTree);
+        treeBtn.classList.toggle('is-active', isTree);
+        listBtn.classList.toggle('is-active', !isTree);
+        treeBtn.setAttribute('aria-selected', isTree ? 'true' : 'false');
+        listBtn.setAttribute('aria-selected', !isTree ? 'true' : 'false');
+    };
+
+    window.copyReferralLink = function () {
+        const link = document.getElementById('sponsorLink')?.textContent?.trim() || '';
+        if (!link) return;
+        const done = function () {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Lien copié');
+            }
+        };
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(link).then(done).catch(function () {
+                fallbackCopy(link, done);
+            });
+        } else {
+            fallbackCopy(link, done);
+        }
+    };
+
+    function fallbackCopy(text, cb) {
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        cb();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setNetworkView('tree');
+
+        const mount = document.getElementById('networkTreeMount');
+        if (mount && typeof ResizeObserver !== 'undefined') {
+            var ro = new ResizeObserver(function () {
+                drawNetworkTreeLines();
+            });
+            ro.observe(mount);
+        }
+        window.addEventListener('resize', function () {
+            drawNetworkTreeLines();
+        });
+
+        requestAnimationFrame(function () {
+            drawNetworkTreeLines();
+            centerNetworkTree();
+        });
+
+        const searchInput = document.getElementById('searchMember');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function () {
+            const q = this.value.trim().toLowerCase();
+            document.querySelectorAll('#memberList tr[data-name]').forEach(function (row) {
+                const name = row.dataset.name || '';
+                const email = row.dataset.email || '';
+                row.style.display = !q || name.includes(q) || email.includes(q) ? '' : 'none';
+            });
+            document.querySelectorAll('#memberListMobile .network-member-card').forEach(function (card) {
+                const name = card.dataset.name || '';
+                const email = card.dataset.email || '';
+                card.style.display = !q || name.includes(q) || email.includes(q) ? '' : 'none';
+            });
         });
     });
+})();
 </script>
 @endpush
+@endsection

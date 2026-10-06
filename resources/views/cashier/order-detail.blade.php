@@ -16,7 +16,7 @@
     }
     .badge-source-web {
         background: rgba(139, 92, 246, 0.12);
-        color: #3d8a2a;
+        color: #e8940f;
     }
     .badge-source-mlm {
         background: rgba(59, 130, 246, 0.12);
@@ -43,7 +43,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -324,9 +324,9 @@
             @endif
         ">
             <span class="font-semibold
-                @if($order->source == 'pos') text-[#16a34a]
-                @elseif($order->source == 'web' || $order->source == 'online') text-[#3d8a2a]
-                @else text-[#2563eb]
+                @if($order->source == 'pos') text-[var(--ui-stat-success)]
+                @elseif($order->source == 'web' || $order->source == 'online') text-[var(--ui-stat-accent)]
+                @else text-[var(--ui-stat-info)]
                 @endif
             ">
                 @if($order->source == 'pos') Commande POS (Guichet)
@@ -381,10 +381,10 @@
                             <p class="item-meta">
                                 Qté: {{ $item->quantity }} x ${{ number_format($item->price, 2) }}
                                 @if($item->pv_value > 0)
-                                    <span class="ml-2 text-[#16a34a] font-medium">{{ $item->pv_value }} PV</span>
+                                    <span class="ml-2 text-[var(--ui-stat-success)] font-medium">{{ $item->pv_value }} PV</span>
                                 @endif
                                 @if($item->bv_value > 0)
-                                    <span class="ml-2 text-[#3d8a2a] font-medium">{{ $item->bv_value }} BV</span>
+                                    <span class="ml-2 text-[var(--ui-stat-accent)] font-medium">{{ $item->bv_value }} BV</span>
                                 @endif
                             </p>
                         </div>
@@ -405,10 +405,10 @@
                     <div class="mt-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
                         <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
                             @if($totalPV > 0)
-                                <span class="font-medium text-[#16a34a]">Total PV: {{ $totalPV }} PV</span>
+                                <span class="font-medium text-[var(--ui-stat-success)]">Total PV: {{ $totalPV }} PV</span>
                             @endif
                             @if($totalBV > 0)
-                                <span class="font-medium text-[#3d8a2a]">Total BV: {{ $totalBV }} BV</span>
+                                <span class="font-medium text-[var(--ui-stat-accent)]">Total BV: {{ $totalBV }} BV</span>
                             @endif
                         </div>
                     </div>
@@ -440,7 +440,7 @@
                 @if($order->discount > 0)
                 <div class="flex justify-between">
                     <span class="text-[var(--text-secondary)]">Réduction</span>
-                    <span class="font-medium text-[#b32a2a]">-${{ number_format($order->discount, 2) }}</span>
+                    <span class="font-medium text-[var(--ui-stat-danger)]">-${{ number_format($order->discount, 2) }}</span>
                 </div>
                 @endif
                 <div class="border-t border-[var(--border-color)] pt-3 mt-2">
@@ -502,9 +502,9 @@
                 <div class="flex justify-between pt-2 border-t border-[var(--border-color)]">
                     <span class="text-[var(--text-secondary)]">Source</span>
                     <span class="font-medium
-                        @if($order->source == 'pos') text-[#16a34a]
-                        @elseif($order->source == 'web' || $order->source == 'online') text-[#3d8a2a]
-                        @else text-[#2563eb]
+                        @if($order->source == 'pos') text-[var(--ui-stat-success)]
+                        @elseif($order->source == 'web' || $order->source == 'online') text-[var(--ui-stat-accent)]
+                        @else text-[var(--ui-stat-info)]
                         @endif
                     ">
                         @if($order->source == 'pos') POS (Guichet)
@@ -588,7 +588,7 @@
                             </p>
                         @elseif($isTimeExpired)
                             <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg mt-2">
-                                <div class="flex items-center gap-2 text-[#b32a2a]">
+                                <div class="flex items-center gap-2 text-[var(--ui-stat-danger)]">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -696,7 +696,7 @@
 
         <div class="mb-3">
             <label for="cancellationReason" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                Motif de l'annulation <span class="text-[#b32a2a]">*</span>
+                Motif de l'annulation <span class="text-[var(--ui-stat-danger)]">*</span>
             </label>
             <textarea id="cancellationReason"
                       class="input"
@@ -802,7 +802,7 @@ function submitCancelRequest() {
         if (!errorMsg) {
             errorMsg = document.createElement('p');
             errorMsg.id = 'reasonError';
-            errorMsg.className = 'text-[#b32a2a] text-xs mt-1';
+            errorMsg.className = 'text-[var(--ui-stat-danger)] text-xs mt-1';
             errorMsg.textContent = 'Veuillez entrer un motif d\'au moins 10 caractères';
             reasonTextarea.parentNode.appendChild(errorMsg);
         }

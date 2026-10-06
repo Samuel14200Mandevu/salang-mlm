@@ -3,6 +3,7 @@
 namespace App\Models;
 
 
+use App\Models\UserPvBalance;
 use App\Support\MlmPeriod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -185,6 +186,40 @@ class User extends Authenticatable
     public function parrain()
     {
         return $this->belongsTo(User::class, 'parrain_id');
+    }
+
+    public function pvBalance()
+    {
+        return $this->hasOne(\App\Models\UserPvBalance::class);
+    }
+
+    /**
+     * PV cumulés (users.pv_balance) + portefeuille distribution (user_pv_balances).
+     */
+    public function pvSummary(?UserPvBalance $balance = null): array
+    {
+        if ($balance === null) {
+            $balance = $this->relationLoaded('pvBalance')
+                ? $this->pvBalance
+                : $this->pvBalance()->first();
+        }
+
+        $available = $balance ? (int) $balance->available_pv : 0;
+        $allocated = $balance ? (int) $balance->allocated_pv : 0;
+        $pending = $balance ? (int) $balance->pending_pv : 0;
+        $walletTotal = $balance
+            ? (int) ($balance->total_pv ?: ($available + $allocated + $pending))
+            : 0;
+
+        return [
+            'cumulative_pv' => (int) round((float) ($this->pv_balance ?? 0)),
+            'wallet_total_pv' => $walletTotal,
+            'available_pv' => $available,
+            'allocated_pv' => $allocated,
+            'pending_pv' => $pending,
+            'total_bv' => $balance ? (int) $balance->total_bv : 0,
+            'available_bv' => $balance ? (int) $balance->available_bv : 0,
+        ];
     }
 
     public function filleuls()

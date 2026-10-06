@@ -3,13 +3,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -345,7 +338,7 @@
                                     <input type="text" name="recommended_products[{{ $productIndex }}][observation]"
                                            value="{{ $product['observation'] ?? '' }}" placeholder="Observation"
                                            class="flex-1 min-w-[100px] form-control form-control-sm">
-                                    <button type="button" class="text-[#B91C1C] hover:text-[#991B1B] p-1 remove-product" onclick="removeProductRow(this)">
+                                    <button type="button" class="text-[var(--ui-stat-danger)] hover:text-[#991B1B] p-1 remove-product" onclick="removeProductRow(this)">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -371,7 +364,7 @@
                                        class="w-24 form-control form-control-sm text-right product-price" readonly value="0.00">
                                 <input type="text" name="recommended_products[0][observation]" placeholder="Observation"
                                        class="flex-1 min-w-[100px] form-control form-control-sm">
-                                <button type="button" class="text-[#B91C1C] hover:text-[#991B1B] p-1 remove-product hidden" onclick="removeProductRow(this)">
+                                <button type="button" class="text-[var(--ui-stat-danger)] hover:text-[#991B1B] p-1 remove-product hidden" onclick="removeProductRow(this)">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -510,7 +503,7 @@ function addProductRow() {
                class="w-24 form-control form-control-sm text-right product-price" readonly value="0.00">
         <input type="text" name="recommended_products[${productIndex}][observation]" placeholder="Observation"
                class="flex-1 min-w-[100px] form-control form-control-sm">
-        <button type="button" class="text-[#B91C1C] hover:text-[#991B1B] p-1 remove-product" onclick="removeProductRow(this)">
+        <button type="button" class="text-[var(--ui-stat-danger)] hover:text-[#991B1B] p-1 remove-product" onclick="removeProductRow(this)">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>

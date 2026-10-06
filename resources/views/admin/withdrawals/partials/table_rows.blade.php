@@ -22,7 +22,7 @@
         <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
             {{ $withdrawal->user?->email ?? 'N/A' }}
         </td>
-        <td class="font-bold text-sm text-[#1F7B4D]">
+        <td class="font-bold text-sm text-[var(--ui-stat-success)]">
             {{ number_format($withdrawal->amount, 2) }} $
         </td>
         <td class="hidden md:table-cell">

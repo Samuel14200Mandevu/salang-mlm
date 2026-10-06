@@ -47,7 +47,7 @@
         justify-content: center;
         flex-shrink: 0;
     }
-    .stat-icon-primary { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
+    .stat-icon-primary { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
     .stat-icon-warning { background: rgba(245, 158, 11, 0.10); color: #d97706; }
     .stat-icon-danger { background: rgba(179, 42, 42, 0.10); color: #b32a2a; }
     .stat-icon-info { background: rgba(59, 130, 246, 0.10); color: #2563eb; }
@@ -101,7 +101,7 @@
     }
     .avatar-ring {
         border: 3px solid var(--primary);
-        box-shadow: 0 0 0 4px rgba(15, 43, 79, 0.10);
+        box-shadow: 0 0 0 4px rgba(30, 93, 173, 0.10);
     }
     .avatar img {
         width: 100%;
@@ -155,7 +155,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
     .btn-primary:disabled {
         opacity: 0.5;
@@ -520,7 +520,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-[#b32a2a]">Zone de danger</h3>
+                        <h3 class="text-base sm:text-lg font-semibold text-[var(--ui-stat-danger)]">Zone de danger</h3>
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actions irréversibles</p>
                     </div>
                 </div>
@@ -543,7 +543,7 @@
     <div id="deleteModal" class="modal-overlay" onclick="if(event.target === this) closeDeleteModal()">
         <div class="modal-box">
             <div class="text-center">
-                <svg class="w-12 h-12 mx-auto text-[#b32a2a] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-12 h-12 mx-auto text-[var(--ui-stat-danger)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
                 <h2 class="modal-title">Supprimer le compte</h2>
@@ -564,7 +564,7 @@
                            class="input text-center text-sm sm:text-base"
                            required>
                     @error('password', 'userDeletion')
-                        <p class="text-xs text-[#b32a2a] text-center mt-2">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] text-center mt-2">{{ $message }}</p>
                     @enderror
                 </div>
 

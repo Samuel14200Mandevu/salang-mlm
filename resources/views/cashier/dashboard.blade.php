@@ -26,8 +26,8 @@
     }
 
     .stat-icon-sales { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
-    .stat-icon-orders { background: rgba(15, 43, 79, 0.10); color: var(--primary); }
-    .stat-icon-customers { background: rgba(245, 158, 11, 0.10); color: #f59e0b; }
+    .stat-icon-orders { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
+    .stat-icon-customers { background: rgba(245, 166, 35, 0.12); color: var(--color-accent-600); }
     .stat-icon-pending { background: rgba(179, 42, 42, 0.10); color: #b32a2a; }
 
     .stat-value {
@@ -138,7 +138,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-success {
@@ -252,7 +252,7 @@
     }
 
     .badge-info {
-        background: rgba(15, 43, 79, 0.10);
+        background: rgba(30, 93, 173, 0.10);
         color: var(--primary);
     }
 
@@ -337,7 +337,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Ventes aujourd'hui</p>
-                    <p class="stat-value text-[#22c55e]">${{ number_format($stats['total_sales_today'] ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($stats['total_sales_today'] ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-sales">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -351,7 +351,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">Clients aujourd'hui</p>
-                    <p class="stat-value text-[#f59e0b]">{{ $stats['customers_today'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $stats['customers_today'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-customers">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -365,7 +365,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="stat-label">En attente</p>
-                    <p class="stat-value text-[#b32a2a]">{{ $stats['pending_orders'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-danger)]">{{ $stats['pending_orders'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-pending">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

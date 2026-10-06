@@ -6,16 +6,7 @@
     <title>Rapport Global des Commissions</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Times New Roman', Times, serif; 
-            font-size: 11px; 
-            color: #000; 
-            padding: 10px 18px 45px 18px;
-            line-height: 1.3;
-        }
-
-        .footer-container {
+.footer-container {
             position: fixed;
             bottom: 0;
             left: 0;

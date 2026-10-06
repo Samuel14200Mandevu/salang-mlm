@@ -32,10 +32,23 @@
         color: var(--text-tertiary, #7A7A82);
     }
 
-    .stat-value-pv { color: #0F2B4F; }
-    .stat-value-available { color: #1F7B4D; }
-    .stat-value-allocated { color: #2563EB; }
-    .stat-value-pending { color: #A65A0E; }
+    .stat-value-pv { color: var(--ui-stat-primary, #184f94); }
+    .stat-value-available { color: var(--ui-stat-success, #1F7B4D); }
+    .stat-value-allocated { color: var(--ui-stat-info, #2563EB); }
+    .stat-value-pending { color: var(--ui-stat-warning, #A65A0E); }
+
+    .pv-context-banner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #DCDEE3);
+        background: var(--bg-secondary, #EEF0F3);
+        font-size: 0.8rem;
+    }
 
     /* ============================================================
        ALLOCATIONS
@@ -117,7 +130,7 @@
         justify-content: center;
         font-weight: 600;
         font-size: 0.75rem;
-        background: #0F2B4F;
+        background: #184f94;
         color: #fff;
         flex-shrink: 0;
     }
@@ -181,7 +194,7 @@
     }
     .badge-success { background: #E6F4EC; color: #1F7B4D; border-color: #B8DFCC; }
     .badge-danger { background: #FDE8E8; color: #B32A2A; border-color: #F5C8C8; }
-    .badge-info { background: #E8EDF5; color: #0F2B4F; border-color: #C8D4E3; }
+    .badge-info { background: #E8EDF5; color: #184f94; border-color: #C8D4E3; }
     .badge-warning { background: #FEF1E6; color: #A65A0E; border-color: #FADCB8; }
 
     .btn {
@@ -203,11 +216,11 @@
         font-size: 0.75rem;
     }
     .btn-primary {
-        background: #0F2B4F;
+        background: #184f94;
         color: #fff;
     }
     .btn-primary:hover {
-        background: #091E3B;
+        background: #134178;
     }
     .btn-outline {
         background: transparent;
@@ -216,8 +229,8 @@
     }
     .btn-outline:hover {
         background: var(--bg-hover, #E8EAEE);
-        border-color: #0F2B4F;
-        color: #0F2B4F;
+        border-color: #184f94;
+        color: #184f94;
     }
 
     .card {
@@ -242,43 +255,75 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
+    @php
+        $pvQuery = !empty($viewingMember) ? ['member_id' => $subject->id] : [];
+    @endphp
+
     {{-- EN-TÊTE --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Gestion des PV</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Consultez votre solde et gérez les allocations</p>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                @if(!empty($viewingMember))
+                    PV de {{ $subject->name }} — cumulés et portefeuille de distribution
+                @else
+                    Consultez votre solde et gérez les allocations
+                @endif
+            </p>
         </div>
-        <a href="{{ route('cashier.pv.distribute') }}" class="btn btn-primary btn-sm">Distribuer des PV</a>
+        <div class="flex flex-wrap gap-2">
+            @if(!empty($viewingMember))
+                <a href="{{ route('cashier.members.show', $subject->id) }}" class="btn btn-outline btn-sm">Fiche membre</a>
+            @endif
+            @if(($memberPv['available_pv'] ?? 0) > 0)
+                <a href="{{ route('cashier.pv.distribute', $pvQuery) }}" class="btn btn-primary btn-sm">Distribuer des PV</a>
+            @endif
+        </div>
     </div>
+
+    @if(!empty($viewingMember))
+        <div class="pv-context-banner">
+            <span class="text-[var(--text-secondary)]">
+                Consultation caisse pour le membre
+                <strong class="text-[var(--text-primary)]">{{ $subject->name }}</strong>
+                (code {{ $subject->sponsor_id ?? 'N/A' }})
+            </span>
+        </div>
+    @endif
 
     {{-- FLASH MESSAGES --}}
     @if(session('success'))
-        <div class="p-3 bg-[#E6F4EC] border border-[#B8DFCC] rounded text-[#1F7B4D] text-sm">{{ session('success') }}</div>
+        <div class="p-3 salang-flash-success border rounded text-sm">{{ session('success') }}</div>
     @endif
     @if(session('error'))
-        <div class="p-3 bg-[#FDE8E8] border border-[#F5C8C8] rounded text-[#B32A2A] text-sm">{{ session('error') }}</div>
+        <div class="p-3 salang-flash-error border rounded text-sm">{{ session('error') }}</div>
     @endif
 
     {{-- STATISTIQUES --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="pv-stat-card">
-            <p class="stat-label">PV Total</p>
-            <p class="stat-value stat-value-pv">{{ number_format($balance?->total_pv ?? 0) }}</p>
-            <p class="stat-sub">BV: {{ number_format($balance?->total_bv ?? 0) }}</p>
+            <p class="stat-label">PV cumulés</p>
+            <p class="stat-value stat-value-pv">{{ number_format($memberPv['cumulative_pv'] ?? 0) }}</p>
+            <p class="stat-sub">
+                Portefeuille&nbsp;: {{ number_format($memberPv['wallet_total_pv'] ?? 0) }}
+                @if(($memberPv['total_bv'] ?? 0) > 0)
+                    • BV&nbsp;: {{ number_format($memberPv['total_bv']) }}
+                @endif
+            </p>
         </div>
         <div class="pv-stat-card">
             <p class="stat-label">Disponibles</p>
-            <p class="stat-value stat-value-available">{{ number_format($balance?->available_pv ?? 0) }}</p>
-            <p class="stat-sub">À distribuer</p>
+            <p class="stat-value stat-value-available">{{ number_format($memberPv['available_pv'] ?? 0) }}</p>
+            <p class="stat-sub">À distribuer (portefeuille)</p>
         </div>
         <div class="pv-stat-card">
             <p class="stat-label">Alloués</p>
-            <p class="stat-value stat-value-allocated">{{ number_format($balance?->allocated_pv ?? 0) }}</p>
+            <p class="stat-value stat-value-allocated">{{ number_format($memberPv['allocated_pv'] ?? 0) }}</p>
             <p class="stat-sub">Déjà distribués</p>
         </div>
         <div class="pv-stat-card">
             <p class="stat-label">En attente</p>
-            <p class="stat-value stat-value-pending">{{ number_format($balance?->pending_pv ?? 0) }}</p>
+            <p class="stat-value stat-value-pending">{{ number_format($memberPv['pending_pv'] ?? 0) }}</p>
             <p class="stat-sub">En cours de validation</p>
         </div>
     </div>
@@ -336,7 +381,7 @@
                                 <div class="name">{{ $member['name'] }}</div>
                                 <div class="detail">Niveau {{ $member['level'] }} • {{ $member['phone'] ?? 'N/A' }}</div>
                             </div>
-                            <div class="pv-badge">{{ $member['pv_balance'] }} PV</div>
+                            <div class="pv-badge">{{ number_format($member['pv_balance']) }} PV</div>
                         </div>
                     @endforeach
                 </div>
@@ -378,7 +423,7 @@
                                     @endphp
                                     <span class="badge {{ $type['class'] }}">{{ $type['label'] }}</span>
                                 </td>
-                                <td class="text-right font-semibold {{ $transaction->type == 'credit' || $transaction->type == 'bonus' ? 'text-[#1F7B4D]' : 'text-[#B32A2A]' }}">
+                                <td class="text-right font-semibold {{ $transaction->type == 'credit' || $transaction->type == 'bonus' ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }}">
                                     {{ $transaction->type == 'credit' || $transaction->type == 'bonus' ? '+' : '-' }}
                                     {{ $transaction->pv_amount }} PV
                                     @if($transaction->bv_amount)
@@ -423,7 +468,12 @@ function rejectAllocation(id) {
 }
 
 function selectNetworkMember(id) {
-    window.location.href = `{{ route('cashier.pv.distribute') }}?member_id=${id}`;
+    const params = new URLSearchParams();
+    @if(!empty($viewingMember))
+    params.set('member_id', '{{ $subject->id }}');
+    @endif
+    params.set('recipient_id', String(id));
+    window.location.href = `{{ route('cashier.pv.distribute') }}?${params.toString()}`;
 }
 </script>
 @endpush

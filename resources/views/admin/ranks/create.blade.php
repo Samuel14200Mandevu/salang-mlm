@@ -2,13 +2,6 @@
 
 @push('styles')
 <style>
-:root {
-    --primary-blue: #0A2A6C;
-    --primary-blue-dark: #061B4A;
-    --primary-blue-bg: rgba(10, 42, 108, 0.08);
-    --primary-blue-border: rgba(10, 42, 108, 0.15);
-}
-
 .form-group {
     margin-bottom: 1rem;
 }
@@ -146,7 +139,7 @@
                            class="form-control @error('name') form-control-error @enderror"
                            placeholder="Manager" required>
                     @error('name')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -158,7 +151,7 @@
                            placeholder="manager" required>
                     <span class="help-text">Identifiant unique pour l'URL (ex: manager)</span>
                     @error('slug')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -169,7 +162,7 @@
                            class="form-control @error('min_pv') form-control-error @enderror"
                            placeholder="0" required>
                     @error('min_pv')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -187,7 +180,7 @@
                            class="form-control @error('bonus_percentage') form-control-error @enderror"
                            placeholder="0" required>
                     @error('bonus_percentage')
-                        <p class="text-xs text-[#B91C1C] mt-1">{{ $message }}</p>
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 

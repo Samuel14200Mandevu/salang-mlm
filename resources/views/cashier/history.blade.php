@@ -22,7 +22,7 @@
     }
     .history-stat-card .number.green { color: #22c55e; }
     .history-stat-card .number.blue { color: #2563eb; }
-    .history-stat-card .number.purple { color: #3d8a2a; }
+    .history-stat-card .number.purple { color: #e8940f; }
     .history-stat-card .number.orange { color: #d97706; }
     .history-stat-card .number.red { color: #b32a2a; }
     .history-stat-card .label {
@@ -42,7 +42,7 @@
     }
     .icon-green { background: rgba(34, 197, 94, 0.10); color: #22c55e; }
     .icon-blue { background: rgba(59, 130, 246, 0.10); color: #2563eb; }
-    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #3d8a2a; }
+    .icon-purple { background: rgba(139, 92, 246, 0.10); color: #e8940f; }
     .icon-orange { background: rgba(245, 158, 11, 0.10); color: #d97706; }
     .icon-red { background: rgba(179, 42, 42, 0.10); color: #b32a2a; }
 
@@ -201,7 +201,7 @@
         color: #FFFFFF;
     }
     .btn-primary:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .btn-outline {
@@ -232,7 +232,7 @@
         transition: background 0.2s ease;
     }
     .filter-section .btn-filter:hover {
-        background: var(--primary-hover, #091E3B);
+        background: var(--primary-hover, #134178);
     }
 
     .filter-section .btn-reset {
@@ -497,7 +497,7 @@
                                 @endif
                             </td>
                             <td class="text-right">
-                                <span class="text-[#16a34a] font-semibold">
+                                <span class="text-[var(--ui-stat-success)] font-semibold">
                                     ${{ number_format($paidAmount, 2) }}
                                 </span>
                                 <span class="badge-paid ml-1">Payé</span>

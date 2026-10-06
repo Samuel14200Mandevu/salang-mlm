@@ -1,8 +1,9 @@
 <?php
-// app/Http/Requests/Auth/LoginRequest.php
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
+use App\Support\UserPassword;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -12,85 +13,67 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Déterminer si l'utilisateur est autorisé
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Règles de validation
-     */
     public function rules(): array
     {
         return [
             'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string'],
             'remember' => ['sometimes', 'boolean'],
         ];
     }
 
-    /**
-     * Messages d'erreur personnalisés
-     */
     public function messages(): array
     {
         return [
-            'email.required' => 'L\'adresse email est obligatoire.',
-            'email.email' => 'Veuillez saisir une adresse email valide (exemple: nom@domaine.com).',
-            'email.max' => 'L\'adresse email ne doit pas dépasser 255 caractères.',
+            'email.required' => 'L’adresse email est obligatoire.',
+            'email.email' => 'Saisissez une adresse email valide (exemple : nom@domaine.com).',
+            'email.max' => 'L’adresse email ne doit pas dépasser 255 caractères.',
             'password.required' => 'Le mot de passe est obligatoire.',
-            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ];
     }
 
     /**
-     * Authentifier l'utilisateur
-     *
      * @throws ValidationException
      */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
-        // Vérifier si l'utilisateur existe
-        $user = \App\Models\User::where('email', $this->email)->first();
-        
+        $user = User::where('email', $this->email)->first();
+
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'email' => 'Aucun compte trouvé avec cette adresse email.',
+                'credentials' => __('auth.failed'),
             ]);
         }
 
-        // Vérifier si le compte est actif - NE PLUS BLOQUER
-        if (!$user->is_active) {
-            // Connecter l'utilisateur même si inactif
-            Auth::login($user);
+        if (UserPassword::usesLegacyMd5($user)) {
             RateLimiter::clear($this->throttleKey());
-            
-            // Rediriger vers la page d'activation
+            session()->flash('legacy_password_email', $user->email);
+
             throw ValidationException::withMessages([
-                'email' => 'Votre compte est inactif. Veuillez l\'activer pour recevoir des commissions.',
+                'legacy' => config('legacy-auth.login_error'),
             ]);
         }
 
-        // Tentative de connexion
-        if (!Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (!UserPassword::verify($user, $this->string('password'))) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'password' => 'Le mot de passe saisi est incorrect.',
+                'credentials' => __('auth.failed'),
             ]);
         }
+
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }
 
-    /**
-     * Vérifier le rate limiting
-     */
     public function ensureIsNotRateLimited(): void
     {
         if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -102,13 +85,10 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => 'Trop de tentatives de connexion. Veuillez réessayer dans ' . ceil($seconds / 60) . ' minute(s).',
+            'throttle' => 'Trop de tentatives de connexion. Réessayez dans '.max(1, (int) ceil($seconds / 60)).' minute(s).',
         ]);
     }
 
-    /**
-     * Clé de rate limiting
-     */
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
