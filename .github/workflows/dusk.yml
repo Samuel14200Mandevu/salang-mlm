@@ -20,6 +20,17 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
       - name: Prepare Dusk environment
         run: |
           cp .env.dusk.example .env.dusk
@@ -38,7 +49,9 @@ jobs:
         run: php artisan dusk:chrome-driver --detect
 
       - name: Start application server
-        run: php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
+        run: |
+          php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
+          sleep 3
 
       - name: Run Dusk
         env:
