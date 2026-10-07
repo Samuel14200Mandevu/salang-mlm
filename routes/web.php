@@ -6,9 +6,11 @@ use App\Http\Controllers\Auth\EmailCheckController;
 use App\Http\Controllers\Auth\SponsorCheckController;
 use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MemberAssistantController;
 use App\Http\Controllers\UserPackageController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RankController;
+use App\Http\Controllers\MyPvController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WithdrawalController;
@@ -171,6 +173,12 @@ Route::middleware(['auth', 'active'])->group(function () {
     // ============================================================
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+        Route::get('/referral', [ProfileController::class, 'referral'])->name('referral');
+        Route::get('/about', [ProfileController::class, 'about'])->name('about');
+        Route::get('/help', [ProfileController::class, 'help'])->name('help');
+        Route::get('/assistant', [MemberAssistantController::class, 'index'])->name('assistant');
+        Route::get('/assistant/search', [MemberAssistantController::class, 'search'])->name('assistant.search');
         Route::put('/', [ProfileController::class, 'update'])->name('update');
         Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('update-avatar');
         Route::delete('/avatar', [ProfileController::class, 'deleteAvatar'])->name('delete-avatar');
@@ -209,6 +217,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/leaderboard', [RankController::class, 'leaderboard'])->name('leaderboard');
         Route::get('/progress', [RankController::class, 'apiProgress'])->name('progress');
     });
+
+    // ============================================================
+    // PV MEMBRE (historique personnel)
+    // ============================================================
+    Route::get('/my-pv', [MyPvController::class, 'index'])->name('my-pv.index');
 
     // ============================================================
     // PORTEFEUILLE (WALLET)

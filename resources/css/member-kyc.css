@@ -1,0 +1,63 @@
+/**
+ * Espace membre — KYC (mobile)
+ */
+
+@media (max-width: 768px) {
+  .member-app .kyc-page-intro-desktop {
+    display: none !important;
+  }
+
+  .member-app .kyc-page-header-desktop {
+    display: none !important;
+  }
+
+  .member-app .kyc-mobile-banner {
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  .member-app .kyc-catalog-banner {
+    margin: 0;
+  }
+
+  .member-app .kyc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .kyc-stats .kyc-status-card {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .member-app .kyc-stats .kyc-status-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .member-app .kyc-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem;
+  }
+
+  .member-app .kyc-info-grid > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .member-app .kyc-page-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .member-app .kyc-page-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .member-app .kyc-page .doc-grid.grid-cols-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .kyc-mobile-banner {
+    display: none;
+  }
+}

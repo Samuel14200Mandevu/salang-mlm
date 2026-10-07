@@ -269,14 +269,19 @@
 </style>
 @endpush
 
-@section('content')
-<div class="space-y-4 sm:space-y-6">
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Commandes',
+        'subtitle' => ($orders->total() ?? 0) . ' commandes · recherche ci-dessous',
+    ])
+@endpush
 
+@section('content')
     <!-- Header with Search -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
+    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commandes</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminOrdersSubtitle">
                 {{ $orders->total() ?? 0 }} commandes
                 @if(request('search'))
                     <span class="text-xs text-[var(--text-tertiary)] ml-2">
@@ -285,7 +290,9 @@
                 @endif
             </p>
         </div>
-        <div class="header-search">
+        <div class="admin-sticky-toolbar md:contents">
+        <div class="admin-page-header-actions flex items-center gap-2 w-full md:w-auto">
+        <div class="header-search admin-search-full flex-1 md:flex-none">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -303,10 +310,12 @@
                 </button>
             </div>
         </div>
+        </div>
+        </div>
     </div>
 
     <!-- Statistics -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    <div class="admin-kpi-rail stats-grid grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">{{ $totalOrders ?? 0 }}</p>
@@ -329,15 +338,21 @@
         </div>
     </div>
 
-    <!-- Orders List -->
-    <div class="card animate-fadeInUp delay-3">
+    @include('admin.orders._mobile_list', ['orders' => $orders])
+
+    @if($orders instanceof \Illuminate\Pagination\LengthAwarePaginator && $orders->hasPages())
+    <x-salang-pagination :paginator="$orders" id="paginationContainerMobile" class="md:hidden" />
+    @endif
+
+    <!-- Orders List desktop -->
+    <div class="card animate-fadeInUp delay-3 hidden md:block">
         <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commandes</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $orders->total() ?? 0 }} commandes</span>
         </div>
 
         <div class="table-wrap">
-            <table class="table table-striped">
+            <table class="table table-striped admin-table-desktop-only">
                 <thead>
                     <tr>
                         <th>N° commande</th>
@@ -436,14 +451,8 @@
             </table>
         </div>
 
-        @if($orders instanceof \Illuminate\Pagination\LengthAwarePaginator && $orders->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $orders->appends(request()->query())->links() }}
-            </div>
-        @endif
+        <x-salang-pagination :paginator="$orders" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
-
-</div>
 
 @push('scripts')
 <script>
@@ -510,6 +519,13 @@ document.addEventListener('DOMContentLoaded', function() {
         url.searchParams.set('page', '1');
 
         const tableBody = document.getElementById('ordersTable');
+        const mobileList = document.getElementById('adminOrdersMobileList');
+        const loadingMobile = '<div class="admin-empty-state"><p>Recherche en cours…</p></div>';
+
+        if (mobileList) {
+            mobileList.innerHTML = loadingMobile;
+        }
+
         if (!tableBody) return;
 
         // Afficher un indicateur de chargement
@@ -546,25 +562,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 tableBody.innerHTML = newTableBody.innerHTML;
             }
 
+            const newMobileList = doc.getElementById('adminOrdersMobileList');
+            if (newMobileList && mobileList) {
+                mobileList.innerHTML = newMobileList.innerHTML;
+            }
+
             // Mettre à jour la pagination
             const newPagination = doc.getElementById('paginationContainer');
             const paginationContainer = document.getElementById('paginationContainer');
             if (newPagination && paginationContainer) {
                 paginationContainer.innerHTML = newPagination.innerHTML;
             }
+            const newPaginationMobile = doc.getElementById('paginationContainerMobile');
+            const paginationMobile = document.getElementById('paginationContainerMobile');
+            if (newPaginationMobile && paginationMobile) {
+                paginationMobile.innerHTML = newPaginationMobile.innerHTML;
+            }
 
-            // Mettre à jour le titre et le compteur
-            const title = document.querySelector('h1');
-            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (title && subtitle) {
-                const totalMatch = html.match(/(\d+)\s+commandes?/);
-                if (totalMatch) {
-                    subtitle.textContent = totalMatch[0];
-                }
-                // Ajouter l'info de recherche
-                if (query) {
-                    subtitle.innerHTML = totalMatch[0] + ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Résultats pour "' + query + '"</span>';
-                }
+            const subtitle = document.getElementById('adminOrdersSubtitle');
+            const newSubtitle = doc.getElementById('adminOrdersSubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
             }
 
             // Mettre à jour les statistiques

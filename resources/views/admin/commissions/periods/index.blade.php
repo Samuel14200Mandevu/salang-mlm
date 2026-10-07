@@ -432,7 +432,7 @@
 
         @if(isset($periods) && $periods->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $periods->links() }}
+                <x-salang-pagination :paginator="$periods" />
             </div>
         @endif
     </div>

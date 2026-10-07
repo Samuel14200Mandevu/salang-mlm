@@ -3,11 +3,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\Commission;
 use App\Models\Withdrawal;
-use App\Models\Package;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,13 +25,35 @@ class ReportController extends Controller
             ->sum('amount');
 
         $transactionsCount = Transaction::where('user_id', $user->id)->count();
-        $packagesCount = Package::where('is_active', true)->count();
+        $ordersCount = Order::where('user_id', $user->id)->count();
+
+        $wallet = $user->wallet;
+        $balance = $wallet ? (float) $wallet->balance : 0.0;
+
+        $commissionsCount = Commission::where('user_id', $user->id)->count();
 
         return view('report.index', compact(
             'totalEarnings',
             'totalWithdrawn',
             'transactionsCount',
-            'packagesCount'
+            'ordersCount',
+            'balance',
+            'commissionsCount'
         ));
+    }
+
+    public function earnings()
+    {
+        return redirect()->route('commissions.index');
+    }
+
+    public function network()
+    {
+        return redirect()->route('network.index');
+    }
+
+    public function export(Request $request)
+    {
+        return redirect()->route('wallet.export', $request->query());
     }
 }

@@ -481,9 +481,7 @@
         </div>
 
         @if(isset($orders) && $orders->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $orders->appends(request()->query())->links() }}
-            </div>
+            <x-salang-pagination :paginator="$orders" id="paginationContainer" class="mt-3 sm:mt-4" />
         @endif
     </div>
 </div>

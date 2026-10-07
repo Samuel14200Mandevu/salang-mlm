@@ -8,29 +8,60 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+<div
+    class="member-dashboard member-dashboard--fintech space-y-4 sm:space-y-6 member-dashboard--level-{{ $dashboardLevelNumber }}"
+    style="--dashboard-accent: {{ $dashboardLevel['gradient'] ?? 'var(--color-primary-600)' }};"
+>
     @include('dashboard.partials.inactive-alert')
-    @include('dashboard.partials.welcome')
-    @include('dashboard.partials.commission-bands')
-    @include('dashboard.partials.stats-primary')
 
-    @if($dashboardLevelNumber === 3)
-        @include('dashboard.partials.leaders')
-    @endif
+    {{-- Mobile : style fintech (Binance-like) --}}
+    <div class="member-fintech-shell md:hidden">
+        @include('dashboard.partials.fintech-hero')
+        @include('dashboard.partials.fintech-actions')
+        @include('dashboard.partials.fintech-metrics-rail')
 
-    @include('dashboard.partials.profile-stats')
+        @if($dashboardLevel['show_max_banner'] ?? false)
+            <div class="member-fintech-animate member-fintech-animate--d4">
+                @include('dashboard.partials.max-banner')
+            </div>
+        @endif
 
-    @if($dashboardLevelNumber !== 3)
-        @include('dashboard.partials.leaders')
-    @endif
+        @include('dashboard.partials.fintech-rank-card')
 
-    @include('dashboard.partials.max-banner')
-    @include('dashboard.partials.rank-progress')
+        @if($dashboardLevel['show_chart'] ?? true)
+            @include('dashboard.partials.fintech-market-panel')
+        @endif
 
-    @if($dashboardLevel['show_chart'] ?? true)
-        @include('dashboard.partials.chart-activities')
-    @endif
+        @if($dashboardLevel['show_leaders'] ?? false)
+            <div class="member-fintech-animate member-fintech-animate--d6">
+                @include('dashboard.partials.leaders')
+            </div>
+        @endif
+    </div>
 
-    @include('dashboard.partials.quick-actions')
+    {{-- Desktop : mise en page classique --}}
+    <div class="member-classic-shell hidden md:block space-y-4 sm:space-y-6">
+        @include('dashboard.partials.welcome')
+        @include('dashboard.partials.commission-bands')
+        @include('dashboard.partials.stats-primary')
+
+        @if($dashboardLevel['show_leaders'] ?? false)
+            @include('dashboard.partials.leaders')
+        @endif
+
+        @include('dashboard.partials.profile-stats')
+
+        @if($dashboardLevel['show_max_banner'] ?? false)
+            @include('dashboard.partials.max-banner')
+        @endif
+
+        @include('dashboard.partials.rank-progress')
+
+        @if($dashboardLevel['show_chart'] ?? true)
+            @include('dashboard.partials.chart-activities')
+        @endif
+
+        @include('dashboard.partials.quick-actions')
+    </div>
 </div>
 @endsection

@@ -1,8 +1,54 @@
 <style>
     /* Dashboard membre — sobre, palette Salang (primary + neutres) */
 
+    .member-dashboard {
+        --dashboard-warm: color-mix(in srgb, var(--dashboard-accent, var(--color-primary-600)) 76%, var(--color-accent-400) 24%);
+        --dashboard-warm-soft: color-mix(in srgb, var(--dashboard-accent, var(--color-primary-600)) 86%, var(--color-accent-300) 14%);
+    }
+
+    .member-dashboard-greeting {
+        background: linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--dashboard-accent, var(--color-primary-600)) 72%, #000) 0%,
+            color-mix(in srgb, var(--dashboard-warm) 48%, #000) 100%
+        );
+        color: #fff;
+        border-radius: 16px;
+        padding: 1rem 1.05rem;
+        box-shadow:
+            0 8px 24px color-mix(in srgb, var(--dashboard-accent, var(--color-primary-600)) 24%, transparent),
+            0 4px 14px color-mix(in srgb, var(--color-accent-500) 10%, transparent);
+    }
+
+    .member-dashboard-greeting h1 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1.25;
+        margin: 0.35rem 0 0;
+        color: #fff;
+    }
+
+    .member-dashboard-greeting p {
+        font-size: 0.8125rem;
+        opacity: 0.92;
+        margin: 0.35rem 0 0;
+        color: rgba(255, 255, 255, 0.92);
+    }
+
+    .member-dashboard-greeting__level {
+        font-size: 0.625rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .member-dashboard-greeting .badge-level {
+        font-size: 0.6875rem;
+    }
+
     .dashboard-level-badge {
-        background: var(--color-primary-600);
+        background: var(--dashboard-accent, var(--color-primary-600));
         color: #fff;
         padding: 0.2rem 0.65rem;
         border-radius: 8px;
@@ -34,8 +80,8 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        background: var(--bg-secondary);
-        color: var(--color-primary-600);
+        background: color-mix(in srgb, var(--dashboard-warm-soft) 35%, var(--bg-secondary));
+        color: var(--dashboard-warm);
     }
 
     .dashboard-stat-card .stat-value {
@@ -44,7 +90,11 @@
     }
 
     .dashboard-stat-card .stat-value--accent {
-        color: var(--color-primary-600);
+        color: var(--dashboard-warm);
+    }
+
+    .member-dashboard .dashboard-stat-card .stat-icon {
+        color: var(--dashboard-warm);
     }
 
     .dashboard-quick-action {
@@ -62,7 +112,7 @@
         height: 1.375rem;
         margin: 0 auto 0.35rem;
         display: block;
-        color: var(--color-primary-600);
+        color: var(--dashboard-warm);
     }
 
     .dashboard-quick-action .label {
@@ -85,7 +135,7 @@
     .dashboard-objective-bar .fill {
         height: 100%;
         border-radius: 6px;
-        background: var(--color-primary-600);
+        background: linear-gradient(90deg, var(--dashboard-warm-soft), var(--dashboard-warm));
     }
 
     .dashboard-activity-item {
@@ -150,7 +200,7 @@
         font-weight: 700;
         margin-top: 0.25rem;
         line-height: 1.2;
-        color: var(--color-primary-600);
+        color: var(--dashboard-warm);
         font-variant-numeric: tabular-nums;
     }
 
@@ -165,7 +215,7 @@
     }
 
     .dashboard-max-banner {
-        background: var(--color-primary-600);
+        background: linear-gradient(135deg, var(--dashboard-warm-soft), var(--dashboard-warm));
         color: #fff;
         border-radius: 10px;
         padding: 1rem 1.125rem;

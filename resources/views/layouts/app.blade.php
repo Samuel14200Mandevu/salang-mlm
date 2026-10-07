@@ -6,6 +6,11 @@
     @include('layouts.partials.sidebar')
     @include('layouts.partials.main-content')
     @include('layouts.partials.bottom-nav')
+    @auth
+        @if(! request()->routeIs('profile.assistant'))
+            @include('partials.member.assistant-widget')
+        @endif
+    @endauth
     @include('layouts.partials.confirm-dialog')
     @include('layouts.partials.scripts')
 </body>

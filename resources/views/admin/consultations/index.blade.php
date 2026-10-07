@@ -470,7 +470,7 @@
 
         @if($consultations->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $consultations->appends(request()->query())->links() }}
+                <x-salang-pagination :paginator="$consultations" />
             </div>
         @endif
     </div>

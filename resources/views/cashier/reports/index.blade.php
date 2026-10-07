@@ -470,7 +470,7 @@
         </div>
 
         <div class="mt-3">
-            {{ $reports->links() }}
+            <x-salang-pagination :paginator="$reports" />
         </div>
     </div>
 </div>

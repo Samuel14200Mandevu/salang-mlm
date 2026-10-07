@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MlmSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,8 @@ class SettingController extends Controller
             'site_url' => config('app.url'),
             'timezone' => config('app.timezone'),
             'locale' => config('app.locale'),
+            'support_email' => MlmSetting::getValue('support_email', config('mail.from.address', '')),
+            'support_phone' => MlmSetting::getValue('support_phone', ''),
             'maintenance_mode' => app()->isDownForMaintenance(),
             'debug_mode' => config('app.debug'),
             'env' => app()->environment(),
@@ -36,18 +39,25 @@ class SettingController extends Controller
     {
         $request->validate([
             'site_name' => 'required|string|max:255',
+            'site_url' => 'required|url|max:255',
             'timezone' => 'required|string|timezone',
             'locale' => 'required|string|in:fr,en',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:40',
             'debug_mode' => 'boolean',
         ]);
 
         try {
             $this->updateEnv([
                 'APP_NAME' => $request->site_name,
+                'APP_URL' => $request->site_url,
                 'APP_TIMEZONE' => $request->timezone,
                 'APP_LOCALE' => $request->locale,
                 'APP_DEBUG' => $request->has('debug_mode') ? 'true' : 'false',
             ]);
+
+            MlmSetting::setValue('support_email', $request->input('support_email', ''), 'contact', 'Email support affiché aux membres');
+            MlmSetting::setValue('support_phone', $request->input('support_phone', ''), 'contact', 'Téléphone support');
 
             Artisan::call('config:clear');
 
@@ -57,7 +67,7 @@ class SettingController extends Controller
             ]);
 
             return redirect()->route('admin.settings')
-                ->with('success', 'General settings updated successfully.');
+                ->with('success', 'Paramètres enregistrés avec succès.');
 
         } catch (\Exception $e) {
             Log::error('Error updating general settings', [

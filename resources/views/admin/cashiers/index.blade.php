@@ -450,7 +450,7 @@
 
         @if($cashiers instanceof \Illuminate\Pagination\LengthAwarePaginator && $cashiers->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $cashiers->links() }}
+                <x-salang-pagination :paginator="$cashiers" />
             </div>
         @endif
     </div>

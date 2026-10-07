@@ -383,3 +383,23 @@ html.dark .badge-source-mlm {
   border-color: #f5c8c8;
   color: #b32a2a;
 }
+
+/* Compte membre — fonds & libellés (évite texte clair sur fond blanc forcé) */
+html.dark .member-app .main-content:has(.profile-page--account) {
+  background: var(--bg-secondary) !important;
+}
+
+html.dark .member-app .profile-account-mobile,
+html.dark .member-app .profile-account-menu,
+html.dark .member-app .profile-account-row {
+  background: var(--bg-card) !important;
+}
+
+html.dark .member-app .profile-account-row__label {
+  color: var(--text-primary) !important;
+}
+
+html.dark .member-app .profile-account-row__icon {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+}

@@ -172,37 +172,6 @@
         margin-bottom: 0.25rem;
     }
     
-    .pagination-container {
-        margin-top: 1.5rem;
-        display: flex;
-        justify-content: center;
-    }
-    .pagination-container nav {
-        display: inline-flex;
-        gap: 0.25rem;
-        flex-wrap: wrap;
-    }
-    .pagination-container .page-link {
-        padding: 0.5rem 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
-        color: var(--text-primary);
-        text-decoration: none;
-        font-size: 0.813rem;
-        transition: all 0.2s ease;
-    }
-    .pagination-container .page-link:hover {
-        background: var(--bg-hover);
-    }
-    .pagination-container .active .page-link {
-        background: var(--primary-500);
-        color: white;
-        border-color: var(--primary-500);
-    }
-    .pagination-container .disabled .page-link {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
     
     .text-primary-500 { color: var(--primary-500); }
     .text-green-500 { color: #22c55e; }
@@ -365,9 +334,7 @@
             </table>
             
             @if(method_exists($results, 'links'))
-                <div class="pagination-container">
-                    {{ $results->appends(['search' => $search ?? ''])->links() }}
-                </div>
+                <x-salang-pagination :paginator="$results" class="mt-4" />
             @endif
         </div>
     @else

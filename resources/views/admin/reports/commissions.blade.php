@@ -299,7 +299,7 @@
 
         @if(isset($commissions) && $commissions->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $commissions->links() }}
+                <x-salang-pagination :paginator="$commissions" />
             </div>
         @endif
     </div>

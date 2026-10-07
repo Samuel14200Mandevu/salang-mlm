@@ -5,28 +5,34 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="member-page-intro animate-fadeInUp">
+@php
+    $parrain = $user->parrain_id ? App\Models\User::find($user->parrain_id) : null;
+    $filleulsCount = App\Models\User::where('parrain_id', $user->id)->count();
+    $openEditMobile = $errors->any() || request()->boolean('edit');
+@endphp
+<div class="profile-page profile-page--account space-y-4 sm:space-y-6 {{ $openEditMobile ? 'profile-page--edit' : '' }}" id="profilePageRoot">
+
+    <input type="file" id="avatar_input" name="avatar" accept="image/*" class="hidden" aria-hidden="true" tabindex="-1">
+
+    <div class="member-page-intro profile-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Profil</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Gérez vos informations personnelles</p>
     </div>
 
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
+        <div class="profile-flash profile-flash--mobile p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="profile-flash profile-flash--mobile p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             {{ session('error') }}
         </div>
     @endif
 
     @if($errors->any())
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="profile-flash profile-flash--mobile p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             <ul class="list-disc list-inside">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -35,11 +41,22 @@
         </div>
     @endif
 
-    <div class="profile-grid grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        
-        <!-- Avatar Section -->
-        <div class="lg:col-span-1 space-y-3 sm:space-y-4">
-            <div class="card animate-fadeInLeft">
+    @include('profile.partials.account-mobile-hub')
+
+    <div class="profile-edit-shell">
+        <div class="profile-subpage profile-subpage--profile-edit md:hidden">
+            @include('profile.partials.account-subpage-header', [
+                'title' => 'Informations personnelles',
+                'sub' => 'Profil · coordonnées · sécurité',
+                'backUrl' => route('profile.index'),
+            ])
+        </div>
+
+        <div class="profile-subpage-body profile-edit-shell__body">
+    <div class="profile-desktop-shell profile-grid grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6" id="profileEditPanel">
+
+        <div class="profile-sidebar-col lg:col-span-1 space-y-3 sm:space-y-4">
+            <div class="card profile-avatar-card animate-fadeInLeft">
                 <div class="flex flex-col items-center">
                     <!-- Avatar -->
                     <div class="profile-avatar-container">
@@ -53,16 +70,11 @@
                         <label for="avatar_input" class="avatar-overlay">
                             <span>Changer</span>
                         </label>
-                        <input type="file" id="avatar_input" name="avatar" accept="image/*" class="hidden">
                     </div>
 
                     <h3 class="mt-3 sm:mt-4 text-lg sm:text-xl font-bold text-[var(--text-primary)]">{{ $user->name }}</h3>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $user->email }}</p>
                     
-                    <!-- Parrain Information -->
-                    @php
-                        $parrain = App\Models\User::find($user->parrain_id);
-                    @endphp
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                         Parrain: 
                         <strong class="text-primary-500">{{ $parrain?->name ?? 'Aucun' }}</strong>
@@ -88,8 +100,7 @@
                         @endif
                     </div>
 
-                    <!-- Stats -->
-                    <div class="mt-3 sm:mt-4 w-full grid grid-cols-2 gap-1.5 sm:gap-2">
+                    <div class="profile-avatar-stats mt-3 sm:mt-4 w-full grid grid-cols-2 gap-1.5 sm:gap-2">
                         <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
                             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">ID</p>
                             <p class="font-bold text-[var(--text-primary)] text-sm sm:text-base">#{{ $user->id }}</p>
@@ -117,9 +128,6 @@
                 <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">
                     Mon Parrain
                 </h4>
-                @php
-                    $parrain = App\Models\User::find($user->parrain_id);
-                @endphp
                 <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="avatar avatar-md avatar-info">
                         {{ $parrain ? strtoupper(substr($parrain->name, 0, 1)) : 'N/A' }}
@@ -140,10 +148,7 @@
                 <h4 class="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 sm:mb-3">
                     Mon Réseau
                 </h4>
-                @php
-                    $filleulsCount = App\Models\User::where('parrain_id', Auth::user()->id)->count();
-                @endphp
-                <div class="grid grid-cols-2 gap-2">
+                <div class="profile-stats stats-grid grid grid-cols-2 gap-2">
                     <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Filleuls</p>
                         <p class="font-bold text-primary-500 text-lg sm:text-xl">{{ $filleulsCount }}</p>
@@ -160,8 +165,8 @@
         <div class="lg:col-span-2 space-y-3 sm:space-y-4">
             
             <!-- Personal Information -->
-            <div class="card animate-fadeInRight">
-                <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div class="card animate-fadeInRight profile-personal-info-card">
+                <div class="hidden md:flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div class="stat-icon stat-icon-primary">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -342,82 +347,48 @@
                     </div>
                 </form>
             </div>
-
-            <!-- Danger Zone -->
-            <div class="card danger-zone animate-fadeInRight delay-5">
-                <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div class="stat-icon stat-icon-danger">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-base sm:text-lg font-semibold text-red-500">Zone de danger</h3>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actions irréversibles</p>
-                    </div>
-                </div>
-
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">
-                    Une fois votre compte supprimé, toutes les données associées seront définitivement perdues.
-                </p>
-
-                <button type="button"
-                        x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-                        class="btn btn-danger text-sm sm:text-base py-2 sm:py-2.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    Supprimer le compte
-                </button>
-            </div>
         </div>
     </div>
-
-    <!-- Delete Account Modal -->
-    <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" class="p-4 sm:p-6">
-            @csrf @method('delete')
-
-            <div class="text-center">
-                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-red-500 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <h2 class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Supprimer le compte</h2>
-                <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-[var(--text-secondary)]">
-                    Cette action est <strong class="text-red-500">irréversible</strong>.<br>
-                    Veuillez entrer votre mot de passe pour confirmer.
-                </p>
-            </div>
-
-            <div class="mt-4 sm:mt-6">
-                <input type="password" 
-                       name="password" 
-                       placeholder="Votre mot de passe"
-                       class="input text-center text-sm sm:text-base"
-                       autofocus>
-                @error('password', 'userDeletion')
-                    <p class="text-xs text-red-500 text-center mt-2">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-                <button type="button" x-on:click="$dispatch('close')" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
-                    Annuler
-                </button>
-                <button type="submit" class="btn btn-danger w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Confirmer
-                </button>
-            </div>
-        </form>
-    </x-modal>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var profileRoot = document.getElementById('profilePageRoot');
+
+    function setProfileEditMode(on) {
+        if (!profileRoot) {
+            return;
+        }
+        profileRoot.classList.toggle('profile-page--edit', on);
+        if (on) {
+            var panel = document.getElementById('profileEditPanel');
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    document.querySelectorAll('[data-profile-open-edit]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            setProfileEditMode(true);
+        });
+    });
+
+    document.querySelectorAll('[data-profile-close-edit]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            setProfileEditMode(false);
+        });
+    });
+
+    if (window.location.hash === '#edit') {
+        setProfileEditMode(true);
+    }
+
     var avatarInput = document.getElementById('avatar_input');
     var removeBtn = document.getElementById('removeAvatarBtn');
 

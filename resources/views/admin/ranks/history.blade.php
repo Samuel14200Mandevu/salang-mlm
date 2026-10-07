@@ -282,7 +282,7 @@
 
         @if(isset($history) && $history->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $history->links() }}
+                <x-salang-pagination :paginator="$history" />
             </div>
         @endif
     </div>

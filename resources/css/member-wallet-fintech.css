@@ -1,0 +1,63 @@
+/* Portefeuille membre — style fintech (type Binance), mobile */
+
+@media (max-width: 767px) {
+  .member-app .member-wallet--fintech {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem 0;
+    padding: 0 0.75rem 0.35rem;
+    --dashboard-accent: var(--color-primary-600);
+  }
+
+  .member-app .main-content:has(.member-wallet--fintech) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .member-wallet--fintech .member-wallet-hero {
+    margin: 1rem 0.35rem 0;
+  }
+
+  .member-app .member-wallet-hero__badge {
+    display: inline-block;
+    margin-top: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(248, 250, 252, 0.92);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .member-app .member-fintech-tx__amount.is-debit {
+    color: #ef4444;
+  }
+
+  .member-app .member-wallet-feed-pagination {
+    margin-top: 0.65rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .member-app .member-wallet-classic-shell {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .member-app .member-wallet--fintech .member-fintech-shell {
+    display: none !important;
+  }
+
+  .member-app .member-wallet-classic-shell {
+    display: block;
+  }
+
+  .member-app .member-wallet--fintech {
+    margin: 0;
+    padding: 0;
+  }
+}

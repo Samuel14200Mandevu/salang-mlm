@@ -9,6 +9,7 @@ use App\Models\RankHistory;
 use App\Models\UserMonthlyRank;
 use App\Models\Commission;
 use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\RankConditionChecker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +18,14 @@ class RankController extends Controller
 {
     protected AdvancedRankCalculator $rankCalculator;
 
-    public function __construct(AdvancedRankCalculator $rankCalculator)
-    {
+    protected RankConditionChecker $rankConditionChecker;
+
+    public function __construct(
+        AdvancedRankCalculator $rankCalculator,
+        RankConditionChecker $rankConditionChecker
+    ) {
         $this->rankCalculator = $rankCalculator;
+        $this->rankConditionChecker = $rankConditionChecker;
     }
 
     public function index()
@@ -175,16 +181,15 @@ class RankController extends Controller
         }
 
         if ($type === 'branches_mixed') {
-            $valid = true;
-            foreach ($rule['branches'] as $count => $level) {
-                $branches = $this->countQualifiedBranches($user, $level);
-                if ($branches < $count) {
-                    $valid = false;
-                    break;
-                }
-            }
             $groupPV = $user->team_pv ?? 0;
-            return $valid && $groupPV >= $rule['group_pv'];
+            if ($groupPV < ($rule['group_pv'] ?? 0)) {
+                return false;
+            }
+
+            return $this->rankConditionChecker->satisfiesExclusiveMixedBranches(
+                $user,
+                $rule['branches'] ?? []
+            );
         }
 
         return false;

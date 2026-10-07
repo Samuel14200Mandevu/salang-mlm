@@ -74,11 +74,86 @@
     background: var(--bg-card);
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.maintenance-card h3 {
+    .maintenance-card h3 {
     font-size: 0.938rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.75rem;
+}
+
+.theme-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+}
+.theme-setting-row + .theme-setting-row {
+    border-top: 1px solid var(--border-light);
+}
+.theme-setting-copy h4 {
+    font-size: 0.938rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.2rem;
+}
+.theme-setting-copy p {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.theme-switch-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 3.25rem;
+    height: 1.875rem;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.theme-switch input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+}
+.theme-switch-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.theme-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 9999px;
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.theme-switch input:checked + .theme-switch-track {
+    background: color-mix(in srgb, var(--color-primary-600, var(--primary-blue)) 88%, #0a1628);
+    border-color: transparent;
+}
+.theme-switch input:checked + .theme-switch-track .theme-switch-thumb {
+    transform: translateX(1.35rem);
+    background: #fff;
+}
+.theme-switch input:focus-visible + .theme-switch-track {
+    outline: 2px solid var(--color-primary-500, var(--primary-blue));
+    outline-offset: 2px;
 }
 
 .btn {
@@ -118,6 +193,22 @@
 .btn-outline:hover {
     background: var(--bg-hover);
     border-color: var(--border-color);
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+.badge-success {
+    background: rgba(28, 126, 74, 0.12);
+    color: #1C7E4A;
+}
+.badge-warning {
+    background: rgba(181, 71, 8, 0.12);
+    color: #B54708;
 }
 
 .form-group {
@@ -274,6 +365,80 @@
         </a>
     </div>
 
+    <!-- Apparence -->
+    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-1 border-b border-[var(--border-color)] pb-2">
+            Apparence
+        </h3>
+        <div class="theme-setting-row">
+            <div class="theme-setting-copy">
+                <h4>Thème sombre</h4>
+                <p>Interface admin claire ou sombre. Enregistré sur cet appareil.</p>
+            </div>
+            <div class="theme-switch-wrap">
+                <label class="theme-switch" for="settings-theme-toggle">
+                    <input type="checkbox"
+                           id="settings-theme-toggle"
+                           aria-label="Activer le thème sombre">
+                    <span class="theme-switch-track" aria-hidden="true">
+                        <span class="theme-switch-thumb"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="theme-setting-row">
+            <div class="theme-setting-copy">
+                <h4>Menu latéral ouvert</h4>
+                <p>Sur ordinateur, menu déployé ou replié au chargement.</p>
+            </div>
+            <div class="theme-switch-wrap">
+                <label class="theme-switch" for="settings-sidebar-toggle">
+                    <input type="checkbox" id="settings-sidebar-toggle" aria-label="Menu latéral ouvert par défaut">
+                    <span class="theme-switch-track" aria-hidden="true">
+                        <span class="theme-switch-thumb"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="theme-setting-row">
+            <div class="theme-setting-copy">
+                <h4>Animations réduites</h4>
+                <p>Moins d’animations et de transitions dans l’interface (confort visuel).</p>
+            </div>
+            <div class="theme-switch-wrap">
+                <label class="theme-switch" for="settings-reduce-motion-toggle">
+                    <input type="checkbox" id="settings-reduce-motion-toggle" aria-label="Réduire les animations">
+                    <span class="theme-switch-track" aria-hidden="true">
+                        <span class="theme-switch-thumb"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
+        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-1 border-b border-[var(--border-color)] pb-2">
+            Notifications
+        </h3>
+        <div class="theme-setting-row">
+            <div class="theme-setting-copy">
+                <h4>Alertes workflow</h4>
+                <p>Rafraîchir automatiquement les badges consultations / rapports (toutes les 30 s).</p>
+            </div>
+            <div class="theme-switch-wrap">
+                <label class="theme-switch" for="settings-workflow-poll-toggle">
+                    <input type="checkbox" id="settings-workflow-poll-toggle" aria-label="Activer les alertes workflow" checked>
+                    <span class="theme-switch-track" aria-hidden="true">
+                        <span class="theme-switch-thumb"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <!-- General Settings Form -->
     <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
         <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 border-b border-[var(--border-color)] pb-2">
@@ -291,7 +456,7 @@
                         Nom du site <span class="required">*</span>
                     </label>
                     <input type="text" name="site_name"
-                           value="{{ old('site_name', config('app.name')) }}"
+                           value="{{ old('site_name', $settings['site_name'] ?? config('app.name')) }}"
                            class="form-control @error('site_name') form-control-error @enderror"
                            required>
                     @error('site_name')
@@ -305,7 +470,7 @@
                         URL du site <span class="required">*</span>
                     </label>
                     <input type="url" name="site_url"
-                           value="{{ old('site_url', config('app.url')) }}"
+                           value="{{ old('site_url', $settings['site_url'] ?? config('app.url')) }}"
                            class="form-control @error('site_url') form-control-error @enderror"
                            required>
                     @error('site_url')
@@ -348,6 +513,42 @@
                         <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div class="form-group md:col-span-2">
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                        Email support
+                    </label>
+                    <input type="email" name="support_email"
+                           value="{{ old('support_email', $settings['support_email'] ?? '') }}"
+                           class="form-control @error('support_email') form-control-error @enderror"
+                           placeholder="support@example.com">
+                    @error('support_email')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                        Téléphone support
+                    </label>
+                    <input type="text" name="support_phone"
+                           value="{{ old('support_phone', $settings['support_phone'] ?? '') }}"
+                           class="form-control @error('support_phone') form-control-error @enderror"
+                           placeholder="+243 …">
+                    @error('support_phone')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="form-group md:col-span-2">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-[var(--text-secondary)]">
+                        <input type="checkbox" name="debug_mode" value="1"
+                               class="rounded border-[var(--border-color)]"
+                               {{ old('debug_mode', ($settings['debug_mode'] ?? false) ? '1' : '') ? 'checked' : '' }}>
+                        <span>Mode debug (APP_DEBUG)</span>
+                    </label>
+                    <p class="text-xs text-[var(--text-tertiary)] mt-1">À désactiver en production.</p>
+                </div>
             </div>
 
             <div class="mt-4">
@@ -363,7 +564,12 @@
 
     <!-- Maintenance -->
     <div class="maintenance-card animate-fadeInUp delay-3">
-        <h3>Maintenance</h3>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="mb-0">Maintenance</h3>
+            <span class="badge {{ ($settings['maintenance_mode'] ?? false) ? 'badge-warning' : 'badge-success' }}">
+                {{ ($settings['maintenance_mode'] ?? false) ? 'Site en maintenance' : 'Site en ligne' }}
+            </span>
+        </div>
         <div class="flex flex-wrap gap-2 sm:gap-3">
             <form action="{{ route('admin.settings.clear-cache') }}" method="POST" class="inline">
                 @csrf

@@ -1,0 +1,177 @@
+/**
+ * Espace membre — Packages (mobile : bandeau type boutique)
+ */
+
+@media (max-width: 768px) {
+  .member-app .subscriptions-page-intro-desktop {
+    display: none !important;
+  }
+
+  .member-app .main-content:has(.subscriptions-page) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .subscriptions-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem;
+    padding: 0 0 1rem;
+  }
+
+  .member-app .subscriptions-catalog-head {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.65rem;
+    background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .member-app .subscriptions-catalog-banner {
+    margin: 0;
+  }
+
+  .member-app .subscriptions-summary-cards {
+    display: none !important;
+  }
+
+  .member-app .subscriptions-page-flash {
+    margin: 0 0.75rem;
+  }
+
+  .member-app .subscriptions-offers-label {
+    margin: 0.15rem 0.75rem 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .member-app .subscriptions-page .subscription-grid {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: unset !important;
+    gap: 0.65rem;
+    margin: 0 0.75rem;
+    padding: 0;
+  }
+
+  .member-app .subscriptions-page .subscription-card {
+    border-radius: 14px;
+    border: 1px solid var(--border-light);
+    padding: 0.9rem 0.95rem 1rem;
+    text-align: left;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    transform: none !important;
+  }
+
+  .member-app .subscriptions-page .subscription-card:hover {
+    transform: none;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  }
+
+  .member-app .subscriptions-page .subscription-card::before {
+    display: none;
+  }
+
+  .member-app .subscriptions-page .subscription-card.current {
+    border-color: color-mix(in srgb, var(--color-primary-500) 45%, var(--border-light));
+    box-shadow:
+      0 1px 4px rgba(15, 23, 42, 0.04),
+      0 0 0 1px color-mix(in srgb, var(--color-primary-500) 22%, transparent);
+  }
+
+  .member-app .subscriptions-page .subscription-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .member-app .subscriptions-page .subscription-card__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.25;
+  }
+
+  .member-app .subscriptions-page .subscription-card__price {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--color-primary-600);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .member-app .subscriptions-page .subscription-card__pv {
+    margin: 0.15rem 0 0;
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+  }
+
+  .member-app .subscriptions-page .subscription-card .sub-icon {
+    display: none;
+  }
+
+  .member-app .subscriptions-page .subscription-badge {
+    position: static;
+    display: inline-block;
+    margin: 0 0 0.35rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.5625rem;
+  }
+
+  .member-app .subscriptions-page .subscription-card .border-t {
+    margin-top: 0.65rem;
+    padding-top: 0.65rem;
+    border-color: var(--border-light) !important;
+  }
+
+  .member-app .subscriptions-page .benefit-item {
+    font-size: 0.6875rem;
+    padding: 0.15rem 0;
+  }
+
+  .member-app .subscriptions-page .subscription-card .btn {
+    border-radius: 10px;
+    font-size: 0.8125rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .member-app .subscriptions-page .subscription-grid .col-span-full {
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .subscriptions-catalog-head {
+    display: none !important;
+  }
+
+  .member-app .subscriptions-offers-label {
+    display: none;
+  }
+
+  .member-app .subscriptions-page .subscription-card__head {
+    display: block;
+    text-align: center;
+  }
+
+  .member-app .subscriptions-page .subscription-card__head .subscription-card__price {
+    margin-top: 0.35rem;
+  }
+
+  .member-app .subscriptions-page .subscription-card__head .min-w-0 {
+    text-align: center;
+  }
+}

@@ -441,7 +441,7 @@
 
         @if($products->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $products->appends(request()->query())->links() }}
+                <x-salang-pagination :paginator="$products" />
             </div>
         @endif
     </div>

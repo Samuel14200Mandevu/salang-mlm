@@ -126,7 +126,7 @@
 
             @if($notifications->hasPages())
                 <div class="mt-3 sm:mt-4">
-                    {{ $notifications->links() }}
+                    <x-salang-pagination :paginator="$notifications" />
                 </div>
             @endif
         @else

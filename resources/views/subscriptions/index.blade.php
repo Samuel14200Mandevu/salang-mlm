@@ -3,31 +3,29 @@
 
 @section('title', 'Packages')
 
-
-
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- En-tête -->
-    <div class="member-page-intro animate-fadeInUp">
+<div class="subscriptions-page space-y-4 sm:space-y-6">
+
+    <div class="member-page-intro subscriptions-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Packages</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Choisissez l'abonnement qui correspond à vos objectifs</p>
     </div>
 
+    @include('subscriptions.partials.catalog-head')
+
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
+        <div class="subscriptions-page-flash p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="subscriptions-page-flash p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             {{ session('error') }}
         </div>
     @endif
 
-    <!-- Abonnement actuel et solde -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-1">
+    <div class="subscriptions-summary-cards grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-1">
         <div class="card border-l-4 border-primary-500">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Votre abonnement actuel</p>
             <h2 class="text-xl sm:text-2xl font-bold text-primary-500">
@@ -58,7 +56,8 @@
         </div>
     </div>
 
-    <!-- Liste des packages -->
+    <p class="subscriptions-offers-label">Offres disponibles</p>
+
     <div class="subscription-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         @forelse($subscriptions as $package)
             @php
@@ -75,15 +74,20 @@
                 @if($isPopular)
                     <span class="subscription-badge subscription-badge-popular text-[8px] sm:text-[10px]">Populaire</span>
                 @endif
-                
+
+                <div class="subscription-card__head">
+                    <div class="min-w-0">
+                        <h3 class="subscription-card__title text-base sm:text-xl font-bold text-[var(--text-primary)]">{{ $package->name }}</h3>
+                        <p class="subscription-card__pv text-[10px] sm:text-sm text-[var(--text-secondary)]">{{ $package->pv_value ?? 0 }} PV</p>
+                    </div>
+                    <p class="subscription-card__price text-xl sm:text-3xl font-bold text-primary-500">${{ number_format($package->price, 2) }}</p>
+                </div>
+
                 <span class="sub-icon">
                     <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                     </svg>
                 </span>
-                <h3 class="text-base sm:text-xl font-bold text-[var(--text-primary)]">{{ $package->name }}</h3>
-                <p class="text-xl sm:text-3xl font-bold text-primary-500 mt-1 sm:mt-2">${{ number_format($package->price, 2) }}</p>
-                <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">{{ $package->pv_value ?? 0 }} PV</p>
 
                 <div class="mt-3 sm:mt-4 space-y-0.5 sm:space-y-1 border-t border-[var(--border-color)] pt-3 sm:pt-4 text-left">
                     <div class="benefit-item">
@@ -133,13 +137,13 @@
                                 </button>
                                 <p class="insufficient-balance">Il manque ${{ number_format($package->price - $balance, 2) }}</p>
                             @endif
-                            
+
                             <form action="{{ route('cart.add-package') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="package_id" value="{{ $package->id }}">
                                 <button type="submit" class="btn btn-outline text-[10px] sm:text-sm py-1.5 sm:py-2 {{ !$canAfford ? 'opacity-50' : '' }}">
                                     <svg class="w-3 h-3 sm:w-4 sm:h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
                                     Ajouter au panier
                                 </button>

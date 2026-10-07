@@ -4,10 +4,9 @@
 @section('title', 'Tableau des commissions')
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+<div class="commissions-dashboard-page space-y-4 sm:space-y-6">
+
+    <div class="commissions-dashboard-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Tableau de bord des commissions</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vue d'ensemble de vos gains</p>
@@ -28,8 +27,9 @@
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="stat-grid grid grid-cols-2 md:grid-cols-4 gap-3 animate-fadeInUp delay-1">
+    @include('commissions.partials.dashboard-catalog-head', compact('stats'))
+
+    <div class="commissions-dashboard-stats stat-grid grid grid-cols-2 md:grid-cols-4 gap-3 animate-fadeInUp delay-1">
         <div class="stat-card border-l-4 border-primary-500">
             <div class="stat-icon">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@
     </div>
 
     @if(!empty($commissionBands))
-    <div class="card animate-fadeInUp delay-1 mb-3">
+    <div class="card commissions-dashboard-panel commissions-dashboard-bands animate-fadeInUp delay-1 mb-3">
         <div class="card-header">
             <h5>Synthèse bandes</h5>
             <span class="text-xs text-[var(--text-secondary)]">Périodes masquées (C) exclues de l’affichage membre</span>
@@ -103,9 +103,8 @@
     </div>
     @endif
 
-    <!-- Répartition par type -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 animate-fadeInUp delay-2">
-        <div class="card lg:col-span-2">
+    <div class="commissions-dashboard-split grid grid-cols-1 lg:grid-cols-3 gap-3 animate-fadeInUp delay-2">
+        <div class="card commissions-dashboard-panel lg:col-span-2">
             <div class="card-header">
                 <h5>Répartition par type</h5>
                 <span class="text-xs text-[var(--text-secondary)]">{{ $stats['total_count'] ?? 0 }} commissions</span>
@@ -137,8 +136,7 @@
             </div>
         </div>
 
-        <!-- Meilleur mois -->
-        <div class="card">
+        <div class="card commissions-dashboard-panel">
             <div class="card-header">
                 <h5>Meilleur mois</h5>
             </div>
@@ -167,9 +165,9 @@
                     <span class="text-[var(--text-secondary)]">Taux de paiement</span>
                     <span class="font-bold text-success-500">
                         @php
-                            $total = $stats['total_count'] ?? 1;
-                            $paid = $stats['paid_count'] ?? 0;
-                            echo round($paid / $total * 100, 1) . '%';
+                            $total = (int) ($stats['total_count'] ?? 0);
+                            $paid = (int) ($stats['paid_count'] ?? 0);
+                            echo ($total > 0 ? round($paid / $total * 100, 1) : 0) . '%';
                         @endphp
                     </span>
                 </div>
@@ -177,8 +175,7 @@
         </div>
     </div>
 
-    <!-- Évolution mensuelle -->
-    <div class="card animate-fadeInUp delay-3">
+    <div class="card commissions-dashboard-panel animate-fadeInUp delay-3">
         <div class="card-header">
             <h5>Évolution mensuelle</h5>
             <span class="text-xs text-[var(--text-secondary)]">12 derniers mois</span>
@@ -214,16 +211,18 @@
         </div>
     </div>
 
-    <!-- Dernières commissions + Top parrains -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fadeInUp delay-4">
-        <div class="card">
+    <div class="commissions-dashboard-tables grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fadeInUp delay-4">
+        <div class="card commissions-dashboard-panel">
             <div class="card-header">
                 <h5>Dernières commissions</h5>
                 <a href="{{ route('commissions.index') }}" class="text-xs text-primary-500 hover:underline">
                     Voir tout
                 </a>
             </div>
-            <div class="table-wrap">
+            <div class="commissions-dashboard-mobile-feed md:hidden">
+                @include('commissions.partials.dashboard-recent-mobile', compact('recent'))
+            </div>
+            <div class="table-wrap commissions-dashboard-table-desktop">
                 <table class="table">
                     <thead>
                         <tr>
@@ -263,13 +262,15 @@
             </div>
         </div>
 
-        <!-- Top parrains -->
-        <div class="card">
+        <div class="card commissions-dashboard-panel">
             <div class="card-header">
                 <h5>Meilleurs parrains</h5>
                 <span class="text-xs text-[var(--text-secondary)]">Top 10</span>
             </div>
-            <div class="table-wrap">
+            <div class="commissions-dashboard-mobile-feed md:hidden">
+                @include('commissions.partials.dashboard-referrals-mobile', compact('topReferrals'))
+            </div>
+            <div class="table-wrap commissions-dashboard-table-desktop">
                 <table class="table">
                     <thead>
                         <tr>
@@ -317,12 +318,15 @@
 
     <!-- Commissions en attente -->
     @if($pending->count() > 0)
-    <div class="card animate-fadeInUp delay-5 border-l-4 border-warning-500">
+    <div class="card commissions-dashboard-panel animate-fadeInUp delay-5 border-l-4 border-warning-500">
         <div class="card-header">
             <h5>Commissions en attente ({{ $pending->count() }})</h5>
             <span class="text-xs text-[var(--text-secondary)]">Total: ${{ number_format($pending->sum('amount'), 2) }}</span>
         </div>
-        <div class="table-wrap">
+        <div class="commissions-dashboard-mobile-feed md:hidden">
+            @include('commissions.partials.dashboard-pending-mobile', compact('pending'))
+        </div>
+        <div class="table-wrap commissions-dashboard-table-desktop">
             <table class="table">
                 <thead>
                     <tr>
@@ -359,8 +363,7 @@
     </div>
     @endif
 
-    <!-- Quick Navigation -->
-    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-5">
+    <div class="commissions-dashboard-quick-nav-desktop flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-5">
         <a href="{{ route('commissions.index') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>

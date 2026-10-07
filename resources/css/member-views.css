@@ -4943,6 +4943,218 @@
     }
     .member-app .method-card .method-icon { font-size: 2rem; display: block; margin-bottom: 0.25rem; }
     .member-app .method-card .method-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); }
+
+    .member-app .my-pv-page-intro-desktop {
+        display: none;
+    }
+
+    .member-app .my-pv-mobile-banner {
+        display: block;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 0.15rem;
+    }
+
+    .member-app .my-pv-mobile-banner__stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .member-app .my-pv-catalog-banner {
+        margin: 0;
+    }
+
+    .member-app .my-pv-mobile-banner:has(.my-pv-period-panel--banner-inline.is-open) {
+        z-index: 60;
+    }
+
+    .member-app .my-pv-period-picker-wrap--desktop {
+        display: none;
+    }
+
+    .member-app .my-pv-stats {
+        position: relative;
+        z-index: 1;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        max-width: none;
+    }
+
+    .member-app .my-pv-movements-desktop {
+        display: none;
+    }
+
+    .member-app .my-pv-movements-mobile {
+        display: block;
+    }
+
+    .member-app .my-pv-movements-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .member-app .my-pv-movements-head__left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    .member-app .my-pv-movements-head__filter {
+        display: none;
+        margin: 0;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: var(--color-primary-600);
+    }
+
+    .member-app .my-pv-period-picker {
+        position: relative;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .member-app .my-pv-period-picker__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .member-app .my-pv-period-picker__btn:hover,
+    .member-app .my-pv-period-picker__btn.is-open {
+        background: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-card));
+        border-color: color-mix(in srgb, var(--color-primary-500) 35%, var(--border-light));
+        color: var(--color-primary-600);
+    }
+
+    .member-app .my-pv-period-picker__btn.has-filter {
+        border-color: color-mix(in srgb, var(--color-primary-500) 45%, var(--border-light));
+        color: var(--color-primary-600);
+        background: color-mix(in srgb, var(--color-primary-500) 8%, var(--bg-card));
+    }
+
+    .member-app .my-pv-period-picker__btn:active {
+        transform: scale(0.94);
+    }
+
+    .member-app .my-pv-period-panel {
+        display: none;
+        padding: 0.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-card);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    .member-app .my-pv-period-panel:not(.my-pv-period-panel--banner-inline) {
+        position: absolute;
+        top: calc(100% + 0.35rem);
+        right: 0;
+        z-index: 40;
+        min-width: 11.5rem;
+        max-width: min(16rem, calc(100vw - 2rem));
+        max-height: min(16rem, 50vh);
+        overflow: auto;
+    }
+
+    .member-app .my-pv-period-panel.my-pv-period-panel--banner-inline {
+        position: relative;
+        top: auto;
+        right: auto;
+        left: auto;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        max-height: min(14rem, 45vh);
+        overflow: auto;
+        margin: 0.45rem 0 0;
+        box-sizing: border-box;
+        z-index: 70;
+    }
+
+    .member-app .my-pv-period-panel.is-open {
+        display: block;
+    }
+
+    .member-app .my-pv-period-panel__title {
+        margin: 0 0 0.35rem;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+    }
+
+    .member-app .my-pv-period-panel__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .member-app .my-pv-period-option {
+        display: block;
+        padding: 0.45rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .member-app .my-pv-period-option:hover {
+        background: var(--bg-secondary);
+    }
+
+    .member-app .my-pv-period-option.is-active {
+        background: color-mix(in srgb, var(--color-primary-500) 12%, var(--bg-card));
+        color: var(--color-primary-700);
+    }
+
+    @media (min-width: 768px) {
+        .member-app .my-pv-page-intro-desktop {
+            display: block;
+        }
+
+        .member-app .my-pv-mobile-banner {
+            display: none;
+        }
+
+        .member-app .my-pv-period-picker-wrap--desktop {
+            display: block;
+        }
+
+        .member-app .my-pv-movements-head__filter {
+            display: block;
+        }
+
+        .member-app .my-pv-stats {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        }
+
+        .member-app .my-pv-movements-desktop {
+            display: block;
+        }
+
+        .member-app .my-pv-movements-mobile {
+            display: none;
+        }
+    }
     
     @media (max-width: 640px) {
         .member-app .card-stats { padding: 0.75rem; }

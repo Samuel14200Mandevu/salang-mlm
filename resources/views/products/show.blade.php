@@ -6,10 +6,9 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Breadcrumb -->
-    <nav class="text-xs sm:text-sm text-[var(--text-secondary)] animate-fadeInUp">
+<div class="member-shop member-shop--detail space-y-4 sm:space-y-6">
+
+    <nav class="text-xs sm:text-sm text-[var(--text-secondary)] member-shop-animate member-shop-animate--1">
         <a href="{{ route('products.index') }}" class="hover:text-primary-500 transition">Produits</a>
         <span class="mx-1 sm:mx-2">/</span>
         <span class="text-[var(--text-primary)] font-medium">{{ $product->name }}</span>
@@ -19,8 +18,19 @@
     <div class="product-details-grid grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
         <!-- Image -->
-        <div class="card product-gallery animate-fadeInLeft p-3 sm:p-4 md:p-6">
+        <div class="card product-gallery shop-gallery p-3 sm:p-4 md:p-6">
             <div class="flex items-center justify-center min-h-[200px] sm:min-h-[300px] md:min-h-[400px] relative">
+                @auth
+                    <button type="button"
+                            onclick="toggleWishlist({{ $product->id }})"
+                            class="shop-gallery-fav {{ $isInWishlist ? 'is-active' : '' }}"
+                            id="wishlistBtnFloat"
+                            aria-label="Favoris">
+                        <svg class="shop-gallery-fav__icon" fill="{{ $isInWishlist ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </button>
+                @endauth
                 @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
                     <img src="{{ asset('storage/products/' . $product->image) }}" 
                          alt="{{ $product->name }}"
@@ -47,7 +57,7 @@
         </div>
 
         <!-- Information -->
-        <div class="card animate-fadeInRight p-3 sm:p-4 md:p-6">
+        <div class="card member-shop-detail-info p-3 sm:p-4 md:p-6">
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $product->category ?? 'Général' }}</p>
@@ -116,80 +126,85 @@
                 </div>
             @endif
 
-            <!-- Actions -->
-            <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-                @if($product->stock > 0)
-                    <form action="{{ route('cart.add') }}" method="POST" class="flex-1 min-w-[200px]">
+            @if($product->stock > 0)
+                <div class="shop-buy-panel mt-4 sm:mt-6">
+                    <p class="shop-buy-panel__label">Quantité</p>
+                    <form action="{{ route('cart.add') }}" method="POST" id="productAddForm" class="shop-buy-panel__form">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <div class="flex items-center gap-1">
-                                <button type="button" class="quantity-btn" onclick="decrementQty()">-</button>
-                                <input type="number" id="qty" name="quantity" value="1" min="1" max="{{ $product->stock }}" 
-                                       class="input input-sm w-12 sm:w-16 text-center text-sm sm:text-base">
-                                <button type="button" class="quantity-btn" onclick="incrementQty()">+</button>
+                        <div class="shop-qty-row">
+                            <div class="shop-qty-stepper">
+                                <button type="button" class="shop-qty-btn" onclick="decrementQty()" aria-label="Diminuer">−</button>
+                                <input type="number" id="qty" name="quantity" value="1" min="1" max="{{ $product->stock }}"
+                                       class="shop-qty-input" aria-label="Quantité">
+                                <button type="button" class="shop-qty-btn" onclick="incrementQty()" aria-label="Augmenter">+</button>
                             </div>
-                            <button type="submit" class="btn btn-primary flex-1 text-sm sm:text-base py-2 sm:py-2.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            <span class="shop-qty-hint">{{ $product->stock }} disponible(s)</span>
+                        </div>
+                        <div class="shop-cta-row">
+                            <button type="submit" class="shop-cta shop-cta--primary btn-shop-add" id="productAddBtn">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
                                 Ajouter au panier
                             </button>
+                            <a href="{{ route('cart.index') }}" class="shop-cta shop-cta--secondary">
+                                Voir le panier
+                            </a>
                         </div>
                     </form>
-                @else
-                    <button class="btn btn-danger w-full opacity-50 cursor-not-allowed text-sm sm:text-base py-2 sm:py-2.5">
-                        Rupture de stock
-                    </button>
-                @endif
+                </div>
+            @else
+                <button type="button" class="shop-cta shop-cta--disabled w-full mt-4 sm:mt-6" disabled>
+                    Rupture de stock
+                </button>
+            @endif
 
-                <!-- BOUTON WISHLIST AVEC SVG -->
+            <div class="shop-social-bar mt-4 sm:mt-5" role="group" aria-label="Interactions">
                 @auth
-                    <button onclick="toggleWishlist({{ $product->id }})" 
-                            class="btn-wishlist {{ $isInWishlist ? 'active' : '' }}"
-                            id="wishlistBtn"
-                            title="{{ $isInWishlist ? 'Retirer de la liste de souhaits' : 'Ajouter à la liste de souhaits' }}">
-                        <svg class="heart-icon {{ $isInWishlist ? 'active' : 'inactive' }}" 
-                             fill="{{ $isInWishlist ? 'currentColor' : 'none' }}" 
-                             stroke="currentColor" 
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    <button type="button"
+                            onclick="toggleWishlist({{ $product->id }})"
+                            class="shop-social-btn shop-social-btn--like {{ $isInWishlist ? 'is-active' : '' }}"
+                            id="wishlistBtn">
+                        <svg class="shop-social-btn__icon" fill="{{ $isInWishlist ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                         </svg>
-                        <span id="wishlistText">{{ $isInWishlist ? 'Retirer' : 'Ajouter' }}</span>
+                        <span id="wishlistText">{{ $isInWishlist ? 'Aimé' : 'J\'aime' }}</span>
                     </button>
                 @else
-                    <a href="{{ route('login') }}" class="btn-wishlist" title="Connectez-vous pour ajouter à votre liste de souhaits">
-                        <svg class="heart-icon inactive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    <a href="{{ route('login') }}" class="shop-social-btn shop-social-btn--like">
+                        <svg class="shop-social-btn__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                         </svg>
-                        <span>Se connecter</span>
+                        <span>J'aime</span>
                     </a>
                 @endauth
-            </div>
-
-            <!-- Share -->
-            <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--border-color)]">
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)] mb-1 sm:mb-2">Partager ce produit :</p>
-                <div class="flex gap-1.5 sm:gap-2">
-                    <button onclick="copyLink()" class="btn btn-outline btn-sm btn-icon" title="Copier le lien">
-                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
-                        </svg>
-                    </button>
-                </div>
+                <button type="button"
+                        class="shop-social-btn shop-social-btn--share"
+                        data-shop-share-url="{{ url()->current() }}"
+                        data-shop-share-title="{{ $product->name }}">
+                    <svg class="shop-social-btn__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    <span>Partager</span>
+                </button>
+                <button type="button" class="shop-social-btn" onclick="copyLink()">
+                    <svg class="shop-social-btn__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    <span>Copier</span>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Related Products -->
     @if($relatedProducts->count() > 0)
-        <div class="animate-fadeInUp delay-4">
+        <div class="member-shop-related member-shop-animate member-shop-animate--3">
             <h2 class="text-base sm:text-xl font-bold text-[var(--text-primary)] mb-3 sm:mb-4">Produits similaires</h2>
-            <div class="related-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div class="related-grid product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 @foreach($relatedProducts as $related)
-                    <div class="product-card">
+                    <div class="product-card member-shop-card">
                         <a href="{{ route('products.show', $related->slug) }}" class="block">
                             <div class="aspect-square bg-[var(--bg-secondary)] rounded-lg overflow-hidden flex items-center justify-center">
                                 @if($related->image && file_exists(storage_path('app/public/products/' . $related->image)))
@@ -214,6 +229,18 @@
         </div>
     @endif
 </div>
+
+@if($product->stock > 0)
+    <div class="shop-sticky-bar md:hidden" aria-hidden="false">
+        <div class="shop-sticky-bar__meta">
+            <span class="shop-sticky-bar__price">${{ number_format($product->price, 2) }}</span>
+            <span class="shop-sticky-bar__stock text-green-600">En stock</span>
+        </div>
+        <button type="submit" form="productAddForm" class="shop-sticky-bar__cta">
+            Ajouter au panier
+        </button>
+    </div>
+@endif
 
 @push('scripts')
 <script>
@@ -251,15 +278,74 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (form) {
         form.addEventListener('submit', function(e) {
-            var qty = parseInt(qtyInput.value);
-            var max = parseInt(qtyInput.max);
+            var qty = parseInt(qtyInput.value, 10);
+            var max = parseInt(qtyInput.max, 10);
             if (qty > max) {
                 e.preventDefault();
                 showToast('Quantité maximum : ' + max, 'warning');
+                return;
             }
+            e.preventDefault();
+            submitProductAddForm(form);
         });
     }
 });
+
+function submitProductAddForm(form) {
+    var btn = document.getElementById('productAddBtn');
+    var sticky = document.querySelector('.shop-sticky-bar__cta');
+    var original = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+    }
+    if (sticky) {
+        sticky.disabled = true;
+        sticky.textContent = '…';
+    }
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (btn) {
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+        if (sticky) {
+            sticky.disabled = false;
+            sticky.textContent = 'Ajouter au panier';
+        }
+        if (data.success) {
+            if (btn) {
+                btn.classList.add('is-success');
+                setTimeout(function() { btn.classList.remove('is-success'); }, 600);
+            }
+            showToast(data.message || 'Ajouté au panier', 'success');
+        } else {
+            showToast(data.message || 'Erreur', 'error');
+        }
+    })
+    .catch(function() {
+        if (btn) {
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+        if (sticky) {
+            sticky.disabled = false;
+            sticky.textContent = 'Ajouter au panier';
+        }
+        showToast('Erreur lors de l\'ajout au panier', 'error');
+    });
+}
 
 // ============================================================
 //  COPY LINK
@@ -284,7 +370,7 @@ function copyLink() {
 // ============================================================
 //  TOAST NOTIFICATION
 // ============================================================
-function showToast(message, type) {
+window.showToast = function showToast(message, type) {
     type = type || 'success';
     document.querySelectorAll('.custom-toast').forEach(function(el) { el.remove(); });
     
@@ -318,15 +404,22 @@ function showToast(message, type) {
 // ============================================================
 function toggleWishlist(productId) {
     const btn = document.getElementById('wishlistBtn');
-    const heartIcon = btn.querySelector('.heart-icon');
+    const floatBtn = document.getElementById('wishlistBtnFloat');
     const text = document.getElementById('wishlistText');
-    
-    // Ajouter une animation de pulse
-    heartIcon.classList.add('heart-pulse');
-    setTimeout(() => {
-        heartIcon.classList.remove('heart-pulse');
-    }, 500);
-    
+    const icons = [];
+    if (btn) {
+        icons.push(btn.querySelector('.shop-social-btn__icon'));
+    }
+    if (floatBtn) {
+        icons.push(floatBtn.querySelector('.shop-gallery-fav__icon'));
+    }
+    icons.forEach(function(icon) {
+        if (icon) {
+            icon.classList.add('shop-like-pop');
+            setTimeout(function() { icon.classList.remove('shop-like-pop'); }, 450);
+        }
+    });
+
     fetch(`/wishlist/toggle/${productId}`, {
         method: 'POST',
         headers: {
@@ -337,23 +430,24 @@ function toggleWishlist(productId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (data.added) {
-                btn.classList.add('active');
-                heartIcon.classList.remove('inactive');
-                heartIcon.classList.add('active');
-                heartIcon.setAttribute('fill', 'currentColor');
-                text.textContent = 'Retirer';
-                showToast(' ' + data.message);
-            } else {
-                btn.classList.remove('active');
-                heartIcon.classList.remove('active');
-                heartIcon.classList.add('inactive');
-                heartIcon.setAttribute('fill', 'none');
-                text.textContent = 'Ajouter';
-                showToast(' ' + data.message);
+            var active = !!data.added;
+            if (btn) {
+                btn.classList.toggle('is-active', active);
             }
+            if (floatBtn) {
+                floatBtn.classList.toggle('is-active', active);
+            }
+            icons.forEach(function(icon) {
+                if (icon) {
+                    icon.setAttribute('fill', active ? 'currentColor' : 'none');
+                }
+            });
+            if (text) {
+                text.textContent = active ? 'Aimé' : 'J\'aime';
+            }
+            showToast(data.message, 'success');
         } else {
-            showToast(' ' + data.message, 'error');
+            showToast(data.message, 'error');
         }
     })
     .catch(error => {

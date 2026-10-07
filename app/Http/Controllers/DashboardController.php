@@ -15,8 +15,10 @@ use App\Models\Package;
 use App\Models\Rank;
 use App\Models\RankHistory;
 use App\Models\Withdrawal;
+use App\Models\PVHistory;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\UserCommissionDisplayService;
+use App\Support\MlmRank;
 
 class DashboardController extends Controller
 {
@@ -60,9 +62,18 @@ class DashboardController extends Controller
             $userRank = Rank::find($user->rank_id);
         }
 
-        // DÉTERMINER LE GRADE ACTUEL
-        $currentRankName = $userRank ? $userRank->name : ($user->rank ?? 'Distributeur');
-        $currentRankLevel = $userRank ? $userRank->level : 1;
+        // DÉTERMINER LE GRADE ACTUEL (niveau MLM 0–9)
+        $rawRankLevel = $user->getAttributes()['rank_level'] ?? null;
+        if ($rawRankLevel === null || $rawRankLevel === '') {
+            $rawRankLevel = $userRank ? (int) $userRank->level : 1;
+        }
+        $currentRankLevel = max(0, min(9, (int) $rawRankLevel));
+        $currentRankName = MlmRank::label($currentRankLevel);
+        if ($userRank && $userRank->name) {
+            $currentRankName = $userRank->name;
+        } elseif (is_string($user->rank) && $user->rank !== '') {
+            $currentRankName = $user->rank;
+        }
         $currentRankId = $userRank ? $userRank->id : null;
 
         // ✅ CALCUL DES PV
@@ -91,6 +102,15 @@ class DashboardController extends Controller
             }
             
             $pvNeeded = max(0, $nextPvRequired - $pvCumul);
+
+            $personalTarget = $this->resolveNextRankPersonalPvTarget($nextRank);
+            if ($personalTarget > 0) {
+                $personalProgress = min(100, max(0, ($pvPersonnel / $personalTarget) * 100));
+                $personalPvNeeded = max(0, $personalTarget - $pvPersonnel);
+            } else {
+                $personalProgress = 100;
+                $personalPvNeeded = 0;
+            }
             
             // Conditions du prochain grade
             $conditions = $this->getRankConditions($nextRank, $user);
@@ -99,6 +119,9 @@ class DashboardController extends Controller
             $nextPvRequired = 0;
             $progress = 100;
             $pvNeeded = 0;
+            $personalProgress = 100;
+            $personalTarget = 0;
+            $personalPvNeeded = 0;
             $conditions = [];
         }
 
@@ -202,23 +225,55 @@ class DashboardController extends Controller
                 ->where('status', 'paid')
                 ->whereDate('created_at', today())
                 ->sum('amount') ?? 0,
+            'today_pv' => (float) (PVHistory::where('user_id', $user->id)
+                ->whereDate('date', today())
+                ->sum('amount') ?? 0),
         ];
 
-        // DONNÉES MENSUELLES POUR LE GRAPHIQUE
+        // Données mensuelles (PV crédités + commissions payées) — accueil & graphiques
         $monthlyData = [];
+        $monthlyPvData = [];
+        $performanceChart = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $amount = Commission::where('user_id', $user->id)
+            $monthLocalized = $month->copy()->locale(app()->getLocale());
+            $monthLabel = $monthLocalized->translatedFormat('F Y');
+            $monthShort = $monthLocalized->isoFormat('MMM YY');
+
+            $commissionAmount = (float) (Commission::where('user_id', $user->id)
                 ->visibleToMember()
                 ->where('status', 'paid')
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
-                ->sum('amount') ?? 0;
+                ->sum('amount') ?? 0);
+
+            $pvAmount = (float) (PVHistory::where('user_id', $user->id)
+                ->whereMonth('date', $month->month)
+                ->whereYear('date', $month->year)
+                ->where('amount', '>', 0)
+                ->sum('amount') ?? 0);
+
+            $performanceChart[] = [
+                'month' => $monthLabel,
+                'month_short' => $monthShort,
+                'pv' => $pvAmount,
+                'commission' => $commissionAmount,
+            ];
             $monthlyData[] = [
-                'month' => $month->format('M'),
-                'amount' => $amount,
+                'month' => $monthLocalized->translatedFormat('M'),
+                'amount' => $commissionAmount,
+            ];
+            $monthlyPvData[] = [
+                'month' => $monthLocalized->translatedFormat('M'),
+                'amount' => $pvAmount,
             ];
         }
+
+        $recentPvActivities = PVHistory::where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
 
         // GRADE DU MOIS DERNIER
         $lastMonthRank = RankHistory::where('user_id', $user->id)
@@ -251,9 +306,15 @@ class DashboardController extends Controller
             'next' => $nextRank ? $nextRank->name : 'Maximum Level',
             'next_level' => $nextRank ? $nextRank->level : $currentRankLevel,
             'progress' => $progress,
+            'team_progress' => $progress,
             'pv_needed' => $pvNeeded,
+            'team_pv_needed' => $pvNeeded,
             'current_pv' => $pvCumul,
             'next_pv' => $nextPvRequired,
+            'team_target_pv' => $nextPvRequired,
+            'personal_progress' => $personalProgress ?? 100,
+            'personal_target_pv' => $personalTarget ?? 0,
+            'personal_pv_needed' => $personalPvNeeded ?? 0,
             'pv_personnel' => $pvPersonnel,
             'pv_cumul' => $pvCumul,
             'monthly_pv' => $monthlyPv,
@@ -287,6 +348,9 @@ class DashboardController extends Controller
             'rankProgress' => $rankProgress,
             'stats' => $stats,
             'monthlyData' => $monthlyData,
+            'monthlyPvData' => $monthlyPvData,
+            'performanceChart' => $performanceChart,
+            'recentPvActivities' => $recentPvActivities,
             'lastMonthRank' => $lastMonthRank,
             'rankDistribution' => $rankDistribution,
             'history' => $history,
@@ -299,14 +363,42 @@ class DashboardController extends Controller
             'commissionBands' => $commissionBands,
         ];
 
-        $dashboardLevelNumber = (int) min(max($currentRankLevel, 1), 9);
+        $dashboardLevelNumber = $currentRankLevel;
         $dashboardLevel = config('dashboard-levels.'.$dashboardLevelNumber)
             ?? config('dashboard-levels.1');
 
         $data['dashboardLevel'] = $dashboardLevel;
         $data['dashboardLevelNumber'] = $dashboardLevelNumber;
+        $data['currentRankBadgeClass'] = MlmRank::badgeClass($currentRankLevel);
 
         return view('dashboard.index', $data);
+    }
+
+    /**
+     * Cible PV personnel pour le prochain grade (conditions ou barème interne).
+     */
+    private function resolveNextRankPersonalPvTarget(?Rank $nextRank): float
+    {
+        if (!$nextRank) {
+            return 0.0;
+        }
+
+        if (!empty($nextRank->conditions)) {
+            foreach ($nextRank->conditions as $condition) {
+                if (($condition['type'] ?? '') === 'personal_pv') {
+                    return (float) ($condition['value'] ?? 0);
+                }
+            }
+        }
+
+        return match ((int) $nextRank->level) {
+            4 => 1000.0,
+            5, 6 => 5000.0,
+            7 => 12000.0,
+            8 => 20000.0,
+            9 => 30000.0,
+            default => (float) ($nextRank->min_pv ?? 0),
+        };
     }
 
     /**

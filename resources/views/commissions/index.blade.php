@@ -4,10 +4,9 @@
 @section('title', 'Mes commissions')
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+<div class="commissions-page space-y-4 sm:space-y-6">
+
+    <div class="commissions-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en detail</p>
@@ -28,8 +27,9 @@
         </div>
     </div>
 
-    <!-- Statistics -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    @include('commissions.partials.catalog-head', compact('stats', 'commissions'))
+
+    <div class="commissions-stats stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total gagne</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
@@ -48,15 +48,14 @@
         </div>
     </div>
 
-    <!-- Search - Barre de recherche uniquement -->
-    <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 animate-fadeInUp delay-5 search-container">
+    <div class="commissions-search-desktop flex flex-wrap items-center justify-end gap-2 sm:gap-3 animate-fadeInUp delay-5 search-container">
         <div class="relative flex-1 sm:flex-none w-full sm:w-auto min-w-[150px] sm:min-w-[250px] max-w-full sm:max-w-sm">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Rechercher une commission..." class="input pl-9 text-sm sm:text-base w-full">
+            <input type="text" id="searchInputDesktop" placeholder="Rechercher une commission..." class="input pl-9 text-sm sm:text-base w-full">
         </div>
         
         <span id="resultCount" class="result-count">{{ $commissions->total() ?? 0 }} commissions</span>
@@ -72,8 +71,13 @@
         </a>
     </div>
 
-    <!-- Commission List -->
-    <div class="card animate-fadeInUp delay-6">
+    <p class="commissions-history-label">Historique</p>
+
+    <div class="commissions-mobile-feed animate-fadeInUp delay-6">
+        @include('commissions.partials.mobile-list', ['commissions' => $commissions])
+    </div>
+
+    <div class="commissions-table-card card animate-fadeInUp delay-6">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des commissions</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs" id="totalBadge">{{ $commissions->total() ?? 0 }} commissions</span>
@@ -144,16 +148,16 @@
             </table>
         </div>
 
-        @if($commissions instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissions->hasPages())
-            <div class="mt-3 sm:mt-4">
-                {{ $commissions->links() }}
-            </div>
-        @endif
     </div>
 
-    <!-- Distribution by Type -->
+    @if($commissions instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissions->hasPages())
+        <div class="commissions-pagination mt-3 sm:mt-4">
+            <x-salang-pagination :paginator="$commissions" />
+        </div>
+    @endif
+
     @if(!empty($stats['by_type']))
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-7">
+    <div class="commissions-type-stats grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-7">
         @foreach($stats['by_type'] as $type => $data)
             <div class="card-stats border-l-4 border-{{ $data['color'] ?? 'primary' }}-500">
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $data['label'] }}</p>
@@ -166,8 +170,7 @@
     </div>
     @endif
 
-    <!-- Quick Navigation -->
-    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-7">
+    <div class="commissions-quick-nav-desktop flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-7">
         <a href="{{ route('commissions.dashboard') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -448,49 +451,91 @@ document.addEventListener('keydown', function(e) {
 // RECHERCHE EN TEMPS RÉEL - UNIQUEMENT LA RECHERCHE
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    var searchInput = document.getElementById('searchInput');
-    var rows = document.querySelectorAll('#commissionsTable tr');
-    var resultCount = document.getElementById('resultCount');
-    var totalBadge = document.getElementById('totalBadge');
-    var totalRows = rows.length;
+    var searchToggle = document.getElementById('commissionsSearchToggle');
+    var searchPanel = document.getElementById('commissionsSearchPanel');
 
-    function filterRows() {
-        var search = searchInput.value.trim().toLowerCase();
-        var visibleCount = 0;
-
-        rows.forEach(function(row) {
-            var text = row.textContent.toLowerCase();
-            if (search === '' || text.includes(search)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+    if (searchToggle && searchPanel) {
+        searchToggle.addEventListener('click', function() {
+            var open = searchPanel.classList.toggle('is-open');
+            searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            searchPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+            if (open) {
+                var input = document.getElementById('searchInput');
+                if (input) input.focus();
             }
         });
+    }
 
-        // Mettre à jour le compteur
-        if (resultCount) {
-            if (search === '') {
-                resultCount.textContent = totalRows + ' commissions';
-            } else {
-                resultCount.textContent = visibleCount + ' résultat(s) sur ' + totalRows;
-            }
+    var searchInput = document.getElementById('searchInput');
+    var searchInputDesktop = document.getElementById('searchInputDesktop');
+    var tableRows = document.querySelectorAll('#commissionsTable tr.commission-row');
+    var mobileRows = document.querySelectorAll('.commissions-mobile-row');
+    var resultCount = document.getElementById('resultCount');
+    var resultCountMobile = document.getElementById('resultCountMobile');
+    var totalBadge = document.getElementById('totalBadge');
+    var totalRows = tableRows.length || mobileRows.length;
+
+    function getSearchValue() {
+        if (searchInput && searchInput.offsetParent !== null) {
+            return searchInput.value.trim().toLowerCase();
         }
+        if (searchInputDesktop) {
+            return searchInputDesktop.value.trim().toLowerCase();
+        }
+        return '';
+    }
 
-        // Mettre à jour le badge
+    function syncSearchInputs(value) {
+        if (searchInput) searchInput.value = value;
+        if (searchInputDesktop) searchInputDesktop.value = value;
+    }
+
+    function updateCounters(visibleCount, search) {
+        var label = search === ''
+            ? totalRows + ' commissions'
+            : visibleCount + ' résultat(s) sur ' + totalRows;
+
+        if (resultCount) resultCount.textContent = label;
+        if (resultCountMobile) resultCountMobile.textContent = label;
         if (totalBadge) {
-            if (search === '') {
-                totalBadge.textContent = totalRows + ' commissions';
-            } else {
-                totalBadge.textContent = visibleCount + ' / ' + totalRows;
-            }
+            totalBadge.textContent = search === '' ? totalRows + ' commissions' : visibleCount + ' / ' + totalRows;
         }
     }
 
-    // Recherche immédiate à chaque frappe
-    if (searchInput) {
-        searchInput.addEventListener('input', filterRows);
+    function filterRows(sourceInput) {
+        var search = sourceInput ? sourceInput.value.trim().toLowerCase() : getSearchValue();
+        if (sourceInput) {
+            syncSearchInputs(sourceInput.value);
+        }
+        var visibleCount = 0;
+
+        var countRows = window.matchMedia('(max-width: 768px)').matches && mobileRows.length
+            ? mobileRows
+            : (tableRows.length ? tableRows : mobileRows);
+
+        tableRows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            var show = search === '' || text.includes(search);
+            row.style.display = show ? '' : 'none';
+        });
+
+        mobileRows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            var show = search === '' || text.includes(search);
+            row.style.display = show ? '' : 'none';
+            var item = row.closest('li');
+            if (item) item.style.display = show ? '' : 'none';
+        });
+
+        countRows.forEach(function(row) {
+            if (row.style.display !== 'none') visibleCount++;
+        });
+
+        updateCounters(visibleCount, search);
     }
+
+    if (searchInput) searchInput.addEventListener('input', function() { filterRows(searchInput); });
+    if (searchInputDesktop) searchInputDesktop.addEventListener('input', function() { filterRows(searchInputDesktop); });
 });
 
 function showToast(message, type) {

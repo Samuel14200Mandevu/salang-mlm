@@ -34,17 +34,14 @@
                 <span>Réseau</span>
             </a>
 
-            <button type="button"
-                    class="nav-item nav-item--button {{ request()->routeIs('commissions.*', 'orders.*', 'subscriptions.*', 'rank.*', 'notifications.*', 'kyc.*', 'withdrawal.*', 'profile.*', 'cart.index') ? 'active' : '' }}"
-                    @click="mobileMoreOpen = !mobileMoreOpen"
-                    :class="{ 'active': mobileMoreOpen }"
-                    aria-label="Ouvrir le menu"
-                    :aria-expanded="mobileMoreOpen">
+            <a href="{{ route('profile.index') }}"
+               class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                <span>Menu</span>
-            </button>
+                <span>Compte</span>
+            </a>
+
         </nav>
 
     </div>

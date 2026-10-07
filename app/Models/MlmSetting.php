@@ -24,6 +24,26 @@ class MlmSetting extends Model
         return $setting ? $setting->value : $default;
     }
 
+    public static function setValue(string $key, $value, string $group = 'general', ?string $description = null): void
+    {
+        if (is_bool($value)) {
+            $stored = $value ? 'true' : 'false';
+        } elseif (is_array($value)) {
+            $stored = json_encode($value);
+        } else {
+            $stored = (string) $value;
+        }
+
+        static::query()->updateOrCreate(
+            ['key' => $key],
+            [
+                'value' => $stored,
+                'group' => $group,
+                'description' => $description ?? '',
+            ]
+        );
+    }
+
     public static function getFloat(string $key, float $default = 0): float
     {
         return (float) self::getValue($key, $default);

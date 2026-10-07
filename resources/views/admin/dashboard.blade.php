@@ -425,33 +425,42 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@php
+    $heure = date('H');
+    if ($heure >= 5 && $heure < 12) {
+        $salutation = 'Bonjour';
+    } elseif ($heure >= 12 && $heure < 18) {
+        $salutation = 'Bon après-midi';
+    } elseif ($heure >= 18 && $heure < 22) {
+        $salutation = 'Bonsoir';
+    } else {
+        $salutation = 'Bonne nuit';
+    }
+@endphp
+@push('admin_mobile_page_extra_classes')
+admin-mobile-stack
+@endpush
 
-    <!-- Header -->
-    <div class="animate-fadeInUp">
+@push('admin_mobile_greeting')
+    <div class="admin-mobile-greeting md:hidden animate-fadeInUp">
+        <h1>Tableau de bord</h1>
+        <p>{{ $salutation }}, {{ Auth::user()->name }} · {{ date('H:i') }}</p>
+    </div>
+@endpush
+
+    <!-- Header desktop -->
+    <div class="admin-mobile-page-head animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
             Tableau de bord Admin
         </h1>
         <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-            @php
-                $heure = date('H');
-                if ($heure >= 5 && $heure < 12) {
-                    $salutation = 'Bonjour';
-                } elseif ($heure >= 12 && $heure < 18) {
-                    $salutation = 'Bon après-midi';
-                } elseif ($heure >= 18 && $heure < 22) {
-                    $salutation = 'Bonsoir';
-                } else {
-                    $salutation = 'Bonne nuit';
-                }
-            @endphp
             {{ $salutation }}, <span class="font-semibold text-[var(--primary-blue)]">{{ Auth::user()->name }}</span>
             <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
         </p>
     </div>
 
     <!-- Statistics -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+    <div class="admin-kpi-rail grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
 
         <!-- Users -->
         <div class="stat-card animate-fadeInUp delay-1">
@@ -711,7 +720,7 @@
     </div>
 
     <!-- Quick actions -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-9">
+    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-9">
 
         <a href="{{ route('admin.users.create') }}" class="quick-action">
             <div class="quick-icon stat-icon-primary">
@@ -751,5 +760,4 @@
 
     </div>
 
-</div>
 @endsection

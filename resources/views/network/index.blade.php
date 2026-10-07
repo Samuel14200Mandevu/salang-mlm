@@ -9,12 +9,29 @@
 @endphp
 <div class="space-y-4 sm:space-y-6 network-page">
 
-    <div class="member-page-intro animate-fadeInUp">
+    <div class="member-page-intro network-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mon réseau</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-0.5">Votre généalogie, vos filleuls et votre lien de parrainage</p>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    <div class="network-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner network-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">Mon équipe</p>
+                <p class="shop-catalog-banner__title">Mon réseau</p>
+                <p class="shop-catalog-banner__sub">Généalogie · filleuls · parrainage</p>
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <button type="button" class="shop-banner-icon-btn" onclick="copyReferralLink()" aria-label="Copier le lien de parrainage">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="network-stats stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats p-3 border-l-4 border-primary-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total équipe</p>
             <p class="text-lg sm:text-xl font-bold text-primary-500">{{ $stats['total'] ?? 0 }}</p>
@@ -35,7 +52,7 @@
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Actifs (N1)</p>
             <p class="text-lg sm:text-xl font-bold text-yellow-600">{{ $stats['active'] ?? 0 }}</p>
         </div>
-        <div class="card-stats p-3 border-l-4 border-slate-500 col-span-2 sm:col-span-1">
+        <div class="card-stats p-3 border-l-4 border-slate-500">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV équipe</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{{ number_format($stats['total_pv'] ?? 0) }}</p>
         </div>

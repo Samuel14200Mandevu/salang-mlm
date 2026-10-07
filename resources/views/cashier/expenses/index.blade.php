@@ -431,9 +431,7 @@
             </div>
         </div>
 
-        <div class="mt-3" id="paginationWrapper">
-            {{ $expenses->links() }}
-        </div>
+        <x-salang-pagination :paginator="$expenses" id="paginationWrapper" class="mt-3" />
     </div>
 </div>
 

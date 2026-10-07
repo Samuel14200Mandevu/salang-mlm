@@ -25,6 +25,15 @@
     padding-bottom: calc(var(--mobile-nav-height) + 0.75rem) !important;
   }
 
+  .member-app .main-content:has(.member-dashboard--fintech) {
+    padding-top: 0.75rem !important;
+    background: var(--bg-secondary);
+  }
+
+  .member-app .main-content:has(.member-dashboard--fintech) .member-alert {
+    margin-bottom: 0.85rem;
+  }
+
   /* Bottom nav — app-like */
   .member-app .mobile-bottom-nav {
     display: flex !important;
@@ -244,6 +253,34 @@
 
   .member-app .stats-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .member-app .my-pv-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .network-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .rank-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .kyc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .my-pv-mobile-banner:has(.my-pv-period-panel--banner-inline.is-open) {
+    z-index: 80;
+  }
+
+  .member-app .my-pv-period-panel.my-pv-period-panel--banner-inline.is-open {
+    z-index: 81;
   }
 
   .member-app .main-content .table {

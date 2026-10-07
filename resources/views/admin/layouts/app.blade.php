@@ -66,31 +66,68 @@
 <body class="admin-app public-body h-full bg-[var(--bg-page)] text-[var(--text-primary)] antialiased">
 
     <div class="app-container"
+         :class="{ 'admin-drawer-active': isMobile && sidebarOpen }"
          x-data="{
-            sidebarOpen: window.salangReadSidebarOpen(),
-            isMobile: window.innerWidth < 768
+            sidebarOpen: window.innerWidth < 768 ? false : window.salangReadSidebarOpen(),
+            isMobile: window.innerWidth < 768,
+            mobileMoreOpen: false,
+            toggleSidebar() {
+                if (this.isMobile && this.mobileMoreOpen) {
+                    this.mobileMoreOpen = false;
+                }
+                this.sidebarOpen = !this.sidebarOpen;
+                if (!this.isMobile) {
+                    window.salangPersistSidebarOpen(this.sidebarOpen);
+                }
+            },
+            openMobileDrawer() {
+                this.mobileMoreOpen = false;
+                this.sidebarOpen = true;
+            },
+            closeSidebar() {
+                this.sidebarOpen = false;
+                if (!this.isMobile) {
+                    window.salangPersistSidebarOpen(false);
+                }
+            }
          }"
          x-init="
-            sidebarOpen = window.salangReadSidebarOpen();
             isMobile = window.innerWidth < 768;
-            if (window.innerWidth < 768) sidebarOpen = false;
+            sidebarOpen = isMobile ? false : window.salangReadSidebarOpen();
             window.salangSyncSidebarShell(sidebarOpen);
             window.addEventListener('resize', () => {
+                const wasMobile = isMobile;
                 isMobile = window.innerWidth < 768;
-                if (window.innerWidth < 768) {
+                if (isMobile) {
                     sidebarOpen = false;
-                } else {
+                    mobileMoreOpen = false;
+                } else if (wasMobile) {
                     sidebarOpen = window.salangReadSidebarOpen();
                 }
                 window.salangSyncSidebarShell(sidebarOpen);
             });
+            const syncAdminScrollLock = () => {
+                const lock = mobileMoreOpen || (isMobile && sidebarOpen);
+                document.body.classList.toggle('admin-mobile-scroll-lock', !!lock);
+            };
+            $watch('mobileMoreOpen', syncAdminScrollLock);
+            $watch('sidebarOpen', (open) => {
+                syncAdminScrollLock();
+                if (open && isMobile) {
+                    mobileMoreOpen = false;
+                    $nextTick(() => document.getElementById('adminDrawerCloseBtn')?.focus({ preventScroll: true }));
+                }
+            });
          "
-         @sidebar-toggle.window="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)">
+         @sidebar-toggle.window="toggleSidebar()"
+         @admin-close-drawer.window="if (isMobile) closeSidebar()"
+         @keydown.escape.window="if (isMobile && sidebarOpen) closeSidebar()">
 
         <!-- Mobile overlay -->
         <div x-show="sidebarOpen && isMobile"
-             @click="sidebarOpen = false; window.salangPersistSidebarOpen(false)"
-             class="fixed inset-0 bg-black/40 z-40 lg:hidden"
+             x-cloak
+             @click="closeSidebar()"
+             class="admin-mobile-drawer-backdrop fixed inset-0 bg-black/45 z-40 lg:hidden"
              x-transition:enter="transition-opacity ease-linear duration-250"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -101,22 +138,28 @@
         </div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" aria-label="Navigation administration"
+        <aside id="sidebar"
                class="fixed top-0 left-0 z-50 h-full transition-all duration-200 ease-in-out"
+               aria-label="Navigation administration"
+               :role="isMobile && sidebarOpen ? 'dialog' : 'complementary'"
+               :aria-modal="isMobile && sidebarOpen ? 'true' : null"
+               :aria-hidden="isMobile && !sidebarOpen ? 'true' : null"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
                   'w-20 sidebar-is-rail': !sidebarOpen && !isMobile,
-                  'w-64 translate-x-0': sidebarOpen && isMobile,
-                  'w-64 -translate-x-full': !sidebarOpen && isMobile
+                  'admin-sidebar-drawer-open w-64 translate-x-0': sidebarOpen && isMobile,
+                  'w-64 -translate-x-full pointer-events-none': !sidebarOpen && isMobile
                }">
 
-            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 <div class="cashier-sidebar-accent" aria-hidden="true"></div>
 
             <!-- Logo -->
             <div class="sidebar-logo-bar flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
                  :class="sidebarOpen ? 'px-4' : 'px-2'">
-                <a href="{{ route('admin.dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
+                <a href="{{ route('admin.dashboard') }}"
+                   class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0"
+                   @click="if (isMobile) closeSidebar()">
                     <img src="{{ asset('images/salang_logo.png') }}"
                          alt="Salang"
                          width="160"
@@ -124,16 +167,24 @@
                          decoding="async"
                          class="sidebar-logo-img sidebar-logo-full logo-themeable">
                 </a>
-                <button @click="sidebarOpen = false; window.salangPersistSidebarOpen(false)"
-                        class="lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+                <button type="button"
+                        id="adminDrawerCloseBtn"
+                        @click="closeSidebar()"
+                        class="admin-drawer-close lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                        aria-label="Fermer le menu">
                     <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
+            <div class="admin-drawer-mobile-head lg:hidden" aria-hidden="true">
+                <span>Menu administration</span>
+            </div>
+
             <!-- Menu -->
-            <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
+            <nav class="admin-sidebar-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
+                 @click="if (isMobile && $event.target.closest('a.sidebar-link')) closeSidebar()">
                 <ul class="space-y-0.5">
 
                     <!-- Dashboard -->
@@ -227,11 +278,11 @@
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span id="adminConsultationDot" class="notification-dot" style="display:none;"></span>
+                                <span id="adminConsultationDot" class="notification-dot workflow-notify-accent" style="display:none;"></span>
                             </div>
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
                                 Consultations
-                                <span id="adminConsultationBadge" class="badge-count" style="display:none;">0</span>
+                                <span id="adminConsultationBadge" class="badge-count workflow-notify-accent" style="display:none;">0</span>
                             </span>
                         </a>
                     </li>
@@ -244,11 +295,11 @@
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span id="adminReportDot" class="notification-dot" style="display:none;"></span>
+                                <span id="adminReportDot" class="notification-dot workflow-notify-accent" style="display:none;"></span>
                             </div>
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">
                                 Rapports caisse
-                                <span id="adminReportBadge" class="badge-count" style="display:none;">0</span>
+                                <span id="adminReportBadge" class="badge-count workflow-notify-accent" style="display:none;">0</span>
                             </span>
                         </a>
                     </li>
@@ -364,7 +415,7 @@
             </nav>
 
             <!-- Profil sidebar -->
-            <div class="p-3 border-t border-[var(--border-color)] flex-shrink-0">
+            <div class="admin-sidebar-profile p-3 border-t border-[var(--border-color)] flex-shrink-0">
                 <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                     <div class="w-9 h-9 rounded-full bg-[var(--primary)] flex items-center justify-center text-[var(--text-inverse)] font-medium text-sm flex-shrink-0">
                         @auth
@@ -403,9 +454,14 @@
                     <div class="flex justify-between items-center h-14 sm:h-16">
 
                         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)"
-                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
-                                <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <button type="button"
+                                    @click="toggleSidebar()"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0"
+                                    aria-label="Menu">
+                                <svg class="w-5 h-5 text-[var(--text-primary)] md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                                </svg>
+                                <svg class="w-5 h-5 text-[var(--text-primary)] hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
@@ -434,7 +490,8 @@
 
                             <!-- Theme Toggle -->
                             <button type="button" id="theme-toggle"
-                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                                    aria-label="Changer le thème">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon"/>
                                 </svg>
@@ -520,10 +577,15 @@
 
             <!-- Contenu -->
             <main class="main-content" id="main-content">
-                @yield('content')
+                <div class="admin-mobile-page space-y-3 sm:space-y-6 @stack('admin_mobile_page_extra_classes')">
+                    @stack('admin_mobile_greeting')
+                    @yield('content')
+                </div>
             </main>
 
         </div>
+
+        @include('admin.layouts.partials.bottom-nav')
     </div>
 
     <!-- ===== CONFIRMATION DIALOG ===== -->
@@ -740,6 +802,7 @@
             'consultations' => ['badge' => 'adminConsultationBadge', 'dot' => 'adminConsultationDot'],
             'reports' => ['badge' => 'adminReportBadge', 'dot' => 'adminReportDot'],
             'header' => ['badge' => 'adminWorkflowHeaderBadge', 'dot' => 'adminWorkflowHeaderDot'],
+            'mobileNav' => ['badge' => 'adminMobileNavBadge'],
             'dropdown' => [
                 'consultationCount' => 'adminWorkflowDropdownConsultationCount',
                 'reportCount' => 'adminWorkflowDropdownReportCount',
@@ -773,6 +836,10 @@
             if (!toggle) return;
 
             function setTheme(theme) {
+                if (typeof window.salangApplyTheme === 'function') {
+                    window.salangApplyTheme(theme);
+                    return;
+                }
                 if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
                     localStorage.setItem('theme', 'dark');

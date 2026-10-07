@@ -351,7 +351,7 @@
 
         @if($transactions instanceof \Illuminate\Pagination\LengthAwarePaginator && $transactions->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $transactions->links() }}
+                <x-salang-pagination :paginator="$transactions" />
             </div>
         @endif
     </div>

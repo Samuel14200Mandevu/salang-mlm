@@ -545,9 +545,7 @@
             </table>
         </div>
 
-        <div id="paginationContainer" class="mt-3 sm:mt-4">
-            {{ $withdrawals->appends(request()->query())->links() }}
-        </div>
+        <x-salang-pagination :paginator="$withdrawals" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
 
 </div>

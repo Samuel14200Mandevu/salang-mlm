@@ -5,12 +5,28 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- En-tête -->
-    <div class="animate-fadeInUp">
+<div class="kyc-page space-y-4 sm:space-y-6">
+
+    <div class="member-page-intro kyc-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Soumettre un document KYC</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité en soumettant vos documents</p>
+    </div>
+
+    <div class="kyc-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner kyc-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">KYC</p>
+                <p class="shop-catalog-banner__title">Nouveau document</p>
+                <p class="shop-catalog-banner__sub">Carte ID · domicile · selfie</p>
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <a href="{{ route('kyc.index') }}" class="shop-banner-icon-btn" aria-label="Retour KYC">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
     @if($errors->any())

@@ -326,7 +326,7 @@
 
         @if(isset($packages) && method_exists($packages, 'links') && $packages->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $packages->links() }}
+                <x-salang-pagination :paginator="$packages" />
             </div>
         @endif
     </div>

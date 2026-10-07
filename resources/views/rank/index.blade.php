@@ -55,16 +55,37 @@
     $progress = ($nextRank && $nextPv > 0) ? min(100, ($currentPv / $nextPv) * 100) : 0;
 @endphp
 
-<div class="space-y-4 sm:space-y-6">
-    
-    <div class="member-page-intro animate-fadeInUp">
+<div class="rank-page space-y-4 sm:space-y-6">
+
+    <div class="member-page-intro rank-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Grade</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
             Suivez votre progression dans le systeme de grades
         </p>
     </div>
 
-    <div class="rank-card animate-fadeInUp delay-1">
+    <div class="rank-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner rank-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">Niveau {{ $userRankLevel }} · {{ $userRankName }}</p>
+                <p class="shop-catalog-banner__title">Mon rang</p>
+                @if($nextRank)
+                    <p class="shop-catalog-banner__sub">Prochain · {{ $nextRank->name }} · {{ number_format($progress, 0) }}%</p>
+                @else
+                    <p class="shop-catalog-banner__sub">Grade maximum atteint</p>
+                @endif
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <a href="{{ route('rank.history') }}" class="shop-banner-icon-btn" aria-label="Historique des grades">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="rank-card rank-current-card animate-fadeInUp delay-1">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Grade actuel</p>
@@ -106,7 +127,7 @@
         @endif
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
+    <div class="rank-stats stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
         <div class="rank-card text-center">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">PV Total</p>
             <p class="text-lg sm:text-2xl font-bold text-primary-500">{{ number_format(Auth::user()->pv_balance ?? 0) }}</p>
@@ -219,8 +240,8 @@
                         'conditions' => [
                             ['label' => 'Être niveau 6', 'value' => 'Avoir 3 filleuls directs de niveau 5 avec ≥ 16000 PV'],
                             ['label' => 'Option 1', 'value' => 'Avoir 2 filleuls de niveau 5 avec ≥ 35000 PV'],
-                            ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 5 et 4 filleuls de niveau 4 avec ≥ 16000 PV'],
-                            ['label' => 'Option 3', 'value' => 'Avoir 1 filleul de niveau 5 et 6 filleuls de niveau 4 avec ≥ 16000 PV']
+                            ['label' => 'Option 2', 'value' => 'Avoir 2 branches distinctes (niv. 5+) et 4 autres branches (niv. 4+), rang max dans chaque jambe, ≥ 16000 PV groupe'],
+                            ['label' => 'Option 3', 'value' => 'Avoir 1 branche (niv. 5+) et 6 autres branches (niv. 4+), jambes distinctes, ≥ 16000 PV groupe']
                         ],
                         'pv_payment' => 'PV mensuel ≥ 50 PV'
                     ],

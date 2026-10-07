@@ -1,13 +1,16 @@
         <aside id="sidebar" aria-label="Navigation caisse"
                class="fixed top-0 left-0 z-50 h-full transition-all duration-200 ease-in-out"
+               :role="isMobile && sidebarOpen ? 'dialog' : 'complementary'"
+               :aria-modal="isMobile && sidebarOpen ? 'true' : null"
+               :aria-hidden="isMobile && !sidebarOpen ? 'true' : null"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
                   'w-20 sidebar-is-rail': !sidebarOpen && !isMobile,
-                  'w-64 translate-x-0': sidebarOpen && isMobile,
+                  'admin-sidebar-drawer-open w-64 translate-x-0': sidebarOpen && isMobile,
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
 
-            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
                 <div class="cashier-sidebar-accent" aria-hidden="true"></div>
 
                 <!-- Logo -->
@@ -21,16 +24,23 @@
                              decoding="async"
                              class="sidebar-logo-img sidebar-logo-full logo-themeable">
                     </a>
-                    <button @click="sidebarOpen = false; window.salangPersistSidebarOpen(false)"
-                            class="lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+                    <button type="button"
+                            id="cashierDrawerCloseBtn"
+                            @click="closeSidebar()"
+                            class="admin-drawer-close lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                            aria-label="Fermer le menu">
                         <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
 
+                <div class="admin-drawer-mobile-head lg:hidden" aria-hidden="true">
+                    Menu caisse
+                </div>
+
                 <!-- Menu -->
-                <nav class="flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
+                <nav class="admin-sidebar-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
                     <ul class="space-y-0.5">
 
                         <!-- Dashboard -->
@@ -63,12 +73,12 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    <span id="cashierConsultationDot" class="notification-dot" style="display:none;"></span>
+                                    <span id="cashierConsultationDot" class="notification-dot workflow-notify-accent" style="display:none;"></span>
                                 </div>
                                 <span class="label transition-opacity duration-200"
                                       :class="!sidebarOpen ? 'hidden' : ''">
                                     Mes Consultations
-                                    <span id="cashierConsultationBadge" class="badge-count" style="display:none;">0</span>
+                                    <span id="cashierConsultationBadge" class="badge-count workflow-notify-accent" style="display:none;">0</span>
                                 </span>
                             </a>
                         </li>
@@ -171,12 +181,12 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    <span id="cashierReportDot" class="notification-dot" style="display:none;"></span>
+                                    <span id="cashierReportDot" class="notification-dot workflow-notify-accent" style="display:none;"></span>
                                 </div>
                                 <span class="label transition-opacity duration-200"
                                     :class="!sidebarOpen ? 'hidden' : ''">
                                     Rapports
-                                    <span id="cashierReportBadge" class="badge-count" style="display:none;">0</span>
+                                    <span id="cashierReportBadge" class="badge-count workflow-notify-accent" style="display:none;">0</span>
                                 </span>
                             </a>
                         </li>

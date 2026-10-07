@@ -1,4 +1,4 @@
-@if(($dashboardLevel['show_max_banner'] ?? false) || (($rankProgress['next'] ?? '') === 'Maximum Level'))
+@if($dashboardLevel['show_max_banner'] ?? false)
 <div class="dashboard-max-banner animate-fadeInUp delay-4">
     <div class="flex items-center justify-center gap-3 font-semibold">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

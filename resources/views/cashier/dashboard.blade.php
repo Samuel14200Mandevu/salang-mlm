@@ -44,17 +44,34 @@
         color: var(--text-tertiary);
     }
 
+    .stat-card .stat-detail {
+        font-size: 0.625rem;
+        color: var(--text-tertiary);
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .stat-card .stat-detail .value-warning {
+        color: var(--color-accent-600);
+        font-weight: 600;
+    }
+
     /* ============================================================
-       QUICK ACTIONS – Pas de hover avec ombre, juste un fond
+       QUICK ACTIONS (aligné admin mobile)
        ============================================================ */
     .quick-action {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-md, 8px);
-        padding: 1rem 0.75rem;
+        padding: 0.875rem 1rem;
         text-align: center;
         transition: background 0.2s ease, border-color 0.2s ease;
-        text-decoration: none;
+        text-decoration: none !important;
         display: block;
     }
 
@@ -63,24 +80,21 @@
         border-color: var(--primary);
     }
 
-    .quick-action .icon {
-        width: 1.5rem;
-        height: 1.5rem;
-        margin: 0 auto 0.35rem;
-        display: block;
-        color: var(--primary);
+    .quick-action .quick-icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.375rem;
     }
 
-    .quick-action .label {
+    .quick-action .quick-label {
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 500;
         color: var(--text-primary);
-    }
-
-    .quick-action .sub {
-        font-size: 0.625rem;
-        color: var(--text-tertiary);
-        margin-top: 0.125rem;
+        line-height: 1.2;
     }
 
     /* ============================================================
@@ -282,8 +296,31 @@
 </style>
 @endpush
 
+@php
+    $heure = date('H');
+    if ($heure >= 5 && $heure < 12) {
+        $salutation = 'Bonjour';
+    } elseif ($heure >= 12 && $heure < 18) {
+        $salutation = 'Bon après-midi';
+    } elseif ($heure >= 18 && $heure < 22) {
+        $salutation = 'Bonsoir';
+    } else {
+        $salutation = 'Bonne nuit';
+    }
+@endphp
+
+@push('cashier_mobile_page_extra_classes')
+admin-mobile-stack
+@endpush
+
+@push('cashier_mobile_greeting')
+    <div class="admin-mobile-greeting md:hidden animate-fadeInUp">
+        <h1>Tableau de bord</h1>
+        <p>{{ $salutation }}, {{ Auth::user()->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
+    </div>
+@endpush
+
 @section('content')
-<div class="space-y-4 sm:space-y-6">
 
     {{-- ALERTE : Compte inactif --}}
     @if(isset($user) && !$user->is_active)
@@ -299,17 +336,30 @@
         </div>
     @endif
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
-                Tableau de bord
-            </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Bienvenue, {{ Auth::user()->name ?? 'Caissier' }}.
-            </p>
+    {{-- EN-TÊTE desktop --}}
+    <div class="admin-mobile-page-head animate-fadeInUp">
+        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+            Tableau de bord caisse
+        </h1>
+        <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()->name ?? 'Caissier' }}</span>
+            <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
+        </p>
+    </div>
+
+    <div class="admin-sticky-toolbar md:hidden w-full">
+        <div class="admin-page-header-actions flex w-full">
+            <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Nouvelle vente</span>
+            </a>
         </div>
-        <a href="{{ route('cashier.pos') }}" class="btn btn-primary">
+    </div>
+
+    <div class="hidden md:flex justify-end -mt-2 mb-1">
+        <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
@@ -318,11 +368,11 @@
     </div>
 
     {{-- STATISTIQUES --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">Commandes aujourd'hui</p>
+    <div class="admin-kpi-rail grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <div class="stat-card animate-fadeInUp delay-1">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="stat-label">Commandes</p>
                     <p class="stat-value text-[var(--primary)]">{{ $stats['total_orders_today'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-orders">
@@ -331,12 +381,16 @@
                     </svg>
                 </div>
             </div>
+            <div class="stat-detail">
+                <span>Aujourd'hui</span>
+                <span>En attente <span class="value-warning">{{ $stats['pending_orders'] ?? 0 }}</span></span>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">Ventes aujourd'hui</p>
+        <div class="stat-card animate-fadeInUp delay-2">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="stat-label">Ventes</p>
                     <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($stats['total_sales_today'] ?? 0, 2) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-sales">
@@ -345,13 +399,17 @@
                     </svg>
                 </div>
             </div>
+            <div class="stat-detail">
+                <span>Aujourd'hui</span>
+                <span>Caisse</span>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">Clients aujourd'hui</p>
-                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $stats['customers_today'] ?? 0 }}</p>
+        <div class="stat-card animate-fadeInUp delay-3">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="stat-label">Clients</p>
+                    <p class="stat-value text-[var(--color-accent-600)]">{{ $stats['customers_today'] ?? 0 }}</p>
                 </div>
                 <div class="stat-icon stat-icon-customers">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -359,11 +417,15 @@
                     </svg>
                 </div>
             </div>
+            <div class="stat-detail">
+                <span>Aujourd'hui</span>
+                <span>Comptés</span>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
+        <div class="stat-card animate-fadeInUp delay-4">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
                     <p class="stat-label">En attente</p>
                     <p class="stat-value text-[var(--ui-stat-danger)]">{{ $stats['pending_orders'] ?? 0 }}</p>
                 </div>
@@ -373,46 +435,15 @@
                     </svg>
                 </div>
             </div>
+            <div class="stat-detail">
+                <span>Commandes</span>
+                <span>À traiter</span>
+            </div>
         </div>
     </div>
 
-    {{-- ACTIONS RAPIDES --}}
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
-        <a href="{{ route('cashier.pos') }}" class="quick-action">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <span class="label">Point de Vente</span>
-            <p class="sub">Vendre au guichet</p>
-        </a>
-
-        <a href="{{ route('cashier.members') }}" class="quick-action">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <span class="label">Membres</span>
-            <p class="sub">Gérer les membres</p>
-        </a>
-
-        <a href="{{ route('cashier.orders') }}" class="quick-action">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <span class="label">Commandes</span>
-            <p class="sub">Toutes les commandes</p>
-        </a>
-
-        <a href="{{ route('cashier.commissions') }}" class="quick-action">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="label">Commissions</span>
-            <p class="sub">Gérer les commissions</p>
-        </a>
-    </div>
-
     {{-- COMMANDES RÉCENTES --}}
-    <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
+    <div class="card p-3 sm:p-4 animate-fadeInUp delay-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commandes récentes</h3>
             <a href="{{ route('cashier.orders') }}" class="text-sm text-[var(--primary)] hover:underline">
@@ -421,7 +452,7 @@
         </div>
 
         <div class="table-wrap">
-            <table class="table">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>N° commande</th>
@@ -485,5 +516,44 @@
             </table>
         </div>
     </div>
-</div>
+
+    {{-- ACTIONS RAPIDES --}}
+    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-6">
+        <a href="{{ route('cashier.pos') }}" class="quick-action">
+            <div class="quick-icon stat-icon-orders">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <p class="quick-label">Point de vente</p>
+        </a>
+
+        <a href="{{ route('cashier.members') }}" class="quick-action">
+            <div class="quick-icon stat-icon-customers">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <p class="quick-label">Membres</p>
+        </a>
+
+        <a href="{{ route('cashier.orders') }}" class="quick-action">
+            <div class="quick-icon stat-icon-orders">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <p class="quick-label">Commandes</p>
+        </a>
+
+        <a href="{{ route('cashier.commissions') }}" class="quick-action">
+            <div class="quick-icon stat-icon-sales">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="quick-label">Commissions</p>
+        </a>
+    </div>
+
 @endsection

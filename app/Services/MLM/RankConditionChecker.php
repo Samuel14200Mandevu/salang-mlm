@@ -114,12 +114,11 @@ class RankConditionChecker
         $cumulPV = $this->getCumulPV($user);
 
         $branchesDirecteur = $this->countQualifiedBranchesOptimized($user, 4);
-        $branchesManager = $this->countQualifiedBranchesOptimized($user, 3);
 
         if ($branchesDirecteur >= 3 && $cumulPV >= 3800) return true;
         if ($branchesDirecteur >= 2 && $cumulPV >= 7800) return true;
-        if ($branchesDirecteur >= 2 && $branchesManager >= 4 && $cumulPV >= 3800) return true;
-        if ($branchesDirecteur >= 1 && $branchesManager >= 6 && $cumulPV >= 3800) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [2 => 4, 4 => 3]) && $cumulPV >= 3800) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [1 => 4, 6 => 3]) && $cumulPV >= 3800) return true;
 
         return false;
     }
@@ -132,12 +131,11 @@ class RankConditionChecker
         $cumulPV = $this->getCumulPV($user);
 
         $branchesManagerSenior = $this->countQualifiedBranchesOptimized($user, 5);
-        $branchesDirecteur = $this->countQualifiedBranchesOptimized($user, 4);
 
         if ($branchesManagerSenior >= 3 && $cumulPV >= 16000) return true;
         if ($branchesManagerSenior >= 2 && $cumulPV >= 35000) return true;
-        if ($branchesManagerSenior >= 2 && $branchesDirecteur >= 4 && $cumulPV >= 16000) return true;
-        if ($branchesManagerSenior >= 1 && $branchesDirecteur >= 6 && $cumulPV >= 16000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [2 => 5, 4 => 4]) && $cumulPV >= 16000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [1 => 5, 6 => 4]) && $cumulPV >= 16000) return true;
 
         return false;
     }
@@ -150,12 +148,11 @@ class RankConditionChecker
         $cumulPV = $this->getCumulPV($user);
 
         $branchesDirecteurEnvolee = $this->countQualifiedBranchesOptimized($user, 6);
-        $branchesManagerSenior = $this->countQualifiedBranchesOptimized($user, 5);
 
         if ($branchesDirecteurEnvolee >= 3 && $cumulPV >= 73000) return true;
         if ($branchesDirecteurEnvolee >= 2 && $cumulPV >= 145000) return true;
-        if ($branchesDirecteurEnvolee >= 2 && $branchesManagerSenior >= 4 && $cumulPV >= 73000) return true;
-        if ($branchesDirecteurEnvolee >= 1 && $branchesManagerSenior >= 6 && $cumulPV >= 73000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [2 => 6, 4 => 5]) && $cumulPV >= 73000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [1 => 6, 6 => 5]) && $cumulPV >= 73000) return true;
 
         return false;
     }
@@ -168,12 +165,11 @@ class RankConditionChecker
         $cumulPV = $this->getCumulPV($user);
 
         $branchesSaphire = $this->countQualifiedBranchesOptimized($user, 7);
-        $branchesDirecteurEnvolee = $this->countQualifiedBranchesOptimized($user, 6);
 
         if ($branchesSaphire >= 3 && $cumulPV >= 280000) return true;
         if ($branchesSaphire >= 2 && $cumulPV >= 580000) return true;
-        if ($branchesSaphire >= 2 && $branchesDirecteurEnvolee >= 4 && $cumulPV >= 280000) return true;
-        if ($branchesSaphire >= 1 && $branchesDirecteurEnvolee >= 6 && $cumulPV >= 280000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [2 => 7, 4 => 6]) && $cumulPV >= 280000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [1 => 7, 6 => 6]) && $cumulPV >= 280000) return true;
 
         return false;
     }
@@ -186,12 +182,11 @@ class RankConditionChecker
         $cumulPV = $this->getCumulPV($user);
 
         $branchesDiamondBlue = $this->countQualifiedBranchesOptimized($user, 8);
-        $branchesSaphire = $this->countQualifiedBranchesOptimized($user, 7);
 
         if ($branchesDiamondBlue >= 3 && $cumulPV >= 400000) return true;
         if ($branchesDiamondBlue >= 2 && $cumulPV >= 780000) return true;
-        if ($branchesDiamondBlue >= 2 && $branchesSaphire >= 4 && $cumulPV >= 400000) return true;
-        if ($branchesDiamondBlue >= 1 && $branchesSaphire >= 6 && $cumulPV >= 400000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [2 => 8, 4 => 7]) && $cumulPV >= 400000) return true;
+        if ($this->satisfiesExclusiveMixedBranches($user, [1 => 8, 6 => 7]) && $cumulPV >= 400000) return true;
 
         return false;
     }
@@ -203,6 +198,123 @@ class RankConditionChecker
     private function getCumulPV(User $user): float
     {
         return (float) ($user->team_pv ?? 0);
+    }
+
+    /**
+     * Options mixtes : chaque filleul direct = une branche ; le niveau retenu est le MAX
+     * dans toute la descendance. Les branches comptées pour un palier ne sont pas réutilisées
+     * pour un palier inférieur (ex. 2× niv.5 + 4× niv.4 = 6 jambes distinctes).
+     *
+     * @param  array<int, int>  $branchCountsByMinRank  ex. [2 => 5, 4 => 4] → 2 br. niv.≥5 et 4 autres br. niv.≥4
+     */
+    public function satisfiesExclusiveMixedBranches(User $user, array $branchCountsByMinRank): bool
+    {
+        if ($branchCountsByMinRank === []) {
+            return false;
+        }
+
+        $requirements = [];
+        foreach ($branchCountsByMinRank as $count => $minRankLevel) {
+            $count = (int) $count;
+            $minRankLevel = (int) $minRankLevel;
+            if ($count <= 0 || $minRankLevel <= 0) {
+                return false;
+            }
+            $requirements[] = ['count' => $count, 'min_rank' => $minRankLevel];
+        }
+
+        usort($requirements, fn (array $a, array $b): int => $b['min_rank'] <=> $a['min_rank']);
+
+        $branchMaxRanks = $this->getBranchMaxRankLevels($user);
+        if ($branchMaxRanks === []) {
+            return false;
+        }
+
+        $usedBranchIds = [];
+
+        foreach ($requirements as $requirement) {
+            $candidates = [];
+            foreach ($branchMaxRanks as $branchId => $maxRank) {
+                if (in_array($branchId, $usedBranchIds, true)) {
+                    continue;
+                }
+                if ($maxRank >= $requirement['min_rank']) {
+                    $candidates[$branchId] = $maxRank;
+                }
+            }
+
+            if (count($candidates) < $requirement['count']) {
+                return false;
+            }
+
+            arsort($candidates);
+            $selected = array_slice(array_keys($candidates), 0, $requirement['count']);
+            foreach ($selected as $branchId) {
+                $usedBranchIds[] = $branchId;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<int, int> branch_id (filleul direct) => meilleur niveau de grade dans la branche
+     */
+    private function getBranchMaxRankLevels(User $user): array
+    {
+        $cacheKey = "branch_max_levels_{$user->id}";
+
+        if (isset($this->branchCache[$cacheKey])) {
+            return $this->branchCache[$cacheKey];
+        }
+
+        $appendPath = SqlDialect::appendToPath('d.path', 'u.id');
+        $notInPath = SqlDialect::notInPath('u.id', 'd.path');
+
+        $rows = DB::select("
+            WITH RECURSIVE descendants AS (
+                SELECT 
+                    id, 
+                    parrain_id, 
+                    rank_id, 
+                    1 as depth,
+                    id as branch_id,
+                    CAST(id AS CHAR(1000)) as path
+                FROM users 
+                WHERE parrain_id = ?
+                AND is_active = true
+                
+                UNION ALL
+                
+                SELECT 
+                    u.id, 
+                    u.parrain_id, 
+                    u.rank_id, 
+                    d.depth + 1,
+                    d.branch_id,
+                    {$appendPath}
+                FROM users u
+                INNER JOIN descendants d ON u.parrain_id = d.id
+                WHERE u.is_active = true
+                AND {$notInPath}
+                AND d.depth < 50
+            )
+            SELECT 
+                branch_id,
+                MAX(COALESCE(r.level, 1)) as max_level
+            FROM descendants d
+            LEFT JOIN ranks r ON d.rank_id = r.id
+            GROUP BY branch_id
+        ", [$user->id]);
+
+        $levels = [];
+        foreach ($rows as $row) {
+            $levels[(int) $row->branch_id] = (int) $row->max_level;
+        }
+
+        $this->branchCache[$cacheKey] = $levels;
+
+        return $levels;
     }
 
     private function countQualifiedBranchesOptimized(User $user, int $rankLevel): int

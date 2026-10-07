@@ -492,9 +492,7 @@
         </div>
 
         @if($wallets->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $wallets->appends(request()->query())->links() }}
-            </div>
+            <x-salang-pagination :paginator="$wallets" id="paginationContainer" class="mt-3 sm:mt-4" />
         @endif
     </div>
 

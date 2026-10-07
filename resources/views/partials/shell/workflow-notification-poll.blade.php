@@ -102,6 +102,10 @@
     }
 
     function refresh() {
+        if (localStorage.getItem('admin_workflow_poll_enabled') === '0') {
+            return;
+        }
+
         fetch(config.url, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin'
@@ -120,12 +124,17 @@
                 if (config.header) {
                     setBadge(config.header.badge, config.header.dot, data.total);
                 }
+                if (config.mobileNav) {
+                    setBadge(config.mobileNav.badge, config.mobileNav.dot || null, data.total);
+                }
                 updateDropdown(data);
             })
             .catch(function (err) {
                 console.error('Compteur workflow:', err);
             });
     }
+
+    window.salangWorkflowPollRefresh = refresh;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', refresh);

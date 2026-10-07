@@ -438,7 +438,7 @@
                 </table>
             </div>
             @if($transactions->hasPages())
-                <div class="mt-3">{{ $transactions->links() }}</div>
+                <div class="mt-3"><x-salang-pagination :paginator="$transactions" /></div>
             @endif
         @endif
     </div>

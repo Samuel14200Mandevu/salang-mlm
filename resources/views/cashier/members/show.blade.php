@@ -297,7 +297,7 @@
 
         @if(isset($downlines) && $downlines->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $downlines->links() }}
+                <x-salang-pagination :paginator="$downlines" />
             </div>
         @endif
     </div>

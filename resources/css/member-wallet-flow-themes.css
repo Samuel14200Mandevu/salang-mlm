@@ -1,0 +1,151 @@
+/* Dépôt (vert) & retrait (orange) — thèmes portefeuille */
+
+.member-app .member-deposit--fintech {
+  --flow-accent: #16a34a;
+  --flow-accent-strong: #15803d;
+  --flow-accent-soft: color-mix(in srgb, #16a34a 16%, var(--bg-card));
+}
+
+.member-app .member-withdraw--fintech {
+  --flow-accent: #ea580c;
+  --flow-accent-strong: #c2410c;
+  --flow-accent-soft: color-mix(in srgb, #ea580c 16%, var(--bg-card));
+}
+
+@media (max-width: 767px) {
+  .member-app .member-deposit--fintech .member-fintech-hero {
+    --dashboard-accent: var(--flow-accent);
+    background: linear-gradient(
+      168deg,
+      #031208 0%,
+      color-mix(in srgb, var(--flow-accent) 52%, #0a1020) 46%,
+      #0f172a 88%
+    );
+  }
+
+  .member-app .member-deposit--fintech .member-fintech-hero__mesh {
+    background-image:
+      radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--flow-accent) 55%, transparent) 0%, transparent 45%),
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  .member-app .member-withdraw--fintech .member-fintech-hero {
+    --dashboard-accent: var(--flow-accent);
+    background: linear-gradient(
+      168deg,
+      #180903 0%,
+      color-mix(in srgb, var(--flow-accent) 52%, #0a1020) 46%,
+      #0f172a 88%
+    );
+  }
+
+  .member-app .member-withdraw--fintech .member-fintech-hero__mesh {
+    background-image:
+      radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--flow-accent) 55%, transparent) 0%, transparent 45%),
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  .member-app .member-deposit--fintech .member-wallet-hero__badge,
+  .member-app .member-withdraw--fintech .member-wallet-hero__badge {
+    color: rgba(248, 250, 252, 0.92);
+    background: color-mix(in srgb, var(--flow-accent) 35%, rgba(255, 255, 255, 0.1));
+    border-color: color-mix(in srgb, var(--flow-accent) 40%, rgba(255, 255, 255, 0.14));
+  }
+}
+
+/* Formulaires flux (dépôt + retrait) */
+.member-app .member-deposit--fintech .member-withdraw-form__step,
+.member-app .member-withdraw--fintech .member-withdraw-form__step {
+  color: var(--flow-accent-strong);
+  background: var(--flow-accent-soft);
+}
+
+.member-app .member-deposit--fintech .member-withdraw-method.is-selected,
+.member-app .member-withdraw--fintech .member-withdraw-method.is-selected {
+  border-color: color-mix(in srgb, var(--flow-accent) 55%, var(--border-light));
+  background: color-mix(in srgb, var(--flow-accent) 8%, var(--bg-card));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--flow-accent) 25%, transparent);
+}
+
+.member-app .member-deposit--fintech .member-withdraw-method__icon,
+.member-app .member-withdraw--fintech .member-withdraw-method__icon {
+  color: var(--flow-accent);
+  background: color-mix(in srgb, var(--flow-accent) 14%, var(--bg-card));
+}
+
+.member-app .member-deposit--fintech .member-withdraw-method__icon svg,
+.member-app .member-withdraw--fintech .member-withdraw-method__icon svg {
+  color: var(--flow-accent-strong);
+}
+
+.member-app .member-deposit--fintech .member-withdraw-amount__max,
+.member-app .member-withdraw--fintech .member-withdraw-amount__max {
+  color: var(--flow-accent-strong);
+  background: color-mix(in srgb, var(--flow-accent) 16%, var(--bg-card));
+}
+
+.member-app .member-deposit--fintech .member-withdraw-summary__row--total span:last-child,
+.member-app .member-withdraw--fintech .member-withdraw-summary__row--total span:last-child {
+  color: var(--flow-accent-strong);
+}
+
+.member-app .member-deposit--fintech .member-withdraw-submit:not(:disabled),
+.member-app .member-withdraw--fintech .member-withdraw-submit:not(:disabled) {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--flow-accent) 92%, #fff),
+    var(--flow-accent-strong)
+  );
+  border-color: transparent;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--flow-accent) 35%, transparent);
+}
+
+.member-app .member-deposit--fintech .member-deposit-tx__icon {
+  background: #16a34a !important;
+}
+
+.member-app .member-withdraw--fintech .member-withdraw-tx__icon {
+  background: #ea580c !important;
+}
+
+/* Actions portefeuille */
+.member-app .member-fintech-actions__item.is-deposit .member-fintech-actions__icon {
+  background: linear-gradient(145deg, #22c55e, #15803d);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, #16a34a 35%, transparent);
+}
+
+.member-app .member-fintech-actions__item.is-deposit .member-fintech-actions__label {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.member-app .member-fintech-actions__item.is-withdraw .member-fintech-actions__icon {
+  background: linear-gradient(145deg, #fb923c, #ea580c);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, #ea580c 35%, transparent);
+}
+
+.member-app .member-fintech-actions__item.is-withdraw .member-fintech-actions__label {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+html.dark .member-app .member-fintech-actions__item.is-deposit .member-fintech-actions__label {
+  color: #4ade80;
+}
+
+html.dark .member-app .member-fintech-actions__item.is-withdraw .member-fintech-actions__label {
+  color: #fdba74;
+}
+
+@media (min-width: 768px) {
+  .member-app .member-deposit--fintech .member-withdraw-method.is-selected,
+  .member-app .member-withdraw--fintech .member-withdraw-method.is-selected {
+    border-color: var(--flow-accent);
+  }
+}

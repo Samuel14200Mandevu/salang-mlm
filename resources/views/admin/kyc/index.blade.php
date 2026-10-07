@@ -700,9 +700,7 @@
         </div>
 
         @if($documents->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $documents->appends(request()->query())->links() }}
-            </div>
+            <x-salang-pagination :paginator="$documents" id="paginationContainer" class="mt-3 sm:mt-4" />
         @endif
     </div>
 

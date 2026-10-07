@@ -297,7 +297,7 @@
 
         @if(isset($withdrawals) && $withdrawals->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $withdrawals->links() }}
+                <x-salang-pagination :paginator="$withdrawals" />
             </div>
         @endif
     </div>

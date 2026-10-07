@@ -12,15 +12,54 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfileController extends Controller
 {
+    protected function accountMeta(User $user): array
+    {
+        return [
+            'referralUrl' => url('/register?ref=' . ($user->sponsor_id ?? '')),
+            'unreadNotifications' => $user->unreadNotifications()->count(),
+        ];
+    }
+
     public function index()
     {
         $user = Auth::user();
-        $sponsor = User::where('sponsor_id', $user->sponsor_id)->first();
+        $sponsor = $user->parrain_id ? User::find($user->parrain_id) : null;
+        $meta = $this->accountMeta($user);
 
-        return view('profile.index', compact('user', 'sponsor'));
+        return view('profile.index', array_merge(compact('user', 'sponsor'), $meta));
+    }
+
+    public function settings()
+    {
+        return redirect()->route('profile.index', ['edit' => 1]);
+    }
+
+    public function referral()
+    {
+        $user = Auth::user();
+        $referralUrl = url('/register?ref=' . ($user->sponsor_id ?? ''));
+        $qrSvg = QrCode::format('svg')
+            ->size(220)
+            ->margin(2)
+            ->color(30, 93, 173)
+            ->backgroundColor(255, 255, 255)
+            ->generate($referralUrl);
+
+        return view('profile.referral', compact('user', 'referralUrl', 'qrSvg'));
+    }
+
+    public function about()
+    {
+        return view('profile.about');
+    }
+
+    public function help()
+    {
+        return view('profile.help');
     }
 
     public function update(Request $request)

@@ -289,4 +289,52 @@
     padding: 1.25rem 0.75rem 1.75rem;
   }
 
+  .member-app .network-page-intro-desktop {
+    display: none !important;
+  }
+
+  .member-app .downline-header {
+    display: none !important;
+  }
+
+  .member-app .network-page-back-desktop {
+    display: none !important;
+  }
+
+  .member-app .network-mobile-banner {
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  .member-app .network-catalog-banner {
+    margin: 0;
+  }
+
+  .member-app .network-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .member-app .network-stats .card-stats {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .member-app .network-stats .card-stats p:last-child {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .network-mobile-banner {
+    display: none;
+  }
+
+  .member-app .network-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .member-app .network-stats {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }

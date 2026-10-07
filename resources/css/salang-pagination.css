@@ -1,0 +1,85 @@
+/* Pagination mobile — barre indicateur seule (style iOS) */
+
+.salang-pagination-wrap {
+  width: 100%;
+}
+
+.salang-pagination-nav {
+  width: 100%;
+}
+
+.salang-pagination--mobile {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  touch-action: pan-x;
+  cursor: grab;
+}
+
+.salang-pagination--mobile:active {
+  cursor: grabbing;
+}
+
+.salang-pagination__home-bar {
+  position: relative;
+  width: min(52vw, 11rem);
+  height: 0.3125rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-tertiary) 28%, transparent);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.salang-pagination__home-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 38%;
+  min-width: 0.75rem;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--text-primary) 72%, transparent);
+  transform: translateX(0);
+  will-change: transform;
+  transition: transform 0.12s ease-out;
+}
+
+.salang-pagination__desktop-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.salang-pagination__desktop-text.is-disabled {
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .salang-pagination--mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .salang-pagination--desktop {
+    display: none !important;
+  }
+
+  .admin-app .admin-user-list,
+  .admin-app .admin-entity-list,
+  .cashier-app .admin-user-list,
+  .cashier-app .admin-entity-list,
+  .member-app .product-grid {
+    touch-action: pan-y;
+  }
+
+  nav[role='navigation']:not(.salang-pagination-nav) .flex.gap-2.items-center.justify-between.sm\:hidden {
+    display: none !important;
+  }
+}

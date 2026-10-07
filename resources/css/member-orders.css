@@ -1,0 +1,140 @@
+/**
+ * Espace membre — Mes commandes (mobile : bandeau boutique + liste)
+ */
+
+@media (max-width: 768px) {
+  .member-app .orders-page-header-desktop {
+    display: none !important;
+  }
+
+  .member-app .orders-filters-desktop {
+    display: none !important;
+  }
+
+  .member-app .orders-table-card {
+    display: none !important;
+  }
+
+  .member-app .main-content:has(.orders-page) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .orders-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem;
+    padding: 0 0 1rem;
+  }
+
+  .member-app .orders-catalog-head {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.65rem;
+    background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .member-app .orders-catalog-banner {
+    margin: 0;
+  }
+
+  .member-app .orders-search-panel {
+    margin-top: 0.45rem;
+  }
+
+  .member-app .orders-search-panel.is-open {
+    display: block;
+  }
+
+  .member-app .orders-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0;
+    animation: none;
+  }
+
+  .member-app .orders-filter-bar .orders-filter-select,
+  .member-app .orders-filter-bar .orders-filter-date {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .member-app .orders-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    margin: 0 0.75rem;
+  }
+
+  .member-app .orders-stats .card-stats {
+    padding: 0.65rem 0.75rem;
+    border-radius: 14px;
+  }
+
+  .member-app .orders-stats .card-stats p:nth-child(2) {
+    font-size: 1.125rem;
+  }
+
+  .member-app .orders-mobile-feed {
+    display: block;
+    margin: 0 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  }
+
+  .member-app .orders-mobile-feed__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .member-app .orders-mobile-row {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .member-app .orders-mobile-row__icon {
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .member-app .orders-mobile-row__aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .member-app .orders-mobile-row__aside .order-status {
+    font-size: 0.5625rem;
+    padding: 0.12rem 0.4rem;
+  }
+
+  .member-app .orders-mobile-feed__empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+
+  .member-app .orders-pagination {
+    margin: 0 0.75rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .orders-catalog-head,
+  .member-app .orders-mobile-feed {
+    display: none !important;
+  }
+
+  .member-app .orders-pagination {
+    margin-top: 1rem;
+  }
+}

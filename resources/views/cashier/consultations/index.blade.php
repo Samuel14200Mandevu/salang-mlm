@@ -193,54 +193,67 @@
         color: #d97706;
     }
 
-    @media (max-width: 640px) {
-        .stat-card { padding: 0.75rem 1rem; }
-        .stat-card .stat-value { font-size: 1.25rem; }
-        .stat-icon { width: 2rem; height: 2rem; }
-        .stat-icon svg { width: 1.25rem; height: 1.25rem; }
-        .table thead th, .table tbody td { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
-        .card { padding: 0.875rem; }
-        .stats-grid {
-            grid-template-columns: 1fr 1fr !important;
+    @media (max-width: 767px) {
+        .consultations-index .admin-page-header-actions .btn-primary {
+            flex: 1 1 100%;
+            min-height: 2.75rem;
+            border-radius: 9999px;
         }
-        .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
-        .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+
+        .consultations-index .admin-mobile-table tbody tr:has(td[colspan]) {
+            display: block;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .consultations-index .admin-mobile-table tbody tr:has(td[colspan]) td {
+            display: none !important;
+        }
     }
 
-    @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr !important;
-        }
-        .table thead th, .table tbody td {
-            padding: 0.25rem 0.375rem;
-            font-size: 0.6rem;
-        }
-        .btn-xs { padding: 0.1rem 0.375rem; font-size: 0.6rem; }
+    @media (max-width: 640px) {
+        .table thead th, .table tbody td { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
+        .card { padding: 0.875rem; }
+        .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+        .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
     }
 </style>
 @endpush
 
 @section('title', 'Mes Consultations')
 
+@push('cashier_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Consultations',
+        'subtitle' => ($stats['total'] ?? 0) . ' fiches · créez ou suivez vos dossiers',
+    ])
+@endpush
+
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+<div class="consultations-index space-y-4 sm:space-y-6">
 
     {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3">
+        <div class="admin-mobile-page-head">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Mes Consultations
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 Gérez vos fiches de consultation
             </p>
         </div>
-        <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouvelle Consultation
-        </a>
+        <div class="admin-sticky-toolbar md:contents">
+            <div class="admin-page-header-actions flex w-full md:w-auto">
+                <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary btn-sm sm:btn-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>Nouvelle consultation</span>
+                </a>
+            </div>
+        </div>
     </div>
 
     {{-- ALERTS --}}
@@ -263,66 +276,60 @@
     @endif
 
     {{-- STATISTIQUES --}}
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">Total</p>
-                    <p class="stat-value text-[var(--primary)]">{{ $stats['total'] ?? 0 }}</p>
-                </div>
-                <div class="stat-icon stat-icon-total">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </div>
+    <div class="admin-kpi-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</span>
             </div>
+            <p class="text-lg sm:text-xl font-bold text-[var(--primary)]">{{ $stats['total'] ?? 0 }}</p>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">En attente</p>
-                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ $stats['pending'] ?? 0 }}</p>
-                </div>
-                <div class="stat-icon stat-icon-pending">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[var(--color-accent-600)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</span>
             </div>
+            <p class="text-lg sm:text-xl font-bold text-[var(--color-accent-600)]">{{ $stats['pending'] ?? 0 }}</p>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">En traitement</p>
-                    <p class="stat-value text-[var(--ui-stat-info)]">{{ $stats['processing'] ?? 0 }}</p>
-                </div>
-                <div class="stat-icon stat-icon-processing">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[var(--ui-stat-info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</span>
             </div>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ $stats['processing'] ?? 0 }}</p>
         </div>
 
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="stat-label">Terminées</p>
-                    <p class="stat-value text-[var(--ui-stat-success)]">{{ $stats['completed'] ?? 0 }}</p>
-                </div>
-                <div class="stat-icon stat-icon-completed">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+        <div class="card-stats">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Terminées</span>
             </div>
+            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $stats['completed'] ?? 0 }}</p>
         </div>
     </div>
 
+    @if($consultations->isEmpty())
+        <div class="admin-empty-state md:hidden">
+            <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="font-medium text-[var(--text-primary)]">Aucune consultation</p>
+            <p class="text-sm mt-1">Créez votre première fiche de consultation.</p>
+        </div>
+    @endif
+
     {{-- LISTE --}}
-    <div class="card">
+    <div class="card {{ $consultations->isEmpty() ? 'hidden md:block' : '' }}">
         <div class="table-wrap">
             <table class="table">
                 <thead>
@@ -384,11 +391,11 @@
                                 </svg>
                                 <p class="text-base font-medium">Aucune consultation</p>
                                 <p class="text-sm text-[var(--text-tertiary)]">Commencez par créer une nouvelle fiche</p>
-                                <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary mt-3">
+                                <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary mt-3 hidden md:inline-flex">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    Nouvelle Consultation
+                                    Nouvelle consultation
                                 </a>
                             </td>
                         </tr>
@@ -399,7 +406,7 @@
 
         @if($consultations->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $consultations->links() }}
+                <x-salang-pagination :paginator="$consultations" />
             </div>
         @endif
     </div>

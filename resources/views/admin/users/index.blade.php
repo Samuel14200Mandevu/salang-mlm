@@ -26,16 +26,21 @@
 </style>
 @endpush
 
-@section('content')
-<div class="space-y-4 sm:space-y-6">
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Membres',
+        'subtitle' => $users->total() . ' comptes · recherche et actions ci-dessous',
+    ])
+@endpush
 
+@section('content')
     <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3">
+        <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Gestion des utilisateurs
             </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminUsersSubtitle">
                 {{ $users->total() }} utilisateurs/membres enregistrés
                 @if(request('search'))
                     <span class="text-xs text-[var(--text-tertiary)] ml-2">
@@ -44,8 +49,9 @@
                 @endif
             </p>
         </div>
-        <div class="flex items-center gap-2">
-            <div class="header-search">
+        <div class="admin-sticky-toolbar md:contents">
+        <div class="admin-page-header-actions flex items-center gap-2">
+            <div class="header-search admin-search-full">
                 <div class="search-wrapper">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -70,6 +76,7 @@
                 </svg>
                 <span class="hidden xs:inline">Importer PV</span>
             </a>
+        </div>
         </div>
     </div>
 
@@ -102,7 +109,7 @@
         $withPackage = isset($stats['with_package']) ? $stats['with_package'] : 0;
     @endphp
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+    <div class="admin-kpi-rail grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         <div class="card-stats">
             <div class="flex items-center gap-2 mb-1">
                 <svg class="w-4 h-4 text-[var(--ui-stat-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -159,10 +166,14 @@
         </div>
     </div>
 
-    <!-- Tableau -->
-    <div class="card p-3 sm:p-4">
+    @include('admin.users._mobile_list', ['users' => $users])
+
+    <x-salang-pagination :paginator="$users" id="paginationContainerMobile" class="md:hidden" />
+
+    <!-- Tableau desktop -->
+    <div class="card p-3 sm:p-4 hidden md:block">
         <div class="table-wrap" id="tableContainer">
-            <table class="table table-striped" id="usersTable">
+            <table class="table table-striped admin-table-desktop-only" id="usersTable">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -181,14 +192,8 @@
             </table>
         </div>
 
-        @if($users->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $users->appends(request()->query())->links() }}
-            </div>
-        @endif
+        <x-salang-pagination :paginator="$users" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
-
-</div>
 
 @push('scripts')
 <script>
@@ -247,22 +252,29 @@ document.addEventListener('DOMContentLoaded', function() {
             if (newTableBody) {
                 document.getElementById('tableBody').innerHTML = newTableBody.innerHTML;
             }
+
+            const newMobileList = doc.getElementById('adminUserMobileList');
+            const mobileList = document.getElementById('adminUserMobileList');
+            if (newMobileList && mobileList) {
+                mobileList.innerHTML = newMobileList.innerHTML;
+            }
             
             if (newPagination) {
                 const paginationContainer = document.getElementById('paginationContainer');
                 if (paginationContainer) {
                     paginationContainer.innerHTML = newPagination.innerHTML;
                 }
+                const paginationMobile = document.getElementById('paginationContainerMobile');
+                const newPaginationMobile = doc.getElementById('paginationContainerMobile');
+                if (paginationMobile && newPaginationMobile) {
+                    paginationMobile.innerHTML = newPaginationMobile.innerHTML;
+                }
             }
 
-            // Mise à jour du titre
-            const title = document.querySelector('h1');
-            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (title && subtitle) {
-                const totalMatch = html.match(/(\d+)\s+utilisateurs?/);
-                if (totalMatch) {
-                    subtitle.textContent = totalMatch[0];
-                }
+            const subtitle = document.getElementById('adminUsersSubtitle');
+            const newSubtitle = doc.getElementById('adminUsersSubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
             }
         })
         .catch(error => {

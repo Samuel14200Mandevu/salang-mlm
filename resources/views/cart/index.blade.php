@@ -5,16 +5,16 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="member-page-intro animate-fadeInUp">
+<div class="cart-page space-y-4 sm:space-y-6">
+
+    <div class="member-page-intro cart-page-intro-desktop animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mon Panier</h1>
         <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez vos articles avant de passer la commande</p>
     </div>
 
-    <!-- Balance Info -->
-    <div class="balance-card animate-fadeInUp delay-1">
+    @include('cart.partials.catalog-head', ['cart' => $cart ?? [], 'walletBalance' => $walletBalance ?? 0])
+
+    <div class="balance-card cart-balance-desktop animate-fadeInUp delay-1">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Solde de votre portefeuille</p>
@@ -32,20 +32,19 @@
     </div>
 
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
+        <div class="cart-page-flash p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="cart-page-flash p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             {{ session('error') }}
         </div>
     @endif
 
     @if(empty($cart))
-        <!-- Panier Vide -->
-        <div class="card text-center py-8 sm:py-12 animate-fadeIn">
+        <div class="card cart-empty-card text-center py-8 sm:py-12 animate-fadeIn">
             <svg class="w-16 h-16 sm:w-24 sm:h-24 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
@@ -59,9 +58,9 @@
     @else
         <!-- Contenu du Panier -->
         <div class="cart-grid grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            
-            <!-- Articles -->
-            <div class="lg:col-span-2 animate-fadeInLeft">
+
+            <div class="lg:col-span-2 animate-fadeInLeft cart-items-col">
+                <div class="cart-items-panel">
                 <div class="card">
                     <div class="divide-y divide-[var(--border-color)]">
                         @php $total = 0; @endphp
@@ -99,9 +98,9 @@
                         @endforeach
                     </div>
                 </div>
-                
-                <!-- Actions -->
-                <div class="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
+                </div>
+
+                <div class="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3 cart-actions-bar">
                     <a href="{{ route('products.index') }}" class="btn btn-outline btn-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -114,9 +113,8 @@
                 </div>
             </div>
 
-            <!-- Résumé -->
-            <div class="lg:col-span-1 animate-fadeInRight">
-                <div class="card sticky-top">
+            <div class="lg:col-span-1 animate-fadeInRight cart-summary-col">
+                <div class="card sticky-top cart-summary-panel">
                     <h3 class="font-bold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Résumé de la commande</h3>
                     
                     @php

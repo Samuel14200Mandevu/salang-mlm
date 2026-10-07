@@ -9,16 +9,33 @@
     
     <!-- Header -->
     <div class="downline-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="member-page-intro">
+        <div class="member-page-intro network-page-intro-desktop">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mes filleuls</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Tous les membres de votre généalogie</p>
         </div>
-        <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md">
+        <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md network-page-back-desktop">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
             Retour à l'arbre
         </a>
+    </div>
+
+    <div class="network-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner network-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">Réseau</p>
+                <p class="shop-catalog-banner__title">Mes filleuls</p>
+                <p class="shop-catalog-banner__sub">Tous les membres de votre généalogie</p>
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <a href="{{ route('network.index') }}" class="shop-banner-icon-btn" aria-label="Retour à l'arbre">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- ✅ Affichage du code de parrain -->
@@ -117,7 +134,7 @@
 
         @if(isset($downlines) && method_exists($downlines, 'links'))
             <div class="mt-3 sm:mt-4">
-                {{ $downlines->links() }}
+                <x-salang-pagination :paginator="$downlines" />
             </div>
         @endif
     </div>

@@ -257,10 +257,30 @@
 @endpush
 
 @section('content')
-<div class="p-4 sm:p-6">
+@php
+    $rankLevelShow = (int) ($user->rank_level ?? 0);
+    $rankLabelShow = \App\Support\MlmRank::label($rankLevelShow);
+    $rankBadgeShow = \App\Support\MlmRank::badgeClass($rankLevelShow);
+@endphp
+    <div class="admin-profile-hero md:hidden">
+        <div class="admin-profile-hero__avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+        <div class="admin-profile-hero__body">
+            <p class="admin-profile-hero__name">{{ $user->name }}</p>
+            <p class="admin-profile-hero__meta">{{ $user->email }}</p>
+            <div class="admin-profile-hero__chips">
+                <span class="{{ $rankBadgeShow }}">{{ $rankLabelShow }}</span>
+                <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
+                    {{ $user->is_active ? 'Actif' : 'Inactif' }}
+                </span>
+            </div>
+            @if($user->sponsor_id)
+                <span class="admin-profile-hero__code">#{{ $user->sponsor_id }}</span>
+            @endif
+        </div>
+    </div>
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
+    <!-- Header desktop -->
+    <div class="admin-mobile-page-head flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Détails de l'utilisateur
@@ -269,7 +289,9 @@
                 ID: {{ $user->id }}
             </p>
         </div>
-        <div class="flex gap-2 flex-wrap justify-end">
+    </div>
+
+    <div class="admin-action-rail flex gap-2 flex-wrap justify-start md:justify-end mb-1 md:mb-4 animate-fadeInUp">
             <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -332,7 +354,6 @@
                 </svg>
                 <span class="hidden xs:inline">Supprimer</span>
             </button>
-        </div>
     </div>
 
     @if(session('success'))
@@ -353,16 +374,37 @@
         </div>
     @endif
 
+    <div class="admin-member-kpis md:hidden">
+        <div class="admin-member-kpi">
+            <strong>{{ $filleuls->count() ?? 0 }}</strong>
+            <span>Filleuls</span>
+        </div>
+        <div class="admin-member-kpi">
+            <strong>{{ $commissionsCount ?? 0 }}</strong>
+            <span>Commissions</span>
+        </div>
+        <div class="admin-member-kpi">
+            <strong>${{ number_format($totalCommissions ?? 0, 0) }}</strong>
+            <span>Total $</span>
+        </div>
+        <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}" class="admin-member-kpi pv-link">
+            <strong>{{ $user->pv_balance ?? 0 }}</strong>
+            <span>PV →</span>
+        </a>
+    </div>
+
     <!-- User Information -->
-    <div class="card p-3 sm:p-4 animate-fadeInUp delay-1">
+    <div class="admin-section animate-fadeInUp delay-1">
+        <h2 class="admin-section__title md:hidden">Informations</h2>
+        <div class="card p-3 sm:p-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
-                <div class="info-row">
+                <div class="info-row hidden md:flex">
                     <span class="label">Nom complet</span>
                     <span class="value">{{ $user->name }}</span>
                 </div>
-                <div class="info-row">
+                <div class="info-row hidden md:flex">
                     <span class="label">Email</span>
                     <span class="value text-sm">{{ $user->email }}</span>
                 </div>
@@ -373,7 +415,7 @@
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
-                <div class="info-row">
+                <div class="info-row hidden md:flex">
                     <span class="label">Statut</span>
                     <span class="value">
                         <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
@@ -432,7 +474,7 @@
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
-                <div class="info-row">
+                <div class="info-row hidden md:flex">
                     <span class="label">Code de parrainage</span>
                     <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
                 </div>
@@ -458,7 +500,7 @@
                 </div>
 
                 <!-- GRADE avec couleurs -->
-                <div class="info-row">
+                <div class="info-row hidden md:flex">
                     <span class="label">Grade</span>
                     <span class="value">
                         @php
@@ -483,8 +525,8 @@
             </div>
         </div>
 
-        <!-- Statistics -->
-        <div class="mt-4 pt-4 border-t border-[var(--border-color)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <!-- Statistics desktop -->
+        <div class="hidden md:grid mt-4 pt-4 border-t border-[var(--border-color)] grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="text-center">
                 <p class="text-2xl font-bold text-primary-blue">{{ $filleuls->count() ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Filleuls</p>
@@ -517,12 +559,38 @@
 
         <!-- Downlines List with Grade Column -->
         @if(isset($filleuls) && $filleuls->count() > 0)
-        <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
-            <h4 class="text-sm font-semibold text-[var(--text-primary)] mb-3">
-                Liste des filleuls ({{ $filleuls->count() }})
+        <div class="admin-section md:mt-4 md:pt-4 md:border-t md:border-[var(--border-color)]">
+            <h4 class="admin-section__title">
+                Filleuls ({{ $filleuls->count() }})
             </h4>
-            <div class="table-wrap">
-                <table class="table table-striped">
+
+            <div class="admin-entity-list md:hidden">
+                @foreach($filleuls as $filleul)
+                    @php $flRank = (int) ($filleul->rank_level ?? 0); @endphp
+                    <a href="{{ route('admin.users.show', $filleul->id) }}" class="admin-entity-card">
+                        <div class="admin-entity-card__top">
+                            <div class="min-w-0">
+                                <div class="admin-entity-card__name">{{ $filleul->name }}</div>
+                                <div class="admin-entity-card__sub">{{ $filleul->email }}</div>
+                            </div>
+                            <svg class="admin-entity-card__chevron w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                        <div class="admin-entity-card__meta">
+                            <span class="{{ \App\Support\MlmRank::badgeClass($flRank) }}">{{ \App\Support\MlmRank::label($flRank) }}</span>
+                            <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
+                                {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
+                            </span>
+                            <span class="text-xs font-mono text-primary-blue">#{{ $filleul->sponsor_id }}</span>
+                            <span class="text-xs text-[var(--text-secondary)]">{{ number_format((float) ($filleul->pv_balance ?? 0)) }} PV</span>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+
+            <div class="table-wrap hidden md:block">
+                <table class="table table-striped admin-table-desktop-only">
                     <thead>
                         <tr>
                             <th class="text-xs">ID</th>
@@ -571,8 +639,8 @@
             </div>
         </div>
         @endif
+        </div>
     </div>
-</div>
 
 <!-- ============================================================ -->
 <!-- MODAL GÉNÉRER CODE D'ACTIVATION -->

@@ -409,7 +409,7 @@
             </div>
 
             @if($commissions->hasPages())
-                <div class="mt-3">{{ $commissions->links() }}</div>
+                <div class="mt-3"><x-salang-pagination :paginator="$commissions" /></div>
             @endif
         </div>
     </div>
@@ -467,7 +467,7 @@
             </div>
 
             @if($downlines->hasPages())
-                <div class="mt-3">{{ $downlines->links() }}</div>
+                <div class="mt-3"><x-salang-pagination :paginator="$downlines" /></div>
             @endif
         </div>
     </div>
@@ -537,7 +537,7 @@
             </div>
 
             @if($orders->hasPages())
-                <div class="mt-3">{{ $orders->links() }}</div>
+                <div class="mt-3"><x-salang-pagination :paginator="$orders" /></div>
             @endif
         </div>
     </div>

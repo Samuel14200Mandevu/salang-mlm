@@ -54,6 +54,15 @@ class ProductController extends Controller
             'max' => Product::where('is_active', true)->max('pv_value') ?? 50,
         ];
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('products.partials.shop-catalog-results', compact('products'))->render(),
+                'total' => $products->total(),
+                'visible' => $products->count(),
+            ]);
+        }
+
         return view('products.index', compact('products', 'categories', 'pvRange'));
     }
 

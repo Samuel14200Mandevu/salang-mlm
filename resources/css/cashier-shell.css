@@ -36,7 +36,7 @@
   min-width: 1.25rem;
   padding: 0.125rem 0.375rem;
   border-radius: 9999px;
-  background: var(--danger);
+  background: var(--color-accent-600);
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
@@ -50,19 +50,28 @@
   min-width: 1.35rem;
   padding: 0.125rem 0.4rem;
   border-radius: 9999px;
-  background: var(--danger);
+  background: var(--color-accent-600);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
   flex-shrink: 0;
 }
 
+.workflow-notify-accent,
+.notification-dot.workflow-notify-accent,
+.sidebar-link .badge-count.workflow-notify-accent,
+.mobile-bottom-nav .badge-count.workflow-notify-accent {
+  background: var(--color-accent-600) !important;
+  color: #fff !important;
+  border-color: transparent;
+}
+
 .workflow-notify-row-priority {
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  background: color-mix(in srgb, var(--color-accent-500) 12%, transparent);
 }
 
 .workflow-notify-row-priority .workflow-notify-row-icon {
-  color: var(--primary);
+  color: var(--color-accent-600);
 }
 
 .salang-cart-root .cart-dropdown-backdrop,

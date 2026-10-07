@@ -5,11 +5,28 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="member-page-intro min-w-0">
+@php
+    $kycStatus = $user->kyc_status ?? 'not_submitted';
+    $kycStatusLabel = match ($kycStatus) {
+        'pending' => 'En attente',
+        'partial' => 'Partiel',
+        'verified' => 'Vérifié',
+        'rejected' => 'Rejeté',
+        default => 'Non soumis',
+    };
+    $requiredDocs = ['id_card', 'proof_of_address'];
+    $verifiedTypes = $documents->where('status', 'verified')->pluck('document_type')->toArray();
+    $kycProgress = 0;
+    foreach ($requiredDocs as $docType) {
+        if (in_array($docType, $verifiedTypes, true)) {
+            $kycProgress += 50;
+        }
+    }
+@endphp
+<div class="kyc-page space-y-4 sm:space-y-6">
+
+    <div class="kyc-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div class="member-page-intro kyc-page-intro-desktop min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Vérification KYC</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité pour sécuriser votre compte</p>
         </div>
@@ -19,6 +36,23 @@
             </svg>
             Soumettre un document
         </a>
+    </div>
+
+    <div class="kyc-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner kyc-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">Identité · {{ $kycStatusLabel }}</p>
+                <p class="shop-catalog-banner__title">Vérification KYC</p>
+                <p class="shop-catalog-banner__sub">{{ $kycProgress }}% · {{ $documents->count() }} document(s)</p>
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <a href="{{ route('kyc.create') }}" class="shop-banner-icon-btn" aria-label="Soumettre un document">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
     @if(session('success'))
@@ -33,26 +67,13 @@
         </div>
     @endif
 
-    <!-- Statut KYC -->
-    <div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-1">
-        
+    <div class="kyc-stats stats-grid grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 animate-fadeInUp delay-1">
+
         <div class="kyc-status-card border-l-4 border-primary-500">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Statut KYC</p>
             <div class="mt-1 sm:mt-2">
-                <span class="kyc-status-badge kyc-status-badge-{{ $user->kyc_status ?? 'not_submitted' }}">
-                    @if($user->kyc_status == 'not_submitted')
-                        Non soumis
-                    @elseif($user->kyc_status == 'pending')
-                        En attente
-                    @elseif($user->kyc_status == 'partial')
-                        Partiel
-                    @elseif($user->kyc_status == 'verified')
-                        Vérifié
-                    @elseif($user->kyc_status == 'rejected')
-                        Rejeté
-                    @else
-                        Non soumis
-                    @endif
+                <span class="kyc-status-badge kyc-status-badge-{{ $kycStatus }}">
+                    {{ $kycStatusLabel }}
                 </span>
             </div>
         </div>
@@ -69,20 +90,12 @@
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Niveau de vérification</p>
             <div class="mt-1 sm:mt-2 flex items-center gap-2">
                 <div class="flex-1 h-1.5 sm:h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
-                    @php
-                        $progress = 0;
-                        $required = ['id_card', 'proof_of_address'];
-                        $verified = $documents->where('status', 'verified')->pluck('document_type')->toArray();
-                        foreach ($required as $doc) {
-                            if (in_array($doc, $verified)) $progress += 50;
-                        }
-                    @endphp
-                    <div class="h-full bg-primary-500 rounded-full transition-all duration-500" style="width: {{ $progress }}%"></div>
+                    <div class="h-full bg-primary-500 rounded-full transition-all duration-500" style="width: {{ $kycProgress }}%"></div>
                 </div>
-                <span class="text-xs sm:text-sm font-semibold text-primary-500">{{ $progress }}%</span>
+                <span class="text-xs sm:text-sm font-semibold text-primary-500">{{ $kycProgress }}%</span>
             </div>
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
-                @if($progress == 100)
+                @if($kycProgress == 100)
                     Vérification terminée
                 @else
                     Requis : Carte d'identité + Justificatif de domicile
@@ -166,7 +179,7 @@
     <!-- Informations -->
     <div class="card animate-fadeInUp delay-5 border-l-4 border-primary-500">
         <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-2 sm:mb-3">Pourquoi vérifier votre identité ?</h3>
-        <div class="info-grid grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
+        <div class="kyc-info-grid info-grid grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
             <div class="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -198,7 +211,7 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-6">
+    <div class="kyc-page-actions flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-6">
         <a href="{{ route('kyc.create') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>

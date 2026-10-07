@@ -468,9 +468,7 @@
         </div>
 
         @if(isset($customers) && $customers->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $customers->appends(request()->query())->links() }}
-            </div>
+            <x-salang-pagination :paginator="$customers" id="paginationContainer" class="mt-3 sm:mt-4" />
         @endif
     </div>
 </div>

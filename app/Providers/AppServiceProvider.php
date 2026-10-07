@@ -5,6 +5,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\App;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use App\Services\CommissionService;
@@ -146,6 +147,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         App::setLocale(config('app.locale', env('APP_LOCALE', 'fr')));
+
+        Paginator::defaultView('vendor.pagination.salang');
+        Paginator::defaultSimpleView('vendor.pagination.simple-salang');
 
         // Forcer HTTPS en production
         if ($this->app->environment('production')) {

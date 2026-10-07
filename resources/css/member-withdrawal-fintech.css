@@ -1,0 +1,368 @@
+/* Retraits membre — style fintech (type Binance), mobile */
+
+@media (max-width: 767px) {
+  .member-app .member-withdraw--fintech {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem 0;
+    padding: 0 0.75rem calc(0.35rem + env(safe-area-inset-bottom, 0));
+    --dashboard-accent: var(--color-primary-600);
+  }
+
+  .member-app .main-content:has(.member-withdraw--fintech) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .member-withdraw--fintech .member-withdraw-hero {
+    margin: 1rem 0.35rem 0;
+  }
+
+  .member-app .member-withdraw-classic {
+    display: none !important;
+  }
+
+  .member-app .member-withdraw-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.88);
+    text-decoration: none;
+  }
+
+  .member-app .member-withdraw-hero__title {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin: 0;
+  }
+
+  .member-app .member-withdraw-form-panel {
+    padding: 0.85rem 0.9rem 0.5rem;
+  }
+
+  .member-app .member-withdraw-form--fintech .member-withdraw-form__section + .member-withdraw-form__section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .member-app .member-withdraw-form__section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .member-app .member-withdraw-form__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 800;
+    color: var(--color-primary-700);
+    background: color-mix(in srgb, var(--color-primary-500) 18%, var(--bg-card));
+  }
+
+  .member-app .member-withdraw-form__section-title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .member-app .member-withdraw-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .member-app .member-withdraw-method {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.65rem 0.7rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .member-app .member-withdraw-method.is-selected {
+    border-color: color-mix(in srgb, var(--color-primary-500) 55%, var(--border-light));
+    background: color-mix(in srgb, var(--color-primary-500) 8%, var(--bg-card));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 25%, transparent);
+  }
+
+  .member-app .member-withdraw-method__icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.65rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f59e0b;
+    background: color-mix(in srgb, #f59e0b 14%, var(--bg-card));
+  }
+
+  .member-app .member-withdraw-method__icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--color-primary-600);
+  }
+
+  .member-app .member-withdraw-method__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .member-app .member-withdraw-method__label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .member-app .member-withdraw-method__hint {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .member-app .member-withdraw-method__chev {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+
+  .member-app .member-withdraw-amount__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+  }
+
+  .member-app .member-withdraw-amount__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    outline: none;
+  }
+
+  .member-app .member-withdraw-amount__unit {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .member-app .member-withdraw-amount__max {
+    padding: 0.25rem 0.55rem;
+    border-radius: 0.45rem;
+    border: none;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: var(--color-primary-700);
+    background: color-mix(in srgb, var(--color-primary-500) 16%, var(--bg-card));
+    cursor: pointer;
+  }
+
+  .member-app .member-withdraw-amount__avail {
+    margin: 0.45rem 0 0;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .member-app .member-withdraw-summary {
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.75rem;
+    background: var(--bg-secondary);
+    font-size: 0.75rem;
+  }
+
+  .member-app .member-withdraw-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0;
+    color: var(--text-secondary);
+  }
+
+  .member-app .member-withdraw-summary__row--total {
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed var(--border-light);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .member-app .member-withdraw-summary__row--total span:last-child {
+    color: var(--color-primary-600);
+    font-size: 0.875rem;
+  }
+
+  .member-app .member-withdraw-field__label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .member-app .member-withdraw-field__input {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  .member-app .member-withdraw-field__textarea {
+    min-height: 5rem;
+    resize: vertical;
+  }
+
+  .member-app .member-withdraw-field__hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .member-app .member-withdraw-form__error {
+    margin: 0.35rem 0 0;
+    font-size: 0.6875rem;
+    color: #ef4444;
+  }
+
+  .member-app .member-withdraw-form__submit-wrap {
+    position: sticky;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    z-index: 2;
+    margin-top: 1rem;
+    padding: 0.65rem 0 0.25rem;
+    background: linear-gradient(to top, var(--bg-secondary) 70%, transparent);
+  }
+
+  .member-app .member-withdraw-submit {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    border-radius: 0.85rem;
+  }
+
+  .member-app .member-withdraw-submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .member-app .member-withdraw-form__legal {
+    margin: 0.5rem 0 0;
+    font-size: 0.625rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .member-app .member-withdraw-tx__icon {
+    background: #f59e0b !important;
+  }
+
+  .member-app .member-withdraw-history {
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .member-app .member-withdraw--fintech .member-fintech-shell {
+    display: none !important;
+  }
+
+  .member-app .member-withdraw-classic {
+    display: block;
+  }
+
+  .member-app .member-withdraw--fintech {
+    margin: 0;
+    padding: 0;
+  }
+
+  .member-app .member-withdraw-form:not(.member-withdraw-form--fintech) .member-withdraw-form__section + .member-withdraw-form__section {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .member-app .member-withdraw-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .member-app .member-withdraw-method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    cursor: pointer;
+  }
+
+  .member-app .member-withdraw-method__chev {
+    display: none;
+  }
+
+  .member-app .member-withdraw-method.is-selected {
+    border-color: var(--color-primary-500);
+    background: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-card));
+  }
+
+  .member-app .member-withdraw-amount__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .member-app .member-withdraw-amount__input {
+    flex: 1;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .member-app .member-withdraw-form__submit-wrap {
+    margin-top: 1.25rem;
+  }
+
+  .member-app .member-withdraw-submit {
+    width: 100%;
+  }
+}

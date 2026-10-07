@@ -156,7 +156,7 @@
 
         @if(isset($recentDownlines) && $recentDownlines instanceof \Illuminate\Pagination\LengthAwarePaginator && $recentDownlines->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $recentDownlines->links() }}
+                <x-salang-pagination :paginator="$recentDownlines" />
             </div>
         @endif
     </div>

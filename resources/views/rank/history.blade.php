@@ -4,12 +4,11 @@
 @section('title', 'Historique des rangs')
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="animate-fadeInUp">
+<div class="rank-page space-y-4 sm:space-y-6">
+
+    <div class="rank-page-header-desktop animate-fadeInUp">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div class="member-page-intro rank-page-intro-desktop">
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Historique des grades</h1>
                 <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                     Toutes vos promotions et r&eacute;trogradations
@@ -24,8 +23,24 @@
         </div>
     </div>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-3 gap-2 sm:gap-3 animate-fadeInUp delay-1">
+    <div class="rank-mobile-banner animate-fadeInUp">
+        <div class="shop-catalog-banner rank-catalog-banner">
+            <div class="shop-catalog-banner__text">
+                <p class="shop-catalog-banner__eyebrow">Mon rang</p>
+                <p class="shop-catalog-banner__title">Historique grades</p>
+                <p class="shop-catalog-banner__sub">{{ $stats['total'] ?? 0 }} événement(s) · {{ $stats['promotions'] ?? 0 }} promotion(s)</p>
+            </div>
+            <div class="shop-catalog-banner__tools">
+                <a href="{{ route('rank.index') }}" class="shop-banner-icon-btn" aria-label="Retour au grade">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="rank-stats stats-grid grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="rank-card text-center">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Total</p>
             <p class="text-lg sm:text-2xl font-bold text-[var(--text-primary)]">{{ $stats['total'] ?? 0 }}</p>
@@ -88,7 +103,7 @@
 
         @if($history->hasPages())
             <div class="mt-4">
-                {{ $history->links() }}
+                <x-salang-pagination :paginator="$history" />
             </div>
         @endif
     </div>

@@ -6,10 +6,9 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+<div class="commissions-levels-page space-y-4 sm:space-y-6">
+
+    <div class="commissions-levels-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Commissions par niveau</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Détail des commissions par niveau</p>
@@ -30,8 +29,16 @@
         </div>
     </div>
 
-    <!-- Notice importante -->
-    <div class="notice-box animate-fadeInUp delay-1">
+    @include('commissions.partials.levels-catalog-head', compact('levels'))
+
+    @if(!empty($levels))
+        <p class="commissions-levels-section-label">Mes gains par type</p>
+        <div class="commissions-levels-earnings animate-fadeInUp delay-1">
+            @include('commissions.partials.levels-earnings', compact('levels'))
+        </div>
+    @endif
+
+    <div class="notice-box commissions-levels-notice animate-fadeInUp delay-1">
         <div class="notice-icon">i</div>
         <div class="notice-content">
             <div class="notice-title">Comment sont calculées les commissions ?</div>
@@ -44,12 +51,12 @@
         </div>
     </div>
 
-    <!-- Explication des niveaux (cartes cliquables) -->
-    <div class="animate-fadeInUp delay-3">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Comprendre les niveaux de commission</h3>
-        <p class="text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">Cliquez sur une carte pour obtenir une explication détaillée</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+    <p class="commissions-levels-section-label">Comprendre les niveaux</p>
+    <div class="animate-fadeInUp delay-3 commissions-levels-cards-wrap">
+        <h3 class="commissions-levels-explain-title font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Comprendre les niveaux de commission</h3>
+        <p class="commissions-levels-explain-sub text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">Cliquez sur une carte pour obtenir une explication détaillée</p>
+
+        <div class="commissions-levels-cards grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             
             <!-- Niveau 1 - Sponsor -->
             <div class="explanation-card rounded-lg p-3 sm:p-4" onclick="openLevelModal(1)">
@@ -118,8 +125,7 @@
         </div>
     </div>
 
-    <!-- Quick Navigation -->
-    <div class="flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-4">
+    <div class="commissions-levels-quick-nav-desktop flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-4">
         <a href="{{ route('commissions.dashboard') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>

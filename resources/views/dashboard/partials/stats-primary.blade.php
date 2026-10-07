@@ -1,13 +1,15 @@
 @php
     $teamTotal = ($level1 ?? 0) + ($level2 ?? 0) + ($level3 ?? 0) + ($level4 ?? 0) + ($level5 ?? 0)
         + ($level6 ?? 0) + ($level7 ?? 0) + ($level8 ?? 0) + ($level9 ?? 0);
+    $statsSet = $dashboardLevel['stats_set'] ?? 'growth';
 @endphp
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-2">
     <div class="dashboard-stat-card">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau</p>
-                <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">{{ $currentRankLevel ?? 1 }}</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Grade</p>
+                <p class="text-sm sm:text-base md:text-lg stat-value stat-value--accent truncate">{{ $currentRankName }}</p>
+                <p class="text-[10px] text-[var(--text-tertiary)]">Niv. {{ $dashboardLevelNumber }}</p>
             </div>
             <div class="stat-icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -17,7 +19,7 @@
         </div>
     </div>
 
-    @if($dashboardLevelNumber === 1)
+    @if($statsSet === 'entry')
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
@@ -47,17 +49,17 @@
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Grade</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value truncate">{{ $currentRankName }}</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV perso</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ number_format($pvPersonnel ?? 0) }}</p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                     </svg>
                 </div>
             </div>
         </div>
-    @elseif($dashboardLevelNumber >= 5)
+    @elseif($statsSet === 'leader')
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
@@ -74,7 +76,7 @@
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total equipe</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total équipe</p>
                     <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ $teamTotal }}</p>
                 </div>
                 <div class="stat-icon">
@@ -87,8 +89,8 @@
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Croissance grade</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">+{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Progression</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -114,7 +116,7 @@
         <div class="dashboard-stat-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV Equipe</p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV équipe</p>
                     <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ number_format($pvCumul ?? 0) }}</p>
                 </div>
                 <div class="stat-icon">
@@ -129,7 +131,7 @@
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">
                         @if($dashboardLevelNumber === 3)
-                            Top Filleuls
+                            Top filleuls
                         @else
                             Filleuls
                         @endif

@@ -2,6 +2,8 @@
  * Caisse — Alpine + panier (toggle fiable, indépendant du script inline)
  */
 import './bootstrap';
+import './admin-mobile';
+import './salang-pagination';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;

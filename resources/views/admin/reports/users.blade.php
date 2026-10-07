@@ -366,7 +366,7 @@
 
         @if(isset($users) && $users->hasPages())
             <div class="mt-3 sm:mt-4">
-                {{ $users->links() }}
+                <x-salang-pagination :paginator="$users" />
             </div>
         @endif
     </div>

@@ -360,14 +360,19 @@
 </style>
 @endpush
 
-@section('content')
-<div class="space-y-4 sm:space-y-6">
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Commissions',
+        'subtitle' => $commissions->total() . ' lignes · filtres et recherche ci-dessous',
+    ])
+@endpush
 
+@section('content')
     <!-- En-tête avec recherche à droite -->
-    <div class="header-with-search animate-fadeInUp">
-        <div class="header-left">
+    <div class="admin-page-header header-with-search animate-fadeInUp">
+        <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commissions</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminCommissionsSubtitle">
                 {{ $commissions->total() }} commissions
                 @if(request('search'))
                     <span class="text-xs text-[var(--text-tertiary)] ml-2">
@@ -386,8 +391,9 @@
                 @endif
             </p>
         </div>
-        <div class="header-right">
-            <div class="search-wrapper">
+        <div class="admin-sticky-toolbar md:contents">
+        <div class="header-right admin-page-header-actions">
+            <div class="search-wrapper admin-search-full">
                 <span class="search-icon">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -447,6 +453,7 @@
                 PDF Global
             </a>
         </div>
+        </div>
     </div>
 
     <!-- Messages flash -->
@@ -469,7 +476,7 @@
     @endif
 
     <!-- Statistiques -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
+    <div class="admin-kpi-rail stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
         <div class="card-stats">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total payé</p>
             <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">
@@ -496,10 +503,14 @@
         </div>
     </div>
 
-    <!-- Liste des commissions -->
-    <div class="card p-3 sm:p-4 animate-fadeInUp" style="animation-delay: 0.1s;">
+    @include('admin.commissions._mobile_list', ['commissions' => $commissions])
+
+    <x-salang-pagination :paginator="$commissions" id="paginationContainerMobile" class="md:hidden" />
+
+    <!-- Liste des commissions desktop -->
+    <div class="card p-3 sm:p-4 animate-fadeInUp hidden md:block" style="animation-delay: 0.1s;">
         <div class="table-wrap">
-            <table class="table table-striped">
+            <table class="table table-striped admin-table-desktop-only">
                 <thead>
                     <tr>
                         <th>Utilisateur</th>
@@ -590,14 +601,8 @@
             </table>
         </div>
 
-        @if($commissions->hasPages())
-            <div class="mt-3 sm:mt-4" id="paginationContainer">
-                {{ $commissions->appends(request()->query())->links() }}
-            </div>
-        @endif
+        <x-salang-pagination :paginator="$commissions" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
-
-</div>
 
 @push('scripts')
 <script>
@@ -705,6 +710,13 @@ document.addEventListener('DOMContentLoaded', function() {
         url.searchParams.set('page', '1');
 
         const tableBody = document.getElementById('commissionsTable');
+        const mobileList = document.getElementById('adminCommissionsMobileList');
+        const loadingMobile = '<div class="admin-empty-state"><p>Recherche en cours…</p></div>';
+
+        if (mobileList) {
+            mobileList.innerHTML = loadingMobile;
+        }
+
         if (!tableBody) return;
 
         tableBody.innerHTML = `
@@ -736,29 +748,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 tableBody.innerHTML = newTableBody.innerHTML;
             }
 
+            const newMobileList = doc.getElementById('adminCommissionsMobileList');
+            if (newMobileList && mobileList) {
+                mobileList.innerHTML = newMobileList.innerHTML;
+            }
+
             const newPagination = doc.getElementById('paginationContainer');
             const paginationContainer = document.getElementById('paginationContainer');
             if (newPagination && paginationContainer) {
                 paginationContainer.innerHTML = newPagination.innerHTML;
             }
+            const newPaginationMobile = doc.getElementById('paginationContainerMobile');
+            const paginationMobile = document.getElementById('paginationContainerMobile');
+            if (newPaginationMobile && paginationMobile) {
+                paginationMobile.innerHTML = newPaginationMobile.innerHTML;
+            }
 
-            // Mise à jour du titre et du compte
-            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (subtitle) {
-                const totalMatch = html.match(/(\d+)\s+commissions?/);
-                if (totalMatch) {
-                    let text = totalMatch[0];
-                    if (search) {
-                        text += ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Résultats pour "' + search + '"</span>';
-                    }
-                    if (type) {
-                        text += ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Type: ' + type.charAt(0).toUpperCase() + type.slice(1) + '</span>';
-                    }
-                    if (status) {
-                        text += ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Statut: ' + status.charAt(0).toUpperCase() + status.slice(1) + '</span>';
-                    }
-                    subtitle.innerHTML = text;
-                }
+            const subtitle = document.getElementById('adminCommissionsSubtitle');
+            const newSubtitle = doc.getElementById('adminCommissionsSubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
             }
 
             // Mise à jour des statistiques

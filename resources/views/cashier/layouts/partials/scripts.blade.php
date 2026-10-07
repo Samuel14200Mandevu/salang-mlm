@@ -462,6 +462,7 @@
             'consultations' => ['badge' => 'cashierConsultationBadge', 'dot' => 'cashierConsultationDot'],
             'reports' => ['badge' => 'cashierReportBadge', 'dot' => 'cashierReportDot'],
             'header' => ['badge' => 'cashierWorkflowHeaderBadge', 'dot' => 'cashierWorkflowHeaderDot'],
+            'mobileNav' => ['badge' => 'cashierMobileNavBadge'],
             'dropdown' => [
                 'consultationCount' => 'cashierWorkflowDropdownConsultationCount',
                 'reportCount' => 'cashierWorkflowDropdownReportCount',
