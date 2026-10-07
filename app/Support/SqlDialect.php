@@ -38,4 +38,21 @@ class SqlDialect
 
         return "CONCAT({$pathSql}, ',', {$idSql})";
     }
+
+    /** Chemin initial (id du filleul direct) pour la CTE branches. */
+    public static function branchPathSeed(string $idSql = 'id'): string
+    {
+        if (self::isSqlite()) {
+            return "CAST({$idSql} AS TEXT)";
+        }
+
+        return "CAST({$idSql} AS CHAR(1000))";
+    }
+
+    public static function userIsActive(string $userAlias = ''): string
+    {
+        $prefix = $userAlias !== '' ? $userAlias . '.' : '';
+
+        return "COALESCE({$prefix}is_active, 0) = 1";
+    }
 }

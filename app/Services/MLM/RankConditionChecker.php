@@ -270,38 +270,43 @@ class RankConditionChecker
 
         $appendPath = SqlDialect::appendToPath('d.path', 'u.id');
         $notInPath = SqlDialect::notInPath('u.id', 'd.path');
+        $pathSeed = SqlDialect::branchPathSeed('id');
+        $activeRoot = SqlDialect::userIsActive();
+        $activeChild = SqlDialect::userIsActive('u');
 
         $rows = DB::select("
             WITH RECURSIVE descendants AS (
                 SELECT 
                     id, 
                     parrain_id, 
-                    rank_id, 
+                    rank_id,
+                    rank_level,
                     1 as depth,
                     id as branch_id,
-                    CAST(id AS CHAR(1000)) as path
+                    {$pathSeed} as path
                 FROM users 
                 WHERE parrain_id = ?
-                AND is_active = true
+                AND {$activeRoot}
                 
                 UNION ALL
                 
                 SELECT 
                     u.id, 
                     u.parrain_id, 
-                    u.rank_id, 
+                    u.rank_id,
+                    u.rank_level,
                     d.depth + 1,
                     d.branch_id,
-                    {$appendPath}
+                    {$appendPath} as path
                 FROM users u
                 INNER JOIN descendants d ON u.parrain_id = d.id
-                WHERE u.is_active = true
+                WHERE {$activeChild}
                 AND {$notInPath}
                 AND d.depth < 50
             )
             SELECT 
                 branch_id,
-                MAX(COALESCE(r.level, 1)) as max_level
+                MAX(COALESCE(r.level, d.rank_level, 1)) as max_level
             FROM descendants d
             LEFT JOIN ranks r ON d.rank_id = r.id
             GROUP BY branch_id
@@ -327,32 +332,37 @@ class RankConditionChecker
 
         $appendPath = SqlDialect::appendToPath('d.path', 'u.id');
         $notInPath = SqlDialect::notInPath('u.id', 'd.path');
+        $pathSeed = SqlDialect::branchPathSeed('id');
+        $activeRoot = SqlDialect::userIsActive();
+        $activeChild = SqlDialect::userIsActive('u');
 
         $result = DB::select("
             WITH RECURSIVE descendants AS (
                 SELECT 
                     id, 
                     parrain_id, 
-                    rank_id, 
+                    rank_id,
+                    rank_level,
                     1 as depth,
                     id as branch_id,
-                    CAST(id AS CHAR(1000)) as path
+                    {$pathSeed} as path
                 FROM users 
                 WHERE parrain_id = ?
-                AND is_active = true
+                AND {$activeRoot}
                 
                 UNION ALL
                 
                 SELECT 
                     u.id, 
                     u.parrain_id, 
-                    u.rank_id, 
+                    u.rank_id,
+                    u.rank_level,
                     d.depth + 1,
                     d.branch_id,
-                    {$appendPath}
+                    {$appendPath} as path
                 FROM users u
                 INNER JOIN descendants d ON u.parrain_id = d.id
-                WHERE u.is_active = true
+                WHERE {$activeChild}
                 AND {$notInPath}
                 AND d.depth < 50
             ),
@@ -360,7 +370,7 @@ class RankConditionChecker
                 SELECT 
                     branch_id,
                     MAX(CASE 
-                        WHEN COALESCE(r.level, 1) >= ? THEN 1 
+                        WHEN COALESCE(r.level, d.rank_level, 1) >= ? THEN 1 
                         ELSE 0 
                     END) as is_qualified
                 FROM descendants d

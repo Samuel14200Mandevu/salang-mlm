@@ -6,6 +6,7 @@ use App\Models\Rank;
 use App\Models\User;
 use App\Services\MLM\RankConditionChecker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class RankConditionCheckerMixedBranchesTest extends TestCase
@@ -20,6 +21,8 @@ class RankConditionCheckerMixedBranchesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Évite le recalcul synchrone des grades à la création (QUEUE_CONNECTION=sync).
+        Queue::fake();
         $this->checker = app(RankConditionChecker::class);
         $this->seedRanks();
     }
