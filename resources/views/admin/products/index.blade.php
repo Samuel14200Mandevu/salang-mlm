@@ -289,39 +289,46 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@php
+    $productsSubtitle = $products->total() . ' produits référencés';
+    if (request('search')) {
+        $productsSubtitle .= ' · Résultats pour « ' . e(request('search')) . ' »';
+    }
+@endphp
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Catalogue produits</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $products->total() }} produits référencés
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-            </p>
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Catalogue produits',
+    'subtitle' => $productsSubtitle,
+    'actions' => view('admin.products.partials.index-header-actions')->render(),
+])
+
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
+
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Catalogue produits</h1>
+                <p class="page-subtitle">{{ $productsSubtitle }}</p>
+            </div>
+            @include('admin.products.partials.mobile-banner-actions')
         </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                Ajouter
-            </a>
-            <a href="{{ route('admin.products.generate-all-qr') }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                Générer QR
-            </a>
-            <a href="{{ route('admin.products.qr-codes') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                Voir QR
-            </a>
+    </div>
+
+    <div class="admin-page-header page-header hidden md:flex justify-end pb-0 border-0">
+        <div class="admin-page-header-actions w-full max-w-xs sm:max-w-sm">
+            <div class="header-search admin-search-full w-full">
+                <div class="search-wrapper relative">
+                    <svg class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input input text-sm w-full pl-9 sm:pl-10"
+                           placeholder="Rechercher un produit"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -336,19 +343,6 @@
             {{ session('error') }}
         </div>
     @endif
-
-    <div class="relative max-w-xs sm:max-w-sm">
-        <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </span>
-        <input type="text"
-               id="searchInput"
-               placeholder="Rechercher un produit"
-               class="input text-sm"
-               value="{{ request('search') }}">
-    </div>
 
     <div class="card p-3 sm:p-4">
         <div class="table-wrap">

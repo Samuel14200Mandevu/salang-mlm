@@ -221,61 +221,6 @@
     gap: 0.75rem;
 }
 
-.search-wrapper {
-    position: relative;
-    min-width: 200px;
-    max-width: 280px;
-}
-
-.search-wrapper .search-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary);
-    pointer-events: none;
-}
-
-.search-wrapper .search-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: border-color 0.15s ease;
-    outline: none;
-}
-.search-wrapper .search-input:focus {
-    border-color: var(--primary-navy);
-}
-.search-wrapper .search-input::placeholder {
-    color: var(--text-tertiary);
-}
-
-.search-wrapper .clear-btn {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    display: none;
-    transition: background 0.15s ease;
-}
-.search-wrapper .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-.search-wrapper .clear-btn.visible {
-    display: block;
-}
-
 .filter-select {
     padding: 0.5rem 2rem 0.5rem 0.75rem;
     border: 1px solid var(--border-color);
@@ -468,12 +413,19 @@
 </style>
 @endpush
 
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Vérification KYC',
+        'subtitle' => ($documents->total() ?? 0) . ' documents · recherche ci-dessous',
+    ])
+@endpush
+
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
     <!-- En-tête avec recherche à droite -->
-    <div class="header-with-search animate-fadeInUp">
-        <div class="header-left">
+    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+        <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Vérification KYC</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 {{ $documents->total() ?? 0 }} documents
@@ -500,8 +452,8 @@
                 <span class="badge badge-info">{{ $verifiedUsersCount ?? 0 }} Utilisateurs vérifiés</span>
             </div>
         </div>
-        <div class="header-right">
-            <div class="search-wrapper">
+        <div class="header-right admin-page-header-actions">
+            <div class="search-wrapper admin-search-full">
                 <span class="search-icon">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

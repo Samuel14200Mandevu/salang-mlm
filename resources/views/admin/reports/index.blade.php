@@ -127,27 +127,21 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Rapports & Statistiques',
+    'subtitle' => 'Analyse complète de la plateforme',
+    'actions' => view('admin.reports.partials.index-header-actions')->render(),
+])
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Rapports & Statistiques</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Analyse complète de la plateforme</p>
-        </div>
-        <div class="flex flex-wrap gap-1.5 sm:gap-2">
-            <a href="{{ route('admin.reports.export', ['type' => 'users']) }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Exporter CSV
-            </a>
-            <a href="{{ route('admin.reports.pdf', ['type' => 'users']) }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
-                </svg>
-                PDF
-            </a>
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
+
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Rapports & Statistiques</h1>
+                <p class="page-subtitle">Analyse complète de la plateforme</p>
+            </div>
+            @include('admin.reports.partials.mobile-banner-actions')
         </div>
     </div>
 

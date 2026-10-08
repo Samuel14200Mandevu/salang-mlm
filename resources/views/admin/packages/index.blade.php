@@ -228,21 +228,23 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Packages',
+    'subtitle' => "Gestion des packages d'adhésion",
+    'actions' => view('admin.packages.partials.index-header-actions')->render(),
+])
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Packages</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Gestion des packages d'adhésion</p>
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Packages</h1>
+            <p class="page-subtitle">Gestion des packages d'adhésion</p>
         </div>
-        <a href="{{ route('admin.packages.create') }}" class="btn btn-primary btn-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Ajouter
-        </a>
+        @include('admin.packages.partials.mobile-banner-actions')
     </div>
+</div>
+
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
 
     @if(session('success'))
         <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm animate-fadeIn flex items-center gap-2">

@@ -25,30 +25,145 @@
   border: 2px solid var(--bg-navbar);
 }
 
-.admin-app .header-search .search-wrapper {
-  position: relative;
+/* Recherche — même rendu que boutique (member-shop-search) */
+.admin-app .admin-search-panel {
+  display: none;
+  width: 100%;
+  flex: 1 1 100%;
+  padding: 0.1rem 0 0.35rem;
 }
 
-.admin-app .header-search .search-wrapper .search-input {
-  padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+.admin-app .admin-search-panel.is-open {
+  display: block;
+  animation: admin-search-fade-up 0.28s ease forwards;
+}
+
+.admin-app .admin-search-panel.is-open > .admin-shop-search,
+.admin-app .admin-search-panel.is-open > .search-wrapper {
+  padding-top: 0.15rem;
+}
+
+@media (min-width: 768px) {
+  .admin-app .admin-search-panel {
+    display: none !important;
+  }
+
+  .admin-app .admin-page-header .header-search .search-wrapper,
+  .admin-app .admin-page-header-actions .header-search .search-wrapper {
+    max-width: none;
+  }
+}
+
+@keyframes admin-search-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-app .search-wrapper,
+.admin-app .admin-shop-search {
+  position: relative;
+  flex: 1 1 12rem;
+  max-width: 100%;
+  width: 100%;
+}
+
+.admin-app .search-wrapper .search-input,
+.admin-app .search-wrapper .input,
+.admin-app .admin-shop-search .search-input,
+.admin-app .admin-shop-search .input {
+  width: 100% !important;
+  max-width: none;
+  border-radius: 999px;
+  padding: 0.5rem 2.35rem 0.5rem 2.35rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 8px);
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 0.813rem;
-  width: 220px;
-  transition: border-color 0.15s ease, width 0.2s ease, box-shadow 0.15s ease;
+  font-size: 0.8125rem;
+  line-height: 1.35;
   outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
-.admin-app .header-search .search-wrapper .search-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--border-focus);
-  width: 280px;
+.admin-app .search-wrapper .search-input:focus,
+.admin-app .search-wrapper .input:focus,
+.admin-app .admin-shop-search .search-input:focus {
+  border-color: var(--color-primary-400);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary-500) 12%, transparent);
 }
 
-.admin-app .header-search .search-wrapper .search-input::placeholder {
+.admin-app .search-wrapper .search-input::placeholder,
+.admin-app .search-wrapper .input::placeholder {
   color: var(--text-muted);
+}
+
+.admin-app .search-wrapper .search-icon,
+.admin-app .search-wrapper > svg:not(.clear-btn svg) {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.admin-app .search-wrapper:focus-within .search-icon,
+.admin-app .search-wrapper:focus-within > svg:not(.clear-btn svg) {
+  color: var(--color-primary-500);
+}
+
+.admin-app .search-wrapper .clear-btn {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.admin-app .search-wrapper .clear-btn.visible,
+.admin-app .search-wrapper .clear-btn:not([hidden]) {
+  display: inline-flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.admin-app .search-wrapper .clear-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.admin-app .header-search {
+  width: 100%;
+}
+
+.admin-app .header-search.admin-search-full,
+.admin-app .admin-page-header-actions > .admin-search-panel {
+  order: 2;
+  flex: 1 1 100%;
 }
 
 .admin-app .card-stats {
@@ -63,6 +178,8 @@
 /* Badges rôle (liste utilisateurs) */
 .admin-app .badge {
   display: inline-block;
+  width: fit-content;
+  max-width: 100%;
   padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   font-size: 0.625rem;
@@ -130,16 +247,13 @@ html.dark .admin-app .badge-admin {
   }
 }
 
-@media (max-width: 640px) {
-  .admin-app .header-search {
-    width: 100%;
-  }
-  .admin-app .header-search .search-wrapper {
-    flex: 1;
-  }
-  .admin-app .header-search .search-wrapper .search-input,
-  .admin-app .header-search .search-wrapper .search-input:focus {
-    width: 100%;
+@media (max-width: 767px) {
+  .admin-app .admin-page-header-actions .filter-select,
+  .admin-app .admin-page-header-actions select {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-height: 2.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
   }
 }
 

@@ -6,19 +6,34 @@
     const passwordInput = form.querySelector('#password');
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    const setFieldError = window.salangAuthSetFieldError;
+
     form.addEventListener('submit', function (e) {
+        window.salangAuthClearJsFieldErrors?.(form);
+
         const email = emailInput?.value.trim() ?? '';
         const password = passwordInput?.value ?? '';
+        let blocked = false;
+
         if (!email || !emailRe.test(email)) {
             e.preventDefault();
-            window.showToast?.('Saisissez une adresse email valide.', 'error');
+            setFieldError?.(emailInput, 'Saisissez une adresse email valide.');
             emailInput?.focus();
-            return;
+            blocked = true;
+        } else {
+            setFieldError?.(emailInput, null);
         }
+
         if (!password) {
             e.preventDefault();
-            window.showToast?.('Mot de passe requis.', 'error');
-            passwordInput?.focus();
+            setFieldError?.(passwordInput, 'Mot de passe requis.');
+            if (!blocked) {
+                passwordInput?.focus();
+            }
+            blocked = true;
+        } else if (!blocked) {
+            setFieldError?.(passwordInput, null);
         }
+
     });
 })();

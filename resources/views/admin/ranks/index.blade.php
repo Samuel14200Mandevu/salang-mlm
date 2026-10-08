@@ -209,28 +209,21 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Gestion des rangs',
+    'subtitle' => 'Configurer les rangs et leurs bonus',
+    'actions' => view('admin.ranks.partials.index-header-actions')->render(),
+])
 
-    <!-- Header with Search -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Gestion des rangs</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Configurer les rangs et leurs bonus</p>
-        </div>
-        <div class="flex gap-1.5 sm:gap-2">
-            <a href="{{ route('admin.ranks.history') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="hidden xs:inline">Historique</span>
-            </a>
-            <a href="{{ route('admin.ranks.create') }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span class="hidden xs:inline">Ajouter</span>
-                <span class="inline xs:hidden">+</span>
-            </a>
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
+
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Gestion des rangs</h1>
+                <p class="page-subtitle">Configurer les rangs et leurs bonus</p>
+            </div>
+            @include('admin.ranks.partials.mobile-banner-actions')
         </div>
     </div>
 

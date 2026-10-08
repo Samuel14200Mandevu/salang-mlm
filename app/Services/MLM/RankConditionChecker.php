@@ -322,6 +322,19 @@ class RankConditionChecker
         return $levels;
     }
 
+    public function countQualifiedBranches(User $user, int $rankLevel): int
+    {
+        return $this->countQualifiedBranchesOptimized($user, $rankLevel);
+    }
+
+    /**
+     * @return array<int, int> filleul direct (id) => meilleur niveau de grade dans la branche
+     */
+    public function getDirectBranchMaxRankLevels(User $user): array
+    {
+        return $this->getBranchMaxRankLevels($user);
+    }
+
     private function countQualifiedBranchesOptimized(User $user, int $rankLevel): int
     {
         $cacheKey = "branches_{$user->id}_rank_{$rankLevel}";

@@ -21,6 +21,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="public-body bg-[var(--bg-page)] text-[var(--text-primary)] antialiased @yield('bodyClass')">
+    @stack('body-start')
     @include('layouts.partials.public-nav')
 
     <main id="main-content">

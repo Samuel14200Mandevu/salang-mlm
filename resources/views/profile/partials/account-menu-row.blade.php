@@ -4,14 +4,24 @@
     'danger' => false,
     'badge' => null,
     'icon',
+    'iconTone' => null,
     'fabSwitch' => false,
     'fabSwitchId' => null,
 ])
 
+@php
+    $profileIconClass = 'profile-account-row__icon';
+    if ($danger) {
+        $profileIconClass .= ' profile-account-row__icon--danger';
+    } elseif ($iconTone) {
+        $profileIconClass .= ' profile-account-row__icon--tone-' . preg_replace('/[^a-z0-9-]/', '', $iconTone);
+    }
+@endphp
+
 @if($href && $fabSwitch)
     <div {{ $attributes->merge(['class' => 'profile-account-row profile-account-row--fab-switch']) }}>
         <a href="{{ $href }}" class="profile-account-row__nav">
-            <span class="profile-account-row__icon" aria-hidden="true">{!! $icon !!}</span>
+            <span class="{{ $profileIconClass }}" aria-hidden="true">{!! $icon !!}</span>
             <span class="profile-account-row__label">{{ $label }}</span>
         </a>
         <div class="profile-account-row__switch-wrap">
@@ -22,7 +32,7 @@
     </div>
 @elseif($href)
     <a href="{{ $href }}" {{ $attributes->merge(['class' => 'profile-account-row' . ($danger ? ' profile-account-row--danger' : '')]) }}>
-        <span class="profile-account-row__icon {{ $danger ? 'profile-account-row__icon--danger' : '' }}" aria-hidden="true">{!! $icon !!}</span>
+        <span class="{{ $profileIconClass }}" aria-hidden="true">{!! $icon !!}</span>
         <span class="profile-account-row__label">{{ $label }}</span>
         @if($badge)
             <span class="profile-account-row__badge">{{ $badge }}</span>

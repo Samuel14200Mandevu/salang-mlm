@@ -42,6 +42,7 @@ class AdminCommissionHistoryController extends Controller
 
         $selectedPeriod = $request->input('period');
         $userId = $request->input('user_id');
+        $memberQ = trim((string) $request->input('member_q', ''));
 
         $commissions = collect();
         $totals = [
@@ -58,7 +59,13 @@ class AdminCommissionHistoryController extends Controller
             $query->where('period', $selectedPeriod);
         }
 
-        if ($userId) {
+        if ($memberQ !== '') {
+            $like = '%' . $memberQ . '%';
+            $query->whereHas('user', function ($userQuery) use ($like) {
+                $userQuery->where('name', 'like', $like)
+                    ->orWhere('sponsor_id', 'like', $like);
+            });
+        } elseif ($userId) {
             $query->where('user_id', $userId);
         }
 
@@ -70,15 +77,25 @@ class AdminCommissionHistoryController extends Controller
         $totals['cash_pos'] = $commissions->where('type', 'cash_pos')->sum('amount');
         $totals['total'] = $commissions->sum('amount');
 
-        $users = User::where('is_active', true)->orderBy('name')->get();
+        $prefillMemberQ = $memberQ;
+        if ($prefillMemberQ === '' && $userId) {
+            $filteredUser = User::find($userId);
+            if ($filteredUser) {
+                $prefillMemberQ = $filteredUser->sponsor_id ?: $filteredUser->name;
+            }
+        }
+
+        $users = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return view('admin.pv.commission-history', compact(
             'periods',
             'selectedPeriod',
             'userId',
+            'memberQ',
+            'prefillMemberQ',
             'commissions',
             'totals',
-            'users'
+            'users',
         ));
     }
 

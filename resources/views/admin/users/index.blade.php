@@ -35,7 +35,7 @@
 
 @section('content')
     <!-- En-tête -->
-    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3">
+    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3">
         <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Gestion des utilisateurs

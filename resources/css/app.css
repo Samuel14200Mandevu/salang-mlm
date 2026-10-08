@@ -10,6 +10,7 @@
 @import './cashier-mobile.css';
 @import './cashier-mobile-pages.css';
 @import './dark-surfaces.css';
+@import './text-chip.css';
 @import './member-pages.css';
 @import './member-views.css';
 @import './member-mobile.css';
@@ -392,6 +393,8 @@
     font-size: 0.688rem;
     font-weight: 500;
     border: 1px solid transparent;
+    width: fit-content;
+    max-width: 100%;
   }
   
   .badge-success {

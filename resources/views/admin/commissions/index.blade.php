@@ -232,61 +232,6 @@
     gap: 0.75rem;
 }
 
-.search-wrapper {
-    position: relative;
-    min-width: 200px;
-    max-width: 280px;
-}
-
-.search-wrapper .search-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary);
-    pointer-events: none;
-}
-
-.search-wrapper .search-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: border-color 0.15s ease;
-    outline: none;
-}
-.search-wrapper .search-input:focus {
-    border-color: var(--primary-navy);
-}
-.search-wrapper .search-input::placeholder {
-    color: var(--text-tertiary);
-}
-
-.search-wrapper .clear-btn {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    display: none;
-    transition: background 0.15s ease;
-}
-.search-wrapper .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-.search-wrapper .clear-btn.visible {
-    display: block;
-}
-
 .amount-positive {
     color: #1F7B4D;
     font-weight: 700;
@@ -369,7 +314,7 @@
 
 @section('content')
     <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header header-with-search animate-fadeInUp">
+    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commissions</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminCommissionsSubtitle">

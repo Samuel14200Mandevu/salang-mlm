@@ -38,6 +38,11 @@ class ProfileController extends Controller
         return redirect()->route('profile.index', ['edit' => 1]);
     }
 
+    public function password()
+    {
+        return view('profile.password');
+    }
+
     public function referral()
     {
         $user = Auth::user();
@@ -147,7 +152,7 @@ class ProfileController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
-        return redirect()->route('profile.index')
+        return redirect()->route('profile.password')
             ->with('success', 'Mot de passe mis à jour avec succès !');
     }
 

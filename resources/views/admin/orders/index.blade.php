@@ -167,53 +167,6 @@
 }
 .table-striped tbody tr:nth-child(even) { background: var(--bg-secondary); }
 
-.header-search .search-wrapper {
-    position: relative;
-}
-
-.header-search .search-wrapper .search-input {
-    padding: 0.375rem 0.75rem 0.375rem 2.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-primary);
-    font-size: 0.813rem;
-    width: 220px;
-    transition: border-color 0.15s ease, width 0.2s ease;
-    outline: none;
-}
-
-.header-search .search-wrapper .search-input:focus {
-    border-color: var(--primary-navy);
-    width: 280px;
-}
-
-.header-search .search-wrapper .search-input::placeholder {
-    color: var(--text-tertiary);
-}
-
-.header-search .search-wrapper .clear-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    display: none;
-    transition: background 0.15s ease;
-}
-.header-search .search-wrapper .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-.header-search .search-wrapper .clear-btn.visible {
-    display: block;
-}
-
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -278,7 +231,7 @@
 
 @section('content')
     <!-- Header with Search -->
-    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commandes</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminOrdersSubtitle">

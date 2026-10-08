@@ -67,5 +67,6 @@ find "$HOME_BACKUP" -name 'salang_mlm_PROD_*.sql.gz' -mtime +30 -delete 2>/dev/n
 echo "📊 Volumes (extrait) :"
 export MYSQL_PWD="$DB_PASSWORD"
 mysql -u "$DB_USERNAME" -h "$DB_HOST" -P "$DB_PORT" "$DB_DATABASE" -N -e \
-    "SELECT CONCAT('users=', COUNT(*)) FROM users UNION ALL SELECT CONCAT('commission_history=', COUNT(*)) FROM commission_history;"
+    "SELECT CONCAT('users=', COUNT(*)) FROM users UNION ALL SELECT CONCAT('commission_history=', COUNT(*)) FROM commission_history;" \
+    2>/dev/null || echo "(tables manquantes ou base vide)"
 unset MYSQL_PWD

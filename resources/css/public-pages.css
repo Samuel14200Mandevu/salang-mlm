@@ -436,9 +436,9 @@
     background-color: #111827;
     background-image: linear-gradient(
         125deg,
-        rgba(15, 51, 92, 0.88) 0%,
+        rgba(15, 51, 92, 0.92) 0%,
         rgba(17, 24, 39, 0.9) 52%,
-        rgba(122, 73, 6, 0.32) 100%
+        rgba(30, 93, 173, 0.38) 100%
       ),
       var(--auth-panel-bg);
     background-size: cover;
@@ -448,7 +448,11 @@
   .auth-panel-brand::before {
     content: "";
     @apply absolute inset-x-0 top-0 h-1 pointer-events-none;
-    background: var(--gradient-brand);
+    background: linear-gradient(
+      90deg,
+      var(--color-primary-600) 0%,
+      var(--color-primary-500) 100%
+    );
   }
 
   .auth-panel-brand-main {
@@ -468,11 +472,11 @@
   }
 
   .auth-panel-kicker {
-    @apply mt-8 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent-400;
+    @apply mt-8 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-primary-300;
   }
 
   .auth-panel-title-accent {
-    @apply text-accent-400;
+    @apply text-primary-300;
   }
 
   .auth-panel-brand h1 {
@@ -499,7 +503,7 @@
   }
 
   .auth-panel-list li:nth-child(even)::before {
-    @apply bg-accent-500;
+    @apply bg-primary-300;
   }
 
   .auth-panel-foot {
@@ -702,12 +706,18 @@
   }
 
   .auth-alert-success {
-    @apply mb-5 p-3.5 rounded-lg text-sm text-left bg-[var(--success-light)] text-[var(--success)];
+    @apply mb-5 px-2.5 py-1.5 rounded-md text-sm text-left bg-[var(--success-light)] text-[var(--success)];
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
     border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
   }
 
   .auth-alert-error {
-    @apply mb-5 p-3.5 rounded-lg text-sm text-left bg-[var(--danger-light)] text-[var(--danger)];
+    @apply mb-5 px-2.5 py-1.5 rounded-md text-sm text-left bg-[var(--danger-light)] text-[var(--danger)];
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
     border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
   }
 
@@ -749,11 +759,13 @@
   }
 
   .sponsor-status {
-    @apply hidden text-xs mt-2 p-2.5 rounded-lg items-center gap-2;
+    @apply hidden text-xs mt-2 px-2 py-1 rounded-md items-center gap-1.5;
   }
 
   .sponsor-status.visible {
-    @apply flex;
+    @apply inline-flex;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .sponsor-status.success {
@@ -774,7 +786,9 @@
   .email-status-success,
   .email-status-error,
   .email-status-warning {
-    @apply flex items-center gap-2 text-xs mt-2 p-2.5 rounded-lg;
+    @apply inline-flex items-center gap-1.5 text-xs mt-2 px-2 py-1 rounded-md;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .email-checking {

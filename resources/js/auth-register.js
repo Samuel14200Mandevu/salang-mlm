@@ -13,6 +13,7 @@
     const googleBtn = document.getElementById('googleBtn');
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const setFieldError = window.salangAuthSetFieldError;
     let sponsorTimeout = null;
     let emailTimeout = null;
     let emailChecked = false;
@@ -103,12 +104,12 @@
         googleBtn.addEventListener('click', function () {
             const sponsorId = sponsorInput?.value.trim() ?? '';
             if (!sponsorId) {
-                window.showToast?.('Indiquez d’abord votre code parrain.', 'error');
+                setFieldError?.(sponsorInput, 'Indiquez d’abord votre code parrain.');
                 sponsorInput?.focus();
                 return;
             }
             if (sponsorInput?.classList.contains('auth-input-error')) {
-                window.showToast?.('Code parrain invalide.', 'error');
+                setFieldError?.(sponsorInput, 'Code parrain invalide.');
                 sponsorInput?.focus();
                 return;
             }
@@ -116,31 +117,106 @@
         });
     }
 
+    const nameInput = form.querySelector('#name');
+    const passwordInput = form.querySelector('#password');
+    const confirmInput = form.querySelector('#password_confirmation');
+    const termsInput = form.querySelector('#terms');
+
+    if (emailInput) {
+        emailInput.addEventListener('blur', function () {
+            const email = this.value.trim();
+            if (!email) {
+                return;
+            }
+            if (!emailRe.test(email)) {
+                setFieldError?.(emailInput, 'Format d’email invalide.');
+            }
+        });
+    }
+
+    if (passwordInput && confirmInput) {
+        confirmInput.addEventListener('blur', function () {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+            if (confirm && password !== confirm) {
+                setFieldError?.(confirmInput, 'Les mots de passe ne correspondent pas.');
+            }
+        });
+    }
+
     form.addEventListener('submit', function (e) {
-        const name = form.querySelector('#name')?.value.trim() ?? '';
+        window.salangAuthClearJsFieldErrors?.(form);
+
+        const name = nameInput?.value.trim() ?? '';
         const email = emailInput?.value.trim() ?? '';
         const sponsor = sponsorInput?.value.trim() ?? '';
-        const password = form.querySelector('#password')?.value ?? '';
-        const confirm = form.querySelector('#password_confirmation')?.value ?? '';
-        const terms = form.querySelector('#terms')?.checked;
+        const password = passwordInput?.value ?? '';
+        const confirm = confirmInput?.value ?? '';
+        const terms = termsInput?.checked;
 
-        let message = '';
-        if (!name) message = 'Nom complet requis.';
-        else if (!email) message = 'Adresse email requise.';
-        else if (!emailRe.test(email)) message = 'Format d’email invalide.';
-        else if (email.length && !emailChecked) message = 'Attendez la vérification de l’email.';
-        else if (emailInput?.classList.contains('auth-input-error')) message = 'Cet email ne peut pas être utilisé.';
-        else if (!sponsor) message = 'Code parrain requis.';
-        else if (sponsor.length < 3) message = 'Code parrain trop court.';
-        else if (sponsorInput?.classList.contains('auth-input-error')) message = 'Code parrain invalide.';
-        else if (sponsorStatus?.classList.contains('loading')) message = 'Vérification du parrain en cours.';
-        else if (password.length < 8) message = 'Mot de passe : 8 caractères minimum.';
-        else if (password !== confirm) message = 'Les mots de passe ne correspondent pas.';
-        else if (!terms) message = 'Acceptez les conditions générales et la politique de confidentialité.';
+        let blocked = false;
+        let firstFocus = null;
 
-        if (message) {
+        function fail(input, msg) {
+            blocked = true;
+            setFieldError?.(input, msg);
+            if (!firstFocus && input && typeof input.focus === 'function') {
+                firstFocus = input;
+            }
+        }
+
+        if (!name) {
+            fail(nameInput, 'Nom complet requis.');
+        } else {
+            setFieldError?.(nameInput, null);
+        }
+
+        if (!email) {
+            fail(emailInput, 'Adresse email requise.');
+        } else if (!emailRe.test(email)) {
+            fail(emailInput, 'Format d’email invalide.');
+        } else if (!emailChecked) {
+            fail(emailInput, 'Attendez la fin de la vérification de l’email.');
+        } else if (emailInput?.classList.contains('auth-input-error')) {
+            fail(emailInput, 'Cet email ne peut pas être utilisé.');
+        } else {
+            setFieldError?.(emailInput, null);
+        }
+
+        if (!sponsor) {
+            fail(sponsorInput, 'Code parrain requis.');
+        } else if (sponsor.length < 3) {
+            fail(sponsorInput, 'Code parrain trop court.');
+        } else if (sponsorInput?.classList.contains('auth-input-error')) {
+            fail(sponsorInput, 'Code parrain invalide.');
+        } else if (sponsorStatus?.classList.contains('loading')) {
+            fail(sponsorInput, 'Vérification du parrain en cours…');
+        } else {
+            setFieldError?.(sponsorInput, null);
+        }
+
+        if (password.length < 8) {
+            fail(passwordInput, 'Mot de passe : 8 caractères minimum.');
+        } else {
+            setFieldError?.(passwordInput, null);
+        }
+
+        if (password !== confirm) {
+            fail(confirmInput, 'Les mots de passe ne correspondent pas.');
+        } else if (confirm) {
+            setFieldError?.(confirmInput, null);
+        }
+
+        if (!terms) {
+            blocked = true;
+            setFieldError?.(termsInput, 'Acceptez les conditions générales et la politique de confidentialité.');
+        } else {
+            setFieldError?.(termsInput, null);
+        }
+
+        if (blocked) {
             e.preventDefault();
-            window.showToast?.(message, 'error');
+            firstFocus?.focus();
         }
     });
 })();

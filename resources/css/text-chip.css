@@ -1,0 +1,59 @@
+/**
+ * Fonds colorés serrés au texte (puces / étiquettes), pas en barre pleine largeur.
+ */
+
+.badge,
+[class*='badge-'],
+.pv-badge,
+.rank-badge,
+.type-badge,
+.rank-status,
+.product-status,
+.package-status,
+.network-node-status,
+.cancellation-status,
+.member-wallet-hero__badge,
+.detail-status,
+.sponsor-status.visible,
+.email-checking,
+.email-status-success,
+.email-status-error,
+.email-status-warning {
+  width: fit-content;
+  max-width: 100%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.sponsor-status.visible,
+.email-checking,
+.email-status-success,
+.email-status-error,
+.email-status-warning {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: top;
+}
+
+.admin-app .main-content table.table.admin-mobile-table tbody td > .badge,
+.admin-app .main-content table.table.admin-mobile-table tbody td > .pv-badge,
+.admin-app .main-content table.table.admin-mobile-table tbody td > .rank-badge,
+.admin-app .main-content table.table.admin-mobile-table tbody td > [class*='badge'] {
+  justify-self: end;
+}
+
+.member-app .rank-detail-card .detail-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.salang-flash-success,
+.salang-flash-error,
+.member-app .member-alert {
+  width: fit-content;
+  max-width: 100%;
+}

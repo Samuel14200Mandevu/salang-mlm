@@ -175,8 +175,12 @@ class RankController extends Controller
         }
 
         if ($type === 'branches') {
-            $branches = $this->countQualifiedBranches($user, $rule['rank_level']);
+            $branches = $this->rankConditionChecker->countQualifiedBranches(
+                $user,
+                (int) $rule['rank_level']
+            );
             $groupPV = $user->team_pv ?? 0;
+
             return $branches >= $rule['branches'] && $groupPV >= $rule['group_pv'];
         }
 

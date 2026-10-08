@@ -142,33 +142,38 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@php
+    $cashierShowSubtitle = $cashier->name . ' · ID ' . $cashier->id;
+@endphp
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Détails du caissier
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Informations détaillées de <strong>{{ $cashier->name }}</strong>
-            </p>
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Détails du caissier',
+    'subtitle' => $cashierShowSubtitle,
+    'actions' => view('admin.cashiers.partials.show-header-actions', compact('cashier'))->render(),
+])
+
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Détails du caissier</h1>
+            <p class="page-subtitle">{{ $cashierShowSubtitle }}</p>
         </div>
-        <div class="flex gap-1.5 sm:gap-2 flex-wrap">
-            <a href="{{ route('admin.users.edit', $cashier->id) }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                Modifier
-            </a>
-            <a href="{{ route('admin.cashiers.index') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Retour
-            </a>
-        </div>
+        @include('admin.cashiers.partials.show-mobile-banner-actions', ['cashier' => $cashier])
     </div>
+</div>
+
+<form id="cashierToggleForm" action="{{ route('admin.users.toggle-status', $cashier->id) }}" method="POST" class="hidden" onsubmit="return confirm('Confirmer le changement de statut ?')">
+    @csrf
+    @method('POST')
+</form>
+@if(auth()->id() != $cashier->id)
+    <form id="cashierDeleteForm" action="{{ route('admin.users.destroy', $cashier->id) }}" method="POST" class="hidden" onsubmit="return confirm('Supprimer définitivement ce caissier ?')">
+        @csrf
+        @method('DELETE')
+    </form>
+@endif
+
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
 
     <!-- Informations principales -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-1">
@@ -290,8 +295,8 @@
         </div>
     </div>
 
-    <!-- Actions -->
-    <div class="info-card animate-fadeInUp delay-3">
+    <!-- Actions (desktop) -->
+    <div class="info-card animate-fadeInUp delay-3 hidden md:block">
         <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">
             <svg class="inline-block w-5 h-5 mr-2 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>

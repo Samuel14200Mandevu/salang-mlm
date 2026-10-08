@@ -1,5 +1,7 @@
 @extends('layouts.auth')
 
+@section('auth-body-class', 'auth-mobile-recover')
+
 @section('title', 'Mot de passe oublié — Salang Group')
 
 @section('content')
@@ -42,11 +44,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const email = emailInput?.value.trim() ?? '';
         if (!emailRe.test(email)) {
             e.preventDefault();
-            emailInput?.classList.add('auth-input-error');
-            window.showToast?.('Adresse email invalide.', 'error');
+            window.salangAuthSetFieldError?.(emailInput, 'Adresse email invalide.');
+            emailInput?.focus();
         }
     });
-    emailInput?.addEventListener('input', () => emailInput.classList.remove('auth-input-error'));
 });
 </script>
 @endpush

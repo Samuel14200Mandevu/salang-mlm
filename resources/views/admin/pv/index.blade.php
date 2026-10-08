@@ -159,6 +159,79 @@ body {
     border-color: var(--success-hover);
 }
 
+.btn-round-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+    max-width: 2.5rem;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    flex: 0 0 auto;
+    flex-shrink: 0;
+}
+
+.btn-round-icon.btn-sm {
+    width: 2.35rem;
+    height: 2.35rem;
+    min-height: 2.35rem;
+    max-width: 2.35rem;
+}
+
+.btn-round-icon .icon {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.history-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+    width: auto;
+    max-width: 100%;
+    margin-left: auto;
+}
+
+.pv-history-table th:last-child,
+.pv-history-table td.admin-td-actions {
+    text-align: right;
+}
+
+.pv-history-table td.admin-td-actions .history-row-actions {
+    margin-left: auto;
+}
+
+.history-row-actions .btn-outline.btn-round-icon {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.history-row-actions .btn-outline.btn-round-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.history-row-actions .btn-danger.btn-round-icon {
+    border: 1px solid var(--danger);
+    box-shadow: none;
+}
+
+.admin-app .admin-title-banner__tools .btn-round-icon {
+    width: 2.625rem;
+    height: 2.625rem;
+    min-height: 2.625rem;
+    border-radius: 999px;
+    padding: 0;
+}
+
+@media (max-width: 767px) {
+    .admin-app .admin-title-banner__tools .btn-round-icon span {
+        display: none !important;
+    }
+}
+
 .btn-danger {
     background: var(--danger);
     color: white;
@@ -356,7 +429,7 @@ body {
 .team-origin .item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     padding: 0.375rem 0;
     border-bottom: 1px solid var(--border-light);
     font-size: 0.813rem;
@@ -400,6 +473,10 @@ body {
 .team-origin .item .pv {
     font-weight: 600;
     color: var(--text-primary);
+    flex-shrink: 0;
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
 }
 
 .team-origin .total {
@@ -518,6 +595,11 @@ body {
 
 .confirm-overlay.active {
     display: flex;
+}
+
+.confirm-box--wide {
+    max-width: 24rem;
+    width: 100%;
 }
 
 .confirm-box {
@@ -649,7 +731,6 @@ body {
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
 
-.hidden { display: none !important; }
 .overflow-x-auto { overflow-x: auto; }
 .w-full { width: 100%; }
 
@@ -691,7 +772,7 @@ body {
     .pv-stat .value {
         font-size: 1.25rem;
     }
-    .btn {
+    .btn:not(.btn-round-icon) {
         width: 100%;
     }
     .card {
@@ -730,11 +811,24 @@ body {
         max-width: none;
     }
     .team-origin .item {
-        flex-wrap: wrap;
-        gap: 0.25rem;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+    }
+    .team-origin .item .level {
+        display: none;
     }
     .team-origin .item .name {
-        flex: 1 1 100%;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .team-origin .item .name a {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 
@@ -799,32 +893,19 @@ body {
 @endpush
 
 @section('content')
-<div class="page-header">
-    <div class="top-row">
-        <div>
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Gestion des PV',
+    'subtitle' => $user->name . ' — Points de Volume',
+    'actions' => view('admin.pv.partials.pv-index-header-actions', ['user' => $user])->render(),
+])
+
+<div class="admin-page-header page-header animate-fadeInUp md:hidden">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
             <h1 class="page-title">Gestion des PV</h1>
             <p class="page-subtitle">{{ $user->name }} — Points de Volume</p>
         </div>
-        <div class="header-actions">
-            <a href="{{ url('/admin/pv/commission-history?user_id=' . $user->id) }}" class="btn btn-success btn-sm">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <span>Commissions Historiques</span>
-            </a>
-            <a href="{{ url('/admin/pv/import?user_id=' . $user->id) }}" class="btn btn-success btn-sm">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                <span>Importer des PV</span>
-            </a>
-            <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-outline btn-sm">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                <span>Retour</span>
-            </a>
-        </div>
+        @include('admin.pv.partials.pv-mobile-banner-actions', ['user' => $user])
     </div>
 </div>
 
@@ -1041,52 +1122,105 @@ body {
         </div>
     </div>
 </div>
-<br>
-
 <!-- History -->
-<div class="card animate-fadeInUp delay-3">
-    <div class="flex flex-wrap items-center justify-between mb-4">
-        <div class="card-title">Historique des PV</div>
-        <span class="text-xs text-muted" id="history_count">Total: {{ isset($pvHistory) ? count($pvHistory) : 0 }} entrées</span>
+<div class="admin-section admin-pv-history-section animate-fadeInUp delay-3">
+    <div class="admin-section__head flex flex-wrap items-end justify-between gap-2 mb-3 md:mb-4">
+        <h2 class="admin-section__title mb-0">Historique des PV</h2>
+        <span class="text-xs text-muted shrink-0" id="history_count">{{ isset($pvHistory) ? count($pvHistory) : 0 }} entrée(s)</span>
     </div>
-    
+
+    <div class="card admin-pv-history-card">
     <div class="table-wrap">
-        <table class="table">
+        <table class="table admin-mobile-table pv-history-table">
             <thead>
                 <tr>
                     <th>Période</th>
                     <th>Type</th>
                     <th>Montant</th>
                     <th>Notes</th>
-                    <th class="text-center">Action</th>
+                    <th class="text-right">Action</th>
                 </tr>
             </thead>
             <tbody id="historyTableBody">
                 @if(isset($pvHistory) && count($pvHistory) > 0)
                     @foreach($pvHistory as $entry)
                         <tr id="history-row-{{ $entry->id }}">
-                            <td>{{ $entry->period ?? '-' }}</td>
-                            <td><span class="badge badge-sm badge-info">{{ ucfirst($entry->type) }}</span></td>
-                            <td class="font-medium">{{ number_format($entry->amount, 1, ',', ' ') }}</td>
-                            <td>{{ $entry->notes ?? '-' }}</td>
-                            <td class="text-center">
-                                <!-- ✅ NOUVEAU : Bouton avec modal personnalisée -->
-                                <button type="button" class="btn btn-sm btn-danger" 
-                                        onclick="openDeleteHistoryModal({{ $entry->id }}, '{{ $entry->period ?? 'N/A' }}', {{ number_format($entry->amount, 1) }})">
-                                    <svg class="icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
+                            <td data-label="Période">{{ $entry->period ?? '-' }}</td>
+                            <td data-label="Type"><span class="badge badge-sm badge-info">{{ ucfirst($entry->type) }}</span></td>
+                            <td data-label="Montant" class="font-medium">{{ number_format($entry->amount, 1, ',', ' ') }} PV</td>
+                            <td data-label="Notes" class="pv-history-notes">{{ $entry->notes ?? '—' }}</td>
+                            <td class="text-right admin-td-actions" data-label="Actions">
+                                <div class="history-row-actions">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline btn-round-icon js-edit-history-entry"
+                                            title="Modifier"
+                                            aria-label="Modifier"
+                                            data-history-id="{{ $entry->id }}"
+                                            data-period="{{ $entry->period }}"
+                                            data-type="{{ $entry->type }}"
+                                            data-amount="{{ $entry->amount }}"
+                                            data-notes="{{ $entry->notes ?? '' }}">
+                                        <svg class="icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger btn-round-icon"
+                                            title="Supprimer"
+                                            aria-label="Supprimer"
+                                            onclick="openDeleteHistoryModal({{ $entry->id }}, '{{ $entry->period ?? 'N/A' }}', {{ number_format($entry->amount, 1) }})">
+                                        <svg class="icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
                 @else
                     <tr id="noHistoryRow">
-                        <td colspan="5" class="text-center text-muted py-4">Aucun historique de PV trouvé</td>
+                        <td colspan="5" class="admin-td-compact text-center text-muted py-4" data-label="">Aucun historique de PV trouvé</td>
                     </tr>
                 @endif
             </tbody>
         </table>
+    </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL MODIFICATION HISTORIQUE PV -->
+<!-- ============================================================ -->
+<div id="editHistoryModal" class="confirm-overlay">
+    <div class="confirm-box confirm-box--wide">
+        <div class="icon">✏️</div>
+        <h3>Modifier l'entrée</h3>
+        <form id="editHistoryForm" class="text-left space-y-3 mt-3">
+            <div class="form-group mb-0">
+                <label class="form-label" for="editHistoryPeriod">Période (AAAA-MM)</label>
+                <input type="month" id="editHistoryPeriod" name="period" class="form-control" required>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label" for="editHistoryType">Type</label>
+                <select id="editHistoryType" name="type" class="form-control" required>
+                    <option value="personal">PV Personnel</option>
+                    <option value="team">PV Équipe</option>
+                    <option value="monthly">PV Mensuel</option>
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label" for="editHistoryAmount">Montant (PV)</label>
+                <input type="number" id="editHistoryAmount" name="amount" class="form-control" step="0.1" min="0.1" required>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label" for="editHistoryNotes">Notes</label>
+                <input type="text" id="editHistoryNotes" name="notes" class="form-control" maxlength="255">
+            </div>
+        </form>
+        <div class="actions mt-4">
+            <button type="button" class="btn btn-outline" onclick="closeEditHistoryModal()">Annuler</button>
+            <button type="button" class="btn btn-primary" id="confirmEditHistoryBtn">Enregistrer</button>
+        </div>
     </div>
 </div>
 
@@ -1164,6 +1298,23 @@ function showToast(message, type) {
 // MODAL SUPPRESSION HISTORIQUE PV
 // ============================================================
 var deleteHistoryId = null;
+var editHistoryId = null;
+
+function openEditHistoryModal(historyId, period, type, amount, notes) {
+    editHistoryId = historyId;
+    document.getElementById('editHistoryPeriod').value = period || '';
+    document.getElementById('editHistoryType').value = type || 'personal';
+    document.getElementById('editHistoryAmount').value = amount;
+    document.getElementById('editHistoryNotes').value = notes || '';
+    document.getElementById('editHistoryModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditHistoryModal() {
+    document.getElementById('editHistoryModal').classList.remove('active');
+    document.body.style.overflow = '';
+    editHistoryId = null;
+}
 
 function openDeleteHistoryModal(historyId, period, amount) {
     deleteHistoryId = historyId;
@@ -1184,6 +1335,31 @@ document.getElementById('confirmDeleteHistoryBtn').addEventListener('click', fun
     if (deleteHistoryId) {
         deleteHistory(deleteHistoryId);
         closeDeleteHistoryModal();
+    }
+});
+
+document.getElementById('confirmEditHistoryBtn').addEventListener('click', function() {
+    if (editHistoryId) {
+        saveHistoryEdit(editHistoryId);
+    }
+});
+
+document.getElementById('historyTableBody').addEventListener('click', function(e) {
+    var editBtn = e.target.closest('.js-edit-history-entry');
+    if (editBtn) {
+        openEditHistoryModal(
+            parseInt(editBtn.getAttribute('data-history-id'), 10),
+            editBtn.getAttribute('data-period') || '',
+            editBtn.getAttribute('data-type') || 'personal',
+            parseFloat(String(editBtn.getAttribute('data-amount') || '0').replace(',', '.')),
+            editBtn.getAttribute('data-notes') || ''
+        );
+    }
+});
+
+document.getElementById('editHistoryModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditHistoryModal();
     }
 });
 
@@ -1211,6 +1387,7 @@ document.addEventListener('keydown', function(e) {
             document.body.style.overflow = '';
         });
         deleteHistoryId = null;
+        editHistoryId = null;
     }
 });
 
@@ -1245,12 +1422,111 @@ function submitReset() {
 }
 
 // ============================================================
+// UPDATE HISTORY (AJAX)
+// ============================================================
+function saveHistoryEdit(historyId) {
+    var period = document.getElementById('editHistoryPeriod').value;
+    var type = document.getElementById('editHistoryType').value;
+    var amount = document.getElementById('editHistoryAmount').value.replace(',', '.');
+    var notes = document.getElementById('editHistoryNotes').value;
+
+    if (!period || !type || !amount) {
+        showToast('Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+
+    showToast('Enregistrement...', 'warning');
+
+    var url = @json(route('admin.pv.update-history', ['id' => '__ID__'])).replace('__ID__', String(historyId));
+
+    fetch(url, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            period: period,
+            type: type,
+            amount: parseFloat(amount),
+            notes: notes
+        })
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success && data.entry) {
+            var row = document.getElementById('history-row-' + historyId);
+            if (row) {
+                if (data.entry.id !== historyId) {
+                    row.id = 'history-row-' + data.entry.id;
+                }
+                var cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    cells[0].textContent = data.entry.period || '-';
+                    cells[1].innerHTML = '<span class="badge badge-sm badge-info">' +
+                        (data.entry.type ? data.entry.type.charAt(0).toUpperCase() + data.entry.type.slice(1) : '-') +
+                        '</span>';
+                    cells[2].textContent = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                        .format(data.entry.amount) + ' PV';
+                    cells[2].classList.add('font-medium');
+                    cells[3].textContent = data.entry.notes || '—';
+                }
+                var editBtn = row.querySelector('.js-edit-history-entry');
+                if (editBtn) {
+                    editBtn.setAttribute('data-history-id', data.entry.id);
+                    editBtn.setAttribute('data-period', data.entry.period || '');
+                    editBtn.setAttribute('data-type', data.entry.type || 'personal');
+                    editBtn.setAttribute('data-amount', data.entry.amount);
+                    editBtn.setAttribute('data-notes', data.entry.notes || '');
+                }
+            }
+
+            if (data.user) {
+                applyUserPvDisplays(data.user);
+            }
+
+            closeEditHistoryModal();
+            showToast('Historique mis à jour', 'success');
+        } else {
+            showToast('Erreur: ' + (data.message || 'Mise à jour impossible'), 'error');
+        }
+    })
+    .catch(function() {
+        showToast('Erreur lors de la mise à jour', 'error');
+    });
+}
+
+function applyUserPvDisplays(user) {
+    document.getElementById('pv_balance_display').textContent =
+        new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        .format(user.pv_balance);
+    document.getElementById('monthly_pv_display').textContent =
+        new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        .format(user.monthly_pv);
+    document.getElementById('team_pv_display').textContent =
+        new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        .format(user.team_pv);
+
+    var pvInput = document.querySelector('input[name="pv_balance"]');
+    var monthlyInput = document.querySelector('input[name="monthly_pv"]');
+    if (pvInput) {
+        pvInput.value = user.pv_balance;
+    }
+    if (monthlyInput) {
+        monthlyInput.value = user.monthly_pv;
+    }
+}
+
+// ============================================================
 // DELETE HISTORY (AJAX)
 // ============================================================
 function deleteHistory(historyId) {
     showToast('Suppression en cours...', 'warning');
     
-    var url = '{{ url('admin/pv/history') }}/' + historyId;
+    var url = @json(route('admin.pv.delete-history', ['id' => '__ID__'])).replace('__ID__', String(historyId));
     
     fetch(url, {
         method: 'DELETE',
@@ -1272,22 +1548,11 @@ function deleteHistory(historyId) {
             var match = counter.textContent.match(/\d+/);
             if (match) {
                 var count = parseInt(match[0]) - 1;
-                counter.textContent = 'Total: ' + count + ' entrées';
+                counter.textContent = count + ' entrée(s)';
             }
             
             if (data.user) {
-                document.getElementById('pv_balance_display').textContent = 
-                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                    .format(data.user.pv_balance);
-                document.getElementById('monthly_pv_display').textContent = 
-                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                    .format(data.user.monthly_pv);
-                document.getElementById('team_pv_display').textContent = 
-                    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                    .format(data.user.team_pv);
-                    
-                document.querySelector('input[name="pv_balance"]').value = data.user.pv_balance;
-                document.querySelector('input[name="monthly_pv"]').value = data.user.monthly_pv;
+                applyUserPvDisplays(data.user);
             }
             
             showToast('Historique supprimé', 'success');

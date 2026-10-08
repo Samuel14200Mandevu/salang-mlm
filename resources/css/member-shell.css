@@ -56,6 +56,26 @@
   transition: color 0.2s ease;
 }
 
+@media (min-width: 768px) {
+  .member-app #sidebar .sidebar-link-icon {
+    width: auto;
+    height: auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    color: inherit;
+  }
+
+  .member-app #sidebar .sidebar-link-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .member-app #sidebar .sidebar-link.active .sidebar-link-icon {
+    color: var(--color-primary-600);
+  }
+}
+
 .member-app .sidebar-link .label {
   flex: 1;
   min-width: 0;
@@ -79,8 +99,30 @@
   box-shadow: var(--shadow-sm);
 }
 
-.member-app .sidebar-link.active svg {
+.member-app .sidebar-link.active > svg {
   color: var(--color-primary-600);
+}
+
+.member-app .sidebar-link--logout,
+.member-app .sidebar-link--logout .label {
+  color: var(--danger);
+}
+
+.member-app .sidebar-link--logout:hover {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+@media (min-width: 768px) {
+  .member-app #sidebar .sidebar-link--logout .sidebar-link-icon--danger {
+    background: #fee2e2;
+    color: #dc2626;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .dark .member-app .sidebar-link.active {

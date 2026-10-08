@@ -22,46 +22,55 @@
         @include('profile.partials.account-menu-row', [
             'href' => route('wallet.index'),
             'label' => 'Portefeuille',
+            'iconTone' => 'teal',
             'icon' => $iconWallet,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('wallet.transactions'),
             'label' => 'Transactions',
+            'iconTone' => 'sky',
             'icon' => $iconTx,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('withdrawal.index'),
             'label' => 'Retraits',
+            'iconTone' => 'orange',
             'icon' => $iconWithdraw,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('commissions.index'),
             'label' => 'Commissions',
+            'iconTone' => 'accent',
             'icon' => $iconCommission,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('my-pv.index'),
             'label' => 'Mes PV',
+            'iconTone' => 'sky',
             'icon' => $iconPv,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('orders.index'),
             'label' => 'Mes commandes',
+            'iconTone' => 'primary',
             'icon' => $iconOrders,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('subscriptions.index'),
             'label' => 'Packages',
+            'iconTone' => 'purple',
             'icon' => $iconPackage,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('report.network'),
             'label' => 'Réseau & ventes filleuls',
+            'iconTone' => 'primary',
             'icon' => $iconNetwork,
         ])
         @include('profile.partials.account-menu-row', [
             'href' => route('report.export'),
             'label' => 'Exporter le portefeuille',
+            'iconTone' => 'success',
             'icon' => $iconExport,
         ])
     </nav>

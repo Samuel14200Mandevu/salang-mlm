@@ -101,7 +101,6 @@ body { background: var(--bg-page); color: var(--text-primary); }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-4 { margin-bottom: 1rem; }
 
-.hidden { display: none !important; }
 .w-full { width: 100%; }
 .max-w-md { max-width: 28rem; }
 
@@ -282,6 +281,26 @@ body { background: var(--bg-page); color: var(--text-primary); }
     .page-title { font-size: 1.25rem; }
     .page-header { flex-direction: column; align-items: stretch; }
 }
+
+.btn-round-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    border-radius: 999px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-round-icon .icon { margin: 0; }
+
+@media (max-width: 767px) {
+    .admin-app .pv-import-member-search.is-search-host-empty {
+        display: none !important;
+    }
+}
 </style>
 @endpush
 
@@ -324,10 +343,43 @@ body { background: var(--bg-page); color: var(--text-primary); }
             $backLabel = 'Retour aux utilisateurs';
         }
     }
+
+    $mobileGreetingTitle = $hasPreselectedUser
+        ? ('Ajout de PV · ' . $user->name)
+        : 'Import des PV mensuels';
+    $mobileGreetingSubtitle = $hasPreselectedUser
+        ? 'Saisie manuelle pour ce membre'
+        : 'Fichier CSV ou recherche d\'un membre';
 @endphp
 
-<div class="page-header">
-    <div>
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => $mobileGreetingTitle,
+        'subtitle' => $mobileGreetingSubtitle,
+    ])
+@endpush
+
+@php
+    $importDesktopTitle = $hasPreselectedUser
+        ? 'Ajout de PV pour ' . $user->name
+        : 'Import des PV mensuels';
+    $importDesktopSubtitle = $hasPreselectedUser
+        ? 'Ajoutez manuellement des PV à ce membre'
+        : 'Ajoutez des PV à un membre via fichier CSV ou saisie manuelle';
+    $importBackBtn = '<a href="' . e($backUrl) . '" class="btn btn-outline btn-sm">'
+        . '<svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+        . '<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
+        . '</svg> ' . e($backLabel) . '</a>';
+@endphp
+
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => $importDesktopTitle,
+    'subtitle' => $importDesktopSubtitle,
+    'actions' => $importBackBtn,
+])
+
+<div class="admin-page-header page-header animate-fadeInUp md:hidden">
+    <div class="admin-mobile-page-head">
         <h1 class="page-title">
             @if($hasPreselectedUser)
                 Ajout de PV pour {{ $user->name }}
@@ -343,12 +395,12 @@ body { background: var(--bg-page); color: var(--text-primary); }
             @endif
         </p>
     </div>
-    <div class="flex gap-2">
-        <a href="{{ $backUrl }}" class="btn btn-outline">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+    <div class="admin-page-header-actions flex flex-wrap gap-2">
+        <a href="{{ $backUrl }}" class="btn btn-outline btn-sm btn-round-icon" title="{{ $backLabel }}" aria-label="{{ $backLabel }}">
+            <svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            {{ $backLabel }}
+            <span class="hidden sm:inline">{{ $backLabel }}</span>
         </a>
     </div>
 </div>
@@ -432,11 +484,20 @@ body { background: var(--bg-page); color: var(--text-primary); }
 {{-- ============================================================ --}}
 {{-- SECTION 2 : RECHERCHE UTILISATEUR (affichée uniquement si PAS de user présélectionné) --}}
 {{-- ============================================================ --}}
-<div class="card">
-    <div class="card-title">Ajout manuel - Rechercher un membre</div>
-    <div class="flex gap-3">
-        <input type="text" id="searchUser" class="form-control flex-1" placeholder="Nom, email ou code sponsor (min. 2 caractères)" autocomplete="off">
-        <button type="button" onclick="searchUser()" class="btn btn-primary">Rechercher</button>
+<div class="card pv-import-member-search" id="pvImportMemberSearch" data-admin-pv-import-search="1">
+    <div class="card-title pv-import-member-search__title">Ajout manuel - Rechercher un membre</div>
+    <div class="pv-import-search-row flex flex-col sm:flex-row gap-3">
+        <div class="search-wrapper admin-shop-search flex-1 min-w-0">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text"
+                   id="searchUser"
+                   class="form-control search-input flex-1 w-full pl-9"
+                   placeholder="Nom, email ou code sponsor (min. 2 caractères)"
+                   autocomplete="off">
+        </div>
+        <button type="button" onclick="searchUser()" class="btn btn-primary pv-import-search-submit shrink-0">Rechercher</button>
     </div>
 </div>
 

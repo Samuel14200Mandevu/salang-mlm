@@ -261,7 +261,26 @@
     $rankLevelShow = (int) ($user->rank_level ?? 0);
     $rankLabelShow = \App\Support\MlmRank::label($rankLevelShow);
     $rankBadgeShow = \App\Support\MlmRank::badgeClass($rankLevelShow);
+    $userShowSubtitle = $user->name . ' · ID ' . $user->id;
 @endphp
+
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => "Détails de l'utilisateur",
+    'subtitle' => $userShowSubtitle,
+    'actions' => view('admin.users.partials.show-header-actions', compact('user'))->render(),
+])
+
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Détails de l'utilisateur</h1>
+            <p class="page-subtitle">{{ $userShowSubtitle }}</p>
+        </div>
+        @include('admin.users.partials.show-mobile-banner-actions', ['user' => $user])
+    </div>
+</div>
+
+<div class="admin-mobile-page">
     <div class="admin-profile-hero md:hidden">
         <div class="admin-profile-hero__avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
         <div class="admin-profile-hero__body">
@@ -277,83 +296,6 @@
                 <span class="admin-profile-hero__code">#{{ $user->sponsor_id }}</span>
             @endif
         </div>
-    </div>
-
-    <!-- Header desktop -->
-    <div class="admin-mobile-page-head flex flex-wrap items-center justify-between gap-3 mb-4 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Détails de l'utilisateur
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                ID: {{ $user->id }}
-            </p>
-        </div>
-    </div>
-
-    <div class="admin-action-rail flex gap-2 flex-wrap justify-start md:justify-end mb-1 md:mb-4 animate-fadeInUp">
-            <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                <span class="hidden xs:inline">Retour</span>
-            </a>
-
-            <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
-               class="btn btn-info btn-sm sm:btn-md"
-               title="Gérer les Points de Volume de cet utilisateur">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                <span class="hidden sm:inline">Gérer les PV</span>
-                <span class="sm:hidden">PV</span>
-            </a>
-
-            @if($user->is_active)
-                <button type="button"
-                        onclick="openDeactivateModal()"
-                        class="btn btn-warning btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                    </svg>
-                    <span class="hidden sm:inline">Désactiver</span>
-                </button>
-            @else
-                <button type="button"
-                        onclick="openActivateWithPackageModal()"
-                        class="btn btn-success btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <span class="hidden md:inline">Activer avec package</span>
-                    <span class="md:hidden">Activer</span>
-                </button>
-
-                <button type="button"
-                        onclick="openGenerateCodeModal()"
-                        class="btn btn-info btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                    </svg>
-                    <span class="hidden sm:inline">Générer code</span>
-                </button>
-            @endif
-
-            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                <span class="hidden xs:inline">Modifier</span>
-            </a>
-
-            <button type="button"
-                    onclick="openDeleteModal()"
-                    class="btn btn-danger btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                <span class="hidden xs:inline">Supprimer</span>
-            </button>
     </div>
 
     @if(session('success'))
@@ -387,7 +329,7 @@
             <strong>${{ number_format($totalCommissions ?? 0, 0) }}</strong>
             <span>Total $</span>
         </div>
-        <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}" class="admin-member-kpi pv-link">
+        <a href="{{ route('admin.pv.show', $user->id) }}" class="admin-member-kpi pv-link">
             <strong>{{ $user->pv_balance ?? 0 }}</strong>
             <span>PV →</span>
         </a>
@@ -412,9 +354,21 @@
                     <span class="label">Téléphone</span>
                     <span class="value">{{ $user->phone ?? 'Non fourni' }}</span>
                 </div>
+                <div class="info-row md:hidden">
+                    <span class="label">Code parrain</span>
+                    <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
+                </div>
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
+                <div class="info-row md:hidden">
+                    <span class="label">Statut</span>
+                    <span class="value">
+                        <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
+                            {{ $user->is_active ? 'Actif' : 'Inactif' }}
+                        </span>
+                    </span>
+                </div>
                 <div class="info-row hidden md:flex">
                     <span class="label">Statut</span>
                     <span class="value">
@@ -500,7 +454,7 @@
                 </div>
 
                 <!-- GRADE avec couleurs -->
-                <div class="info-row hidden md:flex">
+                <div class="info-row">
                     <span class="label">Grade</span>
                     <span class="value">
                         @php
@@ -541,7 +495,7 @@
             </div>
             <!-- PV Link -->
             <div class="text-center">
-                <a href="{{ url('/admin/pv?search=' . ($user->sponsor_id ?? $user->email)) }}"
+                <a href="{{ route('admin.pv.show', $user->id) }}"
                    class="pv-link block group"
                    title="Voir les PV dans la gestion des PV">
                     <p class="text-2xl font-bold text-primary-blue pv-value group-hover:text-[#061B4A] transition-colors">
@@ -641,6 +595,7 @@
         @endif
         </div>
     </div>
+</div>
 
 <!-- ============================================================ -->
 <!-- MODAL GÉNÉRER CODE D'ACTIVATION -->

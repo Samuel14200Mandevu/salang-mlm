@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Services\MLM\RankConditionChecker;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -241,26 +242,23 @@ class Rank extends Model
         // TYPE 2: BRANCHES (Ex: 3 branches niveau X avec Y PV)
         // ============================================================
         if (isset($condition['type']) && $condition['type'] === 'branches') {
-            $branchLevel = $condition['rank_level'] ?? 0;
-            $minBranches = $condition['branches'] ?? 1;
-            $minBranchPV = $condition['group_pv'] ?? 0;
+            $branchLevel = (int) ($condition['rank_level'] ?? 0);
+            $minBranches = (int) ($condition['branches'] ?? 1);
+            $minGroupPV = (float) ($condition['group_pv'] ?? 0);
 
-            $count = $directChildren->filter(function ($child) use ($branchLevel, $minBranchPV) {
-                $childRank = $this->getUserRankObject($child);
-                $childRankLevel = $childRank?->level ?? 0;
-                return $childRankLevel >= $branchLevel
-                    && $child->pv_balance >= $minBranchPV;
-            })->count();
+            $checker = app(RankConditionChecker::class);
+            $count = $checker->countQualifiedBranches($user, $branchLevel);
+            $groupPV = (float) ($user->team_pv ?? 0);
+            $result = $count >= $minBranches && $groupPV >= $minGroupPV;
 
-            $result = $count >= $minBranches;
-            
             Log::debug('Vérification branches', [
                 'user_id' => $user->id,
                 'branch_level' => $branchLevel,
                 'min_branches' => $minBranches,
-                'min_branch_pv' => $minBranchPV,
-                'count' => $count,
-                'result' => $result
+                'min_group_pv' => $minGroupPV,
+                'qualified_branches' => $count,
+                'team_pv' => $groupPV,
+                'result' => $result,
             ]);
 
             return $result;
@@ -271,29 +269,22 @@ class Rank extends Model
         // ============================================================
         if (isset($condition['type']) && $condition['type'] === 'branches_mixed') {
             $branchRequirements = $condition['branches'] ?? [];
-            $minGroupPV = $condition['group_pv'] ?? 0;
+            $minGroupPV = (float) ($condition['group_pv'] ?? 0);
+            $groupPV = (float) ($user->team_pv ?? 0);
 
-            foreach ($branchRequirements as $count => $level) {
-                $actualCount = $directChildren->filter(function ($child) use ($level) {
-                    $childRank = $this->getUserRankObject($child);
-                    return ($childRank?->level ?? 0) >= $level;
-                })->count();
-
-                if ($actualCount < $count) {
-                    return false;
-                }
+            if ($groupPV < $minGroupPV) {
+                return false;
             }
 
-            // Calculer le PV total des branches
-            $totalGroupPV = $directChildren->sum('pv_balance');
-            $result = $totalGroupPV >= $minGroupPV;
-            
+            $checker = app(RankConditionChecker::class);
+            $result = $checker->satisfiesExclusiveMixedBranches($user, $branchRequirements);
+
             Log::debug('Vérification branches_mixed', [
                 'user_id' => $user->id,
                 'requirements' => $branchRequirements,
                 'min_group_pv' => $minGroupPV,
-                'total_group_pv' => $totalGroupPV,
-                'result' => $result
+                'team_pv' => $groupPV,
+                'result' => $result,
             ]);
 
             return $result;

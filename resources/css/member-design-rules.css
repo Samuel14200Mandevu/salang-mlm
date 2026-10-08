@@ -17,7 +17,7 @@
 }
 
 /* [1][5][8][22] Pas de glass, glow ni ombres empilées */
-.member-app .mobile-bottom-nav {
+.member-app .mobile-bottom-nav:not(.mobile-bottom-nav--salang) {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
@@ -79,13 +79,13 @@
 }
 
 /* [19] Coins sobres sur la nav mobile */
-.member-app .mobile-bottom-nav .nav-item,
-.member-app .mobile-bottom-nav .nav-item--button {
+.member-app .mobile-bottom-nav:not(.mobile-bottom-nav--salang) .nav-item,
+.member-app .mobile-bottom-nav:not(.mobile-bottom-nav--salang) .nav-item--button {
   border-radius: 8px;
 }
 
-.member-app .mobile-bottom-nav .nav-item.active,
-.member-app .mobile-bottom-nav .nav-item--button.active {
+.member-app .mobile-bottom-nav:not(.mobile-bottom-nav--salang) .nav-item.active,
+.member-app .mobile-bottom-nav:not(.mobile-bottom-nav--salang) .nav-item--button.active {
   background: var(--bg-secondary);
   color: var(--color-primary-600);
 }

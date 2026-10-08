@@ -104,63 +104,6 @@
     gap: 0.75rem;
 }
 
-.header-search .search-wrapper {
-    position: relative;
-}
-
-.header-search .search-wrapper .search-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-}
-
-.header-search .search-wrapper .search-input {
-    padding: 0.375rem 0.75rem 0.375rem 2.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-input);
-    color: var(--text-primary);
-    font-size: 0.813rem;
-    width: 220px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, width 0.2s ease;
-    outline: none;
-}
-
-.header-search .search-wrapper .search-input:focus {
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px var(--primary-blue-border);
-    width: 280px;
-}
-
-.header-search .search-wrapper .search-input::placeholder {
-    color: var(--text-muted);
-}
-
-.header-search .search-wrapper .clear-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 50%;
-    display: none;
-    transition: background 0.15s ease;
-}
-.header-search .search-wrapper .clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-.header-search .search-wrapper .clear-btn.visible {
-    display: block;
-}
-
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -189,16 +132,23 @@
 </style>
 @endpush
 
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Historique des promotions',
+        'subtitle' => 'Suivi de toutes les promotions de rang',
+    ])
+@endpush
+
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
     <!-- Header with Search -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
+    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Historique des promotions</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Suivi de toutes les promotions de rang</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="admin-page-header-actions flex items-center gap-2">
             <div class="header-search">
                 <div class="search-wrapper">
                     <span class="search-icon">

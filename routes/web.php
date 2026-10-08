@@ -174,6 +174,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
         Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+        Route::get('/password', [ProfileController::class, 'password'])->name('password');
         Route::get('/referral', [ProfileController::class, 'referral'])->name('referral');
         Route::get('/about', [ProfileController::class, 'about'])->name('about');
         Route::get('/help', [ProfileController::class, 'help'])->name('help');
@@ -573,6 +574,7 @@ Route::prefix('pv')->name('pv.')->group(function () {
     Route::put('/reset/{user}', [AdminPVController::class, 'reset'])->name('reset');
     
     // Routes avec paramètres dynamiques
+    Route::put('/history/{id}', [AdminPVController::class, 'updateHistory'])->name('update-history');
     Route::delete('/history/{id}', [AdminPVController::class, 'deleteHistory'])->name('delete-history');
     
     // Attribution massive

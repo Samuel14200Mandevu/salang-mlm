@@ -19,13 +19,13 @@
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="auth-page public-body">
+<body class="auth-page public-body auth-mobile-app @yield('auth-body-class')">
     <div class="auth-split">
         @include('partials.auth.panel-brand')
 
         <div class="auth-form-panel">
             <div class="auth-form-panel-top">
-                <a href="{{ url('/') }}" class="auth-back-home lg:hidden text-sm text-[var(--text-secondary)]">
+                <a href="{{ url('/') }}" class="auth-back-home lg:hidden text-sm text-[var(--text-secondary)] max-md:hidden">
                     ← Accueil
                 </a>
                 <button
@@ -42,9 +42,12 @@
             </div>
 
             <div class="auth-form-inner @yield('auth-inner-class')">
+                @if (request()->routeIs('login', 'register'))
+                    @include('partials.auth.mobile-auth-logo')
+                @endif
                 <div class="auth-card @yield('auth-card-class')">
                     <span class="auth-card-accent" aria-hidden="true"></span>
-                    <div class="auth-card-logo">
+                    <div class="auth-card-logo auth-card-logo--desktop-only">
                         <a href="{{ url('/') }}" class="auth-card-logo-link" aria-label="Salang Group — accueil">
                             <img
                                 src="{{ asset('images/salang_logo.png') }}"

@@ -195,7 +195,7 @@ class AdminPVController extends Controller
                 'package_changed' => $packageChanged,
             ]);
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
+            return redirect()->route('admin.pv.show', $user->id)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
@@ -277,7 +277,7 @@ class AdminPVController extends Controller
                 'old_values' => $oldValues,
             ]);
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
+            return redirect()->route('admin.pv.show', $user->id)
                 ->with('success', "{$user->name} a ete reinitialise avec succes ! Grade: Distributeur (Niv. 1) Package: Aucun. Recalcul effectue immediatement.");
 
         } catch (\Exception $e) {
@@ -354,7 +354,7 @@ class AdminPVController extends Controller
             
             $message .= "\nRecalcul effectue immediatement.";
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
+            return redirect()->route('admin.pv.show', $user->id)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
@@ -447,13 +447,120 @@ class AdminPVController extends Controller
             
             $message .= "\nRecalcul effectue immediatement.";
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
+            return redirect()->route('admin.pv.show', $user->id)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur ajout historique PV: ' . $e->getMessage());
             return back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Modification d'une entrée d'historique PV (soldes recalculés).
+     */
+    public function updateHistory(Request $request, $historyId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.1',
+            'period' => 'required|date_format:Y-m',
+            'type' => 'required|in:personal,team,monthly',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $history = PVHistory::findOrFail($historyId);
+        $user = User::findOrFail($history->user_id);
+        $oldType = $history->type;
+
+        DB::beginTransaction();
+        try {
+            $this->adjustUserBalancesForHistory($user, $history, true);
+
+            $history->update([
+                'amount' => (float) $request->amount,
+                'period' => $request->period,
+                'type' => $request->type,
+                'notes' => $request->notes,
+            ]);
+            $history->refresh();
+
+            $this->adjustUserBalancesForHistory($user, $history, false);
+            $user->saveQuietly();
+
+            DB::commit();
+
+            $teamPVCalculator = app(TeamPVCalculator::class);
+            $teamPVCalculator->updateUser($user);
+            $user->refresh();
+            $this->rankCalculator->clearCache();
+            $this->rankCalculator->recalculateUserRank($user, 'Modification historique PV');
+
+            if ($user->parrain_id && (
+                in_array($oldType, ['personal', 'monthly'], true)
+                || in_array($request->type, ['personal', 'monthly'], true)
+            )) {
+                $parrain = User::find($user->parrain_id);
+                if ($parrain && $parrain->is_active) {
+                    $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
+
+            Cache::forget("descendants_{$user->id}");
+            Cache::forget("descendants_count_{$user->id}");
+            Cache::forget("user_rank_{$user->id}");
+
+            $user->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Historique mis à jour',
+                'entry' => [
+                    'id' => $history->id,
+                    'period' => $history->period,
+                    'type' => $history->type,
+                    'amount' => (float) $history->amount,
+                    'notes' => $history->notes ?? '',
+                ],
+                'user' => [
+                    'pv_balance' => $user->pv_balance,
+                    'monthly_pv' => $user->monthly_pv,
+                    'team_pv' => $user->team_pv,
+                    'rank' => $user->rank ?? 'Distributeur',
+                    'rank_level' => $user->rank_level ?? 1,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur modification historique PV: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function adjustUserBalancesForHistory(User $user, PVHistory $history, bool $subtract): void
+    {
+        $amount = (float) $history->amount;
+        $sign = $subtract ? -1 : 1;
+        $historyPeriod = $history->period;
+        $currentPeriod = MlmPeriod::current();
+
+        if ($history->type === 'personal' || $history->type === 'monthly') {
+            $user->pv_balance = max(0, ($user->pv_balance ?? 0) + ($sign * $amount));
+            $user->bv_balance = max(0, ($user->bv_balance ?? 0) + ($sign * $amount));
+
+            if ($historyPeriod === $currentPeriod) {
+                $user->monthly_pv = max(0, ($user->monthly_pv ?? 0) + ($sign * $amount));
+                $user->monthly_bv = max(0, ($user->monthly_bv ?? 0) + ($sign * $amount));
+            }
+        }
+
+        if ($history->type === 'team') {
+            $user->team_pv = max(0, ($user->team_pv ?? 0) + ($sign * $amount));
+            $user->team_bv = max(0, ($user->team_bv ?? 0) + ($sign * $amount));
         }
     }
 
@@ -468,25 +575,7 @@ class AdminPVController extends Controller
         DB::beginTransaction();
         try {
             $user = User::find($userId);
-            $amount = $history->amount;
-            $historyPeriod = $history->period;
-            $currentPeriod = MlmPeriod::current();
-
-            // ✅ CORRECTION 1 : Protéger contre les valeurs négatives
-            if ($history->type === 'personal' || $history->type === 'monthly') {
-                $user->pv_balance = max(0, ($user->pv_balance ?? 0) - $amount);
-                $user->bv_balance = max(0, ($user->bv_balance ?? 0) - ($amount * 0.8));
-
-                // ✅ monthly_pv : ne retirer QUE si le PV est du mois en cours
-                if ($historyPeriod === $currentPeriod) {
-                    $user->monthly_pv = max(0, ($user->monthly_pv ?? 0) - $amount);
-                    $user->monthly_bv = max(0, ($user->monthly_bv ?? 0) - ($amount * 0.8));
-                }
-            }
-            if ($history->type === 'team') {
-                $user->team_pv = max(0, ($user->team_pv ?? 0) - $amount);
-                $user->team_bv = max(0, ($user->team_bv ?? 0) - ($amount * 0.8));
-            }
+            $this->adjustUserBalancesForHistory($user, $history, true);
             $user->saveQuietly();
 
             $history->delete();
@@ -565,7 +654,7 @@ class AdminPVController extends Controller
             $message = "Recalcul du grade de {$user->name} effectue.\n";
             $message .= "Nouveau grade: {$user->rank} (Niv. {$user->rank_level}).";
 
-            return redirect()->route('admin.pv.index', ['user_id' => $user->id])
+            return redirect()->route('admin.pv.show', $user->id)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
@@ -752,4 +841,5 @@ class AdminPVController extends Controller
         $teamPVCalculator = app(TeamPVCalculator::class);
         return $teamPVCalculator->calculateForUser($user);
     }
+
 }

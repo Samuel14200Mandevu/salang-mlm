@@ -227,9 +227,14 @@
     gap: 0.75rem;
   }
 
-  .admin-app .admin-page-header .header-search {
+  .admin-app .admin-page-header .header-search:not(.admin-search-panel) {
     width: 100%;
     order: 2;
+  }
+
+  .admin-app .admin-page-header > .admin-search-panel.is-open {
+    order: 2;
+    width: 100%;
   }
 
   .admin-app .admin-page-header-actions {
@@ -240,8 +245,15 @@
     order: 3;
   }
 
+  .admin-app .admin-page-header-actions .search-wrapper,
+  .admin-app .admin-page-header-actions .header-search,
+  .admin-app .admin-page-header-actions .admin-search-full {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
   .admin-app .admin-page-header-actions .btn {
-    flex: 1 1 calc(50% - 0.25rem);
+    flex: 0 0 auto;
     min-height: 2.75rem;
     justify-content: center;
   }

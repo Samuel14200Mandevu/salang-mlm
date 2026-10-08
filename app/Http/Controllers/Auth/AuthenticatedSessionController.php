@@ -61,6 +61,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->forget('error');
         $request->session()->forget('warning');
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

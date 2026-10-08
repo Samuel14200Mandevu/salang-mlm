@@ -151,10 +151,18 @@
             enableOnboarding();
         }
 
-        syncMode();
-        window.addEventListener('resize', function () {
+        function startOnboardingFlow() {
             syncMode();
-        });
+            window.addEventListener('resize', function () {
+                syncMode();
+            });
+        }
+
+        if (document.getElementById('publicMobileSplash')) {
+            document.addEventListener('salang:splash-done', startOnboardingFlow, { once: true });
+        } else {
+            startOnboardingFlow();
+        }
     }
 
     if (document.readyState === 'loading') {

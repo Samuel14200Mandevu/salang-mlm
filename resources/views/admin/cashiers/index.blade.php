@@ -300,25 +300,23 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Gestion des caissiers',
+    'subtitle' => 'Liste des caissiers pour les ventes au guichet',
+    'actions' => view('admin.cashiers.partials.index-header-actions')->render(),
+])
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Gestion des caissiers
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Liste des caissiers pour les ventes au guichet
-            </p>
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Gestion des caissiers</h1>
+            <p class="page-subtitle">Liste des caissiers pour les ventes au guichet</p>
         </div>
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouveau caissier
-        </a>
+        @include('admin.cashiers.partials.mobile-banner-actions')
     </div>
+</div>
+
+<div class="admin-mobile-page space-y-4 sm:space-y-6">
 
     <!-- Statistics -->
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">

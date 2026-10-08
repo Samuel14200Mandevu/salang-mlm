@@ -175,6 +175,14 @@ body {
 /* TABLEAU */
 .table-wrap {
     overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 767px) {
+    .table-wrap {
+        overflow-x: visible;
+    }
 }
 
 .table {
@@ -457,45 +465,258 @@ body {
     .confirm-box .actions .btn { width: 100%; }
     .footer-links { flex-wrap: wrap; gap: 1rem; }
 }
+
+.commission-period-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.commission-period-card-head .card-title {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.commission-period-card-tools {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.commission-card-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border-color, #DDE0E3);
+    background: var(--bg-card, #F8F9FA);
+    color: var(--text-primary, #1A1D23);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.commission-card-icon-btn:hover {
+    background: var(--bg-hover, #EEF0F2);
+}
+
+.commission-card-icon-btn.is-active {
+    border-color: var(--color-primary-500, #2563eb);
+    color: var(--color-primary-600, #1d4ed8);
+    background: color-mix(in srgb, var(--color-primary-500, #2563eb) 8%, var(--bg-card, #fff));
+}
+
+.commission-filter-panel {
+    display: none;
+    margin-bottom: 1rem;
+}
+
+.commission-filter-panel.is-open {
+    display: block !important;
+    animation: commission-filter-fade 0.22s ease forwards;
+}
+
+@keyframes commission-filter-fade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+    .admin-app .admin-period-panel {
+        display: none;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0 0 1rem;
+        padding: 0.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-light, #DDE0E3);
+        background: var(--bg-card, #fff);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+        max-height: min(14rem, 45vh);
+        overflow: auto;
+    }
+
+    .admin-app .admin-period-panel.is-open {
+        display: block;
+    }
+
+    .admin-app .admin-period-panel__title {
+        margin: 0 0 0.35rem;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-tertiary, #5A626A);
+    }
+
+    .admin-app .admin-period-panel__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .admin-app .admin-period-panel__option {
+        display: block;
+        padding: 0.45rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-primary, #1A1D23);
+        text-decoration: none;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .admin-app .admin-period-panel__option:hover {
+        background: var(--bg-secondary, #EEF0F2);
+    }
+
+    .admin-app .admin-period-panel__option.is-active {
+        background: color-mix(in srgb, var(--color-primary-500, #2563eb) 12%, var(--bg-card, #fff));
+        color: var(--color-primary-700, #1d4ed8);
+    }
+
+    .admin-app .commission-card-icon-btn.is-open {
+        border-color: var(--color-primary-500, #2563eb);
+        color: var(--color-primary-600, #1d4ed8);
+    }
+
+    .admin-app .main-content table.commission-history-table.admin-mobile-table tbody td.commission-history-action {
+        display: none !important;
+    }
+
+    .admin-app .main-content table.commission-history-table.admin-mobile-table tbody td.commission-history-desc {
+        display: block !important;
+        text-align: left;
+        padding-top: 0.55rem !important;
+        margin-top: 0.2rem;
+        border-top: 1px dashed var(--border-light, #DDE0E3);
+        line-height: 1.45;
+    }
+
+    .admin-app .main-content table.commission-history-table.admin-mobile-table tbody td.commission-history-desc::before {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.35rem;
+    }
+
+    .admin-app .main-content table.commission-history-table.admin-mobile-table tbody tr:not([class*='bonus-group']) td:not(.commission-history-desc):not(.commission-history-action) {
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .admin-app .main-content .card:has(.commission-history-table) {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .admin-app .commission-history-table .badge {
+        background: transparent !important;
+        border-color: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        font-weight: 600;
+    }
+
+    .admin-app .commission-history-table .badge-direct { color: #4F46E5; }
+    .admin-app .commission-history-table .badge-indirect { color: #2563EB; }
+    .admin-app .commission-history-table .badge-leadership { color: #A65A0E; }
+    .admin-app .commission-history-table .badge-cash_pos,
+    .admin-app .commission-history-table .badge-cash { color: #16a34a; }
+}
+
+@media (min-width: 768px) {
+    .admin-app .commission-period-panel-mobile,
+    .admin-app .commission-history-mobile-filters {
+        display: none !important;
+    }
+
+    .admin-app .commission-history-desktop-head {
+        display: block;
+    }
+
+    .admin-app .commission-history-desktop-filters {
+        display: flex !important;
+    }
+
+    .admin-app .commission-history-table .badge {
+        padding: 0.125rem 0.5rem !important;
+        border-radius: 9999px !important;
+    }
+
+    .admin-app .commission-history-table .badge-direct {
+        background: rgba(79, 70, 229, 0.12) !important;
+        border-color: transparent !important;
+    }
+
+    .admin-app .commission-history-table .badge-indirect {
+        background: rgba(37, 99, 235, 0.12) !important;
+        border-color: transparent !important;
+    }
+
+    .admin-app .commission-history-table .badge-leadership {
+        background: rgba(166, 90, 14, 0.12) !important;
+        border-color: transparent !important;
+    }
+
+    .admin-app .commission-history-table .badge-cash_pos {
+        background: rgba(22, 163, 74, 0.12) !important;
+        border-color: transparent !important;
+    }
+
+    .admin-app .main-content .card:has(.commission-history-table) {
+        padding: 1.25rem !important;
+    }
+}
+
+.commission-history-desktop-head {
+    display: none;
+}
 </style>
 @endpush
 
+@push('admin_mobile_greeting')
+    @include('admin.layouts.partials.mobile-greeting', [
+        'title' => 'Commissions historiques',
+        'subtitle' => 'Recalcul à partir des PV historiques',
+    ])
+@endpush
+
 @section('content')
-<div class="page-header">
+<div class="commission-history-page">
+
+<div class="page-header commission-history-desktop-head">
     <div class="top-row">
         <div>
             <h1 class="page-title">Commissions historiques</h1>
             <p class="page-subtitle">Recalcul à partir des PV historiques</p>
         </div>
         <div class="header-actions">
-            <button type="button" class="btn btn-warning btn-sm" onclick="openRecalculateModal()">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Recalculer
-            </button>
-            @if($selectedPeriod)
-            <a href="{{ url('/admin/pv/commission-history/' . $selectedPeriod . '/pdf?user_id=' . $userId) }}" class="btn btn-primary btn-sm">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Rapport Détaillé
-            </a>
-            <a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}" 
-            class="btn btn-danger btn-sm" target="_blank">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Rapport Global
-            </a>
-            @endif
-            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm">
-                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Retour
-            </a>
+            @include('admin.pv.partials.commission-history-header-actions', [
+                'selectedPeriod' => $selectedPeriod,
+                'userId' => $userId,
+            ])
         </div>
+    </div>
+</div>
+
+<div class="admin-page-header page-header animate-fadeInUp md:hidden">
+    <div class="admin-mobile-page-head">
+        <h1 class="page-title">Commissions historiques</h1>
+        <p class="page-subtitle">Recalcul à partir des PV historiques</p>
+    </div>
+    <div class="admin-page-header-actions header-actions flex flex-wrap gap-2">
+        @include('admin.pv.partials.commission-history-header-actions', [
+            'selectedPeriod' => $selectedPeriod,
+            'userId' => $userId,
+        ])
     </div>
 </div>
 
@@ -518,10 +739,18 @@ body {
 </div>
 
 <div class="card">
-    <div class="flex flex-wrap items-center justify-between mb-4">
-        <div class="card-title">Commissions par période</div>
-        <div class="flex gap-2 flex-wrap">
-            <form method="GET" class="flex gap-2 items-center">
+    @php
+        $hasPeriodFilter = filled($selectedPeriod);
+        $hasMemberFilter = filled($prefillMemberQ ?? '');
+        $commissionFilterQuery = array_filter([
+            'member_q' => request('member_q') ?: ($prefillMemberQ ?? null),
+            'user_id' => request('user_id'),
+        ], fn ($value) => filled($value));
+    @endphp
+    <form method="GET" id="commissionHistoryFilters">
+        <div class="commission-history-desktop-filters hidden md:flex flex-wrap items-center justify-between mb-4">
+            <div class="card-title mb-0">Commissions par période</div>
+            <div class="flex gap-2 flex-wrap items-center">
                 <select name="period" class="form-control" style="width: auto; min-width: 150px;" onchange="this.form.submit()">
                     <option value="">Toutes les périodes</option>
                     @foreach($periods as $p)
@@ -533,18 +762,98 @@ body {
                 <select name="user_id" class="form-control" style="width: auto; min-width: 150px;" onchange="this.form.submit()">
                     <option value="">Tous les utilisateurs</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ $userId == $u->id ? 'selected' : '' }}>
+                        <option value="{{ $u->id }}" {{ (string) $userId === (string) $u->id ? 'selected' : '' }}>
                             {{ $u->name }}
                         </option>
                     @endforeach
                 </select>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="commission-history-mobile-filters md:hidden">
+        <div class="commission-period-filter-wrap" data-admin-commission-period-picker>
+        <div class="commission-period-card-head">
+            <div class="card-title">Commissions par période</div>
+            <div class="commission-period-card-tools">
+                <button type="button"
+                        class="commission-card-icon-btn {{ $hasPeriodFilter ? 'has-filter is-active' : '' }}"
+                        id="commissionPeriodFilterToggle"
+                        data-admin-period-toggle
+                        aria-expanded="false"
+                        aria-controls="commissionPeriodFilterPanel"
+                        aria-label="Filtrer par période"
+                        title="Période">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+                <button type="button"
+                        class="commission-card-icon-btn {{ $hasMemberFilter ? 'has-filter is-active' : '' }}"
+                        id="commissionMemberSearchToggle"
+                        aria-expanded="{{ $hasMemberFilter ? 'true' : 'false' }}"
+                        aria-controls="commissionMemberSearchPanel"
+                        aria-label="Rechercher par code ou nom"
+                        title="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="commissionPeriodFilterPanel"
+             class="admin-period-panel commission-period-panel-mobile"
+             data-admin-period-panel
+             role="dialog"
+             aria-label="Filtrer par période"
+             aria-hidden="true">
+            <p class="admin-period-panel__title">Période</p>
+            <div class="admin-period-panel__list">
+                <a href="{{ route('admin.pv.commission-history.index', $commissionFilterQuery) }}"
+                   class="admin-period-panel__option {{ !$hasPeriodFilter ? 'is-active' : '' }}">
+                    Toutes les périodes
+                </a>
+                @foreach($periods as $p)
+                    @php
+                        $periodValue = $p->period;
+                        $periodLabel = $periodValue;
+                        if (preg_match('/^(\d{4})-(\d{1,2})/', (string) $periodValue, $periodParts)) {
+                            $periodLabel = str_pad($periodParts[2], 2, '0', STR_PAD_LEFT) . '/' . $periodParts[1];
+                        }
+                    @endphp
+                    <a href="{{ route('admin.pv.commission-history.index', array_merge($commissionFilterQuery, ['period' => $periodValue])) }}"
+                       class="admin-period-panel__option {{ $selectedPeriod == $periodValue ? 'is-active' : '' }}">
+                        {{ $periodLabel }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+        </div>
+
+        <div id="commissionMemberSearchPanel"
+             class="commission-filter-panel admin-search-panel {{ $hasMemberFilter ? 'is-open' : '' }}"
+             aria-hidden="{{ $hasMemberFilter ? 'false' : 'true' }}">
+            <label class="form-label text-xs font-semibold uppercase tracking-wide text-secondary" for="commissionMemberSearchInput">Membre (code ou nom)</label>
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="commissionMemberSearchInput"
+                       name="member_q"
+                       class="form-control search-input w-full pl-9 commission-filter-mobile-only"
+                       placeholder="Code sponsor ou nom"
+                       value="{{ $prefillMemberQ ?? '' }}"
+                       autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm w-full mt-2">Appliquer</button>
+        </div>
+        </div>
+    </form>
 
     @if($commissions->count() > 0)
     <div class="table-wrap">
-        <table class="table">
+        <table class="table commission-history-table">
             <thead>
                 <tr>
                     <th>Période</th>
@@ -603,8 +912,8 @@ body {
                             <td class="text-right font-medium">${{ number_format($commission->amount, 2) }}</td>
                             <td class="text-center">{{ $commission->percentage }}%</td>
                             <td class="text-center">{{ number_format($commission->pv_used, 1) }}</td>
-                            <td class="text-sm text-secondary">{{ $commission->description }}</td>
-                            <td class="text-center">
+                            <td class="text-sm text-secondary commission-history-desc" data-label="Description">{{ $commission->description }}</td>
+                            <td class="text-center commission-history-action">
                                 <a href="{{ route('admin.pv.commission-history.details', $commission->period) }}" class="btn btn-primary btn-sm">
                                     <svg class="icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -716,6 +1025,126 @@ document.addEventListener('keydown', function(e) {
         });
     }
 });
+
+(function initCommissionPeriodFilters() {
+    var mq = window.matchMedia('(max-width: 767px)');
+
+    function syncCommissionFilterFields() {
+        var mobile = mq.matches;
+        document.querySelectorAll('.commission-history-desktop-filters select').forEach(function (el) {
+            el.disabled = mobile;
+        });
+        document.querySelectorAll('.commission-history-mobile-filters input, .commission-history-mobile-filters select').forEach(function (el) {
+            el.disabled = !mobile;
+        });
+    }
+
+    function setSearchPanelOpen(panel, toggle, open) {
+        if (!panel || !toggle) {
+            return;
+        }
+        panel.classList.toggle('is-open', open);
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.classList.toggle('is-active', open || toggle.classList.contains('has-filter'));
+        if (open) {
+            var focusEl = panel.querySelector('input');
+            if (focusEl) {
+                window.setTimeout(function () { focusEl.focus(); }, 120);
+            }
+        }
+    }
+
+    function setPeriodPanelOpen(panel, toggle, open) {
+        if (!panel || !toggle) {
+            return;
+        }
+        panel.classList.toggle('is-open', open);
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.classList.toggle('is-open', open);
+    }
+
+    function closePeriodPanel() {
+        var periodToggle = document.getElementById('commissionPeriodFilterToggle');
+        var periodPanel = document.getElementById('commissionPeriodFilterPanel');
+        setPeriodPanelOpen(periodPanel, periodToggle, false);
+    }
+
+    function bindCommissionFilterToggles() {
+        var periodPicker = document.querySelector('[data-admin-commission-period-picker]');
+        var periodToggle = document.getElementById('commissionPeriodFilterToggle');
+        var periodPanel = document.getElementById('commissionPeriodFilterPanel');
+        var searchToggle = document.getElementById('commissionMemberSearchToggle');
+        var searchPanel = document.getElementById('commissionMemberSearchPanel');
+
+        if (periodToggle && periodPanel) {
+            periodToggle.addEventListener('click', function (event) {
+                event.stopPropagation();
+                var open = !periodPanel.classList.contains('is-open');
+                if (open && searchPanel) {
+                    setSearchPanelOpen(searchPanel, searchToggle, false);
+                }
+                setPeriodPanelOpen(periodPanel, periodToggle, open);
+            });
+
+            periodPanel.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    closePeriodPanel();
+                });
+            });
+        }
+
+        if (periodPicker) {
+            periodPicker.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+        }
+
+        if (searchToggle && searchPanel) {
+            searchPanel.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+
+            searchToggle.addEventListener('click', function (event) {
+                event.stopPropagation();
+                var open = !searchPanel.classList.contains('is-open');
+                if (open) {
+                    closePeriodPanel();
+                }
+                setSearchPanelOpen(searchPanel, searchToggle, open);
+            });
+        }
+
+        document.addEventListener('click', function () {
+            closePeriodPanel();
+            if (searchPanel && searchToggle) {
+                setSearchPanelOpen(searchPanel, searchToggle, false);
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closePeriodPanel();
+                if (searchPanel && searchToggle) {
+                    setSearchPanelOpen(searchPanel, searchToggle, false);
+                }
+            }
+        });
+    }
+
+    syncCommissionFilterFields();
+
+    if (mq.matches) {
+        bindCommissionFilterToggles();
+    }
+
+    mq.addEventListener('change', function () {
+        syncCommissionFilterFields();
+    });
+})();
 </script>
+
+</div>{{-- .commission-history-page --}}
 
 @endsection

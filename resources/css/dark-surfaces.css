@@ -399,7 +399,8 @@ html.dark .member-app .profile-account-row__label {
   color: var(--text-primary) !important;
 }
 
-html.dark .member-app .profile-account-row__icon {
+html.dark .member-app .profile-account-row__icon:not(.profile-account-row__icon--danger):not([class*='profile-account-row__icon--tone-']),
+html.dark .member-app .member-mobile-sheet__tile-icon:not([class*='member-mobile-sheet__tile-icon--tone-']) {
   background: var(--bg-secondary) !important;
   color: var(--text-secondary) !important;
 }

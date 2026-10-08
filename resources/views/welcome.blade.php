@@ -12,6 +12,10 @@
     <link rel="preload" as="image" href="{{ $heroImage }}">
 @endpush
 
+@push('body-start')
+    @include('partials.public.mobile-splash')
+@endpush
+
 @section('content')
     <div class="public-onboarding-chrome" id="publicOnboardingChrome" hidden>
         <div class="public-onboarding-chrome-inner">
@@ -21,7 +25,7 @@
             </p>
             <div class="public-onboarding-dots" id="publicOnboardingDots" role="tablist" aria-label="Étapes de découverte"></div>
             <div class="public-onboarding-actions">
-                <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Passer</button>
+                <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Explorer le site</button>
                 <button type="button" class="public-btn-primary public-onboarding-next" id="publicOnboardingNext">Suivant</button>
             </div>
         </div>

@@ -1,5 +1,6 @@
 import './bootstrap';
 import './public-animations';
+import './public-splash';
 import './public-onboarding';
 import './auth-forms';
 import './auth-password';

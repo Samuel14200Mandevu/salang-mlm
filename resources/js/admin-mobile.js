@@ -59,6 +59,471 @@
     });
   }
 
+  function wrapAdminTitleText(head) {
+    if (!head || head.querySelector(':scope > .admin-title-banner__text')) {
+      return;
+    }
+    const tools = head.querySelector(':scope > .admin-title-banner__tools');
+    const textWrap = document.createElement('div');
+    textWrap.className = 'admin-title-banner__text';
+    const nodes = [...head.childNodes].filter(
+      (node) => node !== tools && !(node.nodeType === 1 && node.classList?.contains('admin-title-banner__tools'))
+    );
+    nodes.forEach((node) => textWrap.appendChild(node));
+    if (textWrap.childNodes.length) {
+      head.insertBefore(textWrap, tools || null);
+    }
+  }
+
+  function ensureAdminTitleTools(container) {
+    let tools = container.querySelector(':scope > .admin-title-banner__tools');
+    if (!tools) {
+      tools = document.createElement('div');
+      tools.className = 'admin-title-banner__tools';
+      container.appendChild(tools);
+    }
+    return tools;
+  }
+
+  function collectHeaderActionNodes(actions) {
+    if (!actions) {
+      return [];
+    }
+    const nodes = [];
+    actions.childNodes.forEach((child) => {
+      if (child.nodeType !== 1) {
+        return;
+      }
+      if (child.matches('.search-wrapper, .header-search, .admin-search-full')) {
+        return;
+      }
+      if (child.querySelector?.('.search-input, #searchInput') && !child.querySelector('.btn')) {
+        return;
+      }
+      if (child.matches('.btn, a[class*="btn-"], button.btn') || child.tagName === 'FORM') {
+        nodes.push(child);
+      }
+    });
+    return nodes;
+  }
+
+  const ADMIN_SEARCH_ICON =
+    '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+    + '<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>'
+    + '</svg>';
+
+  function findAdminSearchSource(page) {
+    const selectors = [
+      '.admin-page-header .header-search',
+      '.admin-page-header-actions > .header-search',
+      '.admin-page-header-actions > .search-wrapper',
+      '.admin-sticky-toolbar .header-search',
+      '.header-with-search .header-right > .search-wrapper',
+      '.header-with-search .header-search',
+    ];
+
+    for (let i = 0; i < selectors.length; i += 1) {
+      const el = page.querySelector(selectors[i]);
+      if (el && !el.closest('.admin-search-panel')) {
+        return el;
+      }
+    }
+
+    const wrap = page.querySelector(
+      '.admin-page-header .search-wrapper, .header-with-search .search-wrapper'
+    );
+    if (wrap && !wrap.closest('.admin-search-panel')) {
+      return wrap.closest('.header-search') || wrap;
+    }
+
+    return null;
+  }
+
+  function placeAdminSearchPanel(page, panel) {
+    const greeting = page.querySelector('.admin-mobile-greeting');
+    const pageHead = page.querySelector('.admin-mobile-page-head');
+    const header = page.querySelector('.admin-page-header');
+
+    if (greeting) {
+      greeting.insertAdjacentElement('afterend', panel);
+      return;
+    }
+    if (pageHead) {
+      pageHead.insertAdjacentElement('afterend', panel);
+      return;
+    }
+    if (header) {
+      header.insertAdjacentElement('afterbegin', panel);
+      return;
+    }
+    page.insertBefore(panel, page.firstChild);
+  }
+
+  function createAdminSearchToggle(panelId, expanded) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'admin-banner-icon-btn' + (expanded ? ' is-active' : '');
+    btn.dataset.adminSearchToggle = '1';
+    btn.setAttribute('aria-controls', panelId);
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    btn.setAttribute('aria-label', 'Rechercher');
+    btn.innerHTML = ADMIN_SEARCH_ICON;
+    return btn;
+  }
+
+  function bindAdminSearchToggle(page) {
+    const panel = page.querySelector('[data-admin-search-panel]');
+    if (!panel) {
+      return;
+    }
+
+    const input = panel.querySelector('.search-input, #searchInput, input[type="text"]');
+    const toggles = page.querySelectorAll('[data-admin-search-toggle]');
+
+    function setSearchPanelOpen(open) {
+      panel.classList.toggle('is-open', open);
+      panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      toggles.forEach((toggle) => {
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.classList.toggle('is-active', open);
+      });
+      if (open && input) {
+        window.setTimeout(function () {
+          input.focus();
+        }, 120);
+      }
+    }
+
+    toggles.forEach((toggle) => {
+      if (toggle.dataset.adminSearchBound === '1') {
+        return;
+      }
+      toggle.dataset.adminSearchBound = '1';
+      toggle.addEventListener('click', function () {
+        setSearchPanelOpen(!panel.classList.contains('is-open'));
+      });
+    });
+
+    if (input && input.value.trim() !== '' && panel.getAttribute('aria-hidden') !== 'false') {
+      setSearchPanelOpen(true);
+    }
+  }
+
+  function mountAdminSearchToggles(page, panelId, expanded) {
+    page.querySelectorAll('.admin-mobile-greeting, .admin-mobile-page-head').forEach((banner) => {
+      wrapAdminTitleText(banner);
+      const tools = ensureAdminTitleTools(banner);
+      if (tools.querySelector('[data-admin-search-toggle]')) {
+        return;
+      }
+      tools.insertBefore(createAdminSearchToggle(panelId, expanded), tools.firstChild);
+    });
+  }
+
+  function restoreDesktopAdminSearch(page) {
+    const panel = page.querySelector('[data-admin-search-panel]');
+    if (!panel) {
+      return;
+    }
+
+    const wrap = panel.querySelector('.search-wrapper, .admin-shop-search');
+    const header = page.querySelector('.admin-page-header, .header-with-search');
+    const actions =
+      header?.querySelector('.admin-page-header-actions, .header-right, .admin-sticky-toolbar')
+      || header;
+
+    if (wrap && actions) {
+      let host = actions.querySelector('.header-search');
+      if (!host) {
+        host = document.createElement('div');
+        host.className = 'header-search admin-search-full';
+        const sticky = actions.querySelector('.admin-sticky-toolbar');
+        if (sticky) {
+          sticky.insertBefore(host, sticky.firstChild);
+        } else {
+          actions.insertBefore(host, actions.firstChild);
+        }
+      }
+      host.appendChild(wrap);
+    }
+
+    panel.remove();
+    page.querySelectorAll('[data-admin-search-toggle]').forEach((btn) => btn.remove());
+  }
+
+  function mountAdminSearchTogglesForPvImport(page, panelId) {
+    page.querySelectorAll('.admin-mobile-greeting').forEach((banner) => {
+      wrapAdminTitleText(banner);
+      const tools = ensureAdminTitleTools(banner);
+      if (tools.querySelector('[data-admin-search-toggle]')) {
+        return;
+      }
+      const btn = createAdminSearchToggle(panelId, false);
+      btn.dataset.adminPvImportSearchToggle = '1';
+      tools.insertBefore(btn, tools.firstChild);
+    });
+  }
+
+  function enhanceAdminPvImportSearch(page) {
+    const host = page.querySelector('[data-admin-pv-import-search]');
+    if (!host) {
+      return;
+    }
+
+    const existingPanel = page.querySelector('[data-admin-pv-import-search-panel]');
+
+    if (!MQ.matches) {
+      if (existingPanel) {
+        const row = existingPanel.querySelector('.pv-import-search-row');
+        if (row) {
+          host.appendChild(row);
+          host.classList.remove('is-search-host-empty');
+        }
+        existingPanel.remove();
+      }
+      page.querySelectorAll('[data-admin-pv-import-search-toggle]').forEach((btn) => btn.remove());
+      return;
+    }
+
+    if (existingPanel) {
+      mountAdminSearchTogglesForPvImport(page, existingPanel.id);
+      bindAdminSearchToggle(page);
+      return;
+    }
+
+    const row = host.querySelector('.pv-import-search-row');
+    if (!row) {
+      return;
+    }
+
+    const panel = document.createElement('div');
+    panel.className = 'admin-search-panel';
+    panel.id = 'adminPvImportSearchPanel';
+    panel.dataset.adminSearchPanel = '1';
+    panel.dataset.adminPvImportSearchPanel = '1';
+    panel.setAttribute('aria-hidden', 'true');
+    panel.appendChild(row);
+
+    const greeting = page.querySelector('.admin-mobile-greeting');
+    if (greeting) {
+      greeting.insertAdjacentElement('afterend', panel);
+    } else {
+      const head = page.querySelector('.admin-mobile-page-head');
+      if (head) {
+        head.insertAdjacentElement('afterend', panel);
+      } else {
+        page.insertBefore(panel, page.firstChild);
+      }
+    }
+
+    host.classList.add('is-search-host-empty');
+
+    mountAdminSearchTogglesForPvImport(page, panel.id);
+    bindAdminSearchToggle(page);
+  }
+
+  function restoreDesktopAdminTitleActions(page) {
+    page.querySelectorAll('.admin-page-header, .header-with-search').forEach((header) => {
+      const actions = header.querySelector('.admin-page-header-actions, .header-right');
+      if (!actions) {
+        return;
+      }
+
+      page.querySelectorAll('.admin-title-banner__tools').forEach((tools) => {
+        collectHeaderActionNodes(tools).forEach((node) => {
+          if (!actions.contains(node)) {
+            actions.appendChild(node);
+          }
+        });
+        tools.querySelectorAll('[data-admin-search-toggle]').forEach((btn) => btn.remove());
+      });
+    });
+
+    page.querySelectorAll('.admin-action-rail.hidden').forEach((rail) => {
+      rail.classList.remove('hidden');
+    });
+  }
+
+  function enhanceAdminSearchPanels(root) {
+    if (!root || !document.body.classList.contains('admin-app')) {
+      return;
+    }
+
+    const page = root.querySelector('.admin-mobile-page') || root;
+
+    if (!MQ.matches) {
+      restoreDesktopAdminSearch(page);
+      return;
+    }
+
+    if (page.querySelector('[data-admin-search-panel]')) {
+      bindAdminSearchToggle(page);
+      mountAdminSearchToggles(
+        page,
+        'adminSearchPanel',
+        page.querySelector('#adminSearchPanel')?.classList.contains('is-open') ?? false
+      );
+      return;
+    }
+
+    const source = findAdminSearchSource(page);
+    if (!source) {
+      return;
+    }
+
+    const input = source.querySelector('.search-input, #searchInput, input[type="text"]');
+    const hasQuery = Boolean(input && input.value.trim() !== '');
+
+    const panel = document.createElement('div');
+    panel.className = 'admin-search-panel' + (hasQuery ? ' is-open' : '');
+    panel.id = 'adminSearchPanel';
+    panel.dataset.adminSearchPanel = '1';
+    panel.setAttribute('aria-hidden', hasQuery ? 'false' : 'true');
+
+    let nodeToMove = source;
+    if (source.classList.contains('header-search')) {
+      const wrap = source.querySelector('.search-wrapper');
+      nodeToMove = wrap || source;
+    }
+
+    if (nodeToMove.classList.contains('search-wrapper')) {
+      nodeToMove.classList.add('admin-shop-search');
+    }
+
+    panel.appendChild(nodeToMove);
+    if (source !== nodeToMove && source.parentElement) {
+      source.remove();
+    }
+
+    placeAdminSearchPanel(page, panel);
+    mountAdminSearchToggles(page, panel.id, hasQuery);
+    bindAdminSearchToggle(page);
+  }
+
+  function normalizeLegacyPageHeaders(page) {
+    page.querySelectorAll('.page-header:not(.admin-page-header):not(.admin-desktop-page-head)').forEach((header) => {
+      header.classList.add('admin-page-header');
+    });
+
+    page.querySelectorAll('.page-header .top-row').forEach((row) => {
+      if (row.closest('.admin-desktop-page-head')) {
+        return;
+      }
+      const head = row.querySelector(':scope > div:first-child');
+      const actions = row.querySelector('.header-actions');
+      if (head && !head.classList.contains('header-actions')) {
+        head.classList.add('admin-mobile-page-head');
+      }
+      if (actions) {
+        actions.classList.add('admin-page-header-actions');
+      }
+    });
+
+    page.querySelectorAll('.header-with-search:not(.admin-page-header)').forEach((header) => {
+      header.classList.add('admin-page-header');
+      const left = header.querySelector('.header-left');
+      if (left) {
+        left.classList.add('admin-mobile-page-head');
+      }
+      const right = header.querySelector('.header-right');
+      if (right) {
+        right.classList.add('admin-page-header-actions');
+      }
+    });
+
+    page.querySelectorAll('.admin-page-header.flex, .flex.admin-page-header').forEach((header) => {
+      const head = header.querySelector(':scope > .admin-mobile-page-head, :scope > div:first-child');
+      if (head && !head.classList.contains('admin-page-header-actions')) {
+        head.classList.add('admin-mobile-page-head');
+      }
+    });
+  }
+
+  function restoreDesktopAdminChrome(root) {
+    if (!root) {
+      return;
+    }
+    const page = root.querySelector('.admin-mobile-page') || root;
+    normalizeLegacyPageHeaders(page);
+    restoreDesktopAdminSearch(page);
+    restoreDesktopAdminTitleActions(page);
+    page.querySelectorAll('.admin-action-rail.hidden').forEach((rail) => {
+      rail.classList.remove('hidden');
+    });
+    page.querySelectorAll('.admin-mobile-greeting[data-auto-greeting="1"]').forEach((el) => {
+      el.remove();
+    });
+    if (page.dataset.adminMobileGreetingAuto === '1') {
+      delete page.dataset.adminMobileGreetingAuto;
+    }
+  }
+
+  function relocateAdminTitleActions(root) {
+    if (!root || !document.body.classList.contains('admin-app')) {
+      return;
+    }
+
+    const page = root.querySelector('.admin-mobile-page') || root;
+    normalizeLegacyPageHeaders(page);
+
+    if (!MQ.matches) {
+      restoreDesktopAdminTitleActions(page);
+      return;
+    }
+
+    page.querySelectorAll('.admin-mobile-greeting').forEach((greeting) => {
+      wrapAdminTitleText(greeting);
+      const tools = ensureAdminTitleTools(greeting);
+      const header = page.querySelector('.admin-page-header:not(.admin-desktop-page-head)');
+      const actions = header?.querySelector('.admin-page-header-actions');
+      collectHeaderActionNodes(actions).forEach((node) => {
+        if (!tools.contains(node)) {
+          tools.appendChild(node);
+        }
+      });
+    });
+
+    page.querySelectorAll('.admin-page-header').forEach((header) => {
+      if (header.classList.contains('admin-desktop-page-head')) {
+        return;
+      }
+      const head = header.querySelector('.admin-mobile-page-head');
+      if (!head) {
+        return;
+      }
+      if (head.classList.contains('is-mobile-banner') && head.querySelector('.admin-title-banner__tools')) {
+        wrapAdminTitleText(head);
+        return;
+      }
+      wrapAdminTitleText(head);
+      const tools = ensureAdminTitleTools(head);
+      const actions = header.querySelector('.admin-page-header-actions');
+      collectHeaderActionNodes(actions).forEach((node) => {
+        if (!tools.contains(node)) {
+          tools.appendChild(node);
+        }
+      });
+    });
+
+    page.querySelectorAll('.admin-mobile-page-head').forEach((head) => {
+      if (head.closest('.admin-page-header')) {
+        return;
+      }
+      const rail = head.nextElementSibling;
+      if (!rail?.classList.contains('admin-action-rail')) {
+        return;
+      }
+      wrapAdminTitleText(head);
+      const tools = ensureAdminTitleTools(head);
+      rail.querySelectorAll('.btn, a[class*="btn-"], form').forEach((node) => {
+        if (!tools.contains(node)) {
+          tools.appendChild(node);
+        }
+      });
+      rail.classList.add('hidden');
+    });
+  }
+
   function initMobilePageChrome(root) {
     if (!root || !MQ.matches) {
       return;
@@ -73,12 +538,26 @@
       return;
     }
 
+    const hasCustomMobileBanner = page.querySelector('.admin-mobile-page-head.is-mobile-banner');
+
+    if (hasCustomMobileBanner) {
+      page.querySelectorAll('.admin-mobile-greeting[data-auto-greeting="1"]').forEach((el) => {
+        el.remove();
+      });
+      if (page.dataset.adminMobileGreetingAuto === '1') {
+        delete page.dataset.adminMobileGreetingAuto;
+      }
+    }
+
     const hasGreeting =
       page.querySelector('.admin-mobile-greeting') ||
-      page.querySelector('.admin-profile-hero');
+      page.querySelector('.admin-profile-hero') ||
+      hasCustomMobileBanner;
 
     if (!hasGreeting && page.dataset.adminMobileGreetingAuto !== '1') {
-      const h1 = page.querySelector('h1');
+      const h1 = Array.from(page.querySelectorAll('h1')).find(function (el) {
+        return !el.closest('.admin-desktop-page-head, .admin-mobile-greeting, .admin-profile-hero');
+      });
       if (h1 && !h1.closest('.admin-mobile-greeting, .admin-profile-hero')) {
         const titleBlock = h1.parentElement;
         const subtitle = titleBlock?.querySelector(':scope > p');
@@ -175,7 +654,26 @@
       return;
     }
     const root = document.querySelector('.main-content');
+    if (!root) {
+      return;
+    }
+
+    if (!MQ.matches) {
+      restoreDesktopAdminChrome(root);
+      enhanceAdminTables(root);
+      if (typeof window.initSalangPagination === 'function') {
+        window.initSalangPagination(root);
+      }
+      return;
+    }
+
     initMobilePageChrome(root);
+    enhanceAdminSearchPanels(root);
+    const page = root.querySelector('.admin-mobile-page') || root;
+    if (page) {
+      enhanceAdminPvImportSearch(page);
+    }
+    relocateAdminTitleActions(root);
     enhanceAdminTables(root);
     if (typeof window.initSalangPagination === 'function') {
       window.initSalangPagination(root);

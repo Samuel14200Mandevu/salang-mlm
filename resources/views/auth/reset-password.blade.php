@@ -62,17 +62,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     form?.addEventListener('submit', function (e) {
-        const email = form.querySelector('#email')?.value.trim() ?? '';
-        const password = form.querySelector('#password')?.value ?? '';
-        const confirm = form.querySelector('#password_confirmation')?.value ?? '';
+        const setFieldError = window.salangAuthSetFieldError;
+        const emailInput = form.querySelector('#email');
+        const passwordInput = form.querySelector('#password');
+        const confirmInput = form.querySelector('#password_confirmation');
+        const email = emailInput?.value.trim() ?? '';
+        const password = passwordInput?.value ?? '';
+        const confirm = confirmInput?.value ?? '';
+
+        window.salangAuthClearJsFieldErrors?.(form);
+
+        let blocked = false;
         if (!emailRe.test(email)) {
-            e.preventDefault();
-            window.showToast?.('Adresse email invalide.', 'error');
-            return;
+            setFieldError?.(emailInput, 'Adresse email invalide.');
+            blocked = true;
         }
-        if (password.length < 8 || password !== confirm) {
+        if (password.length < 8) {
+            setFieldError?.(passwordInput, 'Mot de passe : 8 caractères minimum.');
+            blocked = true;
+        } else if (password !== confirm) {
+            setFieldError?.(confirmInput, 'Les mots de passe ne correspondent pas.');
+            blocked = true;
+        }
+        if (blocked) {
             e.preventDefault();
-            window.showToast?.('Vérifiez le mot de passe et sa confirmation.', 'error');
         }
     });
 });
