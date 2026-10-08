@@ -1,0 +1,60 @@
+/**
+ * Thème couleur grade — bandeau accueil + carte dashboard (pas drawer, pas barre du bas).
+ * --member-rank-accent sur <body> (route dashboard).
+ */
+
+.member-app.member-home-rank-theme {
+  --member-home-head-gradient: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--member-rank-accent) 38%, #000) 0%,
+    color-mix(in srgb, var(--member-rank-accent) 58%, #000) 32%,
+    var(--member-rank-accent) 62%,
+    color-mix(in srgb, var(--member-rank-accent) 72%, #fff) 100%
+  );
+  --dashboard-warm: color-mix(in srgb, var(--member-rank-accent) 76%, var(--color-accent-400) 24%);
+  --dashboard-warm-soft: color-mix(in srgb, var(--member-rank-accent) 86%, var(--color-accent-300) 14%);
+}
+
+html.dark .member-app.member-home-rank-theme {
+  --member-home-head-gradient: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--member-rank-accent) 28%, #000) 0%,
+    color-mix(in srgb, var(--member-rank-accent) 48%, #000) 38%,
+    color-mix(in srgb, var(--member-rank-accent) 82%, #000) 100%
+  );
+}
+
+/* Bandeau accueil (pas le header du drawer) */
+.member-app.member-home-rank-theme .main-wrapper--member-home::before {
+  background: var(--member-home-head-gradient);
+}
+
+.member-app.member-home-rank-theme .main-wrapper--member-home::after {
+  background: linear-gradient(
+    90deg,
+    var(--member-rank-accent) 0%,
+    color-mix(in srgb, var(--member-rank-accent) 65%, var(--color-accent-500) 35%) 48%,
+    var(--color-accent-500) 100%
+  );
+}
+
+/* Drawer : bandeau + sélection menu — bleu Salang (pas la couleur grade) */
+.member-app.member-home-rank-theme #sidebar .sidebar-mobile-drawer-head {
+  background: var(--member-mobile-head-gradient);
+}
+
+.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active {
+  background: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-card));
+  color: var(--text-primary);
+  border-left-color: transparent;
+  box-shadow: none;
+}
+
+.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .label {
+  color: var(--color-primary-700);
+}
+
+.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active svg,
+.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .sidebar-link-icon {
+  color: inherit;
+}

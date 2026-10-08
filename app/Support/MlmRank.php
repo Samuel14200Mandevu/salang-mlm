@@ -36,4 +36,13 @@ class MlmRank
 
         return 'badge-level badge-level-' . $level;
     }
+
+    /** Couleur d’accent grade (alignée sur config/dashboard-levels.php) */
+    public static function dashboardAccent(?int $level): string
+    {
+        $level = max(0, min(9, (int) ($level ?? 1)));
+        $config = config('dashboard-levels.'.$level) ?? config('dashboard-levels.1');
+
+        return $config['gradient'] ?? '#1e5dad';
+    }
 }

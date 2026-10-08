@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 @include('layouts.partials.head')
-<body class="cashier-app member-app public-body h-full bg-[var(--bg-page)] text-[var(--text-primary)] antialiased">
+@php
+    $isMemberHomeRankTheme = auth()->check() && request()->routeIs('dashboard');
+    $memberRankAccent = $isMemberHomeRankTheme
+        ? \App\Support\MlmRank::dashboardAccent(auth()->user()->rank_level)
+        : null;
+@endphp
+<body @class([
+    'cashier-app member-app public-body h-full bg-[var(--bg-page)] text-[var(--text-primary)] antialiased',
+    $isMemberHomeRankTheme ? 'member-home-rank-theme' : null,
+]) @if($memberRankAccent) style="--member-rank-accent: {{ $memberRankAccent }}; --dashboard-accent: {{ $memberRankAccent }};" @endif>
     @include('layouts.partials.app-shell-open')
     @include('layouts.partials.sidebar')
     @include('layouts.partials.main-content')
