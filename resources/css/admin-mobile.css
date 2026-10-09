@@ -346,9 +346,9 @@
 
   /* Fiche utilisateur & grilles */
   .admin-app .grid-cols-2,
-  .admin-app .sm\\:grid-cols-2,
-  .admin-app .md\\:grid-cols-3,
-  .admin-app .lg\\:grid-cols-4 {
+  .admin-app .sm\:grid-cols-2,
+  .admin-app .md\:grid-cols-3,
+  .admin-app .lg\:grid-cols-4 {
     grid-template-columns: 1fr !important;
   }
 

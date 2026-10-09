@@ -147,6 +147,11 @@
     color: #1C7E4A;
     border-color: rgba(28, 126, 74, 0.15);
 }
+.role-option .role-badge.it-manager {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0f766e;
+    border-color: rgba(13, 148, 136, 0.18);
+}
 .role-option.selected {
     border-color: var(--primary-blue);
     background: var(--primary-blue-bg);
@@ -271,29 +276,50 @@
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@php
+    $editSubtitle = 'ID ' . $user->id;
+    $editBackBtn = '<a href="' . e(route('admin.users.show', $user)) . '" class="btn btn-outline btn-sm">'
+        . '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+        . '<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
+        . '</svg> Retour</a>';
+    $editAvatarHtml = '';
+    if ($user->avatar) {
+        $editAvatarHtml = '<img src="' . e(asset('storage/avatars/' . $user->avatar)) . '" alt="" class="user-avatar">';
+    } else {
+        $editAvatarHtml = '<div class="user-avatar-placeholder">' . e(strtoupper(substr($user->name, 0, 1))) . '</div>';
+    }
+    $editDesktopActions = $editBackBtn . '<div class="avatar-wrapper flex-shrink-0">' . $editAvatarHtml . '</div>';
+@endphp
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Modifier {{ $user->name }}
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                ID: {{ $user->id }}
-            </p>
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Modifier ' . $user->name,
+    'subtitle' => $editSubtitle,
+    'actions' => $editDesktopActions,
+])
+
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text admin-title-banner__text--user-edit">
+            <div class="admin-title-banner__avatar">
+                @if($user->avatar)
+                    <img src="{{ asset('storage/avatars/' . $user->avatar) }}"
+                         alt="" class="user-avatar">
+                @else
+                    <div class="user-avatar-placeholder">
+                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                    </div>
+                @endif
+            </div>
+            <div class="admin-title-banner__copy">
+                <h1 class="page-title">Modifier</h1>
+                <p class="page-subtitle">{{ $user->name }} · {{ $editSubtitle }}</p>
+            </div>
         </div>
-        <div class="avatar-wrapper ml-auto flex-shrink-0">
-            @if($user->avatar)
-                <img src="{{ asset('storage/avatars/' . $user->avatar) }}"
-                     alt="Avatar" class="user-avatar">
-            @else
-                <div class="user-avatar-placeholder">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
-            @endif
-        </div>
+        @include('admin.users.partials.edit-mobile-banner-actions', ['user' => $user])
     </div>
+</div>
+
+<div class="space-y-4 sm:space-y-6">
 
     @if($errors->any())
         <div class="alert-danger animate-fadeInUp delay-1">
@@ -477,45 +503,11 @@
                 </div>
 
                 <!-- Role -->
+                @php
+                    $currentRole = $user->roles->first()?->name ?? 'user';
+                @endphp
                 <div class="form-group md:col-span-2">
-                    <label>Rôle de l'utilisateur <span class="required">*</span></label>
-                    <span class="help-text block mb-2">Sélectionnez le rôle que cet utilisateur aura</span>
-
-                    <div class="space-y-2" id="roleSelector">
-                        @php
-                            $currentRole = $user->roles->first()?->name ?? 'user';
-                        @endphp
-
-                        <label class="role-option {{ $currentRole === 'user' ? 'selected' : '' }}" id="role-user">
-                            <input type="radio" name="role" value="user" {{ $currentRole === 'user' ? 'checked' : '' }}>
-                            <div class="role-info">
-                                <div class="role-name">Membre</div>
-                                <div class="role-desc">Accès au dashboard, achats, commissions, réseau MLM</div>
-                            </div>
-                            <span class="role-badge user">Standard</span>
-                        </label>
-
-                        <label class="role-option {{ $currentRole === 'cashier' ? 'selected' : '' }}" id="role-cashier">
-                            <input type="radio" name="role" value="cashier" {{ $currentRole === 'cashier' ? 'checked' : '' }}>
-                            <div class="role-info">
-                                <div class="role-name">Caissier</div>
-                                <div class="role-desc">Accès au Point de Vente (POS), ventes au guichet</div>
-                            </div>
-                            <span class="role-badge cashier">Ventes</span>
-                        </label>
-
-                        <label class="role-option {{ $currentRole === 'admin' ? 'selected' : '' }}" id="role-admin">
-                            <input type="radio" name="role" value="admin" {{ $currentRole === 'admin' ? 'checked' : '' }}>
-                            <div class="role-info">
-                                <div class="role-name">Administrateur</div>
-                                <div class="role-desc">Accès complet à l'administration, gestion utilisateurs</div>
-                            </div>
-                            <span class="role-badge admin">Admin</span>
-                        </label>
-                    </div>
-                    @error('role')
-                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
-                    @enderror
+                    @include('admin.users.partials.role-select', ['selectedRole' => old('role', $currentRole)])
                 </div>
 
                 <!-- Status -->
@@ -553,6 +545,8 @@
                                 Les caissiers sont des employés. Pas de code de parrainage, pas de commissions, pas de réseau MLM.
                             @elseif($currentRole === 'admin')
                                 Administrateur avec accès complet à l'administration.
+                            @elseif($currentRole === 'it_manager')
+                                Accès Supervision (assistance membres, publications).
                             @else
                                 Un code de parrain unique a été généré. Il peut bénéficier du système MLM.
                             @endif
@@ -619,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ═══════════════════════════════════════════════════════════
        GESTION DU RÔLE
     ═══════════════════════════════════════════════════════════ */
-    const roleOptions = document.querySelectorAll('.role-option');
+    const roleSelect = document.getElementById('userRoleSelect');
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
@@ -628,7 +622,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const infoMessages = {
         user: 'Un code de parrain unique a été généré. Il peut bénéficier du système MLM et des commissions.',
         cashier: 'Les caissiers sont des employés. Pas de code de parrainage, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
-        admin: 'Administrateur avec accès complet. Un code de parrain a été généré automatiquement.'
+        admin: 'Administrateur avec accès complet. Un code de parrain a été généré automatiquement.',
+        it_manager: 'Accès Supervision (assistance membres, publications). Un code de parrain sera conservé ou généré si besoin.'
     };
 
     function updateRoleDisplay(role) {
@@ -645,25 +640,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const selectedRadio = document.querySelector('input[name="role"]:checked');
-    if (selectedRadio) {
-        updateRoleDisplay(selectedRadio.value);
-    }
-
-    roleOptions.forEach(function(option) {
-        option.addEventListener('click', function() {
-            roleOptions.forEach(function(opt) {
-                opt.classList.remove('selected');
-            });
-            this.classList.add('selected');
-
-            var radio = this.querySelector('input[type="radio"]');
-            if (radio) {
-                radio.checked = true;
-                updateRoleDisplay(radio.value);
-            }
+    if (roleSelect) {
+        updateRoleDisplay(roleSelect.value);
+        roleSelect.addEventListener('change', function () {
+            updateRoleDisplay(roleSelect.value);
         });
-    });
+    }
 
     /* ═══════════════════════════════════════════════════════════
        VÉRIFICATION AJAX DU CODE PARRAIN

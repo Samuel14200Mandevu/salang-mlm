@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('qualified_branches')) {
+            return;
+        }
+
         Schema::create('qualified_branches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('Le leader (ex: vous)');

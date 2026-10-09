@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Models\User;
+use Laravel\Dusk\Browser;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -20,8 +21,26 @@ abstract class DuskTestCase extends BaseTestCase
             'is_active' => true,
             'kyc_status' => 'verified',
             'user_type' => 'member',
-            'password' => bcrypt('password'),
+            'password' => 'password',
         ], $overrides));
+    }
+
+    protected function actingAsInBrowser(Browser $browser, User $user): Browser
+    {
+        return $browser->logout()->loginAs($user);
+    }
+
+    protected function loginViaBrowser(Browser $browser, User $user, string $password = 'password'): Browser
+    {
+        $browser->logout();
+
+        return $browser->visit('/login')
+            ->waitFor('#loginForm', 10)
+            ->assertPathIs('/login')
+            ->type('#email', $user->email)
+            ->type('#password', $password)
+            ->keys('#password', '{enter}')
+            ->waitForLocation('/services', 15);
     }
 
     protected function setUp(): void

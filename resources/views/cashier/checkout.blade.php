@@ -620,9 +620,9 @@
                                 
                                 <!-- Client sélectionné -->
                                 <div id="customerSelected" class="customer-selected">
-                                    <div id="selectedAvatar" class="customer-avatar">JD</div>
+                                    <div id="selectedAvatar" class="customer-avatar">—</div>
                                     <div class="customer-info">
-                                        <div id="selectedName" class="name">Jean Dupont</div>
+                                        <div id="selectedName" class="name">Client sélectionné</div>
                                         <div id="selectedDetails" class="details">
                                             <span id="selectedPhone">+225 07 00 00 00 00</span>
                                             <span class="sponsor-code" id="selectedSponsorCode">SALXXXXXX</span>

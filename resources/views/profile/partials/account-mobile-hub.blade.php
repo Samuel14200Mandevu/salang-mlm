@@ -139,11 +139,12 @@
             'iconTone' => 'primary',
             'icon' => $icon('M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
         ])
-        <button type="button" class="profile-account-row" @click="mobileMoreOpen = true">
-            <span class="profile-account-row__icon profile-account-row__icon--tone-violet" aria-hidden="true">{!! $icon('M4 6h16M4 12h16M4 18h16') !!}</span>
-            <span class="profile-account-row__label">Autres raccourcis</span>
-            <svg class="profile-account-row__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        @include('profile.partials.account-menu-row', [
+            'href' => route('services.index'),
+            'label' => 'Tous les services',
+            'iconTone' => 'violet',
+            'icon' => $icon('M4 6h16M4 12h16M4 18h16'),
+        ])
 
         <form method="POST" action="{{ route('logout') }}" class="profile-account-row profile-account-row--danger">
             @csrf

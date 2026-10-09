@@ -145,6 +145,77 @@
     </li>
 
     <li>
+        <div class="sidebar-section transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Services</div>
+    </li>
+    <li>
+        <a href="{{ route('services.index') }}"
+           class="sidebar-link {{ request()->routeIs('services.*') ? 'active' : '' }}"
+           data-title="Services">
+            <x-ui.sidebar-link-icon tone="primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </x-ui.sidebar-link-icon>
+            <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Hub Services</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ auth()->user()->memberQuestionsEntryUrl() }}"
+           class="sidebar-link {{ request()->routeIs('questions.*') ? 'active' : '' }}"
+           data-title="Assistance">
+            <x-ui.sidebar-link-icon tone="sky">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </x-ui.sidebar-link-icon>
+            <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Assistance</span>
+        </a>
+    </li>
+    @auth
+        <li>
+            <a href="{{ route('publications.index') }}"
+               class="sidebar-link {{ request()->routeIs('publications.*') && ! auth()->user()->hasSupervisionAccess() ? 'active' : '' }}"
+               data-title="Événements">
+                <x-ui.sidebar-link-icon tone="amber">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </x-ui.sidebar-link-icon>
+                <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Événements & promos</span>
+            </a>
+        </li>
+        @if(auth()->user()->hasSupervisionAccess())
+            <li>
+                <div class="sidebar-section transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Supervision</div>
+            </li>
+            <li>
+                <a href="{{ route('questions.index', ['status' => 'open']) }}"
+                   class="sidebar-link {{ request()->routeIs('questions.*') ? 'active' : '' }}"
+                   data-title="Questions reçues">
+                    <x-ui.sidebar-link-icon tone="green">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </x-ui.sidebar-link-icon>
+                    <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Questions reçues</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('publications.index') }}"
+                   class="sidebar-link {{ request()->routeIs('publications.*') ? 'active' : '' }}"
+                   data-title="Publications">
+                    <x-ui.sidebar-link-icon tone="purple">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </x-ui.sidebar-link-icon>
+                    <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Publications</span>
+                </a>
+            </li>
+        @endif
+    @endauth
+
+    <li>
         <div class="sidebar-section transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Compte</div>
     </li>
     <li>

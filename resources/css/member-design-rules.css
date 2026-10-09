@@ -35,6 +35,10 @@
   border-radius: 10px 10px 0 0;
 }
 
+.member-app .member-mobile-sheet--fullscreen {
+  border-radius: 0;
+}
+
 .member-app #sidebar {
   box-shadow: none;
 }

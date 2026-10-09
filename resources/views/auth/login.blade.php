@@ -5,7 +5,7 @@
 @section('content')
     @include('partials.auth.page-header', [
         'title' => 'Connexion',
-        'lead' => 'Accédez à votre espace membre Salang Group.',
+        'lead' => 'Accédez à votre espace : hub Services, boutique, réseau et assistance.',
     ])
 
     @include('partials.auth.alerts', ['showErrors' => true])

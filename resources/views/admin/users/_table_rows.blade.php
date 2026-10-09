@@ -9,6 +9,9 @@
         if($roleName === 'admin') {
             $roleDisplay = 'Administrateur';
             $badgeClass = 'badge-admin';
+        } elseif($roleName === 'it_manager') {
+            $roleDisplay = 'IT / Supervision';
+            $badgeClass = 'badge-info';
         } elseif($roleName === 'cashier') {
             $roleDisplay = 'Caissier';
             $badgeClass = 'badge-cashier';

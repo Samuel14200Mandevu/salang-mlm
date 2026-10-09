@@ -322,7 +322,8 @@ html.dark .cashier-app .sidebar-section, html.dark .admin-app .sidebar-section, 
 .cashier-app .main-wrapper, .admin-app .main-wrapper, .member-app .main-wrapper {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 100vh;
     transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
 }

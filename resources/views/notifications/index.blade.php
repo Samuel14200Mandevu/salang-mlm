@@ -5,10 +5,12 @@
 
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    
-    <!-- En-tête -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+<div class="notifications-page space-y-4 sm:space-y-6">
+
+    @include('notifications.partials.catalog-head', compact('notifications', 'unreadCount'))
+
+    <!-- En-tête desktop -->
+    <div class="notifications-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Notifications</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
@@ -37,19 +39,19 @@
     </div>
 
     @if(session('success'))
-        <div class="p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
+        <div class="notifications-page-flash p-3 sm:p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm sm:text-base animate-fadeIn">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
+        <div class="notifications-page-flash p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm sm:text-base animate-fadeIn">
             {{ session('error') }}
         </div>
     @endif
 
     <!-- Liste des notifications -->
-    <div class="card animate-fadeInUp delay-1">
+    <div class="notifications-list-card card animate-fadeInUp delay-1">
         @if($notifications->count() > 0)
             <div class="table-wrap">
                 <table class="table table-striped">

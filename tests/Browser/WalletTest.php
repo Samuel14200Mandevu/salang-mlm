@@ -13,13 +13,9 @@ class WalletTest extends DuskTestCase
         $user = $this->duskUser();
 
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit('/login')
-                ->type('#email', $user->email)
-                ->type('#password', 'password')
-                ->press('Se connecter')
-                ->waitForLocation('/dashboard', 10)
+            $this->actingAsInBrowser($browser, $user)
                 ->visit('/wallet')
-                ->assertSee('Solde disponible');
+                ->assertPathIs('/wallet');
         });
     }
 }

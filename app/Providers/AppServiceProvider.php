@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Route;
+use App\Models\QuestionConversation;
 use App\Services\CommissionService;
 use App\Services\PaymentService;
 use App\Services\NetworkService;
@@ -25,9 +27,11 @@ use App\Services\MLM\CommissionHistoryPaymentSync;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Genealogy;
-use App\Observers\UserObserver;
-use App\Observers\OrderObserver;
+use App\Models\PublicationMedia;
 use App\Observers\GenealogyObserver;
+use App\Observers\OrderObserver;
+use App\Observers\PublicationMediaObserver;
+use App\Observers\UserObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -169,6 +173,11 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Order::observe(OrderObserver::class);
         Genealogy::observe(GenealogyObserver::class);
+        PublicationMedia::observe(PublicationMediaObserver::class);
+
+        Route::bind('question', function (string $value) {
+            return QuestionConversation::query()->findOrFail($value);
+        });
     }
 
     /**

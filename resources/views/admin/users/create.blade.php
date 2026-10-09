@@ -147,6 +147,11 @@
     color: #1C7E4A;
     border-color: rgba(28, 126, 74, 0.15);
 }
+.role-option .role-badge.it-manager {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0f766e;
+    border-color: rgba(13, 148, 136, 0.18);
+}
 .role-option.selected {
     border-color: var(--primary-blue);
     background: var(--primary-blue-bg);
@@ -177,6 +182,44 @@
 .delay-2 { animation-delay: 0.1s; }
 .delay-3 { animation-delay: 0.15s; }
 
+.parrain-feedback {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    min-height: 1rem;
+}
+.parrain-feedback.success {
+    color: #1C7E4A;
+}
+.parrain-feedback.error {
+    color: #B91C1C;
+}
+.parrain-feedback.loading {
+    color: var(--text-tertiary);
+}
+
+.admin-user-create-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.admin-user-create-actions .btn-primary {
+    flex: 1 1 auto;
+    min-height: 2.75rem;
+}
+
+.admin-user-create-actions .btn-outline {
+    flex: 1 1 auto;
+    min-height: 2.75rem;
+    justify-content: center;
+}
+
 @media (max-width: 640px) {
     .form-group label {
         font-size: 0.75rem;
@@ -197,30 +240,56 @@
     .role-option {
         padding: 0.5rem 0.625rem;
     }
+
+    .admin-mobile-page--user-create {
+        padding-bottom: 5.5rem;
+    }
+
+    .admin-user-create-actions {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+        backdrop-filter: blur(10px);
+    }
 }
 </style>
 @endpush
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+@php
+    $createBackBtn = '<a href="' . e(route('admin.users')) . '" class="btn btn-outline btn-sm">'
+        . '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+        . '<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
+        . '</svg> Retour</a>';
+@endphp
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Créer un utilisateur
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Créer un nouveau compte utilisateur
-            </p>
+@include('admin.layouts.partials.desktop-page-header', [
+    'title' => 'Créer un utilisateur',
+    'subtitle' => 'Créer un nouveau compte utilisateur',
+    'actions' => $createBackBtn,
+])
+
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Créer un utilisateur</h1>
+            <p class="page-subtitle">Membre, caissier, admin ou responsable IT</p>
         </div>
-        <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Retour
-        </a>
+        @include('admin.users.partials.create-mobile-banner-actions')
     </div>
+</div>
+
+<div class="admin-mobile-page admin-mobile-page--user-create space-y-4 sm:space-y-6">
 
     @if($errors->any())
         <div class="alert-danger animate-fadeInUp delay-1">
@@ -241,7 +310,7 @@
     @endif
 
     <div class="card animate-fadeInUp delay-2 max-w-2xl p-3 sm:p-4">
-        <form action="{{ route('admin.users.store') }}" method="POST">
+        <form action="{{ route('admin.users.store') }}" method="POST" id="adminUserCreateForm">
             @csrf
 
             <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -251,7 +320,7 @@
                     <label>Nom complet <span class="required">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}"
                            class="form-control @error('name') form-control-error @enderror"
-                           placeholder="Jean Dupont" required>
+                           placeholder="Nom et prénom" required>
                     @error('name')
                         <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
@@ -262,7 +331,7 @@
                     <label>Email <span class="required">*</span></label>
                     <input type="email" name="email" value="{{ old('email') }}"
                            class="form-control @error('email') form-control-error @enderror"
-                           placeholder="jean.dupont@email.com" required>
+                           placeholder="membre@exemple.com" required>
                     @error('email')
                         <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
                     @enderror
@@ -341,56 +410,23 @@
                 <!-- Sponsor -->
                 <div class="form-group" id="sponsorGroup">
                     <label>Sponsor (Parrain)</label>
-                    <select name="parrain_id" class="form-control">
-                        <option value="">Aucun</option>
-                        @if(isset($users) && $users->count() > 0)
-                            @foreach($users as $sponsor)
-                                <option value="{{ $sponsor->id }}" {{ old('parrain_id') == $sponsor->id ? 'selected' : '' }}>
-                                    {{ $sponsor->name }} ({{ $sponsor->sponsor_id }})
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                    <span class="help-text">Sélectionnez le parrain pour ce nouvel utilisateur</span>
+                    <input type="text"
+                           name="parrain_code"
+                           id="parrainCode"
+                           value="{{ old('parrain_code') }}"
+                           class="form-control @error('parrain_code') form-control-error @enderror"
+                           placeholder="Ex. 51234567"
+                           autocomplete="off">
+                    <span class="help-text">Saisissez le <strong>code de parrain</strong>. Laissez vide si aucun parrain.</span>
+                    <div id="parrainFeedback" class="parrain-feedback"></div>
+                    @error('parrain_code')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Role -->
                 <div class="form-group md:col-span-2">
-                    <label>Rôle de l'utilisateur <span class="required">*</span></label>
-                    <span class="help-text block mb-2">Sélectionnez le rôle que cet utilisateur aura</span>
-
-                    <div class="space-y-2" id="roleSelector">
-
-                        <label class="role-option selected" id="role-user">
-                            <input type="radio" name="role" value="user" checked>
-                            <div class="role-info">
-                                <div class="role-name">Membre</div>
-                                <div class="role-desc">Accès au dashboard, achats, commissions, réseau MLM</div>
-                            </div>
-                            <span class="role-badge user">Standard</span>
-                        </label>
-
-                        <label class="role-option" id="role-cashier">
-                            <input type="radio" name="role" value="cashier">
-                            <div class="role-info">
-                                <div class="role-name">Caissier</div>
-                                <div class="role-desc">Accès au Point de Vente (POS), ventes au guichet</div>
-                            </div>
-                            <span class="role-badge cashier">Ventes</span>
-                        </label>
-
-                        <label class="role-option" id="role-admin">
-                            <input type="radio" name="role" value="admin">
-                            <div class="role-info">
-                                <div class="role-name">Administrateur</div>
-                                <div class="role-desc">Accès complet à l'administration, gestion utilisateurs</div>
-                            </div>
-                            <span class="role-badge admin">Admin</span>
-                        </label>
-                    </div>
-                    @error('role')
-                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
-                    @enderror
+                    @include('admin.users.partials.role-select', ['selectedRole' => old('role', 'user')])
                 </div>
 
                 <!-- Status -->
@@ -417,20 +453,19 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Buttons -->
-            <div class="mt-4 flex flex-wrap gap-2">
-                <button type="submit" class="btn btn-primary flex-1 sm:flex-none" id="submitBtn">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Créer l'utilisateur
-                </button>
-                <a href="{{ route('admin.users') }}" class="btn btn-outline flex-1 sm:flex-none">
-                    Annuler
-                </a>
-            </div>
         </form>
+    </div>
+
+    <div class="admin-user-create-actions max-w-2xl animate-fadeInUp delay-3">
+        <button type="submit" form="adminUserCreateForm" class="btn btn-primary" id="submitBtn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Créer l'utilisateur
+        </button>
+        <a href="{{ route('admin.users') }}" class="btn btn-outline">
+            Annuler
+        </a>
     </div>
 
 </div>
@@ -438,7 +473,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const roleOptions = document.querySelectorAll('.role-option');
+    const roleSelect = document.getElementById('userRoleSelect');
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
@@ -446,7 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const infoMessages = {
         user: 'Un code de parrain unique sera généré automatiquement. Il pourra bénéficier du système MLM et des commissions.',
         cashier: 'Les caissiers sont des employés. Pas de code de parrainage, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
-        admin: 'Administrateur avec accès complet. Un code de parrain sera généré automatiquement.'
+        admin: 'Administrateur avec accès complet. Un code de parrain sera généré automatiquement.',
+        it_manager: 'Accès Supervision (assistance membres, publications). Un code de parrain sera généré automatiquement.'
     };
 
     function updateRoleDisplay(role) {
@@ -461,25 +497,94 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const selectedRadio = document.querySelector('input[name="role"]:checked');
-    if (selectedRadio) {
-        updateRoleDisplay(selectedRadio.value);
+    if (roleSelect) {
+        updateRoleDisplay(roleSelect.value);
+        roleSelect.addEventListener('change', function () {
+            updateRoleDisplay(roleSelect.value);
+        });
     }
 
-    roleOptions.forEach(function(option) {
-        option.addEventListener('click', function() {
-            roleOptions.forEach(function(opt) {
-                opt.classList.remove('selected');
-            });
-            this.classList.add('selected');
+    const parrainInput = document.getElementById('parrainCode');
+    const parrainFeedback = document.getElementById('parrainFeedback');
+    const form = document.getElementById('adminUserCreateForm');
+    let parrainValide = false;
 
-            var radio = this.querySelector('input[type="radio"]');
-            if (radio) {
-                radio.checked = true;
-                updateRoleDisplay(radio.value);
+    if (parrainInput) {
+        let debounceTimer;
+
+        parrainInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const code = this.value.trim();
+            parrainValide = false;
+
+            if (code === '') {
+                parrainFeedback.className = 'parrain-feedback';
+                parrainFeedback.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(function () {
+                verifierCodeParrain(code);
+            }, 500);
+        });
+    }
+
+    function verifierCodeParrain(code) {
+        parrainFeedback.className = 'parrain-feedback loading';
+        parrainFeedback.innerHTML = '⏳ Vérification du code...';
+
+        const url = '{{ route("admin.users.verify-sponsor") }}?code=' + encodeURIComponent(code);
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function (data) {
+            if (data.valid) {
+                parrainValide = true;
+                parrainFeedback.className = 'parrain-feedback success';
+                parrainFeedback.innerHTML = '✓ Parrain trouvé : <strong>' +
+                    escapeHtml(data.name) + '</strong> (Code: ' + escapeHtml(data.sponsor_id) + ')';
+            } else {
+                parrainFeedback.className = 'parrain-feedback error';
+                parrainFeedback.innerHTML = '✗ ' + escapeHtml(data.message || 'Code invalide');
+            }
+        })
+        .catch(function () {
+            parrainFeedback.className = 'parrain-feedback error';
+            parrainFeedback.innerHTML = '✗ Erreur de vérification. Réessayez.';
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const code = parrainInput ? parrainInput.value.trim() : '';
+            if (code !== '' && !parrainValide) {
+                e.preventDefault();
+                parrainFeedback.className = 'parrain-feedback error';
+                parrainFeedback.innerHTML = '✗ Veuillez attendre la vérification du code parrain ou corriger le code.';
+                if (parrainInput) {
+                    parrainInput.focus();
+                    parrainInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         });
-    });
+    }
 });
 </script>
 @endpush

@@ -47,6 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\EnsureUserActive::class,
             'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
             'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'supervision' => \App\Http\Middleware\EnsureSupervisionAccess::class,
         ]);
         
         $middleware->validateCsrfTokens(except: [

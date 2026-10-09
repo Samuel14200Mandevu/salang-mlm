@@ -45,6 +45,7 @@
     );
     /* Barre jusqu’au milieu vertical de la carte hero (accueil) */
     --member-home-header-band-height: calc(env(safe-area-inset-top, 0px) + 10.75rem);
+    --member-sticky-topbar-offset: calc(env(safe-area-inset-top, 0px) + 3.5rem);
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -125,6 +126,8 @@
     cursor: pointer;
     pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
+    text-decoration: none;
+    color: inherit;
   }
 
   .member-app .member-mobile-nav__services-logo:active .member-mobile-nav__services-disc {
@@ -710,6 +713,10 @@
     background: rgba(17, 24, 39, 0.5);
   }
 
+  .member-app .member-mobile-sheet-backdrop {
+    top: var(--member-sticky-topbar-offset);
+  }
+
   .member-mobile-sheet {
     position: fixed;
     left: 0;
@@ -725,12 +732,63 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .member-app .member-mobile-sheet--fullscreen {
+    top: var(--member-sticky-topbar-offset);
+    bottom: calc(var(--mobile-nav-height) + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 115;
+    max-height: none;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .member-mobile-sheet__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.65rem 0.75rem calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .member-page-catalog-head {
+    margin-bottom: 0.65rem;
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .services-featured {
+    margin-bottom: 0.75rem;
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .services-featured__media {
+    aspect-ratio: 16 / 9;
+    min-height: 11.5rem;
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .member-services-hub.profile-account-mobile {
+    padding: 0;
+    margin: 0;
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .member-services-hub .profile-account-section-title:first-child {
+    margin-top: 0;
+  }
+
   .member-mobile-sheet__handle {
     width: 2.5rem;
     height: 0.25rem;
     border-radius: 9999px;
     background: var(--border-color);
     margin: 0 auto 0.75rem;
+  }
+
+  .member-app .member-mobile-sheet--fullscreen .member-mobile-sheet__handle {
+    margin-bottom: 0;
   }
 
   .member-mobile-sheet__grid {
@@ -902,8 +960,9 @@
   .member-app .member-mobile-topbar {
     background: var(--member-mobile-head-gradient) !important;
     border-bottom-color: transparent !important;
-    position: relative;
-    z-index: 40;
+    position: sticky;
+    top: 0;
+    z-index: 130;
   }
 
   .member-app .member-mobile-topbar::after {

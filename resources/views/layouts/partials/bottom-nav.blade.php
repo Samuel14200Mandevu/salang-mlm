@@ -1,21 +1,8 @@
-        @include('partials.member.mobile-more-sheet')
-
         @php
-            $memberServicesNavActive = request()->routeIs(
-                'commissions.*',
-                'orders.*',
-                'subscriptions.*',
-                'rank.*',
-                'my-pv.*',
-                'notifications.*',
-                'kyc.*',
-                'withdrawal.*',
-                'network.*',
-                'report.*'
-            );
+            $memberServicesNavActive = request()->routeIs('services.*');
         @endphp
 
-        <div class="member-mobile-nav-bar member-mobile-nav-bar--salang">
+        <div class="member-mobile-nav-bar member-mobile-nav-bar--salang md:hidden">
             <nav class="mobile-bottom-nav mobile-bottom-nav--salang" id="mobileBottomNav" aria-label="Navigation mobile">
                 <a href="{{ route('dashboard') }}"
                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -34,12 +21,13 @@
                     <x-ui.cart-badge variant="bottom-nav" />
                 </a>
 
-                <span class="nav-item nav-item--services-slot"
-                      :class="{ 'is-active': mobileMoreOpen || @js($memberServicesNavActive) }"
-                      aria-hidden="true">
+                <a href="{{ route('services.index') }}"
+                   class="nav-item nav-item--services-slot {{ $memberServicesNavActive ? 'active' : '' }}"
+                   aria-hidden="true"
+                   tabindex="-1">
                     <span class="nav-item__icon-gap"></span>
                     <span>Services</span>
-                </span>
+                </a>
 
                 <a href="{{ route('wallet.index') }}"
                    class="nav-item {{ request()->routeIs('wallet.*') ? 'active' : '' }}">
@@ -58,19 +46,16 @@
                 </a>
             </nav>
 
-            <button type="button"
-                    class="member-mobile-nav__services-logo"
-                    @click="mobileMoreOpen = !mobileMoreOpen"
-                    :class="{ 'is-active': mobileMoreOpen || @js($memberServicesNavActive) }"
-                    aria-label="Services"
-                    :aria-expanded="mobileMoreOpen">
+            <a href="{{ route('services.index') }}"
+               class="member-mobile-nav__services-logo {{ $memberServicesNavActive ? 'is-active' : '' }}"
+               aria-label="Services">
                 <span class="member-mobile-nav__services-disc">
                     <img class="member-mobile-nav__services-disc-logo"
                          src="{{ asset('images/salang_logo.webp') }}"
                          alt=""
                          decoding="async">
                 </span>
-            </button>
+            </a>
         </div>
 
     </div>

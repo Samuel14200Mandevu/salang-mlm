@@ -29,8 +29,11 @@
 @import './member-profile.css';
 @import './member-subscriptions.css';
 @import './member-orders.css';
+@import './member-notifications.css';
 @import './member-cart.css';
 @import './member-commissions.css';
+@import './member-supervision.css';
+@import './member-services.css';
 @import './salang-pagination.css';
 
 @tailwind base;

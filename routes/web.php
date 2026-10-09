@@ -23,6 +23,9 @@ use App\Http\Controllers\CommissionTriggerController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\CommissionDashboardController;
 use App\Http\Controllers\KycController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\PublicationController;
+use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\PaymentController;
@@ -246,6 +249,25 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/', [KycController::class, 'store'])->name('store');
         Route::get('/status', [KycController::class, 'getStatus'])->name('status');
     });
+
+    // ============================================================
+    // SERVICES (hub membre)
+    // ============================================================
+    Route::get('/services', [ServicesController::class, 'index'])->name('services.index');
+
+    // ============================================================
+    // SUPERVISION — questions & publications
+    // ============================================================
+    Route::resource('questions', QuestionController::class)->except(['edit', 'update']);
+    Route::post('questions/{question}/answer', [QuestionController::class, 'answer'])
+        ->name('questions.answer')
+        ->middleware('role:admin|it_manager');
+    Route::post('questions/{question}/messages', [QuestionController::class, 'storeMessage'])
+        ->name('questions.messages.store');
+
+    Route::resource('publications', PublicationController::class);
+    Route::delete('publications/media/{media}', [PublicationController::class, 'deleteMedia'])
+        ->name('publications.media.destroy');
 
     // ============================================================
     // RAPPORTS

@@ -1,0 +1,52 @@
+/**
+ * Espace membre — Notifications (bandeau mobile type boutique)
+ */
+
+@media (max-width: 768px) {
+  .member-app .notifications-page-header-desktop {
+    display: none !important;
+  }
+
+  .member-app .main-content:has(.notifications-page) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .notifications-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem;
+    padding: 0 0 1rem;
+  }
+
+  .member-app .notifications-catalog-head {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.65rem;
+    background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .member-app .notifications-catalog-banner {
+    margin: 0;
+  }
+
+  .member-app .notifications-page-flash {
+    margin: 0 0.75rem;
+  }
+
+  .member-app .notifications-list-card {
+    margin: 0 0.75rem;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .notifications-catalog-head {
+    display: none !important;
+  }
+}

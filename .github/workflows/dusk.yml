@@ -41,6 +41,7 @@ jobs:
           touch database/dusk.sqlite
           php artisan migrate:fresh --force --env=dusk
           php artisan db:seed --class=DuskSeeder --env=dusk
+          cp .env.dusk .env
 
       - name: Install Chromium
         run: sudo apt-get update && sudo apt-get install -y chromium-browser
@@ -51,7 +52,12 @@ jobs:
       - name: Start application server
         run: |
           php artisan serve --env=dusk --host=127.0.0.1 --port=8000 &
-          sleep 3
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/up && exit 0
+            sleep 1
+          done
+          echo "Application server did not become ready in time" >&2
+          exit 1
 
       - name: Run Dusk
         env:

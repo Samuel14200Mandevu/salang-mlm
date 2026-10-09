@@ -34,7 +34,7 @@ DB_CONNECTION=sqlite
 DB_DATABASE=/chemin/absolu/vers/projet/database/dusk.sqlite
 
 CACHE_STORE=array
-SESSION_DRIVER=array
+SESSION_DRIVER=file
 QUEUE_CONNECTION=sync
 MAIL_MAILER=array
 
@@ -86,7 +86,7 @@ chmod +x scripts/check-db.sh
 |----------|--------|
 | Exception guard MySQL | Créer `.env.dusk`, relancer avec `--env=dusk` |
 | Chrome / Chromedriver | `php artisan dusk:chrome-driver --detect` ; sur Linux Snap : `DUSK_CHROME_BINARY=/snap/bin/chromium` |
-| Timeout login | Serveur `--env=dusk` sur le même port que `APP_URL` |
+| Timeout login | Serveur `--env=dusk` sur le même port que `APP_URL` ; `SESSION_DRIVER=file` (pas `array` avec `artisan serve`) |
 | Données absentes côté navigateur | `db:seed --class=DuskSeeder --env=dusk` puis redémarrer `serve` |
 
 ## Données MySQL vs Dusk
