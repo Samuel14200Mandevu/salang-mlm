@@ -41,6 +41,7 @@ jobs:
           touch database/dusk.sqlite
           php artisan migrate:fresh --force --env=dusk
           php artisan db:seed --class=DuskSeeder --env=dusk
+          cp .env.dusk .env
 
       - name: Install Chromium
         run: sudo apt-get update && sudo apt-get install -y chromium-browser

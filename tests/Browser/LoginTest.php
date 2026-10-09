@@ -8,7 +8,7 @@ use Tests\DuskTestCase;
 class LoginTest extends DuskTestCase
 {
 
-    public function test_user_can_login_and_see_dashboard(): void
+    public function test_user_can_login_and_see_services_hub(): void
     {
         $user = $this->duskUser();
 
@@ -17,8 +17,8 @@ class LoginTest extends DuskTestCase
                 ->type('#email', $user->email)
                 ->type('#password', 'password')
                 ->press('Se connecter')
-                ->waitForLocation('/dashboard', 10)
-                ->assertSee($user->name);
+                ->waitForLocation('/services', 10)
+                ->assertSee('Services');
         });
     }
 }

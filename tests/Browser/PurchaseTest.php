@@ -17,7 +17,7 @@ class PurchaseTest extends DuskTestCase
                 ->type('#email', $user->email)
                 ->type('#password', 'password')
                 ->press('Se connecter')
-                ->waitForLocation('/dashboard', 10)
+                ->waitForLocation('/services', 10)
                 ->visit('/products')
                 ->assertPathIs('/products');
         });

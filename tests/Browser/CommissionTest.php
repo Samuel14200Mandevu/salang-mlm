@@ -17,7 +17,7 @@ class CommissionTest extends DuskTestCase
                 ->type('#email', $user->email)
                 ->type('#password', 'password')
                 ->press('Se connecter')
-                ->waitForLocation('/dashboard', 10)
+                ->waitForLocation('/services', 10)
                 ->visit('/commissions')
                 ->assertPathIs('/commissions');
         });
