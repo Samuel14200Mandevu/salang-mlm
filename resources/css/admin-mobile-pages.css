@@ -263,6 +263,33 @@
     max-width: min(48%, 6.5rem);
   }
 
+  .admin-app .admin-mobile-page-head.is-mobile-banner .admin-title-banner__tools--user-create,
+  .admin-app .admin-mobile-page-head.is-mobile-banner .admin-title-banner__tools--user-edit {
+    max-width: min(36%, 4.5rem);
+  }
+
+  .admin-app .admin-title-banner__text--user-edit {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+
+  .admin-app .admin-title-banner__text--user-edit .admin-title-banner__avatar {
+    flex-shrink: 0;
+  }
+
+  .admin-app .admin-title-banner__text--user-edit .admin-title-banner__avatar .user-avatar,
+  .admin-app .admin-title-banner__text--user-edit .admin-title-banner__avatar .user-avatar-placeholder {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.875rem;
+  }
+
+  .admin-app .admin-title-banner__text--user-edit .admin-title-banner__copy {
+    min-width: 0;
+  }
+
   .admin-app .admin-mobile-page-head.is-mobile-banner .admin-title-banner__tools--reports-index {
     max-width: min(48%, 6.5rem);
   }

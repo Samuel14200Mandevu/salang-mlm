@@ -6,6 +6,8 @@
         $roleDisplay = 'Utilisateur';
         if ($roleName === 'admin') {
             $roleDisplay = 'Admin';
+        } elseif ($roleName === 'it_manager') {
+            $roleDisplay = 'IT / Supervision';
         } elseif ($roleName === 'cashier') {
             $roleDisplay = 'Caissier';
         } elseif ($roleName === 'caissier_principal') {

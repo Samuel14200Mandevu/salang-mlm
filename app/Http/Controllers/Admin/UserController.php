@@ -175,12 +175,8 @@ class UserController extends Controller
     {
         $ranks = Rank::orderBy('level')->get();
         $packages = Package::orderBy('price')->get();
-        $users = User::select('id', 'name', 'email', 'sponsor_id')
-            ->whereNotNull('sponsor_id')
-            ->orderBy('name')
-            ->get();
 
-        return view('admin.users.create', compact('ranks', 'packages', 'users'));
+        return view('admin.users.create', compact('ranks', 'packages'));
     }
 
     public function store(Request $request)
@@ -190,18 +186,27 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:user,cashier,admin',
+            'role' => 'required|in:user,cashier,admin,it_manager',
             'is_active' => 'boolean',
         ];
 
         if ($request->role !== 'cashier') {
             $rules['package_id'] = 'nullable|exists:packages,id';
-            $rules['parrain_id'] = 'nullable|exists:users,id';
+            $rules['parrain_code'] = 'nullable|string|exists:users,sponsor_id';
             $rules['rank_id'] = 'nullable|exists:ranks,id';
             $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
         }
 
-        $validated = $request->validate($rules);
+        $request->validate($rules);
+
+        if ($request->role !== 'cashier' && $request->filled('parrain_code')) {
+            $parrainCandidate = User::where('sponsor_id', trim($request->parrain_code))->first();
+            if ($parrainCandidate?->hasRole('cashier')) {
+                return back()->withInput()->withErrors([
+                    'parrain_code' => 'Un caissier ne peut pas être parrain.',
+                ]);
+            }
+        }
 
         DB::beginTransaction();
 
@@ -261,8 +266,8 @@ class UserController extends Controller
 
             } else {
                 $parrain = null;
-                if ($request->filled('parrain_id')) {
-                    $parrain = User::find($request->parrain_id);
+                if ($request->filled('parrain_code')) {
+                    $parrain = User::where('sponsor_id', trim($request->parrain_code))->first();
                 }
 
                 $sponsorCode = $this->generateSponsorCode();
@@ -319,11 +324,11 @@ class UserController extends Controller
                     'total_children' => 0,
                 ]);
 
-                if ($role === 'admin') {
-                    $user->assignRole('admin');
-                } else {
-                    $user->assignRole('user');
-                }
+                match ($role) {
+                    'admin' => $user->assignRole('admin'),
+                    'it_manager' => $user->assignRole('it_manager'),
+                    default => $user->assignRole('user'),
+                };
 
                 if ($parrain) {
                     $parrain->increment('total_sponsors');
@@ -385,7 +390,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'nullable|string|max:20',
             'is_active' => 'boolean',
-            'role' => 'required|in:user,cashier,admin',
+            'role' => 'required|in:user,cashier,admin,it_manager',
         ];
 
         if ($request->role !== 'cashier') {
