@@ -96,16 +96,6 @@ Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('payme
 Route::get('/activate/{code}', [ActivationController::class, 'activateWithLink'])->name('activate.account');
 
 // ============================================================
-// AUTHENTIFICATION SOCIALE
-// ============================================================
-Route::prefix('auth')->name('social.')->group(function () {
-    Route::get('{provider}', [SocialiteController::class, 'redirect'])->name('redirect');
-    Route::get('{provider}/callback', [SocialiteController::class, 'callback'])->name('callback');
-});
-
-Route::post('/social/store-sponsor', [SocialiteController::class, 'storeSponsor'])->name('social.store-sponsor');
-
-// ============================================================
 // PAGES LEGALES
 // ============================================================
 Route::view('/privacy-policy', 'pages.privacy-policy')->name('privacy-policy');
@@ -185,6 +175,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/avatar', [ProfileController::class, 'deleteAvatar'])->name('delete-avatar');
         Route::put('/password', [ProfileController::class, 'updatePassword'])->name('update-password');
         Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+        Route::get('/google/link', [ProfileController::class, 'linkGoogle'])->name('google.link');
     });
 
     // ============================================================

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
+use Laravel\Socialite\Facades\Socialite;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfileController extends Controller
@@ -41,6 +42,32 @@ class ProfileController extends Controller
     public function password()
     {
         return view('profile.password');
+    }
+
+    public function linkGoogle()
+    {
+        $user = Auth::user();
+
+        if (! $user->hasPlaceholderEmail()) {
+            return redirect()
+                ->route('profile.settings')
+                ->with('error', 'Votre adresse email n’est pas une adresse provisoire Salang.');
+        }
+
+        session([
+            'socialite_intent' => 'link_google',
+            'socialite_link_user_id' => $user->id,
+        ]);
+
+        try {
+            return Socialite::driver('google')->redirect();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('profile.settings')
+                ->with('error', 'Connexion Google indisponible. Réessayez plus tard.');
+        }
     }
 
     public function referral()

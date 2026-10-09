@@ -101,10 +101,12 @@ Route::middleware('auth')->group(function () {
 // SOCIAL AUTH (Public)
 // ============================================================
 
-Route::middleware('guest')->prefix('auth')->name('social.')->group(function () {
-    Route::get('{provider}', [App\Http\Controllers\Auth\SocialiteController::class, 'redirect'])
-        ->name('redirect');
-
+Route::prefix('auth')->name('social.')->group(function () {
     Route::get('{provider}/callback', [App\Http\Controllers\Auth\SocialiteController::class, 'callback'])
         ->name('callback');
+
+    Route::middleware('guest')->group(function () {
+        Route::get('{provider}', [App\Http\Controllers\Auth\SocialiteController::class, 'redirect'])
+            ->name('redirect');
+    });
 });

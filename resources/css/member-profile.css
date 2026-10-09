@@ -1325,3 +1325,17 @@ html.dark .member-app .member-assistant-fab__svg--close {
     width: 22rem;
   }
 }
+
+.member-app .profile-email-google--placeholder {
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-primary-500) 22%, var(--border-color));
+  background: color-mix(in srgb, var(--color-primary-500) 6%, var(--bg-card));
+}
+
+.member-app .profile-email-google__btn {
+  width: 100%;
+  max-width: 100%;
+  text-decoration: none;
+  justify-content: center;
+}

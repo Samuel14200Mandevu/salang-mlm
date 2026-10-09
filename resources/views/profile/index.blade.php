@@ -188,10 +188,8 @@
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="input text-sm sm:text-base" required>
                         </div>
                         
-                        <!-- Email (non modifiable) -->
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
-                            <input type="email" value="{{ $user->email }}" class="input text-sm sm:text-base opacity-70 cursor-not-allowed" disabled>
+                        <div class="md:col-span-2">
+                            @include('profile.partials.email-google-link', ['user' => $user])
                         </div>
                         
                         <!-- Téléphone -->

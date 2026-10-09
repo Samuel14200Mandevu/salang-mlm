@@ -437,6 +437,26 @@ class User extends Authenticatable
         });
     }
 
+    /** Email généré à l’inscription caisse / import (remplaçable par Google). */
+    public function hasPlaceholderEmail(): bool
+    {
+        $email = strtolower(trim((string) ($this->email ?? '')));
+
+        if ($email === '') {
+            return false;
+        }
+
+        return str_ends_with($email, '@salanggroup.com')
+            || str_ends_with($email, '@salang.com');
+    }
+
+    public function isGoogleLinked(): bool
+    {
+        return $this->provider === 'google'
+            && filled($this->provider_id)
+            && ! $this->hasPlaceholderEmail();
+    }
+
     // ══════════════════════════════════════════════════════════════
     // MÉTHODES DE CALCUL — TOUTES VIA LES SERVICES UNIFIÉS
     // ══════════════════════════════════════════════════════════════

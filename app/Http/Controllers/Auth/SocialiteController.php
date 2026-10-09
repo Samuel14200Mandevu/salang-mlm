@@ -71,6 +71,10 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
+        if (session('socialite_intent') === 'link_google') {
+            return $this->callbackLinkGoogle($provider);
+        }
+
         try {
             $socialUser = Socialite::driver($provider)->user();
         } catch (\Exception $e) {
@@ -241,6 +245,67 @@ class SocialiteController extends Controller
         }
         
         return $sponsorCode;
+    }
+
+    protected function callbackLinkGoogle(string $provider)
+    {
+        if ($provider !== 'google') {
+            return redirect()->route('profile.settings')
+                ->with('error', 'Seul Google est pris en charge pour associer votre email.');
+        }
+
+        try {
+            $socialUser = Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            Log::error('Google link callback error: ' . $e->getMessage());
+
+            return redirect()->route('profile.settings')
+                ->with('error', 'Authentification Google échouée. Réessayez.');
+        }
+
+        $userId = session('socialite_link_user_id');
+        session()->forget(['socialite_intent', 'socialite_link_user_id', 'social_provider']);
+
+        $user = $userId ? User::find($userId) : null;
+
+        if (! $user) {
+            return redirect()->route('login')
+                ->with('error', 'Session expirée. Reconnectez-vous, puis associez Google depuis votre profil.');
+        }
+
+        if (! $user->hasPlaceholderEmail()) {
+            Auth::login($user);
+
+            return redirect()->route('profile.settings')
+                ->with('error', 'Votre email a déjà été mis à jour.');
+        }
+
+        $googleEmail = strtolower(trim((string) $socialUser->getEmail()));
+
+        if ($googleEmail === '') {
+            Auth::login($user);
+
+            return redirect()->route('profile.settings')
+                ->with('error', 'Google n’a pas fourni d’adresse email.');
+        }
+
+        if (User::where('email', $googleEmail)->where('id', '!=', $user->id)->exists()) {
+            Auth::login($user);
+
+            return redirect()->route('profile.settings')
+                ->with('error', 'Cette adresse Google est déjà utilisée par un autre compte Salang.');
+        }
+
+        $user->email = $googleEmail;
+        $user->provider = 'google';
+        $user->provider_id = $socialUser->getId();
+        $user->email_verified_at = now();
+        $user->save();
+
+        Auth::login($user);
+
+        return redirect()->route('profile.settings')
+            ->with('success', 'Compte Google associé. Vous pouvez vous connecter avec ' . $googleEmail . '.');
     }
 
     public function storeSponsor(Request $request)
