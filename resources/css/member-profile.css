@@ -107,8 +107,24 @@
     display: flex;
   }
 
+  .member-app .profile-edit-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
   .member-app .profile-edit-shell__body {
     padding: 0 0.35rem 1rem;
+  }
+
+  .member-app .profile-form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .member-app .profile-form-stack > .card {
+    margin-top: 0 !important;
   }
 
   .member-app .profile-page--edit .profile-edit-shell__body .profile-desktop-shell {
@@ -1326,16 +1342,38 @@ html.dark .member-app .member-assistant-fab__svg--close {
   }
 }
 
+.member-app .profile-email-google {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+@media (min-width: 768px) {
+  .member-app .profile-email-field:has(.profile-email-google--placeholder) {
+    grid-column: 1 / -1;
+  }
+}
+
 .member-app .profile-email-google--placeholder {
-  padding: 0.75rem 0.85rem;
+  padding: 0.85rem 0.9rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
   border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, var(--color-primary-500) 22%, var(--border-color));
   background: color-mix(in srgb, var(--color-primary-500) 6%, var(--bg-card));
+  gap: 0.5rem;
+}
+
+.member-app .profile-email-google__placeholder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .member-app .profile-email-google__btn {
   width: 100%;
   max-width: 100%;
+  margin-top: 0.15rem;
   text-decoration: none;
   justify-content: center;
 }

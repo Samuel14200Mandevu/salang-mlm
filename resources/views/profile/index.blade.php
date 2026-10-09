@@ -162,7 +162,7 @@
         </div>
 
         <!-- Forms -->
-        <div class="lg:col-span-2 space-y-3 sm:space-y-4">
+        <div class="lg:col-span-2 profile-form-stack space-y-3 sm:space-y-4">
             
             <!-- Personal Information -->
             <div class="card animate-fadeInRight profile-personal-info-card">
@@ -188,7 +188,7 @@
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="input text-sm sm:text-base" required>
                         </div>
                         
-                        <div class="md:col-span-2">
+                        <div class="profile-email-field min-w-0">
                             @include('profile.partials.email-google-link', ['user' => $user])
                         </div>
                         
