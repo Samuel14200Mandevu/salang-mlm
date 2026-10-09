@@ -407,7 +407,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Nom client <span class="required">*</span></label>
-                    <input type="text" name="name" class="input" placeholder="Jean Dupont" required>
+                    <input type="text" name="name" class="input" placeholder="Nom et prénom du client" required>
                 </div>
 
                 <div class="form-group">
