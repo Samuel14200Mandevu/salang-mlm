@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (! Schema::hasTable('user_higher_ranks') || $this->foreignKeyExists('user_higher_ranks', 'user_higher_ranks_higher_rank_id_foreign')) {
+        if (! Schema::hasTable('user_higher_ranks') || $this->foreignKeyExists('user_higher_ranks', 'higher_rank_id')) {
             return;
         }
 
@@ -28,13 +28,25 @@ return new class extends Migration
         });
     }
 
-    private function foreignKeyExists(string $table, string $constraintName): bool
+    private function foreignKeyExists(string $table, string $column): bool
     {
-        $database = Schema::getConnection()->getDatabaseName();
+        $connection = Schema::getConnection();
+
+        if ($connection->getDriverName() === 'sqlite') {
+            foreach ($connection->select("PRAGMA foreign_key_list({$table})") as $foreignKey) {
+                if (($foreignKey->from ?? null) === $column) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $constraintName = "{$table}_{$column}_foreign";
         $row = DB::selectOne(
             'SELECT 1 AS found FROM information_schema.TABLE_CONSTRAINTS
              WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = ? LIMIT 1',
-            [$database, $table, $constraintName, 'FOREIGN KEY']
+            [$connection->getDatabaseName(), $table, $constraintName, 'FOREIGN KEY']
         );
 
         return $row !== null;
