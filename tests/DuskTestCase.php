@@ -27,6 +27,8 @@ abstract class DuskTestCase extends BaseTestCase
 
     protected function loginViaBrowser(Browser $browser, User $user, string $password = 'password'): Browser
     {
+        $browser->driver->manage()->deleteAllCookies();
+
         return $browser->visit('/login')
             ->waitFor('#loginForm', 10)
             ->assertPathIs('/login')
