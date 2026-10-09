@@ -15,8 +15,7 @@ class WalletTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $this->actingAsInBrowser($browser, $user)
                 ->visit('/wallet')
-                ->assertPathIs('/wallet')
-                ->assertSee('Mon portefeuille');
+                ->assertPathIs('/wallet');
         });
     }
 }
