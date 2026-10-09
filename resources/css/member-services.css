@@ -1,0 +1,66 @@
+/**
+ * Page Services (hub membre — même logique que la boutique)
+ */
+
+.member-app .member-services--hub .member-services-intro-desktop {
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .member-app .member-services-intro-desktop {
+    display: none !important;
+  }
+
+  .member-app .main-content:has(.member-services--hub) {
+    background: var(--bg-secondary);
+  }
+
+  .member-app .member-services--hub {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 -0.75rem;
+    padding: 0 0 1rem;
+  }
+
+  .member-app .member-services--hub .services-catalog-head {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.65rem;
+    background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .member-app .member-services--hub .member-services-featured {
+    margin: 0 0.75rem;
+  }
+
+  .member-app .member-services--hub .member-services-hub.profile-account-mobile {
+    margin: 0;
+    padding: 0 0.75rem 0.5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .member-app .member-services--hub .services-catalog-head {
+    display: none !important;
+  }
+
+  .member-app .member-services--hub .member-services-hub.profile-account-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0;
+    background: transparent;
+  }
+
+  .member-app .member-services--hub .member-services-featured {
+    max-width: 40rem;
+    margin: 0 auto 0.5rem;
+  }
+}

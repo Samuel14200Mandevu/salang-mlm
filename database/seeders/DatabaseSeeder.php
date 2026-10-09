@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RankSeeder::class,
             PackageSeeder::class,
             PermissionSeeder::class,
+            RoleSeeder::class,
             AdminUserSeeder::class,
             TestDataSeeder::class,
         ]);

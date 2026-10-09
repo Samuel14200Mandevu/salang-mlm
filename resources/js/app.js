@@ -11,6 +11,7 @@ import './salang-pagination';
 import './member-shop';
 import './member-withdrawal';
 import './member-assistant';
+import './member-services-featured';
 import Alpine from 'alpinejs';
 import api from './api';
 

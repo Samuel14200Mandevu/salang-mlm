@@ -898,4 +898,23 @@ class User extends Authenticatable
         }
         return $query;
     }
+
+    public function questionConversation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(QuestionConversation::class);
+    }
+
+    public function memberQuestionsEntryUrl(): string
+    {
+        $conversation = $this->questionConversation;
+
+        return $conversation
+            ? route('questions.show', $conversation)
+            : route('questions.create');
+    }
+
+    public function hasSupervisionAccess(): bool
+    {
+        return $this->hasAnyRole(['admin', 'it_manager']);
+    }
 }
