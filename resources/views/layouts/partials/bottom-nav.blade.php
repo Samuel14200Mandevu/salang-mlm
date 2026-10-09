@@ -15,7 +15,7 @@
             );
         @endphp
 
-        <div class="member-mobile-nav-bar member-mobile-nav-bar--salang">
+        <div class="member-mobile-nav-bar member-mobile-nav-bar--salang md:hidden">
             <nav class="mobile-bottom-nav mobile-bottom-nav--salang" id="mobileBottomNav" aria-label="Navigation mobile">
                 <a href="{{ route('dashboard') }}"
                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
