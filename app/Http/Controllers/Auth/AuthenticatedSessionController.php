@@ -35,18 +35,7 @@ class AuthenticatedSessionController extends Controller
                 ->with('warning', 'Votre compte est inactif. Veuillez l\'activer pour recevoir des commissions.');
         }
 
-        // Redirection selon le rôle
-        if ($user->hasRole('admin')) {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
-        // Redirection pour le caissier
-        if ($user->hasRole('cashier')) {
-            return redirect()->intended(route('cashier.dashboard'));
-        }
-
-        // Redirection par défaut pour les utilisateurs normaux
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended($user->loginRedirectUrl());
     }
 
     public function destroy(Request $request): RedirectResponse

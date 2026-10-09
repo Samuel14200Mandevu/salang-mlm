@@ -102,12 +102,7 @@ class SocialiteController extends Controller
             session()->forget('social_provider');
             Auth::login($user);
 
-            if ($user->hasRole('admin')) {
-                return redirect()->route('admin.dashboard')
-                    ->with('success', 'Welcome back ' . $user->name . '!');
-            }
-
-            return redirect()->route('dashboard')
+            return redirect()->to($user->loginRedirectUrl())
                 ->with('success', 'Welcome back ' . $user->name . '!');
         }
 
@@ -191,7 +186,7 @@ class SocialiteController extends Controller
             // Connecter l'utilisateur
             Auth::login($user);
 
-            return redirect()->route('dashboard')
+            return redirect()->to($user->loginRedirectUrl())
                 ->with('success', 'Welcome ' . $user->name . '! Your account has been created with ' . ucfirst($provider) . '.');
 
         } catch (\Exception $e) {

@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('higher_ranks')) {
+            return;
+        }
+
         Schema::create('higher_ranks', function (Blueprint $table) {
             $table->id();
             $table->string('name')->comment('Rubis, Saphir, Diamant 1, ...');

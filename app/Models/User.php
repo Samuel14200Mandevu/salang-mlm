@@ -917,4 +917,16 @@ class User extends Authenticatable
     {
         return $this->hasAnyRole(['admin', 'it_manager']);
     }
+
+    /**
+     * URL de redirection après connexion (email, Google, etc.).
+     */
+    public function loginRedirectUrl(): string
+    {
+        if ($this->hasRole('cashier')) {
+            return route('cashier.dashboard');
+        }
+
+        return route('services.index');
+    }
 }
