@@ -25,9 +25,14 @@ abstract class DuskTestCase extends BaseTestCase
         ], $overrides));
     }
 
+    protected function actingAsInBrowser(Browser $browser, User $user): Browser
+    {
+        return $browser->logout()->loginAs($user);
+    }
+
     protected function loginViaBrowser(Browser $browser, User $user, string $password = 'password'): Browser
     {
-        $browser->driver->manage()->deleteAllCookies();
+        $browser->logout();
 
         return $browser->visit('/login')
             ->waitFor('#loginForm', 10)

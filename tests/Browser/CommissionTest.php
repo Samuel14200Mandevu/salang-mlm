@@ -13,7 +13,7 @@ class CommissionTest extends DuskTestCase
         $user = $this->duskUser();
 
         $this->browse(function (Browser $browser) use ($user) {
-            $this->loginViaBrowser($browser, $user)
+            $this->actingAsInBrowser($browser, $user)
                 ->visit('/commissions')
                 ->assertPathIs('/commissions');
         });
