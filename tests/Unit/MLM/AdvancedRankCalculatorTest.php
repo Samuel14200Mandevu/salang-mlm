@@ -78,17 +78,30 @@ class AdvancedRankCalculatorTest extends TestCase
         $this->assertEquals('Cumul Directeur', $rank->name);
     }
 
-    public function test_user_with_1000_pv_gets_manager_rank(): void
+    public function test_user_with_1000_lifetime_pv_without_monthly_stays_assistant_manager(): void
     {
         $user = User::factory()->create([
             'pv_balance' => 1000,
             'bv_balance' => 1000,
-            'team_pv' => 1000,
-            'team_bv' => 1000,
+            'monthly_pv' => 0,
+            'team_pv' => 0,
+            'team_bv' => 0,
             'is_active' => true,
         ]);
         $rank = $this->calculator->calculateAdvancedRank($user);
         $this->assertNotNull($rank);
+        $this->assertEquals('Cumul Directeur', $rank->name);
+    }
+
+    public function test_user_with_1000_monthly_pv_and_no_referrals_gets_directeur(): void
+    {
+        $user = User::factory()->create([
+            'pv_balance' => 1000,
+            'monthly_pv' => 1000,
+            'team_pv' => 0,
+            'is_active' => true,
+        ]);
+        $rank = $this->calculator->calculateAdvancedRank($user);
         $this->assertEquals('Directeur', $rank->name);
     }
 
@@ -97,8 +110,9 @@ class AdvancedRankCalculatorTest extends TestCase
         $user = User::factory()->create([
             'pv_balance' => 3800,
             'bv_balance' => 3800,
-            'team_pv' => 3800,
-            'team_bv' => 3800,
+            'monthly_pv' => 3800,
+            'team_pv' => 0,
+            'team_bv' => 0,
             'is_active' => true,
         ]);
         $rank = $this->calculator->calculateAdvancedRank($user);

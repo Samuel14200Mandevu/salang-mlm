@@ -25,7 +25,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'sponsor_id', 'parrain_id',
-        'position', 'rank_id', 'rank', 'rank_level', 'package_id',
+        'position', 'rank_id', 'rank', 'rank_level', 'rank4_grandfathered', 'package_id',
         'pv_balance', 'bv_balance', 'monthly_pv', 'monthly_bv',
         'team_pv', 'team_bv', 'qualified_branches', 'direct_sponsors_count',
         'commission_balance', 'total_earnings', 'total_sponsors', 'total_team',
@@ -69,6 +69,7 @@ class User extends Authenticatable
         'total_team' => 'integer',
         'total_sponsors' => 'integer',
         'rank_level' => 'integer',
+        'rank4_grandfathered' => 'boolean',
         'rank_id' => 'integer',
 
         // ✅ Booléens / dates

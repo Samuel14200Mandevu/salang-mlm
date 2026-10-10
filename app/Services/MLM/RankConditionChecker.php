@@ -91,19 +91,48 @@ class RankConditionChecker
     // ============================================================
     private function checkLevel4(User $user): bool
     {
-        $pvPerso = $this->normalizePV($user->pv_balance);
-
-        if ($pvPerso >= 1000) {
+        if ($user->rank4_grandfathered) {
             return true;
         }
 
+        $rules = config('ranks.level_4_qualification', []);
+        $branchMinRank = (int) ($rules['branch_min_rank_level'] ?? 3);
         $cumulPV = $this->getCumulPV($user);
-        $branchesManager = $this->countQualifiedBranchesOptimized($user, 3);
+        $qualifiedBranches = $this->countQualifiedBranchesOptimized($user, $branchMinRank);
+        $directReferrals = $this->countDirectActiveReferrals($user);
 
-        if ($branchesManager >= 3 && $cumulPV >= 1000) return true;
-        if ($branchesManager >= 2 && $cumulPV >= 2200) return true;
+        $simpleBranches = (int) ($rules['branches_simple_count'] ?? 3);
+        $simpleCumul = (float) ($rules['team_cumul_simple'] ?? 1000);
+        if ($qualifiedBranches >= $simpleBranches && $cumulPV >= $simpleCumul) {
+            return true;
+        }
+
+        $doubleMinBranches = (int) ($rules['branches_double_min'] ?? 1);
+        $doubleMaxBranches = (int) ($rules['branches_double_max'] ?? 2);
+        $doubleCumul = (float) ($rules['team_cumul_double'] ?? 2200);
+        if ($directReferrals >= 1
+            && $qualifiedBranches >= $doubleMinBranches
+            && $qualifiedBranches <= $doubleMaxBranches
+            && $cumulPV >= $doubleCumul
+        ) {
+            return true;
+        }
+
+        $soloMonthlyPv = (float) ($rules['personal_monthly_pv_solo'] ?? 1000);
+        $monthlyPv = $this->normalizePV($user->monthly_pv);
+        if ($directReferrals === 0 && $monthlyPv >= $soloMonthlyPv) {
+            return true;
+        }
 
         return false;
+    }
+
+    private function countDirectActiveReferrals(User $user): int
+    {
+        return User::query()
+            ->where('parrain_id', $user->id)
+            ->where('is_active', true)
+            ->count();
     }
 
     // ============================================================

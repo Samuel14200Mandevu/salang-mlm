@@ -209,9 +209,9 @@
                         'description' => 'Grade de leader, commencez à développer votre réseau',
                         'commission_types' => ['Bonus Direct (26%)', 'Bonus Indirect', 'Bonus Consommateur (6%)'],
                         'conditions' => [
-                            ['label' => 'Être niveau 4', 'value' => 'Avoir ≥ 1000 PV personnel'],
-                            ['label' => 'Option 1', 'value' => 'Avoir 3 filleuls directs de niveau 4 avec ≥ 1000 PV'],
-                            ['label' => 'Option 2', 'value' => 'Avoir 2 filleuls de niveau 3 avec un total ≥ 2200 PV']
+                            ['label' => 'Voie solo', 'value' => 'Sans filleul direct : ≥ 1000 PV personnels sur le mois en cours'],
+                            ['label' => 'Voie réseau simple', 'value' => '3 branches qualifiées (≥ niv. 3) et ≥ 1000 PV cumul d’équipe'],
+                            ['label' => 'Double cumulatif', 'value' => 'Avec 1 ou 2 filleuls qualifiés : ≥ 2200 PV cumul (1000 PV + filleul = reste niv. 3)'],
                         ],
                         'pv_payment' => 'PV mensuel ≥ 25 PV'
                     ],

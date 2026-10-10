@@ -1,5 +1,7 @@
 # Déploiement — Salang MLM
 
+**Routine quotidienne** (local validé → prod) : [ROUTINE_FIN_DE_JOURNEE.md](./ROUTINE_FIN_DE_JOURNEE.md).
+
 ## Règles de production
 
 1. **Jamais** `php artisan migrate:fresh` sur `salang_mlm`
