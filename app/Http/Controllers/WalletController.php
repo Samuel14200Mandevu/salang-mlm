@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Commission;
+use App\Services\WalletCommissionBreakdown;
+use App\Support\CareerQualificationPrizes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
 {
+    public function __construct(
+        protected WalletCommissionBreakdown $commissionBreakdown
+    ) {}
+
     public function index()
     {
         $user = Auth::user();
@@ -69,6 +75,9 @@ class WalletController extends Controller
             ->reverse()
             ->values();
 
+        $bonusByType = $this->commissionBreakdown->paidByType($user->id);
+        $careerQualificationPrizes = CareerQualificationPrizes::forWallet($user);
+
         return view('wallet.index', compact(
             'balance',
             'pendingBalance',
@@ -76,7 +85,9 @@ class WalletController extends Controller
             'totalDeposited',
             'transactions',
             'transactionStats',
-            'monthlyCommissions'
+            'monthlyCommissions',
+            'bonusByType',
+            'careerQualificationPrizes'
         ));
     }
 

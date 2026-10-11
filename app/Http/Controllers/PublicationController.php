@@ -6,14 +6,17 @@ use App\Http\Requests\StorePublicationRequest;
 use App\Http\Requests\UpdatePublicationRequest;
 use App\Models\Publication;
 use App\Models\PublicationMedia;
+use App\Services\CareerQualificationPublicationsSync;
 use App\Services\PublicationMediaStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PublicationController extends Controller
 {
     public function __construct(
-        protected PublicationMediaStorage $mediaStorage
+        protected PublicationMediaStorage $mediaStorage,
+        protected CareerQualificationPublicationsSync $careerPublicationsSync
     ) {
         $this->middleware('role:admin|it_manager')->only([
             'create', 'store', 'edit', 'update', 'destroy', 'deleteMedia',
@@ -23,6 +26,10 @@ class PublicationController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Publication::class);
+
+        if (Schema::hasTable('publications')) {
+            $this->careerPublicationsSync->sync();
+        }
 
         $user = Auth::user();
         $query = Publication::query()
@@ -48,8 +55,9 @@ class PublicationController extends Controller
             $servicesFeaturedPublications = Publication::query()
                 ->active()
                 ->with('medias')
+                ->orderByRaw("CASE WHEN title LIKE 'Bonus carrière%' THEN 0 ELSE 1 END")
                 ->latest()
-                ->limit(8)
+                ->limit(12)
                 ->get();
         }
 

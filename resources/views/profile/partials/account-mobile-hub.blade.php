@@ -146,7 +146,7 @@
             'icon' => $icon('M4 6h16M4 12h16M4 18h16'),
         ])
 
-        <form method="POST" action="{{ route('logout') }}" class="profile-account-row profile-account-row--danger">
+        <form method="POST" action="{{ route('logout') }}" class="logout-form profile-account-row profile-account-row--danger">
             @csrf
             <button type="submit" class="profile-account-row__button">
                 <span class="profile-account-row__icon profile-account-row__icon--danger" aria-hidden="true">

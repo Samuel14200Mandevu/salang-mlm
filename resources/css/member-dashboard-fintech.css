@@ -672,7 +672,26 @@
     line-height: 1.15;
   }
 
-  /* —— Rail métriques —— */
+  /* —— Grille métriques (dashboard accueil) —— */
+  .member-app .member-dashboard--fintech .member-fintech-grid-wrap {
+    margin-top: 0.1rem;
+  }
+
+  .member-app .member-dashboard--fintech .member-fintech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .member-app .member-dashboard--fintech .member-fintech-grid .member-fintech-tile {
+    flex: none;
+    width: auto;
+    max-width: none;
+    scroll-snap-align: none;
+  }
+
+  /* —— Rail métriques (rapports, etc.) —— */
   .member-app .member-fintech-rail-wrap {
     margin-top: 0.1rem;
   }
@@ -736,6 +755,114 @@
 
   .member-app .member-fintech-tile__value--sm {
     font-size: 0.9375rem;
+  }
+
+  .member-app .member-fintech-tile__meta {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.5rem;
+    color: var(--text-tertiary);
+    line-height: 1.2;
+  }
+
+  .member-app .member-fintech-rail--career {
+    padding-bottom: 0.5rem;
+  }
+
+  .member-app .member-fintech-rail__track--career {
+    gap: 0.55rem;
+  }
+
+  .member-app .member-fintech-career-card {
+    scroll-snap-align: start;
+    flex: 0 0 min(52vw, 11.5rem);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+
+  .member-app .member-fintech-career-card.is-unlocked {
+    border-color: color-mix(in srgb, var(--dashboard-accent, #1e5dad) 40%, var(--border-light));
+  }
+
+  .member-app .member-fintech-career-card__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--bg-subtle, #f1f5f9);
+  }
+
+  .member-app .member-fintech-career-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .member-app .member-fintech-career-card__cash {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.15rem;
+    height: 100%;
+    color: var(--dashboard-accent, #1e5dad);
+    font-weight: 800;
+  }
+
+  .member-app .member-fintech-career-card__cash-symbol {
+    font-size: 1.25rem;
+  }
+
+  .member-app .member-fintech-career-card__cash-amount {
+    font-size: 1.75rem;
+  }
+
+  .member-app .member-fintech-career-card__badge {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    padding: 0.12rem 0.35rem;
+    border-radius: 6px;
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #fff;
+    background: var(--color-success-600, #16a34a);
+  }
+
+  .member-app .member-fintech-career-card__body {
+    padding: 0.5rem 0.55rem 0.6rem;
+    text-align: center;
+  }
+
+  .member-app .member-fintech-career-card__level {
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    margin: 0;
+  }
+
+  .member-app .member-fintech-career-card__rank {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0.15rem 0 0;
+    line-height: 1.2;
+  }
+
+  .member-app .member-fintech-career-card__reward {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--dashboard-accent, #1e5dad);
+    margin: 0.2rem 0 0;
+  }
+
+  .member-app .member-fintech-career-wrap {
+    margin-top: 0.15rem;
   }
 
   /* —— Panneaux —— */

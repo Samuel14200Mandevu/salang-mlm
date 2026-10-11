@@ -45,6 +45,29 @@
   .member-app .member-wallet-classic-shell {
     display: none !important;
   }
+
+  .member-app .member-wallet--fintech .member-fintech-grid-wrap {
+    margin-top: 0.1rem;
+  }
+
+  .member-app .member-wallet--fintech .member-fintech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .member-app .member-wallet--fintech .member-fintech-grid .member-fintech-tile,
+  .member-app .member-wallet--fintech .member-fintech-grid .member-fintech-career-card {
+    flex: none;
+    width: auto;
+    max-width: none;
+    scroll-snap-align: none;
+  }
+
+  .member-app .member-wallet--fintech .member-fintech-grid--career {
+    gap: 0.55rem;
+  }
 }
 
 @media (min-width: 768px) {
