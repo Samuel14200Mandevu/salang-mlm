@@ -433,6 +433,7 @@ body { background: var(--bg-page); color: var(--text-primary); }
     <p class="text-sm text-secondary mb-4">
         Importez un fichier contenant les colonnes <strong>ID</strong> (sponsor_id), <strong>NOMS</strong>, <strong>RANK</strong>, <strong>PV</strong>.
         Les PV seront ajoutés à l'historique et aux soldes des membres concernés.
+        <strong>Les grades sont recalculés automatiquement</strong> après chaque import (règles MLM + PVHistory).
     </p>
 
     <form id="historicalForm" method="POST" action="{{ route('admin.pv.import.historical') }}" enctype="multipart/form-data">
@@ -459,7 +460,7 @@ body { background: var(--bg-page); color: var(--text-primary); }
         <div class="flex gap-4 mt-2 items-center">
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="update_rank" value="1" id="update_rank">
-                Mettre à jour le grade depuis le fichier
+                Forcer le grade depuis la colonne RANK du fichier (optionnel — sinon recalcul auto)
             </label>
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="dry_run" value="1" id="dry_run">

@@ -331,6 +331,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/code', [ActivationController::class, 'activateWithCode'])->name('code');
         Route::post('/package', [ActivationController::class, 'activateWithPackage'])->name('package');
         Route::post('/resend', [ActivationController::class, 'resendCode'])->name('resend');
+        Route::post('/request-admin', [ActivationController::class, 'requestAdminActivation'])->name('request-admin');
     });
 
 }); // FIN DU GROUPE auth, active

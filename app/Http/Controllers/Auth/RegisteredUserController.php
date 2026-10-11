@@ -123,7 +123,7 @@ class RegisteredUserController extends Controller
             $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
 
             // ✅ Générer le code d'activation
-            $activationCode = $this->generateActivationCode();
+            $activationCode = \App\Support\ActivationCodeGenerator::generate();
 
             // ✅ Créer l'utilisateur avec is_active = false
             $user = User::create([
@@ -366,19 +366,6 @@ class RegisteredUserController extends Controller
     /**
      * Générer un code d'activation unique
      */
-    private function generateActivationCode(): string
-    {
-        $prefix = 'ACT-';
-        $code = $prefix . strtoupper(substr(md5(uniqid() . time() . rand()), 0, 12));
-        
-        // Vérifier l'unicité
-        while (User::where('activation_code', $code)->exists()) {
-            $code = $prefix . strtoupper(substr(md5(uniqid() . time() . rand()), 0, 12));
-        }
-        
-        return $code;
-    }
-
     /**
      * Déterminer la position dans l'arbre généalogique
      */

@@ -29,39 +29,54 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
+        $activateUrl = route('activate.index');
+        $packagesUrl = route('subscriptions.index');
+
         $message = (new MailMessage)
-            ->subject('Code d\'activation - Salang MLM')
-            ->greeting('Bonjour ' . $notifiable->name . '!')
-            ->line('Voici votre code d\'activation :')
+            ->subject('Activez votre compte — Salang MLM')
+            ->greeting('Bonjour '.$notifiable->name.' !')
+            ->line('Votre compte a été créé et reste **inactif** tant que vous n\'avez pas finalisé l\'activation.')
             ->line('')
-            ->line('**Code :** ' . $this->activationCode)
+            ->line('**Code guichet (7 jours) :** '.$this->activationCode)
             ->line('');
 
         if ($this->package) {
-            $message->line('Package associe : **' . $this->package->name . '**')
-                    ->line('Valeur : **$' . number_format($this->package->price, 2) . '**')
-                    ->line('PV : ' . $this->package->pv_value . ' | BV : ' . $this->package->bv_value)
-                    ->line('');
+            $message->line('Package associé : **'.$this->package->name.'**')
+                ->line('Valeur : **$'.number_format($this->package->price, 2).'**')
+                ->line('PV : '.$this->package->pv_value.' | BV : '.$this->package->bv_value)
+                ->line('');
         }
 
-        $message->line('Ce code est valable 7 jours.')
-                ->action('Activer mon compte', route('activate.account', ['code' => $this->activationCode]))
-                ->line('')
-                ->line('Si vous avez déjà payé votre package au guichet, entrez ce code dans la section activation.')
-                ->line('')
-                ->salutation('L\'équipe Salang MLM');
+        $message->line('**Comment activer votre compte :**')
+            ->line('1. **Achat d\'un package en ligne** — souscrivez depuis votre espace membre.')
+            ->line('2. **Paiement au guichet** — saisissez le code ci-dessus sur la page d\'activation.')
+            ->line('3. **Demande à l\'administration** — depuis la page d\'activation, envoyez une demande ; l\'équipe pourra activer votre compte manuellement.')
+            ->action('Page d\'activation', $activateUrl)
+            ->line('Packages en ligne : '.$packagesUrl)
+            ->salutation('L\'équipe Salang MLM');
 
         return $message;
     }
 
     public function toArray($notifiable): array
     {
+        $activateUrl = route('activate.index');
+        $packagesUrl = route('subscriptions.index');
+
+        $instructions = 'Votre compte est inactif. Pour l\'activer : (1) achetez un package en ligne ; '
+            .'(2) payez au guichet et saisissez votre code '.$this->activationCode.' ; '
+            .'(3) demandez l\'activation à l\'administration depuis la page d\'activation. '
+            .'Code valable 7 jours.';
+
         $data = [
-            'title' => 'Code d\'activation de compte',
-            'message' => 'Votre code d\'activation est : ' . $this->activationCode,
+            'type' => 'account_pending_activation',
+            'title' => 'Compte en attente d\'activation',
+            'message' => $instructions,
             'code' => $this->activationCode,
             'expires_in' => '7 jours',
-            'action_url' => route('activate.account', ['code' => $this->activationCode]),
+            'activate_url' => $activateUrl,
+            'packages_url' => $packagesUrl,
+            'action_url' => $activateUrl,
         ];
 
         if ($this->package) {

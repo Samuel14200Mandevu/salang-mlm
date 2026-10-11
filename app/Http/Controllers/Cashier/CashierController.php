@@ -1886,7 +1886,7 @@ public function destroyProfile(Request $request)
             'phone' => 'required|string|max:20|unique:users,phone',
             'email' => 'nullable|email|max:255|unique:users,email',
             'sponsor_code' => 'required|string|exists:users,sponsor_id',
-            'member_code' => 'required|string|max:20|unique:users,sponsor_id',
+            'member_code' => ['required', 'string', 'regex:/^\d{6}$/', 'unique:users,sponsor_id'],
             'package_id' => 'required|exists:packages,id',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|string|in:male,female',
@@ -1947,16 +1947,18 @@ public function destroyProfile(Request $request)
             $email = $request->email;
             if (!$email) {
                 $nameParts = explode(' ', trim($request->name));
-                $firstName = strtolower($nameParts[0] ?? 'user');
-                $lastName = strtolower($nameParts[1] ?? '');
-                $firstName = preg_replace('/[^a-z0-9]/', '', $firstName);
-                $lastName = preg_replace('/[^a-z0-9]/', '', $lastName);
-                $email = $firstName . ($lastName ? '.' . $lastName : '') . '@salanggroup.com';
-                
+                $localPart = '';
+                foreach ($nameParts as $part) {
+                    $localPart .= preg_replace('/[^a-z0-9]/', '', strtolower($part));
+                }
+                if ($localPart === '') {
+                    $localPart = 'user';
+                }
+                $email = $localPart.'@salanggroup.com';
+
                 $counter = 1;
-                $originalEmail = $email;
                 while (User::where('email', $email)->exists()) {
-                    $email = str_replace('@salanggroup.com', $counter . '@salanggroup.com', $originalEmail);
+                    $email = $localPart.$counter.'@salanggroup.com';
                     $counter++;
                 }
             }
@@ -2048,20 +2050,6 @@ public function destroyProfile(Request $request)
                 Log::error('Erreur assignation rôle: ' . $e->getMessage());
             }
 
-            // 7. Créer le wallet
-            try {
-                Wallet::create([
-                    'user_id' => $member->id,
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Erreur création wallet: ' . $e->getMessage());
-            }
-
-            // 8. Créer l'entrée généalogique
             try {
                 $level = ($sponsor->genealogy?->level ?? 0) + 1;
                 Genealogy::create([
@@ -2075,42 +2063,15 @@ public function destroyProfile(Request $request)
                     'total_children' => 0,
                 ]);
             } catch (\Exception $e) {
-                Log::error('Erreur création généalogie: ' . $e->getMessage());
+                Log::error('Erreur création généalogie: '.$e->getMessage());
             }
 
-            // 9. Mettre à jour les compteurs du sponsor
             $sponsor->increment('total_sponsors');
             $sponsor->increment('total_team');
             $sponsor->save();
 
-            // 10. Mettre à jour le team_pv
-            if (method_exists($member, 'updateTeamPVOptimized')) {
-                try {
-                    $member->updateTeamPVOptimized();
-                } catch (\Exception $e) {
-                    Log::error('Erreur updateTeamPVOptimized: ' . $e->getMessage());
-                }
-            }
-            
-            if (method_exists($member, 'updateAllAncestorsTeamPV')) {
-                try {
-                    $member->updateAllAncestorsTeamPV();
-                } catch (\Exception $e) {
-                    Log::error('Erreur updateAllAncestorsTeamPV: ' . $e->getMessage());
-                }
-            }
-
-            // 11. Mettre à jour le grade du sponsor
-            if (method_exists($sponsor, 'updateRankAfterPVChange')) {
-                try {
-                    $sponsor->updateRankAfterPVChange('new_member_with_package');
-                } catch (\Exception $e) {
-                    Log::error('Erreur updateRankAfterPVChange: ' . $e->getMessage());
-                }
-            }
-
             // ============================================================
-            // 12. COMMISSIONS VIA CommissionDistributor UNIQUEMENT
+            // Commande POS + commission parrain (CommissionDistributor)
             // ============================================================
             try {
                 Log::info('🔄 Appel de CommissionDistributor pour adhésion...');
@@ -2125,10 +2086,13 @@ public function destroyProfile(Request $request)
                     ]
                 );
 
-                // CRÉER UNE COMMANDE POUR L'ADHÉSION
+                $orderNumber = 'POS-'.date('Ymd').'-'.strtoupper(Str::random(6));
+
                 $order = Order::create([
                     'user_id' => $member->id,
-                    'order_number' => 'MEM-' . strtoupper(uniqid()),
+                    'cashier_id' => auth()->id(),
+                    'created_by' => auth()->id(),
+                    'order_number' => $orderNumber,
                     'subtotal' => $package->price ?? 0,
                     'tax' => 0,
                     'shipping' => 0,
@@ -2138,8 +2102,9 @@ public function destroyProfile(Request $request)
                     'total_bv' => $bvValue,
                     'status' => 'completed',
                     'payment_status' => 'completed',
+                    'payment_method' => 'cash',
                     'paid_at' => now(),
-                    'source' => 'membership', // SOURCE IMPORTANTE !
+                    'source' => 'pos',
                     'metadata' => [
                         'cashier_id' => auth()->id(),
                         'cashier_name' => auth()->user()->name,
@@ -2147,6 +2112,7 @@ public function destroyProfile(Request $request)
                         'is_membership' => true,
                         'cashier_registration' => true,
                         'member_code' => $request->member_code,
+                        'pos_sale' => true,
                     ],
                 ]);
 
@@ -2172,11 +2138,13 @@ public function destroyProfile(Request $request)
                 // APPEL À CommissionDistributor
                 // ============================================================
                 $commissionDistributor = app(\App\Services\MLM\CommissionDistributor::class);
+                // PV déjà crédités sur le profil membre à la création — sponsor bonus uniquement
                 $commissions = $commissionDistributor->distributeCommissions(
-                    $member,      // L'acheteur (le nouveau membre)
-                    $package,      // Le package acheté
-                    $order->id,    // L'ID de la commande
-                    $period        // La période de commission
+                    $member,
+                    $package,
+                    $order->id,
+                    $period,
+                    true
                 );
 
                 $totalAmount = collect($commissions)->sum('amount');
@@ -2190,8 +2158,6 @@ public function destroyProfile(Request $request)
                     'total_amount' => $totalAmount,
                     'commission_types' => collect($commissions)->pluck('type')->unique()->toArray(),
                 ]);
-
-                $this->dispatchMlmRecalculation($member);
 
             } catch (\Exception $e) {
                 Log::error('❌ Erreur CommissionDistributor: ' . $e->getMessage(), [

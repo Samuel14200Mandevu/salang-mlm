@@ -975,9 +975,14 @@ body {
         <div class="sub">Points de Volume totaux</div>
     </div>
     <div class="pv-stat">
-        <div class="label">PV Mensuel</div>
+        <div class="label">PV Mensuel (profil)</div>
         <div class="value value-success" id="monthly_pv_display">{{ number_format($user->monthly_pv ?? 0, 1, ',', ' ') }}</div>
-        <div class="sub">Points de Volume du mois</div>
+        <div class="sub">
+            Période MLM {{ $mlmCurrentPeriod ?? '' }}&nbsp;: {{ number_format($personalPvCurrentPeriod ?? 0, 1, ',', ' ') }} PV
+            @if(($personalPvPreviousPeriod ?? 0) > 0)
+                · {{ $mlmPreviousPeriod ?? '' }}&nbsp;: {{ number_format($personalPvPreviousPeriod, 1, ',', ' ') }} PV (grade)
+            @endif
+        </div>
     </div>
     <div class="pv-stat">
         <div class="label">PV Équipe</div>

@@ -117,6 +117,13 @@ class CommissionDistributor
         return 0;
     }
 
+    private function isCashierAdhesionOrder(int $orderId): bool
+    {
+        $order = \App\Models\Order::find($orderId);
+
+        return $order && ! empty($order->metadata['cashier_registration']);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // VÉRIFICATIONS
     // ═══════════════════════════════════════════════════════════════
@@ -192,8 +199,10 @@ class CommissionDistributor
         $sponsor    = $buyer->parrain;
 
         $source       = $this->getSourceFromOrder($orderId);
-        $isPosSource  = ($source === 'pos');
-        $isMlmSource  = in_array($source, ['mlm', 'web', 'online', 'membership']);
+        $isCashierAdhesion = $this->isCashierAdhesionOrder($orderId);
+        $isPosSource  = ($source === 'pos') && ! $isCashierAdhesion;
+        $isMlmSource  = in_array($source, ['mlm', 'web', 'online', 'membership'], true)
+            || $isCashierAdhesion;
 
         // ══════════════════════════════════════════════════════════
         // 0. PV HISTORY + INCRÉMENTS (sauf rejeu fin de période)

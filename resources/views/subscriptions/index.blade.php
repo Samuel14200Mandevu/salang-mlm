@@ -39,21 +39,36 @@
             </span>
         </div>
 
-        <div class="card border-l-4 border-yellow-500">
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Solde de votre portefeuille</p>
-            <h2 class="text-xl sm:text-2xl font-bold text-yellow-500">
-                ${{ number_format(Auth::user()->wallet?->balance ?? 0, 2) }}
-            </h2>
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                Disponible pour les achats
-            </p>
-            <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm mt-2 inline-flex w-auto">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Déposer
-            </a>
-        </div>
+        @if(Auth::user()->wallet)
+            <div class="card border-l-4 border-yellow-500">
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Solde de votre portefeuille</p>
+                <h2 class="text-xl sm:text-2xl font-bold text-yellow-500">
+                    ${{ number_format(Auth::user()->wallet->balance, 2) }}
+                </h2>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                    Disponible pour les achats
+                </p>
+                <a href="{{ route('wallet.deposit') }}" class="btn btn-primary btn-sm mt-2 inline-flex w-auto">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Déposer
+                </a>
+            </div>
+        @else
+            <div class="card border-l-4 border-[var(--border-light)]">
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Portefeuille en ligne</p>
+                <h2 class="text-base sm:text-lg font-semibold text-[var(--text-primary)]">
+                    Non ouvert
+                </h2>
+                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                    Adhésion au guichet ou dépôt pour payer un package en ligne.
+                </p>
+                <a href="{{ route('wallet.deposit') }}" class="btn btn-outline btn-sm mt-2 inline-flex w-auto">
+                    Ouvrir / déposer
+                </a>
+            </div>
+        @endif
     </div>
 
     <p class="subscriptions-offers-label">Offres disponibles</p>
@@ -66,8 +81,8 @@
                 $isLocked = Auth::user()->package_id && Auth::user()->package_id > $package->id;
                 $isPopular = $package->id == 4;
                 $delay = min($loop->index + 2, 7);
-                $balance = Auth::user()->wallet?->balance ?? 0;
-                $canAfford = $balance >= $package->price;
+                $balance = Auth::user()->wallet?->balance;
+                $canAfford = $balance !== null && $balance >= $package->price;
             @endphp
 
             <div class="subscription-card animate-fadeInUp delay-{{ $delay }} {{ $isCurrent ? 'current' : '' }}">

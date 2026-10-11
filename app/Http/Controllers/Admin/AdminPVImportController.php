@@ -207,12 +207,7 @@ class AdminPVImportController extends Controller
             fclose($handle);
             DB::commit();
 
-            if (!empty($usersUpdated) && count($usersUpdated) <= 50) {
-                $this->recalculateSync($usersUpdated, $period);
-            } elseif (!empty($usersUpdated)) {
-                RecalculateAfterPVImport::dispatch($usersUpdated, $period)
-                    ->onQueue('rank-recalculation');
-            }
+            $rankRecalc = $this->dispatchRankRecalculationAfterImport($usersUpdated, $period);
 
             $message = "Import termine !\n";
             $message .= "Lignes importees: {$imported}\n";
@@ -220,7 +215,7 @@ class AdminPVImportController extends Controller
             if ($packagesAttributed > 0) {
                 $message .= "Packages attribués (id=1) : {$packagesAttributed}\n";
             }
-            $message .= " Recalcul " . (count($usersUpdated) <= 50 ? "effectué" : "en arrière-plan") . ".";
+            $message .= $this->formatRankRecalcImportMessage($rankRecalc, $period);
 
             if (!empty($errors)) {
                 $message .= "\nErreurs: " . count($errors) . "\n";
@@ -298,6 +293,7 @@ class AdminPVImportController extends Controller
         $errors = [];
         $warnings = [];
         $usersUpdated = [];
+        $usersRankRecalc = [];
         $totalPV = 0;
         $packagesAttributed = 0;
         $createdMembers = [];
@@ -492,6 +488,9 @@ class AdminPVImportController extends Controller
                         // ✅ Montant IDENTIQUE → ne rien faire
                         $warnings[] = "Ligne {$lineNum}: PV déjà importé pour {$user->name} ({$existingAmount} PV) → ignoré";
                         $skipIncrement = true;
+                        if (!$dryRun) {
+                            $usersRankRecalc[$user->id] = true;
+                        }
 
                     } else {
                         // ✅ Montant DIFFÉRENT → remplacer
@@ -510,7 +509,18 @@ class AdminPVImportController extends Controller
                                 $user->monthly_bv = ($user->monthly_bv ?? 0) - ($oldAmount * 0.8) + ($newAmount * 0.8);
                             }
 
+                            $this->applyRankFromImportFile(
+                                $user,
+                                $rankValue,
+                                $updateRank,
+                                $ranksByLevel,
+                                $lineNum,
+                                $memberId,
+                                $warnings
+                            );
+
                             $user->saveQuietly();
+                            $usersRankRecalc[$user->id] = true;
                         }
 
                         $warnings[] = "Ligne {$lineNum}: PV REMPLACÉ pour {$user->name} : {$existingAmount} → {$newAmount} PV";
@@ -551,24 +561,22 @@ class AdminPVImportController extends Controller
                         $packagesAttributed++;
                     }
 
-                    if ($updateRank && is_numeric($rankValue) && $rankValue > 0 && $rankValue <= 20) {
-                        $rank = $ranksByLevel->get((int) $rankValue);
-
-                        if ($rank) {
-                            $user->rank_id = $rank->id;
-                            $user->rank = $rank->name;
-                            $user->rank_level = $rank->level;
-                            $user->last_rank_update = now();
-                        } else {
-                            $warnings[] = "Ligne {$lineNum}: Rang niveau {$rankValue} introuvable pour ID {$memberId}";
-                        }
-                    }
+                    $this->applyRankFromImportFile(
+                        $user,
+                        $rankValue,
+                        $updateRank,
+                        $ranksByLevel,
+                        $lineNum,
+                        $memberId,
+                        $warnings
+                    );
 
                     $user->saveQuietly();
 
                     if (!in_array($user->id, $usersUpdated)) {
                         $usersUpdated[] = $user->id;
                     }
+                    $usersRankRecalc[$user->id] = true;
                 }
 
                 $totalPV += $pv;
@@ -590,13 +598,10 @@ class AdminPVImportController extends Controller
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
 
-        if (!$dryRun && !empty($usersUpdated)) {
-            if (count($usersUpdated) <= 50) {
-                $this->recalculateSync($usersUpdated, $period);
-            } else {
-                RecalculateAfterPVImport::dispatch($usersUpdated, $period)
-                    ->onQueue('rank-recalculation');
-            }
+        $recalcUserIds = array_keys($usersRankRecalc);
+        $rankRecalc = ['count' => 0, 'mode' => 'none'];
+        if (!$dryRun && !empty($recalcUserIds)) {
+            $rankRecalc = $this->dispatchRankRecalculationAfterImport($recalcUserIds, $period);
         }
 
         $duration = round(microtime(true) - $startTime, 2);
@@ -642,8 +647,8 @@ class AdminPVImportController extends Controller
 
         $message .= "\nIgnorés : {$skipped}\n";
 
-        if (!$dryRun && !empty($usersUpdated)) {
-            $message .= "\n Recalcul " . (count($usersUpdated) <= 50 ? "effectué immédiatement" : "en arrière-plan") . ".";
+        if (!$dryRun) {
+            $message .= $this->formatRankRecalcImportMessage($rankRecalc, $period, $isCurrentMonth);
         }
 
         if (!empty($errors)) {
@@ -659,53 +664,101 @@ class AdminPVImportController extends Controller
     /**
      * Recalcul synchrone des team_pv + grades
      */
+    /**
+     * Recalcule automatiquement team_pv + grades après import PV.
+     *
+     * @return array{count: int, mode: 'none'|'sync'|'queue'}
+     */
+    protected function dispatchRankRecalculationAfterImport(array $userIds, string $period): array
+    {
+        $userIds = array_values(array_unique(array_filter($userIds)));
+        if ($userIds === []) {
+            return ['count' => 0, 'mode' => 'none'];
+        }
+
+        $syncLimit = 500;
+
+        if (count($userIds) <= $syncLimit) {
+            $this->recalculateSync($userIds, $period);
+
+            return ['count' => count($userIds), 'mode' => 'sync'];
+        }
+
+        RecalculateAfterPVImport::dispatch($userIds, $period)
+            ->onQueue('rank-recalculation');
+
+        Log::info('Import PV : recalcul grades en file (volume élevé)', [
+            'users_count' => count($userIds),
+            'period' => $period,
+        ]);
+
+        return ['count' => count($userIds), 'mode' => 'queue'];
+    }
+
+    protected function formatRankRecalcImportMessage(array $rankRecalc, string $period, ?bool $isCurrentMonth = null): string
+    {
+        if (($rankRecalc['count'] ?? 0) === 0) {
+            return '';
+        }
+
+        $line = "\n Grades recalculés automatiquement pour {$rankRecalc['count']} membre(s)";
+        $line .= ($rankRecalc['mode'] === 'sync')
+            ? ' (immédiat).'
+            : ' (file rank-recalculation — worker requis).';
+
+        if ($isCurrentMonth === false) {
+            $line .= "\n Période {$period} : qualification grade via PVHistory (monthly_pv profil inchangé si mois passé).";
+        }
+
+        return $line;
+    }
+
     protected function recalculateSync(array $userIds, string $period): void
     {
-        Log::info('Recalcul synchrone démarré', [
+        if ($userIds === []) {
+            return;
+        }
+
+        Log::info('Recalcul synchrone démarré (RecalculateAfterPVImport)', [
             'users_count' => count($userIds),
             'period' => $period,
         ]);
 
         $startTime = microtime(true);
 
-        $teamPVCalculator = app(TeamPVCalculator::class);
-        $rankCalculator = app(AdvancedRankCalculator::class);
-
-        foreach ($userIds as $userId) {
-            $user = User::find($userId);
-            if (!$user) continue;
-
-            try {
-                $teamPVCalculator->updateUser($user);
-                $teamPVCalculator->updateAncestors($user);
-
-                $user->refresh();
-                $rankCalculator->clearCache();
-                $rankCalculator->recalculateUserRank($user, "Import synchrone {$period}");
-
-                $ancestors = $teamPVCalculator->getAncestorIds($user);
-                foreach ($ancestors as $ancestorId) {
-                    $ancestor = User::find($ancestorId);
-                    if (!$ancestor) continue;
-
-                    $rankCalculator->clearCache();
-                    $rankCalculator->recalculateUserRank($ancestor, "Ancêtre de {$user->name}");
-                }
-
-            } catch (\Exception $e) {
-                Log::error('Erreur recalcul synchrone user', [
-                    'user_id' => $userId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        $duration = round(microtime(true) - $startTime, 2);
+        (new RecalculateAfterPVImport($userIds, $period))->handle(
+            app(AdvancedRankCalculator::class),
+            app(TeamPVCalculator::class)
+        );
 
         Log::info('Recalcul synchrone terminé', [
             'users_count' => count($userIds),
-            'duration_seconds' => $duration,
+            'duration_seconds' => round(microtime(true) - $startTime, 2),
         ]);
+    }
+
+    private function applyRankFromImportFile(
+        User $user,
+        mixed $rankValue,
+        bool $updateRank,
+        $ranksByLevel,
+        int $lineNum,
+        string $memberId,
+        array &$warnings
+    ): void {
+        if (!$updateRank || !is_numeric($rankValue) || $rankValue <= 0 || $rankValue > 20) {
+            return;
+        }
+
+        $rank = $ranksByLevel->get((int) $rankValue);
+        if ($rank) {
+            $user->rank_id = $rank->id;
+            $user->rank = $rank->name;
+            $user->rank_level = $rank->level;
+            $user->last_rank_update = now();
+        } else {
+            $warnings[] = "Ligne {$lineNum}: Rang niveau {$rankValue} introuvable pour ID {$memberId}";
+        }
     }
 
     private function readSpreadsheet($file, int $skipRows = 0): array
@@ -985,7 +1038,7 @@ class AdminPVImportController extends Controller
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
 
-        $this->recalculateSync([$user->id], $period);
+        $this->dispatchRankRecalculationAfterImport([$user->id], $period);
 
         $user->refresh();
         $user = User::with(['rank', 'parrain'])->find($user->id);

@@ -92,7 +92,28 @@ class AdminPVController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        return view('admin.pv.index', compact('user', 'packages', 'pvHistory'));
+        $mlmCurrentPeriod = \App\Support\MlmPeriod::current();
+        $mlmPreviousPeriod = \Carbon\Carbon::createFromFormat('Y-m', $mlmCurrentPeriod)->subMonth()->format('Y-m');
+        $personalPvCurrentPeriod = (float) PVHistory::query()
+            ->where('user_id', $user->id)
+            ->where('period', $mlmCurrentPeriod)
+            ->where('type', 'personal')
+            ->sum('amount');
+        $personalPvPreviousPeriod = (float) PVHistory::query()
+            ->where('user_id', $user->id)
+            ->where('period', $mlmPreviousPeriod)
+            ->where('type', 'personal')
+            ->sum('amount');
+
+        return view('admin.pv.index', compact(
+            'user',
+            'packages',
+            'pvHistory',
+            'mlmCurrentPeriod',
+            'mlmPreviousPeriod',
+            'personalPvCurrentPeriod',
+            'personalPvPreviousPeriod',
+        ));
     }
 
     public function update(Request $request, $id)

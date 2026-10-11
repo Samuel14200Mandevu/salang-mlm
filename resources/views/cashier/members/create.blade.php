@@ -91,7 +91,7 @@
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}">
-                    <div class="help-text">Si non renseigné, un email sera généré automatiquement.</div>
+                    <div class="help-text">Si non renseigné : prenomnom@salanggroup.com (sans point entre prénom et nom).</div>
                 </div>
             </div>
 

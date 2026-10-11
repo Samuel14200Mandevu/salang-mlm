@@ -51,5 +51,9 @@ class RegistrationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('activate.index', absolute: false));
+
+        $user = User::where('email', 'test@example.com')->first();
+        $this->assertFalse($user->is_active);
+        $this->assertNotNull($user->activation_code);
     }
 }

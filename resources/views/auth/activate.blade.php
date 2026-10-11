@@ -16,7 +16,8 @@
     <div class="auth-notice" role="status">
         <p class="font-semibold text-[var(--text-primary)]">Compte en attente d’activation</p>
         <p class="mt-1 text-sm text-[var(--text-secondary)]">
-            Saisissez le code reçu après paiement au guichet, ou souscrivez un package en ligne.
+            Souscrivez un package en ligne, saisissez le code reçu au guichet, ou demandez l’activation à l’administration.
+            Un rappel détaillé est disponible dans vos notifications.
         </p>
     </div>
 
@@ -76,6 +77,21 @@
     <p class="text-sm text-center text-[var(--text-secondary)]">
         <a href="{{ route('subscriptions.index') }}" class="auth-link">Souscrire un package en ligne</a>
     </p>
+
+    <section class="auth-activate-block mt-6" aria-labelledby="activate-admin-heading">
+        <h2 id="activate-admin-heading" class="auth-activate-heading">
+            Demande à l’administration
+        </h2>
+        <p class="text-sm text-[var(--text-secondary)] mb-3">
+            Si vous avez déjà réglé votre adhésion ou besoin d’une activation manuelle, envoyez une demande à l’équipe Salang.
+        </p>
+        <form action="{{ route('activate.request-admin') }}" method="POST" class="auth-form">
+            @csrf
+            <button type="submit" class="auth-btn-outline w-full" data-loading-text="Envoi…">
+                Demander l’activation à l’admin
+            </button>
+        </form>
+    </section>
 
     <div class="auth-meta-links">
         <p class="text-xs text-[var(--text-muted)]">

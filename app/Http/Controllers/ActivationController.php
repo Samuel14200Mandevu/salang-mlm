@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Package;
 use App\Notifications\ActivationCodeNotification;
+use App\Notifications\ActivationRequestReceivedNotification;
+use App\Notifications\MemberActivationRequestAdminNotification;
 use App\Services\SmsService;
 use App\Services\MLM\CommissionDistributor;
 use App\Services\MLM\AdvancedRankCalculator;
@@ -45,6 +47,46 @@ class ActivationController extends Controller
         $packages = Package::where('is_active', true)->get();
 
         return view('auth.activate', compact('user', 'packages'));
+    }
+
+    public function requestAdminActivation(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return redirect()->route('login')->with('error', 'Veuillez vous connecter.');
+        }
+
+        if ($user->is_active) {
+            return redirect()->route('dashboard')->with('info', 'Votre compte est deja actif.');
+        }
+
+        $cacheKey = 'activation_admin_request_'.$user->id;
+        if (Cache::has($cacheKey)) {
+            return back()->with('info', 'Votre demande a deja ete envoyee recemment. L\'administration vous contactera ou utilisez un package en ligne.');
+        }
+
+        $admins = User::role(['admin', 'it_manager'])->get();
+        foreach ($admins as $admin) {
+            try {
+                $admin->notify(new MemberActivationRequestAdminNotification($user));
+            } catch (\Exception $e) {
+                Log::error('Admin activation request notification failed: '.$e->getMessage(), [
+                    'admin_id' => $admin->id,
+                    'user_id' => $user->id,
+                ]);
+            }
+        }
+
+        try {
+            $user->notify(new ActivationRequestReceivedNotification);
+        } catch (\Exception $e) {
+            Log::error('Member activation ack notification failed: '.$e->getMessage());
+        }
+
+        Cache::put($cacheKey, true, now()->addHours(24));
+
+        return back()->with('success', 'Votre demande d\'activation a ete envoyee a l\'administration. Consultez vos notifications pour les autres options d\'activation.');
     }
 
     public function activateWithCode(Request $request)

@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Rank;
+use App\Notifications\ActivationCodeNotification;
+use App\Support\ActivationCodeGenerator;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
@@ -19,13 +21,34 @@ class SocialiteController extends Controller
 {
     protected $providers = ['google', 'facebook', 'twitter', 'instagram', 'tiktok'];
 
+    private const INTENT_LOGIN = 'login';
+
+    private const INTENT_LINK_GOOGLE = 'link_google';
+
     public function redirect($provider)
     {
         if (!in_array($provider, $this->providers)) {
             return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
-        $sponsorId = session('sponsor_id') 
+        if (request()->query('intent') === self::INTENT_LOGIN) {
+            session([
+                'socialite_intent' => self::INTENT_LOGIN,
+                'social_provider' => $provider,
+            ]);
+            session()->forget('sponsor_id');
+
+            try {
+                return Socialite::driver($provider)->redirect();
+            } catch (\Exception $e) {
+                Log::error('Socialite login redirect error: '.$e->getMessage());
+
+                return redirect()->route('login')
+                    ->with('error', 'Connexion Google indisponible. Réessayez ou utilisez email et mot de passe.');
+            }
+        }
+
+        $sponsorId = session('sponsor_id')
             ?? request()->query('sponsor_id')
             ?? request()->query('ref')
             ?? request()->input('sponsor_id');
@@ -33,6 +56,8 @@ class SocialiteController extends Controller
         Log::info('=== SOCIALITE REDIRECT ===');
         Log::info('Provider: ' . $provider);
         Log::info('Sponsor ID: ' . $sponsorId);
+
+        session()->forget('socialite_intent');
 
         if (!$sponsorId) {
             return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
@@ -71,26 +96,40 @@ class SocialiteController extends Controller
             return redirect('/login')->with('error', 'This provider is not supported.');
         }
 
-        if (session('socialite_intent') === 'link_google') {
+        if (session('socialite_intent') === self::INTENT_LINK_GOOGLE) {
             return $this->callbackLinkGoogle($provider);
         }
+
+        $loginIntent = session('socialite_intent') === self::INTENT_LOGIN;
 
         try {
             $socialUser = Socialite::driver($provider)->user();
         } catch (\Exception $e) {
             Log::error('Socialite callback error: ' . $e->getMessage());
-            return redirect('/login')->with('error', 'Authentication error with ' . ucfirst($provider) . '. Please try again.');
+            session()->forget(['socialite_intent', 'sponsor_id', 'social_provider']);
+
+            return redirect()->route('login')
+                ->with('error', 'Authentification '.ucfirst($provider).' échouée. Réessayez.');
         }
 
         if (!$socialUser->getEmail()) {
-            return redirect('/register')->with('error', 'No email address found with this account.');
+            session()->forget(['socialite_intent', 'sponsor_id', 'social_provider']);
+
+            return redirect($loginIntent ? route('login') : '/register')
+                ->with('error', 'Aucune adresse email associée à ce compte Google.');
         }
 
-        // ✅ Vérifier si l'utilisateur existe déjà
-        $user = User::where('email', $socialUser->getEmail())->first();
+        $user = User::query()
+            ->where(function ($query) use ($provider, $socialUser) {
+                $query->where('email', $socialUser->getEmail())
+                    ->orWhere(function ($q) use ($provider, $socialUser) {
+                        $q->where('provider', $provider)
+                            ->where('provider_id', $socialUser->getId());
+                    });
+            })
+            ->first();
 
         if ($user) {
-            // ✅ Mettre à jour les informations sociales (utiliser provider et provider_id)
             if (empty($user->provider_id) || $user->provider != $provider) {
                 $user->provider = $provider;
                 $user->provider_id = $socialUser->getId();
@@ -98,12 +137,24 @@ class SocialiteController extends Controller
                 $user->save();
             }
 
-            session()->forget('sponsor_id');
-            session()->forget('social_provider');
+            session()->forget(['sponsor_id', 'social_provider', 'socialite_intent']);
+
             Auth::login($user);
 
+            if (! $user->is_active) {
+                return redirect()->route('activate.index')
+                    ->with('warning', 'Votre compte est inactif. Activez-le pour continuer.');
+            }
+
             return redirect()->to($user->loginRedirectUrl())
-                ->with('success', 'Welcome back ' . $user->name . '!');
+                ->with('success', 'Bon retour, '.$user->name.' !');
+        }
+
+        if ($loginIntent) {
+            session()->forget(['socialite_intent', 'sponsor_id', 'social_provider']);
+
+            return redirect()->route('login')
+                ->with('error', 'Aucun compte Salang pour cet email Google. Créez un compte avec un code parrain.');
         }
 
         // ✅ Nouvel utilisateur - vérifier le sponsor
@@ -124,8 +175,9 @@ class SocialiteController extends Controller
 
         try {
             $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
+            $activationCode = ActivationCodeGenerator::generate();
 
-            // ✅ Créer l'utilisateur avec provider et provider_id
+            // ✅ Créer l'utilisateur avec provider et provider_id (inactif jusqu'à activation)
             $user = User::create([
                 'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
                 'email' => $socialUser->getEmail(),
@@ -135,7 +187,9 @@ class SocialiteController extends Controller
                 'avatar' => $socialUser->getAvatar(),
                 'rank_id' => $rankId,
                 'rank' => 'Distributor',
-                'is_active' => true,
+                'is_active' => false,
+                'activation_code' => $activationCode,
+                'activation_code_expires_at' => now()->addDays(7),
                 'provider' => $provider,
                 'provider_id' => $socialUser->getId(),
                 'pv_balance' => 0,
@@ -183,11 +237,16 @@ class SocialiteController extends Controller
             session()->forget('sponsor_id');
             session()->forget('social_provider');
 
-            // Connecter l'utilisateur
+            try {
+                $user->notify(new ActivationCodeNotification($activationCode));
+            } catch (\Exception $e) {
+                Log::error('Error sending activation notification (social): '.$e->getMessage());
+            }
+
             Auth::login($user);
 
-            return redirect()->to($user->loginRedirectUrl())
-                ->with('success', 'Welcome ' . $user->name . '! Your account has been created with ' . ucfirst($provider) . '.');
+            return redirect()->route('activate.index')
+                ->with('warning', 'Votre compte a été créé. Activez-le en achetant un package, avec votre code guichet, ou via une demande à l\'administration.');
 
         } catch (\Exception $e) {
             Log::error('Social registration error: ' . $e->getMessage());

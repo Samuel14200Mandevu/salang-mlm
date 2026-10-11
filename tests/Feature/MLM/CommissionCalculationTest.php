@@ -101,4 +101,58 @@ class CommissionCalculationTest extends TestCase
         $this->assertSame(50.0, (float) $buyer->fresh()->monthly_pv);
         $this->assertDatabaseCount('pv_history', 0);
     }
+
+    public function test_cashier_adhesion_pos_order_pays_sponsor_bonus_only(): void
+    {
+        $period = $this->currentPeriod();
+
+        $sponsor = User::factory()->create([
+            'is_active' => true,
+            'rank_level' => 1,
+            'monthly_pv' => 0,
+            'team_pv' => 0,
+        ]);
+
+        $buyer = User::factory()->create([
+            'parrain_id' => $sponsor->id,
+            'user_type' => 'member',
+            'is_active' => true,
+            'monthly_pv' => 100,
+            'pv_balance' => 100,
+        ]);
+
+        $package = Package::where('slug', 'bronze')->firstOrFail();
+
+        $order = Order::withoutEvents(function () use ($buyer, $package, $sponsor) {
+            return Order::create([
+                'user_id' => $buyer->id,
+                'order_number' => 'POS-'.date('Ymd').'-TEST01',
+                'subtotal' => $package->price,
+                'total' => $package->price,
+                'status' => 'completed',
+                'payment_status' => 'completed',
+                'source' => 'pos',
+                'paid_at' => now(),
+                'metadata' => [
+                    'cashier_registration' => true,
+                    'is_membership' => true,
+                    'sponsor_id' => $sponsor->id,
+                ],
+            ]);
+        });
+
+        $distributor = app(CommissionDistributor::class);
+        $distributor->distributeCommissions($buyer, $package, $order->id, $period, true);
+
+        $this->assertSame(100.0, (float) $buyer->fresh()->monthly_pv);
+        $this->assertDatabaseHas('commissions', [
+            'user_id' => $sponsor->id,
+            'from_user_id' => $buyer->id,
+            'type' => 'sponsor',
+        ]);
+        $this->assertDatabaseMissing('commissions', [
+            'from_user_id' => $buyer->id,
+            'type' => 'cash_pos',
+        ]);
+    }
 }

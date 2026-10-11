@@ -1,16 +1,19 @@
 @php
     $user = Auth::user();
     $packageName = $user->package?->name ?? 'Aucun package';
-    $balance = $user->wallet?->balance ?? 0;
+    $wallet = $user->wallet;
     $isActive = (bool) $user->package_id;
     $statusLabel = $isActive ? 'Actif' : 'Inactif';
+    $walletSub = $wallet
+        ? '$'.number_format($wallet->balance, 2).' disponible'
+        : 'Portefeuille non ouvert';
 @endphp
 <div class="subscriptions-catalog-head shop-catalog-head member-shop-animate member-shop-animate--1">
     <div class="shop-catalog-banner subscriptions-catalog-banner">
         <div class="shop-catalog-banner__text">
             <p class="shop-catalog-banner__eyebrow">Salang MLM · {{ $statusLabel }}</p>
             <p class="shop-catalog-banner__title">{{ $subscriptions->count() }} package(s)</p>
-            <p class="shop-catalog-banner__sub">{{ $packageName }} · ${{ number_format($balance, 2) }} disponible</p>
+            <p class="shop-catalog-banner__sub">{{ $packageName }} · {{ $walletSub }}</p>
         </div>
         <div class="shop-catalog-banner__tools">
             <a href="{{ route('wallet.deposit') }}" class="shop-banner-icon-btn" aria-label="Déposer des fonds">

@@ -2,8 +2,10 @@
 
 namespace Tests\Unit\MLM;
 
+use App\Models\PVHistory;
 use App\Models\Rank;
 use App\Models\User;
+use App\Support\MlmPeriod;
 use App\Services\MLM\RankConditionChecker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -68,6 +70,28 @@ class RankConditionCheckerLevel4Test extends TestCase
             'monthly_pv' => 100,
         ]);
         $this->assertFalse($this->checker->checkConditions($user, $this->ranksByLevel[4]));
+    }
+
+    public function test_1000_personal_pv_in_previous_period_history_qualifies_solo(): void
+    {
+        $user = $this->sponsor([
+            'pv_balance' => 1000,
+            'monthly_pv' => 0,
+            'team_pv' => 1000,
+        ]);
+
+        $previousPeriod = \Carbon\Carbon::createFromFormat('Y-m', MlmPeriod::current())->subMonth()->format('Y-m');
+
+        PVHistory::create([
+            'user_id' => $user->id,
+            'amount' => 1000,
+            'date' => $previousPeriod.'-01',
+            'period' => $previousPeriod,
+            'type' => 'personal',
+            'notes' => "Import historique {$previousPeriod} - test",
+        ]);
+
+        $this->assertTrue($this->checker->checkConditions($user, $this->ranksByLevel[4]));
     }
 
     public function test_one_referral_with_1000_cumul_stays_below_level_4(): void

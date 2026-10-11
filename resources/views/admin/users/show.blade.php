@@ -361,15 +361,7 @@
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
-                <div class="info-row md:hidden">
-                    <span class="label">Statut</span>
-                    <span class="value">
-                        <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
-                            {{ $user->is_active ? 'Actif' : 'Inactif' }}
-                        </span>
-                    </span>
-                </div>
-                <div class="info-row hidden md:flex">
+                <div class="info-row">
                     <span class="label">Statut</span>
                     <span class="value">
                         <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">

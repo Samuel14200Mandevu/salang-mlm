@@ -51,7 +51,10 @@
 
     <div class="auth-divider" role="separator">ou</div>
 
-    @include('partials.auth.google-signin', ['id' => 'googleLoginBtn'])
+    @include('partials.auth.google-signin', [
+        'id' => 'googleLoginBtn',
+        'href' => route('social.redirect', ['provider' => 'google', 'intent' => 'login']),
+    ])
 
     <div class="auth-meta-links">
         <p>Pas encore membre ? <a href="{{ route('register') }}" class="auth-link">Créer un compte</a></p>
