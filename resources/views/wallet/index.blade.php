@@ -10,6 +10,8 @@
         @include('wallet.partials.fintech-hero')
         @include('wallet.partials.fintech-actions')
         @include('wallet.partials.fintech-metrics')
+        @include('wallet.partials.fintech-bonus-breakdown')
+        @include('wallet.partials.fintech-career-prizes')
         @include('wallet.partials.fintech-feed')
     </div>
 
@@ -34,6 +36,8 @@
                 <p class="text-2xl sm:text-3xl font-bold text-blue-500">${{ number_format($totalWithdrawn ?? 0, 2) }}</p>
             </div>
         </div>
+
+        @include('wallet.partials.wallet-bonus-desktop')
 
         <div class="card animate-fadeInUp delay-4">
             <div class="flex items-center justify-between mb-3 sm:mb-4">

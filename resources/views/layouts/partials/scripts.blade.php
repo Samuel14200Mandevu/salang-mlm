@@ -195,10 +195,25 @@
         });
 
         // Fermer le dialogue en cliquant sur l'overlay
-        document.getElementById('confirmDialog').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeConfirmDialog();
-            }
+        const confirmDialogEl = document.getElementById('confirmDialog');
+        if (confirmDialogEl) {
+            confirmDialogEl.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeConfirmDialog();
+                }
+            });
+        }
+
+        // Déconnexion mobile / sidebar : confirmation avant envoi du formulaire
+        document.querySelectorAll('form.logout-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                const submitter = e.submitter;
+                if (submitter && submitter.type === 'button') {
+                    return;
+                }
+                e.preventDefault();
+                confirmLogout(e);
+            });
         });
     });
     </script>

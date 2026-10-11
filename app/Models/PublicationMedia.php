@@ -50,7 +50,14 @@ class PublicationMedia extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk('public')->url($this->path);
+        $disk = Storage::disk('public');
+        $url = $disk->url($this->path);
+
+        if (str_starts_with($this->path, 'publications/career/') && $disk->exists($this->path)) {
+            $url .= '?v='.$disk->lastModified($this->path);
+        }
+
+        return $url;
     }
 
     public function getThumbnailUrlAttribute(): ?string

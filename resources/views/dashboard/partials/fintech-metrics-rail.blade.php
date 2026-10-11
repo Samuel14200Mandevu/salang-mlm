@@ -2,10 +2,9 @@
     $todayPv = (float) ($stats['today_pv'] ?? 0);
     $personalNeeded = (float) ($rankProgress['personal_pv_needed'] ?? 0);
 @endphp
-<div class="member-fintech-rail-wrap member-fintech-animate member-fintech-animate--d3">
+<div class="member-fintech-grid-wrap member-fintech-animate member-fintech-animate--d3">
     <p class="member-fintech-section-label">Aperçu réseau</p>
-    <div class="member-fintech-rail" tabindex="0">
-    <div class="member-fintech-rail__track">
+    <div class="member-fintech-grid member-fintech-grid--2x3">
         <article class="member-fintech-tile is-highlight">
             <span class="member-fintech-tile__label">PV perso</span>
             <span class="member-fintech-tile__value">{{ number_format($pvPersonnel ?? 0) }}</span>
@@ -30,6 +29,5 @@
             <span class="member-fintech-tile__label">PV mois</span>
             <span class="member-fintech-tile__value">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</span>
         </article>
-    </div>
     </div>
 </div>

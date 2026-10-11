@@ -258,7 +258,7 @@
         @endif
 
         <li>
-            <form method="POST" action="{{ route('logout') }}" class="sidebar-logout-form">
+            <form method="POST" action="{{ route('logout') }}" class="logout-form sidebar-logout-form">
                 @csrf
                 <button type="submit" class="sidebar-link sidebar-link--button sidebar-link--logout w-full">
                     <x-ui.sidebar-link-icon tone="danger">

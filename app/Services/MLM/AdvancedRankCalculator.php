@@ -223,16 +223,7 @@ class AdvancedRankCalculator
 
     public function calculatePrizes(User $user): array
     {
-        $prizes = [];
-        $rankLevel = (int) ($user->rank_level ?? 1);
-
-        if ($rankLevel >= 4) $prizes[] = ['level' => 4, 'prize' => 'Manager - Woofer'];
-        if ($rankLevel >= 5) $prizes[] = ['level' => 5, 'prize' => 'Directeur Principal - LCD TV'];
-        if ($rankLevel >= 6) $prizes[] = ['level' => 6, 'prize' => 'Soaring Manager - Moto'];
-        if ($rankLevel >= 7) $prizes[] = ['level' => 7, 'prize' => 'Saphire Manager - Petite voiture'];
-        if ($rankLevel >= 8) $prizes[] = ['level' => 8, 'prize' => 'Blue Diamond - Grande voiture'];
-        if ($rankLevel >= 9) $prizes[] = ['level' => 9, 'prize' => 'Diamond Pearl - House'];
-        return $prizes;
+        return \App\Support\CareerQualificationPrizes::earnedPrizesList($user);
     }
 
     public function getProgress(User $user): array
