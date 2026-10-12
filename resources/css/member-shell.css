@@ -1,5 +1,12 @@
 /* Espace membre (distributeur) — shell navigation */
 
+@media (min-width: 768px) {
+  .member-app .member-sidebar-drawer,
+  .member-app #sidebar {
+    z-index: 50;
+  }
+}
+
 .member-app #sidebar .sidebar-logo-full {
   height: 3.5rem;
   width: auto;

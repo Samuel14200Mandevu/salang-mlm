@@ -1,6 +1,6 @@
         <!-- Sidebar -->
         <aside id="sidebar" aria-label="Navigation membre"
-               class="fixed top-0 left-0 z-50 h-full transition-all duration-200 ease-in-out"
+               class="member-sidebar-drawer fixed top-0 left-0 h-full transition-all duration-200 ease-in-out"
                :class="{
                   'w-64': sidebarOpen && !isMobile,
                   'w-20 sidebar-is-rail': !sidebarOpen && !isMobile,

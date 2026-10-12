@@ -39,7 +39,7 @@
         <!-- Overlay mobile -->
         <div x-show="sidebarOpen && isMobile"
              @click="sidebarOpen = false"
-             class="fixed inset-0 bg-black/40 z-40 lg:hidden"
+             class="member-sidebar-overlay fixed inset-0 bg-black/40 lg:hidden"
              x-transition:enter="transition-opacity ease-linear duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"

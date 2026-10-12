@@ -325,10 +325,20 @@
     border-color: var(--member-nav-bar-badge-ring);
   }
 
-  /* Drawer sidebar */
+  /* Drawer sidebar — au-dessus de la barre menu (z-index 130) et de la nav bas (100) */
+  .member-app .member-sidebar-overlay {
+    z-index: 150 !important;
+  }
+
+  .member-app .member-sidebar-drawer,
   .member-app #sidebar {
+    z-index: 160 !important;
     width: min(18.5rem, 88vw) !important;
     max-width: 88vw;
+  }
+
+  .member-app.member-mobile-scroll-lock .member-mobile-topbar {
+    z-index: 120;
   }
 
   .member-app #sidebar .sidebar-link {
