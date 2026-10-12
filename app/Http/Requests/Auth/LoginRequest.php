@@ -18,6 +18,13 @@ class LoginRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'remember' => $this->boolean('remember'),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -34,6 +41,7 @@ class LoginRequest extends FormRequest
             'email.email' => 'Saisissez une adresse email valide (exemple : nom@domaine.com).',
             'email.max' => 'L’adresse email ne doit pas dépasser 255 caractères.',
             'password.required' => 'Le mot de passe est obligatoire.',
+            'remember.boolean' => 'La case « Rester connecté » est invalide.',
         ];
     }
 
@@ -49,7 +57,7 @@ class LoginRequest extends FormRequest
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'credentials' => __('auth.failed'),
+                'credentials' => $this->invalidCredentialsMessage(),
             ]);
         }
 
@@ -65,7 +73,7 @@ class LoginRequest extends FormRequest
         if (!UserPassword::verify($user, $this->string('password'))) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'credentials' => __('auth.failed'),
+                'credentials' => $this->invalidCredentialsMessage(),
             ]);
         }
 
@@ -92,5 +100,10 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+
+    private function invalidCredentialsMessage(): string
+    {
+        return trans('auth.failed', [], 'fr');
     }
 }
