@@ -262,6 +262,7 @@
     $rankLabelShow = \App\Support\MlmRank::label($rankLevelShow);
     $rankBadgeShow = \App\Support\MlmRank::badgeClass($rankLevelShow);
     $userShowSubtitle = $user->name . ' · ID ' . $user->id;
+    $parrainReferralCode = $parrain?->sponsor_id;
 @endphp
 
 @include('admin.layouts.partials.desktop-page-header', [
@@ -354,10 +355,6 @@
                     <span class="label">Téléphone</span>
                     <span class="value">{{ $user->phone ?? 'Non fourni' }}</span>
                 </div>
-                <div class="info-row md:hidden">
-                    <span class="label">Code parrain</span>
-                    <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
-                </div>
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
@@ -430,15 +427,15 @@
                 <div class="info-row">
                     <span class="label">Parrain</span>
                     <span class="value">
-                        @php
-                            $parrain = App\Models\User::find($user->parrain_id);
-                        @endphp
                         @if($parrain)
                             <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-blue hover:underline font-semibold">
                                 {{ $parrain->name }}
                             </a>
                             <span class="text-xs text-[var(--text-tertiary)] block">
                                 Email: {{ $parrain->email }}
+                                @if($parrainReferralCode)
+                                    · Code: <span class="font-mono">{{ $parrainReferralCode }}</span>
+                                @endif
                             </span>
                         @elseif($user->parrain_id)
                             <span class="text-red-500">Inconnu (ID: {{ $user->parrain_id }})</span>

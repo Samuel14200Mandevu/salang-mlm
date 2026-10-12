@@ -98,9 +98,9 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
+        $user = User::with(['rank', 'package', 'wallet', 'parrain'])->findOrFail($id);
 
-        $parrain = User::find($user->parrain_id);
+        $parrain = $user->parrain;
 
         $filleuls = User::where('parrain_id', $user->id)->get();
         $filleulsCount = $filleuls->count();
