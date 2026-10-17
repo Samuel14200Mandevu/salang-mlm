@@ -441,4 +441,76 @@ curl -sf http://127.0.0.1:8000/up
 
 ---
 
+## Sprint 0 + BB1-rapide — Bilan final
+
+**Date clôture pilote :** 2026-10-17 · Branche `sprint-0/audit-critical-fixes` · **PR #3** · CI **PHPUnit + Dusk + Vite** verte
+
+### Commits (13 depuis `c8cca10`)
+
+| SHA | Message |
+|-----|---------|
+| `e186abb` | docs(audit) : 4 fichiers d'audit |
+| `db00253` | fix(db) : migrations + garde-fous démo + tests Cashier |
+| `0a72605` | refactor(mlm) : suppression code mort (GenealogyService, BA13) |
+| `6308296` | test(security) : garde-fou démo |
+| `382c12a` | fix(deps) : Guzzle + Dompdf (CVE) |
+| `57b4c51` | fix(security) : Stripe webhook (C1) |
+| `525d758` | fix(mlm) : idempotence commission (BA12) |
+| `a77581d` | fix(mlm) : statut failed + guard retry (BA14a) |
+| `b9ac2f2` | fix(mlm) : throw generatePayments (BE1) |
+| `deaedaf` | docs(audit) : close Sprint 0 |
+| `119ac4b` | ci : fix PHPUnit workflow (sqlite) |
+| `821b9b3` | ci : fix Vite build |
+| `aab1894` | fix(cashier) : prevent double-click checkout (BB1-rapide) |
+
+*(Workflow PHPUnit initial : `0b143aa` — hors décompte fonctionnel Sprint 0.)*
+
+### Résultats
+
+| Métrique | Valeur |
+|----------|--------|
+| Tests | **88 → 110 passed** (+22), **1 skipped**, 2 risky (CommissionPeriodRetryTest) |
+| CI | PHPUnit + Dusk + Vite **verts** sur PR #3 |
+| Advisories Composer | **30 → 18** (Guzzle/Dompdf corrigés ; Livewire/Laravel/commonmark restants) |
+
+### CRITIQUES résolus (7 + BB1-rapide)
+
+| Item | Livrable |
+|------|----------|
+| **C1** | `config/cashier.php` + tests signature Stripe |
+| **C3 / C4** | Guzzle 7.15.5, Dompdf 3.1.6 |
+| **BA12** | Migration `unique(order_id, type)` + garde `CommissionDistributor` |
+| **BA14a** | Enum `failed` + heartbeat `ProcessMonthlyCommissions` |
+| **BE1** | Throw si `generatePayments` false |
+| **BB1 (tests)** | `CheckoutRegressionTest` (3 scénarios caisse) |
+| **BB1-rapide** | Garde double-clic `createCheckoutOrder` (`CashierController.php:1182-1225`) + `CheckoutDoubleClickTest` (3 tests) + bouton checkout disabled |
+
+### MAJEURS résolus (6)
+
+- **D4 / D5** : isolation démo (`MLM_DEMO_MODE`, sync historique, recalculate admin)
+- **D8** : couvert par garde-fous démo / prod (recalculate, sync)
+- **D10** : Stripe webhook (C1)
+- **D13** : retry période `failed` / stale (BA14a)
+- **D14** : BE1 (échec clôture explicite)
+
+### Différés Sprint 1
+
+- **BA14b** : orchestrateur `runMonthlyClose` (atomicité complète)
+- **BB1** : refonte complète checkout → `CommissionDistributor`
+- **D6** : colonne `source` runtime vs historique
+- **D11** : 403 JSON par défaut sur webhook sans `Accept`
+- **services.webhooks.stripe** : mapping orphelin
+- **29× `total_bv` legacy**
+- **AdminUserSeeder** : bug `rank_id=10` (pré-existant)
+- **18 advisories Composer** restants
+- **Clarification wallet** : `cash_pos` `paid` au checkout vs crédit wallet (`commissionPay`)
+
+### Pilote prod
+
+Checklist opérationnelle : [`docs/PILOT_LAUNCH_CHECKLIST.md`](docs/PILOT_LAUNCH_CHECKLIST.md).
+
+**Prêt pour merge PR #3** sous réserve : backup prod, audit doublons `(order_id, type)`, variables Cloud (`MLM_DEMO_MODE=false`, Stripe si actif), smoke caisse post-deploy.
+
+---
+
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*
