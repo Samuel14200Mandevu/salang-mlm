@@ -354,6 +354,14 @@ curl -sf http://127.0.0.1:8000/up
 - Reste Sprint 1 : orchestrateur `runMonthlyClose` pour atomicité + compensation (BA14b)
 - Fichier:ligne : `2026_10_17_170000_add_failed_status_to_commission_periods.php`, `ProcessMonthlyCommissions.php` (guard, `failed`, `markPeriodFailed`), `CommissionPeriod.php` (`STATUS_FAILED`, `isFailed()`), `tests/Feature/MLM/CommissionPeriodRetryTest.php`
 
+### D14 — BE1 échec silencieux generatePayments (CRITIQUE — RÉSOLU)
+
+- `ProcessMonthlyCommissions` step 4 : `RuntimeException` si `generatePayments` retourne `false` sans `paymentBlockReason()` (refus métier → step `blocked`, pas de throw)
+- `failed()` / catch → `status=failed` + notes (BA14a D13)
+- Plus de log `completed` avec paiements en échec technique silencieux
+- 3 tests Feature : `false` → throw + failed, `true` → pas d’échec, `failed()` sur `paying`
+- Fichier:ligne : `ProcessMonthlyCommissions.php` (step 4), `tests/Feature/MLM/ProcessMonthlyCommissionsFailureTest.php`
+
 ---
 
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*

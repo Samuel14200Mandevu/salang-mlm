@@ -130,7 +130,24 @@ class ProcessMonthlyCommissions implements ShouldQueue
             // Step 4: Generate payments
             Log::info('Step 4: Generating payments', ['period' => $period->period]);
             $result = $commissionService->generatePayments($period->id);
-            $results['steps']['payments'] = $result ? 'completed' : 'failed';
+
+            if (! $result) {
+                $period->refresh();
+                $blockReason = $period->paymentBlockReason();
+                if ($blockReason !== null) {
+                    Log::info('Payments blocked legitimately', [
+                        'period' => $period->period,
+                        'reason' => $blockReason,
+                    ]);
+                    $results['steps']['payments'] = 'blocked';
+                } else {
+                    throw new \RuntimeException(
+                        'Failed to generate payments for period ' . $period->period
+                    );
+                }
+            } else {
+                $results['steps']['payments'] = 'completed';
+            }
 
             Log::info('Monthly commission processing completed', $results);
 
