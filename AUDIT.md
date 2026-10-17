@@ -364,4 +364,81 @@ curl -sf http://127.0.0.1:8000/up
 
 ---
 
+## Sprint 0 — Statut final
+
+**Date clôture :** 2026-10-17 · Branche `sprint-0/audit-critical-fixes` · **9 commits** depuis `c8cca10`
+
+### Résumé Sprint 0 — Commits
+
+| SHA | Message |
+|-----|---------|
+| `e186abb` | docs(audit) : AUDIT.md + 3 passes (2A/2B/2C) |
+| `db00253` | fix(db) : migrations caisse/MLM + garde démo + tests Cashier |
+| `0a72605` | refactor(mlm) : suppression GenealogyService (BA13) |
+| `6308296` | test(security) : MLM_DEMO_MODE + CI |
+| `382c12a` | fix(deps) : Guzzle 7.15.5 + Dompdf 3.1.6 (CVE) |
+| `57b4c51` | fix(security) : Stripe webhook signature (C1) |
+| `525d758` | fix(mlm) : idempotence commission (BA12) |
+| `a77581d` | fix(mlm) : statut failed + guard retry (BA14a) |
+| `b9ac2f2` | fix(mlm) : throw sur échec generatePayments (BE1) |
+
+### CRITIQUES résolus
+
+| Item | Statut |
+|------|--------|
+| **C1** Stripe webhook | Signature si `STRIPE_WEBHOOK_SECRET` + tests |
+| **C3** Guzzle CVE-2026-69246 | 7.15.5 (`382c12a`) |
+| **C4** Dompdf | 3.1.6 (`382c12a`) |
+| **BA12** Idempotence commission | 3 couches BDD + temps réel + fin de période |
+| **BA14a** Clôture | `failed` + heartbeat 1h (orchestrateur → Sprint 1) |
+| **BE1** generatePayments silencieux | Throw → `failed()` + notes |
+| **BB1** CashierController ~2989 L | Tests non-régression ; refonte → Sprint 1 |
+
+### MAJEURS résolus
+
+- **D4/D5** : isolation démo (`MLM_DEMO_MODE`, sync/recalculate)
+- **D10** : Stripe (détails C1)
+- **D13** : retry période `failed` / stale
+- **D14** : BE1 (détails ci-dessus)
+
+### Différés Sprint 1
+
+- **BA14b** : orchestrateur `runMonthlyClose` (atomicité complète)
+- **BB1** : refonte `CashierController` en services
+- **D6** : colonne `source` runtime vs historique
+- **D11** : 403 JSON par défaut sur `/stripe/webhook` sans `Accept`
+- **services.webhooks.stripe** : mapping orphelin (Cashier utilise `cashier.webhook.secret`)
+- **29× `total_bv` legacy** (hors colonne `orders`)
+- **AdminUserSeeder** : `rank_id=10` vs 5 rangs seedés (`migrate:fresh --seed` à corriger)
+- **Composer audit** : 18 advisories / 7 packages (Livewire, Laravel, league/commonmark, etc.) — Guzzle/Dompdf traités Sprint 0
+
+### Tests
+
+| Métrique | Valeur |
+|----------|--------|
+| Avant Sprint 0 | ~88 tests |
+| Après Sprint 0 | **107 passed**, **1 skipped** (108 total) |
+| Ajouts | +19 (Cashier, demo guard, Stripe, idempotence, retry, BE1) |
+| **Risky (2)** | `CommissionPeriodRetryTest` — assertions implicites via Mockery `shouldReceive` |
+
+### Smoke test clôture (2026-10-17)
+
+- `php artisan test` : **107 passed, 1 skipped, 2 risky**
+- `php artisan migrate:fresh --force` : **OK** (MySQL dev, sans `--seed`)
+- Routes : `POST stripe/webhook`, `admin/pv/commission-history/*`, `POST …/recalculate`, routes `cashier.*`
+- Config : `cashier.webhook.secret=null`, `tolerance=300`, `mlm.demo_mode_enabled=false`
+- Doublons `(order_id, type)` sur base fresh : **0**
+
+### Score AUDIT (indicatif post-Sprint 0)
+
+| Domaine | Avant | Après (estimé) |
+|---------|-------|----------------|
+| Sécurité | 4/10 | **6/10** |
+| Robustesse financière | 2/10 | **6/10** |
+| Architecture | 5/10 | **6/10** |
+| Tests | 3/10 | **5/10** |
+| **Global** | **~4,5/10** | **~5,5–6/10** |
+
+---
+
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*
