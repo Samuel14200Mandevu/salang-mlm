@@ -330,6 +330,21 @@ curl -sf http://127.0.0.1:8000/up
 - `services.webhooks.stripe` (`config/services.php:8`) est orphelin pour Cashier → nettoyage Sprint 1 (middleware app FlexPay)
 - Fichier:ligne : `config/cashier.php:49-52`, `.env.example` (section Stripe), `tests/Feature/Security/StripeWebhookSignatureTest.php`, `vendor/laravel/cashier/config/cashier.php:50`
 
+### D11 — Accept: application/json pour erreurs 403 (INFO)
+
+- Les tests Stripe 403 renvoyaient 500 à cause du rendu HTML d’erreur (layout)
+- Fix tests : header `Accept: application/json`
+- Impact prod : client webhook sans `Accept` peut voir 500 au lieu de 403 → à investiguer Sprint 1
+
+### D12 — BA12 idempotence commission (CRITIQUE — RÉSOLU)
+
+- Couche 1 : `unique(order_id, type)` sur `commissions` (`2026_10_17_160000_add_unique_order_type_to_commissions_table.php`)
+- Couche 2 : garde globale `distributeCommissionsForOrder` + une seule `cash_pos` par commande + `pv_history.order_id` dans `recordPVHistory`
+- Couche 3 : `PeriodCommissionCalculator` exclut les PV liés aux commandes déjà commissionnées (`cash_pos`, `sponsor`)
+- 4 tests Feature : double appel, panier multi-lignes, temps réel + fin de période, contrainte unique BDD
+- Double couche économique (POS + bonus direct/indirect/leadership en fin de période) : **voulue**, non modifiée
+- Fichier:ligne : `CommissionDistributor.php` (`distributeCommissionsForOrder`, bloc `cash_pos`, `recordPVHistory`), `PeriodCommissionCalculator.php` (agrégat PV)
+
 ---
 
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*
