@@ -15,6 +15,13 @@ class CommissionHistoryToCommissionsSync
      */
     public function ensurePeriod(string $periodValue, bool $dryRun = false): array
     {
+        if (! config('mlm.demo_mode_enabled')) {
+            throw new \RuntimeException(
+                'CommissionHistoryToCommissionsSync est désactivée en production. '
+                . 'Activez MLM_DEMO_MODE=true pour la démo.'
+            );
+        }
+
         $gross = (float) CommissionHistory::query()
             ->where('period', $periodValue)
             ->sum('amount');
@@ -50,6 +57,13 @@ class CommissionHistoryToCommissionsSync
      */
     public function syncHistoryRow(CommissionHistory $history, ?int $commissionPeriodId, bool $dryRun = false): array
     {
+        if (! config('mlm.demo_mode_enabled')) {
+            throw new \RuntimeException(
+                'CommissionHistoryToCommissionsSync est désactivée en production. '
+                . 'Activez MLM_DEMO_MODE=true pour la démo.'
+            );
+        }
+
         if ($dryRun) {
             if ($this->hasSourceHistoryColumn()) {
                 $exists = Commission::query()
@@ -136,6 +150,13 @@ class CommissionHistoryToCommissionsSync
         bool $ensurePeriods = true,
         int $chunkSize = 500
     ): array {
+        if (! config('mlm.demo_mode_enabled')) {
+            throw new \RuntimeException(
+                'CommissionHistoryToCommissionsSync est désactivée en production. '
+                . 'Activez MLM_DEMO_MODE=true pour la démo.'
+            );
+        }
+
         $periodReports = [];
         $totals = ['created' => 0, 'skipped' => 0, 'errors' => 0, 'gross' => 0.0];
 
@@ -194,6 +215,13 @@ class CommissionHistoryToCommissionsSync
 
     public function checksumForPeriod(string $periodValue): array
     {
+        if (! config('mlm.demo_mode_enabled')) {
+            throw new \RuntimeException(
+                'CommissionHistoryToCommissionsSync est désactivée en production. '
+                . 'Activez MLM_DEMO_MODE=true pour la démo.'
+            );
+        }
+
         $historySum = (float) CommissionHistory::query()->where('period', $periodValue)->sum('amount');
         $historyCount = CommissionHistory::query()->where('period', $periodValue)->count();
 

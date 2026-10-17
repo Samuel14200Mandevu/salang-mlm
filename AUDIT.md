@@ -288,4 +288,36 @@ curl -sf http://127.0.0.1:8000/up
 
 ---
 
+## Découvertes Sprint 0
+
+### D4 — Sync historique dangereuse en prod (CRITIQUE)
+
+- `CommissionHistoryToCommissionsSync::syncPeriods` / `syncHistoryRow` / `ensurePeriod` écrivent `commission_history` → `commissions`
+- Rôle : démo one-shot avant prod
+- Correction Sprint 0 : `MLM_DEMO_MODE=false` en prod, `true` en démo
+- Fichier:ligne : `CommissionHistoryToCommissionsSync.php` — `ensurePeriod`, `syncHistoryRow`, `syncPeriods`, `checksumForPeriod`
+
+### D5 — Recalculate historique accessible en prod (CRITIQUE)
+
+- `AdminCommissionHistoryController::recalculate` recrée toutes les commissions
+- Correction Sprint 0 : `MLM_DEMO_MODE` contrôle l'accès
+- Note : lecture (`index`, `details`, `exportPDF`) reste accessible en prod
+- Fichier:ligne : `AdminCommissionHistoryController.php:recalculate`
+
+### D6 — Pas de distinction historique vs runtime (MAJEUR)
+
+- Table `commissions` ne distingue pas la source
+- Correction Sprint 2 : ajouter `source` ENUM('mlm','runtime')
+- Fichier:ligne : `database/migrations/2026_06_22_000006_create_commissions_table.php`
+
+### D7 — Procédure de mise en prod (INFO)
+
+- Phase démo : `MLM_DEMO_MODE=true` (calcul historique autorisé)
+- Validation propriétaire : recalcul OK
+- Avant prod : `MLM_DEMO_MODE=false` + vérifier config en prod
+- Prod : runtime uniquement, historique en lecture seule
+- Fichier:ligne : `config/mlm.php`
+
+---
+
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*

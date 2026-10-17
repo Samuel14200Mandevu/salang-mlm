@@ -105,6 +105,11 @@ class AdminCommissionHistoryController extends Controller
      */
     public function recalculate(Request $request)
     {
+        if (! config('mlm.demo_mode_enabled')) {
+            abort(403, 'Recalcul historique désactivé en production. '
+                . 'Consultez l\'historique en lecture seule via le dashboard.');
+        }
+
         $period = $request->input('period');
         $userId = $request->input('user_id');
 
