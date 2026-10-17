@@ -318,6 +318,18 @@ curl -sf http://127.0.0.1:8000/up
 - Prod : runtime uniquement, historique en lecture seule
 - Fichier:ligne : `config/mlm.php`
 
+### D10 — Stripe webhook sécurisé (C1 — RÉSOLU)
+
+- `config/cashier.php` publié (`webhook.secret` ← `STRIPE_WEBHOOK_SECRET`)
+- `.env.example` : `STRIPE_WEBHOOK_SECRET` + `STRIPE_WEBHOOK_TOLERANCE`
+- 3 tests Feature : signé → 200, invalide → 403, header absent → 403
+- 1 test skipped documente le comportement actuel (secret null → pas de vérif)
+- Comportement actuel (C1) : sans `STRIPE_WEBHOOK_SECRET` configuré, `POST /stripe/webhook` n'est **pas** vérifié
+- Mitigation prod : signing secret Stripe Dashboard → Developers → Webhooks → copier dans `.env`
+- Vérification prod : `php artisan tinker --execute="echo config('cashier.webhook.secret') ? 'ok' : 'null';"`
+- `services.webhooks.stripe` (`config/services.php:8`) est orphelin pour Cashier → nettoyage Sprint 1 (middleware app FlexPay)
+- Fichier:ligne : `config/cashier.php:49-52`, `.env.example` (section Stripe), `tests/Feature/Security/StripeWebhookSignatureTest.php`, `vendor/laravel/cashier/config/cashier.php:50`
+
 ---
 
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*
