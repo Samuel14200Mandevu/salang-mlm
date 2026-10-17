@@ -64,13 +64,38 @@ class ProcessMonthlyCommissions implements ShouldQueue
             // Create or get period
             $period = $existing ?? $commissionService->createMonthlyPeriod((int)$year, (int)$month);
 
-            // Vérifier que la période n'est pas déjà en cours
-            if ($period->status === 'calculating' || $period->status === 'paying') {
-                Log::warning('Period already being processed', [
+            // BA14a — Guard avec heartbeat : autoriser reprise si stale (> 1h)
+            $heartbeatMaxAge = 60;
+            $isStale = $period->updated_at->diffInMinutes(now()) > $heartbeatMaxAge;
+
+            if ($period->status === 'calculating' && ! $isStale) {
+                Log::warning('Period already calculating (heartbeat < 1h)', [
                     'period' => $period->period,
-                    'status' => $period->status
+                    'updated_at' => $period->updated_at->toIso8601String(),
                 ]);
+
                 return;
+            }
+
+            if ($period->status === 'paying' && ! $isStale) {
+                Log::warning('Period already paying (heartbeat < 1h)', [
+                    'period' => $period->period,
+                    'updated_at' => $period->updated_at->toIso8601String(),
+                ]);
+
+                return;
+            }
+
+            if ($period->status === CommissionPeriod::STATUS_FAILED) {
+                Log::info('Retrying failed period', ['period' => $period->period]);
+            }
+
+            if ($isStale && in_array($period->status, ['calculating', 'paying'], true)) {
+                Log::warning('Stale period detected, allowing retry', [
+                    'period' => $period->period,
+                    'previous_status' => $period->status,
+                    'updated_at' => $period->updated_at->toIso8601String(),
+                ]);
             }
 
             $results = [
@@ -105,7 +130,24 @@ class ProcessMonthlyCommissions implements ShouldQueue
             // Step 4: Generate payments
             Log::info('Step 4: Generating payments', ['period' => $period->period]);
             $result = $commissionService->generatePayments($period->id);
-            $results['steps']['payments'] = $result ? 'completed' : 'failed';
+
+            if (! $result) {
+                $period->refresh();
+                $blockReason = $period->paymentBlockReason();
+                if ($blockReason !== null) {
+                    Log::info('Payments blocked legitimately', [
+                        'period' => $period->period,
+                        'reason' => $blockReason,
+                    ]);
+                    $results['steps']['payments'] = 'blocked';
+                } else {
+                    throw new \RuntimeException(
+                        'Failed to generate payments for period ' . $period->period
+                    );
+                }
+            } else {
+                $results['steps']['payments'] = 'completed';
+            }
 
             Log::info('Monthly commission processing completed', $results);
 
@@ -122,13 +164,8 @@ class ProcessMonthlyCommissions implements ShouldQueue
                 'trace' => $e->getTraceAsString(),
             ]);
             
-            // Marquer la période comme en erreur
-            if (isset($period)) {
-                $period->status = 'pending';
-                $period->notes = 'Erreur: ' . $e->getMessage();
-                $period->save();
-            }
-            
+            $this->markPeriodFailed($period ?? null, 'Erreur: ' . $e->getMessage());
+
             throw $e;
         } catch (\Exception $e) {
             Log::error('Unexpected error in monthly commission processing', [
@@ -136,14 +173,9 @@ class ProcessMonthlyCommissions implements ShouldQueue
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
-            // Marquer la période comme en erreur
-            if (isset($period)) {
-                $period->status = 'pending';
-                $period->notes = 'Erreur inattendue: ' . $e->getMessage();
-                $period->save();
-            }
-            
+
+            $this->markPeriodFailed($period ?? null, 'Erreur inattendue: ' . $e->getMessage());
+
             throw $e;
         }
     }
@@ -177,19 +209,38 @@ class ProcessMonthlyCommissions implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
         ]);
 
-        // Nettoyer la période en cas d'échec
         try {
             $period = CommissionPeriod::where('period', $this->period)->first();
-            if ($period && in_array($period->status, ['calculating', 'paying'])) {
-                $period->status = 'pending';
-                $period->notes = 'Échec du job: ' . $exception->getMessage();
-                $period->save();
+            if ($period && in_array($period->status, ['calculating', 'paying'], true)) {
+                $previousNotes = $period->notes ?? '';
+                $period->update([
+                    'status' => CommissionPeriod::STATUS_FAILED,
+                    'notes' => 'Échec job: ' . ($exception->getMessage() ?? 'inconnu')
+                        . ($previousNotes !== '' ? ' | ' . $previousNotes : ''),
+                ]);
+                Log::error('Period marked as failed', [
+                    'period' => $period->period,
+                    'exception' => $exception->getMessage(),
+                ]);
             }
         } catch (\Exception $e) {
             Log::error('Error cleaning up period after job failure', [
                 'period' => $this->period,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function markPeriodFailed(?CommissionPeriod $period, string $message): void
+    {
+        if ($period === null) {
+            return;
+        }
+
+        $previousNotes = $period->notes ?? '';
+        $period->update([
+            'status' => CommissionPeriod::STATUS_FAILED,
+            'notes' => $message . ($previousNotes !== '' ? ' | ' . $previousNotes : ''),
+        ]);
     }
 }

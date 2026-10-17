@@ -42,10 +42,24 @@ class PeriodCommissionCalculator
 
         $allUsers = User::where('is_active', true)->get()->keyBy('id');
 
+        $alreadyCommissionedOrderIds = Commission::whereNotNull('order_id')
+            ->whereIn('type', ['cash_pos', 'sponsor'])
+            ->pluck('order_id')
+            ->unique()
+            ->values()
+            ->all();
+
         // Agrège le PV par user sur la période
         $pvQuery = PVHistory::where('period', $period->period);
         if ($userId) {
             $pvQuery->where('user_id', $userId);
+        }
+
+        if ($alreadyCommissionedOrderIds !== []) {
+            $pvQuery->where(function ($q) use ($alreadyCommissionedOrderIds) {
+                $q->whereNull('order_id')
+                    ->orWhereNotIn('order_id', $alreadyCommissionedOrderIds);
+            });
         }
 
         $pvByUser = $pvQuery

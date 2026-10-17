@@ -1,0 +1,516 @@
+# Audit technique — Salang MLM E-commerce
+
+**Date :** 2026-10-17  
+**Versions :** Laravel 13.18.0, PHP 8.3 (cible `composer.json:9`), MySQL  
+**Périmètre :** application complète (MLM, caisse, paiements, admin)  
+**Méthodologie :** 3 passes indépendantes — sécurité (`securite_passe2A.md`), architecture/BDD/jobs (`archi_bdd_passe2B.md`), performance/front/tests/déploiement (`perf_tests_deploy_passe2C.md`)
+
+---
+
+## 1. Résumé exécutif
+
+### Notes par domaine (/10)
+
+| Domaine | Note | Critères (synthèse) |
+|---------|------|---------------------|
+| **Robustesse financière** | **2/10** | **BA12**, **BA14**, **BE1** — triple risque fraude / perte commissions (`CommissionDistributor.php:417-444` ; `MonthlyCommissionService.php:92-94` ; `ProcessMonthlyCommissions.php:107-110`). |
+| **Sécurité** | **4/10** | 3 findings **CRITIQUE** runtime (C1 webhook Stripe, C3 Guzzle CVE high, C4 Dompdf CVE) ; **2 policies** sur modèles sensibles (`app/Policies/` — 2A M6) ; session **non chiffrée** (`vendor/laravel/framework/config/session.php:50`, `.env.example:30`) ; webhooks app contournables hors prod (`VerifyWebhookSignature.php:22`). |
+| **Architecture** | **5/10** | Graphe DI MLM sain (**BA11**, hub `TeamPVCalculator`) ; mais **3 CRITIQUE** argent (BA12 idempotence, BA14 clôture, BE1 job) + **BB1** god controller caisse (~2989 L) ; ~40 % services MLM sans tests unitaires (2B). |
+| **Tests** | **3/10** | **32** classes test vs **82** contrôleurs ; **6 scénarios financiers P0** non couverts (2C PC1) ; Dusk = smoke (`tests/Browser/`, 5 fichiers). |
+| **Déploiement** | **6/10** | Health `/up` (`bootstrap/app.php:38`) ; doc migrate/rollback (`docs/DEPLOYMENT.md:7-24`) ; gaps `.env.example` (Stripe, webhooks — 2A M3, 2C PE1) ; pas de rollback auto Cloud. |
+
+**Note globale indicative : ~4,5/10** — produit riche et structuré côté MLM, mais **exposition financière et sécurité runtime** non acceptable pour une prod « argent réel » sans Sprint 0.
+
+**Le MLM fonctionne mais l'argent est à risque** — 3 CRITIQUE financiers (**BA12**, **BA14**, **BE1**) doivent être corrigés avant toute mise en prod.
+
+### Cinq phrases — état du projet
+
+1. Salang MLM est une application Laravel mature (caisse, wallet, commissions, grades) avec une **séparation claire** temps réel / fin de période documentée dans le code commission.  
+2. Les **fondations MLM** (calcul team PV, conditions de rang, calendrier période 8→7) sont testées partiellement et **sans cycle de dépendances** entre services.  
+3. En revanche, les **flux qui touchent l’argent** (commission par commande, clôture mensuelle, webhooks) manquent de **garde-fous transactionnels** et de tests automatisés.  
+4. La **surface sécurité** expose des CVE Composer prioritaires et un webhook Stripe Cashier **non signé** si le secret n’est pas configuré.  
+5. Le déploiement Laravel Cloud est **documenté** ; le risque principal est **configuration** (secrets, queues) plus que l’absence de health check.
+
+### Trois risques business immédiats (langage simple)
+
+1. **Payer deux fois la même commission** — si une commande est retraitée (bug, double clic, rejeu manuel), rien dans la base ne l’empêche formellement (`CommissionDistributor.php:417-444`, pas d’unicité `order_id` + `type` — `2026_06_22_000006_create_commissions_table.php:15-25`).  
+2. **Clôture de mois incohérente** — la fin de mois MLM peut laisser des commissions calculées sans paiement correspondant, sans alerte claire (`ProcessMonthlyCommissions.php:107-110`).  
+3. **Fraude ou erreur sur les paiements en ligne** — webhook Stripe ou bibliothèques HTTP/PDF obsolètes peuvent compromettre l’intégrité des encaissements ou des documents (C1, C3, C4).
+
+### Trois points forts
+
+1. **Architecture DI MLM** — pas de boucle de services ; hub `TeamPVCalculator` partagé proprement (**BA11**, `AdvancedRankCalculator.php:17-21`, `MlmPeriodCloseService.php:18`).  
+2. **Middleware admin** — contrôle d’accès admin explicite (`AdminMiddleware.php:15-62`, 2A matrice).  
+3. **Listes admin paginées** — index User/Order/Wallet/Commission en `paginate()` (2C PA13–PA14, ex. `UserController.php:75`).
+
+### Recommandation — quoi corriger **avant** toute mise en prod « argent réel »
+
+Exécuter le **Sprint 0** (§4, **7 items**) : idempotence commission (BA12), secrets + signature Stripe (C1), mises à jour **Guzzle** et **Dompdf** (C3, C4), échec explicite du job mensuel (BE1), filet caisse (BB1), nettoyage **GenealogyService** (BA13), puis vérifier `composer audit` et `/up` en prod. Voir **Go/No-Go Production** ci-dessous.
+
+### Go/No-Go Production — Checklist obligatoire
+
+- [ ] Sprint 0 (**7 items**) complété et testé  
+- [ ] `composer audit` = 0 advisory **CRITIQUE/MAJEUR** runtime  
+- [ ] `STRIPE_WEBHOOK_SECRET` configuré et vérifié (tinker)  
+- [ ] Test idempotence commission (P0-1) passe en CI  
+- [ ] Test clôture période transactionnelle (P0-2) passe en CI  
+- [ ] Test échec job → throw (P0-3) passe en CI  
+- [ ] 3 tests Feature `CashierController` (checkout / createOrder / cancel)  
+- [ ] `.env.example` sans credentials réalistes  
+- [ ] Session chiffrée + cookie secure + SameSite=strict en prod  
+- [ ] Health check `/up` répond 200  
+- [ ] Rollback documenté et testé sur staging  
+
+---
+
+## 2. Top 10 findings CRITIQUE (fusion 2A + 2B + 2C)
+
+Tri par **impact business** décroissant.
+
+| # | Finding | Fichier:Ligne | Impact business | Effort | Source |
+|---|---------|---------------|-----------------|--------|--------|
+| 1 | **Double crédit commission / PV par commande (BA12)** | `CommissionDistributor.php:417-444` ; `CommissionDistributor.php:254-271` ; `2026_06_22_000004_create_orders_table.php:7-23` ; `2026_06_22_000006_create_commissions_table.php:15-25` | Surpaiement parrains / PV gonflés → commissions et grades faussés | **M** (migration + garde + test) | 2B |
+| 2 | **Clôture mensuelle sans transaction globale (BA14)** | `MonthlyCommissionService.php:92-94` ; `ProcessMonthlyCommissions.php:83-107` | État partiel (PV clôturés, soldes incohérents) après incident | **M–L** | 2B |
+| 3 | **Échec paiements clôture silencieux (BE1)** | `ProcessMonthlyCommissions.php:107-110` ; `failed()` `:172-194` (non appelé si `false` sans exception) | Commissions « calculées » sans virement wallet ; équipe croit la clôture OK | **S** | 2B |
+| 4 | **Webhook Stripe Cashier non signé (C1)** | `vendor/laravel/cashier/config/cashier.php:50` ; route `stripe/webhook` middleware `[]` (2A) ; secret null → pas de vérif signature | Forge événements Stripe / abonnements Cashier | **S** (config + test) | 2A |
+| 5 | **Guzzle 7.13.1 — CVE high (C3)** | `composer audit` ; `guzzlehttp/guzzle` &lt; 7.15.2 (`CVE-2026-69246`) | Compromission des appels HTTP (paiements, APIs) | **S** | 2A |
+| 6 | **Dompdf 3.1.5 — CVE (C4)** | `composer audit` ; `dompdf/dompdf` &lt; 3.1.6 | Fuite fichiers / DoS via PDF admin/caisse | **S** | 2A |
+| 7 | **God controller caisse (BB1)** | `app/Http/Controllers/Cashier/CashierController.php` (~2989 L, 2B B.1) | Régression caisse = perte ventes / commissions POS ; diff reviews impossibles | **L** | 2B |
+| 8 | **Webhooks wallet contournables hors prod (M2)** | `VerifyWebhookSignature.php:15-22` ; `WebhookController.php:464-467` | Crédit wallet forgé en staging / dev si secrets absents | **S–M** | 2A |
+| 9 | **Compte inactif peut payer (M1)** | `EnsureUserActive.php:65-75` ; `routes/web.php:157-299` | Encaissements sans activation MLM contractuelle | **M** | 2A |
+| 10 | **6 scénarios financiers P0 sans tests (PC1)** | Plan 2C P0-1…P0-6 ; ex. `CommissionCalculationTest.php` sans idempotence | Régressions argent non détectées en CI | **M** | 2C |
+
+*Effort : S = quelques heures, M = 1–3 j, L = &gt; 1 sem.*
+
+---
+
+## 3. Findings par domaine
+
+### 3.1 Sécurité (résumé 2A)
+
+**CRITIQUES** — détail §2 : **C1**, **C3**, **C4**.
+
+**MAJEURS (tableau court)**
+
+| ID | Fichier:Ligne | Résumé |
+|----|---------------|--------|
+| M1 | `EnsureUserActive.php:65-75` | Compte inactif : accès non bloqué au groupe `auth`+`active` |
+| M2 | `VerifyWebhookSignature.php:15-22` | Bypass signature si env ≠ production et secret vide |
+| M3 | `.env.example:1-80` | Secrets Stripe/webhooks absents ; `APP_DEBUG=true` `:4` |
+| M4 | `WithdrawalRequest.php:8` ; `WithdrawalController.php:65` | FormRequest retrait non utilisé |
+| M5 | `PaymentController.php:134` ; `WalletController.php:146` | Validation inline paiement/wallet |
+| M6 | `app/Policies/` (2 fichiers) | Pas de policy User/Wallet/Withdrawal/Order/Commission |
+| M7 | `session.php:50,172,202` ; `.env.example:30-31` | Session non chiffrée ; cookie secure null |
+| M11 | `ConsultationController.php:148-183` ; `CashierController.php:48-50` | Consultations sans `cashier.staff` ; encaissement bloqué 403 |
+
+**MINEURS notables :** N1 API login sans throttle ; N2 routes payment success/cancel publiques ; N4 `.env.production` local avec secrets (non versionné — OK git).
+
+**Matrice de conformité (2A)**
+
+| Pratique | Statut |
+|----------|--------|
+| Webhooks signés Stripe Cashier | ❌ C1 |
+| Webhooks signés app (Flexpay/crypto/payment) | ⚠️ M2 |
+| Middleware admin | ✅ |
+| Middleware cashier staff | ⚠️ M11 |
+| Policies modèles sensibles | ❌ 0/7 |
+| FormRequests | ❌ ~8/82 |
+| Session chiffrée / cookie strict | ❌ M7 |
+| `composer audit` clean | ❌ C3, C4 (+ M8, M9) |
+
+---
+
+### 3.2 Architecture / BDD / Jobs (résumé 2B)
+
+**CRITIQUES** — §2 : **BA12**, **BA14**, **BE1**, **BB1** (+ **BA2/BA4/BA5** qualité/tests liés à l’argent).
+
+**MAJEURS**
+
+| ID | Fichier:Ligne | Résumé |
+|----|---------------|--------|
+| BA2 | `MonthlyCommissionService.php` (672 L) | Orchestrateur clôture sans tests |
+| BA4 | `PeriodCommissionCalculator.php:38-43` | Bonus fin de période, 0 test ; charge tous users `:43` |
+| BA5 | `CommissionDistributor.php:187-295` | Temps réel argent/PV, 0 test |
+| BA6 | `MlmPeriodCloseService.php:37+` | Clôture PV pending, 0 test |
+| BA7 | `PvManagementService.php:32+` | Allocations PV ventes, 0 test |
+| BA13 | `GenealogyService.php:11` | ~477 L, 0 appelant prod |
+| BB2 | `AdminPVImportController.php` (~1053 L) | Import PV monolithique |
+| BB3 | `Admin/UserController.php` (~1106 L) | Admin users + MLM inline |
+| BE2 | `ProcessMonthlyCommissions.php:68-74` | Double dispatch job possible |
+| BC1 | `User.php:26-42` | Champs MLM/argent en `$fillable` |
+
+**MINEURS :** BA1 `RankConditionChecker.php` (688 L, testé) ; BA8 taille `AdvancedRankCalculator` / `TeamPVCalculator` ; BA9 `MonthlyCommissionService.php:92` `app()` ; BA10 `PeriodCommissionCalculator.php:43` OOM.
+
+**Point fort — BA11 :** aucun cycle DI dans `app/Services/MLM/` ; hub `TeamPVCalculator` (`AdvancedRankCalculator.php:17-21`, `RecalculateAfterPVImport.php:37-39`, etc.).
+
+---
+
+### 3.3 Performance / Front / Tests / Deploy (résumé 2C)
+
+**CRITIQUES**
+
+| ID | Résumé | Fichier:Ligne |
+|----|--------|---------------|
+| PC1 | Plan 6 tests P0 non implémentés | `perf_tests_deploy_passe2C.md` § Plan P0 |
+| PE1 | `STRIPE_WEBHOOK_SECRET` absent de `.env.example` | `.env.example` ; lien C1 |
+
+**MAJEURS**
+
+| ID | Résumé | Fichier:Ligne |
+|----|--------|---------------|
+| PA1 | Middleware `active` : SQL + cache forget chaque requête | `EnsureUserActive.php:37-47` |
+| PA2 | Dashboard admin sans cache stats | `Admin/DashboardController.php:24-98` |
+| PA3–PA7 | Exports/PDF `->get()` massifs | ex. `CommissionController.php:281` |
+| PA8 | Calculateur période charge tous users | `PeriodCommissionCalculator.php:43` |
+| PB2–PB4 | XSS `{!! !!}` arbre réseau / lead | `network/index.blade.php:107` ; `admin/reports/user_network.blade.php:333` |
+| PD2–PD4 | Migrations prod / rollback / ordre | `docs/DEPLOYMENT.md:16-24` ; `docs/MIGRATIONS_RECONCILIATION.md` |
+| PE2 | Queue example `database` vs config défaut `redis` | `.env.example:34` ; `config/queue.php:16` |
+
+**MINEURS :** PB1 CSRF globalement OK (`cashier/checkout.blade.php:599-600`) ; PA15–PA20 assets/session ; PD5–PD7 ops ; PC3 tests code mort Genealogy.
+
+**Matrice conformité 2C**
+
+| Axe | Verdict |
+|-----|---------|
+| Perf listes admin | ✅ paginées |
+| Perf exports / MLM batch | ⚠️ |
+| Front CSRF | ✅ |
+| Front XSS `{!! !!}` | ⚠️ |
+| Tests métier argent | ❌ |
+| Health deploy | ✅ `/up` |
+| Config prod documentée | ⚠️ |
+
+---
+
+## 4. Plan d'action priorisé
+
+### Sprint 0 — « À faire avant la prochaine mise en prod » (&lt; 1 jour)
+
+| # | Action | PR / commandes | Finding |
+|---|--------|----------------|---------|
+| 1 | **Idempotence commission** : migration `orders.commissions_processed_at` (nullable → set after success) + index unique partiel `commissions(order_id, type)` où `order_id` not null + garde en tête de `distributeCommissionsForOrder` | Branche `fix/ba12-commission-idempotence` ; `php artisan make:migration ...` ; tests Feature P0-1 | BA12 |
+| 2 | **Stripe webhook** : définir `STRIPE_WEBHOOK_SECRET` sur Laravel Cloud ; documenter dans `.env.example` (fichier hors Sprint 0 si politique « no edit » — **obligatoire en Cloud**) ; `php artisan tinker --execute="echo config('cashier.webhook.secret') ? 'ok' : 'null';"` | Config env Cloud + PR doc/test Feature POST `/stripe/webhook` sans signature → 401/403 | C1 |
+| 3 | **Dépendances CVE** : `composer update guzzlehttp/guzzle --with-all-dependencies` (≥ 7.15.2) ; `composer update dompdf/dompdf` (≥ 3.1.6) ; `composer audit` doit passer | PR `chore/security-composer-audit` | C3, C4 |
+| 4 | **Job clôture** : si `generatePayments` retourne `false`, `throw new RuntimeException(...)` dans `ProcessMonthlyCommissions.php` après `:107` | PR `fix/be1-monthly-job-failure` | BE1 |
+| 5 | **Smoke post-deploy** : `curl -sf https://salang-group-mlm.laravel.cloud/up` ; login → `/services` ; `php artisan migrate:status` (Cloud : `migrate --force` déjà deploy) | Checklist manuelle + CI | PD1 |
+| 6 | **`CashierController` (~2989 L, BB1)** — **3 tests Feature non-régression** avant toute refonte ou fix BA12 touchant la caisse : (1) checkout panier valide → commande créée ; (2) `createCheckoutOrder` → statut correct ; (3) `createOrder` → commission déclenchée. Cible : `app/Http/Controllers/Cashier/CashierController.php` | PR `test/cashier-regression-smoke` ; `php artisan test --filter=Cashier` ; **~2 h** | BB1 |
+| 7 | **`GenealogyService` (477 L, 0 appelant, BA13)** — **Option A (recommandée)** : `git rm app/Services/MLM/GenealogyService.php tests/Unit/MLM/GenealogyServiceTest.php` ; **Option B** : `@deprecated` sur la classe + issue « suppression sprint X » | PR `chore/remove-genealogy-service-dead-code` ou doc-only ; **~5 min** | BA13 |
+
+### Sprint 1 — « Quick wins » (1–2 jours)
+
+- **M2** : durcir `VerifyWebhookSignature.php:22` (503 si secret vide sauf `local` explicite).  
+- **BE1 suite** : notification admin (mail/Slack/log critical) quand job mensuel échoue.  
+- **M7** prod : `SESSION_ENCRYPT=true`, `SESSION_SECURE_COOKIE=true`, `SESSION_SAME_SITE=strict`.  
+- **PA2** : `Cache::remember` dashboard 60–300 s (`DashboardController.php:24-98`).  
+- **P0-3** : test webhook Stripe signature (2C).  
+- **M4** : brancher `WithdrawalRequest` sur `WithdrawalController.php:60`.
+
+### Sprint 2 — « Refonte contrôlée » (1–2 semaines)
+
+- **BA14** : saga / transaction orchestrée clôture (ou compensations) ; injecter `MlmPeriodCloseService` (`MonthlyCommissionService.php:92`).  
+- **BB1** : découper `CashierController.php` (checkout, adhésion, POS, rapports).  
+- **M6** : policies Wallet, Withdrawal, Order, Commission + `$this->authorize()`.  
+- **Tests P0-2, P0-4, P0-5, P0-6** (2C).  
+- **PB2–PB4** : échappement arbre réseau + CSP.  
+- **PA3–PA5** : exports en `chunkById`.
+
+### Sprint 3 — « Backlog qualité » (&gt; 1 mois)
+
+- BA1 découpage `RankConditionChecker` ; BA13 (si Option B en Sprint 0 #7).  
+- BB2/BB3 extraction services admin PV / users.  
+- M8/M9 upgrades Livewire, CommonMark.  
+- M1 politique compte inactif (middleware strict ou allowlist).  
+- Couverture tests &gt; 50 % chemins MLM ; E2E caisse Feature.
+
+---
+
+## 5. Annexe — Preuves et fichiers
+
+### Rapports sources (détail complet)
+
+- [securite_passe2A.md](securite_passe2A.md) — sécurité, CVE, webhooks, middleware  
+- [archi_bdd_passe2B.md](archi_bdd_passe2B.md) — services MLM, BA12/BA14/BE1, contrôleurs, jobs  
+- [perf_tests_deploy_passe2C.md](perf_tests_deploy_passe2C.md) — perf, front, tests P0, deploy, config  
+
+### Commandes de vérification
+
+```bash
+# Dépendances
+composer audit
+composer show guzzlehttp/guzzle dompdf/dompdf | head -20
+
+# Routes sensibles (webhooks)
+php artisan route:list --path=stripe
+php artisan route:list --path=webhook
+
+# Config runtime (local — ne pas logger les secrets en prod)
+php artisan config:show session.encrypt cashier.webhook
+
+# Migrations
+php artisan migrate:status
+
+# Tests
+php artisan test --parallel
+php artisan dusk   # si env dusk configuré
+
+# Health
+curl -sf http://127.0.0.1:8000/up
+```
+
+### Checklist post-correction (cocher par sprint)
+
+**Sprint 0 (7 items)**
+
+- [ ] Double appel commission même commande → une seule ligne `cash_pos` (test P0-1 vert)  
+- [ ] `composer audit` sans CVE **high** sur Guzzle/Dompdf  
+- [ ] `config('cashier.webhook.secret')` non null en prod  
+- [ ] Job mensuel : `generatePayments` false → job **failed** (queue), pas log « completed » seul  
+- [ ] `/up` OK prod  
+- [ ] 3 tests Feature caisse (checkout / `createCheckoutOrder` / `createOrder` commission) verts  
+- [ ] `GenealogyService` supprimé (Option A) ou `@deprecated` + issue (Option B)  
+
+**Sprint 1**
+
+- [ ] Webhook app : requête sans signature refusée hors `local`  
+- [ ] Session prod : encrypt + secure cookie  
+- [ ] Dashboard admin : 2e chargement &lt; 1re (cache)  
+
+**Sprint 2**
+
+- [ ] Clôture mensuelle : test intégration état période cohérent (P0-2)  
+- [ ] Policy withdrawal : user B ne voit pas retrait user A  
+- [ ] Export commission : pas de timeout sur jeu de données réaliste  
+
+**Sprint 3**
+
+- [ ] `CashierController` &lt; 800 L ou modules séparés  
+- [ ] `GenealogyService` supprimé ou branché prod  
+
+---
+
+## Découvertes Sprint 0
+
+### D4 — Sync historique dangereuse en prod (CRITIQUE)
+
+- `CommissionHistoryToCommissionsSync::syncPeriods` / `syncHistoryRow` / `ensurePeriod` écrivent `commission_history` → `commissions`
+- Rôle : démo one-shot avant prod
+- Correction Sprint 0 : `MLM_DEMO_MODE=false` en prod, `true` en démo
+- Fichier:ligne : `CommissionHistoryToCommissionsSync.php` — `ensurePeriod`, `syncHistoryRow`, `syncPeriods`, `checksumForPeriod`
+
+### D5 — Recalculate historique accessible en prod (CRITIQUE)
+
+- `AdminCommissionHistoryController::recalculate` recrée toutes les commissions
+- Correction Sprint 0 : `MLM_DEMO_MODE` contrôle l'accès
+- Note : lecture (`index`, `details`, `exportPDF`) reste accessible en prod
+- Fichier:ligne : `AdminCommissionHistoryController.php:recalculate`
+
+### D6 — Pas de distinction historique vs runtime (MAJEUR)
+
+- Table `commissions` ne distingue pas la source
+- Correction Sprint 2 : ajouter `source` ENUM('mlm','runtime')
+- Fichier:ligne : `database/migrations/2026_06_22_000006_create_commissions_table.php`
+
+### D7 — Procédure de mise en prod (INFO)
+
+- Phase démo : `MLM_DEMO_MODE=true` (calcul historique autorisé)
+- Validation propriétaire : recalcul OK
+- Avant prod : `MLM_DEMO_MODE=false` + vérifier config en prod
+- Prod : runtime uniquement, historique en lecture seule
+- Fichier:ligne : `config/mlm.php`
+
+### D10 — Stripe webhook sécurisé (C1 — RÉSOLU)
+
+- `config/cashier.php` publié (`webhook.secret` ← `STRIPE_WEBHOOK_SECRET`)
+- `.env.example` : `STRIPE_WEBHOOK_SECRET` + `STRIPE_WEBHOOK_TOLERANCE`
+- 3 tests Feature : signé → 200, invalide → 403, header absent → 403
+- 1 test skipped documente le comportement actuel (secret null → pas de vérif)
+- Comportement actuel (C1) : sans `STRIPE_WEBHOOK_SECRET` configuré, `POST /stripe/webhook` n'est **pas** vérifié
+- Mitigation prod : signing secret Stripe Dashboard → Developers → Webhooks → copier dans `.env`
+- Vérification prod : `php artisan tinker --execute="echo config('cashier.webhook.secret') ? 'ok' : 'null';"`
+- `services.webhooks.stripe` (`config/services.php:8`) est orphelin pour Cashier → nettoyage Sprint 1 (middleware app FlexPay)
+- Fichier:ligne : `config/cashier.php:49-52`, `.env.example` (section Stripe), `tests/Feature/Security/StripeWebhookSignatureTest.php`, `vendor/laravel/cashier/config/cashier.php:50`
+
+### D11 — Accept: application/json pour erreurs 403 (INFO)
+
+- Les tests Stripe 403 renvoyaient 500 à cause du rendu HTML d’erreur (layout)
+- Fix tests : header `Accept: application/json`
+- Impact prod : client webhook sans `Accept` peut voir 500 au lieu de 403 → à investiguer Sprint 1
+
+### D12 — BA12 idempotence commission (CRITIQUE — RÉSOLU)
+
+- Couche 1 : `unique(order_id, type)` sur `commissions` (`2026_10_17_160000_add_unique_order_type_to_commissions_table.php`)
+- Couche 2 : garde globale `distributeCommissionsForOrder` + une seule `cash_pos` par commande + `pv_history.order_id` dans `recordPVHistory`
+- Couche 3 : `PeriodCommissionCalculator` exclut les PV liés aux commandes déjà commissionnées (`cash_pos`, `sponsor`)
+- 4 tests Feature : double appel, panier multi-lignes, temps réel + fin de période, contrainte unique BDD
+- Double couche économique (POS + bonus direct/indirect/leadership en fin de période) : **voulue**, non modifiée
+- Fichier:ligne : `CommissionDistributor.php` (`distributeCommissionsForOrder`, bloc `cash_pos`, `recordPVHistory`), `PeriodCommissionCalculator.php` (agrégat PV)
+
+### D13 — BA14a statut failed + guard retry (CRITIQUE — RÉSOLU partiellement)
+
+- Migration : ajout `failed` à l’enum `CommissionPeriod.status` (MySQL ; SQLite TEXT inchangé)
+- Guard retry `ProcessMonthlyCommissions::handle()` assouplie avec heartbeat 1h
+- `failed()` et catch `handle()` marquent `status=failed` + notes (au lieu de `pending`)
+- 4 tests Feature : guard calculating récent/stale, `failed()` marking, retry sur `failed`
+- Reste Sprint 1 : orchestrateur `runMonthlyClose` pour atomicité + compensation (BA14b)
+- Fichier:ligne : `2026_10_17_170000_add_failed_status_to_commission_periods.php`, `ProcessMonthlyCommissions.php` (guard, `failed`, `markPeriodFailed`), `CommissionPeriod.php` (`STATUS_FAILED`, `isFailed()`), `tests/Feature/MLM/CommissionPeriodRetryTest.php`
+
+### D14 — BE1 échec silencieux generatePayments (CRITIQUE — RÉSOLU)
+
+- `ProcessMonthlyCommissions` step 4 : `RuntimeException` si `generatePayments` retourne `false` sans `paymentBlockReason()` (refus métier → step `blocked`, pas de throw)
+- `failed()` / catch → `status=failed` + notes (BA14a D13)
+- Plus de log `completed` avec paiements en échec technique silencieux
+- 3 tests Feature : `false` → throw + failed, `true` → pas d’échec, `failed()` sur `paying`
+- Fichier:ligne : `ProcessMonthlyCommissions.php` (step 4), `tests/Feature/MLM/ProcessMonthlyCommissionsFailureTest.php`
+
+---
+
+## Sprint 0 — Statut final
+
+**Date clôture :** 2026-10-17 · Branche `sprint-0/audit-critical-fixes` · **9 commits** depuis `c8cca10`
+
+### Résumé Sprint 0 — Commits
+
+| SHA | Message |
+|-----|---------|
+| `e186abb` | docs(audit) : AUDIT.md + 3 passes (2A/2B/2C) |
+| `db00253` | fix(db) : migrations caisse/MLM + garde démo + tests Cashier |
+| `0a72605` | refactor(mlm) : suppression GenealogyService (BA13) |
+| `6308296` | test(security) : MLM_DEMO_MODE + CI |
+| `382c12a` | fix(deps) : Guzzle 7.15.5 + Dompdf 3.1.6 (CVE) |
+| `57b4c51` | fix(security) : Stripe webhook signature (C1) |
+| `525d758` | fix(mlm) : idempotence commission (BA12) |
+| `a77581d` | fix(mlm) : statut failed + guard retry (BA14a) |
+| `b9ac2f2` | fix(mlm) : throw sur échec generatePayments (BE1) |
+
+### CRITIQUES résolus
+
+| Item | Statut |
+|------|--------|
+| **C1** Stripe webhook | Signature si `STRIPE_WEBHOOK_SECRET` + tests |
+| **C3** Guzzle CVE-2026-69246 | 7.15.5 (`382c12a`) |
+| **C4** Dompdf | 3.1.6 (`382c12a`) |
+| **BA12** Idempotence commission | 3 couches BDD + temps réel + fin de période |
+| **BA14a** Clôture | `failed` + heartbeat 1h (orchestrateur → Sprint 1) |
+| **BE1** generatePayments silencieux | Throw → `failed()` + notes |
+| **BB1** CashierController ~2989 L | Tests non-régression ; refonte → Sprint 1 |
+
+### MAJEURS résolus
+
+- **D4/D5** : isolation démo (`MLM_DEMO_MODE`, sync/recalculate)
+- **D10** : Stripe (détails C1)
+- **D13** : retry période `failed` / stale
+- **D14** : BE1 (détails ci-dessus)
+
+### Différés Sprint 1
+
+- **BA14b** : orchestrateur `runMonthlyClose` (atomicité complète)
+- **BB1** : refonte `CashierController` en services
+- **D6** : colonne `source` runtime vs historique
+- **D11** : 403 JSON par défaut sur `/stripe/webhook` sans `Accept`
+- **services.webhooks.stripe** : mapping orphelin (Cashier utilise `cashier.webhook.secret`)
+- **29× `total_bv` legacy** (hors colonne `orders`)
+- **AdminUserSeeder** : `rank_id=10` vs 5 rangs seedés (`migrate:fresh --seed` à corriger)
+- **Composer audit** : 18 advisories / 7 packages (Livewire, Laravel, league/commonmark, etc.) — Guzzle/Dompdf traités Sprint 0
+
+### Tests
+
+| Métrique | Valeur |
+|----------|--------|
+| Avant Sprint 0 | ~88 tests |
+| Après Sprint 0 | **107 passed**, **1 skipped** (108 total) |
+| Ajouts | +19 (Cashier, demo guard, Stripe, idempotence, retry, BE1) |
+| **Risky (2)** | `CommissionPeriodRetryTest` — assertions implicites via Mockery `shouldReceive` |
+
+### Smoke test clôture (2026-10-17)
+
+- `php artisan test` : **107 passed, 1 skipped, 2 risky**
+- `php artisan migrate:fresh --force` : **OK** (MySQL dev, sans `--seed`)
+- Routes : `POST stripe/webhook`, `admin/pv/commission-history/*`, `POST …/recalculate`, routes `cashier.*`
+- Config : `cashier.webhook.secret=null`, `tolerance=300`, `mlm.demo_mode_enabled=false`
+- Doublons `(order_id, type)` sur base fresh : **0**
+
+### Score AUDIT (indicatif post-Sprint 0)
+
+| Domaine | Avant | Après (estimé) |
+|---------|-------|----------------|
+| Sécurité | 4/10 | **6/10** |
+| Robustesse financière | 2/10 | **6/10** |
+| Architecture | 5/10 | **6/10** |
+| Tests | 3/10 | **5/10** |
+| **Global** | **~4,5/10** | **~5,5–6/10** |
+
+---
+
+## Sprint 0 + BB1-rapide — Bilan final
+
+**Date clôture pilote :** 2026-10-17 · Branche `sprint-0/audit-critical-fixes` · **PR #3** · CI **PHPUnit + Dusk + Vite** verte
+
+### Commits (13 depuis `c8cca10`)
+
+| SHA | Message |
+|-----|---------|
+| `e186abb` | docs(audit) : 4 fichiers d'audit |
+| `db00253` | fix(db) : migrations + garde-fous démo + tests Cashier |
+| `0a72605` | refactor(mlm) : suppression code mort (GenealogyService, BA13) |
+| `6308296` | test(security) : garde-fou démo |
+| `382c12a` | fix(deps) : Guzzle + Dompdf (CVE) |
+| `57b4c51` | fix(security) : Stripe webhook (C1) |
+| `525d758` | fix(mlm) : idempotence commission (BA12) |
+| `a77581d` | fix(mlm) : statut failed + guard retry (BA14a) |
+| `b9ac2f2` | fix(mlm) : throw generatePayments (BE1) |
+| `deaedaf` | docs(audit) : close Sprint 0 |
+| `119ac4b` | ci : fix PHPUnit workflow (sqlite) |
+| `821b9b3` | ci : fix Vite build |
+| `aab1894` | fix(cashier) : prevent double-click checkout (BB1-rapide) |
+
+*(Workflow PHPUnit initial : `0b143aa` — hors décompte fonctionnel Sprint 0.)*
+
+### Résultats
+
+| Métrique | Valeur |
+|----------|--------|
+| Tests | **88 → 110 passed** (+22), **1 skipped**, 2 risky (CommissionPeriodRetryTest) |
+| CI | PHPUnit + Dusk + Vite **verts** sur PR #3 |
+| Advisories Composer | **30 → 18** (Guzzle/Dompdf corrigés ; Livewire/Laravel/commonmark restants) |
+
+### CRITIQUES résolus (7 + BB1-rapide)
+
+| Item | Livrable |
+|------|----------|
+| **C1** | `config/cashier.php` + tests signature Stripe |
+| **C3 / C4** | Guzzle 7.15.5, Dompdf 3.1.6 |
+| **BA12** | Migration `unique(order_id, type)` + garde `CommissionDistributor` |
+| **BA14a** | Enum `failed` + heartbeat `ProcessMonthlyCommissions` |
+| **BE1** | Throw si `generatePayments` false |
+| **BB1 (tests)** | `CheckoutRegressionTest` (3 scénarios caisse) |
+| **BB1-rapide** | Garde double-clic `createCheckoutOrder` (`CashierController.php:1182-1225`) + `CheckoutDoubleClickTest` (3 tests) + bouton checkout disabled |
+
+### MAJEURS résolus (6)
+
+- **D4 / D5** : isolation démo (`MLM_DEMO_MODE`, sync historique, recalculate admin)
+- **D8** : couvert par garde-fous démo / prod (recalculate, sync)
+- **D10** : Stripe webhook (C1)
+- **D13** : retry période `failed` / stale (BA14a)
+- **D14** : BE1 (échec clôture explicite)
+
+### Différés Sprint 1
+
+- **BA14b** : orchestrateur `runMonthlyClose` (atomicité complète)
+- **BB1** : refonte complète checkout → `CommissionDistributor`
+- **D6** : colonne `source` runtime vs historique
+- **D11** : 403 JSON par défaut sur webhook sans `Accept`
+- **services.webhooks.stripe** : mapping orphelin
+- **29× `total_bv` legacy**
+- **AdminUserSeeder** : bug `rank_id=10` (pré-existant)
+- **18 advisories Composer** restants
+- **Clarification wallet** : `cash_pos` `paid` au checkout vs crédit wallet (`commissionPay`)
+
+### Pilote prod
+
+Checklist opérationnelle : [`docs/PILOT_LAUNCH_CHECKLIST.md`](docs/PILOT_LAUNCH_CHECKLIST.md).
+
+**Prêt pour merge PR #3** sous réserve : backup prod, audit doublons `(order_id, type)`, variables Cloud (`MLM_DEMO_MODE=false`, Stripe si actif), smoke caisse post-deploy.
+
+---
+
+*Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*

@@ -233,7 +233,8 @@ class CommissionDistributor
         if ($isPosSource && $sponsor && $sponsor->is_active) {
             $commissionAmount = $this->getCommissionAmountFromOrder($orderId);
 
-            if ($commissionAmount > 0) {
+            if ($commissionAmount > 0
+                && ! Commission::where('order_id', $orderId)->where('type', 'cash_pos')->exists()) {
                 $commissions[] = Commission::create([
                     'user_id'              => $sponsor->id,
                     'from_user_id'         => $buyer->id,
@@ -291,7 +292,7 @@ class CommissionDistributor
         string $source
     ): void {
         try {
-            PVHistory::create([
+            $history = PVHistory::create([
                 'user_id'    => $buyer->id,
                 'amount'     => $itemPV,
                 'date'       => now()->toDateString(),
@@ -300,6 +301,9 @@ class CommissionDistributor
                 'notes'      => "Commande #{$orderId} - " . $this->getItemName($item) . " (source: {$source})",
                 'created_by' => auth()->id() ?? $buyer->id,
             ]);
+            $history->order_id = $orderId;
+            $history->status = 'posted';
+            $history->saveQuietly();
         } catch (\Exception $e) {
             Log::error('Erreur enregistrement PVHistory', [
                 'user_id'  => $buyer->id,
@@ -397,6 +401,15 @@ class CommissionDistributor
 
     public function distributeCommissionsForOrder($order): array
     {
+        if (Commission::where('order_id', $order->id)->exists()) {
+            Log::warning(
+                'BA12 : commissions déjà distribuées pour cette commande',
+                ['order_id' => $order->id]
+            );
+
+            return [];
+        }
+
         $period = CommissionPeriod::getCurrentPeriod();
         if (!$period) {
             Log::error('Aucune période de commission trouvée');
