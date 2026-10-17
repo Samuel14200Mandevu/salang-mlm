@@ -345,6 +345,15 @@ curl -sf http://127.0.0.1:8000/up
 - Double couche économique (POS + bonus direct/indirect/leadership en fin de période) : **voulue**, non modifiée
 - Fichier:ligne : `CommissionDistributor.php` (`distributeCommissionsForOrder`, bloc `cash_pos`, `recordPVHistory`), `PeriodCommissionCalculator.php` (agrégat PV)
 
+### D13 — BA14a statut failed + guard retry (CRITIQUE — RÉSOLU partiellement)
+
+- Migration : ajout `failed` à l’enum `CommissionPeriod.status` (MySQL ; SQLite TEXT inchangé)
+- Guard retry `ProcessMonthlyCommissions::handle()` assouplie avec heartbeat 1h
+- `failed()` et catch `handle()` marquent `status=failed` + notes (au lieu de `pending`)
+- 4 tests Feature : guard calculating récent/stale, `failed()` marking, retry sur `failed`
+- Reste Sprint 1 : orchestrateur `runMonthlyClose` pour atomicité + compensation (BA14b)
+- Fichier:ligne : `2026_10_17_170000_add_failed_status_to_commission_periods.php`, `ProcessMonthlyCommissions.php` (guard, `failed`, `markPeriodFailed`), `CommissionPeriod.php` (`STATUS_FAILED`, `isFailed()`), `tests/Feature/MLM/CommissionPeriodRetryTest.php`
+
 ---
 
 *Fin du rapport fusion — Passe 3. Les passes 2A/2B/2C restent la référence détaillée ; ce document est la vue priorisée pour décision et planning.*
