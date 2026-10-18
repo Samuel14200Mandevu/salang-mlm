@@ -269,8 +269,12 @@
                 }
             });
             
-            // Appliquer le thème initial
-            setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+            // Appliquer le thème initial (aligné sur le script inline du <head>)
+            var storedTheme = localStorage.getItem('theme');
+            if (storedTheme !== 'dark' && storedTheme !== 'light') {
+                storedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            setTheme(storedTheme);
         }
         
         if (document.readyState === 'loading') {

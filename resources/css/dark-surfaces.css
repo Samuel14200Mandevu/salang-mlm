@@ -389,6 +389,18 @@ html.dark .member-app .main-content:has(.profile-page--account) {
   background: var(--bg-secondary) !important;
 }
 
+html.dark .member-app .main-wrapper:has(.member-wallet--fintech),
+html.dark .member-app .main-content:has(.member-wallet--fintech) {
+  background: var(--bg-page) !important;
+}
+
+html.dark .member-app .member-wallet-action-card,
+html.dark .member-app .member-wallet-activity-card {
+  background: var(--bg-card) !important;
+  border-color: var(--border-light) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+}
+
 html.dark .member-app .profile-account-mobile,
 html.dark .member-app .profile-account-menu,
 html.dark .member-app .profile-account-row {
