@@ -7,7 +7,7 @@
                 'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
              }">
 
-            <nav class="cashier-topbar member-mobile-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0 {{ $isMemberHomeTopbar ? 'member-mobile-topbar--home' : '' }}" aria-label="Barre supérieure">
+            <nav class="cashier-topbar member-topbar member-mobile-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0 {{ $isMemberHomeTopbar ? 'member-mobile-topbar--home' : '' }}" aria-label="Barre supérieure">
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16">
                         

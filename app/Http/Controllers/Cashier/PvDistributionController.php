@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Models\CommissionPeriod;
 use App\Models\User;
+use App\Support\MlmPeriod;
 use App\Models\PvAllocation;
 use App\Models\UserPvBalance;
 use App\Models\PvTransaction;
@@ -53,6 +55,11 @@ class PvDistributionController extends Controller
             ->latest()
             ->paginate(30);
 
+        $mlmPeriodValue = MlmPeriod::current();
+        $mlmPeriodDates = CommissionPeriod::getPeriodDates($mlmPeriodValue);
+        $isMlmClosureDay = (int) now()->day === CommissionPeriod::MLM_END_DAY;
+        $subjectHasMemberDownlines = $subject->hasDirectMemberDownlines();
+
         return view('cashier.pv.dashboard', compact(
             'subject',
             'viewingMember',
@@ -61,7 +68,11 @@ class PvDistributionController extends Controller
             'pendingAllocations',
             'approvedAllocations',
             'networkMembers',
-            'transactions'
+            'transactions',
+            'mlmPeriodValue',
+            'mlmPeriodDates',
+            'isMlmClosureDay',
+            'subjectHasMemberDownlines'
         ));
     }
 
@@ -78,12 +89,19 @@ class PvDistributionController extends Controller
         $memberPv = $subject->pvSummary($balance);
         $networkMembers = $this->getNetworkMembers($subject);
 
+        $mlmPeriodValue = MlmPeriod::current();
+        $mlmPeriodDates = CommissionPeriod::getPeriodDates($mlmPeriodValue);
+        $isMlmClosureDay = (int) now()->day === CommissionPeriod::MLM_END_DAY;
+
         return view('cashier.pv.distribute', compact(
             'subject',
             'viewingMember',
             'balance',
             'memberPv',
-            'networkMembers'
+            'networkMembers',
+            'mlmPeriodValue',
+            'mlmPeriodDates',
+            'isMlmClosureDay'
         ));
     }
 

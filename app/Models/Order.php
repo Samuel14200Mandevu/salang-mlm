@@ -21,7 +21,6 @@ class Order extends Model
         'discount',
         'total',
         'total_pv',
-        'total_bv',
         'status',
         'payment_status',
         'payment_method',

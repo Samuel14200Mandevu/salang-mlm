@@ -24,7 +24,7 @@
 </div>
 
 {{-- Desktop / tablette --}}
-<div class="dashboard-welcome-card animate-fadeInUp delay-1 hidden md:block">
+<div class="dashboard-welcome-card animate-fadeInUp delay-1 hidden md:block rounded-2xl border-slate-200/90 dark:border-slate-700/80">
     <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
         <span class="{{ $currentRankBadgeClass ?? \App\Support\MlmRank::badgeClass($dashboardLevelNumber) }}">
             {{ $currentRankName }}

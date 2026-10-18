@@ -4,6 +4,13 @@
 
 @section('content')
 <div class="member-shop member-shop--catalog space-y-3 sm:space-y-4">
+    <div class="member-page-intro member-shop-intro-desktop hidden md:block animate-fadeInUp">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Boutique</h1>
+        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+            Produits Salang · PV et commandes en ligne
+        </p>
+    </div>
+
     @include('products.partials.shop-catalog-toolbar')
 
     <div id="searchResult" class="member-shop-results hidden">

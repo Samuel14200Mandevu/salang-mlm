@@ -189,6 +189,15 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'parrain_id');
     }
 
+    /** Filleuls directs inscrits comme membres MLM (les clients POS ne comptent pas). */
+    public function hasDirectMemberDownlines(): bool
+    {
+        return static::query()
+            ->where('parrain_id', $this->id)
+            ->where('user_type', 'member')
+            ->exists();
+    }
+
     public function pvBalance()
     {
         return $this->hasOne(\App\Models\UserPvBalance::class);
@@ -928,6 +937,6 @@ class User extends Authenticatable
             return route('cashier.dashboard');
         }
 
-        return route('services.index');
+        return route('dashboard');
     }
 }

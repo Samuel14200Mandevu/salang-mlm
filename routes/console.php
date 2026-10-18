@@ -167,22 +167,31 @@ Artisan::command('rank:promotions', function () {
 // ════════════════════════════════════════════════════════════════════
 //
 // RÈGLES :
-//   - Reset PV mensuels       : le 8 à 00h00 (début nouveau mois MLM)
+//   - Clôture PV POS          : le 8 à 00h01 (reliquat available_pv → pv_balance, période terminée le 7)
+//   - Reset PV mensuels       : le 8 à 00h02 (début nouveau mois MLM)
 //   - Pipeline complet        : le 8 à 00h05 (PV + rangs + commissions)
 //   - Paiements              : le 15 à 00h00 (mois M+1)
 //   - Santé MLM              : toutes les heures (vérif incohérences)
 //
 // ════════════════════════════════════════════════════════════════════
 
-// ─── 1. RESET PV MENSUELS (le 8 à 00h00) ────────────────────────────
+// ─── 1. CLÔTURE PV PORTEFEUILLE (le 8 à 00h01, après le 7) ─────────
+Schedule::command('mlm:settle-pv-period')
+    ->monthlyOn(8, '00:01')
+    ->name('mlm-settle-pv-period')
+    ->withoutOverlapping(60)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/mlm-settle-pv-period.log'));
+
+// ─── 2. RESET PV MENSUELS (le 8 à 00h02) ────────────────────────────
 Schedule::command('mlm:reset-monthly-pv')
-    ->monthlyOn(8, '00:00')
+    ->monthlyOn(8, '00:02')
     ->name('mlm-reset-monthly-pv')
     ->withoutOverlapping(30)
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/mlm-reset-monthly-pv.log'));
 
-// ─── 2. PIPELINE COMPLET (le 8 à 00h05) ─────────────────────────────
+// ─── 3. PIPELINE COMPLET (le 8 à 00h05) ─────────────────────────────
 Schedule::command('commissions:calculate-period --full')
     ->monthlyOn(8, '00:05')
     ->name('mlm-calculate-period')
@@ -190,7 +199,7 @@ Schedule::command('commissions:calculate-period --full')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/mlm-calculate-period.log'));
 
-// ─── 3. PAIEMENTS (le 15 à 00h00) ───────────────────────────────────
+// ─── 4. PAIEMENTS (le 15 à 00h00) ───────────────────────────────────
 Schedule::command('commissions:generate-payments')
     ->monthlyOn(15, '00:00')
     ->name('mlm-generate-payments')
@@ -198,14 +207,14 @@ Schedule::command('commissions:generate-payments')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/mlm-generate-payments.log'));
 
-// ─── 4. SANTÉ MLM (toutes les heures) ───────────────────────────────
+// ─── 5. SANTÉ MLM (toutes les heures) ───────────────────────────────
 Schedule::command('mlm:fix-team-pv --dry-run')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/mlm-health.log'));
 
-// ─── 5. GARDE-FOU : Période courante existe (tous les jours à 00h30) ─
+// ─── 6. GARDE-FOU : Période courante existe (tous les jours à 00h30) ─
 Schedule::call(function () {
     \App\Models\CommissionPeriod::getCurrentPeriod();
 })

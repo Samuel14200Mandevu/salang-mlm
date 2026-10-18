@@ -562,6 +562,14 @@ html.dark .cashier-app .btn-outline:hover, html.dark .admin-app .btn-outline:hov
     box-shadow: inset 3px 0 0 var(--color-accent-500);
 }
 
+@media (min-width: 768px) {
+    .cashier-app .sidebar-link.active,
+    .admin-app .sidebar-link.active,
+    .member-app .sidebar-link.active {
+        box-shadow: none;
+    }
+}
+
 .cashier-app .sidebar-link.active svg, .admin-app .sidebar-link.active svg, .member-app .sidebar-link.active svg {
     color: #FFFFFF;
 }

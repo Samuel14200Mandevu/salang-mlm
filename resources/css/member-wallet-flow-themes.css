@@ -143,6 +143,38 @@ html.dark .member-app .member-fintech-actions__item.is-withdraw .member-fintech-
   color: #fdba74;
 }
 
+.member-app .member-fintech-actions__item.is-gains .member-fintech-actions__icon {
+  background: linear-gradient(145deg, #a78bfa, #7c3aed);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, #7c3aed 35%, transparent);
+}
+
+.member-app .member-fintech-actions__item.is-gains .member-fintech-actions__label {
+  color: #6d28d9;
+  font-weight: 700;
+}
+
+.member-app .member-fintech-actions__item.is-shop .member-fintech-actions__icon {
+  background: linear-gradient(145deg, #60a5fa, #2563eb);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, #2563eb 35%, transparent);
+}
+
+.member-app .member-fintech-actions__item.is-shop .member-fintech-actions__label {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+html.dark .member-app .member-fintech-actions__item.is-gains .member-fintech-actions__label {
+  color: #c4b5fd;
+}
+
+html.dark .member-app .member-fintech-actions__item.is-shop .member-fintech-actions__label {
+  color: #93c5fd;
+}
+
 @media (min-width: 768px) {
   .member-app .member-deposit--fintech .member-withdraw-method.is-selected,
   .member-app .member-withdraw--fintech .member-withdraw-method.is-selected {

@@ -299,6 +299,26 @@
         <div class="p-3 salang-flash-error border rounded text-sm">{{ session('error') }}</div>
     @endif
 
+    <div class="pv-context-banner">
+        <span class="text-[var(--text-secondary)]">
+            Période MLM <strong class="text-[var(--text-primary)]">{{ $mlmPeriodValue ?? '' }}</strong>
+            — du {{ $mlmPeriodDates['start']->format('d/m/Y') }} au {{ $mlmPeriodDates['end']->format('d/m/Y') }}
+        </span>
+    </div>
+
+    @if(!empty($isMlmClosureDay) && ($memberPv['available_pv'] ?? 0) > 0)
+        <div class="p-3 border rounded-lg text-sm {{ !empty($subjectHasMemberDownlines) ? 'bg-amber-50 border-amber-200 text-amber-950' : 'bg-sky-50 border-sky-200 text-sky-950' }}">
+            @if(!empty($subjectHasMemberDownlines))
+                <strong>Jour 7 — clôture du mois MLM.</strong>
+                Passez en caisse pour distribuer les PV accumulés (8→7) à vos filleuls.
+                Le reliquat non distribué vous sera crédité après minuit (clôture automatique).
+            @else
+                <strong>Jour 7 — clôture du mois MLM.</strong>
+                Vous n’avez pas de filleul membre : vos PV ventes clients seront validés sur votre compte après la clôture (le 8).
+            @endif
+        </div>
+    @endif
+
     {{-- STATISTIQUES --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="pv-stat-card">

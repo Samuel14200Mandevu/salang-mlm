@@ -266,7 +266,6 @@ public function createOrder(Request $request)
                 'discount' => 0,
                 'total' => $total,
                 'total_pv' => $totalPv,
-                'total_bv' => $totalBv,
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'payment_method' => 'cash',
@@ -627,7 +626,6 @@ public function createMultiOrder(Request $request)
                 'discount' => 0,
                 'total' => $total,
                 'total_pv' => $totalPv,
-                'total_bv' => $totalBv,
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'payment_method' => 'cash',
@@ -1180,6 +1178,51 @@ public function createCheckoutOrder(Request $request)
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
         ]);
+
+        $consultationCheckoutForGuard = session('consultation_checkout');
+        $consultationIdForGuard = ! empty($consultationCheckoutForGuard['consultation_id'])
+            ? (int) $consultationCheckoutForGuard['consultation_id']
+            : null;
+
+        // BB1-rapide — Garde idempotence checkout (protège contre double-clic)
+        // Contexte : user_id sur Order (CashierController.php:1330), consultation_id via session (1188-1220).
+        $recentOrderQuery = Order::query()
+            ->where('cashier_id', auth()->id())
+            ->where('created_at', '>=', now()->subMinutes(2))
+            ->where('status', '!=', 'cancelled');
+
+        $recentOrder = null;
+
+        if ($consultationIdForGuard) {
+            $recentOrder = (clone $recentOrderQuery)
+                ->where('consultation_id', $consultationIdForGuard)
+                ->first();
+        } else {
+            $guardUserId = $request->input('customer_id');
+            if (! $guardUserId && $request->filled('phone')) {
+                $guardUserId = User::where('phone', $request->phone)->value('id');
+            }
+            if (! $guardUserId && $request->filled('customer_phone')) {
+                $guardUserId = User::where('phone', $request->customer_phone)->value('id');
+            }
+            if ($guardUserId) {
+                $recentOrder = (clone $recentOrderQuery)
+                    ->where('user_id', $guardUserId)
+                    ->first();
+            }
+        }
+
+        if ($recentOrder) {
+            Log::warning('BB1-rapide : checkout récent détecté (double-clic évité)', [
+                'existing_order_id' => $recentOrder->id,
+                'customer_id' => $request->input('customer_id'),
+                'consultation_id' => $consultationIdForGuard,
+            ]);
+
+            return redirect()
+                ->route('cashier.orders.show', $recentOrder->id)
+                ->with('info', 'Une commande récente existe déjà. Redirection vers la commande existante.');
+        }
         
         $cart = session()->get('pos_cart', []);
         
@@ -1340,7 +1383,6 @@ public function createCheckoutOrder(Request $request)
                 'discount' => 0,
                 'total' => $total,
                 'total_pv' => $totalPv,
-                'total_bv' => $totalBv,
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'payment_method' => 'cash',
@@ -2099,7 +2141,6 @@ public function destroyProfile(Request $request)
                     'discount' => 0,
                     'total' => $package->price ?? 0,
                     'total_pv' => $pvValue,
-                    'total_bv' => $bvValue,
                     'status' => 'completed',
                     'payment_status' => 'completed',
                     'payment_method' => 'cash',

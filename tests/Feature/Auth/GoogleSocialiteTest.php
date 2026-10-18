@@ -80,7 +80,7 @@ class GoogleSocialiteTest extends TestCase
         $response = $this->withSession(['socialite_intent' => 'login'])
             ->get('/auth/google/callback');
 
-        $response->assertRedirect('/services');
+        $response->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user);
     }
 

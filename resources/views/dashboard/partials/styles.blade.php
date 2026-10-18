@@ -160,6 +160,11 @@
         .dashboard-bands-layout {
             grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
             align-items: start;
+            gap: 1rem;
+        }
+
+        .member-classic-shell .dashboard-band-card {
+            border-radius: 1rem;
         }
     }
 

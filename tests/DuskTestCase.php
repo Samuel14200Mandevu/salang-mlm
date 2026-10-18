@@ -40,7 +40,7 @@ abstract class DuskTestCase extends BaseTestCase
             ->type('#email', $user->email)
             ->type('#password', $password)
             ->keys('#password', '{enter}')
-            ->waitForLocation('/services', 15);
+            ->waitForLocation('/dashboard', 15);
     }
 
     protected function setUp(): void

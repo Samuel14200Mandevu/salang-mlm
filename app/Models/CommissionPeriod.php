@@ -54,6 +54,8 @@ class CommissionPeriod extends Model
     /** Jour de paiement (le 15 du mois suivant) */
     const MLM_PAYMENT_DAY = 15;
 
+    const STATUS_FAILED = 'failed';
+
     // ============================================================
     // RELATIONS
     // ============================================================
@@ -102,6 +104,11 @@ class CommissionPeriod extends Model
         return $query->where('status', 'closed');
     }
 
+    public function isFailed(): bool
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
     public function scopeVisibleToMember($query)
     {
         return $query->where('is_hidden', false);
@@ -129,6 +136,7 @@ class CommissionPeriod extends Model
             'paying'      => 'En paiement',
             'paid'        => 'Payée',
             'closed'      => 'Clôturée',
+            'failed'      => 'Échec',
         ];
         return $labels[$this->status] ?? ucfirst($this->status ?? 'inconnu');
     }
@@ -143,6 +151,7 @@ class CommissionPeriod extends Model
             'paying'      => 'purple',
             'paid'        => 'green',
             'closed'      => 'gray',
+            'failed'      => 'red',
         ];
         return $colors[$this->status] ?? 'gray';
     }

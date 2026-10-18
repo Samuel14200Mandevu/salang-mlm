@@ -11,7 +11,6 @@
         @include('wallet.partials.fintech-actions')
         @include('wallet.partials.fintech-metrics')
         @include('wallet.partials.fintech-bonus-breakdown')
-        @include('wallet.partials.fintech-career-prizes')
         @include('wallet.partials.fintech-feed')
     </div>
 
@@ -22,24 +21,24 @@
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Gérez vos fonds et vos transactions</p>
         </div>
 
-        <div class="stats-grid grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-            <div class="card-stats animate-fadeInUp delay-1 border-l-4 border-primary-500">
-                <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">Solde disponible</p>
-                <p class="text-2xl sm:text-3xl font-bold text-primary-500">${{ number_format($balance ?? 0, 2) }}</p>
+        <div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div class="card-stats animate-fadeInUp delay-1 rounded-2xl border border-slate-100 dark:border-slate-700/80 md:border-l-0">
+                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Solde disponible</p>
+                <p class="text-2xl md:text-3xl font-bold text-primary-600 tabular-nums mt-1">${{ number_format($balance ?? 0, 2) }}</p>
             </div>
-            <div class="card-stats animate-fadeInUp delay-2 border-l-4 border-yellow-500">
-                <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">En attente</p>
-                <p class="text-2xl sm:text-3xl font-bold text-yellow-500">${{ number_format($pendingBalance ?? 0, 2) }}</p>
+            <div class="card-stats animate-fadeInUp delay-2 rounded-2xl border border-slate-100 dark:border-slate-700/80 md:border-l-0">
+                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wide">En attente</p>
+                <p class="text-2xl md:text-3xl font-bold text-amber-600 tabular-nums mt-1">${{ number_format($pendingBalance ?? 0, 2) }}</p>
             </div>
-            <div class="card-stats animate-fadeInUp delay-3 border-l-4 border-blue-500">
-                <p class="text-[10px] sm:text-sm text-[var(--text-secondary)]">Total retiré</p>
-                <p class="text-2xl sm:text-3xl font-bold text-blue-500">${{ number_format($totalWithdrawn ?? 0, 2) }}</p>
+            <div class="card-stats animate-fadeInUp delay-3 rounded-2xl border border-slate-100 dark:border-slate-700/80 md:border-l-0">
+                <p class="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total retiré</p>
+                <p class="text-2xl md:text-3xl font-bold text-slate-700 dark:text-slate-200 tabular-nums mt-1">${{ number_format($totalWithdrawn ?? 0, 2) }}</p>
             </div>
         </div>
 
         @include('wallet.partials.wallet-bonus-desktop')
 
-        <div class="card animate-fadeInUp delay-4">
+        <div class="card animate-fadeInUp delay-4 rounded-2xl border border-slate-100 dark:border-slate-700/80">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des transactions</h3>
                 <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $transactions->total() }} transactions</span>
