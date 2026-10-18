@@ -8,12 +8,12 @@
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
 
-            <div class="h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden sidebar-shell">
+            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden sidebar-shell">
                 <div class="cashier-sidebar-accent" aria-hidden="true"></div>
 
                 @include('layouts.partials.sidebar-mobile-drawer-head')
 
-                <div class="sidebar-logo-bar hidden lg:flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
+                <div class="sidebar-logo-bar hidden md:flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
                      :class="sidebarOpen ? 'px-4' : 'px-2'">
                     <a href="{{ route('dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
                         <img src="{{ asset('images/salang_logo.png') }}"
@@ -33,7 +33,7 @@
                 <p class="sidebar-mobile-drawer-version lg:hidden" aria-hidden="true">Version 1.0.0</p>
 
                 <!-- Pied de page de la sidebar (desktop) -->
-                <div class="sidebar-user hidden lg:block flex-shrink-0">
+                <div class="sidebar-user hidden md:block flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="avatar-ring w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth

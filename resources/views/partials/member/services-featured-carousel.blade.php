@@ -7,7 +7,7 @@
              aria-label="Événements et promotions à la une"
              aria-roledescription="carousel"
              x-data="servicesFeaturedCarousel({{ $items->count() }})"
-             x-init="start()"
+             x-init="initCarousel()"
              @mouseenter="pause()"
              @mouseleave="resume()"
              @touchstart.passive="pause()"
@@ -31,8 +31,8 @@
                     @endphp
                     <a href="{{ route('publications.show', $publication) }}"
                        class="services-featured__slide card overflow-hidden"
-                       :aria-hidden="active !== {{ $loop->index }}"
-                       :tabindex="active === {{ $loop->index }} ? 0 : -1">
+                       :aria-hidden="slideAriaHidden({{ $loop->index }})"
+                       :tabindex="slideTabIndex({{ $loop->index }})">
                         <div class="services-featured__media">
                             @if($cover && $cover->type === 'photo')
                                 <img src="{{ $cover->url }}" alt="" loading="lazy" decoding="async">

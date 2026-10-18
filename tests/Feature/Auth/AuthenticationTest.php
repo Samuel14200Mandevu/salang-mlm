@@ -27,7 +27,21 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('services.index', absolute: false));
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_login_accepts_remember_me_checkbox(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => 'on',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertAuthenticated();
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

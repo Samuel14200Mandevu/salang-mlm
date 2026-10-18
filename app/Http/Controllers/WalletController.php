@@ -7,7 +7,7 @@ use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Commission;
 use App\Services\WalletCommissionBreakdown;
-use App\Support\CareerQualificationPrizes;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,7 @@ class WalletController extends Controller
         protected WalletCommissionBreakdown $commissionBreakdown
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $wallet = $user->wallet;
@@ -29,38 +29,31 @@ class WalletController extends Controller
         $totalWithdrawn = $wallet ? $wallet->total_withdrawn : 0;
         $totalDeposited = $wallet ? $wallet->total_deposited : 0;
 
+        $activityPeriod = $request->query('period', 'week');
+        if (! in_array($activityPeriod, ['week', 'month', 'all'], true)) {
+            $activityPeriod = 'week';
+        }
+        $activitySince = match ($activityPeriod) {
+            'month' => Carbon::now()->startOfMonth(),
+            'week' => Carbon::now()->startOfWeek(),
+            default => null,
+        };
+        $activityPeriodLabels = [
+            'week' => 'Cette semaine',
+            'month' => 'Ce mois',
+            'all' => 'Tout',
+        ];
+        $activityPeriodLabel = $activityPeriodLabels[$activityPeriod];
+
         // 🔥 EXCLURE LES TRANSACTIONS DE TYPE 'pv_credit' ET 'bv_credit'
         $transactions = Transaction::where('user_id', $user->id)
             ->whereNotIn('type', ['pv_credit', 'bv_credit'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->appends(['period' => $activityPeriod]);
 
-        $transactionStats = [
-            'total_commission' => Transaction::where('user_id', $user->id)
-                ->where('type', 'commission')
-                ->where('status', 'completed')
-                ->sum('amount'),
-            'total_deposit' => Transaction::where('user_id', $user->id)
-                ->where('type', 'deposit')
-                ->where('status', 'completed')
-                ->sum('amount'),
-            'total_withdrawal' => Transaction::where('user_id', $user->id)
-                ->where('type', 'withdrawal')
-                ->where('status', 'completed')
-                ->sum('amount'),
-            'count_commission' => Transaction::where('user_id', $user->id)
-                ->where('type', 'commission')
-                ->where('status', 'completed')
-                ->count(),
-            'count_deposit' => Transaction::where('user_id', $user->id)
-                ->where('type', 'deposit')
-                ->where('status', 'completed')
-                ->count(),
-            'count_withdrawal' => Transaction::where('user_id', $user->id)
-                ->where('type', 'withdrawal')
-                ->where('status', 'completed')
-                ->count(),
-        ];
+        $transactionStats = $this->transactionStatsForUser($user->id, null);
+        $activityOverview = $this->buildActivityOverview($user->id, $activitySince);
 
         $monthlyCommissions = Commission::where('user_id', $user->id)
             ->where('status', 'paid')
@@ -76,7 +69,6 @@ class WalletController extends Controller
             ->values();
 
         $bonusByType = $this->commissionBreakdown->paidByType($user->id);
-        $careerQualificationPrizes = CareerQualificationPrizes::forWallet($user);
 
         return view('wallet.index', compact(
             'balance',
@@ -87,8 +79,112 @@ class WalletController extends Controller
             'transactionStats',
             'monthlyCommissions',
             'bonusByType',
-            'careerQualificationPrizes'
+            'activityOverview',
+            'activityPeriod',
+            'activityPeriodLabel'
         ));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function transactionStatsForUser(int $userId, ?Carbon $since): array
+    {
+        $applySince = function ($query) use ($since) {
+            if ($since) {
+                $query->where('created_at', '>=', $since);
+            }
+
+            return $query;
+        };
+
+        return [
+            'total_commission' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'commission')
+                    ->where('status', 'completed')
+            )->sum('amount'),
+            'total_deposit' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'deposit')
+                    ->where('status', 'completed')
+            )->sum('amount'),
+            'total_withdrawal' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'withdrawal')
+                    ->where('status', 'completed')
+            )->sum('amount'),
+            'count_commission' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'commission')
+                    ->where('status', 'completed')
+            )->count(),
+            'count_deposit' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'deposit')
+                    ->where('status', 'completed')
+            )->count(),
+            'count_withdrawal' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'withdrawal')
+                    ->where('status', 'completed')
+            )->count(),
+        ];
+    }
+
+    /**
+     * @return list<array{key: string, label: string, value: string, percent: int, icon: string}>
+     */
+    private function buildActivityOverview(int $userId, ?Carbon $since): array
+    {
+        $stats = $this->transactionStatsForUser($userId, $since);
+        $operations = ($stats['count_commission'] ?? 0)
+            + ($stats['count_deposit'] ?? 0)
+            + ($stats['count_withdrawal'] ?? 0);
+
+        $raw = [
+            'commission' => abs((float) ($stats['total_commission'] ?? 0)),
+            'deposit' => abs((float) ($stats['total_deposit'] ?? 0)),
+            'withdrawal' => abs((float) ($stats['total_withdrawal'] ?? 0)),
+            'operations' => (float) $operations,
+        ];
+        $max = max($raw) ?: 0.0;
+
+        $cards = [
+            [
+                'key' => 'commission',
+                'label' => 'Commissions',
+                'value' => '$'.number_format($raw['commission'], 2),
+                'icon' => 'coins',
+            ],
+            [
+                'key' => 'deposit',
+                'label' => 'Dépôts',
+                'value' => '$'.number_format($raw['deposit'], 2),
+                'icon' => 'wallet',
+            ],
+            [
+                'key' => 'withdrawal',
+                'label' => 'Retraits',
+                'value' => '$'.number_format($raw['withdrawal'], 2),
+                'icon' => 'withdraw',
+            ],
+            [
+                'key' => 'operations',
+                'label' => 'Opérations',
+                'value' => (string) (int) $raw['operations'],
+                'icon' => 'document',
+            ],
+        ];
+
+        foreach ($cards as $i => $card) {
+            $amount = $raw[$card['key']];
+            $cards[$i]['percent'] = $max > 0 && $amount > 0
+                ? (int) round($amount / $max * 100)
+                : 0;
+        }
+
+        return $cards;
     }
 
     public function deposit()

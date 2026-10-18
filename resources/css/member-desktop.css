@@ -1,0 +1,273 @@
+/**
+ * Espace membre — desktop (≥768px).
+ * Aligné sur le shell admin / caisse (cashier-shell.css).
+ * Mobile : member-mobile.css + fintech (inchangé).
+ */
+
+@media (min-width: 768px) {
+  /* —— Canvas (comme cashier-mobile-pages @768) —— */
+  .member-app .main-content {
+    background: var(--bg-page);
+    padding: 1rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .member-app .member-sidebar-drawer,
+  .member-app #sidebar .sidebar-shell,
+  .member-app #sidebar .admin-sidebar-panel {
+    background: var(--bg-navbar);
+    border-color: var(--border-color);
+    box-shadow: none;
+  }
+
+  .member-app .member-sidebar {
+    box-shadow: none;
+  }
+
+  /* Sidebar : mêmes états que .cashier-app / .admin-app */
+  .member-app #sidebar .sidebar-link {
+    border-left: none;
+    border-radius: var(--radius-md);
+  }
+
+  .member-app #sidebar .sidebar-link:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transform: none;
+  }
+
+  .member-app #sidebar .sidebar-link:hover svg,
+  .member-app #sidebar .sidebar-link:hover .sidebar-link-icon svg {
+    color: var(--text-primary);
+  }
+
+  .member-app #sidebar .sidebar-link.active {
+    background: linear-gradient(
+      135deg,
+      var(--color-primary-600) 0%,
+      var(--color-primary-700) 100%
+    );
+    color: #fff;
+    box-shadow: none;
+    border-left-color: transparent;
+  }
+
+  .member-app #sidebar .sidebar-link.active svg,
+  .member-app #sidebar .sidebar-link.active .sidebar-link-icon,
+  .member-app #sidebar .sidebar-link.active .sidebar-link-icon svg {
+    color: #fff;
+  }
+
+  .member-app #sidebar .sidebar-section {
+    color: var(--color-accent-600);
+  }
+
+  .member-app #sidebar .sidebar-section::after {
+    background: var(--border-light);
+  }
+
+  .member-app #sidebar .sidebar-user {
+    background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
+    border-color: var(--border-light);
+  }
+
+  .member-app #sidebar .sidebar-user .text-sm.font-medium {
+    color: var(--text-primary);
+  }
+
+  .member-app #sidebar .sidebar-user .text-xs {
+    color: var(--text-secondary);
+  }
+
+  /* Topbar : bandeau caisse (gradient bas) */
+  .member-app .cashier-topbar.member-topbar {
+    background: var(--bg-navbar);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .member-app .cashier-topbar.member-topbar::after {
+    opacity: 1;
+  }
+
+  .member-app .main-wrapper:has(#main-content .member-page-intro:not(.hidden)) .member-mobile-topbar__title {
+    display: none;
+  }
+
+  .member-app {
+    --member-desktop-stack: 1rem;
+    --member-desktop-card-radius: var(--radius-lg);
+  }
+
+  /* En-têtes type admin-desktop-page-head */
+  .member-app #main-content .member-page-intro,
+  .member-app #main-content .commissions-page-header-desktop,
+  .member-app #main-content .commissions-levels-header-desktop,
+  .member-app #main-content .commissions-dashboard-header-desktop {
+    padding: 1.25rem 0 1rem;
+    margin-bottom: var(--member-desktop-stack);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .member-app #main-content .member-page-intro h1,
+  .member-app #main-content .commissions-page-header-desktop h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .member-app #main-content .member-page-intro p {
+    font-size: 0.875rem;
+    max-width: 42rem;
+    line-height: 1.5;
+    margin-top: 0.25rem;
+  }
+
+  .member-app #main-content :is(
+      .member-classic-shell,
+      .member-wallet-classic-shell,
+      .member-reports-classic,
+      .member-withdraw-classic,
+      .member-deposit-classic,
+      .commissions-page,
+      .commissions-levels-page,
+      .commissions-dashboard-page,
+      .member-services--hub,
+      .member-shop--catalog,
+      .network-page,
+      .rank-page,
+      .member-wallet,
+      .member-dashboard,
+      .member-reports--fintech,
+      .member-withdraw--fintech,
+      .member-deposit--fintech,
+      .subscriptions-page,
+      .orders-page,
+      .cart-page,
+      .my-pv-page,
+      .kyc-page,
+      .notifications-page,
+      .supervision-page,
+      .profile-page
+    ) > * + * {
+    margin-top: var(--member-desktop-stack);
+  }
+
+  /* Cartes / KPI (admin-kpi-rail + .card shell) */
+  .member-app #main-content .card,
+  .member-app #main-content .card-stats,
+  .member-app #main-content .report-card,
+  .member-app #main-content .dashboard-stat-card,
+  .member-app #main-content .dashboard-band-card,
+  .member-app #main-content .dashboard-welcome-card,
+  .member-app #main-content .dashboard-quick-action {
+    border-radius: var(--member-desktop-card-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+  }
+
+  .member-app #main-content .card-stats,
+  .member-app #main-content .stats-grid .card-stats,
+  .member-app #main-content .commissions-stats .card-stats,
+  .member-app #main-content .network-stats .card-stats {
+    padding: 0.875rem 1rem;
+    background: var(--bg-card);
+  }
+
+  .member-app #main-content .stats-grid .card-stats.border-l-4,
+  .member-app #main-content .commissions-stats .card-stats.border-l-4,
+  .member-app #main-content .network-stats .card-stats.border-l-4 {
+    border-left-width: 0;
+  }
+
+  .member-app #main-content .stats-grid,
+  .member-app #main-content .commissions-stats,
+  .member-app #main-content .network-stats {
+    gap: 0.75rem;
+  }
+
+  .member-app #main-content .stats-grid .card-stats p:last-child,
+  .member-app #main-content .commissions-stats .card-stats p:nth-child(2),
+  .member-app #main-content .network-stats .card-stats p:last-child {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .member-app #main-content .table-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .member-app #main-content .table-wrap .table thead th {
+    background: var(--bg-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+  }
+
+  /* Boutons : même hover que caisse */
+  .member-app .btn-primary:hover {
+    box-shadow: 0 4px 14px rgba(245, 166, 35, 0.22);
+  }
+
+  /* Accueil membre — shell classique */
+  .member-app .member-classic-shell .dashboard-welcome-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .member-app .member-classic-shell .dashboard-stat-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .member-app .member-classic-shell .dashboard-band-card--highlight {
+    background: color-mix(in srgb, var(--color-primary-50) 45%, var(--bg-card));
+    border-color: color-mix(in srgb, var(--color-primary-500) 22%, var(--border-color));
+  }
+
+  .member-app .member-classic-shell .dashboard-max-banner {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    text-align: left;
+    padding: 1rem 1.25rem;
+  }
+
+  .member-app .member-classic-shell .dashboard-max-banner .flex {
+    justify-content: flex-start;
+  }
+
+  .member-app .member-classic-shell .dashboard-max-banner svg {
+    color: var(--color-accent-600);
+  }
+
+  .member-app .member-classic-shell .dashboard-max-banner p {
+    color: var(--text-secondary);
+    opacity: 1;
+  }
+
+  .member-app .wallet-bonus-desktop .wallet-bonus-desktop__stat {
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--bg-secondary) 88%, var(--bg-card));
+  }
+}
+
+@media (min-width: 1024px) {
+  .member-app {
+    --member-desktop-stack: 1.25rem;
+  }
+
+  .member-app .main-content {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+
+  .member-app #main-content .member-page-intro h1,
+  .member-app #main-content .commissions-page-header-desktop h1 {
+    font-size: 1.625rem;
+  }
+}

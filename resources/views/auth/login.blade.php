@@ -38,7 +38,8 @@
 
         <div class="auth-form-actions">
             <label class="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
-                <input type="checkbox" name="remember" class="rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-500 focus:ring-offset-0">
+                <input type="checkbox" name="remember" value="1" @checked(old('remember'))
+                       class="rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-500 focus:ring-offset-0">
                 Rester connecté
             </label>
             @if (Route::has('password.request'))

@@ -27,7 +27,7 @@
     </div>
 
     <div class="member-deposit-classic space-y-4 sm:space-y-6">
-        <div class="animate-fadeInUp">
+        <div class="member-page-intro animate-fadeInUp">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Faire un dépôt</h1>

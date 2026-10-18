@@ -26,22 +26,10 @@
 <section class="member-fintech-hero member-wallet-hero member-fintech-animate member-fintech-animate--hero">
     <div class="member-fintech-hero__mesh" aria-hidden="true"></div>
 
-    <div class="member-fintech-hero__top">
+    <div class="member-fintech-hero__top member-wallet-hero__top">
         <div class="member-fintech-hero__user">
-            <p class="member-fintech-hero__hello">{{ $greeting }}, {{ $firstName }}</p>
+            <p class="member-fintech-hero__hello">{{ $greeting }}, {{ strtoupper($firstName) }}</p>
             <span class="member-wallet-hero__badge">Portefeuille USD</span>
-        </div>
-        <div class="member-fintech-hero__tools">
-            <a href="{{ route('commissions.index') }}" class="member-fintech-hero__tool" aria-label="Commissions">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-            </a>
-            <a href="{{ route('wallet.deposit') }}" class="member-fintech-hero__tool" aria-label="Dépôt">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-            </a>
         </div>
     </div>
 
@@ -66,18 +54,42 @@
         @endif
     </div>
 
-    <div class="member-fintech-hero__pnl-row">
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">En attente</span>
-            <span class="member-fintech-hero__pnl-value">${{ number_format($pendingBalance ?? 0, 2) }}</span>
+    <div class="member-wallet-hero__stats-bar">
+        <div class="member-wallet-hero__stat is-pending">
+            <span class="member-wallet-hero__stat-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 22h14"/>
+                    <path d="M5 2h14"/>
+                    <path d="M17 22v-4.2a2 2 0 00-.59-1.4L12 12l-4.41 4.4A2 2 0 007 17.8V22"/>
+                    <path d="M7 2v4.2a2 2 0 00.59 1.4L12 12l4.41-4.4A2 2 0 0017 6.2V2"/>
+                </svg>
+            </span>
+            <div class="member-wallet-hero__stat-text">
+                <span class="member-wallet-hero__stat-label">En attente</span>
+                <span class="member-wallet-hero__stat-value">${{ number_format($pendingBalance ?? 0, 2) }}</span>
+            </div>
         </div>
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">Dépôts</span>
-            <span class="member-fintech-hero__pnl-value is-up">${{ number_format($totalDeposited ?? 0, 2) }}</span>
+        <div class="member-wallet-hero__stat is-deposit">
+            <span class="member-wallet-hero__stat-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-4 4m4-4l4 4"/>
+                </svg>
+            </span>
+            <div class="member-wallet-hero__stat-text">
+                <span class="member-wallet-hero__stat-label">Dépôts</span>
+                <span class="member-wallet-hero__stat-value is-up">${{ number_format($totalDeposited ?? 0, 2) }}</span>
+            </div>
         </div>
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">Retiré</span>
-            <span class="member-fintech-hero__pnl-value">${{ number_format($totalWithdrawn ?? 0, 2) }}</span>
+        <div class="member-wallet-hero__stat is-withdrawn">
+            <span class="member-wallet-hero__stat-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-4-4m4 4l4-4"/>
+                </svg>
+            </span>
+            <div class="member-wallet-hero__stat-text">
+                <span class="member-wallet-hero__stat-label">Retiré</span>
+                <span class="member-wallet-hero__stat-value">${{ number_format($totalWithdrawn ?? 0, 2) }}</span>
+            </div>
         </div>
     </div>
 </section>

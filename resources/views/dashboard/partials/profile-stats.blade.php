@@ -1,5 +1,5 @@
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-3">
-    <div class="card">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 animate-fadeInUp delay-3">
+    <div class="card rounded-2xl border border-slate-100 dark:border-slate-700/80">
         <div class="flex items-center gap-3 sm:gap-4">
             <div class="avatar avatar-lg sm:avatar-xl avatar-gradient avatar-ring">
                 @if($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar)))

@@ -3,7 +3,7 @@
         + ($level6 ?? 0) + ($level7 ?? 0) + ($level8 ?? 0) + ($level9 ?? 0);
     $statsSet = $dashboardLevel['stats_set'] ?? 'growth';
 @endphp
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp delay-2">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 animate-fadeInUp delay-2">
     <div class="dashboard-stat-card">
         <div class="flex items-center justify-between">
             <div>

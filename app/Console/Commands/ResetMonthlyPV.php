@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 class ResetMonthlyPV extends Command
 {
     protected $signature = 'mlm:reset-monthly-pv';
-    protected $description = 'Réinitialise les PV/BV mensuels (le 8 à 00h00, début du mois MLM)';
+    protected $description = 'Réinitialise les PV/BV mensuels (le 8 à 00h02, après clôture portefeuille POS)';
 
     public function handle(MonthlyCommissionService $service): int
     {

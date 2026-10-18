@@ -177,6 +177,13 @@
         <a href="{{ route('cashier.pv.dashboard', $pvQuery) }}" class="btn btn-outline btn-sm">Retour</a>
     </div>
 
+    <p class="text-xs text-[var(--text-secondary)]">
+        Période {{ $mlmPeriodValue ?? '' }} ({{ $mlmPeriodDates['start']->format('d/m') }} → {{ $mlmPeriodDates['end']->format('d/m/Y') }}).
+        @if(!empty($isMlmClosureDay))
+            <span class="font-semibold text-amber-800">Jour 7 : privilégiez la distribution aujourd’hui.</span>
+        @endif
+    </p>
+
     {{-- SOLDE --}}
     <div class="card flex items-center justify-between flex-wrap gap-3">
         <div>

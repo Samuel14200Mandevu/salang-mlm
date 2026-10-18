@@ -18,6 +18,14 @@ class LoginRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Case à cocher HTML : valeur "on" ou "1", pas un booléen JSON.
+        $this->merge([
+            'remember' => $this->boolean('remember'),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

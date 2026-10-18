@@ -4,6 +4,7 @@
 
 namespace App\Services;
 
+use App\Support\MlmPeriod;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\PvAllocation;
@@ -68,6 +69,8 @@ class PvManagementService
             // ============================================================
             // 2. Enregistrer la transaction
             // ============================================================
+            $mlmPeriod = MlmPeriod::forDate($order->paid_at ?? $order->created_at ?? now());
+
             PvTransaction::create([
                 'user_id' => $user->id,
                 'order_id' => $order->id,
@@ -75,12 +78,13 @@ class PvManagementService
                 'source' => 'sale',
                 'pv_amount' => $totalPv,
                 'bv_amount' => $totalBv,
-                'description' => "PV crédités suite à la vente #{$order->order_number} (en attente de distribution)",
+                'description' => "PV crédités suite à la vente #{$order->order_number} (portefeuille période {$mlmPeriod})",
                 'metadata' => [
                     'order_number' => $order->order_number,
                     'order_total' => $order->total,
                     'buyer_id' => $order->user_id,
                     'buyer_name' => $order->user?->name,
+                    'mlm_period' => $mlmPeriod,
                     'status' => 'available_for_distribution',
                 ],
             ]);
