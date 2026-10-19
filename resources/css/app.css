@@ -35,6 +35,7 @@
 @import './member-commissions.css';
 @import './member-supervision.css';
 @import './member-services.css';
+@import './member-mobile-drawer-neon.css';
 @import './salang-pagination.css';
 
 @tailwind base;

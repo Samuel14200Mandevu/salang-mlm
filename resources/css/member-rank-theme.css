@@ -43,18 +43,20 @@ html.dark .member-app.member-home-rank-theme {
   background: var(--member-mobile-head-gradient);
 }
 
-.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active {
-  background: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-card));
-  color: var(--text-primary);
-  border-left-color: transparent;
-  box-shadow: none;
-}
+@media (min-width: 768px) {
+  .cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active {
+    background: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-card));
+    color: var(--text-primary);
+    border-left-color: transparent;
+    box-shadow: none;
+  }
 
-.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .label {
-  color: var(--color-primary-700);
-}
+  .cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .label {
+    color: var(--color-primary-700);
+  }
 
-.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active svg,
-.cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .sidebar-link-icon {
-  color: inherit;
+  .cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active svg,
+  .cashier-app.member-app.member-home-rank-theme #sidebar .sidebar-link.active .sidebar-link-icon {
+    color: inherit;
+  }
 }
