@@ -168,7 +168,11 @@
 
     @include('admin.users._mobile_list', ['users' => $users])
 
-    <x-salang-pagination :paginator="$users" id="paginationContainerMobile" class="md:hidden" />
+    <div id="paginationContainerMobile" class="md:hidden">
+        @if($showUsersListPagination ?? $users->hasPages())
+            <x-salang-pagination :paginator="$users" />
+        @endif
+    </div>
 
     <!-- Tableau desktop -->
     <div class="card p-3 sm:p-4 hidden md:block">
@@ -178,12 +182,12 @@
                     <tr>
                         <th>ID</th>
                         <th>Utilisateur/Membre</th>
-                        <th class="hidden sm:table-cell">Code</th>
-                        <th class="hidden md:table-cell">Rôle</th>
-                        <th class="hidden lg:table-cell">Package</th>
-                        <th class="hidden xl:table-cell">Grade</th>
+                        <th>Code</th>
+                        <th>Grade</th>
+                        <th>Code Parrain</th>
+                        <th>PV</th>
                         <th>Statut</th>
-                        <th class="text-right">Actions</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -192,7 +196,11 @@
             </table>
         </div>
 
-        <x-salang-pagination :paginator="$users" id="paginationContainer" class="mt-3 sm:mt-4" />
+        <div id="paginationContainer" class="mt-3 sm:mt-4">
+            @if($showUsersListPagination ?? $users->hasPages())
+                <x-salang-pagination :paginator="$users" />
+            @endif
+        </div>
     </div>
 
 @push('scripts')
@@ -247,8 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const doc = parser.parseFromString(html, 'text/html');
             
             const newTableBody = doc.getElementById('tableBody');
-            const newPagination = doc.getElementById('paginationContainer');
-            
+
             if (newTableBody) {
                 document.getElementById('tableBody').innerHTML = newTableBody.innerHTML;
             }
@@ -259,16 +266,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileList.innerHTML = newMobileList.innerHTML;
             }
             
-            if (newPagination) {
-                const paginationContainer = document.getElementById('paginationContainer');
-                if (paginationContainer) {
-                    paginationContainer.innerHTML = newPagination.innerHTML;
-                }
-                const paginationMobile = document.getElementById('paginationContainerMobile');
-                const newPaginationMobile = doc.getElementById('paginationContainerMobile');
-                if (paginationMobile && newPaginationMobile) {
-                    paginationMobile.innerHTML = newPaginationMobile.innerHTML;
-                }
+            const paginationContainer = document.getElementById('paginationContainer');
+            const newPagination = doc.getElementById('paginationContainer');
+            if (paginationContainer) {
+                paginationContainer.innerHTML = newPagination ? newPagination.innerHTML : '';
+            }
+
+            const paginationMobile = document.getElementById('paginationContainerMobile');
+            const newPaginationMobile = doc.getElementById('paginationContainerMobile');
+            if (paginationMobile) {
+                paginationMobile.innerHTML = newPaginationMobile ? newPaginationMobile.innerHTML : '';
+            }
+
+            if (typeof window.initSalangPagination === 'function') {
+                window.initSalangPagination(document);
             }
 
             const subtitle = document.getElementById('adminUsersSubtitle');

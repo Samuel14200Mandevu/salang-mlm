@@ -429,6 +429,31 @@ class User extends Authenticatable
         return $this->sponsor_id ?? '';
     }
 
+    /**
+     * Code membre (sponsor_id) du parrain — users.parrain_id ou genealogy.sponsor en secours.
+     */
+    public function parrainSponsorCode(): ?string
+    {
+        $fromParrain = $this->parrain?->sponsor_id;
+        if ($fromParrain !== null && $fromParrain !== '') {
+            return (string) $fromParrain;
+        }
+
+        $genealogy = $this->relationLoaded('genealogy')
+            ? $this->genealogy
+            : null;
+
+        if ($genealogy === null && $this->exists) {
+            $genealogy = $this->genealogy()->with('sponsor:id,sponsor_id')->first();
+        }
+
+        $fromGenealogy = $genealogy?->sponsor?->sponsor_id;
+
+        return ($fromGenealogy !== null && $fromGenealogy !== '')
+            ? (string) $fromGenealogy
+            : null;
+    }
+
     public function getTotalCommissionsAttribute()
     {
         return $this->commissions()->where('status', 'paid')->sum('amount');
