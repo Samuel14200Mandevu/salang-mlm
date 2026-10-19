@@ -4,6 +4,6 @@
 
 @if ($paginator->hasPages())
     <div {{ $attributes->class(['salang-pagination-wrap']) }}>
-        {{ $paginator->withQueryString()->links() }}
+        {{ $paginator->withQueryString()->onEachSide(1)->links() }}
     </div>
 @endif

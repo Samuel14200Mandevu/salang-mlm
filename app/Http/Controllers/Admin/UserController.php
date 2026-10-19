@@ -34,7 +34,12 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::with(['rank', 'package']);
+        $query = User::with([
+            'rank',
+            'package',
+            'parrain:id,sponsor_id',
+            'genealogy.sponsor:id,sponsor_id',
+        ]);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -93,14 +98,45 @@ class UserController extends Controller
         $packages = Package::orderBy('price')->get();
         $kycStatuses = ['not_submitted', 'pending', 'partial', 'verified', 'rejected'];
 
-        return view('admin.users.index', compact('users', 'stats', 'ranks', 'packages', 'kycStatuses'));
+        $showUsersListPagination = $this->shouldShowAdminUsersListPagination(
+            $request->input('search'),
+            $users
+        );
+
+        return view('admin.users.index', compact(
+            'users',
+            'stats',
+            'ranks',
+            'packages',
+            'kycStatuses',
+            'showUsersListPagination'
+        ));
+    }
+
+    /**
+     * Masquer la pagination pour une recherche par code membre complet (6 chiffres).
+     */
+    private function shouldShowAdminUsersListPagination(?string $search, $users): bool
+    {
+        $term = trim((string) $search);
+        if ($term !== '' && preg_match('/^\d{6}$/', $term)) {
+            return false;
+        }
+
+        return $users->hasPages();
     }
 
     public function show($id)
     {
-        $user = User::with(['rank', 'package', 'wallet'])->findOrFail($id);
+        $user = User::with([
+            'rank',
+            'package',
+            'wallet',
+            'parrain:id,sponsor_id,name,email',
+            'genealogy.sponsor:id,sponsor_id,name,email',
+        ])->findOrFail($id);
 
-        $parrain = User::find($user->parrain_id);
+        $parrain = $user->parrain ?? $user->genealogy?->sponsor;
 
         $filleuls = User::where('parrain_id', $user->id)->get();
         $filleulsCount = $filleuls->count();
@@ -138,13 +174,20 @@ class UserController extends Controller
 
         $packages = Package::where('is_active', true)->get();
 
+        $parrainReferralCode = $user->parrainSponsorCode();
+        $commissionsCount = $commissionsStats['count'] ?? 0;
+        $totalCommissions = $commissionsStats['total'] ?? 0;
+
         return view('admin.users.show', compact(
             'user',
             'parrain',
+            'parrainReferralCode',
             'filleuls',
             'filleulsCount',
             'filleulsActifs',
             'commissionsStats',
+            'commissionsCount',
+            'totalCommissions',
             'rankProgress',
             'rankHistory',
             'recentTransactions',

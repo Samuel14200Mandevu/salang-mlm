@@ -354,10 +354,6 @@
                     <span class="label">Téléphone</span>
                     <span class="value">{{ $user->phone ?? 'Non fourni' }}</span>
                 </div>
-                <div class="info-row md:hidden">
-                    <span class="label">Code parrain</span>
-                    <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
-                </div>
             </div>
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
@@ -424,21 +420,22 @@
 
             <div class="px-0 sm:px-4 py-2 sm:py-0">
                 <div class="info-row hidden md:flex">
-                    <span class="label">Code de parrainage</span>
-                    <span class="value font-mono text-primary-blue font-bold">{{ $user->sponsor_id ?? 'Aucun' }}</span>
+                    <span class="label">Code membre</span>
+                    <span class="value font-mono">{{ $user->sponsor_id ?? '—' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Parrain</span>
                     <span class="value">
-                        @php
-                            $parrain = App\Models\User::find($user->parrain_id);
-                        @endphp
                         @if($parrain)
                             <a href="{{ route('admin.users.show', $parrain->id) }}" class="text-primary-blue hover:underline font-semibold">
                                 {{ $parrain->name }}
                             </a>
-                            <span class="text-xs text-[var(--text-tertiary)] block">
-                                Email: {{ $parrain->email }}
+                            <span class="text-xs text-[var(--text-secondary)] block mt-0.5">
+                                @if(!empty($parrainReferralCode))
+                                    <span class="font-mono">{{ $parrainReferralCode }}</span>
+                                    <span class="text-[var(--text-tertiary)]"> · </span>
+                                @endif
+                                {{ $parrain->email }}
                             </span>
                         @elseif($user->parrain_id)
                             <span class="text-red-500">Inconnu (ID: {{ $user->parrain_id }})</span>
@@ -475,7 +472,7 @@
         </div>
 
         <!-- Statistics desktop -->
-        <div class="hidden md:grid mt-4 pt-4 border-t border-[var(--border-color)] grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="hidden md:grid mt-4 pt-4 border-t border-[var(--border-color)] grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div class="text-center">
                 <p class="text-2xl font-bold text-primary-blue">{{ $filleuls->count() ?? 0 }}</p>
                 <p class="text-xs text-[var(--text-secondary)]">Filleuls</p>
@@ -485,16 +482,26 @@
                 <p class="text-xs text-[var(--text-secondary)]">Commissions</p>
             </div>
             <div class="text-center">
-                <p class="text-2xl font-bold text-[var(--ui-stat-success)]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
-                <p class="text-xs text-[var(--text-secondary)]">Total Commissions</p>
+                <a href="{{ route('admin.pv.commission-history.index', ['user_id' => $user->id]) }}"
+                   class="pv-link block group"
+                   title="Commissions historiques de ce membre">
+                    <p class="text-2xl font-bold text-[var(--ui-stat-success)] group-hover:text-[#1C7E4A] transition-colors">
+                        ${{ number_format($totalCommissions ?? 0, 2) }}
+                    </p>
+                    <p class="text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1">
+                        Total Commissions
+                        <svg class="w-3 h-3 text-[var(--text-tertiary)] group-hover:text-[var(--ui-stat-success)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                    </p>
+                </a>
             </div>
-            <!-- PV Link -->
             <div class="text-center">
                 <a href="{{ route('admin.pv.show', $user->id) }}"
                    class="pv-link block group"
                    title="Voir les PV dans la gestion des PV">
                     <p class="text-2xl font-bold text-primary-blue pv-value group-hover:text-[#061B4A] transition-colors">
-                        {{ $user->pv_balance ?? 0 }}
+                        {{ number_format((float) ($user->pv_balance ?? 0), 0, ',', ' ') }}
                     </p>
                     <p class="text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1">
                         PV
@@ -502,6 +509,16 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
                     </p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="{{ route('admin.pv.show', $user->id) }}"
+                   class="pv-link block group"
+                   title="Voir les PV dans la gestion des PV">
+                    <p class="text-2xl font-bold text-[var(--ui-stat-info)] group-hover:text-primary-blue transition-colors">
+                        {{ number_format((float) ($user->team_pv ?? 0), 0, ',', ' ') }}
+                    </p>
+                    <p class="text-xs text-[var(--text-secondary)]">PV cumulé</p>
                 </a>
             </div>
         </div>

@@ -64,6 +64,16 @@
   .salang-pagination--mobile {
     display: none !important;
   }
+
+  .salang-pagination--desktop {
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+
+  .salang-pagination__desktop-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 767px) {

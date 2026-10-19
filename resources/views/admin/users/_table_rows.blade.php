@@ -1,37 +1,9 @@
 {{-- resources/views/admin/users/_table_rows.blade.php --}}
 @forelse($users as $user)
     @php
-        $roleName = $user->getRoleNames()->first() ?? 'user';
-        
-        $roleDisplay = 'Utilisateur';
-        $badgeClass = 'badge-user';
-        
-        if($roleName === 'admin') {
-            $roleDisplay = 'Administrateur';
-            $badgeClass = 'badge-admin';
-        } elseif($roleName === 'it_manager') {
-            $roleDisplay = 'IT / Supervision';
-            $badgeClass = 'badge-info';
-        } elseif($roleName === 'cashier') {
-            $roleDisplay = 'Caissier';
-            $badgeClass = 'badge-cashier';
-        } elseif($roleName === 'caissier_principal') {
-            $roleDisplay = 'Caissier Principal';
-            $badgeClass = 'badge-cashier-principal';
-        }
-        
-        if($user->hasRole('caissier_principal') && $roleName !== 'caissier_principal') {
-            $roleDisplay = 'Caissier Principal';
-            $badgeClass = 'badge-cashier-principal';
-        } elseif($user->hasRole('cashier') && $roleName !== 'cashier' && $roleName !== 'caissier_principal') {
-            $roleDisplay = 'Caissier';
-            $badgeClass = 'badge-cashier';
-        } elseif($user->hasRole('admin') && $roleName !== 'admin') {
-            $roleDisplay = 'Administrateur';
-            $badgeClass = 'badge-admin';
-        }
+        $rankLevel = (int) ($user->rank_level ?? 0);
     @endphp
-    <tr class="user-row" 
+    <tr class="user-row"
         data-name="{{ strtolower($user->name) }}"
         data-email="{{ strtolower($user->email) }}"
         data-sponsor="{{ strtolower($user->sponsor_id ?? '') }}"
@@ -52,59 +24,43 @@
                 </div>
             </div>
         </td>
-        <td class="hidden sm:table-cell">
+        <td class="font-mono text-xs sm:text-sm">
             @if($user->sponsor_id)
-                <span class="badge badge-sponsor text-[10px] sm:text-xs">
-                    {{ $user->sponsor_id }}
-                </span>
+                {{ $user->sponsor_id }}
             @else
-                <span class="text-xs text-[var(--text-tertiary)]">-</span>
+                <span class="text-[var(--text-tertiary)]">—</span>
             @endif
         </td>
-        <td class="hidden md:table-cell">
-            <span class="badge {{ $badgeClass }} text-[10px] sm:text-xs">
-                {{ $roleDisplay }}
-            </span>
-        </td>
-        <td class="hidden lg:table-cell">
-            @if($user->package)
-                <span class="text-sm">{{ $user->package->name }}</span>
-            @else
-                <span class="text-xs text-[var(--text-tertiary)]">-</span>
-            @endif
-        </td>
-        <td class="hidden xl:table-cell">
-            @php
-                $rankLevel = (int) ($user->rank_level ?? 0);
-            @endphp
+        <td>
             <span class="{{ \App\Support\MlmRank::badgeClass($rankLevel) }}">
                 {{ \App\Support\MlmRank::label($rankLevel) }}
             </span>
-            <span class="text-xs text-[var(--text-tertiary)] ml-0.5">(Niv. {{ $rankLevel }})</span>
+        </td>
+        <td class="font-mono text-xs sm:text-sm">
+            @if($codeParrain = $user->parrainSponsorCode())
+                {{ $codeParrain }}
+            @else
+                <span class="text-[var(--text-tertiary)]">—</span>
+            @endif
+        </td>
+        <td class="font-mono text-sm tabular-nums">
+            {{ number_format((float) ($user->pv_balance ?? 0), 0, ',', ' ') }}
         </td>
         <td>
             <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
                 {{ $user->is_active ? 'Actif' : 'Inactif' }}
             </span>
         </td>
-        <td class="text-right">
-            <div class="flex items-center justify-end gap-1">
-                <a href="{{ route('admin.users.show', $user) }}"
-                   class="btn btn-primary btn-sm"
-                   title="Voir le profil">
-                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span class="hidden sm:inline">Voir</span>
-                </a>
+        <td class="text-center">
+            <div class="flex justify-center">
                 <a href="{{ route('admin.users.edit', $user) }}"
                    class="btn btn-warning btn-sm"
-                   title="Modifier">
-                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                   title="Modifier"
+                   onclick="event.stopPropagation();">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
-                    <span class="hidden sm:inline">Modifier</span>
+                    Modifier
                 </a>
             </div>
         </td>

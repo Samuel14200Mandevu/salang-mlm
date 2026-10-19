@@ -20,23 +20,19 @@
             </div>
         </div>
 
-        {{-- Desktop --}}
-        <div class="salang-pagination salang-pagination--desktop hidden md:flex md:flex-1 md:gap-2 md:items-center md:justify-between">
-            <div>
-                <p class="text-sm text-[var(--text-secondary)] leading-5">
+        {{-- Desktop — contrôles seuls (sans légende « Affichage de X à Y sur Z ») --}}
+        <div class="salang-pagination salang-pagination--desktop hidden md:flex md:w-full md:items-center md:justify-center">
+            @if ($paginator->firstItem())
+                <p class="sr-only">
                     {!! __('Showing') !!}
-                    @if ($paginator->firstItem())
-                        <span class="font-medium text-[var(--text-primary)]">{{ $paginator->firstItem() }}</span>
-                        {!! __('to') !!}
-                        <span class="font-medium text-[var(--text-primary)]">{{ $paginator->lastItem() }}</span>
-                    @else
-                        {{ $paginator->count() }}
-                    @endif
+                    {{ number_format($paginator->firstItem(), 0, ',', ' ') }}
+                    {!! __('to') !!}
+                    {{ number_format($paginator->lastItem(), 0, ',', ' ') }}
                     {!! __('of') !!}
-                    <span class="font-medium text-[var(--text-primary)]">{{ $paginator->total() }}</span>
+                    {{ number_format($paginator->total(), 0, ',', ' ') }}
                     {!! __('results') !!}
                 </p>
-            </div>
+            @endif
 
             <div>
                 <span class="inline-flex rtl:flex-row-reverse shadow-sm rounded-md salang-pagination__desktop-links">
