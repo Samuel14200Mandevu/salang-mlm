@@ -187,7 +187,9 @@
         <table class="header-table">
             <tr>
                 <td class="logo-cell">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/salang_logo.png'))) }}" alt="Salang Logo">
+                    @if(!empty($logoBase64))
+                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                    @endif
                 </td>
                 <td class="header-center">
                     <div class="company-title">SALANG GROUP SARL</div>
@@ -202,7 +204,9 @@
                     </div>
                 </td>
                 <td class="logo-cell">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/salang_logo.png'))) }}" alt="Salang Logo">
+                    @if(!empty($logoBase64))
+                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
+                    @endif
                 </td>
             </tr>
         </table>

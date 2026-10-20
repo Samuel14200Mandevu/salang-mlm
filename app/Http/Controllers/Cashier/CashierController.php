@@ -483,15 +483,7 @@ public function createOrder(Request $request)
                                $member['cash_pos'];
         }
 
-        $logoPath = public_path('images/logo.png');
-        $logoBase64 = '';
-        if (file_exists($logoPath)) {
-            $logoContent = file_get_contents($logoPath);
-            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
-        } else {
-            $logoBase64 = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><text x="10" y="30" font-family="Arial" font-size="20" fill="#0E2F76">Salang Group</text></svg>');
-        }
-
+        $logoBase64 = $this->loadPdfLogoBase64();
         $date = now();
 
         $html = view('cashier.commissions-pdf', compact(
@@ -1010,15 +1002,9 @@ public function createMultiOrder(Request $request)
             ];
         });
         
-        $logoPath = public_path('images/salang_logo.png');
-        $logoBase64 = '';
-        if (file_exists($logoPath)) {
-            $logoContent = file_get_contents($logoPath);
-            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
-        }
-        
+        $logoBase64 = $this->loadPdfLogoBase64();
         $date = now();
-        
+
         return $this->downloadPdfView(
             'cashier.members.pay-slip-pdf',
             compact(
@@ -1034,7 +1020,7 @@ public function createMultiOrder(Request $request)
                 'logoBase64',
                 'date'
             ),
-            'fiche_paie_'.$member->sponsor_id.'_'.$period.'.pdf',
+            'fiche_paie_'.($member->sponsor_id ?: $member->id).'_'.$period.'.pdf',
             'a4',
             'portrait',
             180,
@@ -2780,40 +2766,35 @@ public function generateAdhesionForm($id)
         // Récupérer les métadonnées
         $metadata = $member->metadata ?? [];
         
-        // Logo en base64 avec gestion d'erreur
-        $logoBase64 = '';
-        $logoPath = public_path('images/salang_logo.png');
-        if (file_exists($logoPath)) {
-            try {
-                $logoContent = file_get_contents($logoPath);
-                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoContent);
-            } catch (\Exception $e) {
-                Log::error('Erreur chargement logo: ' . $e->getMessage());
-                $logoBase64 = '';
-            }
-        }
-        
         $data = [
             'member' => $member,
             'sponsor' => $sponsor,
             'metadata' => $metadata,
-            'logoBase64' => $logoBase64,
+            'logoBase64' => $this->loadPdfLogoBase64(),
             'date' => now(),
         ];
-        
+
+        $filename = 'formulaire_adhesion_'.($member->sponsor_id ?: $member->id).'.pdf';
+
         return $this->downloadPdfView(
             'cashier.adhesion-pdf',
             $data,
-            'formulaire_adhesion_'.$member->sponsor_id.'.pdf',
+            $filename,
             'a4',
             'portrait',
-            120,
-            '256M'
+            180,
+            '512M'
         );
-        
-    } catch (\Exception $e) {
-        Log::error('Erreur génération PDF: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+    } catch (\Throwable $e) {
+        $this->logPdfFailure('cashier.adhesion-pdf', $e, ['member_id' => $id]);
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'message' => 'Erreur lors de la génération du PDF.',
+            ], 500);
+        }
+
+        return redirect()->back()->with('error', 'Erreur lors de la génération du PDF.');
     }
 }
 

@@ -34,16 +34,51 @@ trait GeneratesPdfSafely
     }
 
     /**
-     * Logo Salang en base64 (taille plafonnée pour DomPDF).
+     * Logo Salang en base64, allégé pour DomPDF (le PNG source fait ~1.4 Mo).
      */
     protected function loadPdfLogoBase64(int $maxBytes = 100000): string
     {
+        $smallPath = public_path('images/salang_logo_pdf.png');
+        if (file_exists($smallPath) && filesize($smallPath) > 0 && filesize($smallPath) < $maxBytes) {
+            return 'data:image/png;base64,'.base64_encode((string) file_get_contents($smallPath));
+        }
+
         $logoPath = public_path('images/salang_logo.png');
-        if (! file_exists($logoPath) || filesize($logoPath) >= $maxBytes) {
+        if (! file_exists($logoPath)) {
             return '';
         }
 
-        return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+        if (filesize($logoPath) < $maxBytes) {
+            return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+        }
+
+        // Redimensionner le gros logo pour éviter OOM / coupure proxy DomPDF
+        if (function_exists('imagecreatefrompng')) {
+            $src = @imagecreatefrompng($logoPath);
+            if ($src !== false) {
+                $origW = imagesx($src);
+                $origH = imagesy($src);
+                $targetH = 80;
+                $targetW = (int) max(1, round($origW * ($targetH / max(1, $origH))));
+                $dst = imagecreatetruecolor($targetW, $targetH);
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+                imagefilledrectangle($dst, 0, 0, $targetW, $targetH, $transparent);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $targetW, $targetH, $origW, $origH);
+                ob_start();
+                imagepng($dst, null, 8);
+                $png = ob_get_clean();
+                imagedestroy($src);
+                imagedestroy($dst);
+
+                if (is_string($png) && $png !== '') {
+                    return 'data:image/png;base64,'.base64_encode($png);
+                }
+            }
+        }
+
+        return '';
     }
 
     /**
