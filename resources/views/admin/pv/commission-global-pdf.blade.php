@@ -254,15 +254,8 @@
             <table class="header-table">
                 <tr>
                     <td class="logo-cell">
-                        @php
-                            $logoPath = public_path('images/salang_logo.png');
-                            $logoBase64 = '';
-                            if(file_exists($logoPath)) {
-                                $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-                            }
-                        @endphp
                         @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
+                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
                         @endif
                     </td>
                     <td class="header-center">
@@ -311,7 +304,7 @@
             </tr>
             <tr>
                 <td class="meta-left">Nombre de bénéficiaires : <strong>{{ $beneficiaires->count() }}</strong></td>
-                <td class="meta-right">Nombre de commissions : <strong>{{ $commissions->count() }}</strong></td>
+                <td class="meta-right">Nombre de commissions : <strong>{{ $commissionsCount }}</strong></td>
             </tr>
         </table>
 
@@ -341,28 +334,20 @@
                 @endphp
                 @foreach($beneficiaires as $userId => $beneficiaire)
                     @php
-                        $userCommissions = $beneficiaire['details'];
-                        $directTotal = collect($userCommissions)->where('type', 'direct')->sum('amount');
-                        $indirectTotal = collect($userCommissions)->where('type', 'indirect')->sum('amount');
-                        $leadershipTotal = collect($userCommissions)->where('type', 'leadership')->sum('amount');
-                        $cashTotal = collect($userCommissions)->where('type', 'cash_pos')->sum('amount');
-                        $userRank = $beneficiaire['rank_level'] ?? 'N/A';
                         $userPV = (float) ($beneficiaire['pv'] ?? 0);
                         $totalPV += $userPV;
-                        $userCode = $beneficiaire['code'] ?? 'N/A';
-                        $parrainCode = $beneficiaire['parrain_code'] ?? 'N/A';
                     @endphp
                     <tr>
                         <td>{{ $numero++ }}</td>
-                        <td class="text-center" style="color:#0E2F76; font-weight:bold;">{{ $userCode }}</td>
+                        <td class="text-center" style="color:#0E2F76; font-weight:bold;">{{ $beneficiaire['code'] ?? 'N/A' }}</td>
                         <td class="text-left"><strong>{{ $beneficiaire['name'] }}</strong></td>
-                        <td class="text-center" style="color:#000; font-weight:bold;">{{ $parrainCode }}</td>
-                        <td>{{ $userRank }}</td>
+                        <td class="text-center" style="color:#000; font-weight:bold;">{{ $beneficiaire['parrain_code'] ?? 'N/A' }}</td>
+                        <td>{{ $beneficiaire['rank_level'] ?? 'N/A' }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">{{ number_format($userPV, 1, ',', ' ') }}</td>
-                        <td class="text-right td-direct">${{ number_format($directTotal, 2) }}</td>
-                        <td class="text-right td-indirect">${{ number_format($indirectTotal, 2) }}</td>
-                        <td class="text-right td-leadership">${{ number_format($leadershipTotal, 2) }}</td>
-                        <td class="text-right td-cash">${{ number_format($cashTotal, 2) }}</td>
+                        <td class="text-right td-direct">${{ number_format($beneficiaire['direct'] ?? 0, 2) }}</td>
+                        <td class="text-right td-indirect">${{ number_format($beneficiaire['indirect'] ?? 0, 2) }}</td>
+                        <td class="text-right td-leadership">${{ number_format($beneficiaire['leadership'] ?? 0, 2) }}</td>
+                        <td class="text-right td-cash">${{ number_format($beneficiaire['cash_pos'] ?? 0, 2) }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ number_format($beneficiaire['total'], 2) }}</td>
                     </tr>
                 @endforeach
@@ -394,37 +379,30 @@
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $totalGeneral = $totals['total'] ?? 1;
-                @endphp
                 @foreach(['direct', 'indirect', 'leadership', 'cash_pos'] as $type)
                     @php
-                        $typeCommissions = $commissions->where('type', $type);
-                        $count = $typeCommissions->count();
-                        $total = $typeCommissions->sum('amount');
-                        $percentage = $totalGeneral > 0 ? ($total / $totalGeneral) * 100 : 0;
-                        $average = $count > 0 ? $total / $count : 0;
+                        $stat = $typeStats[$type] ?? ['count' => 0, 'total' => 0, 'percentage' => 0, 'average' => 0];
                     @endphp
                     <tr>
                         <td class="text-left">
-                            <span class="badge badge-{{ $type }}">
-                                {{ ucfirst($type) }}
+                            <span class="badge badge-{{ $type === 'cash_pos' ? 'cash' : $type }}">
+                                {{ $type === 'cash_pos' ? 'Cash POS' : ucfirst($type) }}
                             </span>
                         </td>
-                        <td>{{ $count }}</td>
-                        <td class="text-right" style="font-weight:bold;">${{ number_format($total, 2) }}</td>
-                        <td>{{ number_format($percentage, 1) }}%</td>
-                        <td class="text-right">${{ number_format($average, 2) }}</td>
+                        <td>{{ $stat['count'] }}</td>
+                        <td class="text-right" style="font-weight:bold;">${{ number_format($stat['total'], 2) }}</td>
+                        <td>{{ number_format($stat['percentage'], 1) }}%</td>
+                        <td class="text-right">${{ number_format($stat['average'], 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="total-row">
                     <td class="text-left"><strong>TOTAL GÉNÉRAL</strong></td>
-                    <td><strong>{{ $commissions->count() }}</strong></td>
+                    <td><strong>{{ $commissionsCount }}</strong></td>
                     <td class="text-right" style="color:#0E2F76;"><strong>${{ number_format($totals['total'] ?? 0, 2) }}</strong></td>
                     <td><strong>100%</strong></td>
-                    <td class="text-right"><strong>${{ number_format($commissions->count() > 0 ? $totals['total'] / $commissions->count() : 0, 2) }}</strong></td>
+                    <td class="text-right"><strong>${{ number_format($commissionsCount > 0 ? $totals['total'] / $commissionsCount : 0, 2) }}</strong></td>
                 </tr>
             </tfoot>
         </table>
