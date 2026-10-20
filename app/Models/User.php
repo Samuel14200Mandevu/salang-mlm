@@ -204,7 +204,7 @@ class User extends Authenticatable
     }
 
     /**
-     * PV cumulés (users.pv_balance) + portefeuille distribution (user_pv_balances).
+     * PV personnels (users.pv_balance) + portefeuille distribution (user_pv_balances).
      */
     public function pvSummary(?UserPvBalance $balance = null): array
     {

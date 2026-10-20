@@ -313,13 +313,6 @@
 admin-mobile-stack
 @endpush
 
-@push('cashier_mobile_greeting')
-    <div class="admin-mobile-greeting md:hidden animate-fadeInUp">
-        <h1>Tableau de bord</h1>
-        <p>{{ $salutation }}, {{ Auth::user()->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
-    </div>
-@endpush
-
 @section('content')
 
     {{-- ALERTE : Compte inactif --}}
@@ -336,29 +329,34 @@ admin-mobile-stack
         </div>
     @endif
 
-    {{-- EN-TÊTE desktop --}}
-    <div class="admin-mobile-page-head animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-            Tableau de bord caisse
-        </h1>
-        <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-            {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()->name ?? 'Caissier' }}</span>
-            <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
-        </p>
-    </div>
-
-    <div class="admin-sticky-toolbar md:hidden w-full">
-        <div class="admin-page-header-actions flex w-full">
-            <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span>Nouvelle vente</span>
-            </a>
+    {{-- BANDEAU MOBILE : titre + Nouvelle vente dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Tableau de bord</h1>
+                <p class="page-subtitle">{{ $salutation }}, {{ Auth::user()->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--dashboard">
+                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle vente" aria-label="Nouvelle vente">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="hidden md:flex justify-end -mt-2 mb-1">
+    {{-- EN-TÊTE desktop --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+                Tableau de bord caisse
+            </h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()->name ?? 'Caissier' }}</span>
+                <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
+            </p>
+        </div>
         <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm sm:btn-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>

@@ -2420,7 +2420,19 @@ public function history(Request $request)
             $query->role($request->role);
         }
         
-        $members = $query->with('package')->orderByDesc('created_at')->paginate(20);
+        $members = $query
+            ->with([
+                'package',
+                'parrain:id,sponsor_id',
+                'genealogy.sponsor:id,sponsor_id',
+            ])
+            ->withSum([
+                'commissions as pos_cash_paid_total' => function ($q) {
+                    $q->where('source', 'pos')->where('status', 'paid');
+                },
+            ], 'amount')
+            ->orderByDesc('created_at')
+            ->paginate(20);
         
         $stats = [
             'total' => User::where('user_type', 'member')->count(),
@@ -2438,7 +2450,7 @@ public function history(Request $request)
     public function memberShow($id)
     {
         $member = User::where('user_type', 'member')
-            ->with(['package', 'orders', 'parrain', 'pvBalance'])
+            ->with(['package', 'orders', 'parrain:id,sponsor_id,name,email,user_type', 'pvBalance'])
             ->findOrFail($id);
         
         $commissionsQuery = Commission::where('user_id', $member->id)

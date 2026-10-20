@@ -224,19 +224,35 @@
 
 @section('title', 'Mes Consultations')
 
-@push('cashier_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Consultations',
-        'subtitle' => ($stats['total'] ?? 0) . ' fiches · créez ou suivez vos dossiers',
-    ])
-@endpush
-
 @section('content')
+@php
+    $consultationsSubtitle = ($stats['total'] ?? 0) . ' fiches · créez ou suivez vos dossiers';
+@endphp
 <div class="consultations-index space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="admin-page-header flex flex-wrap items-center justify-between gap-3">
-        <div class="admin-mobile-page-head">
+    {{-- BANDEAU MOBILE : titre + Nouvelle consultation dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Consultations</h1>
+                <p class="page-subtitle">{{ $consultationsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--consultations-index">
+                <a href="{{ route('cashier.consultations.create') }}"
+                   class="btn btn-primary btn-sm btn-round-icon"
+                   title="Nouvelle consultation"
+                   aria-label="Nouvelle consultation">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- EN-TÊTE DESKTOP --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
+        <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Mes Consultations
             </h1>
@@ -244,16 +260,12 @@
                 Gérez vos fiches de consultation
             </p>
         </div>
-        <div class="admin-sticky-toolbar md:contents">
-            <div class="admin-page-header-actions flex w-full md:w-auto">
-                <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary btn-sm sm:btn-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <span>Nouvelle consultation</span>
-                </a>
-            </div>
-        </div>
+        <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary btn-sm sm:btn-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>Nouvelle consultation</span>
+        </a>
     </div>
 
     {{-- ALERTS --}}

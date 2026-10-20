@@ -272,8 +272,30 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    {{-- BANDEAU MOBILE : Nouvelle vente + Commandes dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Historique des ventes POS</h1>
+                <p class="page-subtitle">Historique complet des ventes effectuées au guichet</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--history-index">
+                <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm btn-round-icon" title="Commandes" aria-label="Commandes">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </a>
+                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle vente" aria-label="Nouvelle vente">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- EN-TÊTE DESKTOP --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Historique des ventes POS

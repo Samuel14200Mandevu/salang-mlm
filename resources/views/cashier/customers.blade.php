@@ -291,21 +291,70 @@
 @section('title', 'Clients POS')
 
 @section('content')
+@php
+    $customersSubtitleHtml = ($customers->total() ?? 0) . ' clients'
+        . (request('search')
+            ? ' <span class="text-xs opacity-90">· Résultats pour "' . e(request('search')) . '"</span>'
+            : '');
+    $searchOpen = filled(request('search'));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    {{-- BANDEAU MOBILE : loupe + Nouveau client dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Clients POS</h1>
+                <p class="page-subtitle">{!! $customersSubtitleHtml !!}</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--customers-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <button type="button"
+                        onclick="openNewCustomerModal()"
+                        class="btn btn-primary btn-sm btn-round-icon"
+                        title="Nouveau client"
+                        aria-label="Nouveau client">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="Rechercher un client"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+        </div>
+    </div>
+
+    {{-- EN-TÊTE DESKTOP --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Clients POS
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $customers->total() ?? 0 }} clients
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
+                {!! $customersSubtitleHtml !!}
             </p>
         </div>
         <div class="flex items-center gap-2">
@@ -315,14 +364,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
-                           id="searchInput"
+                           id="searchInputDesktop"
                            class="search-input"
                            placeholder="Rechercher un client"
                            autocomplete="off"
                            value="{{ request('search') }}">
                 </div>
             </div>
-            <button onclick="openNewCustomerModal()" class="btn btn-primary btn-sm sm:btn-md">
+            <button type="button" onclick="openNewCustomerModal()" class="btn btn-primary btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -454,12 +503,6 @@
                                 </svg>
                                 <p class="text-base font-medium text-[var(--text-primary)]">Aucun client POS</p>
                                 <p class="text-sm text-[var(--text-tertiary)]">Les clients apparaîtront ici après leur première vente au guichet</p>
-                                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm mt-3">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    Faire une vente
-                                </a>
                             </td>
                         </tr>
                     @endforelse
@@ -537,26 +580,39 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputDesktop'),
+    ].filter(Boolean);
     let searchTimeout;
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-
-            searchTimeout = setTimeout(() => {
-                const url = new URL(window.location.href);
-                if (query) {
-                    url.searchParams.set('search', query);
-                } else {
-                    url.searchParams.delete('search');
-                }
-                url.searchParams.set('page', '1');
-                window.location.href = url.toString();
-            }, 500);
+    function syncSearchInputs(value, source) {
+        searchInputs.forEach((input) => {
+            if (input !== source) {
+                input.value = value;
+            }
         });
     }
+
+    function goSearch(query) {
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+
+    searchInputs.forEach((input) => {
+        input.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            syncSearchInputs(this.value, this);
+            const query = this.value.trim();
+            searchTimeout = setTimeout(() => goSearch(query), 500);
+        });
+    });
 });
 
 function openNewCustomerModal() {

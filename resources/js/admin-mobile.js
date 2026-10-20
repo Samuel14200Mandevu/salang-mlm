@@ -345,7 +345,7 @@
   }
 
   function enhanceAdminSearchPanels(root) {
-    if (!root || !document.body.classList.contains('admin-app')) {
+    if (!root || !isBackofficeShell()) {
       return;
     }
 
@@ -692,6 +692,10 @@
   });
 
   MQ.addEventListener('change', run);
+
+  window.refreshAdminMobileTables = function (root) {
+    enhanceAdminTables(root || document.querySelector('.main-content') || document);
+  };
 
   /** Drawer — swipe vers la gauche pour fermer (mobile admin / caisse) */
   function initAdminDrawerSwipe() {

@@ -3,21 +3,50 @@
 @section('title', 'Membres')
 
 @section('content')
+@php
+    $membersSubtitleHtml = $members->total() . ' membres enregistrés'
+        . (request('search')
+            ? ' <span class="text-xs opacity-90">· Résultats pour "' . e(request('search')) . '"</span>'
+            : '');
+    $searchOpen = filled(request('search'));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    {{-- BANDEAU MOBILE : titre + loupe + Nouveau dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Gestion des membres</h1>
+                <p id="membersSubtitleMobile" class="page-subtitle">{!! $membersSubtitleHtml !!}</p>
+            </div>
+            @include('cashier.members.partials.index-mobile-banner-actions')
+        </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="Rechercher un membre"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+        </div>
+    </div>
+
+    {{-- EN-TÊTE DESKTOP --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Gestion des membres
             </h1>
             <p id="membersSubtitle" class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $members->total() }} membres enregistrés
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
+                {!! $membersSubtitleHtml !!}
             </p>
         </div>
         <div class="flex items-center gap-2">
@@ -27,7 +56,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
-                           id="searchInput"
+                           id="searchInputDesktop"
                            class="search-input"
                            placeholder="Rechercher un membre"
                            autocomplete="off"
@@ -38,7 +67,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span class="hidden xs:inline">Nouveau membre</span>
+                <span>Nouveau membre</span>
             </a>
         </div>
     </div>
@@ -101,11 +130,13 @@
                 <thead>
                     <tr>
                         <th>Membre</th>
-                        <th class="hidden sm:table-cell">Code sponsor</th>
-                        <th>Rôle</th>
+                        <th>Code</th>
+                        <th>Grade</th>
+                        <th>Code parrain</th>
+                        <th>PV</th>
                         <th>Statut</th>
-                        <th class="hidden md:table-cell">Total CASH</th>
-                        <th class="text-right">Actions</th>
+                        <th>Total CASH</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -123,17 +154,46 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputDesktop'),
+    ].filter(Boolean);
     let searchTimeout;
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
+    function syncSearchInputs(value, source) {
+        searchInputs.forEach((input) => {
+            if (input !== source) {
+                input.value = value;
+            }
+        });
+    }
+
+    function bindSearch(input) {
+        input.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
+            syncSearchInputs(this.value, this);
 
             searchTimeout = setTimeout(() => {
                 fetchMembers(query);
             }, 300);
+        });
+    }
+
+    searchInputs.forEach(bindSearch);
+
+    function updateSubtitles(doc) {
+        const newDesktop = doc.getElementById('membersSubtitle');
+        const newMobile = doc.getElementById('membersSubtitleMobile');
+        const html = (newDesktop || newMobile) ? (newDesktop || newMobile).innerHTML : null;
+        if (!html) {
+            return;
+        }
+        ['membersSubtitle', 'membersSubtitleMobile'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerHTML = html;
+            }
         });
     }
 
@@ -149,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
+                <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
                     <div class="flex items-center justify-center gap-3">
                         <svg class="animate-spin h-5 w-5 text-[var(--cashier-stat-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -171,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const newTableBody = doc.getElementById('tableBody');
                 const newPagination = doc.getElementById('paginationContainer');
-                const newSubtitle = doc.getElementById('membersSubtitle');
 
                 if (newTableBody) {
                     tableBody.innerHTML = newTableBody.innerHTML;
@@ -184,11 +243,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     paginationContainer.innerHTML = '';
                 }
 
-                if (newSubtitle) {
-                    const subtitle = document.getElementById('membersSubtitle');
-                    if (subtitle) {
-                        subtitle.innerHTML = newSubtitle.innerHTML;
-                    }
+                updateSubtitles(doc);
+
+                if (typeof window.refreshAdminMobileTables === 'function') {
+                    window.refreshAdminMobileTables(document.getElementById('tableContainer') || document);
+                }
+                if (typeof window.initSalangPagination === 'function') {
+                    window.initSalangPagination(document.getElementById('paginationContainer') || document);
                 }
 
                 if (window.history && window.history.replaceState) {
@@ -198,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(() => {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center py-8 text-[var(--cashier-stat-danger)]">
+                        <td colspan="8" class="text-center py-8 text-[var(--cashier-stat-danger)]">
                             Une erreur est survenue lors de la recherche
                         </td>
                     </tr>
