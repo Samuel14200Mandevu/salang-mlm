@@ -321,15 +321,8 @@
             <table class="header-table">
                 <tr>
                     <td class="logo-cell">
-                        @php
-                            $logoPath = public_path('images/salang_logo.png');
-                            $logoBase64 = '';
-                            if(file_exists($logoPath)) {
-                                $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-                            }
-                        @endphp
                         @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
+                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
                         @endif
                     </td>
                     <td class="header-center">
@@ -451,75 +444,49 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            // Définir l'ordre des bonus pour le PDF
-                            $bonusOrder = ['direct', 'indirect', 'leadership', 'cash_pos'];
-                            $bonusLabels = [
-                                'direct' => 'Direct Bonus',
-                                'indirect' => 'Indirect Bonus',
-                                'leadership' => 'Leadership Bonus',
-                                'cash_pos' => 'Cash POS Bonus'
-                            ];
-                            
-                            // Regrouper les détails par type
-                            $groupedDetails = [];
-                            foreach ($bonusOrder as $type) {
-                                $groupedDetails[$type] = [];
-                            }
-                            
-                            foreach ($beneficiaire['details'] as $detail) {
-                                if (isset($groupedDetails[$detail['type']])) {
-                                    $groupedDetails[$detail['type']][] = $detail;
-                                }
-                            }
-                            
-                            $totalParType = [];
-                            foreach ($bonusOrder as $type) {
-                                $totalParType[$type] = collect($groupedDetails[$type])->sum('amount');
-                            }
-                        @endphp
-                        
-                        @foreach($bonusOrder as $type)
-                            @if(count($groupedDetails[$type]) > 0)
-                                <!-- En-tête du groupe de bonus -->
+                        @foreach(($bonusOrder ?? ['direct', 'indirect', 'leadership', 'cash_pos']) as $type)
+                            @php
+                                $groupedDetails = $beneficiaire['details_by_type'][$type] ?? [];
+                                $typeTotal = $beneficiaire['totals_by_type'][$type] ?? 0;
+                                $typeLabel = ($bonusLabels[$type] ?? null) ?: ucfirst(str_replace('_', ' ', $type));
+                            @endphp
+                            @if(count($groupedDetails) > 0)
                                 <tr class="bonus-group-{{ $type }}">
                                     <td colspan="6" class="bonus-group-header">
-                                        {{ $bonusLabels[$type] ?? ucfirst($type) }}
-                                        <span style="float: right; font-weight: bold; color: 
+                                        {{ $typeLabel }}
+                                        <span style="float: right; font-weight: bold; color:
                                             @if($type == 'direct') #4F46E5
                                             @elseif($type == 'indirect') #2563EB
                                             @elseif($type == 'leadership') #A65A0E
                                             @elseif($type == 'cash_pos') #16a34a
                                             @endif
                                         ">
-                                            Total: ${{ number_format($totalParType[$type], 2) }}
+                                            Total: ${{ number_format($typeTotal, 2) }}
                                         </span>
                                     </td>
                                 </tr>
-                                
-                                <!-- Lignes du groupe -->
-                                @foreach($groupedDetails[$type] as $detail)
+
+                                @foreach($groupedDetails as $detail)
                                 <tr>
                                     <td>
-                                        <span class="badge badge-{{ $detail['type'] }}">
-                                            {{ ucfirst($detail['type']) }}
+                                        <span class="badge badge-{{ $detail['type'] === 'cash_pos' ? 'cash' : $detail['type'] }}">
+                                            {{ $detail['type'] === 'cash_pos' ? 'Cash POS' : ucfirst($detail['type']) }}
                                         </span>
                                     </td>
                                     <td class="text-left">{{ $detail['from_user'] }}</td>
                                     <td class="text-right">${{ number_format($detail['amount'], 2) }}</td>
                                     <td>{{ $detail['percentage'] }}%</td>
                                     <td>{{ $detail['generation'] }}</td>
-                                    <td class="text-left" style="font-size:8px;">{{ Str::limit($detail['description'], 45) }}</td>
+                                    <td class="text-left" style="font-size:8px;">{{ $detail['description'] }}</td>
                                 </tr>
                                 @endforeach
-                                
-                                <!-- Sous-total du groupe -->
+
                                 <tr class="bonus-group-{{ $type }}">
                                     <td colspan="5" class="bonus-group-total" style="text-align: right;">
-                                        Sous-total {{ $bonusLabels[$type] ?? ucfirst($type) }}
+                                        Sous-total {{ $typeLabel }}
                                     </td>
                                     <td class="bonus-group-total" style="text-align: right; font-weight: bold;">
-                                        ${{ number_format($totalParType[$type], 2) }}
+                                        ${{ number_format($typeTotal, 2) }}
                                     </td>
                                 </tr>
                             @endif

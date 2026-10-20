@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Genealogy;
 use App\Models\Rank;
 use App\Http\Controllers\Concerns\DispatchesMlmRecalculation;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Notifications\CommissionPaidNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ use App\Services\PvManagementService;
 class CashierController extends Controller
 {
     use DispatchesMlmRecalculation;
+    use GeneratesPdfSafely;
 
     protected $pvService;
 
@@ -500,18 +502,15 @@ public function createOrder(Request $request)
             'date'
         ))->render();
 
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('A4', 'landscape');
-        
-        $fileName = 'rapport_commissions_' . $period . '.pdf';
-        
-        return response($pdf->output(), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
-            ->header('Cache-Control', 'public, max-age=86400')
-            ->header('Content-Length', strlen($pdf->output()))
-            ->header('Pragma', 'public')
-            ->header('Expires', '0');
+        $this->preparePdfExport(300, '512M');
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOptions($this->safePdfOptions());
+
+        return $this->downloadPdfBinary(
+            $pdf->output(),
+            'rapport_commissions_'.$period.'.pdf'
+        );
     }
 
 /**
@@ -1020,23 +1019,27 @@ public function createMultiOrder(Request $request)
         
         $date = now();
         
-        $pdf = Pdf::loadView('cashier.members.pay-slip-pdf', compact(
-            'member',
-            'period',
-            'totals',
-            'totalCommissions',
-            'monthlyPv',
-            'teamPv',
-            'directSponsors',
-            'posClients',
-            'commissionDetails',
-            'logoBase64',
-            'date'
-        ));
-        
-        $pdf->setPaper('A4', 'portrait');
-        
-        return $pdf->download('fiche_paie_' . $member->sponsor_id . '_' . $period . '.pdf');
+        return $this->downloadPdfView(
+            'cashier.members.pay-slip-pdf',
+            compact(
+                'member',
+                'period',
+                'totals',
+                'totalCommissions',
+                'monthlyPv',
+                'teamPv',
+                'directSponsors',
+                'posClients',
+                'commissionDetails',
+                'logoBase64',
+                'date'
+            ),
+            'fiche_paie_'.$member->sponsor_id.'_'.$period.'.pdf',
+            'a4',
+            'portrait',
+            180,
+            '512M'
+        );
     }
 
     /**
@@ -1742,8 +1745,15 @@ public function destroyProfile(Request $request)
             $sponsor = User::find($order->metadata['sponsor_id']);
         }
         
-        $pdf = Pdf::loadView('cashier.invoice-pdf', compact('order', 'sponsor'));
-        return $pdf->download('facture_' . $order->order_number . '.pdf');
+        return $this->downloadPdfView(
+            'cashier.invoice-pdf',
+            compact('order', 'sponsor'),
+            'facture_'.$order->order_number.'.pdf',
+            'a4',
+            'portrait',
+            120,
+            '256M'
+        );
     }
 
     /**
@@ -2791,10 +2801,15 @@ public function generateAdhesionForm($id)
             'date' => now(),
         ];
         
-        $pdf = Pdf::loadView('cashier.adhesion-pdf', $data);
-        $pdf->setPaper('a4', 'portrait');
-        
-        return $pdf->download('formulaire_adhesion_' . $member->sponsor_id . '.pdf');
+        return $this->downloadPdfView(
+            'cashier.adhesion-pdf',
+            $data,
+            'formulaire_adhesion_'.$member->sponsor_id.'.pdf',
+            'a4',
+            'portrait',
+            120,
+            '256M'
+        );
         
     } catch (\Exception $e) {
         Log::error('Erreur génération PDF: ' . $e->getMessage());

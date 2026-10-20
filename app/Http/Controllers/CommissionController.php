@@ -13,10 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class CommissionController extends Controller
 {
+    use GeneratesPdfSafely;
+
     protected MonthlyCommissionService $commissionService;
 
     public function __construct(
@@ -271,10 +274,21 @@ class CommissionController extends Controller
             ],
         ];
 
-        $pdf = PDF::loadView('commissions.export-pdf', $data);
-        $pdf->setPaper('A4', 'portrait');
+        try {
+            return $this->downloadPdfView(
+                'commissions.export-pdf',
+                $data,
+                'rapport_commissions_'.date('Y-m-d').'.pdf',
+                'a4',
+                'portrait',
+                300,
+                '512M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('member.commissions.exportPDF', $e);
 
-        return $pdf->download('rapport_commissions_' . date('Y-m-d') . '.pdf');
+            return back()->with('error', 'Erreur lors de la génération du PDF.');
+        }
     }
 
     /**
