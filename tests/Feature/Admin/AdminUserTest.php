@@ -92,6 +92,30 @@ class AdminUserTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_create_user_with_custom_member_code(): void
+    {
+        $this->createRanks();
+        $rank = Rank::first();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.users.store'), [
+            'name' => 'Coded User',
+            'email' => 'coded@test.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'user',
+            'sponsor_id' => '519999',
+            'rank_id' => $rank?->id,
+            'is_active' => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.users'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'coded@test.com',
+            'sponsor_id' => '519999',
+        ]);
+    }
+
     public function test_admin_can_update_user(): void
     {
         $this->createRanks();

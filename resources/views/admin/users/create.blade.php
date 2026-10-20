@@ -357,6 +357,23 @@
                            placeholder="••••••••" required>
                 </div>
 
+                <!-- Code membre -->
+                <div class="form-group" id="memberCodeGroup">
+                    <label>Code membre</label>
+                    <input type="text"
+                           name="sponsor_id"
+                           id="memberCode"
+                           value="{{ old('sponsor_id') }}"
+                           class="form-control @error('sponsor_id') form-control-error @enderror"
+                           placeholder="Ex. 511671"
+                           autocomplete="off"
+                           maxlength="20">
+                    <span class="help-text">Optionnel. Si vide, un code unique sera généré automatiquement.</span>
+                    @error('sponsor_id')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Phone -->
                 <div class="form-group">
                     <label>Téléphone</label>
@@ -448,7 +465,7 @@
                     <div>
                         <p class="text-sm font-medium text-[var(--text-primary)]">Informations</p>
                         <p class="text-sm text-[var(--text-secondary)]" id="roleInfoText">
-                            Un code de parrain unique sera généré automatiquement.
+                            Vous pouvez saisir un code membre, sinon un code unique sera généré automatiquement.
                         </p>
                     </div>
                 </div>
@@ -477,12 +494,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
+    const memberCodeGroup = document.getElementById('memberCodeGroup');
 
     const infoMessages = {
-        user: 'Un code de parrain unique sera généré automatiquement. Il pourra bénéficier du système MLM et des commissions.',
-        cashier: 'Les caissiers sont des employés. Pas de code de parrainage, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
-        admin: 'Administrateur avec accès complet. Un code de parrain sera généré automatiquement.',
-        it_manager: 'Accès Supervision (assistance membres, publications). Un code de parrain sera généré automatiquement.'
+        user: 'Saisissez un code membre ou laissez vide pour génération automatique. Il pourra bénéficier du système MLM et des commissions.',
+        cashier: 'Les caissiers sont des employés. Pas de code membre, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
+        admin: 'Administrateur avec accès complet. Saisissez un code membre ou laissez vide pour génération automatique.',
+        it_manager: 'Accès Supervision (assistance membres, publications). Saisissez un code membre ou laissez vide pour génération automatique.'
     };
 
     function updateRoleDisplay(role) {
@@ -491,9 +509,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (role === 'cashier') {
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
+            if (memberCodeGroup) memberCodeGroup.style.display = 'none';
         } else {
             if (packageGroup) packageGroup.style.display = 'block';
             if (sponsorGroup) sponsorGroup.style.display = 'block';
+            if (memberCodeGroup) memberCodeGroup.style.display = 'block';
         }
     }
 

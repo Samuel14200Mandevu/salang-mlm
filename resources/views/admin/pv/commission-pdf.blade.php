@@ -7,32 +7,13 @@
     <title>Rapport des Commissions - {{ $period }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-/* PIED DE PAGE PERMANENT */
-        .footer-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+
+        body {
+            padding: 28px 32px 32px 32px;
+        }
+
+        .page-content {
             width: 100%;
-            text-align: center;
-            background-color: #fff;
-            padding: 4px 20px 6px 20px;
-        }
-        .footer-left {
-            font-size: 9px;
-            line-height: 1.3;
-            text-align: center;
-            color: #000;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 3px;
-        }
-        .footer-right {
-            font-size: 8px;
-            color: #666;
-            text-align: right;
-            margin-top: 1px;
         }
 
         /* EN-TÊTE */
@@ -51,18 +32,18 @@
             padding: 2px 4px;
         }
         .logo-cell {
-            width: 65px;
+            width: 70px;
             text-align: center;
         }
         .logo-cell img {
-            max-height: 45px;
+            max-height: 50px;
             width: auto;
         }
         .header-center {
             text-align: center;
         }
         .company-title {
-            font-size: 16px;
+            font-size: 19px;
             font-weight: bold;
             color: #558b2f;
             text-transform: uppercase;
@@ -70,12 +51,12 @@
             margin-bottom: 1px;
         }
         .header-text {
-            font-size: 7.5px;
+            font-size: 10px;
             line-height: 1.2;
             font-weight: bold;
         }
         .address {
-            font-size: 7px;
+            font-size: 9.5px;
             color: #000;
             margin-top: 1px;
             line-height: 1.2;
@@ -89,27 +70,49 @@
         /* TITRE ET META */
         .main-title {
             text-align: center;
-            font-size: 17px;
+            font-size: 20px;
             font-weight: bold;
             color: #0E2F76;
             text-transform: uppercase;
             text-decoration: underline;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .form-meta {
             width: 100%;
-            margin-bottom: 4px;
-            font-size: 10.5px;
+            margin: 2px 0 6px 0;
+            font-size: 13.5px;
             font-weight: bold;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .form-meta td {
             padding: 2px 0;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .form-meta td.meta-left {
+            text-align: left;
+            width: 33%;
+        }
+        .form-meta td.meta-right {
+            text-align: right;
+            width: 33%;
+        }
+        .form-meta td.meta-period-highlight {
+            text-align: center;
+            width: 34%;
+            font-size: 20px;
+            font-weight: bold;
+            color: #8b0000;
+            text-transform: uppercase;
+            text-decoration: underline;
+            letter-spacing: 0.5px;
+            padding: 0 8px;
         }
 
         /* SECTIONS NUMÉROTÉES */
         .section-header {
-            font-size: 11.5px;
+            font-size: 15px;
             font-weight: bold;
             color: #558b2f;
             border-bottom: 2px solid #8b0000;
@@ -128,7 +131,7 @@
         }
         .member-info td {
             padding: 3px 6px;
-            font-size: 10px;
+            font-size: 11px;
             border: 1px solid #000;
         }
         .member-info .label {
@@ -150,46 +153,43 @@
             padding: 4px 8px;
             border: 1px solid #000;
             text-align: center;
-            font-size: 10.5px;
+            font-size: 13.5px;
             background-color: #f9f9f9;
         }
         .totals-grid .label {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 8.5px;
+            font-size: 11px;
             background-color: #f2f2f2;
         }
         .totals-grid .amount {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 15px;
         }
-        .direct-color { color: #4F46E5; }
-        .indirect-color { color: #2563EB; }
-        .leadership-color { color: #A65A0E; }
-        .cash-color { color: #16a34a; }
+        .direct-color { color: #312E81; font-weight: bold; }
+        .indirect-color { color: #1E3A8A; font-weight: bold; }
+        .leadership-color { color: #9A3412; font-weight: bold; }
+        .cash-color { color: #14532D; font-weight: bold; }
 
         /* TABLEAU DES COMMISSIONS */
         .data-table {
             width: 100%;
             border-collapse: collapse;
             margin: 3px 0 4px 0;
-            font-size: 9px;
+            font-size: 10px;
         }
-        
         .data-table thead {
             display: table-header-group;
         }
-        
         .data-table tr {
             page-break-inside: avoid;
         }
-        
         .data-table th {
             background-color: #f2f2f2;
             color: #000;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 7.5px;
+            font-size: 9px;
             padding: 3px 4px;
             border: 1px solid #000;
             text-align: center;
@@ -199,82 +199,57 @@
             border: 1px solid #000;
             text-align: center;
             vertical-align: middle;
-            font-size: 8.5px;
+            font-size: 9.5px;
         }
         .data-table td.text-left { text-align: left; }
         .data-table td.text-right { text-align: right; }
-
         .data-table .total-row td {
             font-weight: bold;
-            font-size: 9.5px;
+            font-size: 10.5px;
             background-color: #f9f9f9;
         }
 
-        /* BADGES AVEC COULEURS */
+        /* BADGES */
         .badge {
             display: inline-block;
             padding: 1px 5px;
             border-radius: 2px;
-            font-size: 7px;
+            font-size: 8px;
             font-weight: bold;
             text-transform: uppercase;
         }
-        .badge-direct { background: rgba(79, 70, 229, 0.15); color: #4F46E5; }
-        .badge-indirect { background: rgba(37, 99, 235, 0.15); color: #2563EB; }
-        .badge-leadership { background: rgba(166, 90, 14, 0.15); color: #A65A0E; }
-        .badge-cash { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
+        .badge-direct { background: #f2f2f2; color: #312E81; }
+        .badge-indirect { background: #f2f2f2; color: #1E3A8A; }
+        .badge-leadership { background: #f2f2f2; color: #9A3412; }
+        .badge-cash { background: #f2f2f2; color: #14532D; }
 
-        /* EN-TÊTE DE GROUPE DE BONUS */
+        /* EN-TÊTE / SOUS-TOTAL DE GROUPE */
         .bonus-group-header {
-            background-color: #f2f2f2;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10px;
             text-transform: uppercase;
+            background-color: #f2f2f2;
         }
-        .bonus-group-header td {
-            padding: 4px 6px;
-            border: 1px solid #000;
-            text-align: left;
-        }
-        .bonus-group-direct .bonus-group-header td {
-            background-color: rgba(79, 70, 229, 0.10);
-            color: #4F46E5;
-        }
-        .bonus-group-indirect .bonus-group-header td {
-            background-color: rgba(37, 99, 235, 0.10);
-            color: #2563EB;
-        }
-        .bonus-group-leadership .bonus-group-header td {
-            background-color: rgba(166, 90, 14, 0.10);
-            color: #A65A0E;
-        }
-        .bonus-group-cash .bonus-group-header td {
-            background-color: rgba(22, 163, 74, 0.10);
-            color: #16a34a;
-        }
+        .bonus-group-direct .bonus-group-header,
+        .bonus-group-direct .bonus-group-total { color: #312E81; }
+        .bonus-group-indirect .bonus-group-header,
+        .bonus-group-indirect .bonus-group-total { color: #1E3A8A; }
+        .bonus-group-leadership .bonus-group-header,
+        .bonus-group-leadership .bonus-group-total { color: #9A3412; }
+        .bonus-group-cash_pos .bonus-group-header,
+        .bonus-group-cash_pos .bonus-group-total,
+        .bonus-group-cash .bonus-group-header,
+        .bonus-group-cash .bonus-group-total { color: #14532D; }
 
-        /* SOUS-TOTAL DE GROUPE */
-        .bonus-group-total td {
+        .bonus-group-total {
             font-weight: bold;
-            font-size: 8.5px;
+            font-size: 9.5px;
             background-color: #f9f9f9;
             border-top: 2px solid #000;
         }
-        .bonus-group-direct .bonus-group-total td {
-            color: #4F46E5;
-        }
-        .bonus-group-indirect .bonus-group-total td {
-            color: #2563EB;
-        }
-        .bonus-group-leadership .bonus-group-total td {
-            color: #A65A0E;
-        }
-        .bonus-group-cash .bonus-group-total td {
-            color: #16a34a;
-        }
 
         .beneficiaire-title {
-            font-size: 10.5px;
+            font-size: 12px;
             font-weight: bold;
             padding: 3px 8px;
             background: #f2f2f2;
@@ -287,33 +262,22 @@
             font-weight: bold;
             color: #0E2F76;
         }
-
         .beneficiaire-section {
             margin-bottom: 6px;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 1.8cm 1.8cm 2cm 1.8cm;
+        }
+
         @media print {
-            body { padding: 8px 15px 40px 15px; }
-            @page { 
-                size: A4 portrait;
-                margin: 0.4cm 0.5cm; 
-            }
+            body { padding: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- PIED DE PAGE FIXE -->
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-        <div class="footer-right">Généré le {{ $date_generated }}</div>
-    </div>
-
-    <!-- CONTENU PRINCIPAL -->
     <div class="page-content">
 
         <!-- EN-TÊTE -->
@@ -339,27 +303,46 @@
                     </td>
                     <td class="logo-cell">
                         @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
+                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
                         @endif
                     </td>
                 </tr>
             </table>
         </div>
 
-        <!-- TITRE -->
+        <!-- TITRE + META (aligné rapport global) -->
+        @php
+            $periodLabel = $period;
+            if ($period === 'all') {
+                $periodLabel = 'Toutes les périodes';
+            } elseif (preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
+                $moisFr = [
+                    1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+                    5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+                    9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre',
+                ];
+                $moisNum = (int) $m[2];
+                $periodLabel = ($moisFr[$moisNum] ?? $m[2]) . ' ' . $m[1];
+            }
+        @endphp
+
         <div class="main-title">Rapport des Commissions</div>
-        
+
         <table class="form-meta">
             <tr>
-                <td style="text-align: left; width:50%;">Période : <strong>{{ $period }}</strong></td>
-                <td style="text-align: right; width:50%;">Date : <strong>{{ $date_generated }}</strong></td>
+                <td class="meta-left">Période : <strong>{{ $periodLabel }}</strong></td>
+                <td class="meta-period-highlight" rowspan="2">{{ $periodLabel }}</td>
+                <td class="meta-right">Date : <strong>{{ $date_generated }}</strong></td>
+            </tr>
+            <tr>
+                <td class="meta-left">Nombre de bénéficiaires : <strong>{{ is_countable($beneficiaires) ? count($beneficiaires) : 0 }}</strong></td>
+                <td class="meta-right">Nombre de commissions : <strong>{{ $commissionsCount ?? 0 }}</strong></td>
             </tr>
         </table>
 
         <!-- 1. INFORMATIONS DU MEMBRE -->
-        <div class="section-header">1. Informations du Membre</div>
-        
         @if(isset($user) && $user)
+        <div class="section-header">1. Informations du Membre</div>
         <table class="member-info">
             <tr>
                 <td class="label">Nom complet</td>
@@ -394,15 +377,14 @@
         </table>
         @endif
 
-        <!-- PV de la période sélectionnée -->
         @if(isset($periodPV) && $periodPV > 0)
-        <div style="margin: 4px 0; padding: 4px 8px; background: #f9f9f9; border: 1px solid #ddd; text-align: center; font-size: 11px;">
-            <strong>PV pour la période {{ $period }} :</strong> {{ number_format($periodPV, 1) }} PV
+        <div style="margin: 4px 0; padding: 4px 8px; background: #f9f9f9; border: 1px solid #ddd; text-align: center; font-size: 12px;">
+            <strong>PV pour la période {{ $periodLabel }} :</strong> {{ number_format($periodPV, 1) }} PV
         </div>
         @endif
 
         <!-- 2. RÉSUMÉ DES GAINS -->
-        <div class="section-header">2. Résumé des Gains</div>
+        <div class="section-header">{{ isset($user) && $user ? '2' : '1' }}. Résumé des Gains</div>
         <table class="totals-grid">
             <tr>
                 <td class="label" style="width:16%;">Type</td>
@@ -423,15 +405,15 @@
         </table>
 
         <!-- 3. DÉTAIL PAR BÉNÉFICIAIRE -->
-        <div class="section-header">3. Détail des Commissions</div>
-        
+        <div class="section-header">{{ isset($user) && $user ? '3' : '2' }}. Détail des Commissions</div>
+
         @foreach($beneficiaires as $beneficiaire)
             <div class="beneficiaire-section">
                 <div class="beneficiaire-title">
                     {{ $beneficiaire['name'] }}
                     <span class="total-badge">${{ number_format($beneficiaire['total'], 2) }}</span>
                 </div>
-                
+
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -449,18 +431,19 @@
                                 $groupedDetails = $beneficiaire['details_by_type'][$type] ?? [];
                                 $typeTotal = $beneficiaire['totals_by_type'][$type] ?? 0;
                                 $typeLabel = ($bonusLabels[$type] ?? null) ?: ucfirst(str_replace('_', ' ', $type));
+                                $typeColor = match ($type) {
+                                    'direct' => '#312E81',
+                                    'indirect' => '#1E3A8A',
+                                    'leadership' => '#9A3412',
+                                    'cash_pos' => '#14532D',
+                                    default => '#0E2F76',
+                                };
                             @endphp
                             @if(count($groupedDetails) > 0)
                                 <tr class="bonus-group-{{ $type }}">
                                     <td colspan="6" class="bonus-group-header">
                                         {{ $typeLabel }}
-                                        <span style="float: right; font-weight: bold; color:
-                                            @if($type == 'direct') #4F46E5
-                                            @elseif($type == 'indirect') #2563EB
-                                            @elseif($type == 'leadership') #A65A0E
-                                            @elseif($type == 'cash_pos') #16a34a
-                                            @endif
-                                        ">
+                                        <span style="float: right; font-weight: bold; color: {{ $typeColor }};">
                                             Total: ${{ number_format($typeTotal, 2) }}
                                         </span>
                                     </td>
@@ -474,7 +457,7 @@
                                         </span>
                                     </td>
                                     <td class="text-left">{{ $detail['from_user'] }}</td>
-                                    <td class="text-right">${{ number_format($detail['amount'], 2) }}</td>
+                                    <td class="text-right" style="color: {{ $typeColor }}; font-weight: bold;">${{ number_format($detail['amount'], 2) }}</td>
                                     <td>{{ $detail['percentage'] }}%</td>
                                     <td>{{ $detail['generation'] }}</td>
                                     <td class="text-left" style="font-size:8px;">{{ $detail['description'] }}</td>
@@ -485,7 +468,7 @@
                                     <td colspan="5" class="bonus-group-total" style="text-align: right;">
                                         Sous-total {{ $typeLabel }}
                                     </td>
-                                    <td class="bonus-group-total" style="text-align: right; font-weight: bold;">
+                                    <td class="bonus-group-total" style="text-align: right; font-weight: bold; color: {{ $typeColor }};">
                                         ${{ number_format($typeTotal, 2) }}
                                     </td>
                                 </tr>
@@ -495,7 +478,7 @@
                     <tfoot>
                         <tr class="total-row">
                             <td colspan="5" style="text-align:right;">TOTAL {{ strtoupper($beneficiaire['name']) }} :</td>
-                            <td style="text-align:right; color:#0E2F76; font-size:10px;">
+                            <td style="text-align:right; color:#0E2F76; font-size:11px;">
                                 <strong>${{ number_format($beneficiaire['total'], 2) }}</strong>
                             </td>
                         </tr>
