@@ -487,9 +487,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const url = '{{ route("cashier.members.adhesion-pdf", $member->id) }}';
             
-            fetch(url)
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/pdf',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
                 .then(response => {
-                    if (!response.ok) {
+                    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                    if (!response.ok || (!contentType.includes('pdf') && !contentType.includes('octet-stream'))) {
                         throw new Error('Erreur HTTP: ' + response.status);
                     }
                     return response.blob();
@@ -498,27 +504,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (blob.size === 0) {
                         throw new Error('Le fichier PDF est vide');
                     }
-                    
-                    const pdfUrl = URL.createObjectURL(blob);
-                    
+
+                    const pdfBlob = blob.type ? blob : new Blob([blob], { type: 'application/pdf' });
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
                     const link = document.createElement('a');
                     link.href = pdfUrl;
-                    link.download = 'formulaire_adhesion_{{ $member->sponsor_id }}.pdf';
+                    link.download = 'formulaire_adhesion_{{ $member->sponsor_id ?: $member->id }}.pdf';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    
-                    const printWindow = window.open(pdfUrl, '_blank');
-                    if (printWindow) {
-                        printWindow.onload = function() {
-                            setTimeout(() => {
-                                printWindow.print();
-                            }, 300);
-                        };
-                    }
-                    
+
                     setTimeout(() => URL.revokeObjectURL(pdfUrl), 5000);
-                    
+
                     printButtons.forEach(function (b) {
                         b.disabled = false;
                         if (b.dataset.defaultHtml) {
@@ -528,7 +526,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    alert('Erreur lors du téléchargement. Veuillez réessayer.');
+                    // Fallback: téléchargement direct (évite les faux négatifs fetch)
+                    window.location.href = url;
                     printButtons.forEach(function (b) {
                         b.disabled = false;
                         if (b.dataset.defaultHtml) {
