@@ -7,32 +7,13 @@
     <title>Rapport Global des Commissions - {{ $period }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-/* PIED DE PAGE PERMANENT */
-        .footer-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+
+        body {
+            padding: 28px 32px 32px 32px;
+        }
+
+        .page-content {
             width: 100%;
-            text-align: center;
-            background-color: #fff;
-            padding: 4px 20px 6px 20px;
-        }
-        .footer-left {
-            font-size: 11px;
-            line-height: 1.3;
-            text-align: center;
-            color: #000;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 3px;
-        }
-        .footer-right {
-            font-size: 10px;
-            color: #666;
-            text-align: right;
-            margin-top: 1px;
         }
 
         /* EN-TÊTE */
@@ -94,17 +75,47 @@
             color: #0E2F76;
             text-transform: uppercase;
             text-decoration: underline;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+        }
+        .main-subtitle {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #0E2F76;
+            text-transform: capitalize;
+            margin-bottom: 6px;
         }
         .form-meta {
             width: 100%;
-            margin-bottom: 4px;
+            margin: 2px 0 6px 0;
             font-size: 13.5px;
             font-weight: bold;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .form-meta td {
             padding: 2px 0;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .form-meta td.meta-left {
+            text-align: left;
+            width: 33%;
+        }
+        .form-meta td.meta-right {
+            text-align: right;
+            width: 33%;
+        }
+        .form-meta td.meta-period-highlight {
+            text-align: center;
+            width: 34%;
+            font-size: 20px;
+            font-weight: bold;
+            color: #8b0000;
+            text-transform: uppercase;
+            text-decoration: underline;
+            letter-spacing: 0.5px;
+            padding: 0 8px;
         }
 
         /* SECTIONS NUMÉROTÉES */
@@ -142,10 +153,13 @@
             font-weight: bold;
             font-size: 15px;
         }
-        .direct-color { color: #4F46E5; }
-        .indirect-color { color: #2563EB; }
-        .leadership-color { color: #A65A0E; }
-        .cash-color { color: #16a34a; }
+        .direct-color, .td-direct, .th-direct { color: #312E81; font-weight: bold; }
+        .indirect-color, .td-indirect, .th-indirect { color: #1E3A8A; font-weight: bold; }
+        .leadership-color, .td-leadership, .th-leadership { color: #9A3412; font-weight: bold; }
+        .cash-color, .td-cash, .th-cash { color: #14532D; font-weight: bold; }
+        .th-direct, .th-indirect, .th-leadership, .th-cash {
+            background-color: #f2f2f2 !important;
+        }
 
         /* TABLEAU GLOBAL */
         .global-table {
@@ -218,26 +232,19 @@
         .badge-leadership { background: rgba(166, 90, 14, 0.15); color: #A65A0E; }
         .badge-cash { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
 
+        @page {
+            size: A4 landscape;
+            margin: 1.8cm 1.8cm 2cm 1.8cm;
+        }
+
         @media print {
-            body { padding: 8px 15px 45px 15px; }
-            @page { 
-                size: A4 landscape;
-                margin: 0.4cm 0.5cm; 
+            body {
+                padding: 0;
             }
         }
     </style>
 </head>
 <body>
-
-    <!-- PIED DE PAGE FIXE -->
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-        <div class="footer-right">Généré le {{ $date_generated }}</div>
-    </div>
 
     <!-- CONTENU PRINCIPAL -->
     <div class="page-content">
@@ -280,16 +287,31 @@
         </div>
 
         <!-- TITRE -->
+        @php
+            $periodLabel = $period;
+            if ($period === 'all') {
+                $periodLabel = 'Toutes les périodes';
+            } elseif (preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
+                $moisFr = [
+                    1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+                    5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+                    9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre',
+                ];
+                $moisNum = (int) $m[2];
+                $periodLabel = ($moisFr[$moisNum] ?? $m[2]) . ' ' . $m[1];
+            }
+        @endphp
         <div class="main-title">Rapport Global des Commissions</div>
-        
+
         <table class="form-meta">
             <tr>
-                <td style="text-align: left; width:50%;">Période : <strong>{{ $period }}</strong></td>
-                <td style="text-align: right; width:50%;">Date : <strong>{{ $date_generated }}</strong></td>
+                <td class="meta-left">Période : <strong>{{ $periodLabel }}</strong></td>
+                <td class="meta-period-highlight" rowspan="2">{{ $periodLabel }}</td>
+                <td class="meta-right">Date : <strong>{{ $date_generated }}</strong></td>
             </tr>
             <tr>
-                <td style="text-align: left;">Nombre de bénéficiaires : <strong>{{ $beneficiaires->count() }}</strong></td>
-                <td style="text-align: right;">Nombre de commissions : <strong>{{ $commissions->count() }}</strong></td>
+                <td class="meta-left">Nombre de bénéficiaires : <strong>{{ $beneficiaires->count() }}</strong></td>
+                <td class="meta-right">Nombre de commissions : <strong>{{ $commissions->count() }}</strong></td>
             </tr>
         </table>
 
@@ -300,20 +322,23 @@
             <thead>
                 <tr>
                     <th style="width:4%;">N°</th>
-                    <th style="width:9%;">Code Membre</th>
-                    <th style="width:20%;">Membre</th>
-                    <th style="width:9%;">Code Parrain</th>
-                    <th style="width:6%;">Grade</th>
-                    <th style="width:8%;">PV</th>
-                    <th style="width:9%;">Direct</th>
-                    <th style="width:9%;">Indirect</th>
-                    <th style="width:9%;">Leadership</th>
-                    <th style="width:8%;">Cash POS</th>
-                    <th style="width:9%;">Total</th>
+                    <th style="width:8%;">Code Membre</th>
+                    <th style="width:24%;">Membre</th>
+                    <th style="width:8%;">Code Parrain</th>
+                    <th style="width:5%;">Grade</th>
+                    <th style="width:7%;">PV</th>
+                    <th class="th-direct" style="width:8%;">Direct</th>
+                    <th class="th-indirect" style="width:8%;">Indirect</th>
+                    <th class="th-leadership" style="width:9%;">Leadership</th>
+                    <th class="th-cash" style="width:8%;">Cash POS</th>
+                    <th style="width:11%;">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @php $numero = 1; @endphp
+                @php
+                    $numero = 1;
+                    $totalPV = 0;
+                @endphp
                 @foreach($beneficiaires as $userId => $beneficiaire)
                     @php
                         $userCommissions = $beneficiaire['details'];
@@ -322,7 +347,8 @@
                         $leadershipTotal = collect($userCommissions)->where('type', 'leadership')->sum('amount');
                         $cashTotal = collect($userCommissions)->where('type', 'cash_pos')->sum('amount');
                         $userRank = $beneficiaire['rank_level'] ?? 'N/A';
-                        $userPV = $beneficiaire['pv'] ?? 0;
+                        $userPV = (float) ($beneficiaire['pv'] ?? 0);
+                        $totalPV += $userPV;
                         $userCode = $beneficiaire['code'] ?? 'N/A';
                         $parrainCode = $beneficiaire['parrain_code'] ?? 'N/A';
                     @endphp
@@ -333,21 +359,22 @@
                         <td class="text-center" style="color:#000; font-weight:bold;">{{ $parrainCode }}</td>
                         <td>{{ $userRank }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">{{ number_format($userPV, 1, ',', ' ') }}</td>
-                        <td class="text-right direct-color">${{ number_format($directTotal, 2) }}</td>
-                        <td class="text-right indirect-color">${{ number_format($indirectTotal, 2) }}</td>
-                        <td class="text-right leadership-color">${{ number_format($leadershipTotal, 2) }}</td>
-                        <td class="text-right cash-color">${{ number_format($cashTotal, 2) }}</td>
+                        <td class="text-right td-direct">${{ number_format($directTotal, 2) }}</td>
+                        <td class="text-right td-indirect">${{ number_format($indirectTotal, 2) }}</td>
+                        <td class="text-right td-leadership">${{ number_format($leadershipTotal, 2) }}</td>
+                        <td class="text-right td-cash">${{ number_format($cashTotal, 2) }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ number_format($beneficiaire['total'], 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="6" style="text-align:right;">TOTAL GÉNÉRAL :</td>
-                    <td class="text-right direct-color">${{ number_format($totals['direct'] ?? 0, 2) }}</td>
-                    <td class="text-right indirect-color">${{ number_format($totals['indirect'] ?? 0, 2) }}</td>
-                    <td class="text-right leadership-color">${{ number_format($totals['leadership'] ?? 0, 2) }}</td>
-                    <td class="text-right cash-color">${{ number_format($totals['cash_pos'] ?? 0, 2) }}</td>
+                    <td colspan="5" style="text-align:right;">TOTAL GÉNÉRAL :</td>
+                    <td class="text-right" style="color:#0E2F76;">{{ number_format($totalPV, 1, ',', ' ') }}</td>
+                    <td class="text-right td-direct">${{ number_format($totals['direct'] ?? 0, 2) }}</td>
+                    <td class="text-right td-indirect">${{ number_format($totals['indirect'] ?? 0, 2) }}</td>
+                    <td class="text-right td-leadership">${{ number_format($totals['leadership'] ?? 0, 2) }}</td>
+                    <td class="text-right td-cash">${{ number_format($totals['cash_pos'] ?? 0, 2) }}</td>
                     <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['total'] ?? 0, 2) }}</td>
                 </tr>
             </tfoot>

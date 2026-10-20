@@ -309,10 +309,65 @@
 @section('title', 'Commandes')
 
 @section('content')
+@php
+    $ordersSubtitleHtml = ($orders->total() ?? 0) . ' commandes'
+        . (request('search')
+            ? ' <span class="text-xs opacity-90">· Résultats pour "' . e(request('search')) . '"</span>'
+            : '');
+    $searchOpen = filled(request('search'));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    {{-- BANDEAU MOBILE : loupe + Commissions + Nouvelle vente dans le div --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Commandes</h1>
+                <p class="page-subtitle">{!! $ordersSubtitleHtml !!}</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--orders-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <a href="{{ route('cashier.commissions') }}" class="btn btn-outline btn-sm btn-round-icon" title="Commissions" aria-label="Commissions">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402 2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </a>
+                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle vente" aria-label="Nouvelle vente">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="Rechercher une commande"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+        </div>
+    </div>
+
+    {{-- EN-TÊTE DESKTOP --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 <svg class="inline-block w-6 h-6 text-[var(--primary-navy)] mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -321,12 +376,7 @@
                 Commandes
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $orders->total() ?? 0 }} commandes
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
+                {!! $ordersSubtitleHtml !!}
             </p>
         </div>
         <div class="flex items-center gap-2">
@@ -336,7 +386,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
-                           id="searchInput"
+                           id="searchInputDesktop"
                            class="search-input"
                            placeholder="Rechercher une commande"
                            autocomplete="off"
@@ -345,7 +395,7 @@
             </div>
             <a href="{{ route('cashier.commissions') }}" class="btn btn-outline btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402 2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 Commissions
             </a>
@@ -467,12 +517,6 @@
                                 </svg>
                                 <p class="text-base font-medium text-[var(--text-primary)]">Aucune commande</p>
                                 <p class="text-sm text-[var(--text-tertiary)]">Les commandes apparaîtront ici</p>
-                                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm mt-3">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    Faire une vente
-                                </a>
                             </td>
                         </tr>
                     @endforelse
@@ -489,26 +533,39 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputDesktop'),
+    ].filter(Boolean);
     let searchTimeout;
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-
-            searchTimeout = setTimeout(() => {
-                const url = new URL(window.location.href);
-                if (query) {
-                    url.searchParams.set('search', query);
-                } else {
-                    url.searchParams.delete('search');
-                }
-                url.searchParams.set('page', '1');
-                window.location.href = url.toString();
-            }, 500);
+    function syncSearchInputs(value, source) {
+        searchInputs.forEach((input) => {
+            if (input !== source) {
+                input.value = value;
+            }
         });
     }
+
+    function goSearch(query) {
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+
+    searchInputs.forEach((input) => {
+        input.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            syncSearchInputs(this.value, this);
+            const query = this.value.trim();
+            searchTimeout = setTimeout(() => goSearch(query), 500);
+        });
+    });
 });
 </script>
 @endpush

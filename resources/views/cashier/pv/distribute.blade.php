@@ -194,7 +194,7 @@
             @endif
         </div>
         <div class="text-right">
-            <p class="text-sm text-[var(--text-secondary)]">PV cumulés (grade)</p>
+            <p class="text-sm text-[var(--text-secondary)]">PV Personnel (grade)</p>
             <p class="text-xl font-bold text-[var(--text-primary)]">{{ number_format($memberPv['cumulative_pv'] ?? 0) }} PV</p>
             <p class="text-xs text-[var(--text-tertiary)]">Portefeuille: {{ number_format($memberPv['wallet_total_pv'] ?? 0) }} PV</p>
         </div>

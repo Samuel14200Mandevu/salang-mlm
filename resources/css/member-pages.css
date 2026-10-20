@@ -511,6 +511,21 @@
   background: var(--bg-hover);
 }
 
+.cashier-app .member-row .member-row-action {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.35rem;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.cashier-app .member-row .member-row-action svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  display: block;
+}
+
 .cashier-app .detail-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);

@@ -2,17 +2,37 @@
 
 @section('title', 'Détails du membre')
 
+@php
+    $memberRankLevel = (int) ($member->rank_level ?? 0);
+    $memberRankLabel = \App\Support\MlmRank::label($memberRankLevel);
+    $memberRankBadge = \App\Support\MlmRank::badgeClass($memberRankLevel);
+    $memberPvPersonal = number_format((float) ($member->pv_balance ?? 0), 0, ',', ' ');
+    $memberPvCumules = number_format((float) ($member->team_pv ?? 0), 0, ',', ' ');
+    $memberShowSubtitle = $member->name . ' · ID ' . $member->id;
+@endphp
+
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    {{-- BANDEAU MOBILE (comme admin : dégradé + boutons dans le div) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1 class="page-title">Détails du membre</h1>
+                <p class="page-subtitle">{{ $memberShowSubtitle }}</p>
+            </div>
+            @include('cashier.members.partials.show-mobile-banner-actions', ['member' => $member])
+        </div>
+    </div>
+
+    {{-- EN-TÊTE (desktop) --}}
+    <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight">
                 Détails du membre
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                ID: {{ $member->id }}
+                {{ $memberShowSubtitle }}
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
@@ -77,8 +97,94 @@
         </div>
     @endif
 
-    {{-- INFORMATIONS DU MEMBRE --}}
-    <div class="detail-card">
+    {{-- MOBILE : profil + KPI + informations (comme admin) --}}
+    <div class="admin-profile-hero md:hidden">
+        <div class="admin-profile-hero__avatar">{{ strtoupper(substr($member->name, 0, 1)) }}</div>
+        <div class="admin-profile-hero__body">
+            <p class="admin-profile-hero__name">{{ $member->name }}</p>
+            <p class="admin-profile-hero__meta">{{ $member->email }}</p>
+            <div class="admin-profile-hero__chips">
+                <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
+                <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
+                    {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                </span>
+            </div>
+            @if($member->sponsor_id)
+                <span class="admin-profile-hero__code">#{{ $member->sponsor_id }}</span>
+            @endif
+        </div>
+    </div>
+
+    <div class="admin-member-kpis md:hidden">
+        <a href="{{ route('cashier.pv.dashboard', ['member_id' => $member->id]) }}" class="admin-member-kpi">
+            <strong>{{ $memberPvPersonal }}</strong>
+            <span>PV Personnel</span>
+        </a>
+        <a href="{{ route('cashier.pv.dashboard', ['member_id' => $member->id]) }}" class="admin-member-kpi">
+            <strong>{{ $memberPvCumules }}</strong>
+            <span>PV cumulés</span>
+        </a>
+        <div class="admin-member-kpi">
+            <strong>{{ $stats['total_downlines'] ?? 0 }}</strong>
+            <span>Filleuls</span>
+        </div>
+        <div class="admin-member-kpi">
+            <strong>${{ number_format($stats['total_commissions'] ?? 0, 0) }}</strong>
+            <span>Total $</span>
+        </div>
+    </div>
+
+    <div class="admin-section md:hidden">
+        <h2 class="admin-section__title">Informations</h2>
+        <div class="card">
+            <div class="info-row">
+                <span class="label">Téléphone</span>
+                <span class="value">{{ $member->phone ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Code</span>
+                <span class="value font-mono">{{ $member->sponsor_id ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Grade</span>
+                <span class="value">
+                    <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
+                    <span class="text-xs text-[var(--text-tertiary)]"> (Niv. {{ $memberRankLevel }})</span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="label">PV Personnel</span>
+                <span class="value font-mono tabular-nums">{{ $memberPvPersonal }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">PV cumulés</span>
+                <span class="value font-mono tabular-nums">{{ $memberPvCumules }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Parrain</span>
+                <span class="value">
+                    @if($member->parrain)
+                        @if(($member->parrain->user_type ?? 'member') === 'member')
+                            <a href="{{ route('cashier.members.show', $member->parrain) }}"
+                               class="text-[var(--cashier-stat-primary)] hover:underline font-semibold">
+                                {{ $member->parrain->name }}
+                            </a>
+                        @else
+                            {{ $member->parrain->name }}
+                        @endif
+                        <span class="text-xs text-[var(--text-secondary)] font-mono block sm:inline">
+                            #{{ $member->parrain->sponsor_id ?? '—' }}
+                        </span>
+                    @else
+                        <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
+                    @endif
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {{-- INFORMATIONS DU MEMBRE (desktop) --}}
+    <div class="detail-card hidden md:block">
         <div class="flex flex-wrap items-start gap-4">
             <div class="avatar-lg">
                 {{ strtoupper(substr($member->name, 0, 1)) }}
@@ -96,52 +202,58 @@
                         <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
                     @endif
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                    <div>
-                        <div class="mb-2">
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Email</p>
-                            <p class="text-sm text-[var(--text-primary)]">{{ $member->email }}</p>
+                <div class="flex flex-col lg:flex-row lg:flex-nowrap lg:items-baseline gap-x-6 gap-y-2 mt-3 min-w-0">
+                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
+                        <div class="inline-flex items-baseline gap-1.5 min-w-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Email</span>
+                            <span class="text-sm text-[var(--text-primary)] truncate">{{ $member->email }}</span>
                         </div>
-                        <div>
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Téléphone</p>
-                            <p class="text-sm text-[var(--text-primary)]">{{ $member->phone ?? 'N/A' }}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="mb-2">
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Code</p>
-                            <p class="text-sm font-mono text-[var(--navy)]">{{ $member->sponsor_id ?? 'N/A' }}</p>
-                        </div>
-                        <div class="mb-2">
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Grade</p>
-                            <p class="text-sm">
-                                @php
-                                    $level = (int) ($member->rank_level ?? 0);
-                                @endphp
-                                <span class="{{ \App\Support\MlmRank::badgeClass($level) }}">
-                                    {{ \App\Support\MlmRank::label($level) }}
-                                </span>
-                                <span class="text-xs text-[var(--text-tertiary)] font-normal ml-1">(Niv. {{ $level }})</span>
-                            </p>
+                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Téléphone</span>
+                            <span class="text-sm text-[var(--text-primary)]">{{ $member->phone ?? 'N/A' }}</span>
                         </div>
                     </div>
-                    <div>
-                        <div class="mb-2">
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">PV</p>
-                            <p class="text-sm font-mono text-[var(--navy)]">{{ number_format((float) ($member->pv_balance ?? 0)) }}</p>
+                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
+                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Code</span>
+                            <span class="text-sm font-mono text-[var(--navy)]">{{ $member->sponsor_id ?? 'N/A' }}</span>
                         </div>
-                        <div>
-                            <p class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Parrain</p>
-                            <p class="text-sm font-medium text-[var(--navy)]">
+                        <div class="inline-flex items-baseline gap-1.5 min-w-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Grade</span>
+                            <span class="text-sm inline-flex flex-wrap items-center gap-x-1">
+                                <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
+                                <span class="text-xs text-[var(--text-tertiary)] font-normal">(Niv. {{ $memberRankLevel }})</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
+                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">PV Personnel</span>
+                            <span class="text-sm font-mono text-[var(--navy)] tabular-nums">{{ $memberPvPersonal }}</span>
+                        </div>
+                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">PV cumulés</span>
+                            <span class="text-sm font-mono text-[var(--navy)] tabular-nums">{{ $memberPvCumules }}</span>
+                        </div>
+                        <div class="inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Parrain</span>
+                            <span class="text-sm font-medium text-[var(--navy)]">
                                 @if($member->parrain)
-                                    {{ $member->parrain->name }}
-                                    <span class="text-xs text-[var(--text-secondary)] font-normal">
-                                        (Code: {{ $member->parrain->sponsor_id ?? 'N/A' }})
+                                    @if(($member->parrain->user_type ?? 'member') === 'member')
+                                        <a href="{{ route('cashier.members.show', $member->parrain) }}"
+                                           class="text-[var(--cashier-stat-primary)] hover:underline font-semibold">
+                                            {{ $member->parrain->name }}
+                                        </a>
+                                    @else
+                                        {{ $member->parrain->name }}
+                                    @endif
+                                    <span class="text-xs text-[var(--text-secondary)] font-normal font-mono">
+                                        · {{ $member->parrain->sponsor_id ?? '—' }}
                                     </span>
                                 @else
                                     <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
                                 @endif
-                            </p>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -360,13 +472,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Impression du formulaire d'adhésion
 document.addEventListener('DOMContentLoaded', function() {
-    const btn = document.getElementById('btnPrintAdhesion');
-    
-    if (btn) {
+    const printButtons = document.querySelectorAll('#btnPrintAdhesion, #btnPrintAdhesionMobile');
+
+    printButtons.forEach(function (btn) {
         btn.addEventListener('click', function() {
             const originalText = this.innerHTML;
-            
+
             this.disabled = true;
+            printButtons.forEach(function (b) { b.disabled = true; });
             this.innerHTML = `
                 <span class="spinner"></span>
                 Téléchargement...
@@ -406,17 +519,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     setTimeout(() => URL.revokeObjectURL(pdfUrl), 5000);
                     
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
+                    printButtons.forEach(function (b) {
+                        b.disabled = false;
+                        if (b.dataset.defaultHtml) {
+                            b.innerHTML = b.dataset.defaultHtml;
+                        }
+                    });
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
                     alert('Erreur lors du téléchargement. Veuillez réessayer.');
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
+                    printButtons.forEach(function (b) {
+                        b.disabled = false;
+                        if (b.dataset.defaultHtml) {
+                            b.innerHTML = b.dataset.defaultHtml;
+                        }
+                    });
                 });
         });
-    }
+        btn.dataset.defaultHtml = btn.innerHTML;
+    });
 });
 </script>
 @endpush

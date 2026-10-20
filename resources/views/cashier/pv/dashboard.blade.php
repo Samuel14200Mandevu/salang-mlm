@@ -265,7 +265,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Gestion des PV</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 @if(!empty($viewingMember))
-                    PV de {{ $subject->name }} — cumulés et portefeuille de distribution
+                    PV de {{ $subject->name }} — PV personnels et portefeuille de distribution
                 @else
                     Consultez votre solde et gérez les allocations
                 @endif
@@ -322,7 +322,7 @@
     {{-- STATISTIQUES --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="pv-stat-card">
-            <p class="stat-label">PV cumulés</p>
+            <p class="stat-label">PV Personnel</p>
             <p class="stat-value stat-value-pv">{{ number_format($memberPv['cumulative_pv'] ?? 0) }}</p>
             <p class="stat-sub">
                 Portefeuille&nbsp;: {{ number_format($memberPv['wallet_total_pv'] ?? 0) }}

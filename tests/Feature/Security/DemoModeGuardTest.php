@@ -39,7 +39,7 @@ class DemoModeGuardTest extends TestCase
         app(CommissionHistoryToCommissionsSync::class)->syncPeriods(collect(['2026-01']));
     }
 
-    public function test_recalculate_blocked_when_demo_mode_disabled(): void
+    public function test_recalculate_allowed_when_demo_mode_disabled(): void
     {
         config(['mlm.demo_mode_enabled' => false]);
 
@@ -48,7 +48,9 @@ class DemoModeGuardTest extends TestCase
             ['period' => '2026-01']
         );
 
-        $response->assertForbidden();
+        // Recalcul historique réactivé : sans PV → warning, pas 403
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
     }
 
     public function test_commission_history_index_allowed_when_demo_mode_disabled(): void
