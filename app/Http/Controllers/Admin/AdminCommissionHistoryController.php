@@ -596,10 +596,13 @@ class AdminCommissionHistoryController extends Controller
                 $totals['total'] += (float) $commission->amount;
             }
 
+            $commissionsCount = $commissions->count();
+
             $user = null;
             $periodPV = 0;
             if ($userId) {
-                $user = User::select('id', 'name', 'sponsor_id')->find($userId);
+                $user = User::with(['package', 'parrain:id,name'])
+                    ->find($userId);
                 $periodPV = PVHistory::where('user_id', $userId)
                     ->where('period', $period)
                     ->sum('amount');
@@ -645,6 +648,7 @@ class AdminCommissionHistoryController extends Controller
 
             $data = [
                 'period' => $period,
+                'commissionsCount' => $commissionsCount,
                 'totals' => $totals,
                 'beneficiaires' => $beneficiaires,
                 'user' => $user,

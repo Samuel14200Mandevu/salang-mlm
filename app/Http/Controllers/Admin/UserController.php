@@ -234,13 +234,17 @@ class UserController extends Controller
         ];
 
         if ($request->role !== 'cashier') {
+            $rules['sponsor_id'] = 'nullable|string|max:20|unique:users,sponsor_id|regex:/^[A-Za-z0-9_-]+$/';
             $rules['package_id'] = 'nullable|exists:packages,id';
             $rules['parrain_code'] = 'nullable|string|exists:users,sponsor_id';
             $rules['rank_id'] = 'nullable|exists:ranks,id';
             $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'sponsor_id.unique' => 'Ce code membre est déjà utilisé.',
+            'sponsor_id.regex' => 'Le code membre ne peut contenir que des lettres, chiffres, tirets ou underscores.',
+        ]);
 
         if ($request->role !== 'cashier' && $request->filled('parrain_code')) {
             $parrainCandidate = User::where('sponsor_id', trim($request->parrain_code))->first();
@@ -313,7 +317,9 @@ class UserController extends Controller
                     $parrain = User::where('sponsor_id', trim($request->parrain_code))->first();
                 }
 
-                $sponsorCode = $this->generateSponsorCode();
+                $sponsorCode = $request->filled('sponsor_id')
+                    ? trim($request->sponsor_id)
+                    : $this->generateSponsorCode();
 
                 $rankId = $request->rank_id;
                 if (!$rankId && $request->package_id) {
