@@ -4,16 +4,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Models\User;
 use App\Models\PVHistory;
 use App\Models\CommissionHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminCommissionHistoryController extends Controller
 {
+    use GeneratesPdfSafely;
+
     /**
      * Nombre maximum de générations pour le bonus INDIRECT.
      */
@@ -544,104 +548,133 @@ class AdminCommissionHistoryController extends Controller
     }
 
     /**
-     * Exporter le rapport en PDF pour une période
+     * Exporter le rapport détaillé en PDF pour une période
      */
     public function exportPDF(Request $request, $period)
     {
-        set_time_limit(300);
-        ini_set('memory_limit', '512M');
+        try {
+            $this->preparePdfExport(300, '1024M');
 
-        $userId = $request->input('user_id');
+            $userId = $request->input('user_id');
+            $bonusOrder = ['direct', 'indirect', 'leadership', 'cash_pos'];
 
-        $query = CommissionHistory::with(['user', 'fromUser'])
-            ->where('period', $period);
-
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
-
-        $commissions = $query->orderBy('created_at', 'desc')->get();
-
-        if ($commissions->isEmpty()) {
-            $pdf = Pdf::loadHTML('<h1 style="text-align:center; font-family:Arial;">Aucune commission trouvée pour la période ' . $period . '</h1>');
-            $pdf->setPaper('a4', 'portrait');
-            return $pdf->stream("rapport_commissions_{$period}.pdf");
-        }
-
-        $totals = [
-            'direct' => 0,
-            'indirect' => 0,
-            'leadership' => 0,
-            'cash_pos' => 0,
-            'total' => 0,
-        ];
-
-        foreach ($commissions as $commission) {
-            if (isset($totals[$commission->type])) {
-                $totals[$commission->type] += $commission->amount;
-            }
-            $totals['total'] += $commission->amount;
-        }
-
-        $user = null;
-        $periodPV = 0;
-        if ($userId) {
-            $user = User::find($userId);
-            $periodPV = PVHistory::where('user_id', $userId)
+            $query = CommissionHistory::with([
+                'user:id,name,sponsor_id',
+                'fromUser:id,name',
+            ])
                 ->where('period', $period)
-                ->sum('amount');
-        }
+                ->select([
+                    'id', 'user_id', 'from_user_id', 'type', 'amount',
+                    'percentage', 'pv_used', 'generation', 'description', 'period', 'created_at',
+                ]);
 
-        $beneficiaires = $commissions->groupBy('user_id')->map(function($items, $userId) {
-            $user = $items->first()->user;
-            return [
-                'name' => $user?->name ?? 'N/A',
-                'id' => $userId,
-                'total' => $items->sum('amount'),
-                'details' => $items->map(function($item) {
-                    return [
-                        'type' => $item->type,
-                        'from_user' => $item->fromUser?->name ?? 'N/A',
-                        'amount' => $item->amount,
-                        'percentage' => $item->percentage,
-                        'pv_used' => $item->pv_used,
-                        'generation' => $item->generation,
-                        'description' => $item->description,
-                    ];
-                })
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+
+            $commissions = $query->orderBy('user_id')->orderBy('type')->get();
+
+            if ($commissions->isEmpty()) {
+                return $this->downloadPdfHtml(
+                    '<h1 style="text-align:center; font-family:DejaVu Sans;">Aucune commission trouvée pour la période '.e($period).'</h1>',
+                    "rapport_commissions_{$period}.pdf"
+                );
+            }
+
+            $totals = [
+                'direct' => 0.0,
+                'indirect' => 0.0,
+                'leadership' => 0.0,
+                'cash_pos' => 0.0,
+                'total' => 0.0,
             ];
-        });
 
-        $logoBase64 = '';
-        $logoPath = public_path('images/salang_logo.png');
-        if (file_exists($logoPath) && filesize($logoPath) < 100000) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+            foreach ($commissions as $commission) {
+                if (isset($totals[$commission->type])) {
+                    $totals[$commission->type] += (float) $commission->amount;
+                }
+                $totals['total'] += (float) $commission->amount;
+            }
+
+            $user = null;
+            $periodPV = 0;
+            if ($userId) {
+                $user = User::select('id', 'name', 'sponsor_id')->find($userId);
+                $periodPV = PVHistory::where('user_id', $userId)
+                    ->where('period', $period)
+                    ->sum('amount');
+            }
+
+            $beneficiaires = $commissions->groupBy('user_id')->map(function ($items, $uid) use ($bonusOrder) {
+                $member = $items->first()->user;
+                $detailsByType = [];
+                $totalsByType = [];
+
+                foreach ($bonusOrder as $type) {
+                    $detailsByType[$type] = [];
+                    $totalsByType[$type] = 0.0;
+                }
+
+                foreach ($items as $item) {
+                    $type = $item->type;
+                    if (! isset($detailsByType[$type])) {
+                        continue;
+                    }
+                    $amount = (float) $item->amount;
+                    $detailsByType[$type][] = [
+                        'type' => $type,
+                        'from_user' => $item->fromUser?->name ?? 'N/A',
+                        'amount' => $amount,
+                        'percentage' => $item->percentage,
+                        'generation' => $item->generation,
+                        'description' => Str::limit((string) ($item->description ?? ''), 45),
+                    ];
+                    $totalsByType[$type] += $amount;
+                }
+
+                return [
+                    'name' => $member?->name ?? 'N/A',
+                    'id' => $uid,
+                    'total' => (float) $items->sum('amount'),
+                    'details_by_type' => $detailsByType,
+                    'totals_by_type' => $totalsByType,
+                ];
+            })->sortByDesc('total')->values();
+
+            unset($commissions);
+
+            $data = [
+                'period' => $period,
+                'totals' => $totals,
+                'beneficiaires' => $beneficiaires,
+                'user' => $user,
+                'userId' => $userId,
+                'periodPV' => $periodPV,
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'date_generated' => now()->format('d/m/Y H:i'),
+                'bonusOrder' => $bonusOrder,
+                'bonusLabels' => [
+                    'direct' => 'Direct Bonus',
+                    'indirect' => 'Indirect Bonus',
+                    'leadership' => 'Leadership Bonus',
+                    'cash_pos' => 'Cash POS Bonus',
+                ],
+            ];
+
+            return $this->downloadPdfView(
+                'admin.pv.commission-pdf',
+                $data,
+                "rapport_commissions_{$period}.pdf",
+                'a4',
+                'portrait',
+                300,
+                '1024M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('commission-history.exportPDF', $e, ['period' => $period]);
+
+            return back()->with('error', 'Erreur lors de la génération du PDF détaillé. Réessayez ou filtrez un membre.');
         }
-
-        $data = [
-            'period' => $period,
-            'commissions' => $commissions,
-            'totals' => $totals,
-            'beneficiaires' => $beneficiaires,
-            'user' => $user,
-            'userId' => $userId,
-            'periodPV' => $periodPV,
-            'logoBase64' => $logoBase64,
-            'date_generated' => now()->format('d/m/Y H:i'),
-        ];
-
-        $pdf = Pdf::loadView('admin.pv.commission-pdf', $data);
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setOptions([
-            'defaultFont' => 'Times New Roman',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => false,
-            'isJavascriptEnabled' => false,
-            'isFontSubsettingEnabled' => true,
-        ]);
-
-        return $pdf->stream("rapport_commissions_{$period}.pdf");
     }
 
     /**
@@ -649,17 +682,18 @@ class AdminCommissionHistoryController extends Controller
      */
     public function exportGlobalPDF(Request $request, $period = 'all')
     {
-        set_time_limit(300);
-        ini_set('memory_limit', '512M');
-
         try {
-            $query = CommissionHistory::with(['user.parrain']);
+            $this->preparePdfExport(300, '512M');
+
+            $query = CommissionHistory::with([
+                'user:id,name,sponsor_id,parrain_id,rank_level,pv_balance',
+                'user.parrain:id,sponsor_id',
+            ]);
 
             if ($period !== 'all') {
                 $query->where('period', $period);
             }
 
-            // Colonnes minimales pour alléger DomPDF / mémoire prod
             $commissions = $query
                 ->select(['id', 'user_id', 'type', 'amount', 'period'])
                 ->orderBy('user_id')
@@ -667,10 +701,12 @@ class AdminCommissionHistoryController extends Controller
                 ->get();
 
             if ($commissions->isEmpty()) {
-                $pdf = Pdf::loadHTML('<h1 style="text-align:center; font-family:Arial;">Aucune commission trouvée pour la période ' . e($period) . '</h1>');
-                $pdf->setPaper('a4', 'landscape');
-
-                return $pdf->download("rapport_global_commissions_{$period}.pdf");
+                return $this->downloadPdfHtml(
+                    '<h1 style="text-align:center; font-family:DejaVu Sans;">Aucune commission trouvée pour la période '.e($period).'</h1>',
+                    "rapport_global_commissions_{$period}.pdf",
+                    'a4',
+                    'landscape'
+                );
             }
 
             $totals = [
@@ -731,14 +767,7 @@ class AdminCommissionHistoryController extends Controller
                 ];
             })->sortByDesc('total');
 
-            // Libérer la collection brute avant DomPDF
             unset($commissions);
-
-            $logoBase64 = '';
-            $logoPath = public_path('images/salang_logo.png');
-            if (file_exists($logoPath) && filesize($logoPath) < 100000) {
-                $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-            }
 
             $data = [
                 'period' => $period,
@@ -746,27 +775,21 @@ class AdminCommissionHistoryController extends Controller
                 'totals' => $totals,
                 'typeStats' => $typeStats,
                 'beneficiaires' => $beneficiaires,
-                'logoBase64' => $logoBase64,
+                'logoBase64' => $this->loadPdfLogoBase64(),
                 'date_generated' => now()->format('d/m/Y H:i'),
             ];
 
-            $pdf = Pdf::loadView('admin.pv.commission-global-pdf', $data);
-            $pdf->setPaper('a4', 'landscape');
-            $pdf->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,
-                'isJavascriptEnabled' => false,
-                'isFontSubsettingEnabled' => true,
-            ]);
-
-            return $pdf->download("rapport_global_commissions_{$period}.pdf");
+            return $this->downloadPdfView(
+                'admin.pv.commission-global-pdf',
+                $data,
+                "rapport_global_commissions_{$period}.pdf",
+                'a4',
+                'landscape',
+                300,
+                '512M'
+            );
         } catch (\Throwable $e) {
-            Log::error('Erreur export PDF global commissions', [
-                'period' => $period,
-                'message' => $e->getMessage(),
-            ]);
+            $this->logPdfFailure('commission-history.exportGlobalPDF', $e, ['period' => $period]);
 
             return back()->with('error', 'Erreur lors de la génération du PDF. Réessayez ou réduisez la période.');
         }

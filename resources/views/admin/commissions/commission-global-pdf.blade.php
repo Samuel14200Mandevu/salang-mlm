@@ -227,7 +227,7 @@
             </tr>
             <tr>
                 <td style="text-align: left;">Bénéficiaires : <strong>{{ $beneficiaires->count() }}</strong></td>
-                <td style="text-align: right;">Commissions : <strong>{{ $commissions->count() }}</strong></td>
+                <td style="text-align: right;">Commissions : <strong>{{ $commissionsCount ?? $beneficiaires->count() }}</strong></td>
             </tr>
             @if(!empty($filters['search']) || !empty($filters['type']) || !empty($filters['status']))
             <tr>
@@ -264,15 +264,6 @@
             <tbody>
                 @php $numero = 1; @endphp
                 @foreach($beneficiaires as $userId => $beneficiaire)
-                    @php
-                        $d = $beneficiaire['details'];
-                        $directTotal = collect($d)->where('type', 'direct')->sum('amount');
-                        $indirectTotal = collect($d)->where('type', 'indirect')->sum('amount');
-                        $leadershipTotal = collect($d)->where('type', 'leadership')->sum('amount');
-                        $sponsorTotal = collect($d)->where('type', 'sponsor')->sum('amount');
-                        $retailTotal = collect($d)->where('type', 'retail')->sum('amount');
-                        $cashTotal = collect($d)->where('type', 'cash_pos')->sum('amount');
-                    @endphp
                     <tr>
                         <td>{{ $numero++ }}</td>
                         <td class="text-center" style="color:#0E2F76; font-weight:bold;">{{ $beneficiaire['code'] }}</td>
@@ -280,12 +271,12 @@
                         <td class="text-center" style="color:#000; font-weight:bold;">{{ $beneficiaire['parrain_code'] }}</td>
                         <td>{{ $beneficiaire['rank_level'] }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">{{ number_format($beneficiaire['pv'], 1, ',', ' ') }}</td>
-                        <td class="text-right direct-color">${{ number_format($directTotal, 2) }}</td>
-                        <td class="text-right indirect-color">${{ number_format($indirectTotal, 2) }}</td>
-                        <td class="text-right leadership-color">${{ number_format($leadershipTotal, 2) }}</td>
-                        <td class="text-right sponsor-color">${{ number_format($sponsorTotal, 2) }}</td>
-                        <td class="text-right retail-color">${{ number_format($retailTotal, 2) }}</td>
-                        <td class="text-right cash-color">${{ number_format($cashTotal, 2) }}</td>
+                        <td class="text-right direct-color">${{ number_format($beneficiaire['direct'] ?? 0, 2) }}</td>
+                        <td class="text-right indirect-color">${{ number_format($beneficiaire['indirect'] ?? 0, 2) }}</td>
+                        <td class="text-right leadership-color">${{ number_format($beneficiaire['leadership'] ?? 0, 2) }}</td>
+                        <td class="text-right sponsor-color">${{ number_format($beneficiaire['sponsor'] ?? 0, 2) }}</td>
+                        <td class="text-right retail-color">${{ number_format($beneficiaire['retail'] ?? 0, 2) }}</td>
+                        <td class="text-right cash-color">${{ number_format($beneficiaire['cash_pos'] ?? 0, 2) }}</td>
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ number_format($beneficiaire['total'], 2) }}</td>
                     </tr>
                 @endforeach

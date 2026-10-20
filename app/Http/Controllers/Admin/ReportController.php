@@ -14,12 +14,15 @@ use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use Barryvdh\DomPDF\Facade\Pdf;
 use setasign\Fpdi\TcpdfFpdi;
 use setasign\Fpdi\Tcpdf\Fpdi;
 
 class ReportController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function index(Request $request)
     {
         try {
@@ -416,16 +419,16 @@ class ReportController extends Controller
         ];
 
         $data = compact('users', 'stats');
-        
-        $pdf = Pdf::loadView('admin.reports.pdf.users', $data);
-        $pdf->setPaper('A4', 'landscape');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-        ]);
-        
-        return $pdf->download('rapport_utilisateurs_' . date('Y-m-d') . '.pdf');
+
+        return $this->downloadPdfView(
+            'admin.reports.pdf.users',
+            $data,
+            'rapport_utilisateurs_'.date('Y-m-d').'.pdf',
+            'a4',
+            'landscape',
+            300,
+            '1024M'
+        );
     }
 
     /**
@@ -476,18 +479,13 @@ class ReportController extends Controller
             ];
             
             $data = compact('users', 'stats', 'pagination');
-            
-            // Générer le PDF temporaire
-            $pdf = Pdf::loadView('admin.reports.pdf.users_chunk', $data);
-            $pdf->setPaper('A4', 'landscape');
-            $pdf->setOptions([
-                'defaultFont' => 'sans-serif',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => false,
-            ]);
-            
-            // Sauvegarder temporairement
-            $tempFile = $tempDir . "/users_page_{$page}.pdf";
+
+            $this->preparePdfExport(300, '1024M');
+            $pdf = Pdf::loadView('admin.reports.pdf.users_chunk', $data)
+                ->setPaper('A4', 'landscape')
+                ->setOptions($this->safePdfOptions());
+
+            $tempFile = $tempDir."/users_page_{$page}.pdf";
             file_put_contents($tempFile, $pdf->output());
             $tempFiles[] = $tempFile;
             
@@ -636,16 +634,16 @@ class ReportController extends Controller
         ];
 
         $data = compact('commissions', 'stats');
-        
-        $pdf = Pdf::loadView('admin.reports.pdf.commissions', $data);
-        $pdf->setPaper('A4', 'landscape');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-        ]);
-        
-        return $pdf->download('rapport_commissions_' . date('Y-m-d') . '.pdf');
+
+        return $this->downloadPdfView(
+            'admin.reports.pdf.commissions',
+            $data,
+            'rapport_commissions_'.date('Y-m-d').'.pdf',
+            'a4',
+            'landscape',
+            300,
+            '1024M'
+        );
     }
 
     /**
@@ -677,16 +675,16 @@ class ReportController extends Controller
         ];
 
         $data = compact('orders', 'stats');
-        
-        $pdf = Pdf::loadView('admin.reports.pdf.sales', $data);
-        $pdf->setPaper('A4', 'landscape');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-        ]);
-        
-        return $pdf->download('rapport_ventes_' . date('Y-m-d') . '.pdf');
+
+        return $this->downloadPdfView(
+            'admin.reports.pdf.sales',
+            $data,
+            'rapport_ventes_'.date('Y-m-d').'.pdf',
+            'a4',
+            'landscape',
+            300,
+            '1024M'
+        );
     }
 
     /**
@@ -720,16 +718,16 @@ class ReportController extends Controller
         ];
 
         $data = compact('withdrawals', 'stats');
-        
-        $pdf = Pdf::loadView('admin.reports.pdf.withdrawals', $data);
-        $pdf->setPaper('A4', 'landscape');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false,
-        ]);
-        
-        return $pdf->download('rapport_retraits_' . date('Y-m-d') . '.pdf');
+
+        return $this->downloadPdfView(
+            'admin.reports.pdf.withdrawals',
+            $data,
+            'rapport_retraits_'.date('Y-m-d').'.pdf',
+            'a4',
+            'landscape',
+            300,
+            '1024M'
+        );
     }
 
     public function exportUsers($request)
@@ -1172,10 +1170,6 @@ class ReportController extends Controller
 public function exportUserNetworkPdf(Request $request, $userId)
 {
     try {
-        // Augmenter temporairement les limites pour Dompdf sur les gros réseaux
-        ini_set('max_execution_time', 600);
-        ini_set('memory_limit', '1024M'); // Passer à 1 Go si nécessaire
-
         $user = User::with(['rank', 'package', 'wallet', 'parrain'])->findOrFail($userId);
 
         $treeData  = $this->getUserNetworkTree($user);
@@ -1188,20 +1182,19 @@ public function exportUserNetworkPdf(Request $request, $userId)
 
         $stats = $this->getNetworkStats($user);
 
-        // Options d'optimisation pour Dompdf
-        $pdf = \Pdf::loadView('admin.reports.pdf.user_network', compact('user', 'networkData', 'stats'))
-                   ->setPaper('a4', 'portrait')
-                   ->setOptions([
-                       'isHtml5ParserEnabled' => true,
-                       'isRemoteEnabled'      => true,
-                       'enable_php'           => false,
-                   ]);
+        return $this->downloadPdfView(
+            'admin.reports.pdf.user_network',
+            compact('user', 'networkData', 'stats'),
+            "reseau-{$user->name}-{$user->id}.pdf",
+            'a4',
+            'portrait',
+            600,
+            '1024M'
+        );
+    } catch (\Throwable $e) {
+        $this->logPdfFailure('admin.reports.exportUserNetworkPdf', $e, ['user_id' => $userId]);
 
-        return $pdf->download("reseau-{$user->name}-{$user->id}.pdf");
-
-    } catch (\Exception $e) {
-        Log::error('Erreur export PDF réseau: ' . $e->getMessage());
-        return back()->with('error', 'Erreur lors de la génération du PDF: ' . $e->getMessage());
+        return back()->with('error', 'Erreur lors de la génération du PDF réseau.');
     }
 }
 

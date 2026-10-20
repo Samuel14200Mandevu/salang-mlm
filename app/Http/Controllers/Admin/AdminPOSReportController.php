@@ -10,10 +10,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminPOSReportController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
@@ -235,11 +238,18 @@ class AdminPOSReportController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
-        $orders = $query->get();
+        $orders = $query->limit(2000)->get();
         $stats = $this->getGlobalStats();
-        
-        $pdf = Pdf::loadView('admin.pos-reports.pdf', compact('orders', 'stats'));
-        return $pdf->download('rapport_pos_' . date('Y-m-d') . '.pdf');
+
+        return $this->downloadPdfView(
+            'admin.pos-reports.pdf',
+            compact('orders', 'stats'),
+            'rapport_pos_'.date('Y-m-d').'.pdf',
+            'a4',
+            'landscape',
+            300,
+            '512M'
+        );
     }
 
     // ============================================================

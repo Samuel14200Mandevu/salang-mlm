@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 
 class AdminOrderController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function index(Request $request)
     {
         $query = Order::with(['user', 'items']);
@@ -89,21 +92,21 @@ class AdminOrderController extends Controller
     {
         $order->load(['user', 'items', 'items.product', 'items.package']);
 
-        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice', compact('order'));
-            return $pdf->download('invoice_' . $order->order_number . '.pdf');
-        }
+        try {
+            return $this->downloadPdfView(
+                'admin.orders.invoice',
+                compact('order'),
+                'invoice_'.$order->order_number.'.pdf',
+                'a4',
+                'portrait',
+                120,
+                '256M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('admin.orders.invoice', $e, ['order_id' => $order->id]);
 
-        if (class_exists('\Dompdf\Dompdf')) {
-            $dompdf = new \Dompdf\Dompdf();
-            $html = view('admin.orders.invoice', compact('order'))->render();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            return $dompdf->stream('invoice_' . $order->order_number . '.pdf');
+            return back()->with('error', 'Erreur lors de la génération de la facture PDF.');
         }
-
-        return back()->with('error', 'Module PDF non installé.');
     }
 
     /**

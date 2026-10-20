@@ -13,10 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use Illuminate\Support\Facades\PDF;
 
 class OrderController extends Controller
 {
+    use GeneratesPdfSafely;
+
     protected MonthlyCommissionService $commissionService;
 
     public function __construct(MonthlyCommissionService $commissionService)
@@ -189,24 +192,21 @@ class OrderController extends Controller
             $sponsor = User::find($order->user->parrain_id);
         }
 
-        // Vérifier si DomPDF est installé
-        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('orders.invoice', compact('order', 'sponsor'));
-            $pdf->setPaper('a6', 'portrait');
-            return $pdf->download('Facture_' . $order->order_number . '.pdf');
-        }
+        try {
+            return $this->downloadPdfView(
+                'orders.invoice',
+                compact('order', 'sponsor'),
+                'Facture_'.$order->order_number.'.pdf',
+                'a6',
+                'portrait',
+                120,
+                '256M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('orders.invoice', $e, ['order_id' => $order->id]);
 
-        // Fallback si DomPDF n'est pas installé
-        if (class_exists('\Dompdf\Dompdf')) {
-            $dompdf = new \Dompdf\Dompdf();
-            $html = view('orders.invoice', compact('order', 'sponsor'))->render();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('a6', 'portrait');
-            $dompdf->render();
-            return $dompdf->stream('Facture_' . $order->order_number . '.pdf');
+            return back()->with('error', 'Erreur lors de la génération de la facture PDF.');
         }
-
-        return back()->with('error', 'Module PDF non installé. Contactez l\'administrateur.');
     }
 
     /**

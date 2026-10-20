@@ -9,6 +9,7 @@ use App\Models\Commission;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\User;
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,8 @@ use Carbon\Carbon;
 
 class CashierReportController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function __construct()
     {
         $this->middleware(['auth', 'active']);
@@ -251,21 +254,17 @@ class CashierReportController extends Controller
             if ($report->user_id !== auth()->id()) abort(403);
         }
 
-        $logoBase64 = '';
-        $logoPath = public_path('images/salang_logo.png');
-        if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
+        $logoBase64 = $this->loadPdfLogoBase64();
 
-        $pdf = Pdf::loadView('cashier.reports.pdf', compact('report', 'logoBase64'));
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'DejaVu Sans',
-        ]);
-
-        return $pdf->download('rapport_caisse_' . $report->report_number . '.pdf');
+        return $this->downloadPdfView(
+            'cashier.reports.pdf',
+            compact('report', 'logoBase64'),
+            'rapport_caisse_'.$report->report_number.'.pdf',
+            'a4',
+            'portrait',
+            180,
+            '512M'
+        );
     }
 
     /**
