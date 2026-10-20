@@ -183,141 +183,138 @@
         </div>
     </div>
 
-    {{-- INFORMATIONS DU MEMBRE (desktop) --}}
-    <div class="detail-card hidden md:block">
-        <div class="flex flex-wrap items-start gap-4">
-            <div class="avatar-lg">
-                {{ strtoupper(substr($member->name, 0, 1)) }}
+    {{-- Infos (gauche) + PV (droite), filleuls en dessous --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        {{-- INFORMATIONS DU MEMBRE (desktop) --}}
+        <div class="detail-card member-info-card hidden md:block h-full">
+            <div class="member-info-card__head">
+                <div class="avatar-lg">
+                    {{ strtoupper(substr($member->name, 0, 1)) }}
+                </div>
+                <div class="member-info-card__identity min-w-0">
+                    <h2 class="text-xl font-bold text-[var(--text-primary)] tracking-tight">{{ $member->name }}</h2>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
+                            {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                        </span>
+                        @php
+                            $roleName = $member->getRoleNames()->first() ?? 'user';
+                        @endphp
+                        @if($roleName != 'user')
+                            <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
+                        @endif
+                    </div>
+                </div>
             </div>
-            <div class="flex-1">
-                <h2 class="text-xl font-bold text-[var(--text-primary)] tracking-tight">{{ $member->name }}</h2>
-                <div class="flex flex-wrap gap-2 mt-1">
-                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
-                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
+
+            <div class="member-info-card__grid">
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Email</span>
+                    <span class="member-info-card__value truncate">{{ $member->email }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Téléphone</span>
+                    <span class="member-info-card__value">{{ $member->phone ?? 'N/A' }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Code</span>
+                    <span class="member-info-card__value font-mono text-[var(--navy)]">{{ $member->sponsor_id ?? 'N/A' }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Grade</span>
+                    <span class="member-info-card__value inline-flex flex-wrap items-center gap-x-1">
+                        <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
+                        <span class="text-xs text-[var(--text-tertiary)] font-normal">(Niv. {{ $memberRankLevel }})</span>
                     </span>
-                    @php
-                        $roleName = $member->getRoleNames()->first() ?? 'user';
-                    @endphp
-                    @if($roleName != 'user')
-                        <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">PV Personnel</span>
+                    <span class="member-info-card__value font-mono text-[var(--navy)] tabular-nums">{{ $memberPvPersonal }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">PV cumulés</span>
+                    <span class="member-info-card__value font-mono text-[var(--navy)] tabular-nums">{{ $memberPvCumules }}</span>
+                </div>
+                <div class="member-info-card__field member-info-card__field--full">
+                    <span class="member-info-card__label">Parrain</span>
+                    <span class="member-info-card__value text-[var(--navy)]">
+                        @if($member->parrain)
+                            @if(($member->parrain->user_type ?? 'member') === 'member')
+                                <a href="{{ route('cashier.members.show', $member->parrain) }}"
+                                   class="text-[var(--cashier-stat-primary)] hover:underline font-semibold">
+                                    {{ $member->parrain->name }}
+                                </a>
+                            @else
+                                {{ $member->parrain->name }}
+                            @endif
+                            <span class="text-xs text-[var(--text-secondary)] font-normal font-mono">
+                                · {{ $member->parrain->sponsor_id ?? '—' }}
+                            </span>
+                        @else
+                            <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
+                        @endif
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{-- SECTION PV DU MEMBRE --}}
+        <div class="detail-card h-full">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-semibold text-[var(--text-primary)] text-sm">Points de Volume (PV)</h3>
+                    <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                        PV Personnel et portefeuille de distribution (ventes POS)
+                    </p>
+                </div>
+                <div class="pv-actions">
+                    @if(($memberPv['available_pv'] ?? 0) > 0)
+                        <a href="{{ route('cashier.pv.distribute', ['member_id' => $member->id]) }}" class="btn btn-primary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            Distribuer PV
+                        </a>
                     @endif
-                </div>
-                <div class="flex flex-col lg:flex-row lg:flex-nowrap lg:items-baseline gap-x-6 gap-y-2 mt-3 min-w-0">
-                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
-                        <div class="inline-flex items-baseline gap-1.5 min-w-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Email</span>
-                            <span class="text-sm text-[var(--text-primary)] truncate">{{ $member->email }}</span>
-                        </div>
-                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Téléphone</span>
-                            <span class="text-sm text-[var(--text-primary)]">{{ $member->phone ?? 'N/A' }}</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
-                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">Code</span>
-                            <span class="text-sm font-mono text-[var(--navy)]">{{ $member->sponsor_id ?? 'N/A' }}</span>
-                        </div>
-                        <div class="inline-flex items-baseline gap-1.5 min-w-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Grade</span>
-                            <span class="text-sm inline-flex flex-wrap items-center gap-x-1">
-                                <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
-                                <span class="text-xs text-[var(--text-tertiary)] font-normal">(Niv. {{ $memberRankLevel }})</span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 min-w-0">
-                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">PV Personnel</span>
-                            <span class="text-sm font-mono text-[var(--navy)] tabular-nums">{{ $memberPvPersonal }}</span>
-                        </div>
-                        <div class="inline-flex items-baseline gap-1.5 shrink-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">PV cumulés</span>
-                            <span class="text-sm font-mono text-[var(--navy)] tabular-nums">{{ $memberPvCumules }}</span>
-                        </div>
-                        <div class="inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
-                            <span class="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide shrink-0">Parrain</span>
-                            <span class="text-sm font-medium text-[var(--navy)]">
-                                @if($member->parrain)
-                                    @if(($member->parrain->user_type ?? 'member') === 'member')
-                                        <a href="{{ route('cashier.members.show', $member->parrain) }}"
-                                           class="text-[var(--cashier-stat-primary)] hover:underline font-semibold">
-                                            {{ $member->parrain->name }}
-                                        </a>
-                                    @else
-                                        {{ $member->parrain->name }}
-                                    @endif
-                                    <span class="text-xs text-[var(--text-secondary)] font-normal font-mono">
-                                        · {{ $member->parrain->sponsor_id ?? '—' }}
-                                    </span>
-                                @else
-                                    <span class="text-[var(--text-tertiary)]">Aucun parrain</span>
-                                @endif
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- SECTION PV DU MEMBRE --}}
-    <div class="detail-card">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h3 class="font-semibold text-[var(--text-primary)] text-sm">Points de Volume (PV)</h3>
-                <p class="text-xs text-[var(--text-secondary)] mt-0.5">
-                    PV Personnel et portefeuille de distribution (ventes POS)
-                </p>
-            </div>
-            <div class="pv-actions">
-                @if(($memberPv['available_pv'] ?? 0) > 0)
-                    <a href="{{ route('cashier.pv.distribute', ['member_id' => $member->id]) }}" class="btn btn-primary btn-sm">
+                    <a href="{{ route('cashier.pv.dashboard', ['member_id' => $member->id]) }}" class="btn btn-outline btn-sm">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14M5 12h14"/>
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
                         </svg>
-                        Distribuer PV
+                        Consulter les PV
                     </a>
-                @endif
-                <a href="{{ route('cashier.pv.dashboard', ['member_id' => $member->id]) }}" class="btn btn-outline btn-sm">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                        <path d="M2 12l10 5 10-5"/>
-                    </svg>
-                    Consulter les PV
-                </a>
+                </div>
             </div>
-        </div>
 
-        <div class="pv-summary">
-            <div class="pv-item">
-                <div class="number">{{ number_format($memberPv['cumulative_pv'] ?? 0) }}</div>
-                <span class="label">PV Personnel </span>
+            <div class="pv-summary !grid !grid-cols-2 !gap-3" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div class="pv-item">
+                    <div class="number">{{ number_format($memberPv['cumulative_pv'] ?? 0) }}</div>
+                    <span class="label">PV Personnel</span>
+                </div>
+                <div class="pv-item pv-item--available">
+                    <div class="number">{{ number_format($memberPv['available_pv'] ?? 0) }}</div>
+                    <span class="label">PV Disponibles</span>
+                </div>
+                <div class="pv-item pv-item--allocated">
+                    <div class="number">{{ number_format($memberPv['allocated_pv'] ?? 0) }}</div>
+                    <span class="label">PV Alloués</span>
+                </div>
+                <div class="pv-item pv-item--pending">
+                    <div class="number">{{ number_format($memberPv['pending_pv'] ?? 0) }}</div>
+                    <span class="label">PV en Attente</span>
+                </div>
             </div>
-            <div class="pv-item pv-item--available">
-                <div class="number">{{ number_format($memberPv['available_pv'] ?? 0) }}</div>
-                <span class="label">PV Disponibles</span>
-            </div>
-            <div class="pv-item pv-item--allocated">
-                <div class="number">{{ number_format($memberPv['allocated_pv'] ?? 0) }}</div>
-                <span class="label">PV Alloués</span>
-            </div>
-            <div class="pv-item pv-item--pending">
-                <div class="number">{{ number_format($memberPv['pending_pv'] ?? 0) }}</div>
-                <span class="label">PV en Attente</span>
-            </div>
+            @if(($memberPv['wallet_total_pv'] ?? 0) > 0)
+                <p class="text-xs text-[var(--text-tertiary)] mt-2">
+                    Crédits portefeuille (ventes à distribuer)&nbsp;:
+                    <span class="font-semibold text-[var(--text-primary)]">{{ number_format($memberPv['wallet_total_pv']) }} PV</span>
+                </p>
+            @endif
         </div>
-        @if(($memberPv['wallet_total_pv'] ?? 0) > 0)
-            <p class="text-xs text-[var(--text-tertiary)] mt-2">
-                Crédits portefeuille (ventes à distribuer)&nbsp;:
-                <span class="font-semibold text-[var(--text-primary)]">{{ number_format($memberPv['wallet_total_pv']) }} PV</span>
-            </p>
-        @endif
-
     </div>
 
-    {{-- LISTE DES FILLEULS --}}
+    {{-- LISTE DES FILLEULS (pleine largeur sous les 2 colonnes) --}}
     <div class="detail-card p-3 sm:p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm">
