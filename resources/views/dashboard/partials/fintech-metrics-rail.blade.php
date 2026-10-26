@@ -7,27 +7,27 @@
     <div class="member-fintech-grid member-fintech-grid--2x3">
         <article class="member-fintech-tile is-highlight">
             <span class="member-fintech-tile__label">PV perso</span>
-            <span class="member-fintech-tile__value">{{ number_format($pvPersonnel ?? 0) }}</span>
+            <span class="member-fintech-tile__value" data-count-up="{{ (float) ($pvPersonnel ?? 0) }}" data-count-decimals="0">{{ number_format($pvPersonnel ?? 0) }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">PV équipe</span>
-            <span class="member-fintech-tile__value">{{ number_format($pvCumul ?? 0) }}</span>
+            <span class="member-fintech-tile__value" data-count-up="{{ (float) ($pvCumul ?? 0) }}" data-count-decimals="0">{{ number_format($pvCumul ?? 0) }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">Filleuls</span>
-            <span class="member-fintech-tile__value">{{ $totalDownlines ?? 0 }}</span>
+            <span class="member-fintech-tile__value" data-count-up="{{ (float) ($totalDownlines ?? 0) }}" data-count-decimals="0">{{ $totalDownlines ?? 0 }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">PV 24h</span>
-            <span class="member-fintech-tile__value member-fintech-tile__value--sm">{{ number_format($todayPv, 0) }}</span>
+            <span class="member-fintech-tile__value member-fintech-tile__value--sm" data-count-up="{{ $todayPv }}" data-count-decimals="0">{{ number_format($todayPv, 0) }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">Reste grade</span>
-            <span class="member-fintech-tile__value member-fintech-tile__value--sm">{{ number_format($personalNeeded, 0) }}</span>
+            <span class="member-fintech-tile__value member-fintech-tile__value--sm" data-count-up="{{ $personalNeeded }}" data-count-decimals="0">{{ number_format($personalNeeded, 0) }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">PV mois</span>
-            <span class="member-fintech-tile__value">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</span>
+            <span class="member-fintech-tile__value" data-count-up="{{ (float) ($rankProgress['monthly_pv'] ?? 0) }}" data-count-decimals="0">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</span>
         </article>
     </div>
 </div>

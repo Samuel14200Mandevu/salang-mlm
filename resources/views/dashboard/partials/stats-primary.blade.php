@@ -24,7 +24,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Commissions</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">${{ number_format($totalCommission, 2) }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent"><span data-count-up="{{ (float) $totalCommission }}" data-count-decimals="2" data-count-prefix="$">${{ number_format($totalCommission, 2) }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -37,7 +37,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Filleuls</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ $totalDownlines }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value"><span data-count-up="{{ (float) $totalDownlines }}" data-count-decimals="0">{{ $totalDownlines }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -50,7 +50,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV perso</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ number_format($pvPersonnel ?? 0) }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value"><span data-count-up="{{ (float) ($pvPersonnel ?? 0) }}" data-count-decimals="0">{{ number_format($pvPersonnel ?? 0) }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -64,7 +64,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Revenu du jour</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">${{ number_format($stats['today_earnings'] ?? 0, 2) }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent"><span data-count-up="{{ (float) ($stats['today_earnings'] ?? 0) }}" data-count-decimals="2" data-count-prefix="$">${{ number_format($stats['today_earnings'] ?? 0, 2) }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,7 +77,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total équipe</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ $teamTotal }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value"><span data-count-up="{{ (float) $teamTotal }}" data-count-decimals="0">{{ $teamTotal }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -90,7 +90,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Progression</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent"><span data-count-up="{{ (float) ($rankProgress['progress'] ?? 0) }}" data-count-decimals="1" data-count-suffix="%">{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -104,7 +104,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Revenu du jour</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent">${{ number_format($stats['today_earnings'] ?? 0, 2) }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value stat-value--accent"><span data-count-up="{{ (float) ($stats['today_earnings'] ?? 0) }}" data-count-decimals="2" data-count-prefix="$">${{ number_format($stats['today_earnings'] ?? 0, 2) }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -117,7 +117,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">PV équipe</p>
-                    <p class="text-lg sm:text-xl md:text-2xl stat-value">{{ number_format($pvCumul ?? 0) }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl stat-value"><span data-count-up="{{ (float) ($pvCumul ?? 0) }}" data-count-decimals="0">{{ number_format($pvCumul ?? 0) }}</span></p>
                 </div>
                 <div class="stat-icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -138,9 +138,9 @@
                     </p>
                     <p class="text-lg sm:text-xl md:text-2xl stat-value">
                         @if($dashboardLevelNumber === 3)
-                            {{ $topDownlines->count() }}
+                            <span data-count-up="{{ (float) $topDownlines->count() }}" data-count-decimals="0">{{ $topDownlines->count() }}</span>
                         @else
-                            {{ $totalDownlines }}
+                            <span data-count-up="{{ (float) $totalDownlines }}" data-count-decimals="0">{{ $totalDownlines }}</span>
                         @endif
                     </p>
                 </div>
