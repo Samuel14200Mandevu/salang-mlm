@@ -25,16 +25,18 @@
     $sparkLine = count($sparkCoords) > 1 ? implode(' ', $sparkCoords) : '';
     $personalPct = min(100, max(0, (float) ($rankProgress['personal_progress'] ?? 0)));
     $personalTarget = (float) ($rankProgress['personal_target_pv'] ?? 0);
+    $rankLevel = (int) ($dashboardLevelNumber ?? $user->rank_level ?? 0);
+    $rankImageUrl = \App\Support\MlmRank::imageUrl($rankLevel);
 @endphp
-<section class="member-fintech-hero member-dashboard-hero member-fintech-animate member-fintech-animate--hero">
+<section class="member-fintech-hero member-dashboard-hero member-fintech-animate member-fintech-animate--hero{{ $rankImageUrl ? ' has-grade-stage' : '' }}">
     <div class="member-fintech-hero__mesh" aria-hidden="true"></div>
+    @if($rankImageUrl)
+        <div class="member-dashboard-hero__bloom" aria-hidden="true"></div>
+    @endif
 
     <div class="member-fintech-hero__top">
         <div class="member-fintech-hero__user">
             <p class="member-fintech-hero__hello">{{ $greeting }}, {{ $firstName }}</p>
-            <span class="{{ $currentRankBadgeClass ?? \App\Support\MlmRank::badgeClass($dashboardLevelNumber) }} member-fintech-hero__grade">
-                {{ $currentRankName }}
-            </span>
         </div>
         <div class="member-fintech-hero__tools">
             <a href="{{ route('commissions.index') }}" class="member-fintech-hero__tool" aria-label="Commissions">
@@ -50,14 +52,79 @@
         </div>
     </div>
 
-    <div class="member-fintech-hero__balance-row">
-        <div>
+    <div class="member-fintech-hero__balance-row member-dashboard-hero__balance-row{{ $rankImageUrl ? ' has-grade-badge' : '' }}">
+        @if($rankImageUrl)
+            <div class="member-dashboard-hero__stage" aria-hidden="true">
+                <span class="member-dashboard-hero__aurora member-dashboard-hero__aurora--a"></span>
+                <span class="member-dashboard-hero__aurora member-dashboard-hero__aurora--b"></span>
+                <span class="member-dashboard-hero__aurora member-dashboard-hero__aurora--c"></span>
+                <svg class="member-dashboard-hero__orbit" viewBox="0 0 200 200" fill="none">
+                    <defs>
+                        <linearGradient id="gradeOrbitStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="var(--dashboard-accent)" stop-opacity="0"/>
+                            <stop offset="35%" stop-color="var(--dashboard-warm-soft)" stop-opacity="0.95"/>
+                            <stop offset="65%" stop-color="var(--color-accent-300, #f0d878)" stop-opacity="0.85"/>
+                            <stop offset="100%" stop-color="var(--dashboard-accent)" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="member-dashboard-hero__orbit-track" cx="100" cy="100" r="78" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+                    <circle class="member-dashboard-hero__orbit-arc" cx="100" cy="100" r="78" stroke="url(#gradeOrbitStroke)" stroke-width="2.25" stroke-linecap="round"/>
+                    <circle class="member-dashboard-hero__orbit-arc member-dashboard-hero__orbit-arc--inner" cx="100" cy="100" r="58" stroke="url(#gradeOrbitStroke)" stroke-width="1.25" stroke-linecap="round"/>
+                </svg>
+                <svg class="member-dashboard-hero__beams" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice">
+                    <defs>
+                        <linearGradient id="gradeBeamA" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" stop-color="var(--dashboard-accent)" stop-opacity="0"/>
+                            <stop offset="45%" stop-color="var(--dashboard-warm-soft)" stop-opacity="0.7"/>
+                            <stop offset="100%" stop-color="var(--dashboard-accent)" stop-opacity="0"/>
+                        </linearGradient>
+                        <linearGradient id="gradeBeamB" x1="100%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="var(--color-accent-300, #f0d878)" stop-opacity="0"/>
+                            <stop offset="50%" stop-color="var(--dashboard-accent)" stop-opacity="0.55"/>
+                            <stop offset="100%" stop-color="var(--color-accent-400, #e8c547)" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <path class="member-dashboard-hero__beam" d="M20 130 C 55 95, 90 70, 130 55 C 150 48, 165 40, 185 28" fill="none" stroke="url(#gradeBeamA)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path class="member-dashboard-hero__beam" d="M15 95 C 50 88, 95 100, 140 78 C 160 68, 175 55, 192 42" fill="none" stroke="url(#gradeBeamB)" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+                <span class="member-dashboard-hero__glow"></span>
+                <span class="member-dashboard-hero__sparkles">
+                    <i></i><i></i><i></i><i></i><i></i><i></i>
+                </span>
+                <span class="member-dashboard-hero__ghost member-dashboard-hero__ghost--a"></span>
+                <span class="member-dashboard-hero__ghost member-dashboard-hero__ghost--b"></span>
+                <span class="member-dashboard-hero__ghost member-dashboard-hero__ghost--c"></span>
+                <span class="member-dashboard-hero__pedestal">
+                    <span class="member-dashboard-hero__pedestal-plate member-dashboard-hero__pedestal-plate--outer"></span>
+                    <span class="member-dashboard-hero__pedestal-plate member-dashboard-hero__pedestal-plate--mid"></span>
+                    <span class="member-dashboard-hero__pedestal-plate member-dashboard-hero__pedestal-plate--inner"></span>
+                    <span class="member-dashboard-hero__pedestal-shine"></span>
+                </span>
+                <div class="member-dashboard-hero__badge-wrap">
+                    <img
+                        src="{{ $rankImageUrl }}"
+                        alt=""
+                        class="member-dashboard-hero__badge-img"
+                        width="168"
+                        height="210"
+                        loading="eager"
+                        decoding="async"
+                    >
+                    <span class="member-dashboard-hero__badge-sheen"></span>
+                </div>
+            </div>
+            <span class="sr-only">Grade {{ $currentRankName }}</span>
+        @endif
+        <div class="member-dashboard-hero__pv">
             <p class="member-fintech-hero__label">PV personnel</p>
             <p class="member-fintech-hero__balance">
-                {{ number_format($pvPersonnel ?? 0, 0) }}<span class="member-fintech-hero__currency"> PV</span>
+                <span
+                    data-count-up="{{ (float) ($pvPersonnel ?? 0) }}"
+                    data-count-decimals="0"
+                >{{ number_format($pvPersonnel ?? 0, 0) }}</span><span class="member-fintech-hero__currency"> PV</span>
             </p>
         </div>
-        @if($sparkLine)
+        @if(! $rankImageUrl && $sparkLine)
             <svg class="member-fintech-hero__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
                     <linearGradient id="memberSparkFill" x1="0" y1="0" x2="0" y2="1">
@@ -75,16 +142,33 @@
         <div class="member-fintech-hero__pnl">
             <span class="member-fintech-hero__pnl-label">24h</span>
             <span class="member-fintech-hero__pnl-value {{ $todayPv >= 0 ? 'is-up' : 'is-down' }}">
-                {{ $todayPv >= 0 ? '+' : '' }}{{ number_format($todayPv, 0) }} PV
+                <span
+                    data-count-up="{{ $todayPv }}"
+                    data-count-decimals="0"
+                    data-count-signed
+                    data-count-suffix=" PV"
+                >{{ $todayPv >= 0 ? '+' : '' }}{{ number_format($todayPv, 0) }} PV</span>
             </span>
         </div>
         <div class="member-fintech-hero__pnl">
             <span class="member-fintech-hero__pnl-label">PV mois</span>
-            <span class="member-fintech-hero__pnl-value">{{ number_format($rankProgress['monthly_pv'] ?? 0, 0) }} PV</span>
+            <span class="member-fintech-hero__pnl-value">
+                <span
+                    data-count-up="{{ (float) ($rankProgress['monthly_pv'] ?? 0) }}"
+                    data-count-decimals="0"
+                    data-count-suffix=" PV"
+                >{{ number_format($rankProgress['monthly_pv'] ?? 0, 0) }} PV</span>
+            </span>
         </div>
         <div class="member-fintech-hero__pnl">
             <span class="member-fintech-hero__pnl-label">PV équipe</span>
-            <span class="member-fintech-hero__pnl-value">{{ number_format($pvCumul ?? 0, 0) }} PV</span>
+            <span class="member-fintech-hero__pnl-value">
+                <span
+                    data-count-up="{{ (float) ($pvCumul ?? 0) }}"
+                    data-count-decimals="0"
+                    data-count-suffix=" PV"
+                >{{ number_format($pvCumul ?? 0, 0) }} PV</span>
+            </span>
         </div>
     </div>
 
@@ -93,9 +177,11 @@
             <span>PV personnel</span>
             <span>
                 @if($personalTarget > 0)
-                    {{ number_format($pvPersonnel ?? 0) }} / {{ number_format($personalTarget) }}
+                    <span data-count-up="{{ (float) ($pvPersonnel ?? 0) }}" data-count-decimals="0">{{ number_format($pvPersonnel ?? 0) }}</span>
+                    /
+                    <span data-count-up="{{ $personalTarget }}" data-count-decimals="0">{{ number_format($personalTarget) }}</span>
                 @else
-                    {{ number_format($personalPct, 0) }}%
+                    <span data-count-up="{{ $personalPct }}" data-count-decimals="0" data-count-suffix="%">{{ number_format($personalPct, 0) }}%</span>
                 @endif
             </span>
         </div>

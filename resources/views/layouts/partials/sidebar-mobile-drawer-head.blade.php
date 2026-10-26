@@ -21,6 +21,7 @@
         }
 
         $drawerRankName = $drawerRankModel?->name ?? \App\Support\MlmRank::label($drawerRankLevel);
+        $drawerRankImageUrl = \App\Support\MlmRank::imageUrl($drawerRankLevel);
         $drawerCode = $drawerUser->sponsor_id ?: ('#' . $drawerUser->id);
         $drawerSubtitle = $drawerUser->package?->name;
         $drawerInitials = collect(preg_split('/\s+/u', trim($drawerUser->name), -1, PREG_SPLIT_NO_EMPTY))
@@ -31,7 +32,10 @@
             $drawerInitials = 'M';
         }
     @endphp
-    <div class="sidebar-mobile-drawer-head lg:hidden">
+    <div class="sidebar-mobile-drawer-head lg:hidden{{ $drawerRankImageUrl ? ' has-grade-badge' : '' }}">
+        <span class="sidebar-mobile-drawer-head__glow" aria-hidden="true"></span>
+        <span class="sidebar-mobile-drawer-head__orbit" aria-hidden="true"></span>
+
         <button type="button"
                 class="sidebar-mobile-drawer-head__close"
                 @click="sidebarOpen = false"
@@ -41,17 +45,27 @@
             </svg>
         </button>
 
-        <div class="sidebar-mobile-drawer-head__avatar">
-            @if($drawerUser->avatar && file_exists(public_path('storage/avatars/' . $drawerUser->avatar)))
-                <img src="{{ asset('storage/avatars/' . $drawerUser->avatar) }}" alt="" class="sidebar-mobile-drawer-head__photo">
+        <div class="sidebar-mobile-drawer-head__badge">
+            @if($drawerRankImageUrl)
+                <span class="sidebar-mobile-drawer-head__badge-glow" aria-hidden="true"></span>
+                <img
+                    src="{{ $drawerRankImageUrl }}"
+                    alt="{{ $drawerRankName }}"
+                    class="sidebar-mobile-drawer-head__badge-img"
+                    width="148"
+                    height="185"
+                    loading="eager"
+                    decoding="async"
+                >
             @else
-                <span class="sidebar-mobile-drawer-head__initials">{{ $drawerInitials }}</span>
+                <div class="sidebar-mobile-drawer-head__avatar" aria-hidden="true">
+                    <span class="sidebar-mobile-drawer-head__initials">{{ $drawerInitials }}</span>
+                </div>
             @endif
         </div>
 
-        <p class="sidebar-mobile-drawer-head__name">{{ $drawerUser->name }}</p>
-
         <p class="sidebar-mobile-drawer-head__grade">{{ $drawerRankName }}</p>
+        <p class="sidebar-mobile-drawer-head__name">{{ $drawerUser->name }}</p>
 
         <p class="sidebar-mobile-drawer-head__code">
             Code&nbsp;: <strong>{{ $drawerCode }}</strong>

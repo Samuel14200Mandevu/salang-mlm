@@ -23,7 +23,7 @@
     }
     $sparkLine = count($sparkCoords) > 1 ? implode(' ', $sparkCoords) : '';
 @endphp
-<section class="member-fintech-hero member-wallet-hero member-fintech-animate member-fintech-animate--hero">
+<section class="member-fintech-hero member-wallet-hero member-wallet-hero--art member-fintech-animate member-fintech-animate--hero">
     <div class="member-fintech-hero__mesh" aria-hidden="true"></div>
 
     <div class="member-fintech-hero__top member-wallet-hero__top">
@@ -33,25 +33,55 @@
         </div>
     </div>
 
-    <div class="member-fintech-hero__balance-row">
-        <div>
+    <div class="member-fintech-hero__balance-row member-wallet-hero__balance-row">
+        <div class="member-wallet-hero__balance-main">
             <p class="member-fintech-hero__label">Solde disponible</p>
             <p class="member-fintech-hero__balance">
                 <span class="member-fintech-hero__currency">$</span>{{ number_format($balance ?? 0, 2) }}
             </p>
+            @if($sparkLine)
+                <svg class="member-fintech-hero__spark member-wallet-hero__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="memberWalletSparkFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="0,100 {{ $sparkLine }} 100,100" fill="url(#memberWalletSparkFill)"/>
+                    <polyline points="{{ $sparkLine }}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+                </svg>
+            @endif
         </div>
-        @if($sparkLine)
-            <svg class="member-fintech-hero__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <div class="member-wallet-hero__stage" aria-hidden="true">
+            <span class="member-wallet-hero__aurora member-wallet-hero__aurora--a"></span>
+            <span class="member-wallet-hero__aurora member-wallet-hero__aurora--b"></span>
+            <span class="member-wallet-hero__aurora member-wallet-hero__aurora--c"></span>
+            <span class="member-wallet-hero__pedestal"></span>
+            <svg class="member-wallet-hero__orbit" viewBox="0 0 200 200" fill="none">
                 <defs>
-                    <linearGradient id="memberWalletSparkFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="currentColor" stop-opacity="0.35"/>
-                        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                    <linearGradient id="walletOrbitStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f0d878" stop-opacity="0"/>
+                        <stop offset="40%" stop-color="#fbbf24" stop-opacity="0.95"/>
+                        <stop offset="70%" stop-color="#fde68a" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
                     </linearGradient>
                 </defs>
-                <polygon points="0,100 {{ $sparkLine }} 100,100" fill="url(#memberWalletSparkFill)"/>
-                <polyline points="{{ $sparkLine }}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+                <circle class="member-wallet-hero__orbit-track" cx="100" cy="100" r="78" stroke="currentColor" stroke-opacity="0.14" stroke-width="1"/>
+                <circle class="member-wallet-hero__orbit-arc" cx="100" cy="100" r="78" stroke="url(#walletOrbitStroke)" stroke-width="2.2" stroke-linecap="round"/>
+                <circle class="member-wallet-hero__orbit-arc member-wallet-hero__orbit-arc--inner" cx="100" cy="100" r="58" stroke="url(#walletOrbitStroke)" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
-        @endif
+            <div class="member-wallet-hero__art">
+                <img
+                    class="member-wallet-hero__art-img"
+                    src="{{ asset('images/portefeuille.png') }}"
+                    alt=""
+                    width="605"
+                    height="501"
+                    loading="eager"
+                    decoding="async"
+                >
+            </div>
+        </div>
     </div>
 
     <div class="member-wallet-hero__stats-bar">

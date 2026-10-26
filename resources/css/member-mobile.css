@@ -359,7 +359,7 @@
   .member-app #sidebar .sidebar-mobile-drawer-head {
     position: relative;
     text-align: center;
-    padding: 1.35rem 1rem 1.25rem;
+    padding: 0.75rem 0.85rem 0.7rem;
     background: var(--member-mobile-head-gradient);
     color: #fff;
     flex-shrink: 0;
@@ -385,10 +385,43 @@
     cursor: pointer;
   }
 
+  .member-app #sidebar .sidebar-mobile-drawer-head__glow,
+  .member-app #sidebar .sidebar-mobile-drawer-head__orbit,
+  .member-app #sidebar .sidebar-mobile-drawer-head__badge-glow {
+    display: none;
+  }
+
+  .member-app #sidebar .sidebar-mobile-drawer-head__badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.05rem auto 0.25rem;
+    max-width: 6.25rem;
+  }
+
+  .member-app #sidebar .sidebar-mobile-drawer-head__badge-img {
+    display: block;
+    width: min(100%, 5.75rem);
+    height: auto;
+    max-height: 6.75rem;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+  }
+
+  .member-app #sidebar .sidebar-mobile-drawer-head__grade {
+    margin: 0 auto 0.2rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
   .member-app #sidebar .sidebar-mobile-drawer-head__avatar {
     width: 4.75rem;
     height: 4.75rem;
-    margin: 0 auto 0.75rem;
+    margin: 0 auto;
     border-radius: 999px;
     border: 3px solid rgba(255, 255, 255, 0.35);
     background: rgba(255, 255, 255, 0.15);
@@ -412,29 +445,18 @@
 
   .member-app #sidebar .sidebar-mobile-drawer-head__name {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 800;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    line-height: 1.25;
-  }
-
-  .member-app #sidebar .sidebar-mobile-drawer-head__grade {
-    display: inline-block;
-    margin: 0.55rem auto 0;
-    padding: 0.35rem 1.1rem;
-    border-radius: 999px;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    line-height: 1.2;
   }
 
   .member-app #sidebar .sidebar-mobile-drawer-head__code,
   .member-app #sidebar .sidebar-mobile-drawer-head__meta {
-    margin: 0.45rem 0 0;
-    font-size: 0.8125rem;
-    line-height: 1.35;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.3;
     color: rgba(255, 255, 255, 0.92);
   }
 
@@ -1144,6 +1166,7 @@
     color: var(--text-tertiary);
     text-decoration: none;
   }
+
 }
 
 @media (max-width: 380px) {
