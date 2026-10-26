@@ -200,16 +200,20 @@ class PaymentService
             return ['success' => false, 'message' => 'Portefeuille non trouvé'];
         }
         
-        if ($wallet->balance < $withdrawal->amount) {
-            return ['success' => false, 'message' => 'Solde insuffisant'];
-        }
-
         DB::beginTransaction();
         
         try {
+            $wallet = Wallet::whereKey($wallet->id)->lockForUpdate()->first();
+
+            // Fonds déjà réservés en pending_balance à la création du retrait.
+            if ((float) $wallet->pending_balance < (float) $withdrawal->amount) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Montant en attente insuffisant'];
+            }
+
             $balanceBefore = $wallet->balance;
             
-            $wallet->balance -= $withdrawal->amount;
+            $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
             $wallet->total_withdrawn += $withdrawal->amount;
             $wallet->save();
 

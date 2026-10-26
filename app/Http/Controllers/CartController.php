@@ -236,6 +236,7 @@ class CartController extends Controller
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'paid_at' => now(),
+                'source' => 'web',
                 'shipping_address' => $request->shipping_address,
                 'billing_address' => $request->billing_address,
             ]);

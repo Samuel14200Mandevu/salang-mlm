@@ -504,12 +504,7 @@ Cache::forget("descendants_{$user->id}");
                 $order->id,
                 $period
             );
-
-            foreach ($commissions as $commission) {
-                if ($commission->type === 'sponsor') {
-                    $this->creditSponsorWallet($commission);
-                }
-            }
+            // Crédit wallet géré dans CommissionDistributor (évite double crédit).
 
             Log::info('Commissions distribuees pour activation', [
                 'user_id' => $user->id,

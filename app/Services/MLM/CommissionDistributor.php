@@ -10,6 +10,7 @@ use App\Models\PVHistory;
 use App\Models\Commission;
 use App\Models\CommissionHistory;
 use App\Models\CommissionPeriod;
+use App\Models\Wallet;
 use App\Jobs\RecalculateAfterPVImport;
 use App\Support\MlmPeriod;
 use Illuminate\Support\Facades\DB;
@@ -206,25 +207,27 @@ class CommissionDistributor
 
         // ══════════════════════════════════════════════════════════
         // 0. PV HISTORY + INCRÉMENTS (sauf rejeu fin de période)
+        // team_pv parrain toujours mis à jour (même en mode commissionsOnly)
         // ══════════════════════════════════════════════════════════
-        if (!$commissionsOnly && $itemPV > 0) {
-
-            if ($isPosSource && $sponsor && $sponsor->is_active) {
+        if ($itemPV > 0) {
+            if (($isPosSource || $isMlmSource) && $sponsor && $sponsor->is_active) {
                 $sponsor->increment('team_pv', $itemPV);
             }
 
-            if ($isMlmSource && $sponsor && $sponsor->is_active) {
-                $sponsor->increment('team_pv', $itemPV);
-            }
+            if (!$commissionsOnly) {
+                if ($buyer->user_type === 'member' && ($isPosSource || $isMlmSource)) {
+                    $buyer->increment('pv_balance', $itemPV);
+                    $buyer->increment('monthly_pv', $itemPV);
+                    $this->recordPVHistory($buyer, $period, $itemPV, $orderId, $item, $source);
+                }
 
-            if ($buyer->user_type === 'member' && ($isPosSource || $isMlmSource)) {
-                $buyer->increment('pv_balance', $itemPV);
-                $buyer->increment('monthly_pv', $itemPV);
-                $this->recordPVHistory($buyer, $period, $itemPV, $orderId, $item, $source);
+                $buyer->refresh();
+                if ($sponsor) {
+                    $sponsor->refresh();
+                }
+            } elseif ($sponsor) {
+                $sponsor->refresh();
             }
-
-            $buyer->refresh();
-            if ($sponsor) $sponsor->refresh();
         }
 
         // ══════════════════════════════════════════════════════════
@@ -235,7 +238,7 @@ class CommissionDistributor
 
             if ($commissionAmount > 0
                 && ! Commission::where('order_id', $orderId)->where('type', 'cash_pos')->exists()) {
-                $commissions[] = Commission::create([
+                $commission = Commission::create([
                     'user_id'              => $sponsor->id,
                     'from_user_id'         => $buyer->id,
                     'commission_period_id' => $period->id,
@@ -253,6 +256,8 @@ class CommissionDistributor
                     'status'               => 'paid',
                     'paid_at'              => now(),
                 ]);
+                $this->creditPaidCommission($commission);
+                $commissions[] = $commission;
             }
         }
 
@@ -351,7 +356,7 @@ class CommissionDistributor
             $description = "Sponsor bonus (30%) pour activation de {$buyer->name} avec {$itemName}";
         }
 
-        return Commission::create([
+        $commission = Commission::create([
             'user_id'              => $sponsor->id,
             'from_user_id'         => $buyer->id,
             'commission_period_id' => $period->id,
@@ -369,6 +374,29 @@ class CommissionDistributor
             'status'               => 'paid',
             'paid_at'              => now(),
         ]);
+
+        $this->creditPaidCommission($commission);
+
+        return $commission;
+    }
+
+    private function creditPaidCommission(Commission $commission): void
+    {
+        try {
+            Wallet::creditCommissionToUser(
+                (int) $commission->user_id,
+                (float) $commission->amount,
+                $commission->description ?: "Commission {$commission->type} #{$commission->id}",
+                ['commission_id' => $commission->id, 'type' => $commission->type]
+            );
+        } catch (\Throwable $e) {
+            Log::error('Échec crédit wallet commission temps réel', [
+                'commission_id' => $commission->id,
+                'user_id' => $commission->user_id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════

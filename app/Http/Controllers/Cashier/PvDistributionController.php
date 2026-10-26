@@ -21,7 +21,14 @@ class PvDistributionController extends Controller
     public function __construct(PvManagementService $pvService)
     {
         $this->pvService = $pvService;
-        $this->middleware('auth');
+        $this->middleware(['auth', 'active']);
+        $this->middleware(function ($request, $next) {
+            if (! auth()->user()->hasRole('cashier') && ! auth()->user()->hasRole('admin')) {
+                abort(403, 'Accès réservé aux caissiers.');
+            }
+
+            return $next($request);
+        });
     }
 
     /**
@@ -205,7 +212,7 @@ class PvDistributionController extends Controller
         $user = Auth::user();
         
         // Vérifier que l'utilisateur est autorisé à approuver
-        if ($allocation->distributor_id != $user->id && !$user->is_admin) {
+        if ($allocation->distributor_id != $user->id && ! $user->isAdmin() && ! $user->hasRole('admin')) {
             return response()->json(['error' => 'Non autorisé'], 403);
         }
 
@@ -256,6 +263,11 @@ class PvDistributionController extends Controller
         $authUser = Auth::user();
 
         if ($request->filled('member_id')) {
+            // Réservé caissier/admin (middleware) : consultation PV d’un membre depuis la fiche caisse.
+            if (! $authUser->hasRole('cashier') && ! $authUser->hasRole('admin')) {
+                abort(403, 'Non autorisé.');
+            }
+
             return User::query()
                 ->where('user_type', 'member')
                 ->with('pvBalance')
