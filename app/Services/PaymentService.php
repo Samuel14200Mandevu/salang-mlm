@@ -77,29 +77,38 @@ class PaymentService
         );
 
         if ($result['success']) {
-            // Créer une transaction en attente
-            $wallet = Wallet::where('user_id', $userId)->first();
-            if ($wallet) {
-                Transaction::create([
-                    'user_id' => $userId,
-                    'wallet_id' => $wallet->id,
-                    'type' => 'deposit',
-                    'amount' => $amount,
-                    'fee' => 0,
-                    'net_amount' => $amount,
-                    'balance_before' => $wallet->balance,
-                    'balance_after' => $wallet->balance,
-                    'status' => 'pending',
-                    'reference' => $result['reference'] ?? null,
-                    'description' => 'Dépôt via ' . ucfirst($provider) . ' Money',
-                    'metadata' => json_encode([
-                        'provider' => $provider,
-                        'phone' => $phoneNumber,
-                        'transaction_id' => $result['transaction_id'] ?? null,
-                        'raw_response' => $result['raw_response'] ?? null,
-                    ]),
-                ]);
-            }
+            // Créer le portefeuille au premier dépôt s'il n'existe pas encore
+            $wallet = Wallet::firstOrCreate(
+                ['user_id' => $userId],
+                [
+                    'balance' => 0,
+                    'pending_balance' => 0,
+                    'total_withdrawn' => 0,
+                    'total_deposited' => 0,
+                    'currency' => 'USD',
+                    'is_active' => true,
+                ]
+            );
+
+            Transaction::create([
+                'user_id' => $userId,
+                'wallet_id' => $wallet->id,
+                'type' => 'deposit',
+                'amount' => $amount,
+                'fee' => 0,
+                'net_amount' => $amount,
+                'balance_before' => $wallet->balance,
+                'balance_after' => $wallet->balance,
+                'status' => 'pending',
+                'reference' => $result['reference'] ?? null,
+                'description' => 'Dépôt via ' . ucfirst($provider) . ' Money',
+                'metadata' => json_encode([
+                    'provider' => $provider,
+                    'phone' => $phoneNumber,
+                    'transaction_id' => $result['transaction_id'] ?? null,
+                    'raw_response' => $result['raw_response'] ?? null,
+                ]),
+            ]);
         }
 
         return $result;
@@ -110,15 +119,17 @@ class PaymentService
      */
     public function completePayment($userId, $amount, $method)
     {
-        $wallet = Wallet::where('user_id', $userId)->first();
-        
-        if (!$wallet) {
-            Log::error('Wallet not found for user: ' . $userId);
-            return [
-                'success' => false,
-                'message' => 'Portefeuille non trouvé'
-            ];
-        }
+        $wallet = Wallet::firstOrCreate(
+            ['user_id' => $userId],
+            [
+                'balance' => 0,
+                'pending_balance' => 0,
+                'total_withdrawn' => 0,
+                'total_deposited' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
+            ]
+        );
 
         DB::beginTransaction();
         

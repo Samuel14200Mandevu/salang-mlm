@@ -333,8 +333,15 @@ class CommissionDistributor
         $itemName  = $this->getItemName($item);
         $itemPrice = $this->getItemPrice($item);
         $itemId    = $this->getItemId($item);
+        $itemData  = $item instanceof Package ? $item : $this->getItemData($item);
+        $package   = $itemData instanceof Package ? $itemData : null;
 
-        if ($rankLevel == 1) {
+        // Package $30 (Starter) : toujours $10 au parrain — pas un %
+        if ($package instanceof Package && $package->isFixedSponsorBonusPackage()) {
+            $amount = 10;
+            $percentage = 0;
+            $description = "Sponsor bonus (10\$ fixe) pour activation de {$buyer->name} avec {$itemName}";
+        } elseif ($rankLevel == 1) {
             $amount = 10;
             $percentage = 0;
             $description = "Sponsor bonus (10\$ fixe) pour activation de {$buyer->name} avec {$itemName}";

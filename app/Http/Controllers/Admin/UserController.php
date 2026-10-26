@@ -51,14 +51,25 @@ class UserController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
+        // Filtre unifié (bouton Filtrer) : actifs / inactifs / admins / caissiers
+        if ($request->filled('filter')) {
+            match ($request->filter) {
+                'active' => $query->where('is_active', true),
+                'inactive' => $query->where('is_active', false),
+                'admin' => $query->whereHas('roles', fn ($q) => $q->where('name', 'admin')),
+                'cashier' => $query->whereHas('roles', fn ($q) => $q->where('name', 'cashier')),
+                default => null,
+            };
+        } else {
+            if ($request->filled('status')) {
+                $query->where('is_active', $request->status === 'active');
+            }
 
-        if ($request->filled('role')) {
-            $query->whereHas('roles', function($q) use ($request) {
-                $q->where('name', $request->role);
-            });
+            if ($request->filled('role')) {
+                $query->whereHas('roles', function ($q) use ($request) {
+                    $q->where('name', $request->role);
+                });
+            }
         }
 
         if ($request->filled('package')) {
@@ -77,7 +88,7 @@ class UserController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+        $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         $stats = [
             'total' => User::count(),
@@ -352,15 +363,7 @@ class UserController extends Controller
                     'bv_balance' => $request->package_id ? Package::find($request->package_id)?->bv_value ?? 0 : 0,
                 ]);
 
-                if (!Wallet::where('user_id', $user->id)->exists()) {
-                    Wallet::create([
-                        'user_id' => $user->id,
-                        'balance' => 0,
-                        'pending_balance' => 0,
-                        'currency' => 'USD',
-                        'is_active' => true,
-                    ]);
-                }
+                // Pas de portefeuille à la création : créé au premier dépôt membre
 
                 Genealogy::create([
                     'user_id' => $user->id,
@@ -438,7 +441,10 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'nullable|string|max:20',
-            'is_active' => 'boolean',
+            'country' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'is_active' => 'required|in:0,1',
             'role' => 'required|in:user,cashier,admin,it_manager',
         ];
 
@@ -461,8 +467,12 @@ class UserController extends Controller
             $data = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone ?? 'N/A',
-                'is_active' => $request->has('is_active'),
+                'phone' => $request->phone ?: null,
+                'country' => $request->country ?: null,
+                'city' => $request->city ?: null,
+                'address' => $request->address ?: null,
+                // Select 0/1 : has('is_active') est toujours vrai → utiliser la valeur
+                'is_active' => (string) $request->input('is_active') === '1',
             ];
 
             if ($request->filled('password')) {
@@ -535,9 +545,11 @@ class UserController extends Controller
                         ]);
                     }
                 }
-                // PACKAGE — NE PLUS recalculer le grade
+                // PACKAGE — NE PLUS recalculer le grade ("" = aucun package)
                 if ($request->has('package_id')) {
-                    $data['package_id'] = $request->package_id;
+                    $data['package_id'] = $request->filled('package_id')
+                        ? (int) $request->package_id
+                        : null;
                 }
 
                 // GRADE — Ne modifier QUE si explicitement fourni
@@ -970,15 +982,7 @@ class UserController extends Controller
                     'kyc_status' => 'not_submitted',
                 ]);
 
-                if (!Wallet::where('user_id', $user->id)->exists()) {
-                    Wallet::create([
-                        'user_id' => $user->id,
-                        'balance' => 0,
-                        'pending_balance' => 0,
-                        'currency' => 'USD',
-                        'is_active' => true,
-                    ]);
-                }
+                // Pas de portefeuille à l'import : créé au premier dépôt membre
 
                 Genealogy::create([
                     'user_id' => $user->id,

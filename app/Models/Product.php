@@ -129,6 +129,30 @@ class Product extends Model
         return !is_null($this->full_price) && !is_null($this->full_pv);
     }
 
+    /**
+     * Prix catalogue selon la portion (1/2 uniquement si half_price/half_pv renseignés).
+     */
+    public function priceForPortion(?string $portion): float
+    {
+        if ($portion === 'half' && $this->hasHalfOption()) {
+            return round((float) $this->half_price, 2);
+        }
+
+        return round((float) ($this->full_price ?? $this->price), 2);
+    }
+
+    /**
+     * PV catalogue selon la portion.
+     */
+    public function pvForPortion(?string $portion): int
+    {
+        if ($portion === 'half' && $this->hasHalfOption()) {
+            return (int) $this->half_pv;
+        }
+
+        return (int) ($this->full_pv ?? $this->pv_value ?? 0);
+    }
+
     public function getProfitAttribute()
     {
         if ($this->cost) {

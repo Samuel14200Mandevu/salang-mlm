@@ -27,6 +27,7 @@
 /* ===== TABLE ===== */
 .consultation-row {
     transition: background 0.1s ease;
+    cursor: pointer;
 }
 .consultation-row:hover {
     background: var(--bg-hover);
@@ -37,7 +38,6 @@
 .consultation-row-pending:hover {
     background: rgba(166, 90, 14, 0.08);
 }
-
 .table-wrap { overflow-x: auto; }
 .table { 
     width: 100%; 
@@ -136,7 +136,6 @@
     background: var(--bg-hover);
     border-color: var(--border-color);
 }
-
 .btn-icon {
     width: 2rem;
     height: 2rem;
@@ -344,6 +343,14 @@
             {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="p-3 sm:p-4 border rounded-lg text-sm flex items-center gap-2" style="background:#FDE8E8;color:#B32A2A;border-color:#F5C8C8;">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            {{ session('error') }}
+        </div>
+    @endif
 
     <!-- Statistiques -->
     <div class="stats-grid grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -371,18 +378,21 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>N°</th>
                         <th>Caissier</th>
                         <th>Patient</th>
                         <th class="hidden sm:table-cell">Motif</th>
                         <th class="hidden md:table-cell">Date</th>
                         <th>Statut</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody id="consultationsTableBody">
                     @forelse($consultations as $consultation)
-                        <tr class="consultation-row {{ $consultation->status == 'pending' ? 'consultation-row-pending' : '' }}">
+                        <tr class="consultation-row {{ $consultation->status == 'pending' ? 'consultation-row-pending' : '' }}"
+                            data-href="{{ route('admin.consultations.show', $consultation) }}"
+                            tabindex="0"
+                            role="link"
+                            aria-label="Voir la consultation {{ $consultation->id }}">
                             <td class="font-mono text-xs text-[var(--primary-navy)]">{{ $consultation->id }}</td>
                             <td class="text-sm">{{ $consultation->cashier?->name ?? 'N/A' }}</td>
                             <td class="text-sm font-medium">{{ $consultation->nom_complet }}</td>
@@ -411,19 +421,10 @@
                                     {{ $statusLabels[$consultation->status] ?? ucfirst($consultation->status) }}
                                 </span>
                             </td>
-                            <td class="text-right">
-                                <a href="{{ route('admin.consultations.show', $consultation) }}" class="btn btn-primary btn-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                    Traiter
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
@@ -458,6 +459,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     const resetBtn = document.getElementById('resetFilters');
     let searchTimeout;
+
+    const tableBody = document.getElementById('consultationsTableBody');
+    if (tableBody) {
+        tableBody.addEventListener('click', function(e) {
+            const row = e.target.closest('tr.consultation-row[data-href]');
+            if (!row || e.target.closest('a, button, form, input, select, textarea')) {
+                return;
+            }
+            window.location.href = row.dataset.href;
+        });
+        tableBody.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const row = e.target.closest('tr.consultation-row[data-href]');
+            if (!row) return;
+            e.preventDefault();
+            window.location.href = row.dataset.href;
+        });
+    }
 
     // Recherche avec debounce
     if (searchInput) {
@@ -508,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('consultationsTableBody');
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
                     <div class="flex items-center justify-center gap-3">
                         <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -576,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur:', error);
             document.getElementById('consultationsTableBody').innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-8 text-[var(--ui-stat-danger)]">
+                    <td colspan="6" class="text-center py-8 text-[var(--ui-stat-danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>

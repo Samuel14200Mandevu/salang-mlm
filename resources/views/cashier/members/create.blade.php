@@ -167,7 +167,7 @@
                                 data-rank="{{ $rankName }}"
                                 data-rank-level="{{ $rankLevel }}"
                                 data-price="{{ $package->price ?? 0 }}"
-                                {{ old('package_id') == $package->id ? 'selected' : '' }}>
+                                {{ (int) old('package_id', $selectedPackageId ?? 0) === (int) $package->id ? 'selected' : '' }}>
                             {{ $package->name }} 
                             @if($package->price) - ${{ number_format($package->price, 2) }} @endif
                             @if($package->pv_value) - {{ $package->pv_value }} PV @endif
@@ -400,9 +400,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewRank = document.getElementById('previewRank');
 
     if (packageSelect) {
-        packageSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (this.value) {
+        function refreshPackagePreview() {
+            const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+            if (packageSelect.value) {
                 preview.style.display = 'block';
                 previewName.textContent = selectedOption.text.split(' - ')[0] || '-';
                 previewPrice.textContent = '$' + parseFloat(selectedOption.dataset.price || 0).toFixed(2);
@@ -411,7 +411,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 preview.style.display = 'none';
             }
-        });
+        }
+        packageSelect.addEventListener('change', refreshPackagePreview);
+        // Prérempli depuis le POS (?package_id=)
+        refreshPackagePreview();
     }
 });
 

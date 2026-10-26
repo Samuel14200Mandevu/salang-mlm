@@ -51,6 +51,52 @@ class Package extends Model
         return '$' . number_format($this->price, 2);
     }
 
+    /**
+     * Package Starter ($30) : bonus parrain fixe de $10 (pas un %).
+     */
+    public function isFixedSponsorBonusPackage(): bool
+    {
+        return abs((float) $this->price - 30.0) < 0.01
+            || $this->slug === 'starter';
+    }
+
+    /**
+     * Montant du bonus parrain pour ce package.
+     * Starter ($30) → $10 fixe ; sinon 30 % du prix (ou $10 si grade Distributeur).
+     */
+    public function sponsorBonusAmount(?int $sponsorRankLevel = null): float
+    {
+        if ($this->isFixedSponsorBonusPackage()) {
+            return 10.0;
+        }
+
+        if ($sponsorRankLevel !== null && (int) $sponsorRankLevel <= 1) {
+            return 10.0;
+        }
+
+        $rate = (float) ($this->commission_rate ?? 30);
+
+        return round((float) $this->price * ($rate / 100), 2);
+    }
+
+    /**
+     * Libellé d'affichage POS / catalogue.
+     */
+    public function sponsorBonusLabel(?int $sponsorRankLevel = null): string
+    {
+        if ($this->isFixedSponsorBonusPackage()) {
+            return '$10 au parrain';
+        }
+
+        if ($sponsorRankLevel !== null && (int) $sponsorRankLevel <= 1) {
+            return '$10 au parrain';
+        }
+
+        $rate = (float) ($this->commission_rate ?? 30);
+
+        return rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.').'% commission';
+    }
+
     public function getBenefitListAttribute()
     {
         if ($this->benefits) {

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
 use App\Models\Product;
+use App\Models\User;
 use App\Notifications\ConsultationReviewedNotification;
 use App\Services\ConsultationSaleService;
 use Illuminate\Http\Request;
@@ -54,11 +55,12 @@ class ConsultationController extends Controller
      */
     public function show(Consultation $consultation)
     {
-        // Récupérer tous les produits actifs pour le sélecteur
+        $consultation->load(['cashier', 'client']);
+
         $products = Product::where('is_active', true)
             ->orderBy('name')
             ->get();
-            
+
         return view('admin.consultations.show', compact('consultation', 'products'));
     }
 
@@ -67,16 +69,39 @@ class ConsultationController extends Controller
      */
     public function update(Request $request, Consultation $consultation)
     {
-        $validated = $request->validate([
+        $request->validate([
+            'code_id' => [
+                'required',
+                'string',
+                'max:50',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $member = User::where('sponsor_id', $value)->where('is_active', true)->first();
+                    if (! $member) {
+                        $fail('Le Code ID doit être un code membre actif (destinataire des PV).');
+                    }
+                },
+            ],
+            'numero' => 'nullable|string|max:50',
+            'nom_complet' => 'required|string|max:255',
+            'genre' => 'nullable|in:masculin,feminin',
+            'age' => 'nullable|integer|min:0|max:150',
+            'poids' => 'nullable|numeric|min:0|max:500',
+            'taille' => 'nullable|numeric|min:0|max:300',
+            'date_examen' => 'nullable|date',
             'reason' => 'nullable|string',
             'symptoms' => 'nullable|string',
             'observations' => 'nullable|string',
+            'admin_notes' => 'nullable|string',
             'seances_ceragem' => 'nullable|integer|min:0',
             'prix_ceragem' => 'nullable|numeric|min:0',
             'seances_detox' => 'nullable|integer|min:0',
             'prix_detox' => 'nullable|numeric|min:0',
             'status' => 'required|in:pending,processing,completed,cancelled',
         ]);
+
+        $pvMember = User::where('sponsor_id', $request->code_id)
+            ->where('is_active', true)
+            ->firstOrFail();
 
         // ============================================================
         // TRAITER LES PRODUITS RECOMMANDÉS
@@ -88,17 +113,10 @@ class ConsultationController extends Controller
                 if (!empty($item['product_id'])) {
                     $product = Product::find($item['product_id']);
                     if ($product) {
-                        $row = [
-                            'product_id' => (int) $product->id,
-                            'produit' => (string) $product->name,
-                            'posologie' => (string) ($item['posologie'] ?? ''),
-                            'prix' => (float) $product->price,
-                            'observation' => (string) ($item['observation'] ?? ''),
-                        ];
                         $recommendedProducts[] = ConsultationSaleService::mergeAdminProductRow(
                             $existingRows,
                             (int) $product->id,
-                            $row
+                            ConsultationSaleService::buildAdminProductRow($product, $item)
                         );
                     }
                 }
@@ -112,9 +130,9 @@ class ConsultationController extends Controller
         foreach ($recommendedProducts as $product) {
             $totalProduits += $product['prix'];
         }
-        
-        $totalServices = ($request->seances_ceragem * $request->prix_ceragem) + 
-                        ($request->seances_detox * $request->prix_detox);
+
+        $totalServices = ((float) ($request->seances_ceragem ?? 0) * (float) ($request->prix_ceragem ?? 0))
+            + ((float) ($request->seances_detox ?? 0) * (float) ($request->prix_detox ?? 0));
         $totalGeneral = $totalProduits + $totalServices;
 
         $previousStatus = $consultation->status;
@@ -123,9 +141,19 @@ class ConsultationController extends Controller
         // METTRE À JOUR LA CONSULTATION
         // ============================================================
         $consultation->update([
+            'client_id' => $pvMember->id,
+            'code_id' => $pvMember->sponsor_id,
+            'numero' => $request->numero,
+            'nom_complet' => $request->nom_complet,
+            'genre' => $request->genre,
+            'age' => $request->age,
+            'poids' => $request->poids,
+            'taille' => $request->taille,
+            'date_examen' => $request->date_examen,
             'reason' => $request->reason,
             'symptoms' => $request->symptoms,
             'observations' => $request->observations,
+            'admin_notes' => $request->admin_notes,
             'recommended_products' => $recommendedProducts,
             'seances_ceragem' => $request->seances_ceragem ?? 0,
             'prix_ceragem' => $request->prix_ceragem ?? 0,
@@ -148,6 +176,24 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.index')
             ->with('success', 'Fiche de consultation mise à jour avec succès !');
+    }
+
+    /**
+     * Supprimer une consultation (Admin)
+     */
+    public function destroy(Consultation $consultation)
+    {
+        if ($consultation->orders()->exists()) {
+            return redirect()
+                ->route('admin.consultations.index')
+                ->with('error', 'Impossible de supprimer : des commandes sont liées à cette consultation.');
+        }
+
+        $consultation->delete();
+
+        return redirect()
+            ->route('admin.consultations.index')
+            ->with('success', 'Consultation supprimée avec succès.');
     }
 
     /**

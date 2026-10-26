@@ -861,22 +861,17 @@ public function createMultiOrder(Request $request)
                     'quantity' => $quantity,
                 ];
             } else {
+                // Vente package = adhésion membre (pas de panier POS)
                 $package = Package::where('is_active', true)->find($productId);
-                if (!$package) {
+                if (! $package) {
                     return response()->json(['success' => false, 'message' => 'Package non trouvé'], 404);
                 }
-                $cart[$key] = [
-                    'id' => $package->id,
-                    'type' => 'package',
-                    'name' => $package->name,
-                    'price' => $package->price,
-                    'image' => null,
-                    'source' => 'mlm',
-                    'source_label' => 'MLM',
-                    'pv_value' => $package->pv_value ?? 0,
-                    'bv_value' => $package->bv_value ?? 0,
-                    'quantity' => $quantity,
-                ];
+
+                return response()->json([
+                    'success' => true,
+                    'redirect' => route('cashier.members.create', ['package_id' => $package->id]),
+                    'message' => 'Redirection vers le formulaire d\'adhésion',
+                ]);
             }
         }
         
@@ -1081,8 +1076,8 @@ public function createMultiOrder(Request $request)
                             'name' => $package->name,
                             'price' => $package->price,
                             'image' => null,
-                            'source' => 'mlm',
-                            'source_label' => 'MLM',
+                            'source' => 'pos',
+                            'source_label' => 'Package',
                             'pv_value' => $package->pv_value ?? 0,
                             'bv_value' => $package->bv_value ?? 0,
                             'quantity' => 1
@@ -1124,8 +1119,16 @@ public function createMultiOrder(Request $request)
             return ($item['bv_value'] ?? 0) * $item['quantity'];
         });
         
+        // Package = adhésion : rediriger vers le formulaire membre
+        $packageItem = $cartItems->first(fn ($item) => ($item['type'] ?? null) === 'package');
+        if ($packageItem) {
+            return redirect()
+                ->route('cashier.members.create', ['package_id' => $packageItem['id']])
+                ->with('info', 'La vente d\'un package se fait via le formulaire d\'adhésion membre.');
+        }
+
         if ($cartItems->isNotEmpty()) {
-            session()->put('pos_cart', $cartItems->toArray());
+            session()->put('pos_cart', $cartItems->values()->toArray());
         }
         
         Log::info('Affichage de la vue checkout avec ' . $cartItems->count() . ' articles');
@@ -1133,7 +1136,13 @@ public function createMultiOrder(Request $request)
         $consultationCheckout = session('consultation_checkout');
         $linkedConsultation = null;
         if (! empty($consultationCheckout['consultation_id'])) {
-            $linkedConsultation = Consultation::find($consultationCheckout['consultation_id']);
+            $linkedConsultation = Consultation::with('client')->find($consultationCheckout['consultation_id']);
+            if ($linkedConsultation && empty($consultationCheckout['pv_member_code'])) {
+                $consultationCheckout['pv_member_code'] = $linkedConsultation->code_id;
+                $consultationCheckout['pv_member_name'] = $linkedConsultation->client?->name
+                    ?? User::where('sponsor_id', $linkedConsultation->code_id)->value('name');
+                session()->put('consultation_checkout', $consultationCheckout);
+            }
         }
 
         return view('cashier.checkout', compact(
@@ -1219,6 +1228,14 @@ public function createCheckoutOrder(Request $request)
             return redirect()->back()->with('error', 'Votre panier est vide.');
         }
 
+        // Package = adhésion membre : ne pas encaisser via le checkout POS
+        $packageInCart = collect($cart)->first(fn ($item) => ($item['type'] ?? null) === 'package');
+        if ($packageInCart) {
+            return redirect()
+                ->route('cashier.members.create', ['package_id' => $packageInCart['id']])
+                ->with('info', 'La vente d\'un package se fait via le formulaire d\'adhésion membre.');
+        }
+
         $consultationCheckout = session('consultation_checkout');
         $consultationId = null;
         $consultationForSale = null;
@@ -1253,17 +1270,25 @@ public function createCheckoutOrder(Request $request)
 
             $consultationId = $consultationForSale->id;
         }
-        
+
+        if ($consultationForSale && $consultationForSale->code_id
+            && $request->sponsor_code !== $consultationForSale->code_id) {
+            return redirect()->back()->with(
+                'error',
+                'Pour une vente consultation, le Code ID doit être celui de la fiche (membre destinataire des PV).'
+            );
+        }
+
         $sponsor = User::where('sponsor_id', $request->sponsor_code)
             ->where('is_active', true)
             ->first();
-            
-        if (!$sponsor) {
-            return redirect()->back()->with('error', 'Code parrain invalide ou inactif');
+
+        if (! $sponsor) {
+            return redirect()->back()->with('error', 'Code membre / parrain invalide ou inactif');
         }
-        
+
         $client = null;
-        
+
         if ($request->filled('customer_id')) {
             $client = User::find($request->customer_id);
             Log::info('Client trouvé par ID:', ['id' => $client->id ?? null]);
@@ -1340,16 +1365,11 @@ public function createCheckoutOrder(Request $request)
         $subtotal = 0;
         $totalPv = 0;
         $totalBv = 0;
-        $isMlmProduct = false;
         
         foreach ($cart as $item) {
             $subtotal += $item['price'] * $item['quantity'];
             $totalPv += ($item['pv_value'] ?? 0) * $item['quantity'];
             $totalBv += ($item['bv_value'] ?? 0) * $item['quantity'];
-            
-            if (isset($item['source']) && $item['source'] == 'mlm') {
-                $isMlmProduct = true;
-            }
         }
         
         $total = $subtotal;
@@ -1360,6 +1380,7 @@ public function createCheckoutOrder(Request $request)
         try {
             $orderNumber = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(6));
             
+            // Vente POS (produit ou package) ≠ adhésion : l'adhésion passe par l'inscription membre.
             $order = Order::create([
                 'user_id' => $client->id,
                 'cashier_id' => auth()->id(),
@@ -1375,7 +1396,7 @@ public function createCheckoutOrder(Request $request)
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'payment_method' => 'cash',
-                'source' => $isMlmProduct ? 'mlm' : 'pos',
+                'source' => 'pos',
                 'shipping_address' => $client->address,
                 'billing_address' => $client->address,
                 'metadata' => [
@@ -1387,6 +1408,7 @@ public function createCheckoutOrder(Request $request)
                     'product_count' => count($cart),
                     'commission_amount' => $commissionAmount,
                     'consultation_id' => $consultationId,
+                    'has_package' => collect($cart)->contains(fn ($i) => ($i['type'] ?? '') === 'package'),
                 ],
                 'paid_at' => now(),
             ]);
@@ -1395,24 +1417,38 @@ public function createCheckoutOrder(Request $request)
                 ConsultationSaleService::markLinesPurchased(
                     $consultationForSale,
                     $consultationCheckout['line_keys'],
-                    $order->id
+                    $order->id,
+                    $consultationCheckout['purchase_details'] ?? []
                 );
             }
             
             foreach ($cart as $item) {
-                $product = Product::find($item['id']);
+                $type = $item['type'] ?? null;
+                $product = null;
                 $package = null;
-                
-                if (!$product) {
+
+                if ($type === 'package') {
                     $package = Package::find($item['id']);
+                } elseif ($type === 'product') {
+                    $product = Product::find($item['id']);
+                } else {
+                    // Panier legacy sans type explicite
+                    $product = Product::find($item['id']);
+                    if (! $product) {
+                        $package = Package::find($item['id']);
+                    }
+                }
+
+                if (! $product && ! $package) {
+                    throw new \RuntimeException('Article introuvable dans le panier (id='.$item['id'].').');
                 }
                 
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => $product ? $product->id : null,
-                    'package_id' => $package ? $package->id : null,
+                    'product_id' => $product?->id,
+                    'package_id' => $package?->id,
                     'name' => $item['name'],
-                    'sku' => $product ? 'PROD-' . $product->id : 'PKG-' . $package->id,
+                    'sku' => $product ? 'PROD-'.$product->id : 'PKG-'.$package->id,
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'total' => $item['price'] * $item['quantity'],
@@ -1421,7 +1457,7 @@ public function createCheckoutOrder(Request $request)
                 ]);
                 
                 if ($product) {
-                    Product::where('id', $item['id'])->decrement('stock', $item['quantity']);
+                    Product::where('id', $product->id)->decrement('stock', $item['quantity']);
                 }
             }
             
@@ -1903,11 +1939,18 @@ public function destroyProfile(Request $request)
 
     /**
      * Afficher le formulaire de création d'un nouveau membre
+     * (aussi accessible depuis le POS : vente package = adhésion)
      */
-    public function memberCreate()
+    public function memberCreate(Request $request)
     {
         $packages = Package::where('is_active', true)->orderBy('price')->get();
-        return view('cashier.members.create', compact('packages'));
+        $selectedPackageId = $request->integer('package_id') ?: (int) old('package_id');
+
+        if ($selectedPackageId && ! $packages->contains('id', $selectedPackageId)) {
+            $selectedPackageId = 0;
+        }
+
+        return view('cashier.members.create', compact('packages', 'selectedPackageId'));
     }
 
     /**
@@ -2307,6 +2350,163 @@ public function history(Request $request)
     
     return view('cashier.history', compact('orders', 'stats'));
 }
+
+    /**
+     * Rapport PDF de l'historique des ventes POS (filtres de la page historique).
+     */
+    public function historyExportPdf(Request $request)
+    {
+        try {
+            $this->preparePdfExport(300, '512M');
+
+            $query = Order::with([
+                'user:id,name,phone',
+                'items.product:id,name',
+                'items.package:id,name',
+                'commissions' => function ($q) {
+                    $q->whereIn('type', ['sponsor', 'cash_pos']);
+                },
+            ])
+                ->whereIn('source', ['pos', 'membership'])
+                ->where('status', 'completed');
+
+            if ($request->filled('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('order_number', 'LIKE', "%{$search}%")
+                        ->orWhereHas('user', function ($sub) use ($search) {
+                            $sub->where('name', 'LIKE', "%{$search}%")
+                                ->orWhere('phone', 'LIKE', "%{$search}%");
+                        });
+                });
+            }
+
+            $orders = $query->orderBy('created_at', 'desc')->limit(3000)->get();
+
+            $sponsorIds = $orders
+                ->map(fn ($order) => $order->metadata['sponsor_id'] ?? null)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $sponsors = $sponsorIds
+                ? User::whereIn('id', $sponsorIds)->get(['id', 'name', 'sponsor_id'])->keyBy('id')
+                : collect();
+
+            $rows = $orders->map(function (Order $order) use ($sponsors) {
+                $firstItem = $order->items->first();
+                $isMembership = ($order->source ?? '') === 'membership'
+                    || isset($order->metadata['is_membership']);
+
+                $itemKind = 'other';
+                $itemLabel = $order->items->count().' article(s)';
+                $itemExtra = null;
+
+                if ($isMembership) {
+                    $itemKind = 'membership';
+                    $pkgName = $firstItem?->package?->name;
+                    $itemLabel = $pkgName ?: 'Adhésion';
+                    if (! empty($order->metadata['member_code'])) {
+                        $itemExtra = 'Code: '.$order->metadata['member_code'];
+                    }
+                } elseif ($firstItem?->package_id) {
+                    $itemKind = 'package';
+                    $itemLabel = $firstItem->package?->name ?? ('Package #'.$firstItem->package_id);
+                    $itemExtra = 'Qté: '.$order->items->sum('quantity');
+                } elseif ($firstItem?->product_id) {
+                    $itemKind = 'product';
+                    $itemLabel = $firstItem->product?->name ?? ('Produit #'.$firstItem->product_id);
+                    $itemExtra = 'Qté: '.$order->items->sum('quantity');
+                }
+
+                $sponsor = null;
+                if (! empty($order->metadata['sponsor_id'])) {
+                    $sponsor = $sponsors->get($order->metadata['sponsor_id']);
+                }
+
+                $sponsorAmount = (float) $order->commissions->where('type', 'sponsor')->sum('amount');
+                $cashAmount = (float) $order->commissions->where('type', 'cash_pos')->sum('amount');
+                $commission = $sponsorAmount + $cashAmount;
+
+                $commissionParts = [];
+                if ($sponsorAmount > 0) {
+                    $commissionParts[] = 'Sponsor $'.number_format($sponsorAmount, 2);
+                }
+                if ($cashAmount > 0) {
+                    $commissionParts[] = 'CASH $'.number_format($cashAmount, 2);
+                }
+
+                $price = (float) ($order->subtotal ?? 0);
+                $pv = (float) $order->items->sum(function ($item) {
+                    return ($item->pv_value ?? 0) * $item->quantity;
+                });
+
+                return [
+                    'date' => $order->created_at->format('d/m/Y H:i'),
+                    'order_number' => $order->order_number,
+                    'client_name' => $order->user?->name ?? 'N/A',
+                    'client_phone' => $order->user?->phone,
+                    'item_kind' => $itemKind,
+                    'item_label' => $itemLabel,
+                    'item_extra' => $itemExtra,
+                    'sponsor_code' => $sponsor?->sponsor_id,
+                    'sponsor_name' => $sponsor?->name,
+                    'price' => $price,
+                    'commission' => $commission,
+                    'commission_detail' => implode(' · ', $commissionParts),
+                    'paid' => $price,
+                    'pv' => $pv,
+                ];
+            });
+
+            $totals = [
+                'price' => (float) $rows->sum('price'),
+                'commission' => (float) $rows->sum('commission'),
+                'paid' => (float) $rows->sum('paid'),
+                'pv' => (float) $rows->sum('pv'),
+            ];
+
+            $periodLabel = 'Toutes les périodes';
+            if ($request->filled('date_from') && $request->filled('date_to')) {
+                $periodLabel = \Carbon\Carbon::parse($request->date_from)->format('d/m/Y')
+                    .' – '.\Carbon\Carbon::parse($request->date_to)->format('d/m/Y');
+            } elseif ($request->filled('date_from')) {
+                $periodLabel = 'Depuis '.\Carbon\Carbon::parse($request->date_from)->format('d/m/Y');
+            } elseif ($request->filled('date_to')) {
+                $periodLabel = 'Jusqu\'au '.\Carbon\Carbon::parse($request->date_to)->format('d/m/Y');
+            }
+
+            return $this->downloadPdfView(
+                'cashier.history-pdf',
+                [
+                    'rows' => $rows,
+                    'totals' => $totals,
+                    'periodLabel' => $periodLabel,
+                    'search' => $request->input('search'),
+                    'logoBase64' => $this->loadPdfLogoBase64(),
+                    'date_generated' => now()->format('d/m/Y H:i'),
+                ],
+                'rapport_historique_ventes_pos_'.now()->format('Y-m-d').'.pdf',
+                'a4',
+                'landscape',
+                300,
+                '512M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('cashier.historyExportPdf', $e);
+
+            return back()->with('error', 'Erreur lors de la génération du PDF. Réessayez ou réduisez la période.');
+        }
+    }
 
     /**
      * Ventes du jour

@@ -81,6 +81,15 @@
     background: var(--bg-hover);
     border-color: var(--border-color);
 }
+.btn-danger {
+    background: #B91C1C;
+    color: #fff;
+    border-color: #B91C1C;
+}
+.btn-danger:hover {
+    background: #991B1B;
+    border-color: #991B1B;
+}
 
 .badge {
     display: inline-block;
@@ -115,6 +124,25 @@
 .form-control-sm {
     padding: 0.375rem 0.625rem;
     font-size: 0.813rem;
+}
+
+.product-select {
+    flex: 1 1 180px;
+    min-width: 140px;
+}
+.product-price-display {
+    min-width: 7.5rem;
+    width: auto;
+    max-width: 10rem;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .table-wrap { overflow-x: auto; }
@@ -197,6 +225,90 @@
         font-size: 0.65rem;
     }
 }
+
+/* ===== MODALE SUPPRESSION ===== */
+.consultation-delete-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.consultation-delete-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.consultation-delete-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    transform: scale(0.96) translateY(6px);
+    transition: transform 0.2s ease;
+}
+.consultation-delete-overlay.active .consultation-delete-box {
+    transform: scale(1) translateY(0);
+}
+.consultation-delete-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    background: rgba(185, 28, 28, 0.1);
+    color: #B91C1C;
+}
+.consultation-delete-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+.consultation-delete-title {
+    text-align: center;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.375rem;
+}
+.consultation-delete-text {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 0.75rem;
+}
+.consultation-delete-text strong {
+    color: var(--text-primary);
+}
+.consultation-delete-warning {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #B91C1C;
+    background: rgba(185, 28, 28, 0.06);
+    border: 1px solid rgba(185, 28, 28, 0.15);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1.25rem;
+}
+.consultation-delete-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.consultation-delete-actions .btn {
+    min-width: 110px;
+}
 </style>
 @endpush
 
@@ -229,6 +341,12 @@
                 </svg>
                 Imprimer
             </a>
+            <button type="button" id="openConsultationDeleteModal" class="btn btn-sm" style="background:#B91C1C;color:#fff;border-color:#B91C1C;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Supprimer
+            </button>
             <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -251,32 +369,56 @@
                     <h3 class="text-base font-semibold text-[var(--primary-blue)] mb-3">Informations du Patient</h3>
                     <div class="info-grid">
                         <div class="info-item">
-                            <div class="label">Code</div>
-                            <div class="value">{{ $consultation->code_id ?? 'N/A' }}</div>
+                            <div class="label">Code ID <span class="text-[var(--ui-stat-danger)]">*</span></div>
+                            <input type="text" name="code_id" id="code_id" required class="form-control form-control-sm mt-1"
+                                   value="{{ old('code_id', $consultation->code_id) }}"
+                                   placeholder="Code membre"
+                                   autocomplete="off">
+                            <div id="codeIdInfo" class="text-xs mt-1 @if($consultation->client) text-[var(--ui-stat-success)] @endif">
+                                @if($consultation->client)
+                                    Membre : <strong>{{ $consultation->client->name }}</strong>
+                                @endif
+                            </div>
+                            @error('code_id') <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="info-item">
                             <div class="label">Numéro</div>
-                            <div class="value">{{ $consultation->numero ?? 'N/A' }}</div>
+                            <input type="text" name="numero" class="form-control form-control-sm mt-1"
+                                   value="{{ old('numero', $consultation->numero) }}">
                         </div>
                         <div class="info-item">
-                            <div class="label">Nom</div>
-                            <div class="value">{{ $consultation->nom_complet }}</div>
+                            <div class="label">Nom <span class="text-[var(--ui-stat-danger)]">*</span></div>
+                            <input type="text" name="nom_complet" required class="form-control form-control-sm mt-1"
+                                   value="{{ old('nom_complet', $consultation->nom_complet) }}">
+                            @error('nom_complet') <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="info-item">
                             <div class="label">Genre</div>
-                            <div class="value">{{ $consultation->genre_label }}</div>
+                            <select name="genre" class="form-control form-control-sm mt-1">
+                                <option value="">Sélectionner</option>
+                                <option value="masculin" @selected(old('genre', $consultation->genre) === 'masculin')>Masculin</option>
+                                <option value="feminin" @selected(old('genre', $consultation->genre) === 'feminin')>Féminin</option>
+                            </select>
                         </div>
                         <div class="info-item">
-                            <div class="label">Âge</div>
-                            <div class="value">{{ $consultation->age ?? 'N/A' }} ans</div>
+                            <div class="label">Âge (ans)</div>
+                            <input type="number" name="age" min="0" max="150" class="form-control form-control-sm mt-1"
+                                   value="{{ old('age', $consultation->age) }}">
                         </div>
                         <div class="info-item">
-                            <div class="label">Poids / Taille</div>
-                            <div class="value">{{ $consultation->poids ?? 'N/A' }} kg / {{ $consultation->taille ?? 'N/A' }} cm</div>
+                            <div class="label">Poids (kg)</div>
+                            <input type="number" name="poids" step="0.1" min="0" class="form-control form-control-sm mt-1"
+                                   value="{{ old('poids', $consultation->poids) }}">
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Taille (cm)</div>
+                            <input type="number" name="taille" step="0.1" min="0" class="form-control form-control-sm mt-1"
+                                   value="{{ old('taille', $consultation->taille) }}">
                         </div>
                         <div class="info-item">
                             <div class="label">Date examen</div>
-                            <div class="value">{{ $consultation->date_examen ? $consultation->date_examen->format('d/m/Y') : 'N/A' }}</div>
+                            <input type="date" name="date_examen" class="form-control form-control-sm mt-1"
+                                   value="{{ old('date_examen', optional($consultation->date_examen)->format('Y-m-d')) }}">
                         </div>
                         <div class="info-item">
                             <div class="label">Caissier</div>
@@ -316,25 +458,43 @@
                         @php $productIndex = 0; @endphp
                         @if($consultation->recommended_products && count($consultation->recommended_products) > 0)
                             @foreach($consultation->recommended_products as $product)
+                                @php
+                                    $selectedProduct = $products->firstWhere('id', $product['product_id'] ?? null);
+                                    $linePrice = $selectedProduct
+                                        ? (float) ($selectedProduct->full_price ?? $selectedProduct->price)
+                                        : (float) ($product['full_price'] ?? $product['prix'] ?? 0);
+                                    $priceLabel = $selectedProduct
+                                        ? \App\Services\ConsultationSaleService::priceLabel([
+                                            'has_half' => $selectedProduct->hasHalfOption(),
+                                            'half_price' => $selectedProduct->half_price,
+                                            'full_price' => $selectedProduct->full_price ?? $selectedProduct->price,
+                                            'prix' => $linePrice,
+                                        ])
+                                        : \App\Services\ConsultationSaleService::priceLabel($product);
+                                @endphp
                                 <div class="product-row flex flex-wrap items-center gap-2 mb-2">
                                     <select name="recommended_products[{{ $productIndex }}][product_id]"
-                                            class="flex-1 min-w-[120px] form-control form-control-sm"
-                                            onchange="updateProductPrice(this, {{ $productIndex }})">
+                                            class="form-control form-control-sm product-select"
+                                            onchange="updateProductPrice({{ $productIndex }})">
                                         <option value="">Sélectionner</option>
                                         @foreach($products as $p)
-                                            <option value="{{ $p->id }}" data-price="{{ $p->price }}"
+                                            <option value="{{ $p->id }}"
+                                                data-full-price="{{ $p->full_price ?? $p->price }}"
+                                                data-half-price="{{ $p->half_price ?? '' }}"
+                                                data-has-half="{{ $p->hasHalfOption() ? '1' : '0' }}"
                                                 @selected(($product['product_id'] ?? '') == $p->id)>
-                                                {{ $p->name }} - ${{ number_format($p->price, 2) }}
+                                                {{ $p->name }}
                                             </option>
                                         @endforeach
                                     </select>
                                     <input type="text" name="recommended_products[{{ $productIndex }}][posologie]"
                                            value="{{ $product['posologie'] ?? '' }}" placeholder="Posologie"
                                            class="w-28 form-control form-control-sm">
-                                    <input type="text" name="recommended_products[{{ $productIndex }}][prix]"
+                                    <div id="product_price_display_{{ $productIndex }}" class="product-price-display" title="Prix catalogue">{{ $priceLabel }}</div>
+                                    <input type="hidden" name="recommended_products[{{ $productIndex }}][prix]"
                                            id="product_price_{{ $productIndex }}"
-                                           value="{{ number_format($product['prix'] ?? 0, 2) }}"
-                                           class="w-24 form-control form-control-sm text-right product-price" readonly>
+                                           value="{{ number_format($linePrice, 2, '.', '') }}"
+                                           class="product-price">
                                     <input type="text" name="recommended_products[{{ $productIndex }}][observation]"
                                            value="{{ $product['observation'] ?? '' }}" placeholder="Observation"
                                            class="flex-1 min-w-[100px] form-control form-control-sm">
@@ -349,19 +509,23 @@
                         @else
                             <div class="product-row flex flex-wrap items-center gap-2 mb-2">
                                 <select name="recommended_products[0][product_id]"
-                                        class="flex-1 min-w-[120px] form-control form-control-sm"
-                                        onchange="updateProductPrice(this, 0)">
+                                        class="form-control form-control-sm product-select"
+                                        onchange="updateProductPrice(0)">
                                     <option value="">Sélectionner</option>
                                     @foreach($products as $p)
-                                        <option value="{{ $p->id }}" data-price="{{ $p->price }}">
-                                            {{ $p->name }} - ${{ number_format($p->price, 2) }}
+                                        <option value="{{ $p->id }}"
+                                            data-full-price="{{ $p->full_price ?? $p->price }}"
+                                            data-half-price="{{ $p->half_price ?? '' }}"
+                                            data-has-half="{{ $p->hasHalfOption() ? '1' : '0' }}">
+                                            {{ $p->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 <input type="text" name="recommended_products[0][posologie]" placeholder="Posologie"
                                        class="w-28 form-control form-control-sm">
-                                <input type="text" name="recommended_products[0][prix]" id="product_price_0"
-                                       class="w-24 form-control form-control-sm text-right product-price" readonly value="0.00">
+                                <div id="product_price_display_0" class="product-price-display" title="Prix catalogue">—</div>
+                                <input type="hidden" name="recommended_products[0][prix]" id="product_price_0"
+                                       class="product-price" value="0.00">
                                 <input type="text" name="recommended_products[0][observation]" placeholder="Observation"
                                        class="flex-1 min-w-[100px] form-control form-control-sm">
                                 <button type="button" class="text-[var(--ui-stat-danger)] hover:text-[#991B1B] p-1 remove-product hidden" onclick="removeProductRow(this)">
@@ -472,12 +636,91 @@
     </form>
 </div>
 
+{{-- Modale confirmation suppression --}}
+<div id="consultationDeleteModal" class="consultation-delete-overlay" aria-hidden="true">
+    <div class="consultation-delete-box" role="dialog" aria-modal="true" aria-labelledby="consultationDeleteTitle">
+        <div class="consultation-delete-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 id="consultationDeleteTitle" class="consultation-delete-title">Supprimer la consultation</h3>
+        <p class="consultation-delete-text">
+            Voulez-vous supprimer la fiche <strong>#{{ $consultation->id }}</strong>
+            de <strong>{{ $consultation->nom_complet }}</strong> ?
+        </p>
+        <div class="consultation-delete-warning">Cette action est définitive et ne peut pas être annulée.</div>
+        <div class="consultation-delete-actions">
+            <button type="button" class="btn btn-outline btn-sm" id="consultationDeleteCancel">Annuler</button>
+            <form action="{{ route('admin.consultations.destroy', $consultation) }}" method="POST" class="inline">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 let productIndex = {{ $productIndex ?? 0 }};
 
-function updateProductPrice(select, index) {
-    const price = select.options[select.selectedIndex]?.dataset?.price || 0;
-    document.getElementById('product_price_' + index).value = parseFloat(price).toFixed(2);
+(function () {
+    const modal = document.getElementById('consultationDeleteModal');
+    const openBtn = document.getElementById('openConsultationDeleteModal');
+    const cancelBtn = document.getElementById('consultationDeleteCancel');
+    if (!modal || !openBtn) return;
+
+    function openModal() {
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+})();
+
+function formatMoney(value) {
+    return '$' + (parseFloat(value) || 0).toFixed(2);
+}
+
+function updateProductPrice(index) {
+    const row = document.querySelector(`#product_price_${index}`)?.closest('.product-row');
+    if (!row) return;
+
+    const select = row.querySelector('.product-select');
+    const opt = select?.options[select.selectedIndex];
+    const display = document.getElementById('product_price_display_' + index);
+    const hidden = document.getElementById('product_price_' + index);
+
+    if (!opt || !opt.value) {
+        if (display) display.textContent = '—';
+        if (hidden) hidden.value = '0.00';
+        calculateProductTotal();
+        return;
+    }
+
+    const fullPrice = parseFloat(opt.dataset.fullPrice || 0) || 0;
+    const halfPrice = parseFloat(opt.dataset.halfPrice || 0) || 0;
+    const hasHalf = opt.dataset.hasHalf === '1';
+
+    if (display) {
+        display.textContent = hasHalf
+            ? (formatMoney(halfPrice) + ' - ' + formatMoney(fullPrice))
+            : formatMoney(fullPrice);
+    }
+    if (hidden) hidden.value = fullPrice.toFixed(2);
     calculateProductTotal();
 }
 
@@ -488,20 +731,22 @@ function addProductRow() {
 
     let optionsHTML = '<option value="">Sélectionner</option>';
     @foreach($products as $p)
-        optionsHTML += `<option value="{{ $p->id }}" data-price="{{ $p->price }}">{{ $p->name }} - ${{ number_format($p->price, 2) }}</option>`;
+        optionsHTML += `<option value="{{ $p->id }}" data-full-price="{{ $p->full_price ?? $p->price }}" data-half-price="{{ $p->half_price ?? '' }}" data-has-half="{{ $p->hasHalfOption() ? '1' : '0' }}">{{ $p->name }}</option>`;
     @endforeach
 
+    const idx = productIndex;
     row.innerHTML = `
-        <select name="recommended_products[${productIndex}][product_id]"
-                class="flex-1 min-w-[120px] form-control form-control-sm"
-                onchange="updateProductPrice(this, ${productIndex})">
+        <select name="recommended_products[${idx}][product_id]"
+                class="form-control form-control-sm product-select"
+                onchange="updateProductPrice(${idx})">
             ${optionsHTML}
         </select>
-        <input type="text" name="recommended_products[${productIndex}][posologie]" placeholder="Posologie"
+        <input type="text" name="recommended_products[${idx}][posologie]" placeholder="Posologie"
                class="w-28 form-control form-control-sm">
-        <input type="text" name="recommended_products[${productIndex}][prix]" id="product_price_${productIndex}"
-               class="w-24 form-control form-control-sm text-right product-price" readonly value="0.00">
-        <input type="text" name="recommended_products[${productIndex}][observation]" placeholder="Observation"
+        <div id="product_price_display_${idx}" class="product-price-display" title="Prix catalogue">—</div>
+        <input type="hidden" name="recommended_products[${idx}][prix]" id="product_price_${idx}"
+               class="product-price" value="0.00">
+        <input type="text" name="recommended_products[${idx}][observation]" placeholder="Observation"
                class="flex-1 min-w-[100px] form-control form-control-sm">
         <button type="button" class="text-[var(--ui-stat-danger)] hover:text-[#991B1B] p-1 remove-product" onclick="removeProductRow(this)">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -579,6 +824,41 @@ document.addEventListener('DOMContentLoaded', function() {
     updateRemoveButtons();
     calculateProductTotal();
     calculateServiceTotal();
+
+    const codeInput = document.getElementById('code_id');
+    const codeInfo = document.getElementById('codeIdInfo');
+    let codeTimer;
+    function checkMemberCode() {
+        const code = (codeInput?.value || '').trim();
+        if (!codeInfo) return;
+        if (!code) {
+            codeInfo.textContent = '';
+            return;
+        }
+        fetch(`{{ route('check.sponsor') }}?sponsor_id=${encodeURIComponent(code)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exists && data.name) {
+                codeInfo.innerHTML = `Membre : <strong>${data.name}</strong>`;
+                codeInfo.className = 'text-xs mt-1 text-[var(--ui-stat-success)]';
+            } else {
+                codeInfo.textContent = data.message || 'Code membre invalide';
+                codeInfo.className = 'text-xs mt-1 text-[var(--ui-stat-danger)]';
+            }
+        })
+        .catch(() => {
+            codeInfo.textContent = 'Erreur de vérification';
+            codeInfo.className = 'text-xs mt-1 text-[var(--ui-stat-danger)]';
+        });
+    }
+    if (codeInput) {
+        codeInput.addEventListener('input', function () {
+            clearTimeout(codeTimer);
+            codeTimer = setTimeout(checkMemberCode, 400);
+        });
+    }
 });
 </script>
 @endsection

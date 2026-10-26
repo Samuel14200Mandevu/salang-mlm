@@ -445,12 +445,13 @@
                     <input type="text"
                            name="parrain_code"
                            id="parrainCode"
-                           value="{{ old('parrain_code') }}"
+                           value="{{ old('parrain_code', $user->parrain?->sponsor_id) }}"
                            class="form-control @error('parrain_code') form-control-error @enderror"
+                           placeholder="Code du parrain"
                            autocomplete="off">
                     <span class="help-text">
                         Entrez le <strong>code de parrain</strong> pour changer de parrain.
-                        Laissez vide pour ne pas modifier.
+                        Laissez le code actuel pour ne pas modifier.
                     </span>
 
                     <!-- Zone de feedback AJAX -->
@@ -514,8 +515,8 @@
                 <div class="form-group">
                     <label>Statut</label>
                     <select name="is_active" class="form-control">
-                        <option value="1" {{ $user->is_active ? 'selected' : '' }}>Actif</option>
-                        <option value="0" {{ !$user->is_active ? 'selected' : '' }}>Inactif</option>
+                        <option value="1" {{ (string) old('is_active', $user->is_active ? '1' : '0') === '1' ? 'selected' : '' }}>Actif</option>
+                        <option value="0" {{ (string) old('is_active', $user->is_active ? '1' : '0') === '0' ? 'selected' : '' }}>Inactif</option>
                     </select>
                 </div>
 

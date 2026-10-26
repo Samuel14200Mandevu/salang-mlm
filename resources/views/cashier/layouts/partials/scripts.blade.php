@@ -54,6 +54,14 @@
                 var saved = localStorage.getItem('pos_cart');
                 if (saved) {
                     window.cart = JSON.parse(saved);
+                    // Packages ne vont plus dans le panier POS (adhésion membre)
+                    var before = (window.cart || []).length;
+                    window.cart = (window.cart || []).filter(function (item) {
+                        return !item || item.type !== 'package';
+                    });
+                    if (window.cart.length !== before) {
+                        window.saveCart();
+                    }
                     window.renderCart();
                 }
             } catch (e) {
@@ -67,6 +75,15 @@
         };
 
         window.addToCart = function (itemId, type) {
+            if (type === 'package') {
+                if (typeof window.posStartPackageAdhesion === 'function') {
+                    window.posStartPackageAdhesion(itemId);
+                } else {
+                    var base = @json(route('cashier.members.create'));
+                    window.location.href = base + '?package_id=' + encodeURIComponent(itemId);
+                }
+                return;
+            }
             var existing = window.cart.find(function (item) { return item.id === itemId && item.type === type; });
             if (existing) {
                 existing.quantity += 1;
@@ -75,9 +92,7 @@
                 window.showToast('Quantité augmentée', 'success');
                 return;
             }
-            var card = type === 'product'
-                ? document.querySelector('.product-card[data-product-id="' + itemId + '"][data-type="product"]')
-                : document.querySelector('.product-card[data-product-id="' + itemId + '"][data-type="package"]');
+            var card = document.querySelector('.product-card[data-product-id="' + itemId + '"][data-type="product"]');
             if (!card) {
                 window.showToast('Erreur: article non trouvé', 'error');
                 return;
@@ -96,8 +111,8 @@
                 name: name,
                 price: price,
                 image: image,
-                source: type === 'product' ? 'pos' : 'mlm',
-                sourceLabel: type === 'product' ? 'POS' : 'MLM',
+                source: 'pos',
+                sourceLabel: 'POS',
                 pv_value: pvValue,
                 bv_value: 0,
                 quantity: 1
@@ -108,6 +123,15 @@
         };
 
         window.addToCartGlobal = function (productId, type, name, price, pv) {
+            if (type === 'package') {
+                if (typeof window.posStartPackageAdhesion === 'function') {
+                    window.posStartPackageAdhesion(productId);
+                } else {
+                    var base = @json(route('cashier.members.create'));
+                    window.location.href = base + '?package_id=' + encodeURIComponent(productId);
+                }
+                return;
+            }
             var existing = window.cart.find(function (item) { return item.id === productId && item.type === type; });
             if (existing) {
                 existing.quantity += 1;
@@ -120,8 +144,8 @@
                     pv_value: pv || 0,
                     bv_value: 0,
                     quantity: 1,
-                    source: type === 'product' ? 'pos' : 'mlm',
-                    sourceLabel: type === 'product' ? 'POS' : 'MLM',
+                    source: 'pos',
+                    sourceLabel: 'POS',
                     image: null
                 });
             }

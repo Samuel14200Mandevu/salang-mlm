@@ -23,20 +23,35 @@ class WalletController extends Controller
     public function show(UserCommissionDisplayService $commissionDisplay)
     {
         $user = Auth::user();
-        $wallet = $user->wallet ?? Wallet::create([
-            'user_id' => $user->id,
-            'balance' => 0,
-            'pending_balance' => 0,
-            'currency' => 'USD',
-            'is_active' => true,
-        ]);
+        // Portefeuille créé uniquement au premier dépôt (pas à la lecture)
+        $wallet = $user->wallet;
+        $commissionSummary = $commissionDisplay->memberStatsPayload($user->id);
+
+        if (! $wallet) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'balance' => 0,
+                    'pending_balance' => 0,
+                    'currency' => 'USD',
+                    'is_active' => false,
+                    'exists' => false,
+                    'commission_summary' => $commissionSummary,
+                ],
+                'message' => null,
+                'errors' => null,
+                'balance' => 0,
+                'pending_balance' => 0,
+                'commission_summary' => $commissionSummary,
+            ]);
+        }
 
         $resource = (new WalletResource($wallet))->resolve();
-        $commissionSummary = $commissionDisplay->memberStatsPayload($user->id);
 
         return response()->json([
             'success' => true,
             'data' => array_merge($resource, [
+                'exists' => true,
                 'commission_summary' => $commissionSummary,
             ]),
             'message' => null,

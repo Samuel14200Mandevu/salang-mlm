@@ -493,6 +493,12 @@
                     <p class="text-[var(--text-secondary)] mt-0.5">
                         @if($linkedConsultation)
                             Patient : {{ $linkedConsultation->nom_complet }}
+                            @if(!empty($consultationCheckout['pv_member_code']))
+                                · PV → Code ID {{ $consultationCheckout['pv_member_code'] }}
+                                @if(!empty($consultationCheckout['pv_member_name']))
+                                    ({{ $consultationCheckout['pv_member_name'] }})
+                                @endif
+                            @endif
                             —
                             <a href="{{ route('cashier.consultations.show', $linkedConsultation) }}" class="text-primary-500 hover:underline">Retour à la fiche</a>
                         @else
@@ -561,8 +567,14 @@
                                     <div class="item-info">
                                         <h4>{{ $item['name'] }}</h4>
                                         <div class="item-meta">
-                                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{ isset($item['source']) && $item['source'] === 'pos' ? 'badge-pos' : 'badge-mlm' }}">
-                                                {{ $item['source_label'] ?? ($item['source'] ?? 'POS') }}
+                                            @php
+                                                $itemType = $item['type'] ?? null;
+                                                $itemBadge = ($itemType === 'package')
+                                                    ? 'Package'
+                                                    : ($item['source_label'] ?? $item['sourceLabel'] ?? 'POS');
+                                            @endphp
+                                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold badge-pos">
+                                                {{ $itemBadge }}
                                             </span>
                                             @if(isset($item['pv_value']) && $item['pv_value'] > 0)
                                                 <span class="pv-badge ml-1">{{ $item['pv_value'] }} PV</span>
@@ -723,24 +735,45 @@
                                 </div>
                             </div>
 
+                            @php
+                                $lockedPvCode = !empty($consultationCheckout['pv_member_code'])
+                                    ? $consultationCheckout['pv_member_code']
+                                    : null;
+                            @endphp
                             <div class="form-group md:col-span-2">
-                                <label for="sponsor_code">Code parrain <span class="text-red-500">*</span></label>
+                                <label for="sponsor_code">
+                                    @if($lockedPvCode)
+                                        Code ID (membre PV) <span class="text-red-500">*</span>
+                                    @else
+                                        Code parrain <span class="text-red-500">*</span>
+                                    @endif
+                                </label>
                                 <div class="flex gap-2">
                                     <input type="text" 
                                            id="sponsor_code" 
                                            name="sponsor_code" 
                                            class="input flex-1 @error('sponsor_code') input-error @enderror" 
-                                           placeholder="Saisir le code de parrain"
-                                           value="{{ old('sponsor_code') }}"
+                                           placeholder="{{ $lockedPvCode ? 'Code membre de la consultation' : 'Saisir le code de parrain' }}"
+                                           value="{{ old('sponsor_code', $lockedPvCode) }}"
+                                           @if($lockedPvCode) readonly @endif
                                            required>
+                                    @unless($lockedPvCode)
                                     <button type="button" onclick="checkSponsor()" class="btn btn-outline btn-sm flex-shrink-0">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                         </svg>
                                         Vérifier
                                     </button>
+                                    @endunless
                                 </div>
-                                <div id="sponsorInfo" class="sponsor-info"></div>
+                                <div id="sponsorInfo" class="sponsor-info">
+                                    @if($lockedPvCode && !empty($consultationCheckout['pv_member_name']))
+                                        <span class="text-sm text-[var(--ui-stat-success)]">
+                                            Membre : <strong>{{ $consultationCheckout['pv_member_name'] }}</strong>
+                                            — PV crédités dans ses PV disponibles pour l’allocation
+                                        </span>
+                                    @endif
+                                </div>
                                 @error('sponsor_code')
                                     <p class="error-text">{{ $message }}</p>
                                 @enderror

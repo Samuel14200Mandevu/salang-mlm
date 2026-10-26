@@ -114,6 +114,12 @@
             text-align: left;
             background-color: #fcfcfc;
         }
+        .products-table th:nth-child(2),
+        .products-table th:nth-child(3),
+        .products-table td:nth-child(2),
+        .products-table td:nth-child(3) {
+            text-align: center;
+        }
         .products-table td {
             border: 2px solid #000;
             padding: 6px 10px;
@@ -264,92 +270,89 @@
 
 @php
     $products = $consultation->recommended_products ?? [];
-    $totalProduits = 0;
-    
-    // Calcul des totaux des services d'observation
     $prixCeragemTotal = ($consultation->seances_ceragem ?? 0) * ($consultation->prix_ceragem ?? 0);
     $prixDetoxTotal = ($consultation->seances_detox ?? 0) * ($consultation->prix_detox ?? 0);
     $totalServices = $prixCeragemTotal + $prixDetoxTotal;
-    
-    foreach($products as $p) {
-        $totalProduits += floatval($p['prix'] ?? 0);
-    }
-    
-    $totalGeneral = $totalProduits + $totalServices;
+    $productsTotal = \App\Services\ConsultationSaleService::productsTotalRange(is_array($products) ? $products : []);
+    $totalMin = $productsTotal['min'] + $totalServices;
+    $totalMax = $productsTotal['max'] + $totalServices;
+    $totalGeneralLabel = abs($totalMin - $totalMax) < 0.001
+        ? '$'.number_format($totalMax, 2)
+        : '$'.number_format($totalMin, 2).' - $'.number_format($totalMax, 2);
 @endphp
 
 <table class="products-table">
     <thead>
         <tr>
-            <th style="width: 35%;">Produits</th>
-            <th style="width: 20%;">Posologie</th>
-            <th style="width: 15%;">Prix</th>
-            <th style="width: 30%;">Observation</th>
+            <th style="width: 30%;">Produits</th>
+            <th style="width: 12%;">Posologie</th>
+            <th style="width: 24%;">Prix</th>
+            <th style="width: 34%;">Observation</th>
         </tr>
     </thead>
     <tbody>
         {{-- Ligne 1 --}}
         <tr>
-            <td>{{ $products[0]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[0]) ? \App\Services\ConsultationSaleService::productDisplayName($products[0]) : '' }}</td>
             <td>{{ $products[0]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[0]['prix']) ? '$'.number_format($products[0]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[0]) ? \App\Services\ConsultationSaleService::priceLabel($products[0]) : '' }}</td>
             <td>{{ $products[0]['observation'] ?? '' }}</td>
         </tr>
         {{-- Ligne 2 : Séances ceragem --}}
         <tr>
-            <td>{{ $products[1]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[1]) ? \App\Services\ConsultationSaleService::productDisplayName($products[1]) : '' }}</td>
             <td>{{ $products[1]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[1]['prix']) ? '$'.number_format($products[1]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[1]) ? \App\Services\ConsultationSaleService::priceLabel($products[1]) : '' }}</td>
             <td><strong>Séances ceragem</strong> : {{ $consultation->seances_ceragem ?? '0' }}</td>
         </tr>
         {{-- Ligne 3 : Prix /s ceragem --}}
         <tr>
-            <td>{{ $products[2]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[2]) ? \App\Services\ConsultationSaleService::productDisplayName($products[2]) : '' }}</td>
             <td>{{ $products[2]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[2]['prix']) ? '$'.number_format($products[2]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[2]) ? \App\Services\ConsultationSaleService::priceLabel($products[2]) : '' }}</td>
             <td><strong>Prix /s:</strong> ${{ number_format($consultation->prix_ceragem ?? 0, 2) }}</td>
         </tr>
         {{-- Ligne 4 --}}
         <tr>
-            <td>{{ $products[3]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[3]) ? \App\Services\ConsultationSaleService::productDisplayName($products[3]) : '' }}</td>
             <td>{{ $products[3]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[3]['prix']) ? '$'.number_format($products[3]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[3]) ? \App\Services\ConsultationSaleService::priceLabel($products[3]) : '' }}</td>
             <td>{{ $products[3]['observation'] ?? '' }}</td>
         </tr>
         {{-- Ligne 5 --}}
         <tr>
-            <td>{{ $products[4]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[4]) ? \App\Services\ConsultationSaleService::productDisplayName($products[4]) : '' }}</td>
             <td>{{ $products[4]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[4]['prix']) ? '$'.number_format($products[4]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[4]) ? \App\Services\ConsultationSaleService::priceLabel($products[4]) : '' }}</td>
             <td>{{ $products[4]['observation'] ?? '' }}</td>
         </tr>
         {{-- Ligne 6 : Séances detox --}}
         <tr>
-            <td>{{ $products[5]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[5]) ? \App\Services\ConsultationSaleService::productDisplayName($products[5]) : '' }}</td>
             <td>{{ $products[5]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[5]['prix']) ? '$'.number_format($products[5]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[5]) ? \App\Services\ConsultationSaleService::priceLabel($products[5]) : '' }}</td>
             <td><strong>Séances detox</strong> : {{ $consultation->seances_detox ?? '0' }}</td>
         </tr>
         {{-- Ligne 7 : Prix /s detox --}}
         <tr>
-            <td>{{ $products[6]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[6]) ? \App\Services\ConsultationSaleService::productDisplayName($products[6]) : '' }}</td>
             <td>{{ $products[6]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[6]['prix']) ? '$'.number_format($products[6]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[6]) ? \App\Services\ConsultationSaleService::priceLabel($products[6]) : '' }}</td>
             <td><strong>Prix /s:</strong> ${{ number_format($consultation->prix_detox ?? 0, 2) }}</td>
         </tr>
         {{-- Ligne 8 --}}
         <tr>
-            <td>{{ $products[7]['produit'] ?? '' }}</td>
+            <td>{{ !empty($products[7]) ? \App\Services\ConsultationSaleService::productDisplayName($products[7]) : '' }}</td>
             <td>{{ $products[7]['posologie'] ?? '' }}</td>
-            <td>{{ isset($products[7]['prix']) ? '$'.number_format($products[7]['prix'], 2) : '' }}</td>
+            <td>{{ !empty($products[7]) ? \App\Services\ConsultationSaleService::priceLabel($products[7]) : '' }}</td>
             <td>{{ $products[7]['observation'] ?? '' }}</td>
         </tr>
         {{-- Ligne Totaux séparés --}}
         <tr>
             <td class="total-cell">Total</td>
             <td></td>
-            <td style="font-size: 15px;"><strong>${{ number_format($totalProduits, 2) }}</strong></td>
-            <td style="font-size: 15px;"><strong>${{ number_format($totalGeneral, 2) }}</strong></td>
+            <td style="font-size: 13px;"><strong>{{ $productsTotal['label'] }}</strong></td>
+            <td style="font-size: 13px;"><strong>{{ $totalGeneralLabel }}</strong></td>
         </tr>
     </tbody>
 </table>

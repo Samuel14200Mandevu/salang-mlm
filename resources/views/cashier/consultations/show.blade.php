@@ -145,6 +145,47 @@
         font-size: 0.7rem;
     }
 
+    .portion-toggle {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: stretch;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary);
+    }
+    .portion-toggle label {
+        margin: 0;
+        cursor: pointer;
+    }
+    .portion-toggle input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .portion-toggle span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.5rem;
+        padding: 0.2rem 0.45rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        line-height: 1;
+        user-select: none;
+    }
+    .portion-toggle label + label span {
+        border-left: 1px solid var(--border-color);
+    }
+    .portion-toggle input:checked + span {
+        background: var(--primary);
+        color: #fff;
+    }
+    .line-price-cell {
+        white-space: nowrap;
+    }
+
     .service-box {
         padding: 0.75rem 1rem;
         border-radius: var(--radius-md, 8px);
@@ -261,7 +302,12 @@
         <div class="info-grid">
             <div class="info-item">
                 <div class="label">Code ID</div>
-                <div class="value">{{ $consultation->code_id ?? 'N/A' }}</div>
+                <div class="value">
+                    {{ $consultation->code_id ?? 'N/A' }}
+                    @if($consultation->client)
+                        <span class="text-xs text-[var(--text-secondary)] block">Membre : {{ $consultation->client->name }}</span>
+                    @endif
+                </div>
             </div>
             <div class="info-item">
                 <div class="label">Numero de dossier</div>
@@ -373,6 +419,7 @@
                                 <input type="checkbox" id="selectAllPending" class="rounded border-[var(--border-color)]" title="Tout sélectionner (à payer)">
                             </th>
                             <th>Produit</th>
+                            <th>Portion</th>
                             <th>Posologie</th>
                             <th class="text-right">Prix ($)</th>
                             <th>Statut</th>
@@ -384,20 +431,61 @@
                             @php
                                 $lineStatus = $line['status'] ?? 'pending';
                                 $isPending = $lineStatus === 'pending';
+                                $enriched = \App\Services\ConsultationSaleService::enrichLinePricing($line);
+                                $hasHalf = \App\Services\ConsultationSaleService::lineHasHalf($enriched);
+                                $halfPrice = \App\Services\ConsultationSaleService::lineMinPrice($enriched);
+                                $fullPrice = \App\Services\ConsultationSaleService::lineMaxPrice($enriched);
+                                $defaultPrice = $fullPrice;
                             @endphp
-                            <tr data-price="{{ (float) ($line['prix'] ?? 0) }}">
+                            <tr class="product-line-row"
+                                data-half-price="{{ $halfPrice }}"
+                                data-full-price="{{ $fullPrice }}"
+                                data-has-half="{{ $hasHalf ? '1' : '0' }}">
                                 <td>
                                     @if($isPending)
                                         <input type="checkbox"
                                                name="line_keys[]"
                                                value="{{ $line['line_key'] }}"
                                                class="line-select rounded border-[var(--border-color)]"
-                                               data-price="{{ (float) ($line['prix'] ?? 0) }}">
+                                               data-price="{{ $defaultPrice }}">
                                     @endif
                                 </td>
                                 <td>{{ $line['produit'] ?? '' }}</td>
+                                <td>
+                                    @if($isPending && $hasHalf)
+                                        <div class="portion-toggle" role="group" aria-label="Portion">
+                                            <label>
+                                                <input type="radio"
+                                                       class="line-portion"
+                                                       name="portions[{{ $line['line_key'] }}]"
+                                                       value="full"
+                                                       checked>
+                                                <span>Complet</span>
+                                            </label>
+                                            <label>
+                                                <input type="radio"
+                                                       class="line-portion"
+                                                       name="portions[{{ $line['line_key'] }}]"
+                                                       value="half">
+                                                <span>1/2</span>
+                                            </label>
+                                        </div>
+                                    @elseif($isPending)
+                                        <input type="hidden" name="portions[{{ $line['line_key'] }}]" value="full">
+                                        <span class="text-xs text-[var(--text-tertiary)]">Complet</span>
+                                    @else
+                                        <span class="text-xs text-[var(--text-secondary)]">
+                                            {{ \App\Services\ConsultationSaleService::portionLabel($line['portion'] ?? null) }}
+                                        </span>
+                                    @endif
+                                </td>
                                 <td>{{ $line['posologie'] ?? '' }}</td>
-                                <td class="text-right font-semibold">${{ number_format($line['prix'] ?? 0, 2) }}</td>
+                                <td class="text-right font-semibold line-price-cell">
+                                    <span class="line-price-display">${{ number_format($defaultPrice, 2) }}</span>
+                                    @if($hasHalf)
+                                        <div class="text-[10px] font-normal text-[var(--text-tertiary)]">{{ \App\Services\ConsultationSaleService::priceLabel($enriched) }}</div>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
                                         {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
@@ -438,9 +526,9 @@
                     @foreach($productLines as $line)
                         @php $lineStatus = $line['status'] ?? 'pending'; @endphp
                         <tr>
-                            <td>{{ $line['produit'] ?? '' }}</td>
+                            <td>{{ \App\Services\ConsultationSaleService::productDisplayName($line) }}</td>
                             <td>{{ $line['posologie'] ?? '' }}</td>
-                            <td class="text-right font-semibold">${{ number_format($line['prix'] ?? 0, 2) }}</td>
+                            <td class="text-right font-semibold">{{ \App\Services\ConsultationSaleService::priceLabel($line) }}</td>
                             <td>
                                 <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
                                     {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
@@ -483,9 +571,9 @@
                 <tbody>
                     @foreach($consultation->recommended_products as $product)
                     <tr>
-                        <td>{{ $product['produit'] ?? '' }}</td>
+                        <td>{{ \App\Services\ConsultationSaleService::productDisplayName($product) }}</td>
                         <td>{{ $product['posologie'] ?? '' }}</td>
-                        <td class="text-right font-semibold">${{ number_format($product['prix'] ?? 0, 2) }}</td>
+                        <td class="text-right font-semibold">{{ \App\Services\ConsultationSaleService::priceLabel($product) }}</td>
                         <td>{{ $product['observation'] ?? '' }}</td>
                     </tr>
                     @endforeach
@@ -604,10 +692,28 @@
         return '$' + n.toFixed(2);
     }
 
+    function syncRowPrice(row) {
+        if (!row) return 0;
+        const hasHalf = row.dataset.hasHalf === '1';
+        const fullPrice = parseFloat(row.dataset.fullPrice || '0') || 0;
+        const halfPrice = parseFloat(row.dataset.halfPrice || '0') || 0;
+        const portionInput = row.querySelector('.line-portion:checked')
+            || row.querySelector('input[name^="portions["]');
+        const portion = portionInput ? portionInput.value : 'full';
+        const price = (portion === 'half' && hasHalf) ? halfPrice : fullPrice;
+        const checkbox = row.querySelector('.line-select');
+        const display = row.querySelector('.line-price-display');
+        if (checkbox) checkbox.dataset.price = String(price);
+        if (display) display.textContent = formatMoney(price);
+        return price;
+    }
+
     function refresh() {
         let count = 0;
         let total = 0;
         boxes.forEach(function (cb) {
+            const row = cb.closest('.product-line-row');
+            syncRowPrice(row);
             if (cb.checked) {
                 count++;
                 total += parseFloat(cb.dataset.price || '0') || 0;
@@ -625,6 +731,17 @@
 
     boxes.forEach(function (cb) {
         cb.addEventListener('change', refresh);
+    });
+
+    form.querySelectorAll('.line-portion').forEach(function (input) {
+        input.addEventListener('change', function () {
+            const row = input.closest('.product-line-row');
+            const checkbox = row ? row.querySelector('.line-select') : null;
+            if (checkbox && !checkbox.checked) {
+                checkbox.checked = true;
+            }
+            refresh();
+        });
     });
 
     if (selectAll) {

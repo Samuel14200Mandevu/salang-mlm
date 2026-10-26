@@ -42,9 +42,42 @@
 
     .consultation-row {
         transition: background 0.2s ease;
+        cursor: pointer;
     }
     .consultation-row:hover {
         background: var(--bg-secondary);
+    }
+    .consultation-row .row-actions {
+        cursor: default;
+    }
+
+    .header-search .search-wrapper {
+        position: relative;
+    }
+    .header-search .search-wrapper .search-input {
+        padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.813rem;
+        width: 220px;
+        max-width: 100%;
+        transition: border-color 0.15s ease, width 0.2s ease;
+        outline: none;
+    }
+    .header-search .search-wrapper .search-input:focus {
+        border-color: var(--primary);
+        width: 280px;
+    }
+    .header-search .search-wrapper .search-input::placeholder {
+        color: var(--text-tertiary);
+    }
+    @media (max-width: 767px) {
+        .header-search .search-wrapper .search-input,
+        .header-search .search-wrapper .search-input:focus {
+            width: 100%;
+        }
     }
 
     .card {
@@ -237,7 +270,7 @@
                 <h1 class="page-title">Consultations</h1>
                 <p class="page-subtitle">{{ $consultationsSubtitle }}</p>
             </div>
-            <div class="admin-title-banner__tools admin-title-banner__tools--consultations-index">
+            <div class="admin-title-banner__tools admin-title-banner__tools--consultations-index flex items-center gap-2">
                 <a href="{{ route('cashier.consultations.create') }}"
                    class="btn btn-primary btn-sm btn-round-icon"
                    title="Nouvelle consultation"
@@ -248,6 +281,18 @@
                 </a>
             </div>
         </div>
+        <div class="mt-3 header-search">
+            <div class="search-wrapper">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       class="search-input consultation-search-input"
+                       placeholder="Code ID ou N° dossier"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+        </div>
     </div>
 
     {{-- EN-TÊTE DESKTOP --}}
@@ -256,16 +301,34 @@
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                 Mes Consultations
             </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="consultationsSubtitle">
                 Gérez vos fiches de consultation
+                @if(request('search'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">· Résultats pour "{{ request('search') }}"</span>
+                @endif
             </p>
         </div>
-        <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span>Nouvelle consultation</span>
-        </a>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input consultation-search-input"
+                           placeholder="Code ID ou N° dossier"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
+            <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary btn-sm sm:btn-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Nouvelle consultation</span>
+            </a>
+        </div>
     </div>
 
     {{-- ALERTS --}}
@@ -341,27 +404,30 @@
     @endif
 
     {{-- LISTE --}}
-    <div class="card {{ $consultations->isEmpty() ? 'hidden md:block' : '' }}">
+    <div class="card {{ $consultations->isEmpty() && ! request('search') ? 'hidden md:block' : '' }}" id="consultationsListCard">
         <div class="table-wrap">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Code</th>
+                        <th>N° dossier</th>
+                        <th>Code ID</th>
                         <th>Patient</th>
-                        <th>Date</th>
+                        <th>Date de l'examen</th>
                         <th>Statut</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="consultationsTableBody">
                     @forelse($consultations as $consultation)
-                        <tr class="consultation-row">
-                            <td class="font-mono text-[var(--primary)] text-xs sm:text-sm">{{ $consultation->id }}</td>
+                        <tr class="consultation-row"
+                            data-href="{{ route('cashier.consultations.show', $consultation) }}"
+                            tabindex="0"
+                            role="link"
+                            aria-label="Voir la consultation {{ $consultation->id }}">
+                            <td class="text-xs sm:text-sm font-mono text-[var(--primary)]">{{ $consultation->numero ?? 'N/A' }}</td>
                             <td class="text-xs sm:text-sm font-mono">{{ $consultation->code_id ?? 'N/A' }}</td>
                             <td class="text-sm">{{ $consultation->nom_complet }}</td>
                             <td class="text-[var(--text-tertiary)] text-xs sm:text-sm">
-                                {{ $consultation->created_at->format('d/m/Y H:i') }}
+                                {{ $consultation->date_examen ? $consultation->date_examen->format('d/m/Y') : 'N/A' }}
                             </td>
                             <td>
                                 @php
@@ -375,40 +441,29 @@
                                 @endphp
                                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                             </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1.5 sm:gap-2">
-                                    <a href="{{ route('cashier.consultations.show', $consultation) }}" class="btn btn-primary btn-xs sm:btn-sm">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                        Voir
-                                    </a>
-                                    @if($consultation->status == 'completed')
-                                        <a href="{{ route('cashier.consultations.print', $consultation) }}" target="_blank" class="btn btn-outline btn-xs sm:btn-sm">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                            </svg>
-                                            Imprimer
-                                        </a>
-                                    @endif
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-tertiary)] text-sm sm:text-base">
+                            <td colspan="5" class="text-center py-6 sm:py-8 text-[var(--text-tertiary)] text-sm sm:text-base">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
                                 <p class="text-base font-medium">Aucune consultation</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Commencez par créer une nouvelle fiche</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">
+                                    @if(request('search'))
+                                        Aucun résultat pour « {{ request('search') }} »
+                                    @else
+                                        Commencez par créer une nouvelle fiche
+                                    @endif
+                                </p>
+                                @unless(request('search'))
                                 <a href="{{ route('cashier.consultations.create') }}" class="btn btn-primary mt-3 hidden md:inline-flex">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                     </svg>
                                     Nouvelle consultation
                                 </a>
+                                @endunless
                             </td>
                         </tr>
                     @endforelse
@@ -416,11 +471,129 @@
             </table>
         </div>
 
-        @if($consultations->hasPages())
-            <div class="mt-3 sm:mt-4">
+        <div class="mt-3 sm:mt-4" id="consultationsPagination">
+            @if($consultations->hasPages())
                 <x-salang-pagination :paginator="$consultations" />
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tbody = document.getElementById('consultationsTableBody');
+    const searchInputs = document.querySelectorAll('.consultation-search-input');
+    let searchTimeout;
+
+    if (tbody) {
+        tbody.addEventListener('click', function (e) {
+            const row = e.target.closest('tr.consultation-row[data-href]');
+            if (!row || e.target.closest('.row-actions, a, button, form')) return;
+            window.location.href = row.dataset.href;
+        });
+
+        tbody.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const row = e.target.closest('tr.consultation-row[data-href]');
+            if (!row) return;
+            e.preventDefault();
+            window.location.href = row.dataset.href;
+        });
+    }
+
+    function syncSearchInputs(value) {
+        searchInputs.forEach(function (input) {
+            if (input.value !== value) input.value = value;
+        });
+    }
+
+    function fetchConsultations(query) {
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        url.searchParams.set('page', '1');
+
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-[var(--text-secondary)]">
+                        <div class="flex items-center justify-center gap-3">
+                            <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Recherche en cours…</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (response) { return response.text(); })
+        .then(function (html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const newBody = doc.getElementById('consultationsTableBody');
+            if (tbody && newBody) {
+                tbody.innerHTML = newBody.innerHTML;
+            }
+
+            const pagination = document.getElementById('consultationsPagination');
+            const newPagination = doc.getElementById('consultationsPagination');
+            if (pagination) {
+                pagination.innerHTML = newPagination ? newPagination.innerHTML : '';
+            }
+
+            const subtitle = document.getElementById('consultationsSubtitle');
+            const newSubtitle = doc.getElementById('consultationsSubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+
+            const listCard = document.getElementById('consultationsListCard');
+            if (listCard) {
+                listCard.classList.remove('hidden');
+            }
+
+            if (typeof window.initSalangPagination === 'function') {
+                window.initSalangPagination(document);
+            }
+
+            history.replaceState({}, '', url.toString());
+        })
+        .catch(function (error) {
+            console.error('Erreur:', error);
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-[var(--ui-stat-danger)]">
+                            Une erreur est survenue lors de la recherche
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+    }
+
+    searchInputs.forEach(function (input) {
+        input.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            syncSearchInputs(this.value);
+            searchTimeout = setTimeout(function () {
+                fetchConsultations(query);
+            }, 300);
+        });
+    });
+});
+</script>
+@endpush
