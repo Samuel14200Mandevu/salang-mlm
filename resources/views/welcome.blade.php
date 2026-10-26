@@ -27,9 +27,9 @@
             <div class="public-onboarding-actions">
                 <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Explorer le site</button>
                 <button type="button" class="public-btn-primary public-onboarding-next" id="publicOnboardingNext">Suivant</button>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
     <section class="public-hero public-mobile-slide" id="onboarding-slide-1" aria-labelledby="hero-title">
         <div class="public-hero-bg" style="background-image: url('{{ $heroImage }}');"></div>
@@ -56,8 +56,8 @@
                         Voir le parcours membre
                     </a>
                 </div>
-            </div>
-
+                </div>
+                
             <div class="public-hero-aside">
                 <div class="public-hero-panel">
                     <p class="text-sm font-semibold">En bref</p>
@@ -68,11 +68,11 @@
                         <div>
                             <p class="public-stat-value">500+</p>
                             <p class="public-stat-label">Membres actifs</p>
-                        </div>
+                    </div>
                         <div>
                             <p class="public-stat-value public-stat-value--accent">50+</p>
                             <p class="public-stat-label">Pays</p>
-                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                         <div class="public-card--lift">
                             <p class="text-sm font-semibold text-[var(--text-primary)]">Produits</p>
                             <p class="text-sm text-[var(--text-secondary)] mt-1">Gammes naturelles, médecine complémentaire</p>
-                        </div>
+                            </div>
                         <div class="public-card--lift">
                             <p class="text-sm font-semibold text-[var(--text-primary)]">Réseau</p>
                             <p class="text-sm text-[var(--text-secondary)] mt-1">Structure binaire et évolution par grades</p>
@@ -143,15 +143,15 @@
                         <h3 class="font-semibold text-[var(--text-primary)]">Réseau international</h3>
                         <p class="text-sm text-[var(--text-secondary)] mt-1">Croissance maîtrisée et outils membre.</p>
                     </article>
-                </div>
-            </div>
-        </div>
+                    </div>
+                        </div>
+                        </div>
     </section>
 
     <section class="public-section-alt public-mobile-slide">
         <div class="public-shell">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center public-reveal public-reveal--delay-1">
-                <div>
+                        <div>
                     @include('partials.public.section-head', [
                         'kicker' => 'Adhésion',
                         'title' => '30 USD — frais uniques',
@@ -162,7 +162,7 @@
                         <li><span class="font-medium text-[var(--text-primary)]">Revenus</span> — commissions liées aux volumes et à la profondeur du réseau.</li>
                         <li><span class="font-medium text-[var(--text-primary)]">Autonomie</span> — rythme personnel, règles documentées.</li>
                     </ol>
-                </div>
+                        </div>
                 <div class="public-card-accent text-center py-8 px-6">
                     <p class="text-4xl font-bold tabular-nums text-[var(--text-primary)]">30&nbsp;<span class="text-xl font-semibold public-price-highlight">USD</span></p>
                     <p class="text-sm text-[var(--text-secondary)] mt-2">Paiement unique à l’inscription</p>
@@ -229,7 +229,7 @@
                         <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Commission</p>
                         <p class="font-semibold text-[var(--text-primary)] mt-1">{{ $name }}</p>
                         <p class="text-sm text-[var(--text-secondary)] mt-2">{{ $detail }}</p>
-                    </div>
+                </div>
                 @endforeach
             </div>
         </div>
@@ -269,9 +269,9 @@
                     <div class="public-rank-card">
                         <p class="font-semibold text-[var(--text-primary)]">{{ $name }}</p>
                         <p class="text-sm text-[var(--text-secondary)] mt-1">{{ $detail }}</p>
-                    </div>
+                </div>
                 @endforeach
-            </div>
+                </div>
             <p class="text-sm text-center text-[var(--text-muted)] mt-8 max-w-2xl mx-auto public-reveal">
                 Les options détaillées (filleuls, PV groupe) sont disponibles dans la documentation membre et votre back-office après connexion.
             </p>
@@ -314,7 +314,7 @@
                                 @foreach ($row as $cell)
                                     <td>{{ $cell }}</td>
                                 @endforeach
-                            </tr>
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
@@ -335,7 +335,7 @@
                         « Santé, prospérité, liberté : les trois axes que nous partageons avec chaque membre engagé. »
                         <footer>Dr Franck KOWAVING</footer>
                     </blockquote>
-                </div>
+                            </div>
                 <div class="public-card-accent p-8">
                     <h3 class="text-lg font-bold text-[var(--text-primary)]">Créer un compte membre</h3>
                     <p class="public-prose mt-3">

@@ -147,6 +147,7 @@ Route::middleware(['auth', 'active'])->prefix('notifications')->name('notificati
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::post('/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
     Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
+    Route::post('/mark-action-feedback-read', [NotificationController::class, 'markActionFeedbackRead'])->name('mark-action-feedback-read');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
     Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
 });
@@ -416,6 +417,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     
     // Historique complet
     Route::get('/history', [CashierController::class, 'history'])->name('history');
+    Route::get('/history/export-pdf', [CashierController::class, 'historyExportPdf'])->name('history.export-pdf');
     
     // Statistiques
     Route::get('/stats', [CashierController::class, 'stats'])->name('stats');
@@ -519,6 +521,7 @@ Route::prefix('admin')
             Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
             Route::get('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'show'])->name('show');
             Route::put('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'update'])->name('update');
+            Route::delete('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'destroy'])->name('destroy');
         });
 // ============================================================
 // GESTION DES PV (Points de Volume) - ADMIN

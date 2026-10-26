@@ -1046,11 +1046,29 @@
 
     .cashier-app .member-info-card__head {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 1.25rem;
         margin-bottom: 1.75rem;
         padding-bottom: 1.25rem;
         border-bottom: 1px solid var(--border-light);
+    }
+    .cashier-app .member-info-card__identity {
+        flex: 1;
+        min-width: 0;
+    }
+    .cashier-app .member-info-card__title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        width: 100%;
+    }
+    .cashier-app .member-info-card__status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.4rem;
     }
     .cashier-app .member-info-card__grid {
         display: grid !important;

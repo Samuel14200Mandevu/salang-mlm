@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\ActionFeedbackNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,20 +18,72 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'unreadCount'));
     }
 
-    public function markAsRead($id)
+    public function markAsRead(Request $request, $id)
     {
         $user = Auth::user();
         $notification = $user->notifications()->findOrFail($id);
         $notification->markAsRead();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true]);
+        }
         
-        return back()->with('success', 'Notification marquée comme lue');
+        return back();
     }
 
-    public function markAllRead()
+    public function markAllRead(Request $request)
     {
         $user = Auth::user();
         $user->unreadNotifications->markAsRead();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true]);
+        }
         
-        return back()->with('success', 'Toutes les notifications ont été marquées comme lues');
+        return back();
+    }
+
+    /**
+     * Marquer comme lues les confirmations d'action (cloche).
+     */
+    public function markActionFeedbackRead(Request $request)
+    {
+        $user = Auth::user();
+
+        $user->unreadNotifications()
+            ->where('type', ActionFeedbackNotification::class)
+            ->get()
+            ->each
+            ->markAsRead();
+
+        return response()->json([
+            'success' => true,
+            'unread' => $user->unreadNotifications()->count(),
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $notification = $user->notifications()->findOrFail($id);
+        $notification->delete();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back();
+    }
+
+    public function destroyAll()
+    {
+        $user = Auth::user();
+        $user->notifications()->delete();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back();
     }
 }

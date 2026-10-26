@@ -74,6 +74,191 @@
   color: var(--color-accent-600);
 }
 
+/* ===== Confirmations d'action dans la cloche ===== */
+.action-feedback-badge {
+  background: var(--color-accent-600);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--bg-navbar);
+  z-index: 1;
+}
+
+.action-feedback-panel {
+  max-height: min(78vh, 34rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.action-feedback-section {
+  max-height: 16rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.action-feedback-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease;
+}
+
+.action-feedback-item:hover {
+  background: var(--bg-secondary);
+}
+
+.action-feedback-item.is-unread {
+  background: color-mix(in srgb, var(--color-accent-500) 8%, transparent);
+}
+
+.action-feedback-item.tone-success {
+  border-left-color: #16a34a;
+}
+.action-feedback-item.tone-danger {
+  border-left-color: #dc2626;
+}
+.action-feedback-item.tone-warning {
+  border-left-color: #d97706;
+}
+.action-feedback-item.tone-info {
+  border-left-color: var(--primary);
+}
+
+.action-feedback-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tone-success .action-feedback-icon {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+.tone-danger .action-feedback-icon {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+.tone-warning .action-feedback-icon {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+.tone-info .action-feedback-icon {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.action-feedback-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.action-feedback-message {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.action-feedback-time {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.action-feedback-bell-pulse {
+  animation: actionFeedbackBellPulse 0.9s ease 2;
+}
+
+@keyframes actionFeedbackBellPulse {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-12deg); }
+  60% { transform: rotate(8deg); }
+  80% { transform: rotate(-4deg); }
+}
+
+.action-feedback-toast {
+  position: fixed;
+  top: calc(4rem + env(safe-area-inset-top, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  pointer-events: none;
+}
+
+.action-feedback-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.action-feedback-toast-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-feedback-toast.tone-success .action-feedback-toast-icon {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+.action-feedback-toast.tone-danger .action-feedback-toast-icon {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+.action-feedback-toast.tone-warning .action-feedback-toast-icon {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+.action-feedback-toast.tone-info .action-feedback-toast-icon {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.action-feedback-toast-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+}
+
+.action-feedback-toast-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Évite le double affichage : bannières flash legacy vs cloche */
+body.has-action-feedback-notify .salang-flash-success,
+body.has-action-feedback-notify .alert-success,
+body.has-action-feedback-notify .flash-success {
+  display: none !important;
+}
+
 .salang-cart-root .cart-dropdown-backdrop,
 .salang-cart-root .cart-dropdown-panel {
   display: none;

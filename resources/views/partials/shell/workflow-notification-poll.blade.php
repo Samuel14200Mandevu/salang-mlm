@@ -59,22 +59,10 @@
             }
         }
 
-        var empty = config.dropdown.empty ? document.getElementById(config.dropdown.empty) : null;
-        var items = config.dropdown.items ? document.getElementById(config.dropdown.items) : null;
         var urgentWrap = config.dropdown.urgentWrap ? document.getElementById(config.dropdown.urgentWrap) : null;
         var urgentLink = config.dropdown.urgentLink ? document.getElementById(config.dropdown.urgentLink) : null;
         var consultationRow = config.dropdown.consultationRow ? document.getElementById(config.dropdown.consultationRow) : null;
         var reportRow = config.dropdown.reportRow ? document.getElementById(config.dropdown.reportRow) : null;
-
-        if (empty && items) {
-            if (total === 0) {
-                empty.classList.remove('hidden');
-                items.classList.add('hidden');
-            } else {
-                empty.classList.add('hidden');
-                items.classList.remove('hidden');
-            }
-        }
 
         if (urgentWrap && urgentLink && config.links) {
             if (total > 0) {

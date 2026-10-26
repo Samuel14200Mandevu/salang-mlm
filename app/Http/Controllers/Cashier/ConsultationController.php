@@ -23,14 +23,12 @@ class ConsultationController extends Controller
         $query = Consultation::with(['cashier', 'admin'])
             ->where('cashier_id', Auth::id());
 
-        // Recherche par nom de patient
+        // Recherche par Code ID ou Numéro de dossier
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nom_complet', 'like', "%{$search}%")
-                  ->orWhere('code_id', 'like', "%{$search}%")
-                  ->orWhere('numero', 'like', "%{$search}%")
-                  ->orWhere('id', 'like', "%{$search}%");
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('code_id', 'like', "%{$search}%")
+                    ->orWhere('numero', 'like', "%{$search}%");
             });
         }
 
@@ -39,7 +37,9 @@ class ConsultationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $consultations = $query->orderBy('created_at', 'desc')->paginate(20);
+        $consultations = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         auth()->user()->unreadNotifications()
             ->where('type', ConsultationReviewedNotification::class)
@@ -63,11 +63,9 @@ class ConsultationController extends Controller
      */
     public function create()
     {
-        // Générer un code ID et un numéro de dossier automatiques
-        $codeId = 'PAT-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
         $numero = 'DOS-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        
-        return view('cashier.consultations.create', compact('codeId', 'numero'));
+
+        return view('cashier.consultations.create', compact('numero'));
     }
 
     /**
@@ -76,7 +74,17 @@ class ConsultationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code_id' => 'nullable|string|max:50',
+            'code_id' => [
+                'required',
+                'string',
+                'max:50',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $member = User::where('sponsor_id', $value)->where('is_active', true)->first();
+                    if (! $member) {
+                        $fail('Le Code ID doit être un code membre actif (destinataire des PV).');
+                    }
+                },
+            ],
             'numero' => 'nullable|string|max:50',
             'nom_complet' => 'required|string|max:255',
             'genre' => 'nullable|in:masculin,feminin',
@@ -89,10 +97,14 @@ class ConsultationController extends Controller
             'adresse' => 'nullable|string|max:500',
         ]);
 
-        // Créer la consultation avec seulement les informations patient
+        $pvMember = User::where('sponsor_id', $validated['code_id'])
+            ->where('is_active', true)
+            ->firstOrFail();
+
         $consultation = Consultation::create([
             'cashier_id' => Auth::id(),
-            'code_id' => $request->code_id ?? 'PAT-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+            'client_id' => $pvMember->id,
+            'code_id' => $pvMember->sponsor_id,
             'numero' => $request->numero ?? 'DOS-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
             'nom_complet' => $request->nom_complet,
             'genre' => $request->genre,
@@ -103,7 +115,7 @@ class ConsultationController extends Controller
             'phone' => $request->phone,
             'email' => $request->email,
             'adresse' => $request->adresse,
-            'status' => 'pending', // En attente de traitement par l'admin
+            'status' => 'pending',
             'recommended_products' => [],
             'seances_ceragem' => 0,
             'prix_ceragem' => 0,
@@ -129,7 +141,10 @@ class ConsultationController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à consulter cette fiche.');
         }
 
-        $consultation->load(['orders' => fn ($q) => $q->latest()->limit(10)]);
+        $consultation->load([
+            'client',
+            'orders' => fn ($q) => $q->latest()->limit(10),
+        ]);
         $productLines = ConsultationSaleService::normalizedLines($consultation);
         $productStats = ConsultationSaleService::productStats($consultation);
         $canSell = ConsultationSaleService::canCashierSell($consultation);
@@ -160,10 +175,16 @@ class ConsultationController extends Controller
         $validated = $request->validate([
             'line_keys' => 'required|array|min:1',
             'line_keys.*' => 'required|string|max:64',
+            'portions' => 'nullable|array',
+            'portions.*' => 'nullable|in:full,half',
         ]);
 
         try {
-            $lines = ConsultationSaleService::resolvePendingLines($consultation, $validated['line_keys']);
+            $lines = ConsultationSaleService::resolvePendingLines(
+                $consultation,
+                $validated['line_keys'],
+                $validated['portions'] ?? []
+            );
             $cart = ConsultationSaleService::buildCartItems($consultation, $lines);
         } catch (\InvalidArgumentException $e) {
             return redirect()
@@ -171,11 +192,23 @@ class ConsultationController extends Controller
                 ->with('error', $e->getMessage());
         }
 
+        $purchaseDetails = [];
+        foreach ($lines as $line) {
+            $purchaseDetails[$line['line_key']] = [
+                'portion' => $line['portion'] ?? ConsultationSaleService::PORTION_FULL,
+                'prix' => $line['prix'] ?? 0,
+            ];
+        }
+
         session()->put('pos_cart', $cart);
         session()->put('consultation_checkout', [
             'consultation_id' => $consultation->id,
             'line_keys' => array_column($lines, 'line_key'),
+            'purchase_details' => $purchaseDetails,
             'patient_name' => $consultation->nom_complet,
+            'pv_member_code' => $consultation->code_id,
+            'pv_member_name' => $consultation->client?->name
+                ?? User::where('sponsor_id', $consultation->code_id)->value('name'),
         ]);
 
         return redirect()

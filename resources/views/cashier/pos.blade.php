@@ -432,7 +432,7 @@
                 Point de Vente
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Vendez des produits ou activez des packages MLM
+                Vendez des produits ; un package ouvre le formulaire d'adhésion membre
             </p>
         </div>
         <div class="flex gap-2 flex-wrap items-center">
@@ -458,7 +458,7 @@
             Produits
         </button>
         <button class="tab-btn" data-tab="packages" onclick="switchTab('packages')">
-            Packages MLM
+            Packages (Adhésion)
         </button>
         <div style="margin-left: auto;">
             <input type="text"
@@ -602,7 +602,7 @@
                                  data-product-id="{{ $package->id }}"
                                  data-type="package">
 
-                                <div class="image-container" onclick="posAddToCart({{ $package->id }}, 'package')" style="background: rgba(59,130,246,0.05);">
+                                <div class="image-container" onclick="posStartPackageAdhesion({{ $package->id }})" style="background: rgba(59,130,246,0.05);">
                                     <div class="w-full h-full flex items-center justify-center text-4xl sm:text-5xl text-[var(--primary)]">
                                         <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
@@ -610,7 +610,7 @@
                                     </div>
 
                                     <span class="absolute top-1 sm:top-2 left-1 sm:left-2 badge badge-mlm text-[8px] sm:text-[10px]">
-                                        MLM
+                                        Adhésion
                                     </span>
 
                                     @if($package->is_popular ?? false)
@@ -621,9 +621,9 @@
 
                                     <div class="click-hint">
                                         <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                         </svg>
-                                        Cliquez pour ajouter
+                                        Formulaire d'adhésion
                                     </div>
                                 </div>
 
@@ -632,7 +632,7 @@
                                         {{ $package->name }}
                                     </h3>
                                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate-2 h-6 sm:h-8 flex-1">
-                                        {{ Str::limit($package->description ?? 'Package MLM', 40) }}
+                                        {{ Str::limit($package->description ?? 'Package d\'adhésion', 40) }}
                                     </p>
 
                                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -651,17 +651,17 @@
                                     <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
                                         <span class="product-price text-sm sm:text-lg font-bold text-[var(--primary)]">${{ number_format($package->price, 2) }}</span>
                                         <span class="text-[8px] sm:text-[10px] text-[var(--ui-stat-info)]">
-                                            {{ $package->commission_rate ?? 30 }}% commission
+                                            {{ $package->sponsorBonusLabel() }}
                                         </span>
                                     </div>
 
                                     <div class="mt-1 sm:mt-2">
-                                        <button onclick="posAddToCart({{ $package->id }}, 'package')"
+                                        <button type="button" onclick="posStartPackageAdhesion({{ $package->id }})"
                                                 class="btn btn-gold btn-sm w-full text-[10px] sm:text-xs add-to-cart-btn">
                                             <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                             </svg>
-                                            Ajouter au panier
+                                            Adhésion membre
                                         </button>
                                     </div>
                                 </div>
@@ -674,7 +674,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
                         </svg>
                         <h3 class="text-lg sm:text-xl font-semibold text-[var(--text-primary)]">Aucun package disponible</h3>
-                        <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun package MLM n'est disponible pour le moment</p>
+                        <p class="text-sm sm:text-base text-[var(--text-tertiary)] mt-1 sm:mt-2">Aucun package d'adhésion n'est disponible pour le moment</p>
                     </div>
                 @endif
             </div>
@@ -716,9 +716,26 @@ function showToast(message, isError) {
 }
 
 // ================================================================
-//  AJOUTER AU PANIER
+//  PACKAGE = ADHÉSION → formulaire membre
+// ================================================================
+const MEMBER_CREATE_URL = @json(route('cashier.members.create'));
+
+function posStartPackageAdhesion(packageId) {
+    const url = MEMBER_CREATE_URL + (MEMBER_CREATE_URL.includes('?') ? '&' : '?') + 'package_id=' + encodeURIComponent(packageId);
+    window.location.href = url;
+}
+
+window.posStartPackageAdhesion = posStartPackageAdhesion;
+
+// ================================================================
+//  AJOUTER AU PANIER (produits uniquement)
 // ================================================================
 function posAddToCart(productId, type) {
+    if (type === 'package') {
+        posStartPackageAdhesion(productId);
+        return;
+    }
+
     const card = document.querySelector(`.product-card[data-product-id="${productId}"][data-type="${type}"]`);
     if (!card) {
         showToast('Produit non trouvé', true);
@@ -731,13 +748,11 @@ function posAddToCart(productId, type) {
     const pvElement = card.querySelector('.pv-badge');
     const pv = pvElement ? parseInt(pvElement.textContent) || 0 : 0;
 
-    if (type === 'product') {
-        const stockElement = card.querySelector('.product-stock');
-        const stockText = stockElement?.textContent?.trim() || '';
-        if (stockText.includes('Rupture') || stockText.includes('0 restants')) {
-            showToast('Ce produit est en rupture de stock', true);
-            return;
-        }
+    const stockElement = card.querySelector('.product-stock');
+    const stockText = stockElement?.textContent?.trim() || '';
+    if (stockText.includes('Rupture') || stockText.includes('0 restants')) {
+        showToast('Ce produit est en rupture de stock', true);
+        return;
     }
 
     if (typeof window.addToCartGlobal === 'function') {

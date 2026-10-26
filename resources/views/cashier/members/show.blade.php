@@ -49,12 +49,6 @@
                 </svg>
                 Commandes
             </a>
-            <a href="{{ route('cashier.members.pay-slip', $member->id) }}?period={{ date('Y-m') }}" class="btn btn-danger btn-sm">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4v16h16V4zM8 12h8M12 8v8"/>
-                </svg>
-                Fiche de paie
-            </a>
             <button type="button" id="btnPrintAdhesion" class="btn btn-success btn-sm">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 9V3h12v6M6 21h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
@@ -192,30 +186,24 @@
                     {{ strtoupper(substr($member->name, 0, 1)) }}
                 </div>
                 <div class="member-info-card__identity min-w-0">
-                    <h2 class="text-xl font-bold text-[var(--text-primary)] tracking-tight">{{ $member->name }}</h2>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                        <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
-                            {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                        </span>
-                        @php
-                            $roleName = $member->getRoleNames()->first() ?? 'user';
-                        @endphp
-                        @if($roleName != 'user')
-                            <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
-                        @endif
+                    <div class="member-info-card__title-row">
+                        <h2 class="text-xl font-bold text-[var(--text-primary)] tracking-tight min-w-0 truncate">{{ $member->name }}</h2>
+                        <div class="member-info-card__status shrink-0">
+                            <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }}">
+                                {{ $member->is_active ? 'Actif' : 'Inactif' }}
+                            </span>
+                            @php
+                                $roleName = $member->getRoleNames()->first() ?? 'user';
+                            @endphp
+                            @if($roleName != 'user')
+                                <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $roleName)) }}</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="member-info-card__grid">
-                <div class="member-info-card__field">
-                    <span class="member-info-card__label">Email</span>
-                    <span class="member-info-card__value truncate">{{ $member->email }}</span>
-                </div>
-                <div class="member-info-card__field">
-                    <span class="member-info-card__label">Téléphone</span>
-                    <span class="member-info-card__value">{{ $member->phone ?? 'N/A' }}</span>
-                </div>
                 <div class="member-info-card__field">
                     <span class="member-info-card__label">Code</span>
                     <span class="member-info-card__value font-mono text-[var(--navy)]">{{ $member->sponsor_id ?? 'N/A' }}</span>
@@ -226,6 +214,14 @@
                         <span class="{{ $memberRankBadge }}">{{ $memberRankLabel }}</span>
                         <span class="text-xs text-[var(--text-tertiary)] font-normal">(Niv. {{ $memberRankLevel }})</span>
                     </span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Email</span>
+                    <span class="member-info-card__value truncate">{{ $member->email }}</span>
+                </div>
+                <div class="member-info-card__field">
+                    <span class="member-info-card__label">Téléphone</span>
+                    <span class="member-info-card__value">{{ $member->phone ?? 'N/A' }}</span>
                 </div>
                 <div class="member-info-card__field">
                     <span class="member-info-card__label">PV Personnel</span>

@@ -50,6 +50,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'supervision' => \App\Http\Middleware\EnsureSupervisionAccess::class,
         ]);
+
+        // Flash success/error → notification cloche (admin / caissier / membre)
+        $middleware->appendToGroup('web', \App\Http\Middleware\ConvertFlashToNotification::class);
         
         $middleware->validateCsrfTokens(except: [
             'webhook/*',

@@ -2,6 +2,8 @@
 
 @push('styles')
 <style>
+[x-cloak] { display: none !important; }
+
 .user-row {
     cursor: pointer;
 }
@@ -23,6 +25,46 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 11.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 40;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.users-filter-menu a:hover {
+    background: var(--bg-secondary);
+}
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+.users-filter-menu .filter-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+.users-filter-menu a.is-active .filter-count {
+    color: var(--primary);
+}
 </style>
 @endpush
 
@@ -42,6 +84,18 @@
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminUsersSubtitle">
                 {{ $users->total() }} utilisateurs/membres enregistrés
+                @php
+                    $subtitleFilterLabels = [
+                        'active' => 'Actifs',
+                        'inactive' => 'Inactifs',
+                        'admin' => 'Admins',
+                        'cashier' => 'Caissiers',
+                    ];
+                    $subtitleFilter = $subtitleFilterLabels[request('filter')] ?? null;
+                @endphp
+                @if($subtitleFilter)
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">· {{ $subtitleFilter }}</span>
+                @endif
                 @if(request('search'))
                     <span class="text-xs text-[var(--text-tertiary)] ml-2">
                         · Résultats pour "{{ request('search') }}"
@@ -76,6 +130,64 @@
                 </svg>
                 <span class="hidden xs:inline">Importer PV</span>
             </a>
+            @php
+                $currentFilter = request('filter');
+                $filterLabels = [
+                    'active' => 'Actifs',
+                    'inactive' => 'Inactifs',
+                    'admin' => 'Admins',
+                    'cashier' => 'Caissiers',
+                ];
+                $filterButtonLabel = $filterLabels[$currentFilter] ?? 'Filtrer';
+                $filterQueryBase = array_filter([
+                    'search' => request('search'),
+                ], fn ($v) => filled($v));
+            @endphp
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm sm:btn-md {{ $currentFilter ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span class="hidden xs:inline">{{ $filterButtonLabel }}</span>
+                    @if($currentFilter)
+                        <span class="inline-flex xs:hidden w-2 h-2 rounded-full bg-[var(--primary)]"></span>
+                    @endif
+                </button>
+                <div x-show="open"
+                     x-cloak
+                     x-transition
+                     @click.outside="open = false"
+                     class="users-filter-menu">
+                    <a href="{{ route('admin.users', array_merge($filterQueryBase, [])) }}"
+                       class="{{ ! $currentFilter ? 'is-active' : '' }}">
+                        <span>Tous</span>
+                    </a>
+                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'active'])) }}"
+                       class="{{ $currentFilter === 'active' ? 'is-active' : '' }}">
+                        <span>Actifs</span>
+                        <span class="filter-count">{{ $stats['active'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'inactive'])) }}"
+                       class="{{ $currentFilter === 'inactive' ? 'is-active' : '' }}">
+                        <span>Inactifs</span>
+                        <span class="filter-count">{{ $stats['inactive'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'admin'])) }}"
+                       class="{{ $currentFilter === 'admin' ? 'is-active' : '' }}">
+                        <span>Admins</span>
+                        <span class="filter-count">{{ $stats['admins'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'cashier'])) }}"
+                       class="{{ $currentFilter === 'cashier' ? 'is-active' : '' }}">
+                        <span>Caissiers</span>
+                        <span class="filter-count">{{ $stats['cashiers'] ?? 0 }}</span>
+                    </a>
+                </div>
+            </div>
         </div>
         </div>
     </div>
@@ -181,8 +293,8 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Utilisateur/Membre</th>
-                        <th>Code</th>
+                        <th>Membre</th>
+                        <th>Code Membre</th>
                         <th>Grade</th>
                         <th>Code Parrain</th>
                         <th>PV</th>

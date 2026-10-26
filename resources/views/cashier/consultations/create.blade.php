@@ -153,12 +153,17 @@
             <h3 class="text-lg font-semibold text-[var(--primary)] mb-4">Informations du Patient</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {{-- Code ID --}}
+                {{-- Code ID = code membre destinataire des PV --}}
                 <div>
-                    <label class="form-label">Code ID</label>
-                    <input type="text" name="code_id"
-                           class="form-input"
-                           value="{{ old('code_id', $codeId ?? '') }}">
+                    <label class="form-label">Code ID <span class="text-[var(--ui-stat-danger)]">*</span></label>
+                    <input type="text" name="code_id" id="code_id"
+                           class="form-input @error('code_id') form-input-error @enderror"
+                           value="{{ old('code_id') }}"
+                           placeholder="Code membre"
+                           required
+                           autocomplete="off">
+                    <div id="codeIdInfo" class="text-xs mt-1"></div>
+                    @error('code_id') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Numero de dossier --}}
@@ -237,3 +242,51 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('code_id');
+    const info = document.getElementById('codeIdInfo');
+    let timer;
+
+    function checkCode() {
+        const code = (input?.value || '').trim();
+        if (!info) return;
+        if (!code) {
+            info.textContent = '';
+            input?.classList.remove('form-input-error');
+            return;
+        }
+
+        fetch(`{{ route('cashier.check-sponsor') }}?code=${encodeURIComponent(code)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.valid && data.sponsor) {
+                info.innerHTML = `Membre : <strong>${data.sponsor.name}</strong>`;
+                info.className = 'text-xs mt-1 text-[var(--ui-stat-success)]';
+                input?.classList.remove('form-input-error');
+            } else {
+                info.textContent = data.message || 'Code membre invalide';
+                info.className = 'text-xs mt-1 text-[var(--ui-stat-danger)]';
+                input?.classList.add('form-input-error');
+            }
+        })
+        .catch(() => {
+            info.textContent = 'Erreur de vérification';
+            info.className = 'text-xs mt-1 text-[var(--ui-stat-danger)]';
+        });
+    }
+
+    if (input) {
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(checkCode, 400);
+        });
+        if (input.value.trim()) checkCode();
+    }
+});
+</script>
+@endpush
