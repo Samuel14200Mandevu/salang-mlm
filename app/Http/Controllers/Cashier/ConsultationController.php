@@ -15,6 +15,18 @@ use Illuminate\Support\Facades\Storage;
 
 class ConsultationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'active']);
+        $this->middleware(function ($request, $next) {
+            if (! auth()->user()->hasRole('cashier') && ! auth()->user()->hasRole('admin')) {
+                abort(403, 'Accès réservé aux caissiers.');
+            }
+
+            return $next($request);
+        });
+    }
+
     /**
      * Liste des consultations du caissier avec recherche
      */

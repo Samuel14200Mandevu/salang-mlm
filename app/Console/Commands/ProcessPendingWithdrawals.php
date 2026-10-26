@@ -161,17 +161,20 @@ class ProcessPendingWithdrawals extends Command
 
             $this->line($this->icon('process') . " Retrait #{$withdrawal->id}: en cours de traitement...");
 
-            if ($wallet->balance < $withdrawal->amount) {
+            $wallet = Wallet::whereKey($wallet->id)->lockForUpdate()->first();
+
+            // Fonds déjà réservés en pending_balance — ne pas redébiter balance.
+            if ((float) $wallet->pending_balance < (float) $withdrawal->amount) {
                 $withdrawal->status = 'failed';
-                $withdrawal->notes = 'Solde insuffisant après vérification';
+                $withdrawal->notes = 'Montant en attente insuffisant après vérification';
                 $withdrawal->save();
                 DB::commit();
-                $this->error($this->icon('error') . " Retrait #{$withdrawal->id}: solde insuffisant");
+                $this->error($this->icon('error') . " Retrait #{$withdrawal->id}: pending insuffisant");
                 return false;
             }
 
             $balanceBefore = $wallet->balance;
-            $wallet->balance -= $withdrawal->amount;
+            $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
             $wallet->total_withdrawn += $withdrawal->amount;
             $wallet->save();
 

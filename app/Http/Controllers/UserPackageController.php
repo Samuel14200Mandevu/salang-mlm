@@ -333,6 +333,7 @@ Cache::forget("descendants_{$user->id}");
                 'status' => 'completed',
                 'payment_status' => 'completed',
                 'paid_at' => now(),
+                'source' => 'membership',
             ]);
 
             OrderItem::create([

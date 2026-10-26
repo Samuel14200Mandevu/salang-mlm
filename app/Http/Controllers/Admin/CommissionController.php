@@ -162,7 +162,7 @@ class CommissionController extends Controller
         $commission = Commission::findOrFail($id);
 
         if ($commission->status !== 'pending') {
-            return redirect()->route('admin.commissions.index')
+            return redirect()->route('admin.commissions')
                 ->with('error', 'Cette commission ne peut pas être approuvée.');
         }
 
@@ -207,7 +207,7 @@ class CommissionController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            return redirect()->route('admin.commissions.index')
+            return redirect()->route('admin.commissions')
                 ->with('success', "Commission #{$id} approuvée avec succès.");
 
         } catch (\Exception $e) {
@@ -232,7 +232,7 @@ class CommissionController extends Controller
         $commission = Commission::findOrFail($id);
 
         if ($commission->status !== 'pending') {
-            return redirect()->route('admin.commissions.index')
+            return redirect()->route('admin.commissions')
                 ->with('error', 'Cette commission ne peut pas être rejetée.');
         }
 
@@ -247,7 +247,7 @@ class CommissionController extends Controller
             'admin_id' => auth()->id(),
         ]);
 
-        return redirect()->route('admin.commissions.index')
+        return redirect()->route('admin.commissions')
             ->with('success', "Commission #{$id} rejetée.");
     }
 

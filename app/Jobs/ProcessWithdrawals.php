@@ -46,20 +46,21 @@ class ProcessWithdrawals implements ShouldQueue
                         continue;
                     }
 
-                    // Check if still sufficient balance
-                    if ($wallet->balance < $withdrawal->amount) {
+                    $wallet = Wallet::whereKey($wallet->id)->lockForUpdate()->first();
+
+                    // Fonds déjà réservés en pending_balance à la demande — ne pas redébiter balance.
+                    if ((float) $wallet->pending_balance < (float) $withdrawal->amount) {
                         $withdrawal->status = 'failed';
-                        $withdrawal->notes = 'Insufficient balance';
+                        $withdrawal->notes = 'Insufficient pending balance';
                         $withdrawal->save();
 
-                        $errors[] = "Insufficient balance for withdrawal #{$withdrawal->id}";
+                        $errors[] = "Insufficient pending balance for withdrawal #{$withdrawal->id}";
                         DB::rollBack();
                         continue;
                     }
 
-                    // Process withdrawal
                     $balanceBefore = $wallet->balance;
-                    $wallet->balance -= $withdrawal->amount;
+                    $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
                     $wallet->total_withdrawn += $withdrawal->amount;
                     $wallet->save();
 

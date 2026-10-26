@@ -15,6 +15,7 @@ use App\Notifications\WelcomeNotification;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\TeamPVCalculator;
 use App\Jobs\RecalculateAfterPVImport;
+use App\Support\MlmPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -280,7 +281,7 @@ class UserController extends Controller
                     'address' => $request->address ?? null,
                     'city' => $request->city ?? null,
                     'country' => $request->country ?? null,
-                    'is_active' => $request->has('is_active'),
+                    'is_active' => (string) $request->input('is_active') === '1',
                     'sponsor_id' => null,
                     'parrain_id' => null,
                     'rank_id' => null,
@@ -357,7 +358,7 @@ class UserController extends Controller
                     'package_id' => $request->package_id,
                     'parrain_id' => $parrain?->id,
                     'sponsor_id' => $sponsorCode,
-                    'is_active' => $request->has('is_active'),
+                    'is_active' => (string) $request->input('is_active') === '1',
                     'kyc_status' => $request->kyc_status ?? 'not_submitted',
                     'pv_balance' => $request->package_id ? Package::find($request->package_id)?->pv_value ?? 0 : 0,
                     'bv_balance' => $request->package_id ? Package::find($request->package_id)?->bv_value ?? 0 : 0,

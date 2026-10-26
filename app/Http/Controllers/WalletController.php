@@ -229,6 +229,7 @@ class WalletController extends Controller
         DB::beginTransaction();
 
         try {
+            // Ne jamais créditer avant confirmation paiement (webhook / admin).
             $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'wallet_id' => $wallet->id,
@@ -237,32 +238,24 @@ class WalletController extends Controller
                 'fee' => 0,
                 'net_amount' => $amount,
                 'balance_before' => $wallet->balance,
-                'balance_after' => $wallet->balance + $amount,
+                'balance_after' => $wallet->balance,
                 'status' => 'pending',
                 'reference' => 'DEP-' . strtoupper(uniqid()),
                 'description' => 'Deposit via ' . ucfirst(str_replace('_', ' ', $paymentMethod)),
                 'metadata' => json_encode(['payment_method' => $paymentMethod]),
             ]);
 
-            $wallet->balance += $amount;
-            $wallet->total_deposited += $amount;
-            $wallet->save();
-
-            $transaction->status = 'completed';
-            $transaction->balance_after = $wallet->balance;
-            $transaction->completed_at = now();
-            $transaction->save();
-
             DB::commit();
 
-            Log::info('Deposit made', [
+            Log::info('Deposit requested (pending payment)', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'method' => $paymentMethod,
+                'transaction_id' => $transaction->id,
             ]);
 
             return redirect()->route('wallet.index')
-                ->with('success', 'Your deposit of $' . number_format($amount, 2) . ' was successful.');
+                ->with('success', 'Demande de dépôt de $' . number_format($amount, 2) . ' enregistrée. Le solde sera crédité après confirmation du paiement.');
 
         } catch (\Exception $e) {
             DB::rollBack();

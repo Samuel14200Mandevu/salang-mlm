@@ -337,20 +337,14 @@ public function createOrder(Request $request)
             
             // Commission CASH POS
             if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
-                Commission::create([
-                    'user_id' => $sponsor->id,
-                    'from_user_id' => $client->id,
-                    'period' => now()->format('Y-m'),
-                    'type' => 'cash_pos',
-                    'source' => 'pos',
-                    'amount' => $commissionAmount,
-                    'percentage' => 0,
-                    'description' => "Commission CASH POS - Commande #{$orderNumber}",
-                    'notes' => "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - Payé en espèce",
-                    'order_id' => $order->id,
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
+                $this->createPaidCashPosCommission(
+                    $sponsor,
+                    $client,
+                    $order,
+                    $orderNumber,
+                    $commissionAmount,
+                    "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - Payé en espèce"
+                );
                 
                 Log::info('Commission CASH POS créée', [
                     'sponsor_id' => $sponsor->id,
@@ -677,20 +671,14 @@ public function createMultiOrder(Request $request)
             }
             
             if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
-                Commission::create([
-                    'user_id' => $sponsor->id,
-                    'from_user_id' => $client->id,
-                    'period' => now()->format('Y-m'),
-                    'type' => 'cash_pos',
-                    'source' => 'pos',
-                    'amount' => $commissionAmount,
-                    'percentage' => 0,
-                    'description' => "Commission CASH POS - Commande #{$orderNumber}",
-                    'notes' => "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce",
-                    'order_id' => $order->id,
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
+                $this->createPaidCashPosCommission(
+                    $sponsor,
+                    $client,
+                    $order,
+                    $orderNumber,
+                    $commissionAmount,
+                    "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce"
+                );
             }
             
             Commission::create([
@@ -1494,20 +1482,14 @@ public function createCheckoutOrder(Request $request)
             }
             
             if ($commissionAmount > 0 && $commissionAmount >= 5 && $commissionAmount <= 15) {
-                Commission::create([
-                    'user_id' => $sponsor->id,
-                    'from_user_id' => $client->id,
-                    'period' => now()->format('Y-m'),
-                    'type' => 'cash_pos',
-                    'source' => 'pos',
-                    'amount' => $commissionAmount,
-                    'percentage' => 0,
-                    'description' => "Commission CASH POS - Commande #{$orderNumber}",
-                    'notes' => "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce",
-                    'order_id' => $order->id,
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                ]);
+                $this->createPaidCashPosCommission(
+                    $sponsor,
+                    $client,
+                    $order,
+                    $orderNumber,
+                    $commissionAmount,
+                    "Montant: $" . number_format($commissionAmount, 2) . " (5$ à 15$) - " . count($cart) . " produits - Payé en espèce"
+                );
             }
             
             Commission::create([
@@ -2044,7 +2026,7 @@ public function destroyProfile(Request $request)
                 }
             }
 
-            $password = 'password123';
+            $password = Str::password(12);
             $pvValue = $package->pv_value ?? 0;
             $bvValue = $package->bv_value ?? ($pvValue * 0.8);
 
@@ -2266,6 +2248,42 @@ public function destroyProfile(Request $request)
                 ->with('error', 'Erreur: ' . $e->getMessage())
                 ->withInput();
         }
+    }
+
+    /**
+     * Crée une commission cash_pos payée et crédite le portefeuille du parrain.
+     */
+    private function createPaidCashPosCommission(
+        User $sponsor,
+        User $client,
+        Order $order,
+        string $orderNumber,
+        float $commissionAmount,
+        string $notes
+    ): Commission {
+        $commission = Commission::create([
+            'user_id' => $sponsor->id,
+            'from_user_id' => $client->id,
+            'period' => MlmPeriod::current(),
+            'type' => 'cash_pos',
+            'source' => 'pos',
+            'amount' => $commissionAmount,
+            'percentage' => 0,
+            'description' => "Commission CASH POS - Commande #{$orderNumber}",
+            'notes' => $notes,
+            'order_id' => $order->id,
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        Wallet::creditCommissionToUser(
+            (int) $sponsor->id,
+            (float) $commissionAmount,
+            $commission->description,
+            ['commission_id' => $commission->id, 'type' => 'cash_pos']
+        );
+
+        return $commission;
     }
 
     /**

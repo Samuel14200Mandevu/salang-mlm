@@ -111,12 +111,14 @@ class WithdrawalController extends Controller
                 return back()->with('error', 'Portefeuille non trouvé.');
             }
 
-            if ($wallet->balance < $withdrawal->amount) {
-                return back()->with('error', 'Solde insuffisant pour ce retrait.');
+            // Solde déjà réservé à la demande (balance → pending_balance) : ne pas redébiter.
+            $wallet = Wallet::whereKey($wallet->id)->lockForUpdate()->first();
+            if ((float) $wallet->pending_balance < (float) $withdrawal->amount) {
+                return back()->with('error', 'Montant en attente insuffisant pour ce retrait.');
             }
 
             $balanceBefore = $wallet->balance;
-            $wallet->balance -= $withdrawal->amount;
+            $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
             $wallet->total_withdrawn += $withdrawal->amount;
             $wallet->save();
 
@@ -188,8 +190,10 @@ class WithdrawalController extends Controller
             $wallet = Wallet::find($withdrawal->wallet_id);
 
             if ($wallet) {
+                $wallet = Wallet::whereKey($wallet->id)->lockForUpdate()->first();
                 $balanceBefore = $wallet->balance;
                 $wallet->balance += $withdrawal->amount;
+                $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
                 $wallet->save();
 
                 Transaction::create([

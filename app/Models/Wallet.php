@@ -52,6 +52,51 @@ class Wallet extends Model
         return $this->createTransaction($amount, 'deposit', $description);
     }
 
+    /**
+     * Crédite une commission payée (crée le wallet si absent).
+     */
+    public static function creditCommissionToUser(int $userId, float $amount, string $description, array $metadata = []): ?self
+    {
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $wallet = static::query()->firstOrCreate(
+            ['user_id' => $userId],
+            [
+                'balance' => 0,
+                'pending_balance' => 0,
+                'total_withdrawn' => 0,
+                'total_deposited' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
+            ]
+        );
+
+        $wallet = static::whereKey($wallet->id)->lockForUpdate()->first();
+        $balanceBefore = $wallet->balance;
+        $wallet->balance += $amount;
+        $wallet->total_deposited += $amount;
+        $wallet->save();
+
+        Transaction::create([
+            'user_id' => $userId,
+            'wallet_id' => $wallet->id,
+            'type' => 'commission',
+            'amount' => $amount,
+            'fee' => 0,
+            'net_amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $wallet->balance,
+            'status' => 'completed',
+            'description' => $description,
+            'metadata' => $metadata ? json_encode($metadata) : null,
+            'completed_at' => now(),
+        ]);
+
+        return $wallet;
+    }
+
     public function debit($amount, $description = null)
     {
         if ($this->balance < $amount) {

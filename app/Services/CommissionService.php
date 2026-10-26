@@ -252,11 +252,12 @@ class CommissionService
             'paid_at' => now(),
         ]);
 
-        $wallet = Wallet::where('user_id', $user->id)->first();
-        if ($wallet) {
-            $wallet->balance += $profitAmount;
-            $wallet->save();
-        }
+        Wallet::creditCommissionToUser(
+            (int) $user->id,
+            (float) $profitAmount,
+            'Profit retail sur vente de produit',
+            ['order_id' => $orderId, 'type' => 'retail']
+        );
 
         return true;
     }
