@@ -14,11 +14,11 @@
         @csrf
 
         <div class="auth-form-group">
-            <label for="email">Adresse email</label>
-            <input type="email" name="email" id="email" value="{{ old('email') }}"
-                   class="auth-input @if($errors->has('email') || $errors->has('credentials')) auth-input-error @endif"
-                   placeholder="@salanggroup.com" required autofocus autocomplete="email">
-            @error('email')
+            <label for="login">Email, ID membre ou téléphone</label>
+            <input type="text" name="login" id="login" value="{{ old('login', old('email')) }}"
+                   class="auth-input @if($errors->has('login') || $errors->has('credentials')) auth-input-error @endif"
+                   required autofocus autocomplete="username" inputmode="text" spellcheck="false">
+            @error('login')
                 <p class="auth-error" role="alert">{{ $message }}</p>
             @enderror
         </div>

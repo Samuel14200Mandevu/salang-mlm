@@ -61,12 +61,14 @@
                         </a>
                     </div>
                     @yield('content')
-                    @include('partials.auth.legal-footer')
                 </div>
 
-                <p class="mt-5 text-center text-xs text-[var(--text-muted)] lg:hidden">
-                    &copy; {{ date('Y') }} Salang Group
-                </p>
+                <div class="auth-form-bottom">
+                    @include('partials.auth.legal-footer')
+                    <p class="auth-form-copyright lg:hidden">
+                        &copy; {{ date('Y') }} Salang Group
+                    </p>
+                </div>
             </div>
         </div>
     </div>

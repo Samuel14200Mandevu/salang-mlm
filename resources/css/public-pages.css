@@ -646,6 +646,40 @@
     @apply mt-1.5 text-xs text-[var(--text-muted)] text-left;
   }
 
+  .auth-account-list {
+    @apply flex flex-col gap-2.5 m-0 p-0 border-0 min-w-0;
+  }
+
+  .auth-account-option {
+    @apply relative flex items-start gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated,var(--bg-card))] px-3.5 py-3 cursor-pointer transition-[border-color,box-shadow,background-color] duration-150;
+  }
+
+  .auth-account-option:hover {
+    border-color: color-mix(in srgb, var(--color-primary-600) 45%, var(--border-color));
+  }
+
+  .auth-account-option:has(.auth-account-option__radio:checked) {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-600) 18%, transparent);
+    background: color-mix(in srgb, var(--color-primary-600) 6%, var(--bg-elevated, var(--bg-card)));
+  }
+
+  .auth-account-option__radio {
+    @apply mt-1 shrink-0 accent-[var(--color-primary-600)];
+  }
+
+  .auth-account-option__body {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+
+  .auth-account-option__name {
+    @apply text-sm font-semibold text-[var(--text-primary)] leading-snug;
+  }
+
+  .auth-account-option__meta {
+    @apply text-xs text-[var(--text-secondary)] leading-snug;
+  }
+
   .auth-btn-primary {
     @apply w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold text-white bg-primary-600 border-0 cursor-pointer;
     transition: background-color 0.18s ease, transform 0.12s ease;
@@ -699,6 +733,14 @@
 
   .dark .auth-link:hover {
     @apply text-primary-300;
+  }
+
+  .auth-form-bottom {
+    @apply mt-6 w-full text-center;
+  }
+
+  .auth-form-copyright {
+    @apply mt-3 text-center text-xs text-[var(--text-muted)];
   }
 
   .auth-footer-legal {

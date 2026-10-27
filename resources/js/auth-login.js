@@ -2,26 +2,25 @@
     const form = document.getElementById('loginForm');
     if (!form) return;
 
-    const emailInput = form.querySelector('#email');
+    const loginInput = form.querySelector('#login') || form.querySelector('#email');
     const passwordInput = form.querySelector('#password');
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const setFieldError = window.salangAuthSetFieldError;
 
     form.addEventListener('submit', function (e) {
         window.salangAuthClearJsFieldErrors?.(form);
 
-        const email = emailInput?.value.trim() ?? '';
+        const login = loginInput?.value.trim() ?? '';
         const password = passwordInput?.value ?? '';
         let blocked = false;
 
-        if (!email || !emailRe.test(email)) {
+        if (!login) {
             e.preventDefault();
-            setFieldError?.(emailInput, 'Saisissez une adresse email valide.');
-            emailInput?.focus();
+            setFieldError?.(loginInput, 'Indiquez votre email, ID membre ou téléphone.');
+            loginInput?.focus();
             blocked = true;
         } else {
-            setFieldError?.(emailInput, null);
+            setFieldError?.(loginInput, null);
         }
 
         if (!password) {
@@ -34,6 +33,5 @@
         } else if (!blocked) {
             setFieldError?.(passwordInput, null);
         }
-
     });
 })();
