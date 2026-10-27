@@ -92,16 +92,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'login' => ['required_without:email', 'nullable', 'string', 'max:255'],
+            'email' => ['required_without:login', 'nullable', 'string', 'max:255'],
             'password' => ['required', 'string'],
             'device_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $identifier = $credentials['login'] ?? $credentials['email'] ?? '';
+        $user = \App\Support\LoginIdentifier::findUser((string) $identifier);
 
         if (!$user) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'login' => ['The provided credentials are incorrect.'],
             ]);
         }
 
@@ -114,7 +116,7 @@ class AuthController extends Controller
 
         if (!\App\Support\UserPassword::verify($user, $credentials['password'])) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'login' => ['The provided credentials are incorrect.'],
             ]);
         }
 

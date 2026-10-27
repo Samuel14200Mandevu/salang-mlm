@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Support\LoginIdentifier;
 use App\Support\UserPassword;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,6 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    public const PENDING_USER_IDS = 'login.pending_user_ids';
+
+    public const PENDING_REMEMBER = 'login.pending_remember';
+
+    public const PENDING_EXPIRES_AT = 'login.pending_expires_at';
+
     public function authorize(): bool
     {
         return true;
@@ -21,7 +28,11 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Case à cocher HTML : valeur "on" ou "1", pas un booléen JSON.
+        // Compat : anciens clients / bookmarks qui postent encore "email".
+        $login = $this->input('login', $this->input('email'));
+
         $this->merge([
+            'login' => is_string($login) ? trim($login) : $login,
             'remember' => $this->boolean('remember'),
         ]);
     }
@@ -29,7 +40,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
             'remember' => ['sometimes', 'boolean'],
         ];
@@ -38,53 +49,87 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'L’adresse email est obligatoire.',
-            'email.email' => 'Saisissez une adresse email valide (exemple : nom@domaine.com).',
-            'email.max' => 'L’adresse email ne doit pas dépasser 255 caractères.',
+            'login.required' => 'Indiquez votre email, votre ID membre ou votre téléphone.',
+            'login.max' => 'L’identifiant ne doit pas dépasser 255 caractères.',
             'password.required' => 'Le mot de passe est obligatoire.',
         ];
     }
 
     /**
+     * Authentifie l'utilisateur, ou prépare le choix de compte si plusieurs matchent.
+     *
+     * @return bool true si connecté, false s'il faut choisir un compte
+     *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): bool
     {
         $this->ensureIsNotRateLimited();
 
-        $user = User::where('email', $this->email)->first();
+        $candidates = LoginIdentifier::findUsers((string) $this->input('login'));
 
-        if (!$user) {
+        if ($candidates->isEmpty()) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
                 'credentials' => __('auth.failed'),
             ]);
         }
 
-        if (UserPassword::usesLegacyMd5($user)) {
-            RateLimiter::clear($this->throttleKey());
-            session()->flash('legacy_password_email', $user->email);
+        $password = $this->string('password');
 
-            throw ValidationException::withMessages([
-                'legacy' => config('legacy-auth.login_error'),
-            ]);
-        }
+        $legacyOnly = $candidates->filter(fn (User $user) => UserPassword::usesLegacyMd5($user));
+        $modern = $candidates->reject(fn (User $user) => UserPassword::usesLegacyMd5($user));
 
-        if (!UserPassword::verify($user, $this->string('password'))) {
+        $valid = $modern
+            ->filter(fn (User $user) => UserPassword::verify($user, $password))
+            ->values();
+
+        if ($valid->isEmpty()) {
+            if ($legacyOnly->isNotEmpty() && $modern->isEmpty()) {
+                RateLimiter::clear($this->throttleKey());
+                session()->flash('legacy_password_email', $legacyOnly->first()->email);
+
+                throw ValidationException::withMessages([
+                    'legacy' => config('legacy-auth.login_error'),
+                ]);
+            }
+
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
                 'credentials' => __('auth.failed'),
             ]);
         }
-
-        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
+
+        if ($valid->count() === 1) {
+            Auth::login($valid->first(), $this->boolean('remember'));
+            $this->clearPendingAccountChoice();
+
+            return true;
+        }
+
+        session([
+            self::PENDING_USER_IDS => $valid->pluck('id')->map(fn ($id) => (int) $id)->all(),
+            self::PENDING_REMEMBER => $this->boolean('remember'),
+            self::PENDING_EXPIRES_AT => now()->addMinutes(10)->getTimestamp(),
+        ]);
+
+        return false;
+    }
+
+    public function clearPendingAccountChoice(): void
+    {
+        session()->forget([
+            self::PENDING_USER_IDS,
+            self::PENDING_REMEMBER,
+            self::PENDING_EXPIRES_AT,
+        ]);
     }
 
     public function ensureIsNotRateLimited(): void
     {
-        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -99,6 +144,6 @@ class LoginRequest extends FormRequest
 
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

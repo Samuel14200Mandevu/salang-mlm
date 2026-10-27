@@ -33,6 +33,12 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    Route::get('login/choix-compte', [AuthenticatedSessionController::class, 'chooseAccount'])
+        ->name('login.choose-account');
+
+    Route::post('login/choix-compte', [AuthenticatedSessionController::class, 'storeChosenAccount'])
+        ->name('login.choose-account.store');
+
     Route::get('connexion/identifiants-legacy', LegacyPasswordInfoController::class)
         ->name('login.legacy-info');
 

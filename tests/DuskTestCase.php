@@ -37,7 +37,7 @@ abstract class DuskTestCase extends BaseTestCase
         return $browser->visit('/login')
             ->waitFor('#loginForm', 10)
             ->assertPathIs('/login')
-            ->type('#email', $user->email)
+            ->type('#login', $user->email)
             ->type('#password', $password)
             ->keys('#password', '{enter}')
             ->waitForLocation('/dashboard', 15);
