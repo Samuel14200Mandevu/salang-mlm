@@ -75,19 +75,26 @@ class ReportController extends Controller
 
     /**
      * Visionneuse : rapport détaillé du réseau (tous les filleuls, PV cumulés).
+     * Pagination serveur : une seule page HTML à la fois (évite timeout proxy).
      */
-    public function downlineNetworkShow(MemberDownlinePeriodReport $report)
+    public function downlineNetworkShow(Request $request, MemberDownlinePeriodReport $report)
     {
+        $this->preparePdfExport(120, '512M');
+
         $user = Auth::user()->loadMissing(['parrain:id,name,sponsor_id']);
-        $rows = $report->buildNetworkRows($user);
+        $paged = $report->buildNetworkPage($user, $request->integer('page', 1));
 
         return view('report.downline.show', [
             'reportType' => 'network',
             'period' => null,
             'periodLabel' => 'Réseau complet',
             'user' => $user,
-            'rows' => $rows,
-            'rowsCount' => count($rows),
+            'rows' => $paged['pageRows'],
+            'rowsCount' => $paged['rowsCount'],
+            'serverPaged' => true,
+            'currentPage' => $paged['page'],
+            'totalPages' => $paged['totalPages'],
+            'rowOffset' => $paged['rowOffset'],
             'totalMonthlyPv' => 0,
             'memberStats' => $report->buildMemberCumulativeStats($user),
             'pdfDownloadUrl' => route('report.downline.network.pdf', ['download' => 1]),
@@ -96,11 +103,13 @@ class ReportController extends Controller
     }
 
     /**
-     * PDF : rapport détaillé du réseau.
+     * PDF : rapport détaillé du réseau (génération renforcée pour gros réseaux).
      */
     public function downlineNetworkPdf(Request $request, MemberDownlinePeriodReport $report)
     {
         try {
+            $this->preparePdfExport(600, '1024M');
+
             $user = Auth::user()->loadMissing(['parrain:id,name,sponsor_id']);
             $rows = $report->buildNetworkRows($user);
             $filename = 'rapport_reseau_'.$user->sponsor_id.'.pdf';
@@ -115,6 +124,7 @@ class ReportController extends Controller
                 'memberStats' => $report->buildMemberCumulativeStats($user),
                 'logoBase64' => $this->loadPdfLogoBase64(),
                 'date_generated' => now()->format('d/m/Y H:i'),
+                'pdfRowChunks' => array_chunk($rows, 40),
             ];
 
             if ($request->boolean('download')) {
@@ -123,7 +133,9 @@ class ReportController extends Controller
                     $data,
                     $filename,
                     'a4',
-                    'landscape'
+                    'landscape',
+                    600,
+                    '1024M'
                 );
             }
 
@@ -132,14 +144,16 @@ class ReportController extends Controller
                 $data,
                 $filename,
                 'a4',
-                'landscape'
+                'landscape',
+                600,
+                '1024M'
             );
         } catch (\Throwable $e) {
             $this->logPdfFailure('report.downlineNetworkPdf', $e);
 
             return redirect()
-                ->route('report.downline')
-                ->with('error', 'Impossible de générer le PDF. Réessayez.');
+                ->route('report.downline.network')
+                ->with('error', 'Réseau trop volumineux pour le PDF immédiat. Réessayez dans un instant ou réduisez la charge.');
         }
     }
 

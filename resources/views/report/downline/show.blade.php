@@ -4,6 +4,7 @@
 
 @php
     $isNetwork = ($reportType ?? 'period') === 'network';
+    $serverPaged = (bool) ($serverPaged ?? false);
     $shortPeriod = $period;
     if (! $isNetwork && preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
         $moisFr = [
@@ -20,33 +21,47 @@
     $gradeLabel = \App\Support\MlmRank::label((int) ($user->rank_level ?? 0));
     $logoUrl = asset('images/salang_logo.png');
 
-    $firstPageSize = $isNetwork ? 8 : 6;
-    $nextPageSize = $isNetwork ? 14 : 12;
-    $rowChunks = [];
-    if ($rowsCount === 0) {
-        $rowChunks[] = [];
+    if ($serverPaged) {
+        $pageNum = (int) ($currentPage ?? 1);
+        $totalPages = max(1, (int) ($totalPages ?? 1));
+        $rowChunks = [$rows];
+        $rowOffsetBase = (int) ($rowOffset ?? 0);
     } else {
-        $rowChunks[] = array_slice($rows, 0, $firstPageSize);
-        $rest = array_slice($rows, $firstPageSize);
-        if ($rest !== []) {
-            $rowChunks = array_merge($rowChunks, array_chunk($rest, $nextPageSize));
+        $firstPageSize = 6;
+        $nextPageSize = 12;
+        $rowChunks = [];
+        if ($rowsCount === 0) {
+            $rowChunks[] = [];
+        } else {
+            $rowChunks[] = array_slice($rows, 0, $firstPageSize);
+            $rest = array_slice($rows, $firstPageSize);
+            if ($rest !== []) {
+                $rowChunks = array_merge($rowChunks, array_chunk($rest, $nextPageSize));
+            }
         }
+        $totalPages = count($rowChunks);
+        $rowOffsetBase = null;
     }
-    $totalPages = count($rowChunks);
 @endphp
 
 @section('content')
-<div class="mrd-viewer" id="mrdViewer" data-pages="{{ $totalPages }}">
+<div class="mrd-viewer" id="mrdViewer" data-pages="{{ $serverPaged ? 1 : $totalPages }}" data-server-paged="{{ $serverPaged ? '1' : '0' }}">
     @if (session('error'))
         <div class="mrd-viewer__alert">{{ session('error') }}</div>
+    @endif
+    @if (session('info'))
+        <div class="mrd-viewer__alert" style="border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8;">{{ session('info') }}</div>
     @endif
 
     <div class="mrd-viewer__stage">
         <div class="mrd-viewer__pages">
             @foreach ($rowChunks as $pageIndex => $pageRows)
-                @php $pageNum = $pageIndex + 1; @endphp
-                <article class="mrd-paper {{ $pageNum === 1 ? 'is-active' : '' }}" data-page="{{ $pageNum }}">
-                    @if ($pageNum === 1)
+                @php
+                    $pageNum = $serverPaged ? (int) ($currentPage ?? 1) : ($pageIndex + 1);
+                    $showIntro = $pageNum === 1;
+                @endphp
+                <article class="mrd-paper {{ ($serverPaged || $pageNum === 1) ? 'is-active' : '' }}" data-page="{{ $pageNum }}">
+                    @if ($showIntro)
                         <header class="mrd-paper__header">
                             <div><img src="{{ $logoUrl }}" alt="" class="mrd-paper__logo"></div>
                             <div class="mrd-paper__brand">
@@ -153,9 +168,9 @@
                         </p>
                     @else
                         @php
-                            $rowOffset = $pageIndex === 0
-                                ? 0
-                                : $firstPageSize + (($pageIndex - 1) * $nextPageSize);
+                            $rowOffset = $serverPaged
+                                ? $rowOffsetBase
+                                : ($pageIndex === 0 ? 0 : 6 + (($pageIndex - 1) * 12));
                         @endphp
                         <table class="mrd-paper__table">
                             <thead>
@@ -207,9 +222,25 @@
 
         @if ($totalPages > 1)
             <div class="mrd-viewer__pager">
-                <button type="button" class="mrd-viewer__pager-btn" id="mrdPrev" aria-label="Page précédente">‹</button>
-                <div class="mrd-viewer__pager-label" id="mrdPageLabel">1 / {{ $totalPages }}</div>
-                <button type="button" class="mrd-viewer__pager-btn" id="mrdNext" aria-label="Page suivante">›</button>
+                @if ($serverPaged)
+                    <a
+                        href="{{ $currentPage > 1 ? route('report.downline.network', ['page' => $currentPage - 1]) : '#' }}"
+                        class="mrd-viewer__pager-btn {{ $currentPage <= 1 ? 'is-disabled' : '' }}"
+                        @if ($currentPage <= 1) aria-disabled="true" tabindex="-1" @endif
+                        aria-label="Page précédente"
+                    >‹</a>
+                    <div class="mrd-viewer__pager-label">{{ $currentPage }} / {{ $totalPages }}</div>
+                    <a
+                        href="{{ $currentPage < $totalPages ? route('report.downline.network', ['page' => $currentPage + 1]) : '#' }}"
+                        class="mrd-viewer__pager-btn {{ $currentPage >= $totalPages ? 'is-disabled' : '' }}"
+                        @if ($currentPage >= $totalPages) aria-disabled="true" tabindex="-1" @endif
+                        aria-label="Page suivante"
+                    >›</a>
+                @else
+                    <button type="button" class="mrd-viewer__pager-btn" id="mrdPrev" aria-label="Page précédente">‹</button>
+                    <div class="mrd-viewer__pager-label" id="mrdPageLabel">1 / {{ $totalPages }}</div>
+                    <button type="button" class="mrd-viewer__pager-btn" id="mrdNext" aria-label="Page suivante">›</button>
+                @endif
             </div>
         @endif
     </div>
@@ -223,6 +254,18 @@
 
 @push('styles')
     @include('report.downline.partials.paper-styles')
+<style>
+    a.mrd-viewer__pager-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+    a.mrd-viewer__pager-btn.is-disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+</style>
 @endpush
 
 @push('scripts')
@@ -230,6 +273,8 @@
 (function () {
     var root = document.getElementById('mrdViewer');
     if (!root) return;
+    if (root.getAttribute('data-server-paged') === '1') return;
+
     var total = parseInt(root.getAttribute('data-pages') || '1', 10);
     if (total <= 1) return;
 
