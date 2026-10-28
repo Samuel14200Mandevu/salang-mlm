@@ -96,7 +96,7 @@
     <div class="auth-meta-links">
         <p class="text-xs text-[var(--text-muted)]">
             Assistance :
-            <a href="mailto:support@salang.com" class="auth-link font-normal">support@salang.com</a>
+            <a href="mailto:support@salanggroup.com" class="auth-link font-normal">support@salanggroup.com</a>
         </p>
     </div>
 @endsection

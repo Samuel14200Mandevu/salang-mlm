@@ -1,3 +1,6 @@
+@php
+    $isHome = request()->routeIs('home');
+@endphp
 <header class="public-nav" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
     <div class="public-nav-inner">
         <button
@@ -16,29 +19,31 @@
             </span>
         </button>
 
-        <a href="{{ url('/') }}" class="public-nav-brand flex items-center gap-2 min-w-0 flex-1">
+        <a href="{{ url('/?site=1') }}" class="public-nav-brand">
             <x-ui.image
                 src="images/salang_logo.png"
                 alt="Salang Group"
-                class="h-8 sm:h-10 w-auto shrink-0"
+                class="public-nav-brand__logo"
                 width="160"
                 height="44"
                 :priority="true"
                 :lazy="false"
             />
-            <span class="hidden min-[380px]:flex sm:flex flex-col min-w-0">
-                <span class="text-sm font-bold text-[var(--text-primary)] leading-none truncate">Salang Group</span>
-                <span class="text-[0.625rem] uppercase tracking-[0.12em] text-[var(--text-muted)] mt-0.5 truncate hidden sm:block">Health Care International</span>
+            <span class="public-nav-brand__text">
+                <span class="public-nav-brand__name">Salang Group</span>
+                <span class="public-nav-brand__tag">Health Care International</span>
             </span>
         </a>
 
-        <nav class="public-nav-links" aria-label="Sections">
-            <a href="{{ url('/') }}#about">Entreprise</a>
-            <a href="{{ url('/') }}#how-it-works">Parcours</a>
-            <a href="{{ url('/') }}#remuneration">Rémunération</a>
+        <nav class="public-nav-links" aria-label="Navigation principale">
+            <a href="{{ url('/?site=1') }}" class="{{ $isHome ? 'is-active' : '' }}">Accueil</a>
+            <a href="{{ route('site.offer') }}" class="{{ request()->routeIs('site.offer') ? 'is-active' : '' }}">Offre</a>
+            <a href="{{ route('site.remuneration') }}" class="{{ request()->routeIs('site.remuneration') ? 'is-active' : '' }}">Rémunération</a>
+            <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'is-active' : '' }}">Contact</a>
+            <a href="{{ route('site.about') }}" class="{{ request()->routeIs('site.about') ? 'is-active' : '' }}">À propos</a>
         </nav>
 
-        <div class="public-nav-actions flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div class="public-nav-actions">
             <button
                 type="button"
                 id="theme-toggle"
@@ -52,15 +57,15 @@
             </button>
 
             @auth
-                <a href="{{ route('dashboard') }}" class="public-btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 whitespace-nowrap">
+                <a href="{{ route('dashboard') }}" class="public-nav-cta">
                     Espace membre
+                    <span aria-hidden="true">→</span>
                 </a>
             @else
-                <a href="{{ route('login') }}" class="hidden md:inline text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-                    Connexion
-                </a>
-                <a href="{{ route('register') }}" class="public-nav-header-cta public-btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 whitespace-nowrap">
+                <a href="{{ route('login') }}" class="public-nav-login">Connexion</a>
+                <a href="{{ route('register') }}" class="public-nav-cta public-nav-header-cta">
                     Adhérer
+                    <span aria-hidden="true">→</span>
                 </a>
             @endauth
         </div>
@@ -80,9 +85,11 @@
         x-transition:leave-end="opacity-0 -translate-y-1"
         aria-label="Menu mobile"
     >
-        <a href="{{ url('/') }}#about" @click="navOpen = false">Entreprise</a>
-        <a href="{{ url('/') }}#how-it-works" @click="navOpen = false">Parcours membre</a>
-        <a href="{{ url('/') }}#remuneration" @click="navOpen = false">Rémunération</a>
+        <a href="{{ url('/?site=1') }}" @click="navOpen = false" class="{{ $isHome ? 'is-active' : '' }}">Accueil</a>
+        <a href="{{ route('site.offer') }}" @click="navOpen = false">Offre</a>
+        <a href="{{ route('site.remuneration') }}" @click="navOpen = false">Rémunération</a>
+        <a href="{{ route('contact') }}" @click="navOpen = false">Contact</a>
+        <a href="{{ route('site.about') }}" @click="navOpen = false">À propos</a>
         <div class="public-nav-mobile-divider" aria-hidden="true"></div>
         @auth
             <a href="{{ route('dashboard') }}" class="public-nav-mobile-cta" @click="navOpen = false">Mon espace membre</a>

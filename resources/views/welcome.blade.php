@@ -6,345 +6,374 @@
 
 @php
     $heroImage = file_exists(public_path('images/site.webp')) ? asset('images/site.webp') : asset('images/site.png');
+    $site = config('salang-site');
+    $homeProductKeys = [
+        'images/produits/0c7a5b36-ba87-4acc-9e6b-75781177adcd.jpeg', // Vision Kit
+        'images/produits/a40666ab-94bd-41e4-9248-21395bab1387.jpeg', // Gluta Glow
+        'images/produits/d94dbceb-f0f2-4fc8-a9c6-6568922fff8d.jpeg', // Bilymarin
+        'images/produits/408c03b3-c5dd-4a8c-836b-0a6a93e4a1f3.jpeg', // Menopause Support
+    ];
+    $byImage = collect($site['offer_products'] ?? [])->keyBy('image');
+    $homeProducts = collect($homeProductKeys)
+        ->map(fn ($img) => $byImage->get($img))
+        ->filter(fn ($p) => $p && is_file(public_path($p['image'])))
+        ->values();
+    $homeServices = collect($site['offer_services'] ?? [])->take(2);
 @endphp
+
+@section('bodyAttributes')
+    data-login-url="{{ route('login') }}"
+    data-register-url="{{ route('register') }}"
+@endsection
 
 @push('head')
     <link rel="preload" as="image" href="{{ $heroImage }}">
+    {{-- Avant paint : site officiel OU parcours app mobile (jamais de flash du site) --}}
+    <script>
+        (function () {
+            try {
+                var q = new URLSearchParams(window.location.search);
+                if (q.get('site') === '1') {
+                    sessionStorage.setItem('salang_force_website', '1');
+                }
+                var desktop = window.matchMedia('(min-width: 768px)').matches;
+                var official = q.get('site') === '1'
+                    || sessionStorage.getItem('salang_force_website') === '1'
+                    || desktop;
+                if (official) {
+                    document.documentElement.classList.add('salang-no-splash');
+                } else {
+                    // Mobile app : masquer le site dès le premier frame
+                    document.documentElement.classList.add('salang-mobile-app');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        html.salang-mobile-app body.public-welcome-page {
+            overflow: hidden !important;
+            height: 100dvh !important;
+            background: var(--bg-page, #0b1220);
+        }
+        html.salang-mobile-app .public-nav,
+        html.salang-mobile-app .public-footer,
+        html.salang-mobile-app #publicOfficialSiteContent {
+            display: none !important;
+        }
+    </style>
 @endpush
 
 @push('body-start')
-    @include('partials.public.mobile-splash')
+    @unless(request('site') === '1')
+        @include('partials.public.mobile-splash')
+    @endunless
 @endpush
 
 @section('content')
+    @include('partials.public.mobile-onboarding')
+
     <div class="public-onboarding-chrome" id="publicOnboardingChrome" hidden>
         <div class="public-onboarding-chrome-inner">
             <p class="public-onboarding-step" aria-live="polite">
                 <span class="public-onboarding-step-label">Étape</span>
-                <span id="publicOnboardingStepNum">1</span><span class="public-onboarding-step-total">/5</span>
+                <span id="publicOnboardingStepNum">1</span><span class="public-onboarding-step-total">/4</span>
             </p>
             <div class="public-onboarding-dots" id="publicOnboardingDots" role="tablist" aria-label="Étapes de découverte"></div>
             <div class="public-onboarding-actions">
-                <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Explorer le site</button>
+                <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Passer</button>
                 <button type="button" class="public-btn-primary public-onboarding-next" id="publicOnboardingNext">Suivant</button>
-                    </div>
-                </div>
             </div>
+        </div>
+    </div>
 
-    <section class="public-hero public-mobile-slide" id="onboarding-slide-1" aria-labelledby="hero-title">
+    <div class="public-official-site-content" id="publicOfficialSiteContent">
+    <section class="public-hero" id="onboarding-slide-1" aria-labelledby="hero-title">
         <div class="public-hero-bg" style="background-image: url('{{ $heroImage }}');"></div>
         <div class="public-hero-overlay" aria-hidden="true"></div>
 
         <div class="public-hero-grid">
             <div class="public-hero-copy">
-                <p class="public-hero-kicker">
-                    Complementary &amp; Alternative Medicine
-                </p>
+                <p class="public-hero-brand">{{ $site['brand'] }}</p>
                 <h1 id="hero-title" class="public-hero-title">
-                    Salang Group<br>Health Care International
+                    Your health <span class="public-hero-title__em">our priority</span>
                 </h1>
-                <p class="public-hero-tagline"><span class="public-hero-tagline-accent">Your health</span> our priority</p>
-                <p class="public-hero-desc">
-                    Formulations d’origine naturelle, fondées sur la médecine complémentaire asiatique.
-                    Rejoignez un réseau international fondé en 2015 par le Dr&nbsp;Lou Jiancheng Salang.
-                </p>
-                <p class="public-hero-meta">Siège social · Hong Kong</p>
-
+                <p class="public-hero-desc">{{ $site['mission'] }}</p>
                 <div class="public-hero-actions">
-                    <a href="{{ route('register') }}" class="public-btn-primary">Adhérer — 30&nbsp;USD</a>
-                    <a href="#how-it-works" class="public-btn-hero-secondary">
-                        Voir le parcours membre
-                    </a>
-                </div>
-                </div>
-                
-            <div class="public-hero-aside">
-                <div class="public-hero-panel">
-                    <p class="text-sm font-semibold">En bref</p>
-                    <p class="mt-2 text-sm text-white/80 leading-relaxed">
-                        Adhésion unique, accès produits, plan de bonus publié et espace membre pour suivre votre réseau.
-                    </p>
-                    <div class="public-stat-row">
-                        <div>
-                            <p class="public-stat-value">500+</p>
-                            <p class="public-stat-label">Membres actifs</p>
-                    </div>
-                        <div>
-                            <p class="public-stat-value public-stat-value--accent">50+</p>
-                            <p class="public-stat-label">Pays</p>
-                    </div>
-                    </div>
+                    <a href="{{ route('register') }}" class="public-btn-primary">Adhérer — {{ $site['membership_fee_usd'] }}&nbsp;USD</a>
+                    <a href="{{ route('site.offer') }}#produits" class="public-btn-hero-secondary">Voir les produits</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="about" class="public-section-alt public-mobile-slide">
+    <section class="public-stats-bar" aria-label="Chiffres clés">
+        <div class="public-shell public-stats-bar__grid">
+            @foreach ([
+                [(string) $site['founded'], 'Fondation'],
+                ['Hong Kong', 'Siège social'],
+                [$site['membership_fee_usd'].' USD', 'Adhésion unique'],
+                ['100 %', 'Naturel'],
+            ] as [$value, $label])
+                <div class="public-stats-bar__item">
+                    <p class="public-stats-bar__value">{{ $value }}</p>
+                    <p class="public-stats-bar__label">{{ $label }}</p>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section id="pillars" class="public-section">
         <div class="public-shell">
             @include('partials.public.section-head', [
-                'kicker' => 'Entreprise',
-                'title' => 'Une marque de santé, un modèle de réseau clair',
-                'lead' => 'Salang Group combine distribution de produits et rémunération sur plusieurs niveaux, avec des règles accessibles avant l’inscription.',
+                'kicker' => 'Promesse',
+                'title' => 'Trois richesses, une adhésion',
+                'lead' => 'Avec seulement '.$site['membership_fee_usd'].' $ d’adhésion, vous ouvrez la porte à la santé, la prospérité et la liberté.',
+                'center' => true,
             ])
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start public-reveal public-reveal--delay-1">
-                <div class="lg:col-span-5 order-2 lg:order-1">
-                    <figure class="public-figure">
-                        <x-ui.image :src="asset('images/team.png')" alt="Équipe Salang Group" class="aspect-[4/3] object-cover" />
-                        <figcaption class="public-figure-caption">Salang Group — présence internationale depuis 2015</figcaption>
-                    </figure>
-                </div>
-                <div class="lg:col-span-7 order-1 lg:order-2 space-y-5 public-prose">
-                    <p>
-                        L’entreprise conçoit et distribue des produits de bien-être naturels. Les membres achètent à tarif préférentiel,
-                        recommandent la marque et développent un réseau encadré par des grades et des volumes (PV / BV).
-                    </p>
-                    <p>
-                        La transparence du plan de rémunération est centrale&nbsp;: bonus direct, indirect, leadership et récompenses
-                        par grade sont détaillés ci-dessous, avant toute décision d’adhésion.
-                    </p>
-                    <div class="grid sm:grid-cols-2 gap-4 pt-2">
-                        <div class="public-card--lift">
-                            <p class="text-sm font-semibold text-[var(--text-primary)]">Produits</p>
-                            <p class="text-sm text-[var(--text-secondary)] mt-1">Gammes naturelles, médecine complémentaire</p>
+            <div class="public-pillars public-pillars--3 public-reveal public-reveal--delay-1">
+                @foreach ($site['three_pillars'] as $pillar)
+                    <article class="public-pillar">
+                        @include('partials.public.pillar-icon', ['icon' => $pillar['icon'] ?? 'health'])
+                        <h3 class="public-pillar__title">{{ $pillar['title'] }}</h3>
+                        <p class="public-pillar__text">{{ $pillar['text'] }}</p>
+                        <a href="{{ route('site.offer') }}" class="public-pillar__link">En savoir plus →</a>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    @if ($homeProducts->isNotEmpty())
+    <section id="produits" class="public-section-alt">
+        <div class="public-shell">
+            @include('partials.public.section-head', [
+                'kicker' => 'Produits',
+                'title' => 'Une sélection Salang',
+                'lead' => 'Compléments naturels pour la vision, la beauté, le foie et le bien-être au quotidien.',
+                'center' => true,
+            ])
+
+            <div class="public-offer-products public-offer-products--home public-reveal public-reveal--delay-1">
+                @foreach ($homeProducts as $product)
+                    <article class="public-offer-product">
+                        <a href="{{ route('site.offer') }}#produits" class="public-offer-product__link">
+                            <div class="public-offer-product__media">
+                                <img
+                                    src="{{ asset($product['image']) }}"
+                                    alt="{{ $product['name'] }}"
+                                    class="public-offer-product__img"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
                             </div>
-                        <div class="public-card--lift">
-                            <p class="text-sm font-semibold text-[var(--text-primary)]">Réseau</p>
-                            <p class="text-sm text-[var(--text-secondary)] mt-1">Structure binaire et évolution par grades</p>
-                        </div>
-                    </div>
-                </div>
+                            <div class="public-offer-product__body">
+                                <p class="public-offer-product__cat">{{ $product['category'] }}</p>
+                                <h3 class="public-offer-product__name">{{ $product['name'] }}</h3>
+                                <p class="public-offer-product__blurb">{{ $product['blurb'] }}</p>
+                            </div>
+                        </a>
+                    </article>
+                @endforeach
+            </div>
+
+            <div class="public-body-actions">
+                <a href="{{ route('site.offer') }}#produits" class="public-btn-primary">Voir tous les produits</a>
+                <a href="{{ route('site.offer') }}#seances" class="public-btn-secondary">Séances Ceragem &amp; Détox</a>
             </div>
         </div>
     </section>
+    @endif
 
-    <section class="public-section public-onboarding-extra">
+    @if ($homeServices->isNotEmpty())
+    <section class="public-section" id="seances-home">
         <div class="public-shell">
             @include('partials.public.section-head', [
-                'kicker' => 'Offre',
-                'title' => 'Trois piliers, une adhésion',
-                'lead' => '30 USD ouvrent l’accès membre, les catalogues et le calcul des commissions.',
+                'kicker' => 'Services',
+                'title' => 'Ceragem &amp; Détox',
+                'lead' => 'Des séances en consultation pour compléter votre parcours bien-être.',
+                'center' => true,
             ])
-
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 public-reveal public-reveal--delay-1">
-                <article class="public-card lg:col-span-3">
-                    <x-ui.image :src="asset('images/natural-products.jpeg')" alt="Produits naturels Salang" class="w-full aspect-[16/10] object-cover rounded-lg mb-5" />
-                    <h3 class="text-lg font-semibold text-[var(--text-primary)]">Qualité produit</h3>
-                    <p class="public-prose mt-2">Sélection naturelle, traçabilité et usage orienté prévention.</p>
-                </article>
-                <div class="lg:col-span-2 flex flex-col gap-6">
-                    <article class="public-card flex-1">
-                        <x-ui.image :src="asset('images/holistic-health.jpeg')" alt="Approche holistique" class="w-full aspect-video object-cover rounded-lg mb-4" />
-                        <h3 class="font-semibold text-[var(--text-primary)]">Approche holistique</h3>
-                        <p class="text-sm text-[var(--text-secondary)] mt-1">Équilibre du corps et suivi dans le temps.</p>
-                    </article>
-                    <article class="public-card flex-1">
-                        <x-ui.image :src="asset('images/global-growth.jpg')" alt="Réseau international" class="w-full aspect-video object-cover rounded-lg mb-4" />
-                        <h3 class="font-semibold text-[var(--text-primary)]">Réseau international</h3>
-                        <p class="text-sm text-[var(--text-secondary)] mt-1">Croissance maîtrisée et outils membre.</p>
-                    </article>
-                    </div>
+            <div class="public-offer-services public-reveal public-reveal--delay-1">
+                @foreach ($homeServices as $service)
+                    @php
+                        $img = ! empty($service['image']) && is_file(public_path($service['image']))
+                            ? asset($service['image'])
+                            : null;
+                    @endphp
+                    <article class="public-offer-service">
+                        <div class="public-offer-service__media">
+                            @if ($img)
+                                <img src="{{ $img }}" alt="{{ $service['title'] }}" class="public-offer-service__img" loading="lazy" decoding="async">
+                            @endif
                         </div>
+                        <div class="public-offer-service__body">
+                            <p class="public-kicker">{{ $service['kicker'] }}</p>
+                            <h3 class="public-offer-service__title">{{ $service['title'] }}</h3>
+                            <p class="public-offer-service__text">{{ $service['text'] }}</p>
+                            <a href="{{ route('site.offer') }}#seances" class="public-pillar__link">Découvrir →</a>
                         </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
     </section>
+    @endif
 
-    <section class="public-section-alt public-mobile-slide">
-        <div class="public-shell">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center public-reveal public-reveal--delay-1">
-                        <div>
-                    @include('partials.public.section-head', [
-                        'kicker' => 'Adhésion',
-                        'title' => '30 USD — frais uniques',
-                        'lead' => 'Création de compte, code parrain, accès boutique et tableau de bord.',
-                    ])
-                    <ol class="public-prose space-y-3 list-decimal pl-5">
-                        <li><span class="font-medium text-[var(--text-primary)]">Santé</span> — consommer et recommander les gammes Salang.</li>
-                        <li><span class="font-medium text-[var(--text-primary)]">Revenus</span> — commissions liées aux volumes et à la profondeur du réseau.</li>
-                        <li><span class="font-medium text-[var(--text-primary)]">Autonomie</span> — rythme personnel, règles documentées.</li>
-                    </ol>
-                        </div>
-                <div class="public-card-accent text-center py-8 px-6">
-                    <p class="text-4xl font-bold tabular-nums text-[var(--text-primary)]">30&nbsp;<span class="text-xl font-semibold public-price-highlight">USD</span></p>
-                    <p class="text-sm text-[var(--text-secondary)] mt-2">Paiement unique à l’inscription</p>
-                    <a href="{{ route('register') }}" class="public-btn-primary mt-8 w-full sm:w-auto">Ouvrir mon compte</a>
-                    <p class="text-xs text-[var(--text-muted)] mt-4">Code parrain requis · CGU acceptées à l’inscription</p>
-                </div>
+    <section id="about" class="public-mission">
+        <div class="public-mission__media">
+            <x-ui.image :src="asset('images/team.png')" alt="Équipe Salang Group" class="public-mission__img" />
+        </div>
+        <div class="public-mission__copy">
+            <p class="public-kicker">Qui sommes-nous</p>
+            <h2 class="public-heading">{{ $site['promise'] }}</h2>
+            <p class="public-mission__lead">{{ $site['who_we_are'] }}</p>
+            <ul class="public-mission__list">
+                <li>Fondé en {{ $site['founded'] }} par {{ $site['founder'] }}</li>
+                <li>Siège social · {{ $site['hq'] }}</li>
+                <li>{{ $site['subtitle'] }}</li>
+            </ul>
+            <div class="public-mission__actions">
+                <a href="{{ route('site.about') }}" class="public-btn-primary">Lire notre histoire</a>
+                <a href="{{ route('register') }}" class="public-btn-hero-secondary">Rejoindre Salang</a>
             </div>
         </div>
     </section>
 
-    <section id="how-it-works" class="public-section public-mobile-slide">
+    <section class="public-section-alt">
+        <div class="public-shell">
+            <div class="public-why public-reveal public-reveal--delay-1">
+                <div class="public-why__copy">
+                    @include('partials.public.section-head', [
+                        'kicker' => 'Pourquoi Salang',
+                        'title' => 'Ce qui nous distingue',
+                        'lead' => 'Une entreprise solide, transparente, tournée vers la santé naturelle et la croissance.',
+                    ])
+                    <ul class="public-check-list">
+                        @foreach ($site['why'] as $item)
+                            <li>{{ $item }}</li>
+                        @endforeach
+                        <li>Adhésion unique à {{ $site['membership_fee_usd'] }}&nbsp;USD — plan consultable avant inscription</li>
+                    </ul>
+                </div>
+                <figure class="public-why__figure">
+                    <x-ui.image :src="asset('images/natural-products.jpeg')" alt="Produits naturels Salang" class="public-why__img" />
+                    <span class="public-why__badge" aria-hidden="true">{{ $site['membership_fee_usd'] }}&nbsp;USD<br><small>adhésion</small></span>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="public-section">
         <div class="public-shell">
             @include('partials.public.section-head', [
                 'kicker' => 'Parcours',
-                'title' => 'Comment avancer avec Salang',
-                'lead' => 'Cinq étapes, de l’adhésion au développement du réseau.',
+                'title' => 'Comment ça fonctionne',
+                'lead' => 'Un modèle simple, accessible et puissant.',
                 'center' => true,
             ])
 
-            <figure class="public-figure max-w-4xl mx-auto public-reveal public-reveal--delay-1">
-                <x-ui.image
-                    :src="asset('images/how-it-works.png')"
-                    alt="Schéma des cinq étapes du parcours membre Salang"
-                    class="w-full"
-                />
-            </figure>
-
-            <ol class="public-steps max-w-xl mx-auto mt-12 public-reveal public-reveal--delay-2">
-                @foreach ([
-                    ['Adhérer', 'Régler 30 USD et valider votre parrain.'],
-                    ['Utiliser', 'Découvrir les produits et cumuler du volume personnel.'],
-                    ['Partager', 'Présenter l’opportunité avec votre lien ou code.'],
-                    ['Percevoir', 'Bonus direct, indirect et leadership selon votre grade.'],
-                    ['Évoluer', 'Atteindre les grades par PV/BV et structure d’équipe.'],
-                ] as [$t, $d])
-                    <li class="public-step">
-                        <span class="public-step-marker" aria-hidden="true"></span>
-                        <p class="public-step-title">{{ $t }}</p>
-                        <p class="public-step-desc">{{ $d }}</p>
+            <ol class="public-steps-grid public-reveal public-reveal--delay-1">
+                @foreach ($site['how_it_works'] as $i => $step)
+                    <li class="public-step-card">
+                        <span class="public-step-card__num">{{ $i + 1 }}</span>
+                        <p class="public-step-card__text">{{ $step }}</p>
                     </li>
                 @endforeach
             </ol>
+
+            <div class="public-body-actions">
+                <a href="{{ route('site.offer') }}" class="public-btn-primary">Voir l’offre complète</a>
+                <a href="{{ asset('docs/livret-salang-international.pdf') }}" class="public-btn-secondary" target="_blank" rel="noopener">Livret PDF</a>
+            </div>
         </div>
     </section>
 
-    <section id="remuneration" class="public-section-alt public-onboarding-extra">
+    <section id="remuneration" class="public-section-alt">
         <div class="public-shell">
             @include('partials.public.section-head', [
                 'kicker' => 'Rémunération',
-                'title' => 'Types de revenus',
-                'lead' => 'Aperçu des composantes du plan. Les pourcentages exacts dépendent du grade atteint.',
-            ])
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 public-reveal public-reveal--delay-1">
-                @foreach ([
-                    ['Bénéfice de détail', '25 % sur le prix catalogue des produits achetés pour revente personnelle.'],
-                    ['Bonus direct', 'Lié au volume personnel (PBV) des membres que vous parrainez directement.'],
-                    ['Bonus indirect', 'De 2 % à 39 % selon la profondeur et le grade.'],
-                    ['Bonus de leadership', 'À partir du 5e niveau, variable selon qualification.'],
-                    ['Prix supplémentaires', 'Récompenses matérielles définies par grade (véhicule, logement selon paliers).'],
-                    ['Bonus d’encouragement', 'À partir du grade Rubis, conditions spécifiques publiées.'],
-                ] as [$name, $detail])
-                    <div class="public-rank-card">
-                        <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Commission</p>
-                        <p class="font-semibold text-[var(--text-primary)] mt-1">{{ $name }}</p>
-                        <p class="text-sm text-[var(--text-secondary)] mt-2">{{ $detail }}</p>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    <section class="public-section public-onboarding-extra">
-        <div class="public-shell">
-            @include('partials.public.section-head', [
-                'kicker' => 'Grades',
-                'title' => 'Qualifications et progression',
-                'lead' => '1 PV = 1 USD d’achats cumulés · BV = volume du mois en cours.',
-            ])
-
-            <figure class="public-figure max-w-5xl mx-auto mb-10 public-reveal public-reveal--delay-1">
-                <x-ui.image
-                    :src="asset('images/ranks-diagram.png')"
-                    alt="Pyramide des grades Salang de Distributeur à Diamond Pearl"
-                    class="w-full"
-                />
-            </figure>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 public-reveal public-reveal--delay-2">
-                @php
-                    $ranks = [
-                        ['Distributeur', 'Adhésion 30 USD'],
-                        ['Qualification', '≥ 100 BV (achat unique ou cumulé)'],
-                        ['Cumul Directeur', '≥ 200 BV · 22 % + bonus indirect'],
-                        ['Directeur', 'Conditions réseau / PV · 26 %'],
-                        ['Manager Senior', 'Structure d’équipe · 30 %'],
-                        ['Directeur de l’Envolée', 'Qualification avancée · 34 %'],
-                        ['Saphire Manager', 'Qualification avancée · 40 %'],
-                        ['Diamant Bleu', 'Qualification avancée · 43 %'],
-                        ['Diamond Pearl', 'Sommet du plan · 45 %'],
-                    ];
-                @endphp
-                @foreach ($ranks as [$name, $detail])
-                    <div class="public-rank-card">
-                        <p class="font-semibold text-[var(--text-primary)]">{{ $name }}</p>
-                        <p class="text-sm text-[var(--text-secondary)] mt-1">{{ $detail }}</p>
-                </div>
-                @endforeach
-                </div>
-            <p class="text-sm text-center text-[var(--text-muted)] mt-8 max-w-2xl mx-auto public-reveal">
-                Les options détaillées (filleuls, PV groupe) sont disponibles dans la documentation membre et votre back-office après connexion.
-            </p>
-        </div>
-    </section>
-
-    <section class="public-section-alt public-onboarding-extra">
-        <div class="public-shell">
-            @include('partials.public.section-head', [
-                'kicker' => 'Tableau',
-                'title' => 'Pourcentages par grade',
+                'title' => 'Commencer à gagner',
+                'lead' => 'Bonus de parrainage, détail, direct, indirect… un plan clair pour progresser.',
                 'center' => true,
             ])
 
-            <figure class="public-figure max-w-4xl mx-auto mb-8">
-                <x-ui.image :src="asset('images/bonus-chart.png')" alt="Graphique des taux de bonus Salang" class="w-full" />
-            </figure>
+            <div class="public-income-grid public-reveal public-reveal--delay-1">
+                @foreach (array_slice($site['income_types'], 0, 4) as [$name, $detail])
+                    <article class="public-income-card">
+                        <p class="public-income-card__label">Commission</p>
+                        <h3 class="public-income-card__title">{{ $name }}</h3>
+                        <p class="public-income-card__text">{{ $detail }}</p>
+                    </article>
+                @endforeach
+            </div>
 
-            <div class="public-table-wrap public-reveal public-reveal--delay-2">
-                <table class="public-table">
-                    <thead>
-                        <tr>
-                            <th>Grade</th>
-                            <th>Direct</th>
-                            <th>Indirect</th>
-                            <th>Leadership</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ([
-                            ['Cumul Directeur', '22 %', '4 % – 20 %', '—'],
-                            ['Directeur', '26 %', '4 % – 20 %', '—'],
-                            ['Manager Senior', '30 %', '4 % – 24 %', '0,5 %'],
-                            ['Directeur de l’Envolée', '34 %', '4 % – 28 %', '1,1 %'],
-                            ['Saphire Manager', '40 %', '6 % – 34 %', '1,8 %'],
-                            ['Diamant Bleu', '43 %', '3 % – 37 %', '2,6 %'],
-                            ['Diamond Pearl', '45 %', '2 % – 39 %', '3,5 %'],
-                        ] as $row)
-                            <tr>
-                                @foreach ($row as $cell)
-                                    <td>{{ $cell }}</td>
-                                @endforeach
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="public-body-actions">
+                <a href="{{ route('site.remuneration') }}" class="public-btn-primary">Grades &amp; pourcentages</a>
+                <a href="{{ route('contact') }}" class="public-btn-secondary">Poser une question</a>
             </div>
         </div>
     </section>
 
-    <section class="public-section public-mobile-slide public-onboarding-final">
+    <section id="faq" class="public-section">
         <div class="public-shell">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start public-reveal public-reveal--delay-1">
-                <div>
+            <div class="public-faq public-reveal public-reveal--delay-1">
+                <div class="public-faq__copy">
                     @include('partials.public.section-head', [
-                        'kicker' => 'Décision',
-                        'title' => 'Prêt à commencer ?',
-                        'lead' => 'L’inscription prend quelques minutes. Préparez votre code parrain et une adresse email valide.',
+                        'kicker' => 'FAQ',
+                        'title' => 'Questions fréquentes',
+                        'lead' => 'Les réponses essentielles avant de créer votre compte.',
                     ])
-                    <blockquote class="public-quote text-[var(--text-secondary)]">
-                        « Santé, prospérité, liberté : les trois axes que nous partageons avec chaque membre engagé. »
-                        <footer>Dr Franck KOWAVING</footer>
-                    </blockquote>
+                    <div class="public-faq__list" x-data="{ open: 0 }">
+                        @foreach ([
+                            ['Combien coûte l’adhésion ?', 'L’adhésion est un paiement unique de '.$site['membership_fee_usd'].' USD. Elle ouvre l’accès à la boutique, au réseau et au tableau de bord.'],
+                            ['Ai-je besoin d’un code parrain ?', 'Oui. Un code ou lien de parrainage est requis à l’inscription pour rattacher votre compte à la structure.'],
+                            ['Comment sont calculées les commissions ?', 'Selon votre grade et les volumes : bonus direct, indirect et, selon qualification, leadership. Le détail est sur la page Rémunération.'],
+                            ['Puis-je consulter le plan avant de m’inscrire ?', 'Oui. Grades, pourcentages, produits et parcours sont publics — et le livret PDF est téléchargeable.'],
+                        ] as $i => [$q, $a])
+                            <div class="public-faq__item">
+                                <button
+                                    type="button"
+                                    class="public-faq__question"
+                                    @click="open = open === {{ $i }} ? null : {{ $i }}"
+                                    :aria-expanded="open === {{ $i }}"
+                                >
+                                    <span>{{ $q }}</span>
+                                    <span class="public-faq__chevron" aria-hidden="true" :class="{ 'is-open': open === {{ $i }} }"></span>
+                                </button>
+                                <div
+                                    class="public-faq__answer"
+                                    x-show="open === {{ $i }}"
+                                    x-cloak
+                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter-start="opacity-0 -translate-y-1"
+                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                >
+                                    <p>{{ $a }}</p>
+                                </div>
                             </div>
-                <div class="public-card-accent p-8">
-                    <h3 class="text-lg font-bold text-[var(--text-primary)]">Créer un compte membre</h3>
-                    <p class="public-prose mt-3">
-                        Accès boutique, arbre binaire, historique des commissions et retraits. Déjà inscrit ?
-                        <a href="{{ route('login') }}" class="text-primary-700 font-semibold dark:text-primary-400">Connectez-vous</a>.
-                    </p>
-                    <a href="{{ route('register') }}" class="public-btn-primary mt-6 w-full text-center">Inscription — 30 USD</a>
+                        @endforeach
+                    </div>
                 </div>
+                <figure class="public-faq__figure">
+                    <x-ui.image :src="asset('images/holistic-health.jpeg')" alt="Approche holistique Salang" class="public-faq__img" />
+                </figure>
             </div>
         </div>
     </section>
+
+    <section class="public-cta-banner public-onboarding-final">
+        <div class="public-shell public-cta-banner__inner">
+            <div>
+                <p class="public-kicker">Décision</p>
+                <h2 class="public-heading">Rejoignez-nous dès aujourd’hui</h2>
+                <p class="public-cta-banner__lead">{{ $site['promise'] }} Préparez votre code parrain et une adresse email valide.</p>
+            </div>
+            <div class="public-cta-banner__actions">
+                <a href="{{ route('register') }}" class="public-btn-primary">Créer un compte — {{ $site['membership_fee_usd'] }}&nbsp;USD</a>
+                <a href="{{ route('login') }}" class="public-btn-hero-secondary">Se connecter</a>
+            </div>
+        </div>
+    </section>
+    </div>{{-- /#publicOfficialSiteContent --}}
 @endsection

@@ -74,7 +74,13 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('/contact', 'pages.contact')->name('contact');
+Route::get('/a-propos', [\App\Http\Controllers\SitePageController::class, 'about'])->name('site.about');
+Route::get('/offre', [\App\Http\Controllers\SitePageController::class, 'offer'])->name('site.offer');
+Route::get('/remuneration', [\App\Http\Controllers\SitePageController::class, 'remuneration'])->name('site.remuneration');
+Route::get('/contact', [\App\Http\Controllers\SitePageController::class, 'contact'])->name('contact');
+Route::post('/contact', [\App\Http\Controllers\ContactMessageController::class, 'store'])
+    ->middleware('throttle:8,1')
+    ->name('contact.store');
 
 // Sponsor & Email check (AJAX)
 Route::get('/check-email', [EmailCheckController::class, 'check'])->name('check.email');
@@ -269,6 +275,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('publications', PublicationController::class);
     Route::delete('publications/media/{media}', [PublicationController::class, 'deleteMedia'])
         ->name('publications.media.destroy');
+
+    // Site officiel — messages visiteurs (admin + it_manager)
+    Route::prefix('site-management')->name('site-management.')->middleware('supervision')->group(function () {
+        Route::get('/contacts', [\App\Http\Controllers\SiteContactController::class, 'index'])->name('contacts.index');
+        Route::get('/contacts/{contactMessage}', [\App\Http\Controllers\SiteContactController::class, 'show'])->name('contacts.show');
+        Route::patch('/contacts/{contactMessage}', [\App\Http\Controllers\SiteContactController::class, 'update'])->name('contacts.update');
+        Route::delete('/contacts/{contactMessage}', [\App\Http\Controllers\SiteContactController::class, 'destroy'])->name('contacts.destroy');
+    });
 
     // ============================================================
     // RAPPORTS
@@ -861,10 +875,3 @@ require __DIR__ . '/auth.php';
 Route::fallback(function () {
     return redirect()->route('home');
 })->name('fallback');
-
-// ============================================================
-// PAGES LEGALES (en dehors du groupe admin)
-// ============================================================
-Route::get('/mentions-legales', [LegalController::class, 'legal'])->name('legal.mentions');
-Route::get('/confidentialite', [LegalController::class, 'privacy'])->name('legal.privacy');
-Route::get('/conditions-generales', [LegalController::class, 'terms'])->name('legal.terms');

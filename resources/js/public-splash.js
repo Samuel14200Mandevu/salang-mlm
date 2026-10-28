@@ -1,11 +1,24 @@
 /**
- * Splash mobile (logo Salang) avant onboarding accueil.
+ * Splash mobile (logo Salang) — style app iOS avant onboarding / auth.
  */
 (function () {
     const MOBILE_MAX = 767;
 
     function isMobile() {
         return window.matchMedia(`(max-width: ${MOBILE_MAX}px)`).matches;
+    }
+
+    function wantsOfficialSite() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('site') === '1') {
+                sessionStorage.setItem('salang_force_website', '1');
+                return true;
+            }
+            return sessionStorage.getItem('salang_force_website') === '1';
+        } catch (e) {
+            return new URLSearchParams(window.location.search).get('site') === '1';
+        }
     }
 
     function dispatchDone() {
@@ -25,13 +38,21 @@
             return;
         }
 
-        if (!isMobile()) {
+        // Desktop ou site officiel (?site=1) : jamais de splash.
+        if (
+            !isMobile()
+            || wantsOfficialSite()
+            || document.documentElement.classList.contains('salang-no-splash')
+        ) {
+            body.classList.add('public-official-site');
+            body.classList.add('public-welcome-expanded');
             splash.remove();
             dispatchDone();
             return;
         }
 
-        body.classList.add('public-splash-active');
+        document.documentElement.classList.add('salang-mobile-app');
+        body.classList.add('public-splash-active', 'public-onboarding-active');
 
         const skipBtn = document.getElementById('publicSplashSkip');
         let closed = false;
@@ -41,12 +62,13 @@
                 return;
             }
             closed = true;
+            // Préparer l’onboarding AVANT de retirer le splash (évite le flash du site).
+            dispatchDone();
             splash.classList.add('is-leaving');
             body.classList.remove('public-splash-active');
 
             window.setTimeout(function () {
                 splash.remove();
-                dispatchDone();
             }, 380);
         }
 
@@ -54,7 +76,7 @@
             skipBtn.addEventListener('click', closeSplash);
         }
 
-        window.setTimeout(closeSplash, 2400);
+        window.setTimeout(closeSplash, 2200);
     }
 
     if (document.readyState === 'loading') {
