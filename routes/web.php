@@ -292,6 +292,13 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/earnings', [ReportController::class, 'earnings'])->name('earnings');
         Route::get('/network', [ReportController::class, 'network'])->name('network');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
+        Route::get('/downline', [ReportController::class, 'downline'])->name('downline');
+        Route::get('/downline/{period}', [ReportController::class, 'downlineShow'])
+            ->where('period', '[0-9]{4}-[0-9]{2}')
+            ->name('downline.show');
+        Route::get('/downline/{period}/pdf', [ReportController::class, 'downlinePdf'])
+            ->where('period', '[0-9]{4}-[0-9]{2}')
+            ->name('downline.pdf');
     });
 
     // ============================================================

@@ -560,7 +560,7 @@ class AdminCommissionHistoryController extends Controller
 
             $query = CommissionHistory::with([
                 'user:id,name,sponsor_id',
-                'fromUser:id,name',
+                'fromUser:id,name,sponsor_id',
             ])
                 ->where('period', $period)
                 ->select([
@@ -626,9 +626,11 @@ class AdminCommissionHistoryController extends Controller
                     $amount = (float) $item->amount;
                     $detailsByType[$type][] = [
                         'type' => $type,
+                        'from_user_code' => $item->fromUser?->sponsor_id ?? '—',
                         'from_user' => $item->fromUser?->name ?? 'N/A',
                         'amount' => $amount,
                         'percentage' => $item->percentage,
+                        'pv_used' => $item->pv_used,
                         'generation' => $item->generation,
                         'description' => Str::limit((string) ($item->description ?? ''), 45),
                     ];

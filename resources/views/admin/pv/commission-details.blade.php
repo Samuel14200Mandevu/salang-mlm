@@ -190,22 +190,26 @@ body { background: var(--bg-page); color: var(--text-primary); }
         <table class="table">
             <thead>
                 <tr>
-                    <th>Type</th>
+                    <th>Code</th>
                     <th>Bénéficiaire</th>
                     <th>De</th>
                     <th class="text-right">Montant</th>
                     <th class="text-center">Taux</th>
+                    <th class="text-right">PV</th>
+                    <th class="text-center">Gén.</th>
                     <th>Description</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($commissions as $commission)
                 <tr>
-                    <td><span class="badge badge-{{ $commission->type }}">{{ ucfirst($commission->type) }}</span></td>
+                    <td class="font-medium">{{ $commission->fromUser?->sponsor_id ?? '—' }}</td>
                     <td>{{ $commission->user?->name ?? 'N/A' }}</td>
                     <td>{{ $commission->fromUser?->name ?? 'N/A' }}</td>
                     <td class="text-right font-medium">${{ number_format($commission->amount, 2) }}</td>
                     <td class="text-center">{{ $commission->percentage }}%</td>
+                    <td class="text-right">{{ number_format((float) ($commission->pv_used ?? 0), 1) }}</td>
+                    <td class="text-center">{{ $commission->generation ?? '—' }}</td>
                     <td class="text-sm text-secondary">{{ $commission->description }}</td>
                 </tr>
                 @endforeach

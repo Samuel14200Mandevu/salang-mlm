@@ -417,12 +417,13 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width:10%;">Type</th>
-                            <th style="width:15%;">De</th>
-                            <th style="width:12%;">Montant</th>
-                            <th style="width:8%;">Taux</th>
-                            <th style="width:8%;">Gén.</th>
-                            <th style="width:47%;">Description</th>
+                            <th style="width:11%;">Code</th>
+                            <th style="width:14%;">De</th>
+                            <th style="width:11%;">Montant</th>
+                            <th style="width:7%;">Taux</th>
+                            <th style="width:8%;">PV</th>
+                            <th style="width:7%;">Gén.</th>
+                            <th style="width:42%;">Description</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -441,31 +442,25 @@
                             @endphp
                             @if(count($groupedDetails) > 0)
                                 <tr class="bonus-group-{{ $type }}">
-                                    <td colspan="6" class="bonus-group-header">
+                                    <td colspan="7" class="bonus-group-header">
                                         {{ $typeLabel }}
-                                        <span style="float: right; font-weight: bold; color: {{ $typeColor }};">
-                                            Total: ${{ number_format($typeTotal, 2) }}
-                                        </span>
                                     </td>
                                 </tr>
 
                                 @foreach($groupedDetails as $detail)
                                 <tr>
-                                    <td>
-                                        <span class="badge badge-{{ $detail['type'] === 'cash_pos' ? 'cash' : $detail['type'] }}">
-                                            {{ $detail['type'] === 'cash_pos' ? 'Cash POS' : ucfirst($detail['type']) }}
-                                        </span>
-                                    </td>
+                                    <td class="text-left" style="font-weight:600;">{{ $detail['from_user_code'] ?? '—' }}</td>
                                     <td class="text-left">{{ $detail['from_user'] }}</td>
                                     <td class="text-right" style="color: {{ $typeColor }}; font-weight: bold;">${{ number_format($detail['amount'], 2) }}</td>
                                     <td>{{ $detail['percentage'] }}%</td>
+                                    <td class="text-right">{{ number_format((float) ($detail['pv_used'] ?? 0), 1) }}</td>
                                     <td>{{ $detail['generation'] }}</td>
                                     <td class="text-left" style="font-size:8px;">{{ $detail['description'] }}</td>
                                 </tr>
                                 @endforeach
 
                                 <tr class="bonus-group-{{ $type }}">
-                                    <td colspan="5" class="bonus-group-total" style="text-align: right;">
+                                    <td colspan="6" class="bonus-group-total" style="text-align: right;">
                                         Sous-total {{ $typeLabel }}
                                     </td>
                                     <td class="bonus-group-total" style="text-align: right; font-weight: bold; color: {{ $typeColor }};">
@@ -477,7 +472,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="5" style="text-align:right;">TOTAL {{ strtoupper($beneficiaire['name']) }} :</td>
+                            <td colspan="6" style="text-align:right;">TOTAL {{ strtoupper($beneficiaire['name']) }} :</td>
                             <td style="text-align:right; color:#0E2F76; font-size:11px;">
                                 <strong>${{ number_format($beneficiaire['total'], 2) }}</strong>
                             </td>

@@ -145,6 +145,33 @@ trait GeneratesPdfSafely
     }
 
     /**
+     * Affiche le PDF dans le navigateur (Content-Disposition: inline).
+     */
+    protected function streamPdfView(
+        string $view,
+        array $data,
+        string $filename,
+        string $paper = 'a4',
+        string $orientation = 'portrait',
+        int $seconds = 300,
+        string $memory = '512M',
+    ): Response {
+        $this->preparePdfExport($seconds, $memory);
+
+        $pdf = Pdf::loadView($view, $data)
+            ->setPaper($paper, $orientation)
+            ->setOptions($this->safePdfOptions());
+
+        $binary = $pdf->output();
+
+        return response($binary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+        ]);
+    }
+
+    /**
      * Journalise une erreur d’export PDF.
      */
     protected function logPdfFailure(string $context, \Throwable $e, array $extra = []): void
