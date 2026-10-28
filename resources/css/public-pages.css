@@ -1648,12 +1648,7 @@
   }
 
   .auth-card-accent {
-    @apply absolute top-0 left-0 right-0 h-[3px] bg-primary-600 origin-left;
-    transform: scaleX(0);
-  }
-
-  .motion-ready .auth-card-accent {
-    animation: salang-scale-x 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards;
+    display: none;
   }
 
   .auth-card-wide {
