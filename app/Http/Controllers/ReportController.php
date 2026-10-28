@@ -124,7 +124,7 @@ class ReportController extends Controller
                 'memberStats' => $report->buildMemberCumulativeStats($user),
                 'logoBase64' => $this->loadPdfLogoBase64(),
                 'date_generated' => now()->format('d/m/Y H:i'),
-                'pdfRowChunks' => array_chunk($rows, 40),
+                'pdfRowChunks' => array_chunk($rows, 28),
             ];
 
             if ($request->boolean('download')) {

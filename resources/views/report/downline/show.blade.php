@@ -60,7 +60,7 @@
                     $pageNum = $serverPaged ? (int) ($currentPage ?? 1) : ($pageIndex + 1);
                     $showIntro = $pageNum === 1;
                 @endphp
-                <article class="mrd-paper {{ ($serverPaged || $pageNum === 1) ? 'is-active' : '' }}" data-page="{{ $pageNum }}">
+                <article class="mrd-paper {{ ($serverPaged || $pageNum === 1) ? 'is-active' : '' }} {{ $serverPaged ? 'mrd-paper--auto-height' : '' }}" data-page="{{ $pageNum }}">
                     @if ($showIntro)
                         <header class="mrd-paper__header">
                             <div><img src="{{ $logoUrl }}" alt="" class="mrd-paper__logo"></div>

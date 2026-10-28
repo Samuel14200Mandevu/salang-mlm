@@ -245,8 +245,8 @@ class MemberDownlinePeriodReport
      */
     public function buildNetworkPage(User $viewer, int $page): array
     {
-        $firstPageSize = 8;
-        $nextPageSize = 14;
+        // Même taille de lot pour toutes les pages (évite des pages à demi vides).
+        $pageSize = 25;
 
         $sortedIds = $this->cachedNetworkSortedIds($viewer);
         $count = count($sortedIds);
@@ -261,16 +261,10 @@ class MemberDownlinePeriodReport
             ];
         }
 
-        $totalPages = 1 + (int) ceil(max(0, $count - $firstPageSize) / $nextPageSize);
+        $totalPages = max(1, (int) ceil($count / $pageSize));
         $page = max(1, min($page, $totalPages));
-
-        if ($page === 1) {
-            $offset = 0;
-            $size = $firstPageSize;
-        } else {
-            $offset = $firstPageSize + (($page - 2) * $nextPageSize);
-            $size = $nextPageSize;
-        }
+        $offset = ($page - 1) * $pageSize;
+        $size = $pageSize;
 
         $pageIds = array_slice($sortedIds, $offset, $size);
         $tree = $this->cachedNetworkTree($viewer);

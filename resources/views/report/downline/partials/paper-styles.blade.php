@@ -34,6 +34,9 @@
         padding: 0.7rem 0.65rem 0.55rem;
         min-height: 62dvh;
     }
+    .mrd-paper.mrd-paper--auto-height {
+        min-height: 0;
+    }
     .mrd-paper.is-active { display: block; }
     .mrd-paper__header {
         display: grid;
