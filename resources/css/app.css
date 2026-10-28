@@ -77,13 +77,14 @@
     --gradient-primary: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
 
     /* Orange logo (#F5A623) */
+    /* Orange logo Salang (~#f0a010) */
     --color-accent-50: #fff8eb;
     --color-accent-100: #fdecc8;
     --color-accent-200: #fbd58a;
     --color-accent-300: #f7bc4d;
-    --color-accent-400: #f5a623;
-    --color-accent-500: #f5a623;
-    --color-accent-600: #e8940f;
+    --color-accent-400: #f5b020;
+    --color-accent-500: #f0a010;
+    --color-accent-600: #e0900c;
     --color-accent-700: #c97a0a;
     --color-accent-800: #a36208;
     --color-accent-900: #7a4906;

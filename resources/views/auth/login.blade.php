@@ -59,7 +59,7 @@
 
     <div class="auth-meta-links">
         <p>Pas encore membre ? <a href="{{ route('register') }}" class="auth-link">Créer un compte</a></p>
-        <p><a href="{{ url('/') }}" class="auth-link font-normal">Retour à l’accueil</a></p>
+        <p><a href="{{ url('/?site=1') }}" class="auth-link font-normal">Visiter le site officiel</a></p>
     </div>
 @endsection
 

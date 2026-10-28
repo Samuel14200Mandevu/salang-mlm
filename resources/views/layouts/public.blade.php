@@ -20,11 +20,14 @@
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="public-body bg-[var(--bg-page)] text-[var(--text-primary)] antialiased @yield('bodyClass')">
+<body
+    class="public-body bg-[var(--bg-page)] text-[var(--text-primary)] antialiased @yield('bodyClass')"
+    @yield('bodyAttributes')
+>
     @stack('body-start')
     @include('layouts.partials.public-nav')
 
-    <main id="main-content">
+    <main id="main-content" class="public-main">
         @yield('content')
     </main>
 
