@@ -333,44 +333,55 @@
                 : 'Aucun filleul n’a enregistré de PV sur cette période.' }}
         </div>
     @else
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:4%;">N°</th>
-                    <th style="width:{{ $isNetwork ? '10%' : '7%' }};">Code</th>
-                    <th style="width:{{ $isNetwork ? '18%' : '12%' }};">Nom &amp; Post-Nom</th>
-                    <th style="width:{{ $isNetwork ? '12%' : '9%' }};">Grade</th>
-                    <th style="width:5%;">Gén.</th>
-                    @unless ($isNetwork)
-                        <th style="width:8%;">PV mensuel</th>
-                        <th style="width:8%;">PV mens groupe</th>
-                    @endunless
-                    <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV pers. cumulé</th>
-                    <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV cumulé réseau</th>
-                    <th style="width:{{ $isNetwork ? '10%' : '8%' }};">Code parrain</th>
-                    <th style="width:{{ $isNetwork ? '13%' : '9%' }};">Nom &amp; Post-Nom</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($rows as $i => $row)
+        @php
+            $pdfChunks = $pdfRowChunks ?? array_chunk($rows, $isNetwork ? 40 : 80);
+            $rowNumber = 0;
+        @endphp
+        @foreach ($pdfChunks as $chunkIndex => $chunk)
+            @if ($chunkIndex > 0)
+                <div style="page-break-before: always;"></div>
+                <div class="section-header">3. Détail sur les filleuls (suite)</div>
+            @endif
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td><strong>{{ $row['code'] }}</strong></td>
-                        <td class="text-left">{{ $row['name'] }}</td>
-                        <td>{{ $row['grade'] }}</td>
-                        <td>{{ $row['generation'] }}</td>
+                        <th style="width:4%;">N°</th>
+                        <th style="width:{{ $isNetwork ? '10%' : '7%' }};">Code</th>
+                        <th style="width:{{ $isNetwork ? '18%' : '12%' }};">Nom &amp; Post-Nom</th>
+                        <th style="width:{{ $isNetwork ? '12%' : '9%' }};">Grade</th>
+                        <th style="width:5%;">Gén.</th>
                         @unless ($isNetwork)
-                            <td class="text-right">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
-                            <td class="text-right">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                            <th style="width:8%;">PV mensuel</th>
+                            <th style="width:8%;">PV mens groupe</th>
                         @endunless
-                        <td class="text-right">{{ number_format($row['cumulative_pv'], 1, ',', ' ') }}</td>
-                        <td class="text-right">{{ number_format($row['cumulative_network_pv'] ?? 0, 1, ',', ' ') }}</td>
-                        <td>{{ $row['sponsor_code'] }}</td>
-                        <td class="text-left">{{ $row['sponsor_name'] }}</td>
+                        <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV pers. cumulé</th>
+                        <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV cumulé réseau</th>
+                        <th style="width:{{ $isNetwork ? '10%' : '8%' }};">Code parrain</th>
+                        <th style="width:{{ $isNetwork ? '13%' : '9%' }};">Nom &amp; Post-Nom</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($chunk as $row)
+                        @php $rowNumber++; @endphp
+                        <tr>
+                            <td>{{ $rowNumber }}</td>
+                            <td><strong>{{ $row['code'] }}</strong></td>
+                            <td class="text-left">{{ $row['name'] }}</td>
+                            <td>{{ $row['grade'] }}</td>
+                            <td>{{ $row['generation'] }}</td>
+                            @unless ($isNetwork)
+                                <td class="text-right">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
+                                <td class="text-right">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                            @endunless
+                            <td class="text-right">{{ number_format($row['cumulative_pv'], 1, ',', ' ') }}</td>
+                            <td class="text-right">{{ number_format($row['cumulative_network_pv'] ?? 0, 1, ',', ' ') }}</td>
+                            <td>{{ $row['sponsor_code'] }}</td>
+                            <td class="text-left">{{ $row['sponsor_name'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endforeach
     @endif
 
     <div class="footer">

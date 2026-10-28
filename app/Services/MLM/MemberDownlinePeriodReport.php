@@ -11,6 +11,8 @@ use App\Support\MlmPeriod;
 use App\Support\MlmRank;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MemberDownlinePeriodReport
 {
@@ -178,6 +180,7 @@ class MemberDownlinePeriodReport
 
     /**
      * Lignes du rapport réseau : tous les filleuls (tous niveaux), PV cumulés.
+     * Résultat mis en cache 15 min pour éviter de reconstruire un gros réseau.
      *
      * @return list<array{
      *     code: string,
@@ -192,42 +195,184 @@ class MemberDownlinePeriodReport
      */
     public function buildNetworkRows(User $viewer): array
     {
-        $tree = $this->collectDescendantsWithGeneration($viewer->id);
-        if ($tree->isEmpty()) {
+        return Cache::remember(
+            'member-network-report:'.$viewer->id,
+            now()->addMinutes(15),
+            fn () => $this->buildNetworkRowsUncached($viewer)
+        );
+    }
+
+    /**
+     * @return list<array{
+     *     code: string,
+     *     name: string,
+     *     grade: string,
+     *     generation: int,
+     *     cumulative_pv: float,
+     *     cumulative_network_pv: float,
+     *     sponsor_code: string,
+     *     sponsor_name: string
+     * }>
+     */
+    public function buildNetworkRowsUncached(User $viewer): array
+    {
+        $sortedIds = $this->cachedNetworkSortedIds($viewer);
+        if ($sortedIds === []) {
             return [];
         }
 
-        $ids = $tree->keys()->all();
-        $users = User::query()
-            ->whereIn('id', $ids)
-            ->with(['parrain:id,name,sponsor_id'])
-            ->get(['id', 'name', 'sponsor_id', 'parrain_id', 'rank_level', 'pv_balance', 'team_pv'])
-            ->keyBy('id');
-
-        $rows = [];
-        foreach ($ids as $userId) {
-            $user = $users->get($userId);
-            if (! $user) {
-                continue;
-            }
-
-            $level = (int) ($user->rank_level ?? 0);
-            $rows[] = [
-                'code' => (string) ($user->sponsor_id ?: '—'),
-                'name' => (string) ($user->name ?: 'N/A'),
-                'grade' => MlmRank::label($level),
-                'generation' => (int) ($tree[$userId]['generation'] ?? 1),
-                'cumulative_pv' => round((float) ($user->pv_balance ?? 0), 1),
-                'cumulative_network_pv' => round((float) ($user->team_pv ?? 0), 1),
-                'sponsor_code' => (string) ($user->parrain?->sponsor_id ?: '—'),
-                'sponsor_name' => (string) ($user->parrain?->name ?: '—'),
-            ];
-        }
+        $tree = $this->cachedNetworkTree($viewer);
+        $rows = $this->hydrateNetworkRows($sortedIds, $tree);
 
         usort($rows, function (array $a, array $b) {
             return [$a['generation'], -$a['cumulative_pv'], $a['name']]
                 <=> [$b['generation'], -$b['cumulative_pv'], $b['name']];
         });
+
+        return $rows;
+    }
+
+    /**
+     * Aperçu paginé : charge seulement les filleuls de la page (pas tout le HTML).
+     *
+     * @return array{
+     *     pageRows: list<array<string, mixed>>,
+     *     page: int,
+     *     totalPages: int,
+     *     rowOffset: int,
+     *     rowsCount: int
+     * }
+     */
+    public function buildNetworkPage(User $viewer, int $page): array
+    {
+        $firstPageSize = 8;
+        $nextPageSize = 14;
+
+        $sortedIds = $this->cachedNetworkSortedIds($viewer);
+        $count = count($sortedIds);
+
+        if ($count === 0) {
+            return [
+                'pageRows' => [],
+                'page' => 1,
+                'totalPages' => 1,
+                'rowOffset' => 0,
+                'rowsCount' => 0,
+            ];
+        }
+
+        $totalPages = 1 + (int) ceil(max(0, $count - $firstPageSize) / $nextPageSize);
+        $page = max(1, min($page, $totalPages));
+
+        if ($page === 1) {
+            $offset = 0;
+            $size = $firstPageSize;
+        } else {
+            $offset = $firstPageSize + (($page - 2) * $nextPageSize);
+            $size = $nextPageSize;
+        }
+
+        $pageIds = array_slice($sortedIds, $offset, $size);
+        $tree = $this->cachedNetworkTree($viewer);
+        $pageRows = $this->hydrateNetworkRows($pageIds, $tree);
+
+        return [
+            'pageRows' => $pageRows,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'rowOffset' => $offset,
+            'rowsCount' => $count,
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function cachedNetworkSortedIds(User $viewer): array
+    {
+        return Cache::remember(
+            'member-network-sorted-ids:'.$viewer->id,
+            now()->addMinutes(15),
+            function () use ($viewer) {
+                $tree = $this->cachedNetworkTree($viewer);
+                $ids = $tree->keys()->all();
+                usort($ids, function ($a, $b) use ($tree) {
+                    return [
+                        (int) ($tree[$a]['generation'] ?? 0),
+                        (int) $a,
+                    ] <=> [
+                        (int) ($tree[$b]['generation'] ?? 0),
+                        (int) $b,
+                    ];
+                });
+
+                return $ids;
+            }
+        );
+    }
+
+    /**
+     * @return Collection<int, array{generation: int, parent_id: int|null}>
+     */
+    private function cachedNetworkTree(User $viewer): Collection
+    {
+        return Cache::remember(
+            'member-network-tree:'.$viewer->id,
+            now()->addMinutes(15),
+            fn () => $this->collectDescendantsWithGeneration($viewer->id)
+        );
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @param  Collection<int, array{generation: int, parent_id: int|null}>  $tree
+     * @return list<array<string, mixed>>
+     */
+    private function hydrateNetworkRows(array $ids, Collection $tree): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $usersById = [];
+        foreach (array_chunk($ids, 400) as $chunk) {
+            $batch = DB::table('users as u')
+                ->leftJoin('users as p', 'p.id', '=', 'u.parrain_id')
+                ->whereIn('u.id', $chunk)
+                ->get([
+                    'u.id',
+                    'u.name',
+                    'u.sponsor_id',
+                    'u.rank_level',
+                    'u.pv_balance',
+                    'u.team_pv',
+                    'p.sponsor_id as sponsor_code',
+                    'p.name as sponsor_name',
+                ]);
+
+            foreach ($batch as $row) {
+                $usersById[(int) $row->id] = $row;
+            }
+        }
+
+        $rows = [];
+        foreach ($ids as $userId) {
+            $user = $usersById[$userId] ?? null;
+            if (! $user) {
+                continue;
+            }
+
+            $rows[] = [
+                'code' => (string) ($user->sponsor_id ?: '—'),
+                'name' => (string) ($user->name ?: 'N/A'),
+                'grade' => MlmRank::label((int) ($user->rank_level ?? 0)),
+                'generation' => (int) ($tree[$userId]['generation'] ?? 1),
+                'cumulative_pv' => round((float) ($user->pv_balance ?? 0), 1),
+                'cumulative_network_pv' => round((float) ($user->team_pv ?? 0), 1),
+                'sponsor_code' => (string) ($user->sponsor_code ?: '—'),
+                'sponsor_name' => (string) ($user->sponsor_name ?: '—'),
+            ];
+        }
 
         return $rows;
     }
@@ -254,24 +399,26 @@ class MemberDownlinePeriodReport
         $seen = [$rootId => true];
 
         while ($frontier !== []) {
-            $children = User::query()
-                ->whereIn('parrain_id', $frontier)
-                ->get(['id', 'parrain_id']);
-
             $nextFrontier = [];
-            foreach ($children as $child) {
-                if (isset($seen[$child->id])) {
-                    continue;
+            foreach (array_chunk($frontier, 400) as $frontierChunk) {
+                $children = User::query()
+                    ->whereIn('parrain_id', $frontierChunk)
+                    ->get(['id', 'parrain_id']);
+
+                foreach ($children as $child) {
+                    if (isset($seen[$child->id])) {
+                        continue;
+                    }
+                    $seen[$child->id] = true;
+                    $parentId = (int) $child->parrain_id;
+                    $generation = ((int) ($parentGeneration[$parentId] ?? 0)) + 1;
+                    $parentGeneration[$child->id] = $generation;
+                    $tree[$child->id] = [
+                        'generation' => $generation,
+                        'parent_id' => $parentId,
+                    ];
+                    $nextFrontier[] = $child->id;
                 }
-                $seen[$child->id] = true;
-                $parentId = (int) $child->parrain_id;
-                $generation = ((int) ($parentGeneration[$parentId] ?? 0)) + 1;
-                $parentGeneration[$child->id] = $generation;
-                $tree[$child->id] = [
-                    'generation' => $generation,
-                    'parent_id' => $parentId,
-                ];
-                $nextFrontier[] = $child->id;
             }
             $frontier = $nextFrontier;
         }
