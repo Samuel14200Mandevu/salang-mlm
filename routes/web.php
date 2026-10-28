@@ -293,6 +293,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/network', [ReportController::class, 'network'])->name('network');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
         Route::get('/downline', [ReportController::class, 'downline'])->name('downline');
+        Route::get('/downline/network', [ReportController::class, 'downlineNetworkShow'])->name('downline.network');
+        Route::get('/downline/network/pdf', [ReportController::class, 'downlineNetworkPdf'])->name('downline.network.pdf');
         Route::get('/downline/{period}', [ReportController::class, 'downlineShow'])
             ->where('period', '[0-9]{4}-[0-9]{2}')
             ->name('downline.show');

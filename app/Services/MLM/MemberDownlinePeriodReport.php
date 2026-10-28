@@ -177,6 +177,73 @@ class MemberDownlinePeriodReport
     }
 
     /**
+     * Lignes du rapport réseau : tous les filleuls (tous niveaux), PV cumulés.
+     *
+     * @return list<array{
+     *     code: string,
+     *     name: string,
+     *     grade: string,
+     *     generation: int,
+     *     cumulative_pv: float,
+     *     cumulative_network_pv: float,
+     *     sponsor_code: string,
+     *     sponsor_name: string
+     * }>
+     */
+    public function buildNetworkRows(User $viewer): array
+    {
+        $tree = $this->collectDescendantsWithGeneration($viewer->id);
+        if ($tree->isEmpty()) {
+            return [];
+        }
+
+        $ids = $tree->keys()->all();
+        $users = User::query()
+            ->whereIn('id', $ids)
+            ->with(['parrain:id,name,sponsor_id'])
+            ->get(['id', 'name', 'sponsor_id', 'parrain_id', 'rank_level', 'pv_balance', 'team_pv'])
+            ->keyBy('id');
+
+        $rows = [];
+        foreach ($ids as $userId) {
+            $user = $users->get($userId);
+            if (! $user) {
+                continue;
+            }
+
+            $level = (int) ($user->rank_level ?? 0);
+            $rows[] = [
+                'code' => (string) ($user->sponsor_id ?: '—'),
+                'name' => (string) ($user->name ?: 'N/A'),
+                'grade' => MlmRank::label($level),
+                'generation' => (int) ($tree[$userId]['generation'] ?? 1),
+                'cumulative_pv' => round((float) ($user->pv_balance ?? 0), 1),
+                'cumulative_network_pv' => round((float) ($user->team_pv ?? 0), 1),
+                'sponsor_code' => (string) ($user->parrain?->sponsor_id ?: '—'),
+                'sponsor_name' => (string) ($user->parrain?->name ?: '—'),
+            ];
+        }
+
+        usort($rows, function (array $a, array $b) {
+            return [$a['generation'], -$a['cumulative_pv'], $a['name']]
+                <=> [$b['generation'], -$b['cumulative_pv'], $b['name']];
+        });
+
+        return $rows;
+    }
+
+    /**
+     * @return array{cumulative_pv: float, cumulative_network_pv: float}
+     */
+    public function buildMemberCumulativeStats(User $viewer): array
+    {
+        return [
+            'cumulative_pv' => round((float) ($viewer->pv_balance ?? 0), 1),
+            'cumulative_network_pv' => round((float) ($viewer->team_pv ?? 0), 1),
+        ];
+    }
+
+    /**
      * @return Collection<int, array{generation: int, parent_id: int|null}>
      */
     private function collectDescendantsWithGeneration(int $rootId): Collection

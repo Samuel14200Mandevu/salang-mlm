@@ -1,10 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Document — ' . $period)
+@section('title', ($reportType ?? 'period') === 'network' ? 'Rapport réseau' : 'Document — '.$period)
 
 @php
+    $isNetwork = ($reportType ?? 'period') === 'network';
     $shortPeriod = $period;
-    if (preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
+    if (! $isNetwork && preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
         $moisFr = [
             1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
             5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
@@ -12,11 +13,15 @@
         ];
         $shortPeriod = ($moisFr[(int) $m[2]] ?? $m[2]).' '.$m[1];
     }
+    if ($isNetwork) {
+        $shortPeriod = 'Réseau';
+    }
+    $reportTitle = $isNetwork ? 'Rapport Détaillé du Réseau' : 'Rapport Détaillé de PV';
     $gradeLabel = \App\Support\MlmRank::label((int) ($user->rank_level ?? 0));
     $logoUrl = asset('images/salang_logo.png');
 
-    $firstPageSize = 6;
-    $nextPageSize = 12;
+    $firstPageSize = $isNetwork ? 8 : 6;
+    $nextPageSize = $isNetwork ? 14 : 12;
     $rowChunks = [];
     if ($rowsCount === 0) {
         $rowChunks[] = [];
@@ -59,13 +64,18 @@
                             <div style="text-align:right"><img src="{{ $logoUrl }}" alt="" class="mrd-paper__logo"></div>
                         </header>
 
-                        <h1 class="mrd-paper__title">Rapport Détaillé de PV</h1>
+                        <h1 class="mrd-paper__title">{{ $reportTitle }}</h1>
 
                         <div class="mrd-paper__meta">
-                            <div>Période : <strong>{{ $shortPeriod }}</strong></div>
-                            <div class="mrd-paper__period">{{ $shortPeriod }}</div>
+                            @if ($isNetwork)
+                                <div>Type : <strong>Réseau complet</strong></div>
+                                <div class="mrd-paper__period">Réseau</div>
+                            @else
+                                <div>Période : <strong>{{ $shortPeriod }}</strong></div>
+                                <div class="mrd-paper__period">{{ $shortPeriod }}</div>
+                            @endif
                             <div>Date : <strong>{{ $date_generated }}</strong></div>
-                            <div>Filleuls actifs : <strong>{{ number_format($rowsCount) }}</strong></div>
+                            <div>Filleuls : <strong>{{ number_format($rowsCount) }}</strong></div>
                         </div>
 
                         <h2 class="mrd-paper__section">1. Informations du Membre</h2>
@@ -98,18 +108,29 @@
 
                         <h2 class="mrd-paper__section">2. Résumé de la Période</h2>
                         <table class="mrd-paper__summary">
-                            <tr>
-                                <th>PV mensuel</th>
-                                <th>PV mensuel groupe</th>
-                                <th>PV personnel cumulé</th>
-                                <th>PV cumulé réseau</th>
-                            </tr>
-                            <tr>
-                                <td>{{ number_format($memberStats['monthly_pv'], 1, ',', ' ') }}</td>
-                                <td>{{ number_format($memberStats['group_pv'], 1, ',', ' ') }}</td>
-                                <td>{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
-                                <td>{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
-                            </tr>
+                            @if ($isNetwork)
+                                <tr>
+                                    <th>PV personnel cumulé</th>
+                                    <th>PV cumulé réseau</th>
+                                </tr>
+                                <tr>
+                                    <td>{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
+                                    <td>{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <th>PV mensuel</th>
+                                    <th>PV mensuel groupe</th>
+                                    <th>PV personnel cumulé</th>
+                                    <th>PV cumulé réseau</th>
+                                </tr>
+                                <tr>
+                                    <td>{{ number_format($memberStats['monthly_pv'], 1, ',', ' ') }}</td>
+                                    <td>{{ number_format($memberStats['group_pv'], 1, ',', ' ') }}</td>
+                                    <td>{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
+                                    <td>{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
+                                </tr>
+                            @endif
                         </table>
 
                         <h2 class="mrd-paper__section">3. Détail sur les filleuls</h2>
@@ -118,14 +139,18 @@
                             <div><img src="{{ $logoUrl }}" alt="" class="mrd-paper__logo"></div>
                             <div class="mrd-paper__brand">
                                 <div class="mrd-paper__company">SALANG GROUP SARL</div>
-                                <div class="mrd-paper__ids">Suite — Rapport détaillé de PV · {{ $shortPeriod }} · {{ $user->sponsor_id }}</div>
+                                <div class="mrd-paper__ids">Suite — {{ $reportTitle }} · {{ $shortPeriod }} · {{ $user->sponsor_id }}</div>
                             </div>
                         </header>
                         <h2 class="mrd-paper__section">3. Détail sur les filleuls (suite)</h2>
                     @endif
 
                     @if ($rowsCount === 0)
-                        <p class="mrd-paper__empty">Aucun filleul n’a enregistré de PV sur cette période.</p>
+                        <p class="mrd-paper__empty">
+                            {{ $isNetwork
+                                ? 'Aucun filleul dans votre réseau.'
+                                : 'Aucun filleul n’a enregistré de PV sur cette période.' }}
+                        </p>
                     @else
                         @php
                             $rowOffset = $pageIndex === 0
@@ -136,16 +161,18 @@
                             <thead>
                                 <tr>
                                     <th style="width:4%">N°</th>
-                                    <th style="width:7%">Code</th>
-                                    <th style="width:12%">Nom &amp; Post-Nom</th>
-                                    <th style="width:10%">Grade</th>
+                                    <th style="width:{{ $isNetwork ? '10%' : '7%' }}">Code</th>
+                                    <th style="width:{{ $isNetwork ? '18%' : '12%' }}">Nom &amp; Post-Nom</th>
+                                    <th style="width:{{ $isNetwork ? '12%' : '10%' }}">Grade</th>
                                     <th style="width:5%">Gén.</th>
-                                    <th style="width:8%">PV mensuel</th>
-                                    <th style="width:8%">PV mens groupe</th>
-                                    <th style="width:10%">PV pers. cumulé</th>
-                                    <th style="width:10%">PV cumulé réseau</th>
-                                    <th style="width:8%">Code parrain</th>
-                                    <th style="width:18%">Nom &amp; Post-Nom</th>
+                                    @unless ($isNetwork)
+                                        <th style="width:8%">PV mensuel</th>
+                                        <th style="width:8%">PV mens groupe</th>
+                                    @endunless
+                                    <th style="width:{{ $isNetwork ? '14%' : '10%' }}">PV pers. cumulé</th>
+                                    <th style="width:{{ $isNetwork ? '14%' : '10%' }}">PV cumulé réseau</th>
+                                    <th style="width:{{ $isNetwork ? '10%' : '8%' }}">Code parrain</th>
+                                    <th style="width:{{ $isNetwork ? '23%' : '18%' }}">Nom &amp; Post-Nom</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,8 +183,10 @@
                                         <td class="tl">{{ $row['name'] }}</td>
                                         <td>{{ $row['grade'] }}</td>
                                         <td>{{ $row['generation'] }}</td>
-                                        <td class="tr">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
-                                        <td class="tr">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                                        @unless ($isNetwork)
+                                            <td class="tr">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
+                                            <td class="tr">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                                        @endunless
                                         <td class="tr">{{ number_format($row['cumulative_pv'], 1, ',', ' ') }}</td>
                                         <td class="tr">{{ number_format($row['cumulative_network_pv'] ?? 0, 1, ',', ' ') }}</td>
                                         <td>{{ $row['sponsor_code'] }}</td>

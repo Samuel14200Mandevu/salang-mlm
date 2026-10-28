@@ -74,6 +74,76 @@ class ReportController extends Controller
     }
 
     /**
+     * Visionneuse : rapport détaillé du réseau (tous les filleuls, PV cumulés).
+     */
+    public function downlineNetworkShow(MemberDownlinePeriodReport $report)
+    {
+        $user = Auth::user()->loadMissing(['parrain:id,name,sponsor_id']);
+        $rows = $report->buildNetworkRows($user);
+
+        return view('report.downline.show', [
+            'reportType' => 'network',
+            'period' => null,
+            'periodLabel' => 'Réseau complet',
+            'user' => $user,
+            'rows' => $rows,
+            'rowsCount' => count($rows),
+            'totalMonthlyPv' => 0,
+            'memberStats' => $report->buildMemberCumulativeStats($user),
+            'pdfDownloadUrl' => route('report.downline.network.pdf', ['download' => 1]),
+            'date_generated' => now()->format('d/m/Y H:i'),
+        ]);
+    }
+
+    /**
+     * PDF : rapport détaillé du réseau.
+     */
+    public function downlineNetworkPdf(Request $request, MemberDownlinePeriodReport $report)
+    {
+        try {
+            $user = Auth::user()->loadMissing(['parrain:id,name,sponsor_id']);
+            $rows = $report->buildNetworkRows($user);
+            $filename = 'rapport_reseau_'.$user->sponsor_id.'.pdf';
+            $data = [
+                'reportType' => 'network',
+                'period' => null,
+                'periodLabel' => 'Réseau complet',
+                'rows' => $rows,
+                'user' => $user,
+                'rowsCount' => count($rows),
+                'totalMonthlyPv' => 0,
+                'memberStats' => $report->buildMemberCumulativeStats($user),
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'date_generated' => now()->format('d/m/Y H:i'),
+            ];
+
+            if ($request->boolean('download')) {
+                return $this->downloadPdfView(
+                    'report.downline.pdf',
+                    $data,
+                    $filename,
+                    'a4',
+                    'landscape'
+                );
+            }
+
+            return $this->streamPdfView(
+                'report.downline.pdf',
+                $data,
+                $filename,
+                'a4',
+                'landscape'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('report.downlineNetworkPdf', $e);
+
+            return redirect()
+                ->route('report.downline')
+                ->with('error', 'Impossible de générer le PDF. Réessayez.');
+        }
+    }
+
+    /**
      * Visionneuse PDF : barre Retour + Télécharger, aperçu du rapport.
      */
     public function downlineShow(string $period, MemberDownlinePeriodReport $report)
@@ -90,6 +160,7 @@ class ReportController extends Controller
         $memberStats = $report->buildMemberStats($user, $period, $totalMonthlyPv);
 
         return view('report.downline.show', [
+            'reportType' => 'period',
             'period' => $period,
             'periodLabel' => $report->periodLabel($period),
             'user' => $user,
@@ -120,6 +191,7 @@ class ReportController extends Controller
             $memberStats = $report->buildMemberStats($user, $period, $totalMonthlyPv);
             $filename = 'rapport_filleuls_'.$period.'_'.$user->sponsor_id.'.pdf';
             $data = [
+                'reportType' => 'period',
                 'period' => $period,
                 'periodLabel' => $report->periodLabel($period),
                 'rows' => $rows,

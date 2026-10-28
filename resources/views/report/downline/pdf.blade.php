@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rapport détaillé — {{ $period }}</title>
+    <title>{{ ($reportType ?? 'period') === 'network' ? 'Rapport réseau' : 'Rapport détaillé — '.$period }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -208,8 +208,9 @@
 </head>
 <body>
 @php
+    $isNetwork = ($reportType ?? 'period') === 'network';
     $shortPeriod = $period;
-    if (preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
+    if (! $isNetwork && preg_match('/^(\d{4})-(\d{2})$/', (string) $period, $m)) {
         $moisFr = [
             1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
             5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
@@ -217,6 +218,10 @@
         ];
         $shortPeriod = ($moisFr[(int) $m[2]] ?? $m[2]).' '.$m[1];
     }
+    if ($isNetwork) {
+        $shortPeriod = 'Réseau';
+    }
+    $reportTitle = $isNetwork ? 'Rapport Détaillé du Réseau' : 'Rapport Détaillé de PV';
     $gradeLabel = \App\Support\MlmRank::label((int) ($user->rank_level ?? 0));
 @endphp
 
@@ -250,16 +255,16 @@
         </table>
     </div>
 
-    <div class="main-title">Rapport Détaillé de PV</div>
+    <div class="main-title">{{ $reportTitle }}</div>
 
     <table class="form-meta">
         <tr>
-            <td class="meta-left">Période : <strong>{{ $shortPeriod }}</strong></td>
+            <td class="meta-left">{{ $isNetwork ? 'Type' : 'Période' }} : <strong>{{ $isNetwork ? 'Réseau complet' : $shortPeriod }}</strong></td>
             <td class="meta-period-highlight" rowspan="2">{{ $shortPeriod }}</td>
             <td class="meta-right">Date : <strong>{{ $date_generated }}</strong></td>
         </tr>
         <tr>
-            <td class="meta-left">Filleuls actifs : <strong>{{ number_format($rowsCount) }}</strong></td>
+            <td class="meta-left">Filleuls : <strong>{{ number_format($rowsCount) }}</strong></td>
             <td class="meta-right"></td>
         </tr>
     </table>
@@ -294,39 +299,56 @@
 
     <div class="section-header">2. Résumé de la Période</div>
     <table class="totals-grid">
-        <tr>
-            <td class="label" style="width:25%;">PV mensuel</td>
-            <td class="label" style="width:25%;">PV mensuel groupe</td>
-            <td class="label" style="width:25%;">PV personnel cumulé</td>
-            <td class="label" style="width:25%;">PV cumulé réseau</td>
-        </tr>
-        <tr>
-            <td class="amount">{{ number_format($memberStats['monthly_pv'], 1, ',', ' ') }}</td>
-            <td class="amount">{{ number_format($memberStats['group_pv'], 1, ',', ' ') }}</td>
-            <td class="amount">{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
-            <td class="amount">{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
-        </tr>
+        @if ($isNetwork)
+            <tr>
+                <td class="label" style="width:50%;">PV personnel cumulé</td>
+                <td class="label" style="width:50%;">PV cumulé réseau</td>
+            </tr>
+            <tr>
+                <td class="amount">{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
+                <td class="amount">{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
+            </tr>
+        @else
+            <tr>
+                <td class="label" style="width:25%;">PV mensuel</td>
+                <td class="label" style="width:25%;">PV mensuel groupe</td>
+                <td class="label" style="width:25%;">PV personnel cumulé</td>
+                <td class="label" style="width:25%;">PV cumulé réseau</td>
+            </tr>
+            <tr>
+                <td class="amount">{{ number_format($memberStats['monthly_pv'], 1, ',', ' ') }}</td>
+                <td class="amount">{{ number_format($memberStats['group_pv'], 1, ',', ' ') }}</td>
+                <td class="amount">{{ number_format($memberStats['cumulative_pv'], 1, ',', ' ') }}</td>
+                <td class="amount">{{ number_format($memberStats['cumulative_network_pv'], 1, ',', ' ') }}</td>
+            </tr>
+        @endif
     </table>
 
     <div class="section-header">3. Détail sur les filleuls</div>
 
     @if ($rowsCount === 0)
-        <div class="empty">Aucun filleul n’a enregistré de PV sur cette période.</div>
+        <div class="empty">
+            {{ $isNetwork
+                ? 'Aucun filleul dans votre réseau.'
+                : 'Aucun filleul n’a enregistré de PV sur cette période.' }}
+        </div>
     @else
         <table class="data-table">
             <thead>
                 <tr>
                     <th style="width:4%;">N°</th>
-                    <th style="width:7%;">Code</th>
-                    <th style="width:12%;">Nom &amp; Post-Nom</th>
-                    <th style="width:9%;">Grade</th>
+                    <th style="width:{{ $isNetwork ? '10%' : '7%' }};">Code</th>
+                    <th style="width:{{ $isNetwork ? '18%' : '12%' }};">Nom &amp; Post-Nom</th>
+                    <th style="width:{{ $isNetwork ? '12%' : '9%' }};">Grade</th>
                     <th style="width:5%;">Gén.</th>
-                    <th style="width:8%;">PV mensuel</th>
-                    <th style="width:8%;">PV mens groupe</th>
-                    <th style="width:10%;">PV pers. cumulé</th>
-                    <th style="width:10%;">PV cumulé réseau</th>
-                    <th style="width:8%;">Code parrain</th>
-                    <th style="width:9%;">Nom &amp; Post-Nom</th>
+                    @unless ($isNetwork)
+                        <th style="width:8%;">PV mensuel</th>
+                        <th style="width:8%;">PV mens groupe</th>
+                    @endunless
+                    <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV pers. cumulé</th>
+                    <th style="width:{{ $isNetwork ? '14%' : '10%' }};">PV cumulé réseau</th>
+                    <th style="width:{{ $isNetwork ? '10%' : '8%' }};">Code parrain</th>
+                    <th style="width:{{ $isNetwork ? '13%' : '9%' }};">Nom &amp; Post-Nom</th>
                 </tr>
             </thead>
             <tbody>
@@ -337,8 +359,10 @@
                         <td class="text-left">{{ $row['name'] }}</td>
                         <td>{{ $row['grade'] }}</td>
                         <td>{{ $row['generation'] }}</td>
-                        <td class="text-right">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
-                        <td class="text-right">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                        @unless ($isNetwork)
+                            <td class="text-right">{{ number_format($row['monthly_pv'], 1, ',', ' ') }}</td>
+                            <td class="text-right">{{ number_format($row['group_pv'], 1, ',', ' ') }}</td>
+                        @endunless
                         <td class="text-right">{{ number_format($row['cumulative_pv'], 1, ',', ' ') }}</td>
                         <td class="text-right">{{ number_format($row['cumulative_network_pv'] ?? 0, 1, ',', ' ') }}</td>
                         <td>{{ $row['sponsor_code'] }}</td>
