@@ -23,7 +23,15 @@
     @endif
 
     <div class="card animate-fadeInUp delay-1">
-        <div class="card-title">Choisir une période</div>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <div class="card-title mb-0">Choisir une période</div>
+            <a
+                href="{{ route('report.downline.network') }}"
+                class="member-downline-network-btn"
+            >
+                Rapport détaillé du réseau
+            </a>
+        </div>
         <p class="text-sm text-[var(--text-secondary)] mb-4">
             Chaque rapport liste vos filleuls (tous niveaux) avec du PV sur le mois sélectionné.
         </p>
@@ -86,6 +94,25 @@
     }
     .member-downline-period-card:hover .member-downline-period-card__cta {
         color: var(--color-primary-600);
+    }
+    .member-downline-network-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.4rem;
+        padding: 0.45rem 0.95rem;
+        border-radius: 0.7rem;
+        border: 1.5px solid var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-600)));
+        background: var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-600)));
+        color: #fff;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .member-downline-network-btn:hover {
+        filter: brightness(1.05);
+        color: #fff;
     }
 </style>
 @endpush
