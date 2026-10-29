@@ -85,14 +85,43 @@
                 if (!video) {
                     return;
                 }
-                if (i === index) {
-                    video.currentTime = 0;
+                if (i !== index) {
+                    video.pause();
+                    return;
+                }
+
+                video.muted = true;
+                video.defaultMuted = true;
+                video.playsInline = true;
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+
+                const tryPlay = function () {
+                    try {
+                        video.currentTime = 0;
+                    } catch (e) {}
                     const playPromise = video.play();
                     if (playPromise && typeof playPromise.catch === 'function') {
-                        playPromise.catch(function () {});
+                        playPromise.catch(function () {
+                            window.setTimeout(function () {
+                                video.play().catch(function () {});
+                            }, 180);
+                        });
                     }
+                };
+
+                if (video.readyState >= 2) {
+                    tryPlay();
                 } else {
-                    video.pause();
+                    video.preload = 'auto';
+                    const onReady = function () {
+                        video.removeEventListener('canplay', onReady);
+                        tryPlay();
+                    };
+                    video.addEventListener('canplay', onReady);
+                    try {
+                        video.load();
+                    } catch (e) {}
                 }
             });
         }
@@ -267,6 +296,12 @@
             }
 
             playActiveVideo(index);
+            // Relance la dernière slide vidéo après le scroll (autoplay mobile).
+            if (index >= slides.length - 1) {
+                window.setTimeout(function () {
+                    playActiveVideo(index);
+                }, 280);
+            }
         }
 
         function goToSlide(index, smooth) {
@@ -282,6 +317,7 @@
             updateChrome(index);
             window.setTimeout(function () {
                 scrollLock = false;
+                playActiveVideo(index);
             }, 420);
         }
 
