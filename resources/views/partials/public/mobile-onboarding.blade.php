@@ -16,10 +16,17 @@
         ];
     }
 
+    $networkWebp = public_path('images/onboarding/onboarding-network@2x.webp');
+    $statsWebp = public_path('images/onboarding/onboarding-stats@2x.webp');
+    $videoPath = public_path('images/onboarding/onboarding4.mp4');
+
     $slides = [
         [
             'type' => 'image',
-            'src' => asset('images/onboarding/onboarding4.png'),
+            'src' => asset('images/onboarding/onboarding1.png'),
+            'srcset' => file_exists($networkWebp)
+                ? asset('images/onboarding/onboarding-network@2x.webp').' 1600w'
+                : null,
             'alt' => 'Réseau Salang Group',
             'anim' => 'network',
             'kicker' => 'Réseau',
@@ -29,6 +36,9 @@
         [
             'type' => 'image',
             'src' => asset('images/onboarding/onboarding2.png'),
+            'srcset' => file_exists($statsWebp)
+                ? asset('images/onboarding/onboarding-stats@2x.webp').' 1600w'
+                : null,
             'alt' => 'Performance et revenus',
             'anim' => 'stats',
             'kicker' => 'Performance',
@@ -51,7 +61,7 @@
         ],
         [
             'type' => 'video',
-            'src' => asset('images/onboarding/onboarding4.mp4').'?v='.filemtime(public_path('images/onboarding/onboarding4.mp4')),
+            'src' => asset('images/onboarding/onboarding4.mp4').'?v='.(file_exists($videoPath) ? filemtime($videoPath) : time()),
             'alt' => 'Découvrir Salang Group',
             'anim' => 'video',
             'kicker' => 'Bienvenue',
@@ -77,9 +87,12 @@
                             class="public-app-onboarding__video"
                             src="{{ $slide['src'] }}"
                             playsinline
+                            webkit-playsinline
                             muted
+                            defaultMuted
+                            autoplay
                             loop
-                            preload="metadata"
+                            preload="auto"
                             aria-label="{{ $slide['alt'] }}"
                         ></video>
                     @elseif ($slide['type'] === 'grades')
@@ -139,15 +152,29 @@
                             </script>
                         </div>
                     @else
-                        <img
-                            class="public-app-onboarding__image"
-                            src="{{ $slide['src'] }}"
-                            alt="{{ $slide['alt'] }}"
-                            width="1264"
-                            height="842"
-                            loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
-                            decoding="async"
-                        >
+                        <picture>
+                            @if (! empty($slide['srcset']) && str_contains($slide['srcset'], '.webp'))
+                                <source
+                                    type="image/webp"
+                                    srcset="{{ $slide['srcset'] }}"
+                                    sizes="(max-width: 767px) 100vw, 640px"
+                                >
+                            @endif
+                            <img
+                                class="public-app-onboarding__image"
+                                src="{{ $slide['src'] }}"
+                                @if (! empty($slide['srcset']))
+                                    srcset="{{ $slide['srcset'] }}"
+                                    sizes="(max-width: 767px) 100vw, 640px"
+                                @endif
+                                alt="{{ $slide['alt'] }}"
+                                width="1600"
+                                height="889"
+                                loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                decoding="async"
+                                fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}"
+                            >
+                        </picture>
                         @if (!empty($slide['stats']))
                             <div class="public-app-onboarding__stats" aria-hidden="true">
                                 @foreach ($slide['stats'] as $stat)
