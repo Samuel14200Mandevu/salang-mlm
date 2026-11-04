@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\User;
+use App\Services\BinancePayService;
 use App\Services\FlexPayService;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\PaymentService;
@@ -21,17 +22,20 @@ class WebhookController extends Controller
     protected PaymentService $paymentService;
     protected MobileMoneyService $mobileMoneyService;
     protected FlexPayService $flexPayService;
+    protected BinancePayService $binancePayService;
 
     public function __construct(
         MonthlyCommissionService $commissionService,
         PaymentService $paymentService,
         MobileMoneyService $mobileMoneyService,
-        FlexPayService $flexPayService
+        FlexPayService $flexPayService,
+        BinancePayService $binancePayService
     ) {
         $this->commissionService = $commissionService;
         $this->paymentService = $paymentService;
         $this->mobileMoneyService = $mobileMoneyService;
         $this->flexPayService = $flexPayService;
+        $this->binancePayService = $binancePayService;
     }
 
     /**
@@ -80,7 +84,36 @@ class WebhookController extends Controller
     }
 
     /**
-     * Webhook Crypto (Coinbase)
+     * Webhook Binance Pay (signature via middleware webhook.binance).
+     */
+    public function binancepay(Request $request)
+    {
+        Log::info('Binance Pay webhook received', [
+            'bizStatus' => $request->input('bizStatus'),
+            'bizType' => $request->input('bizType'),
+        ]);
+
+        try {
+            $result = $this->binancePayService->processCallback($request);
+
+            return response()->json([
+                'returnCode' => $result['returnCode'] ?? 'FAIL',
+                'returnMessage' => $result['returnMessage'] ?? null,
+            ], (int) ($result['http_status'] ?? 200));
+        } catch (\Throwable $e) {
+            Log::error('Binance Pay Webhook Error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'returnCode' => 'FAIL',
+                'returnMessage' => $e->getMessage(),
+            ], 200);
+        }
+    }
+
+    /**
+     * Webhook Crypto (Coinbase) — DEPRECATED: Coinbase Commerce ferme en Mars 2026.
      */
     public function crypto(Request $request)
     {

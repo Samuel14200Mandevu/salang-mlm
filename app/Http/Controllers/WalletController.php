@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Commission;
+use App\Services\BinancePayService;
 use App\Services\FlexPayService;
 use App\Services\PaymentService;
 use App\Services\WalletCommissionBreakdown;
@@ -21,6 +22,7 @@ class WalletController extends Controller
         protected WalletCommissionBreakdown $commissionBreakdown,
         protected PaymentService $paymentService,
         protected FlexPayService $flexPayService,
+        protected BinancePayService $binancePayService,
     ) {}
 
     public function index(Request $request)
@@ -253,6 +255,41 @@ class WalletController extends Controller
                     'Demande Mobile Money de $'.number_format($amount, 2).
                     ' envoyée. Confirmez sur votre téléphone. Réf: '.($result['reference'] ?? '')
                 );
+        }
+
+        if ($paymentMethod === 'crypto') {
+            try {
+                $result = $this->binancePayService->createOrder($user, $amount, [
+                    'goods_name' => 'Depot portefeuille Salang',
+                    'goods_detail' => 'Depot USDT via Binance Pay',
+                    'currency_label' => 'USDT',
+                    'note' => $request->crypto_address,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Binance Pay deposit error', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return back()
+                    ->withInput()
+                    ->with('error', 'Erreur Binance Pay: '.$e->getMessage());
+            }
+
+            if (! ($result['success'] ?? false)) {
+                return back()
+                    ->withInput()
+                    ->with('error', $result['error'] ?? $result['message'] ?? 'Erreur Binance Pay');
+            }
+
+            Log::info('Binance Pay deposit initiated', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'reference' => $result['reference'] ?? null,
+                'prepay_id' => $result['prepay_id'] ?? null,
+            ]);
+
+            return redirect()->away($result['checkout_url']);
         }
 
         $wallet = $user->wallet;

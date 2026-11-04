@@ -16,6 +16,7 @@ use App\Services\NetworkService;
 use App\Services\CryptoPaymentService;
 use App\Services\MobileMoneyService;
 use App\Services\FlexPayService;
+use App\Services\BinancePayService;
 use App\Services\ImageUploadService;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
@@ -118,8 +119,15 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(BinancePayService::class, function ($app) {
+            return new BinancePayService();
+        });
+
+        // DEPRECATED: Coinbase Commerce ferme en Mars 2026 — préférer BinancePayService.
         $this->app->singleton(CryptoPaymentService::class, function ($app) {
-            return new CryptoPaymentService();
+            return new CryptoPaymentService(
+                $app->make(CommissionService::class)
+            );
         });
 
         // ══════════════════════════════════════════════════════════════

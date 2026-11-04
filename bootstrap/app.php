@@ -47,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\EnsureUserActive::class,
             'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
             'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class,
+            'webhook.binance' => \App\Http\Middleware\VerifyBinancePaySignature::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'supervision' => \App\Http\Middleware\EnsureSupervisionAccess::class,
         ]);
@@ -57,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhook/*',
             'webhook/crypto',
+            'webhook/binancepay',
             'webhook/mobile-money',
             'webhook/payment',
             'webhook/stripe',

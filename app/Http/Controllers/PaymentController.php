@@ -148,14 +148,17 @@ class PaymentController extends Controller
         $user = Auth::user();
 
         if ($request->method === 'crypto') {
-            Log::info('Crypto payment initiated', [
-                'user_id' => $user->id,
-                'amount' => $request->amount,
-                'order_id' => $request->order_id,
-            ]);
+            $result = $this->paymentService->processCryptoPayment(
+                $user->id,
+                (float) $request->amount,
+                'USDT'
+            );
 
-            return redirect()->route('payment.success')
-                ->with('success', 'Crypto payment initiated. Please complete the payment.');
+            if (! ($result['success'] ?? false)) {
+                return back()->with('error', $result['error'] ?? $result['message'] ?? 'Erreur Binance Pay');
+            }
+
+            return redirect()->away($result['checkout_url']);
         }
 
         if ($request->method === 'mobile_money') {

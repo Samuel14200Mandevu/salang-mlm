@@ -125,6 +125,12 @@ Route::prefix('webhook')->group(function () {
         ->name('webhook.crypto')
         ->withoutMiddleware(['csrf']);
 
+    // Signature Binance = openssl_verify (pas le HMAC générique webhook.verify)
+    Route::post('/binancepay', [WebhookController::class, 'binancepay'])
+        ->middleware('webhook.binance')
+        ->name('webhook.binancepay')
+        ->withoutMiddleware(['csrf']);
+
     Route::post('/mobile-money', [WebhookController::class, 'mobileMoney'])
         ->middleware('webhook.verify:mobile_money')
         ->name('webhook.mobile-money')

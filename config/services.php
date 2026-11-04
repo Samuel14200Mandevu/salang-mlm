@@ -17,6 +17,14 @@ return [
         // FLEXPAY_ENV prioritaire ; fallback FLEXPAY_ENVIRONMENT (sandbox|dev|live|prod)
         'environment' => env('FLEXPAY_ENV', env('FLEXPAY_ENVIRONMENT', 'sandbox')),
     ],
+
+    'binance_pay' => [
+        'api_key' => env('BINANCE_PAY_API_KEY', env('BINANCE_MERCHANT_API_KEY')),
+        'secret' => env('BINANCE_PAY_SECRET', env('BINANCE_MERCHANT_SECRET_KEY')),
+        'merchant_id' => env('BINANCE_PAY_MERCHANT_ID'),
+        'currency' => env('BINANCE_PAY_CURRENCY', 'USDT'),
+        'webhook_url' => env('BINANCE_SERVICE_WEBHOOK_URL'),
+    ],
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

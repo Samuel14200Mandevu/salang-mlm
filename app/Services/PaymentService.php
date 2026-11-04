@@ -28,18 +28,32 @@ class PaymentService
     }
 
     /**
-     * Traiter un paiement crypto
+     * Traiter un paiement crypto via Binance Pay (jamais de crédit immédiat).
+     *
+     * @return array{success: bool, checkout_url?: string, reference?: string, message?: string, error?: string}
      */
-    public function processCryptoPayment($userId, $amount, $cryptoType, $address)
+    public function processCryptoPayment($userId, $amount, $cryptoType = 'USDT', $address = null)
     {
-        Log::info('Crypto payment initiated', [
+        // SECURITY: ne jamais créditer le wallet ici — uniquement après webhook Binance signé.
+        Log::info('Crypto payment redirected to Binance Pay', [
             'user_id' => $userId,
             'amount' => $amount,
             'crypto' => $cryptoType,
-            'address' => $address
         ]);
 
-        return $this->completePayment($userId, $amount, 'crypto_' . $cryptoType);
+        $user = User::find($userId);
+        if (! $user) {
+            return [
+                'success' => false,
+                'error' => 'Utilisateur introuvable',
+                'message' => 'Utilisateur introuvable',
+            ];
+        }
+
+        return app(BinancePayService::class)->createOrder($user, (float) $amount, [
+            'currency_label' => $cryptoType,
+            'note' => $address,
+        ]);
     }
 
     /**

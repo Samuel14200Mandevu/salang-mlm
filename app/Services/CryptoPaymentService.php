@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+// DEPRECATED: Coinbase Commerce ferme en Mars 2026.
+// Préférer App\Services\BinancePayService pour les dépôts crypto.
+
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;

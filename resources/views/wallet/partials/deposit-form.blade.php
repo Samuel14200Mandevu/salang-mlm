@@ -25,8 +25,8 @@
             <button type="button" class="member-withdraw-method is-selected" data-method="crypto" data-withdraw-method>
                 <span class="member-withdraw-method__icon" aria-hidden="true">₿</span>
                 <span class="member-withdraw-method__body">
-                    <span class="member-withdraw-method__label">Crypto</span>
-                    <span class="member-withdraw-method__hint">USDT · BTC · ETH</span>
+                    <span class="member-withdraw-method__label">Binance Pay</span>
+                    <span class="member-withdraw-method__hint">USDT (checkout Binance)</span>
                 </span>
                 <svg class="member-withdraw-method__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
@@ -112,8 +112,11 @@
         </div>
 
         <div class="member-withdraw-dest" data-withdraw-fields="crypto">
-            <label class="member-withdraw-field__label" for="{{ $formId }}_crypto">Référence / adresse d’envoi</label>
-            <input type="text" name="crypto_address" id="{{ $formId }}_crypto" class="member-withdraw-field__input" placeholder="Tx hash ou adresse source" autocomplete="off">
+            <p class="member-withdraw-amount__avail">
+                Vous serez redirigé vers le checkout Binance Pay (USDT). Le solde est crédité après confirmation webhook.
+            </p>
+            <label class="member-withdraw-field__label" for="{{ $formId }}_crypto">Note (optionnel)</label>
+            <input type="text" name="crypto_address" id="{{ $formId }}_crypto" class="member-withdraw-field__input" placeholder="Référence personnelle" autocomplete="off">
         </div>
 
         <div class="member-withdraw-dest hidden" data-withdraw-fields="mobile_money" hidden>
