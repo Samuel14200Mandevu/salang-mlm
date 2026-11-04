@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "693adfdcd0d3d89fb1a38e4b69fee69d",
+    "content-hash": "27f4833cc54612d75b0c64397289c2bf",
     "packages": [
         {
             "name": "antimech/coinbase",
@@ -739,62 +739,6 @@
                 }
             ],
             "time": "2025-09-11T19:13:23+00:00"
-        },
-        {
-            "name": "devscast/flexpay",
-            "version": "2.0.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/devscast/flexpay-php.git",
-                "reference": "3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/devscast/flexpay-php/zipball/3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863",
-                "reference": "3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.2",
-                "symfony/http-client": "^7.0",
-                "symfony/property-access": "^7.0",
-                "symfony/serializer": "^7.0",
-                "webmozart/assert": "^1.11"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^11.1",
-                "symfony/var-dumper": "^7.0",
-                "symplify/easy-coding-standard": "^12.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Devscast\\Flexpay\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "bernard-ng",
-                    "email": "bernard@devscast.tech"
-                }
-            ],
-            "description": "FlexPay API PHP Client",
-            "keywords": [
-                "api",
-                "flexpay",
-                "mobile money",
-                "payment gateway"
-            ],
-            "support": {
-                "issues": "https://github.com/devscast/flexpay-php/issues",
-                "source": "https://github.com/devscast/flexpay-php/tree/2.0.4"
-            },
-            "time": "2024-10-14T14:10:03+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -4260,6 +4204,62 @@
                 "source": "https://github.com/nette/utils/tree/v4.1.4"
             },
             "time": "2026-05-11T20:49:54+00:00"
+        },
+        {
+            "name": "ngandu-dev/flexpay",
+            "version": "2.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ngandu-dev/flexpay-php.git",
+                "reference": "3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ngandu-dev/flexpay-php/zipball/3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863",
+                "reference": "3abdc21973e3e5ea276fe2d4a0e7b24d9bbf3863",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/http-client": "^7.0",
+                "symfony/property-access": "^7.0",
+                "symfony/serializer": "^7.0",
+                "webmozart/assert": "^1.11"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^11.1",
+                "symfony/var-dumper": "^7.0",
+                "symplify/easy-coding-standard": "^12.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Devscast\\Flexpay\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "bernard-ng",
+                    "email": "bernard@devscast.tech"
+                }
+            ],
+            "description": "FlexPay API PHP Client",
+            "keywords": [
+                "api",
+                "flexpay",
+                "mobile money",
+                "payment gateway"
+            ],
+            "support": {
+                "issues": "https://github.com/ngandu-dev/flexpay-php/issues",
+                "source": "https://github.com/ngandu-dev/flexpay-php/tree/2.0.4"
+            },
+            "time": "2024-10-14T14:10:03+00:00"
         },
         {
             "name": "nikic/php-parser",

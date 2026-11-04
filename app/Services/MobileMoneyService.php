@@ -11,8 +11,8 @@ class MobileMoneyService
 
     public function __construct()
     {
-        // ✅ VERSION SIMPLIFIÉE - Pas de dépendance FlexPay
-        Log::info('MobileMoneyService initialisé (mode sans FlexPay)');
+        // Helpers téléphone / opérateurs. L'appel API FlexPay est dans FlexPayService.
+
     }
 
     /**

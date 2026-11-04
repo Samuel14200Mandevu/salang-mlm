@@ -14,7 +14,8 @@ return [
     'flexpay' => [
         'token' => env('FLEXPAY_TOKEN'),
         'merchant_code' => env('FLEXPAY_MERCHANT_CODE'),
-        'environment' => env('FLEXPAY_ENVIRONMENT', 'sandbox'),
+        // FLEXPAY_ENV prioritaire ; fallback FLEXPAY_ENVIRONMENT (sandbox|dev|live|prod)
+        'environment' => env('FLEXPAY_ENV', env('FLEXPAY_ENVIRONMENT', 'sandbox')),
     ],
     /*
     |--------------------------------------------------------------------------

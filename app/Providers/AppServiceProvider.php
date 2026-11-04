@@ -15,6 +15,7 @@ use App\Services\PaymentService;
 use App\Services\NetworkService;
 use App\Services\CryptoPaymentService;
 use App\Services\MobileMoneyService;
+use App\Services\FlexPayService;
 use App\Services\ImageUploadService;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\RankConditionChecker;
@@ -106,9 +107,14 @@ class AppServiceProvider extends ServiceProvider
             return new MobileMoneyService();
         });
 
+        $this->app->singleton(FlexPayService::class, function ($app) {
+            return new FlexPayService();
+        });
+
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
-                $app->make(MobileMoneyService::class)
+                $app->make(MobileMoneyService::class),
+                $app->make(FlexPayService::class)
             );
         });
 

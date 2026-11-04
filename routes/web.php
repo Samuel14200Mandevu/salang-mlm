@@ -321,6 +321,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     // PAIEMENTS
     // ============================================================
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
+    Route::post('/payment/mobile', [PaymentController::class, 'initierPaiement'])->name('payment.mobile');
+    Route::get('/payment/status/{reference}', [PaymentController::class, 'verifierStatut'])->name('payment.status');
 
     // ============================================================
     // COMMANDES (ORDERS) - Routes utilisateur

@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\User;
+use App\Services\FlexPayService;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\PaymentService;
 use App\Services\MobileMoneyService;
@@ -19,256 +20,62 @@ class WebhookController extends Controller
     protected MonthlyCommissionService $commissionService;
     protected PaymentService $paymentService;
     protected MobileMoneyService $mobileMoneyService;
+    protected FlexPayService $flexPayService;
 
     public function __construct(
         MonthlyCommissionService $commissionService,
         PaymentService $paymentService,
-        MobileMoneyService $mobileMoneyService
+        MobileMoneyService $mobileMoneyService,
+        FlexPayService $flexPayService
     ) {
         $this->commissionService = $commissionService;
         $this->paymentService = $paymentService;
         $this->mobileMoneyService = $mobileMoneyService;
+        $this->flexPayService = $flexPayService;
     }
 
     /**
-     * Webhook pour FlexPay (Orange Money, Airtel Money, M-Pesa)
+     * Webhook FlexPay (Orange Money, Airtel Money, M-Pesa).
+     * La logique métier (idempotence + crédit) est dans FlexPayService.
      */
     public function flexpay(Request $request)
     {
         $data = $request->all();
+
         Log::info('FlexPay Webhook received', [
             'orderNumber' => $data['orderNumber'] ?? null,
-            'status' => $data['status'] ?? null,
+            'reference' => $data['reference'] ?? null,
+            'code' => $data['code'] ?? null,
         ]);
 
         try {
-            $eventId = (string) ($data['reference'] ?? $data['orderNumber'] ?? '');
-            if ($eventId !== '' && !$this->markWebhookProcessed('flexpay', $eventId)) {
-                return response()->json(['message' => 'Already processed'], 200);
+            $result = $this->flexPayService->processCallback($data);
+
+            if (($result['already_processed'] ?? false) === false
+                && ($result['status'] ?? null) === 'completed'
+                && ! empty($result['transaction_id'])
+            ) {
+                $eventId = (string) ($data['reference'] ?? $data['orderNumber'] ?? $result['transaction_id']);
+                $this->markWebhookProcessed('flexpay', $eventId);
             }
 
-            // Valider les données FlexPay
-            if (!isset($data['orderNumber']) || !isset($data['status'])) {
-                Log::error('FlexPay Webhook: Données invalides', $data);
-                return response()->json(['error' => 'Données invalides'], 400);
-            }
-
-            $orderNumber = $data['orderNumber'];
-            $status = $data['status'];
-            $reference = $data['reference'] ?? null;
-            $amount = $data['amount'] ?? 0;
-            $phone = $data['phone'] ?? null;
-            $provider = $data['provider'] ?? 'unknown';
-
-            // Vérifier si la transaction existe déjà
-            $existingTransaction = Transaction::where('reference', $reference)
-                ->orWhere('transaction_id', $orderNumber)
-                ->first();
-
-            if ($existingTransaction) {
-                // Mettre à jour le statut si nécessaire
-                if ($status === 'SUCCESS' || $status === 'COMPLETED') {
-                    if ($existingTransaction->status !== 'completed') {
-                        return $this->confirmFlexPayTransaction($existingTransaction, $data);
-                    }
-                }
-                return response()->json(['message' => 'Transaction déjà traitée'], 200);
-            }
-
-            // Si le paiement est réussi, créer la transaction
-            if ($status === 'SUCCESS' || $status === 'COMPLETED') {
-                return $this->processFlexPayPayment($data);
-            }
-
-            // Paiement échoué ou en attente
-            Log::info('FlexPay Webhook: Statut non réussi', [
-                'orderNumber' => $orderNumber,
-                'status' => $status
-            ]);
-
-            return response()->json(['status' => 'success', 'message' => 'Webhook reçu'], 200);
-
-        } catch (\Exception $e) {
+            return response()->json([
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => $result['message'] ?? 'Webhook reçu',
+                'status' => $result['status'] ?? null,
+                'already_processed' => (bool) ($result['already_processed'] ?? false),
+                'transaction_id' => $result['transaction_id'] ?? null,
+            ], (int) ($result['http_status'] ?? 200));
+        } catch (\Throwable $e) {
             Log::error('FlexPay Webhook Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'data' => $request->all()
             ]);
 
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
-        }
-    }
-
-    /**
-     * Traiter un paiement FlexPay réussi
-     */
-    private function processFlexPayPayment(array $data)
-    {
-        DB::beginTransaction();
-
-        try {
-            $orderNumber = $data['orderNumber'];
-            $reference = $data['reference'] ?? null;
-            $amount = $data['amount'] ?? 0;
-            $phone = $data['phone'] ?? null;
-            $provider = $data['provider'] ?? 'unknown';
-            $metadata = $data['metadata'] ?? [];
-
-            // Récupérer l'utilisateur depuis les métadonnées
-            $userId = $metadata['user_id'] ?? null;
-            
-            if (!$userId) {
-                // Essayer de trouver via le wallet ou transaction existante
-                Log::warning('FlexPay: User ID manquant dans les métadonnées', $data);
-                return response()->json(['error' => 'User ID manquant'], 400);
-            }
-
-            $user = User::find($userId);
-            if (!$user) {
-                Log::error('FlexPay: Utilisateur non trouvé', ['user_id' => $userId]);
-                return response()->json(['error' => 'Utilisateur non trouvé'], 404);
-            }
-
-            $wallet = $user->wallet;
-            if (!$wallet) {
-                Log::error('FlexPay: Portefeuille non trouvé', ['user_id' => $userId]);
-                return response()->json(['error' => 'Portefeuille non trouvé'], 404);
-            }
-
-            // Vérifier si la transaction existe déjà
-            $existing = Transaction::where('reference', $reference)
-                ->orWhere('transaction_id', $orderNumber)
-                ->first();
-
-            if ($existing) {
-                DB::rollBack();
-                return response()->json(['message' => 'Transaction déjà traitée'], 200);
-            }
-
-            // Créer la transaction
-            $balanceBefore = $wallet->balance;
-            $wallet->balance += $amount;
-            $wallet->total_deposited += $amount;
-            $wallet->save();
-
-            $transaction = Transaction::create([
-                'user_id' => $user->id,
-                'wallet_id' => $wallet->id,
-                'type' => 'deposit',
-                'amount' => $amount,
-                'fee' => 0,
-                'net_amount' => $amount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $wallet->balance,
-                'status' => 'completed',
-                'reference' => $reference ?? $orderNumber,
-                'transaction_id' => $orderNumber,
-                'description' => "Dépôt via " . ucfirst($provider) . " Money (FlexPay)",
-                'metadata' => json_encode([
-                    'provider' => $provider,
-                    'phone' => $phone,
-                    'orderNumber' => $orderNumber,
-                    'flexpay_data' => $data,
-                ]),
-                'completed_at' => now(),
-            ]);
-
-            Log::info('FlexPay: Transaction créée avec succès', [
-                'transaction_id' => $transaction->id,
-                'reference' => $reference,
-                'user_id' => $user->id,
-                'amount' => $amount
-            ]);
-
-            // Traiter la commande si elle existe
-            if (isset($metadata['order_id'])) {
-                $this->processOrderPayment($user, $metadata['order_id']);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'FlexPay payment processed successfully',
-                'transaction_id' => $transaction->id
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('FlexPay: Erreur traitement paiement', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'data' => $data
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
-     * Confirmer une transaction FlexPay existante
-     */
-    private function confirmFlexPayTransaction($transaction, array $data)
-    {
-        DB::beginTransaction();
-
-        try {
-            if ($transaction->status === 'completed') {
-                DB::rollBack();
-                return response()->json(['message' => 'Transaction déjà complétée'], 200);
-            }
-
-            $wallet = Wallet::find($transaction->wallet_id);
-            if (!$wallet) {
-                DB::rollBack();
-                return response()->json(['error' => 'Portefeuille non trouvé'], 404);
-            }
-
-            $balanceBefore = $wallet->balance;
-            $wallet->balance += $transaction->amount;
-            $wallet->total_deposited += $transaction->amount;
-            $wallet->save();
-
-            $transaction->status = 'completed';
-            $transaction->balance_before = $balanceBefore;
-            $transaction->balance_after = $wallet->balance;
-            $transaction->completed_at = now();
-            $transaction->metadata = json_encode(array_merge(
-                json_decode($transaction->metadata, true) ?? [],
-                ['flexpay_confirm' => $data]
-            ));
-            $transaction->save();
-
-            // Traiter la commande si elle existe
-            $metadata = json_decode($transaction->metadata, true);
-            if (isset($metadata['order_id'])) {
-                $user = User::find($transaction->user_id);
-                if ($user) {
-                    $this->processOrderPayment($user, $metadata['order_id']);
-                }
-            }
-
-            DB::commit();
-
-            Log::info('FlexPay: Transaction confirmée', [
-                'transaction_id' => $transaction->id,
-                'reference' => $transaction->reference
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Transaction confirmée'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('FlexPay: Erreur confirmation transaction', [
-                'error' => $e->getMessage(),
-                'transaction_id' => $transaction->id
-            ]);
-            throw $e;
         }
     }
 

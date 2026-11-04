@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Commission;
+use App\Services\FlexPayService;
+use App\Services\PaymentService;
 use App\Services\WalletCommissionBreakdown;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,7 +18,9 @@ use Illuminate\Support\Facades\Log;
 class WalletController extends Controller
 {
     public function __construct(
-        protected WalletCommissionBreakdown $commissionBreakdown
+        protected WalletCommissionBreakdown $commissionBreakdown,
+        protected PaymentService $paymentService,
+        protected FlexPayService $flexPayService,
     ) {}
 
     public function index(Request $request)
@@ -204,17 +208,55 @@ class WalletController extends Controller
 
     public function storeDeposit(Request $request)
     {
-        $request->validate([
+        $rules = [
             'amount' => 'required|numeric|min:1|max:10000',
             'payment_method' => 'required|in:crypto,mobile_money,bank,card',
-        ]);
+        ];
+
+        if ($request->payment_method === 'mobile_money') {
+            $rules['phone_number'] = 'required|string|min:9|max:15';
+            $rules['provider'] = 'nullable|in:orange,airtel,mpesa';
+        }
+
+        $request->validate($rules);
 
         $user = Auth::user();
-        $wallet = $user->wallet;
-        $amount = $request->amount;
+        $amount = (float) $request->amount;
         $paymentMethod = $request->payment_method;
 
-        if (!$wallet) {
+        if ($paymentMethod === 'mobile_money') {
+            $provider = $request->input('provider', 'flexpay');
+
+            $result = $this->paymentService->processMobileMoneyPayment(
+                $user->id,
+                $amount,
+                $provider,
+                $request->phone_number
+            );
+
+            if (! ($result['success'] ?? false)) {
+                return back()
+                    ->withInput()
+                    ->with('error', $result['error'] ?? $result['message'] ?? 'Erreur FlexPay');
+            }
+
+            Log::info('FlexPay deposit initiated', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'reference' => $result['reference'] ?? null,
+                'order_number' => $result['order_number'] ?? null,
+            ]);
+
+            return redirect()->route('wallet.index')
+                ->with(
+                    'success',
+                    'Demande Mobile Money de $'.number_format($amount, 2).
+                    ' envoyée. Confirmez sur votre téléphone. Réf: '.($result['reference'] ?? '')
+                );
+        }
+
+        $wallet = $user->wallet;
+        if (! $wallet) {
             $wallet = Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -240,9 +282,14 @@ class WalletController extends Controller
                 'balance_before' => $wallet->balance,
                 'balance_after' => $wallet->balance,
                 'status' => 'pending',
-                'reference' => 'DEP-' . strtoupper(uniqid()),
-                'description' => 'Deposit via ' . ucfirst(str_replace('_', ' ', $paymentMethod)),
-                'metadata' => json_encode(['payment_method' => $paymentMethod]),
+                'reference' => 'DEP-'.strtoupper(uniqid()),
+                'provider' => $paymentMethod,
+                'description' => 'Deposit via '.ucfirst(str_replace('_', ' ', $paymentMethod)),
+                'metadata' => [
+                    'payment_method' => $paymentMethod,
+                    'crypto_address' => $request->crypto_address,
+                    'bank_details' => $request->bank_details,
+                ],
             ]);
 
             DB::commit();
@@ -255,15 +302,15 @@ class WalletController extends Controller
             ]);
 
             return redirect()->route('wallet.index')
-                ->with('success', 'Demande de dépôt de $' . number_format($amount, 2) . ' enregistrée. Le solde sera crédité après confirmation du paiement.');
-
+                ->with('success', 'Demande de dépôt de $'.number_format($amount, 2).' enregistrée. Le solde sera crédité après confirmation du paiement.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error depositing', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            return back()->with('error', 'Error depositing: ' . $e->getMessage());
+
+            return back()->with('error', 'Error depositing: '.$e->getMessage());
         }
     }
 

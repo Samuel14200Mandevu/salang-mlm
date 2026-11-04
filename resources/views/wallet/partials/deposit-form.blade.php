@@ -117,8 +117,15 @@
         </div>
 
         <div class="member-withdraw-dest hidden" data-withdraw-fields="mobile_money" hidden>
-            <label class="member-withdraw-field__label" for="{{ $formId }}_phone">Numéro Mobile Money</label>
-            <input type="tel" name="phone_number" id="{{ $formId }}_phone" class="member-withdraw-field__input" placeholder="+243 …" autocomplete="tel">
+            <label class="member-withdraw-field__label" for="{{ $formId }}_provider">Opérateur</label>
+            <select name="provider" id="{{ $formId }}_provider" class="member-withdraw-field__input">
+                <option value="orange">Orange Money</option>
+                <option value="airtel">Airtel Money</option>
+                <option value="mpesa">M-Pesa</option>
+            </select>
+            <label class="member-withdraw-field__label mt-3" for="{{ $formId }}_phone">Numéro Mobile Money</label>
+            <input type="tel" name="phone_number" id="{{ $formId }}_phone" class="member-withdraw-field__input" placeholder="2438XXXXXXXX" autocomplete="tel" inputmode="tel">
+            <p class="member-withdraw-amount__avail mt-1">Format RDC : 243XXXXXXXXX (12 chiffres)</p>
         </div>
 
         <div class="member-withdraw-dest hidden" data-withdraw-fields="bank" hidden>

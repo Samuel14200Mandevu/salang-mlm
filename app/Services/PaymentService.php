@@ -8,17 +8,23 @@ use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
 use App\Services\MLM\CommissionDistributor;
+use App\Services\FlexPayService;
 use App\Services\MobileMoneyService;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
     protected MobileMoneyService $mobileMoneyService;
+    protected FlexPayService $flexPayService;
 
-    public function __construct(MobileMoneyService $mobileMoneyService)
-    {
+    public function __construct(
+        MobileMoneyService $mobileMoneyService,
+        FlexPayService $flexPayService
+    ) {
         $this->mobileMoneyService = $mobileMoneyService;
+        $this->flexPayService = $flexPayService;
     }
 
     /**
@@ -37,81 +43,81 @@ class PaymentService
     }
 
     /**
-     * Traiter un paiement Mobile Money (Orange, Airtel, M-Pesa)
+     * Traiter un paiement Mobile Money (Orange, Airtel, M-Pesa) via FlexPay.
+     *
+     * @param  int|null  $orderId
      */
-    public function processMobileMoneyPayment($userId, $amount, $provider, $phoneNumber)
+    public function processMobileMoneyPayment($userId, $amount, $provider, $phoneNumber, $orderId = null)
     {
-        $provider = strtolower($provider);
-        
+        $provider = strtolower((string) $provider);
+
         Log::info('Mobile Money payment initiated', [
             'user_id' => $userId,
             'amount' => $amount,
             'provider' => $provider,
-            'phone' => $phoneNumber
+            'phone' => $phoneNumber,
+            'order_id' => $orderId,
         ]);
 
-        // Vérifier le provider
-        $validProviders = ['orange', 'airtel', 'mpesa'];
-        if (!in_array($provider, $validProviders)) {
+        $validProviders = ['orange', 'airtel', 'mpesa', 'flexpay'];
+        if (! in_array($provider, $validProviders, true)) {
             Log::error('Invalid mobile money provider', ['provider' => $provider]);
+
             return [
                 'success' => false,
-                'message' => 'Provider non supporté. Utilisez Orange, Airtel ou M-Pesa.'
+                'error' => 'Provider non supporté. Utilisez Orange, Airtel ou M-Pesa.',
+                'message' => 'Provider non supporté. Utilisez Orange, Airtel ou M-Pesa.',
             ];
         }
 
-        // Valider le numéro pour l'opérateur choisi
-        if (!$this->mobileMoneyService->validateNumberForOperator($phoneNumber, $provider)) {
+        if ($provider !== 'flexpay' && ! $this->mobileMoneyService->validateNumberForOperator($phoneNumber, $provider)) {
             return [
                 'success' => false,
-                'message' => 'Le numéro de téléphone ne correspond pas à l\'opérateur sélectionné.'
+                'error' => 'Le numéro de téléphone ne correspond pas à l\'opérateur sélectionné.',
+                'message' => 'Le numéro de téléphone ne correspond pas à l\'opérateur sélectionné.',
             ];
         }
 
-        // Appeler le service MobileMoneyService avec FlexPay
-        $result = $this->mobileMoneyService->initiatePayment(
-            $amount,
-            $phoneNumber,
-            $provider,
-            $userId
-        );
+        $user = User::find($userId);
+        if (! $user) {
+            return [
+                'success' => false,
+                'error' => 'Utilisateur introuvable',
+                'message' => 'Utilisateur introuvable',
+            ];
+        }
 
-        if ($result['success']) {
-            // Créer le portefeuille au premier dépôt s'il n'existe pas encore
-            $wallet = Wallet::firstOrCreate(
-                ['user_id' => $userId],
-                [
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'total_withdrawn' => 0,
-                    'total_deposited' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]
-            );
-
-            Transaction::create([
-                'user_id' => $userId,
-                'wallet_id' => $wallet->id,
-                'type' => 'deposit',
-                'amount' => $amount,
-                'fee' => 0,
-                'net_amount' => $amount,
-                'balance_before' => $wallet->balance,
-                'balance_after' => $wallet->balance,
-                'status' => 'pending',
-                'reference' => $result['reference'] ?? null,
-                'description' => 'Dépôt via ' . ucfirst($provider) . ' Money',
-                'metadata' => json_encode([
-                    'provider' => $provider,
-                    'phone' => $phoneNumber,
-                    'transaction_id' => $result['transaction_id'] ?? null,
-                    'raw_response' => $result['raw_response'] ?? null,
-                ]),
+        try {
+            $result = $this->flexPayService->initiateDeposit($user, (float) $amount, (string) $phoneNumber, [
+                'provider' => $provider,
+                'order_id' => $orderId,
+                'description' => 'Dépôt via '.ucfirst($provider).' Money',
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+            ];
         }
 
-        return $result;
+        if ($result['success'] ?? false) {
+            return [
+                'success' => true,
+                'reference' => $result['reference'] ?? null,
+                'order_number' => $result['order_number'] ?? null,
+                'transaction_id' => $result['order_number'] ?? null,
+                'message' => $result['message'] ?? 'Paiement initié',
+                'transaction' => $result['transaction'] ?? null,
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error' => $result['error'] ?? 'Erreur lors du paiement',
+            'message' => $result['error'] ?? 'Erreur lors du paiement',
+            'reference' => $result['reference'] ?? null,
+        ];
     }
 
     /**
@@ -152,7 +158,7 @@ class PaymentService
                 'status' => 'completed',
                 'reference' => 'DEP-' . strtoupper(uniqid()),
                 'description' => 'Dépôt via ' . $method,
-                'metadata' => json_encode(['method' => $method]),
+                'metadata' => ['method' => $method],
                 'completed_at' => now(),
             ]);
 
@@ -229,7 +235,7 @@ class PaymentService
                 'status' => 'completed',
                 'reference' => 'WTH-' . strtoupper(uniqid()),
                 'description' => 'Retrait via ' . $withdrawal->method,
-                'metadata' => json_encode(['withdrawal_id' => $withdrawal->id]),
+                'metadata' => ['withdrawal_id' => $withdrawal->id],
                 'completed_at' => now(),
             ]);
 
@@ -317,7 +323,7 @@ class PaymentService
                 'status' => 'pending',
                 'reference' => 'WTH-' . strtoupper(uniqid()),
                 'description' => 'Demande de retrait via ' . $method,
-                'metadata' => json_encode(['withdrawal_id' => $withdrawal->id]),
+                'metadata' => ['withdrawal_id' => $withdrawal->id],
             ]);
 
             DB::commit();
@@ -336,59 +342,57 @@ class PaymentService
     }
 
     /**
-     * Confirmer un paiement mobile via webhook
+     * Confirmer un paiement mobile (fallback manuel / admin).
+     * Préférer le webhook FlexPay en production.
      */
     public function confirmMobilePayment($reference, $provider)
     {
-        $transaction = Transaction::where('reference', $reference)->first();
-        
-        if (!$transaction) {
-            Log::error('Transaction not found', ['reference' => $reference]);
-            return ['success' => false, 'message' => 'Transaction non trouvée'];
-        }
+        return DB::transaction(function () use ($reference, $provider) {
+            $transaction = Transaction::query()
+                ->where('reference', $reference)
+                ->lockForUpdate()
+                ->first();
 
-        if ($transaction->status === 'completed') {
-            return ['success' => true, 'message' => 'Transaction déjà complétée'];
-        }
+            if (! $transaction) {
+                Log::error('Transaction not found', ['reference' => $reference]);
 
-        $wallet = Wallet::find($transaction->wallet_id);
-        
-        if (!$wallet) {
-            return ['success' => false, 'message' => 'Portefeuille non trouvé'];
-        }
+                return ['success' => false, 'message' => 'Transaction non trouvée'];
+            }
 
-        DB::beginTransaction();
-        
-        try {
-            $balanceBefore = $wallet->balance;
-            
-            $wallet->balance += $transaction->amount;
-            $wallet->total_deposited += $transaction->amount;
+            if ($transaction->status === 'completed') {
+                return ['success' => true, 'message' => 'Transaction déjà complétée'];
+            }
+
+            $wallet = Wallet::query()
+                ->whereKey($transaction->wallet_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $wallet) {
+                return ['success' => false, 'message' => 'Portefeuille non trouvé'];
+            }
+
+            $balanceBefore = (float) $wallet->balance;
+            $wallet->balance = $balanceBefore + (float) $transaction->amount;
+            $wallet->total_deposited = (float) $wallet->total_deposited + (float) $transaction->amount;
             $wallet->save();
 
             $transaction->status = 'completed';
             $transaction->balance_before = $balanceBefore;
             $transaction->balance_after = $wallet->balance;
             $transaction->completed_at = now();
+            $meta = is_array($transaction->metadata) ? $transaction->metadata : [];
+            $meta['manual_confirm_provider'] = $provider;
+            $transaction->metadata = $meta;
             $transaction->save();
-
-            DB::commit();
 
             Log::info('Mobile payment confirmed', [
                 'reference' => $reference,
                 'provider' => $provider,
-                'user_id' => $transaction->user_id
+                'user_id' => $transaction->user_id,
             ]);
 
             return ['success' => true, 'message' => 'Paiement confirmé'];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Mobile payment confirmation error', [
-                'reference' => $reference,
-                'error' => $e->getMessage()
-            ]);
-            return ['success' => false, 'message' => 'Erreur lors de la confirmation'];
-        }
+        });
     }
 }
