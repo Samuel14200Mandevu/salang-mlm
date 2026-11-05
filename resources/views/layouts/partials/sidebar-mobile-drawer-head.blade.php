@@ -1,6 +1,9 @@
 @auth
     @php
-        $drawerUser = Auth::user()->loadMissing(['package']);
+        $drawerUser = Auth::user()?->loadMissing(['package']);
+    @endphp
+    @if($drawerUser)
+    @php
         $rawRankLevel = $drawerUser->getAttributes()['rank_level'] ?? null;
         $drawerRankModel = null;
         $drawerRankLevel = 1;
@@ -75,4 +78,5 @@
             <p class="sidebar-mobile-drawer-head__meta">{{ $drawerSubtitle }}</p>
         @endif
     </div>
+    @endif
 @endauth

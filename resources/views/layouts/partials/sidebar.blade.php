@@ -37,22 +37,22 @@
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="avatar-ring w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
-                                @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                    <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
+                                @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
+                                    <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
                                          alt="Avatar"
                                          class="w-9 h-9 rounded-full object-cover">
                                 @else
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                    {{ strtoupper(substr((string) Auth::user()?->name, 0, 1)) }}
                                 @endif
                             @endauth
                         </div>
                         <div class="transition-all duration-300 overflow-hidden"
                              :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0'">
                             <p class="text-sm font-medium text-[var(--text-primary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()->name }} @endauth
+                                @auth {{ Auth::user()?->name }} @endauth
                             </p>
                             <p class="text-xs text-[var(--text-secondary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()->email }} @endauth
+                                @auth {{ Auth::user()?->email }} @endauth
                             </p>
                         </div>
                     </div>

@@ -244,7 +244,7 @@
 
                         <!-- Admin -->
                         @auth
-                            @if(Auth::user()->hasRole('admin'))
+                            @if(Auth::user()?->hasRole('admin'))
                                 <li>
                                     <div class="sidebar-section transition-opacity duration-200"
                                          :class="!sidebarOpen ? 'hidden' : ''">
@@ -291,19 +291,19 @@
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
-                                @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                    <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}"
+                                @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
+                                    <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
                                          alt="Avatar"
                                          class="w-8 h-8 rounded-full object-cover">
                                 @else
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                    {{ strtoupper(substr(Auth::user()?->name, 0, 1)) }}
                                 @endif
                             @endauth
                         </div>
                         <div class="sidebar-user-text transition-all duration-200 overflow-hidden min-w-0"
                              :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 w-0'">
                             <p class="text-sm font-medium text-[var(--text-primary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()->name }} @endauth
+                                @auth {{ Auth::user()?->name }} @endauth
                             </p>
                             <p class="text-xs text-[var(--text-secondary)] truncate whitespace-nowrap">
                                 @auth Caissier @endauth

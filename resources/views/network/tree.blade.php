@@ -55,12 +55,12 @@
                 <!-- Moi -->
                 <div class="flex flex-col items-center">
                     <div class="avatar avatar-xl avatar-gradient avatar-ring relative">
-                        {{ substr(Auth::user()->name, 0, 2) }}
+                        {{ substr(Auth::user()?->name, 0, 2) }}
                         <span class="tree-level-badge">★</span>
                     </div>
-                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()->name }}</p>
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mt-1 sm:mt-2">{{ Auth::user()?->name }}</p>
                     <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Moi</p>
-                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()->rank ?? 'Distributor' }}</span>
+                    <span class="badge badge-success text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ Auth::user()?->rank ?? 'Distributor' }}</span>
                 </div>
 
                 <!-- Enfants -->
@@ -167,7 +167,7 @@
             <div class="min-w-0">
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Votre lien de parrainage</p>
                 <p class="text-xs sm:text-sm font-semibold text-primary-500 break-all" id="sponsorLink">
-                    {{ url('/register?ref=' . Auth::user()->sponsor_id) }}
+                    {{ url('/register?ref=' . Auth::user()?->sponsor_id) }}
                 </p>
             </div>
             <button onclick="copyLink()" class="btn btn-primary btn-sm sm:btn-md flex-shrink-0">

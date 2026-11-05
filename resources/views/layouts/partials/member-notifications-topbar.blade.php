@@ -1,7 +1,8 @@
+@auth
 @php
     use Illuminate\Support\Str;
 
-    $topbarNotifications = auth()->user()->notifications()->limit(50)->get();
+    $topbarNotifications = auth()->user()?->notifications()->limit(50)->get() ?? collect();
 
     $notifyCategory = static function (array $data): string {
         $type = (string) ($data['type'] ?? '');
@@ -53,7 +54,7 @@
     x-data="{
         dropdownOpen: false,
         sheetOpen: false,
-        unreadCount: {{ auth()->user()->unreadNotifications()->count() }},
+        unreadCount: {{ auth()->user()?->unreadNotifications()->count() ?? 0 }},
         tab: 'all',
         category: 'all',
         isMobileViewport() { return window.innerWidth < 768; },
@@ -239,3 +240,4 @@
         </div>
     </template>
 </div>
+@endauth

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@php($isSupervision = auth()->user()->hasSupervisionAccess())
+@php($isSupervision = (bool) auth()->user()?->hasSupervisionAccess())
 
 @section('title', $isSupervision ? ($conversation->member?->name ?? 'Conversation') : 'Support Salang')
 

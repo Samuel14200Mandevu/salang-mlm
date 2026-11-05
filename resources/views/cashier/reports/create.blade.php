@@ -285,7 +285,7 @@
         <div class="section-box">
             <h3>7. Signature</h3>
             <label class="form-label">Nom du signataire</label>
-            <input type="text" name="signature_name" value="{{ old('signature_name', auth()->user()->name) }}"
+            <input type="text" name="signature_name" value="{{ old('signature_name', auth()->user()?->name) }}"
                    class="form-control" required maxlength="255">
             <p class="text-xs text-[var(--text-tertiary)] mt-2">
                 En signant, je certifie l'exactitude des informations ci-dessus.

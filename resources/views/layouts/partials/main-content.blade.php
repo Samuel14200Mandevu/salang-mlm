@@ -67,15 +67,15 @@
                                             aria-label="Menu profil"
                                             :aria-expanded="open">
                                         <span class="hidden md:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
-                                            {{ Auth::user()->name }}
+                                            {{ Auth::user()?->name }}
                                         </span>
                                         <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
-                                            @if(Auth::user()->avatar && file_exists(public_path('storage/avatars/' . Auth::user()->avatar)))
-                                                <img src="{{ asset('storage/avatars/' . Auth::user()->avatar) }}" 
+                                            @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
+                                                <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}" 
                                                      alt="Avatar" 
                                                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover">
                                             @else
-                                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                                {{ strtoupper(substr((string) Auth::user()?->name, 0, 1)) }}
                                             @endif
                                         </div>
                                     </button>
@@ -88,8 +88,8 @@
                                          style="display: none;">
                                         
                                         <div class="px-4 py-2 border-b border-[var(--border-color)] sm:hidden">
-                                            <p class="text-sm font-medium text-[var(--text-primary)]">{{ Auth::user()->name }}</p>
-                                            <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()->email }}</p>
+                                            <p class="text-sm font-medium text-[var(--text-primary)]">{{ Auth::user()?->name }}</p>
+                                            <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()?->email }}</p>
                                         </div>
                                         
                                         <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
@@ -119,7 +119,7 @@
                                             </span>
                                         </a>
                                         
-                                        @if(Auth::user()->hasRole('admin'))
+                                        @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
                                             <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-primary-600 font-semibold transition-colors">
                                                 <span class="flex items-center gap-2">

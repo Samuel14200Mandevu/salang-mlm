@@ -29,21 +29,21 @@
         <div class="card border-l-4 border-primary-500">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Votre abonnement actuel</p>
             <h2 class="text-xl sm:text-2xl font-bold text-primary-500">
-                {{ Auth::user()->package ? Auth::user()->package->name : 'Aucun abonnement' }}
+                {{ Auth::user()?->package ? Auth::user()?->package->name : 'Aucun abonnement' }}
             </h2>
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                {{ Auth::user()->pv_balance ?? 0 }} PV
+                {{ Auth::user()?->pv_balance ?? 0 }} PV
             </p>
-            <span class="badge {{ Auth::user()->package_id ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-1">
-                {{ Auth::user()->package_id ? 'Actif' : 'Inactif' }}
+            <span class="badge {{ Auth::user()?->package_id ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs mt-1">
+                {{ Auth::user()?->package_id ? 'Actif' : 'Inactif' }}
             </span>
         </div>
 
-        @if(Auth::user()->wallet)
+        @if(Auth::user()?->wallet)
             <div class="card border-l-4 border-yellow-500">
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Solde de votre portefeuille</p>
                 <h2 class="text-xl sm:text-2xl font-bold text-yellow-500">
-                    ${{ number_format(Auth::user()->wallet->balance, 2) }}
+                    ${{ number_format(Auth::user()?->wallet->balance, 2) }}
                 </h2>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     Disponible pour les achats
@@ -76,12 +76,12 @@
     <div class="subscription-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         @forelse($subscriptions as $package)
             @php
-                $isCurrent = Auth::user()->package_id == $package->id;
-                $isUpgrade = Auth::user()->package_id && Auth::user()->package_id < $package->id;
-                $isLocked = Auth::user()->package_id && Auth::user()->package_id > $package->id;
+                $isCurrent = Auth::user()?->package_id == $package->id;
+                $isUpgrade = Auth::user()?->package_id && Auth::user()?->package_id < $package->id;
+                $isLocked = Auth::user()?->package_id && Auth::user()?->package_id > $package->id;
                 $isPopular = $package->id == 4;
                 $delay = min($loop->index + 2, 7);
-                $balance = Auth::user()->wallet?->balance;
+                $balance = Auth::user()?->wallet?->balance;
                 $canAfford = $balance !== null && $balance >= $package->price;
             @endphp
 

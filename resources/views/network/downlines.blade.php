@@ -42,7 +42,7 @@
     <div class="animate-fadeInUp delay-1 p-3 bg-primary-500/5 border border-primary-500/20 rounded-lg">
         <p class="text-sm text-[var(--text-secondary)]">
             <span class="font-semibold text-primary-500">Votre code de parrain :</span> 
-            <span class="font-mono text-primary-500 font-bold">{{ Auth::user()->sponsor_id }}</span>
+            <span class="font-mono text-primary-500 font-bold">{{ Auth::user()?->sponsor_id }}</span>
             <span class="text-[var(--text-tertiary)] ml-2">(Partagez ce code pour parrainer de nouveaux membres)</span>
         </p>
     </div>

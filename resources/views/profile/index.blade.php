@@ -155,7 +155,7 @@
                     </div>
                     <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Mon Code</p>
-                        <p class="font-bold text-primary-500 text-xs sm:text-sm font-mono truncate">{{ Auth::user()->sponsor_id }}</p>
+                        <p class="font-bold text-primary-500 text-xs sm:text-sm font-mono truncate">{{ Auth::user()?->sponsor_id }}</p>
                     </div>
                 </div>
             </div>

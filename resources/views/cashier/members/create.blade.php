@@ -16,7 +16,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                {{ auth()->user()->name }}
+                {{ auth()->user()?->name }}
             </span>
             <a href="{{ route('cashier.members') }}" class="btn btn-secondary btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -344,16 +344,16 @@
                 <label>Responsable</label>
                 <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(30, 93, 173, 0.06); border-radius: 6px; border: 1px solid rgba(30, 93, 173, 0.10);">
                     <div style="width: 2.5rem; height: 2.5rem; border-radius: 4px; background: var(--primary-navy); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; flex-shrink: 0;">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        {{ strtoupper(substr(auth()->user()?->name, 0, 1)) }}
                     </div>
                     <div style="flex: 1;">
                         <div style="font-weight: 600; color: var(--text-primary);">
-                            {{ auth()->user()->name }}
+                            {{ auth()->user()?->name }}
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                            {{ auth()->user()->email }}
-                            @if(auth()->user()->phone)
-                                · {{ auth()->user()->phone }}
+                            {{ auth()->user()?->email }}
+                            @if(auth()->user()?->phone)
+                                · {{ auth()->user()?->phone }}
                             @endif
                         </div>
                     </div>
@@ -362,8 +362,8 @@
                     </span>
                 </div>
                 <input type="hidden" name="cashier_id" value="{{ auth()->id() }}">
-                <input type="hidden" name="cashier_name" value="{{ auth()->user()->name }}">
-                <input type="hidden" name="cashier_email" value="{{ auth()->user()->email }}">
+                <input type="hidden" name="cashier_name" value="{{ auth()->user()?->name }}">
+                <input type="hidden" name="cashier_email" value="{{ auth()->user()?->email }}">
                 <div class="help-text">Le caissier est automatiquement enregistré comme responsable.</div>
             </div>
         </div>

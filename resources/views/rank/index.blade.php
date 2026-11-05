@@ -9,7 +9,7 @@
 @php
     use App\Models\Rank;
     
-    $userRank = Auth::user()->rank;
+    $userRank = Auth::user()?->rank;
     $userRankLevel = 1;
     $userRankName = 'Distributeur';
     $userRankId = null;
@@ -36,8 +36,8 @@
         }
     }
     
-    if ($userRankName === 'Distributeur' && Auth::user()->getOriginal('rank')) {
-        $originalRank = Auth::user()->getOriginal('rank');
+    if ($userRankName === 'Distributeur' && Auth::user()?->getOriginal('rank')) {
+        $originalRank = Auth::user()?->getOriginal('rank');
         if (is_string($originalRank)) {
             $userRankName = $originalRank;
             $rankModel = Rank::where('name', $originalRank)->first();
@@ -49,7 +49,7 @@
     }
     
     $nextRank = Rank::where('level', '>', $userRankLevel)->orderBy('level')->first();
-    $currentPv = Auth::user()->pv_balance ?? 0;
+    $currentPv = Auth::user()?->pv_balance ?? 0;
     $nextPv = $nextRank ? $nextRank->min_pv : 0;
     $pvNeeded = $nextRank ? max(0, $nextPv - $currentPv) : 0;
     $progress = ($nextRank && $nextPv > 0) ? min(100, ($currentPv / $nextPv) * 100) : 0;
@@ -130,17 +130,17 @@
     <div class="rank-stats stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-2">
         <div class="rank-card text-center">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">PV Total</p>
-            <p class="text-lg sm:text-2xl font-bold text-primary-500">{{ number_format(Auth::user()->pv_balance ?? 0) }}</p>
+            <p class="text-lg sm:text-2xl font-bold text-primary-500">{{ number_format(Auth::user()?->pv_balance ?? 0) }}</p>
             <p class="text-[10px] text-[var(--text-tertiary)]">Cumul depuis l'inscription</p>
         </div>
         <div class="rank-card text-center">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">PV Mensuel</p>
-            <p class="text-lg sm:text-2xl font-bold text-blue-500">{{ number_format(Auth::user()->monthly_pv ?? 0) }}</p>
+            <p class="text-lg sm:text-2xl font-bold text-blue-500">{{ number_format(Auth::user()?->monthly_pv ?? 0) }}</p>
             <p class="text-[10px] text-[var(--text-tertiary)]">Ventes du mois en cours</p>
         </div>
         <div class="rank-card text-center">
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">PV Equipe</p>
-            <p class="text-lg sm:text-2xl font-bold text-purple-500">{{ number_format(Auth::user()->team_pv ?? 0) }}</p>
+            <p class="text-lg sm:text-2xl font-bold text-purple-500">{{ number_format(Auth::user()?->team_pv ?? 0) }}</p>
             <p class="text-[10px] text-[var(--text-tertiary)]">Ventes de votre reseau</p>
         </div>
         <div class="rank-card text-center">

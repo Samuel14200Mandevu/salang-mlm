@@ -14,13 +14,13 @@
 
     $actionNotifications = collect();
     $actionUnread = 0;
-    if (auth()->check()) {
-        $actionNotifications = auth()->user()->notifications()
+    if (auth()->check() && auth()->user()) {
+        $actionNotifications = auth()->user()?->notifications()
             ->where('type', ActionFeedbackNotification::class)
             ->latest()
             ->limit(12)
             ->get();
-        $actionUnread = auth()->user()->unreadNotifications()
+        $actionUnread = auth()->user()?->unreadNotifications()
             ->where('type', ActionFeedbackNotification::class)
             ->count();
     }

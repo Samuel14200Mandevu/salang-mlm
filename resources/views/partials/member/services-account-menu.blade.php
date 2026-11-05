@@ -4,7 +4,7 @@
 
 <div class="member-services-hub profile-account-mobile">
     @auth
-        @if(auth()->user()->hasRole('admin'))
+        @if(auth()->user()?->hasRole('admin'))
             <p class="profile-account-section-title">Administration</p>
             <nav class="profile-account-menu" aria-label="Administration">
                 @include('profile.partials.account-menu-row', [
@@ -89,28 +89,26 @@
         ])
     </nav>
 
+    @auth
     <p class="profile-account-section-title">Assistance & événements</p>
     <nav class="profile-account-menu" aria-label="Assistance et événements">
         @include('profile.partials.account-menu-row', [
-            'href' => auth()->user()->memberQuestionsEntryUrl(),
+            'href' => auth()->user()?->memberQuestionsEntryUrl() ?? route('questions.index'),
             'label' => 'Assistance & questions',
             'iconTone' => 'sky',
             'icon' => $icon('M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
         ])
-        @auth
-            @if(auth()->user()->hasAnyRole(['user', 'cashier']) && ! auth()->user()->hasSupervisionAccess())
-            @endif
             @include('profile.partials.account-menu-row', [
                 'href' => route('publications.index'),
                 'label' => 'Événements & promos',
                 'iconTone' => 'orange',
                 'icon' => $icon('M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'),
             ])
-        @endauth
     </nav>
+    @endauth
 
     @auth
-        @if(auth()->user()->hasSupervisionAccess())
+        @if(auth()->user()?->hasSupervisionAccess())
             <p class="profile-account-section-title">Supervision</p>
             <nav class="profile-account-menu" aria-label="Supervision">
                 @include('profile.partials.account-menu-row', [

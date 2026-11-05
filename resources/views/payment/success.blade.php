@@ -1,23 +1,43 @@
-@extends('layouts.app')
+@extends(auth()->check() ? 'layouts.app' : 'layouts.public')
 
-@section('title', $paymentStatus === 'completed' ? 'Paiement réussi' : 'Paiement en cours')
+@section('title', ($paymentStatus ?? 'unknown') === 'completed' ? 'Paiement réussi' : 'Paiement en cours')
 
 @section('content')
 @php
     $status = $paymentStatus ?? 'unknown';
+    $isGuest = ! empty($isGuestPaymentReturn) || ! auth()->check();
     $isCompleted = $status === 'completed';
     $isPending = $status === 'pending';
     $isFailed = in_array($status, ['failed', 'cancelled'], true);
 @endphp
 <div class="max-w-md mx-auto py-8 sm:py-12 px-3 sm:px-4"
-     @if(!empty($autoRefreshPending))
+     @if(!empty($autoRefreshPending) && ! $isGuest)
          data-payment-auto-refresh="1"
          data-refresh-interval="10000"
      @endif
 >
     <div class="card text-center animate-fadeInUp">
 
-        @if($isCompleted)
+        @if($isGuest)
+            <svg class="payment-icon mx-auto text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+            </svg>
+            <h1 class="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">Retour de paiement</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-2">
+                {{ $message }}
+            </p>
+            <p class="text-sm text-[var(--text-secondary)] mt-3">
+                Si votre session a expiré pendant le paiement, reconnectez-vous : le solde sera mis à jour dès confirmation du réseau.
+            </p>
+            <div class="success-actions mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
+                <a href="{{ route('login') }}" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+                    Se connecter
+                </a>
+                <a href="{{ url('/') }}" class="btn btn-outline w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
+                    Accueil
+                </a>
+            </div>
+        @elseif($isCompleted)
             <svg class="payment-icon mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
@@ -57,7 +77,7 @@
             </p>
         @endif
 
-        @if($transaction ?? null)
+        @if(! $isGuest && ($transaction ?? null))
         <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-left text-sm">
             <p class="text-[var(--text-secondary)]">
                 <span class="font-medium">Référence:</span>
@@ -78,6 +98,7 @@
         </div>
         @endif
 
+        @if(! $isGuest)
         <div class="success-actions mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
             <a href="{{ route('dashboard') }}" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5">
                 Accéder au Dashboard
@@ -86,11 +107,12 @@
                 Voir Mon Portefeuille
             </a>
         </div>
+        @endif
     </div>
 </div>
 @endsection
 
-@if(!empty($autoRefreshPending))
+@if(!empty($autoRefreshPending) && empty($isGuestPaymentReturn) && auth()->check())
 @push('scripts')
 <script>
 (function () {

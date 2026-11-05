@@ -334,7 +334,7 @@ admin-mobile-stack
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Tableau de bord</h1>
-                <p class="page-subtitle">{{ $salutation }}, {{ Auth::user()->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
+                <p class="page-subtitle">{{ $salutation }}, {{ Auth::user()?->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--dashboard">
                 <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle vente" aria-label="Nouvelle vente">
@@ -353,7 +353,7 @@ admin-mobile-stack
                 Tableau de bord caisse
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()->name ?? 'Caissier' }}</span>
+                {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()?->name ?? 'Caissier' }}</span>
                 <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
             </p>
         </div>

@@ -444,7 +444,7 @@ admin-mobile-stack
 @push('admin_mobile_greeting')
     <div class="admin-mobile-greeting md:hidden animate-fadeInUp">
         <h1>Tableau de bord</h1>
-        <p>{{ $salutation }}, {{ Auth::user()->name }} · {{ date('H:i') }}</p>
+        <p>{{ $salutation }}, {{ Auth::user()?->name }} · {{ date('H:i') }}</p>
     </div>
 @endpush
 
@@ -454,7 +454,7 @@ admin-mobile-stack
             Tableau de bord Admin
         </h1>
         <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-            {{ $salutation }}, <span class="font-semibold text-[var(--primary-blue)]">{{ Auth::user()->name }}</span>
+            {{ $salutation }}, <span class="font-semibold text-[var(--primary-blue)]">{{ Auth::user()?->name }}</span>
             <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
         </p>
     </div>

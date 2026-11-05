@@ -156,7 +156,7 @@
                 </span>
             @endif
         </div>
-        @if(auth()->user()->hasRole('admin') && $report->status === 'submitted')
+        @if(auth()->user()?->hasRole('admin') && $report->status === 'submitted')
             <div class="flex flex-wrap gap-2">
                 <form method="POST" action="{{ route('cashier.reports.approve', $report->id) }}">
                     @csrf

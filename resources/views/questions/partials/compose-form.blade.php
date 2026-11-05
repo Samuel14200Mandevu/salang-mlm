@@ -23,7 +23,7 @@
                 <p class="question-chat-bubble-meta">Support Salang</p>
                 <div class="question-chat-bubble">
                     <div class="question-chat-bubble__text">
-                        Bonjour, {{ auth()->user()->name }} !
+                        Bonjour, {{ auth()->user()?->name ?? 'membre' }} !
                         Expliquez votre demande ci-dessous — un conseiller vous répondra ici, comme dans une conversation.
                     </div>
                 </div>

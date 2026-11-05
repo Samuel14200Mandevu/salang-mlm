@@ -9,7 +9,7 @@
     } else {
         $greeting = 'Bonne nuit';
     }
-    $firstName = explode(' ', trim(Auth::user()->name))[0];
+    $firstName = explode(' ', trim((string) (Auth::user()?->name ?? 'Membre')))[0];
 
     $points = $monthlyCommissions ?? collect();
     $amounts = $points->pluck('total')->map(fn ($v) => (float) $v)->all();

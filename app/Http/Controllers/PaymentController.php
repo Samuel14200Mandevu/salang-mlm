@@ -191,43 +191,61 @@ class PaymentController extends Controller
 
     public function success(Request $request)
     {
-        $message = $request->session()->get('success', 'Votre paiement a été effectué avec succès.');
-
-        // Binance append ?trx-id={transaction.id} sur returnUrl
-        $trxId = $request->query('trx-id') ?? $request->query('trx_id');
-        $reference = $request->query('reference');
+        $isAuthenticated = Auth::check();
+        $message = $request->session()->get(
+            'success',
+            $isAuthenticated
+                ? 'Votre paiement a été effectué avec succès.'
+                : 'Retour de paiement reçu. Connectez-vous pour vérifier votre solde.'
+        );
 
         $transaction = null;
-        if ($trxId) {
-            $transaction = Transaction::query()->find($trxId);
-        } elseif ($reference) {
-            $transaction = Transaction::query()->where('reference', $reference)->first();
-        }
+        $paymentStatus = 'unknown';
+        $autoRefreshPending = false;
 
-        // Sécurité : un membre ne voit que ses propres tx (sauf admin)
-        if ($transaction && Auth::check()) {
+        // Détails transaction uniquement si session membre active (évite fuite via ?trx-id=)
+        if ($isAuthenticated) {
+            $trxId = $request->query('trx-id') ?? $request->query('trx_id');
+            $reference = $request->query('reference');
+
+            if ($trxId) {
+                $transaction = Transaction::query()->find($trxId);
+            } elseif ($reference) {
+                $transaction = Transaction::query()->where('reference', $reference)->first();
+            }
+
             $user = Auth::user();
-            if ((int) $transaction->user_id !== (int) $user->id && ! $user->hasRole('admin')) {
+            if ($transaction && (int) $transaction->user_id !== (int) $user->id && ! $user->hasRole('admin')) {
                 $transaction = null;
             }
+
+            $paymentStatus = $transaction?->status ?? 'unknown';
+            $autoRefreshPending = $paymentStatus === 'pending';
         }
 
-        $paymentStatus = $transaction?->status ?? 'unknown';
-        $autoRefreshPending = $paymentStatus === 'pending';
-
-        return view('payment.success', compact(
-            'message',
-            'transaction',
-            'paymentStatus',
-            'autoRefreshPending'
-        ));
+        return view('payment.success', [
+            'message' => $message,
+            'transaction' => $transaction,
+            'paymentStatus' => $paymentStatus,
+            'autoRefreshPending' => $autoRefreshPending,
+            'isGuestPaymentReturn' => ! $isAuthenticated,
+        ]);
     }
 
     public function cancel(Request $request)
     {
-        $message = $request->session()->get('error', 'Le paiement a été annulé.');
+        $isAuthenticated = Auth::check();
+        $message = $request->session()->get(
+            'error',
+            $isAuthenticated
+                ? 'Le paiement a été annulé.'
+                : 'Paiement annulé. Connectez-vous pour reprendre depuis votre portefeuille.'
+        );
 
-        return view('payment.cancel', compact('message'));
+        return view('payment.cancel', [
+            'message' => $message,
+            'isGuestPaymentReturn' => ! $isAuthenticated,
+        ]);
     }
 
     public function confirmPayment(Request $request)

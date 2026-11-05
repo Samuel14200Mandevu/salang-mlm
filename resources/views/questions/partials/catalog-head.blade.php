@@ -24,7 +24,7 @@
                     </svg>
                 </button>
             @else
-                <a href="{{ auth()->user()->memberQuestionsEntryUrl() }}" class="shop-banner-icon-btn" aria-label="Conversation avec le support">
+                <a href="{{ auth()->user()?->memberQuestionsEntryUrl() ?? route('questions.create') }}" class="shop-banner-icon-btn" aria-label="Conversation avec le support">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>

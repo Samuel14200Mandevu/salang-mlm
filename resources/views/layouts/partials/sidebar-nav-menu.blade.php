@@ -169,8 +169,9 @@
             <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Hub Services</span>
         </a>
     </li>
+    @auth
     <li>
-        <a href="{{ auth()->user()->memberQuestionsEntryUrl() }}"
+        <a href="{{ auth()->user()?->memberQuestionsEntryUrl() ?? route('questions.index') }}"
            class="sidebar-link {{ request()->routeIs('questions.*') ? 'active' : '' }}"
            data-title="Assistance">
             <x-ui.sidebar-link-icon tone="sky">
@@ -181,10 +182,9 @@
             <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Assistance</span>
         </a>
     </li>
-    @auth
         <li>
             <a href="{{ route('publications.index') }}"
-               class="sidebar-link {{ request()->routeIs('publications.*') && ! auth()->user()->hasSupervisionAccess() ? 'active' : '' }}"
+               class="sidebar-link {{ request()->routeIs('publications.*') && ! auth()->user()?->hasSupervisionAccess() ? 'active' : '' }}"
                data-title="Événements">
                 <x-ui.sidebar-link-icon tone="amber">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -194,7 +194,7 @@
                 <span class="label transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Galerie</span>
             </a>
         </li>
-        @if(auth()->user()->hasSupervisionAccess())
+        @if(auth()->user()?->hasSupervisionAccess())
             <li>
                 <div class="sidebar-section transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Supervision</div>
             </li>
@@ -262,7 +262,7 @@
     </li>
 
     @auth
-        @if(Auth::user()->hasRole('admin'))
+        @if(auth()->user()?->hasRole('admin'))
             <li>
                 <div class="sidebar-section transition-opacity duration-200" :class="!sidebarOpen ? 'hidden' : ''">Administration</div>
             </li>

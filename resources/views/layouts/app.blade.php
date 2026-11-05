@@ -3,7 +3,7 @@
 @include('layouts.partials.head')
 @php
     $memberRankAccent = auth()->check()
-        ? \App\Support\MlmRank::dashboardAccent(auth()->user()->rank_level)
+        ? \App\Support\MlmRank::dashboardAccent(auth()->user()?->rank_level)
         : null;
 @endphp
 <body @class([
