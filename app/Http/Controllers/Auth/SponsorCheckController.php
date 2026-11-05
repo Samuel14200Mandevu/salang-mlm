@@ -18,17 +18,23 @@ class SponsorCheckController extends Controller
             ?? User::where('sponsor_id', $request->sponsor_id)->first();
 
         if ($sponsor) {
+            $displayName = trim((string) $sponsor->name);
+            if ($displayName === '') {
+                $displayName = $sponsor->sponsor_id
+                    ? 'Membre '.$sponsor->sponsor_id
+                    : 'Membre #'.$sponsor->id;
+            }
+
             return response()->json([
                 'exists' => true,
-                'name' => $sponsor->name,
-                'email' => $sponsor->email,
+                'name' => $displayName,
                 'sponsor_id' => $sponsor->sponsor_id,
             ]);
         }
 
         return response()->json([
             'exists' => false,
-            'message' => 'Aucun parrain trouve avec ce code.'
+            'message' => 'Aucun parrain trouvé avec ce code.',
         ]);
     }
 }

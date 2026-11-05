@@ -389,11 +389,17 @@ class SocialiteController extends Controller
 
         session(['sponsor_id' => $sponsor->id]);
 
+        $displayName = trim((string) $sponsor->name);
+        if ($displayName === '') {
+            $displayName = $sponsor->sponsor_id
+                ? 'Membre '.$sponsor->sponsor_id
+                : 'Membre #'.$sponsor->id;
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Code parrain validé.',
-            'sponsor_name' => $sponsor->name,
-            'sponsor_email' => $sponsor->email,
+            'sponsor_name' => $displayName,
         ]);
     }
 }

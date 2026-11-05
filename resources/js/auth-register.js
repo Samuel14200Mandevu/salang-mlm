@@ -43,12 +43,13 @@
                     .then((r) => r.json())
                     .then((data) => {
                         if (data.exists) {
+                            const sponsorLabel = (data.name || '').trim() || 'Membre';
                             setSponsorStatus(
                                 'sponsor-status visible success',
-                                'Parrain confirmé : <strong></strong>'
+                                'Parrain : <strong></strong>'
                             );
                             const strong = sponsorStatus.querySelector('strong');
-                            if (strong) strong.textContent = data.name + ' (' + data.email + ')';
+                            if (strong) strong.textContent = sponsorLabel;
                             sponsorInput.classList.add('auth-input-success');
                         } else {
                             setSponsorStatus('sponsor-status visible error', data.message || 'Code invalide.');

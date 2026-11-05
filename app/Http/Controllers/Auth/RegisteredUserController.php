@@ -452,15 +452,21 @@ class RegisteredUserController extends Controller
             ], 422);
         }
         
+        $displayName = trim((string) $sponsor->name);
+        if ($displayName === '') {
+            $displayName = $sponsor->sponsor_id
+                ? 'Membre '.$sponsor->sponsor_id
+                : 'Membre #'.$sponsor->id;
+        }
+
         return response()->json([
             'valid' => true,
             'message' => 'Code sponsor valide.',
             'sponsor' => [
                 'id' => $sponsor->id,
-                'name' => $sponsor->name,
-                'email' => $sponsor->email,
+                'name' => $displayName,
                 'sponsor_id' => $sponsor->sponsor_id,
-            ]
+            ],
         ]);
     }
 }
