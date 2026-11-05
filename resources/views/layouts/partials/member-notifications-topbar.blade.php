@@ -1,21 +1,19 @@
 @auth
 @php
-    use Illuminate\Support\Str;
-
     $topbarNotifications = auth()->user()?->notifications()->limit(50)->get() ?? collect();
 
     $notifyCategory = static function (array $data): string {
         $type = (string) ($data['type'] ?? '');
-        if (Str::contains($type, ['commission', 'payment', 'withdrawal', 'wallet'])) {
+        if (\Illuminate\Support\Str::contains($type, ['commission', 'payment', 'withdrawal', 'wallet'])) {
             return 'finance';
         }
-        if (Str::contains($type, ['kyc', 'activation', 'welcome', 'password'])) {
+        if (\Illuminate\Support\Str::contains($type, ['kyc', 'activation', 'welcome', 'password'])) {
             return 'account';
         }
-        if (Str::contains($type, ['downline', 'rank', 'network'])) {
+        if (\Illuminate\Support\Str::contains($type, ['downline', 'rank', 'network'])) {
             return 'network';
         }
-        if (Str::contains($type, ['package', 'order', 'purchase'])) {
+        if (\Illuminate\Support\Str::contains($type, ['package', 'order', 'purchase'])) {
             return 'orders';
         }
         return 'other';
@@ -24,16 +22,16 @@
     $notifyTone = static function (array $data): string {
         $type = (string) ($data['type'] ?? '');
         $ui = (string) ($data['ui_type'] ?? $data['severity'] ?? '');
-        if ($ui === 'danger' || Str::contains($type, ['reject', 'failed'])) {
+        if ($ui === 'danger' || \Illuminate\Support\Str::contains($type, ['reject', 'failed'])) {
             return 'orange';
         }
         if ($ui === 'warning') {
             return 'orange';
         }
-        if (Str::contains($type, ['kyc', 'activation', 'welcome', 'password'])) {
+        if (\Illuminate\Support\Str::contains($type, ['kyc', 'activation', 'welcome', 'password'])) {
             return 'teal';
         }
-        if (Str::contains($type, ['rank', 'downline'])) {
+        if (\Illuminate\Support\Str::contains($type, ['rank', 'downline'])) {
             return 'green';
         }
         return 'blue';
