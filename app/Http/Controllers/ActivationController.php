@@ -200,15 +200,9 @@ Cache::forget("descendants_{$user->id}");
                 'rank_level' => $rankLevel,
             ]);
 
-            $message = "Votre compte a ete active avec succes !";
-            $message .= "\nGrade: {$rankName} (Niv. {$rankLevel})";
-            
-            if ($package && $sponsorPV > 0 && $sponsorName) {
-                $message .= "\n\nVotre parrain {$sponsorName} a recu " . number_format($sponsorPV, 1) . " PV (10%)";
-            }
-
-            return redirect()->route('dashboard')
-                ->with('success', $message);
+            return redirect()
+                ->route('dashboard')
+                ->with('status', 'Votre compte a été activé avec succès !');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -341,20 +335,23 @@ Cache::forget("descendants_{$user->id}");
         }
     }
 
-    public function activateWithLink($code)
+    public function activateWithLink(Request $request, string $code)
     {
         $user = User::where('activation_code', $code)->first();
 
         if (!$user) {
-            return redirect()->route('login')->with('error', 'Code d\'activation invalide.');
+            return redirect()->route('login')
+                ->with('error', 'Lien d’activation invalide. Connectez-vous ou demandez un nouveau code.');
         }
 
         if ($user->is_active) {
-            return redirect()->route('login')->with('info', 'Ce compte est deja actif.');
+            return redirect()->route('login')
+                ->with('error', 'Ce compte est déjà actif. Connectez-vous pour continuer.');
         }
 
-        if ($user->activation_code_expires_at < now()) {
-            return redirect()->route('login')->with('error', 'Code d\'activation expire. Veuillez contacter l\'administrateur.');
+        if ($user->activation_code_expires_at && $user->activation_code_expires_at < now()) {
+            return redirect()->route('login')
+                ->with('error', 'Ce lien d’activation a expiré. Connectez-vous et demandez un nouveau code.');
         }
 
         $package = null;
@@ -437,24 +434,21 @@ Cache::forget("descendants_{$user->id}");
             }
 
             $user->refresh();
-            $rankName = $user->rank ?? 'Distributeur';
 
             Log::info('User activated with link', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'package_id' => $package?->id,
-                'rank' => $rankName,
+                'rank' => $user->rank ?? 'Distributeur',
             ]);
 
-            $message = "Votre compte a ete active avec succes !";
-            $message .= "\nGrade: {$rankName}";
-            
-            if ($package && $sponsorPV > 0 && $sponsorName) {
-                $message .= "\n\nVotre parrain {$sponsorName} a recu " . number_format($sponsorPV, 1) . " PV (10%)";
-            }
-            $message .= "\nVous pouvez maintenant vous connecter.";
+            // Connexion immédiate : is_active déjà true en BDD ; EnsureUserActive rechargera le user.
+            Auth::login($user->fresh());
+            $request->session()->regenerate();
 
-            return redirect()->route('login')->with('success', $message);
+            return redirect()
+                ->route('dashboard')
+                ->with('status', 'Votre compte a été activé avec succès !');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -462,7 +456,9 @@ Cache::forget("descendants_{$user->id}");
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
-            return redirect()->route('login')->with('error', 'Erreur: ' . $e->getMessage());
+
+            return redirect()->route('login')
+                ->with('error', 'Impossible d’activer le compte. Réessayez ou connectez-vous.');
         }
     }
 

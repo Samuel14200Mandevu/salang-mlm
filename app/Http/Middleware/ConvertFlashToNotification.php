@@ -20,6 +20,7 @@ class ConvertFlashToNotification
         if ($user) {
             $flashes = [
                 'success' => 'success',
+                'status' => 'success',
                 'error' => 'danger',
                 'info' => 'info',
                 'warning' => 'warning',
