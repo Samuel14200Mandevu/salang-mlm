@@ -28,7 +28,7 @@ class SocialiteController extends Controller
     public function redirect($provider)
     {
         if (!in_array($provider, $this->providers)) {
-            return redirect('/login')->with('error', 'This provider is not supported.');
+            return redirect('/login')->with('error', 'Ce fournisseur n’est pas pris en charge.');
         }
 
         if (request()->query('intent') === self::INTENT_LOGIN) {
@@ -60,13 +60,13 @@ class SocialiteController extends Controller
         session()->forget('socialite_intent');
 
         if (!$sponsorId) {
-            return redirect('/register')->with('error', 'You must have a sponsor ID to register.');
+            return redirect('/register')->with('error', 'Un code parrain est obligatoire pour s’inscrire.');
         }
 
         // Vérifier le format du code sponsor
         if (!preg_match('/^51[0-9]{4}$/', $sponsorId)) {
             session()->forget('sponsor_id');
-            return redirect('/register')->with('error', 'Invalid sponsor code format. Must start with 51 and have 6 digits.');
+            return redirect('/register')->with('error', 'Format de code parrain invalide : 6 chiffres commençant par 51.');
         }
 
         $sponsor = User::where('sponsor_id', $sponsorId)->first();
@@ -74,7 +74,7 @@ class SocialiteController extends Controller
         if (!$sponsor) {
             Log::error('Sponsor not found: ' . $sponsorId);
             session()->forget('sponsor_id');
-            return redirect('/register')->with('error', 'Invalid sponsor ID: ' . $sponsorId);
+            return redirect('/register')->with('error', 'ID de parrain invalide : '.$sponsorId);
         }
 
         Log::info('Sponsor found: ' . $sponsor->name);
@@ -93,7 +93,7 @@ class SocialiteController extends Controller
     public function callback($provider)
     {
         if (!in_array($provider, $this->providers)) {
-            return redirect('/login')->with('error', 'This provider is not supported.');
+            return redirect('/login')->with('error', 'Ce fournisseur n’est pas pris en charge.');
         }
 
         if (session('socialite_intent') === self::INTENT_LINK_GOOGLE) {
@@ -160,14 +160,14 @@ class SocialiteController extends Controller
         // ✅ Nouvel utilisateur - vérifier le sponsor
         $sponsorId = session('sponsor_id');
         if (!$sponsorId) {
-            return redirect('/register')->with('error', 'Sponsor ID required for registration.');
+            return redirect('/register')->with('error', 'Un code parrain est obligatoire pour s’inscrire.');
         }
 
         $sponsor = User::find($sponsorId);
         if (!$sponsor) {
             session()->forget('sponsor_id');
             session()->forget('social_provider');
-            return redirect('/register')->with('error', 'Invalid sponsor ID.');
+            return redirect('/register')->with('error', 'ID de parrain invalide.');
         }
 
         // Générer le code sponsor unique au format 51XXXX
@@ -251,7 +251,7 @@ class SocialiteController extends Controller
         } catch (\Exception $e) {
             Log::error('Social registration error: ' . $e->getMessage());
             Log::error('Trace: ' . $e->getTraceAsString());
-            return redirect('/register')->with('error', 'Error creating account: ' . $e->getMessage());
+            return redirect('/register')->with('error', 'Erreur lors de la création du compte : '.$e->getMessage());
         }
     }
 
@@ -367,14 +367,14 @@ class SocialiteController extends Controller
         $request->validate([
             'sponsor_id' => 'required|string'
         ], [
-            'sponsor_id.required' => 'Sponsor ID is required.',
+            'sponsor_id.required' => 'Le code parrain est obligatoire.',
         ]);
 
         // Vérifier le format du code sponsor
         if (!preg_match('/^51[0-9]{4}$/', $request->sponsor_id)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid sponsor code format. Must start with 51 and have 6 digits (e.g., 511739).'
+                'message' => 'Format de code parrain invalide : 6 chiffres commençant par 51 (ex. 511739).',
             ], 422);
         }
 
@@ -383,7 +383,7 @@ class SocialiteController extends Controller
         if (!$sponsor) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid sponsor ID. No user found.'
+                'message' => 'ID de parrain invalide. Aucun utilisateur trouvé.',
             ], 422);
         }
 
@@ -391,7 +391,7 @@ class SocialiteController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Sponsor ID validated.',
+            'message' => 'Code parrain validé.',
             'sponsor_name' => $sponsor->name,
             'sponsor_email' => $sponsor->email,
         ]);
