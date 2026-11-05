@@ -4,7 +4,9 @@ namespace App\Models;
 
 
 use App\Models\UserPvBalance;
+use App\Notifications\VerifyEmail;
 use App\Support\MlmPeriod;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,7 +19,7 @@ use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\TeamPVCalculator;
 use App\Jobs\RecalculateAfterPVImport;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -937,6 +939,14 @@ class User extends Authenticatable
     public function questionConversation(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(QuestionConversation::class);
+    }
+
+    /**
+     * Envoie la notification de vérification d'e-mail (queued → Resend via worker).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmail);
     }
 
     public function memberQuestionsEntryUrl(): string
