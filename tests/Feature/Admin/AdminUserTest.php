@@ -163,6 +163,39 @@ class AdminUserTest extends TestCase
         ]);
     }
 
+    public function test_admin_delete_via_form_method_spoof_redirects_to_index(): void
+    {
+        $this->createRanks();
+
+        $parrain = User::factory()->create(['is_active' => true]);
+        $member = User::factory()->create([
+            'is_active' => true,
+            'parrain_id' => $parrain->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->from(route('admin.users.show', $member->id))
+            ->post(route('admin.users.destroy', $member->id), [
+                '_method' => 'DELETE',
+            ]);
+
+        $response->assertRedirect(route('admin.users'));
+        $this->assertDatabaseMissing('users', ['id' => $member->id]);
+    }
+
+    public function test_admin_delete_already_missing_user_redirects_without_404(): void
+    {
+        $this->createRanks();
+
+        $response = $this->actingAs($this->admin)
+            ->from(route('admin.users'))
+            ->delete('/admin/users/999999');
+
+        $response->assertRedirect(route('admin.users'));
+        $response->assertSessionHas('info');
+        $this->assertSame(302, $response->status());
+    }
+
     public function test_non_admin_cannot_access_admin_panel(): void
     {
         $response = $this->actingAs($this->user)->get('/admin/users');

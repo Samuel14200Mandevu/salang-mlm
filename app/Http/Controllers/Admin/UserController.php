@@ -712,12 +712,21 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
+        // Évite un 404 (findOrFail) si double-soumission / membre déjà absent.
+        $user = User::find($id);
+
+        if (! $user) {
+            return redirect()->route('admin.users')
+                ->with('info', 'Cet utilisateur a déjà été supprimé.');
+        }
 
         if (auth()->id() == $user->id) {
             return redirect()->route('admin.users')
                 ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
+
+        $userName = $user->name;
+        $affectedUserIds = [];
 
         DB::beginTransaction();
 
@@ -734,8 +743,6 @@ class UserController extends Controller
                 Storage::disk('public')->delete('avatars/' . $user->avatar);
             }
 
-            $affectedUserIds = [];
-
             if ($user->parrain_id) {
                 $parrain = User::find($user->parrain_id);
                 if ($parrain) {
@@ -751,33 +758,47 @@ class UserController extends Controller
 
             User::where('parrain_id', $user->id)->update(['parrain_id' => null]);
 
+            // Nettoyer les rôles Spatie (pas de FK cascade sur model_has_roles).
+            $user->roles()->detach();
+            $user->permissions()->detach();
+
             $user->delete();
 
             DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting user', [
+                'user_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
 
-            if (!empty($affectedUserIds)) {
+            // Jamais back() vers /admin/users/{id} : après un échec partiel ou un
+            // second essai, la fiche peut ne plus exister → 404.
+            return redirect()->route('admin.users')
+                ->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
+        }
+
+        try {
+            if (! empty($affectedUserIds)) {
                 RecalculateAfterPVImport::dispatch(
                     array_unique($affectedUserIds),
                     MlmPeriod::current()
                 )->onQueue('rank-recalculation');
             }
-
-            Log::info('User deleted + recalcul dispatché', [
-                'user_id' => $id,
-                'affected_users' => count($affectedUserIds),
-            ]);
-
-            return redirect()->route('admin.users')
-                ->with('success', "Utilisateur {$user->name} supprimé avec succès.");
-
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error deleting user', [
+            Log::error('Recalcul après suppression utilisateur échoué', [
                 'user_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
+
+        Log::info('User deleted + recalcul dispatché', [
+            'user_id' => $id,
+            'affected_users' => count($affectedUserIds),
+        ]);
+
+        return redirect()->route('admin.users')
+            ->with('success', "Utilisateur {$userName} supprimé avec succès.");
     }
 
     public function toggleStatus($id)
