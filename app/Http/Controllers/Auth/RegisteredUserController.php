@@ -8,8 +8,6 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Rank;
-use App\Notifications\WelcomeNotification;
-use App\Notifications\ActivationCodeNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -122,10 +120,7 @@ class RegisteredUserController extends Controller
             $sponsorCode = $this->generateSponsorId();
             $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
 
-            // ✅ Générer le code d'activation
-            $activationCode = \App\Support\ActivationCodeGenerator::generate();
-
-            // ✅ Créer l'utilisateur avec is_active = false
+            // Compte inactif sans code : l'admin génère et envoie le code depuis Activations.
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -135,10 +130,10 @@ class RegisteredUserController extends Controller
                 'parrain_id' => $sponsor->id,
                 'rank_id' => $rankId,
                 'rank' => 'Distributor',
-                'is_active' => false, 
-                'activation_code' => $activationCode, 
-                'activation_code_expires_at' => now()->addDays(7), 
-                'ip_address' => $request->ip(),  
+                'is_active' => false,
+                'activation_code' => null,
+                'activation_code_expires_at' => null,
+                'ip_address' => $request->ip(),
                 'last_login_at' => now(),
                 'pv_balance' => 0,
                 'bv_balance' => 0,
@@ -155,12 +150,11 @@ class RegisteredUserController extends Controller
                 'kyc_status' => 'not_submitted',
             ]);
 
-            Log::info('User created successfully (inactive)', [
+            Log::info('User created successfully (inactive, awaiting admin activation code)', [
                 'user_id' => $user->id,
                 'sponsor_id' => $user->sponsor_id,
                 'parrain_id' => $user->parrain_id,
                 'sponsor_name' => $sponsor->name,
-                'activation_code' => $activationCode,
             ]);
 
             // ✅ Créer le wallet
@@ -198,24 +192,16 @@ class RegisteredUserController extends Controller
 
             DB::commit();
 
-            // ✅ Envoyer la notification de bienvenue AVEC le code d'activation
-            try {
-                $user->notify(new ActivationCodeNotification($activationCode));
-            } catch (\Exception $e) {
-                Log::error('Error sending activation notification: ' . $e->getMessage());
-            }
-
             event(new Registered($user));
 
-            // ✅ Connecter l'utilisateur (même inactif) pour qu'il puisse activer son compte
+            // Connecter l'utilisateur (même inactif) pour accéder à /activate
             Auth::login($user);
 
-            // ✅ Vider le cache des compteurs
             Cache::forget('user_count');
             Cache::forget('active_user_count');
 
             return redirect()->route('activate.index')
-                ->with('warning', 'Votre compte a été créé avec succès. Veuillez l\'activer en achetant un package ou en utilisant le code d\'activation envoyé par email.');
+                ->with('warning', 'Votre compte est en attente d\'activation. L\'administrateur vous enverra un code d\'activation.');
 
         } catch (QueryException $e) {
             DB::rollBack();

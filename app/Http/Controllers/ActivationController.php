@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Package;
-use App\Notifications\ActivationCodeNotification;
 use App\Notifications\ActivationRequestReceivedNotification;
 use App\Notifications\MemberActivationRequestAdminNotification;
-use App\Services\SmsService;
 use App\Services\MLM\CommissionDistributor;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Models\CommissionPeriod;
@@ -466,81 +464,10 @@ Cache::forget("descendants_{$user->id}");
 
     public function resendCode(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user) {
-            return redirect()->route('login')->with('error', 'Veuillez vous connecter.');
-        }
-
-        if ($user->is_active) {
-            return redirect()->route('dashboard')->with('info', 'Votre compte est deja actif.');
-        }
-
-        $method = $request->input('method', 'email');
-
-        $cacheKey = "resend_code_{$user->id}_{$method}_" . date('Y-m-d');
-        $resendCount = Cache::get($cacheKey, 0);
-
-        if ($resendCount >= 3) {
-            return back()->with('error', "Vous avez deja demande 3 codes par {$method} aujourd'hui.");
-        }
-
-        $newCode = 'ACT-' . strtoupper(substr(md5(uniqid() . time()), 0, 12));
-        
-        $user->update([
-            'activation_code' => $newCode,
-            'activation_code_expires_at' => now()->addDays(7),
-        ]);
-
-        $package = null;
-        if ($user->activation_package_id) {
-            $package = Package::find($user->activation_package_id);
-        }
-
-        $success = false;
-
-        try {
-            if ($method === 'email') {
-                $user->notify(new ActivationCodeNotification($newCode, $package));
-                $success = true;
-                $message = 'Un nouveau code a ete envoye a votre adresse email.';
-            } 
-            elseif ($method === 'sms') {
-                $request->validate([
-                    'phone' => 'required|string|max:20',
-                ]);
-
-                $user->phone = $request->phone;
-                $user->save();
-
-                $smsService = app(SmsService::class);
-                $provider = $smsService->detectProvider($request->phone);
-                
-                $smsSent = $smsService->sendActivationCode($request->phone, $newCode, $provider);
-
-                if ($smsSent) {
-                    $success = true;
-                    $providerName = ucfirst($provider);
-                    $message = "Un nouveau code a ete envoye par SMS via {$providerName} a votre numero de telephone.";
-                } else {
-                    throw new \Exception('Erreur lors de l\'envoi du SMS.');
-                }
-            }
-
-            if ($success) {
-                Cache::put($cacheKey, $resendCount + 1, now()->addDay());
-                return back()->with('success', $message);
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error resending activation code: ' . $e->getMessage(), [
-                'user_id' => $user->id,
-                'method' => $method,
-            ]);
-            return back()->with('error', 'Erreur lors de l\'envoi du code. Veuillez reessayer.');
-        }
-
-        return back()->with('error', 'Methode non supportee.');
+        // Le renvoi de code est réservé à l'admin (Générer et envoyer).
+        return redirect()
+            ->route('activate.index')
+            ->with('error', 'Seul l\'administrateur peut renvoyer le code.');
     }
 
     private function calculateCommissionsForPackage($user, $package)

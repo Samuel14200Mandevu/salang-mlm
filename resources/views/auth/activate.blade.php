@@ -48,28 +48,9 @@
             </button>
         </form>
 
-        <details class="auth-activate-details">
-            <summary>Code non reçu · renvoi par email ou SMS</summary>
-            <div class="auth-activate-resend">
-                <form action="{{ route('activate.resend') }}" method="POST" class="auth-activate-resend-form">
-                    @csrf
-                    <input type="hidden" name="method" value="email">
-                    <button type="submit" class="auth-btn-outline">Renvoyer par email</button>
-                </form>
-
-                <form action="{{ route('activate.resend') }}" method="POST" class="auth-activate-resend-form">
-                    @csrf
-                    <input type="hidden" name="method" value="sms">
-                    <div class="auth-form-group mb-0">
-                        <label for="activate_phone" class="sr-only">Numéro de téléphone</label>
-                        <input type="tel" name="phone" id="activate_phone" class="auth-input"
-                               placeholder="+243 …" required autocomplete="tel">
-                    </div>
-                    <button type="submit" class="auth-btn-outline" data-loading-text="Envoi…">Envoyer par SMS</button>
-                </form>
-                <p class="auth-hint">Orange, Airtel, Vodacom — détection automatique de l’opérateur.</p>
-            </div>
-        </details>
+        <p class="auth-hint mt-3">
+            Code non reçu ? Contactez l’administrateur, ou utilisez le bouton « Demander l’activation à l’admin » ci-dessous.
+        </p>
     </section>
 
     <div class="auth-divider" role="separator">ou</div>

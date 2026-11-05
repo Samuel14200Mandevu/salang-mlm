@@ -104,7 +104,7 @@ class GoogleSocialiteTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_google_registration_creates_inactive_user_and_sends_activation_notification(): void
+    public function test_google_registration_creates_inactive_user_without_activation_code(): void
     {
         Notification::fake();
 
@@ -133,10 +133,11 @@ class GoogleSocialiteTest extends TestCase
         $user = User::where('email', 'newgoogle@example.com')->first();
         $this->assertNotNull($user);
         $this->assertFalse($user->is_active);
-        $this->assertNotNull($user->activation_code);
+        $this->assertNull($user->activation_code);
+        $this->assertNull($user->activation_code_expires_at);
         $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('activate.index'));
 
-        Notification::assertSentTo($user, ActivationCodeNotification::class);
+        Notification::assertNotSentTo($user, ActivationCodeNotification::class);
     }
 }

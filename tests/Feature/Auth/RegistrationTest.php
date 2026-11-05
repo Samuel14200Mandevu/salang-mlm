@@ -54,6 +54,8 @@ class RegistrationTest extends TestCase
 
         $user = User::where('email', 'test@example.com')->first();
         $this->assertFalse($user->is_active);
-        $this->assertNotNull($user->activation_code);
+        $this->assertNull($user->activation_code);
+        $this->assertNull($user->activation_code_expires_at);
     }
 }
+

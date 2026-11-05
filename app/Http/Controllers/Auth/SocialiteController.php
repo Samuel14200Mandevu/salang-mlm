@@ -7,8 +7,6 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Rank;
-use App\Notifications\ActivationCodeNotification;
-use App\Support\ActivationCodeGenerator;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
@@ -175,9 +173,8 @@ class SocialiteController extends Controller
 
         try {
             $rankId = Rank::where('slug', 'distributor')->first()?->id ?? 1;
-            $activationCode = ActivationCodeGenerator::generate();
 
-            // ✅ Créer l'utilisateur avec provider et provider_id (inactif jusqu'à activation)
+            // Compte inactif sans code : l'admin génère et envoie le code depuis Activations.
             $user = User::create([
                 'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? $socialUser->getEmail(),
                 'email' => $socialUser->getEmail(),
@@ -188,8 +185,8 @@ class SocialiteController extends Controller
                 'rank_id' => $rankId,
                 'rank' => 'Distributor',
                 'is_active' => false,
-                'activation_code' => $activationCode,
-                'activation_code_expires_at' => now()->addDays(7),
+                'activation_code' => null,
+                'activation_code_expires_at' => null,
                 'provider' => $provider,
                 'provider_id' => $socialUser->getId(),
                 'pv_balance' => 0,
@@ -237,16 +234,10 @@ class SocialiteController extends Controller
             session()->forget('sponsor_id');
             session()->forget('social_provider');
 
-            try {
-                $user->notify(new ActivationCodeNotification($activationCode));
-            } catch (\Exception $e) {
-                Log::error('Error sending activation notification (social): '.$e->getMessage());
-            }
-
             Auth::login($user);
 
             return redirect()->route('activate.index')
-                ->with('warning', 'Votre compte a été créé. Activez-le en achetant un package, avec votre code guichet, ou via une demande à l\'administration.');
+                ->with('warning', 'Votre compte est en attente d\'activation. L\'administrateur vous enverra un code d\'activation.');
 
         } catch (\Exception $e) {
             Log::error('Social registration error: ' . $e->getMessage());
