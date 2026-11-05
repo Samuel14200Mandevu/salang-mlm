@@ -455,6 +455,8 @@ Cache::forget("descendants_{$user->id}");
             Log::error('Erreur activation avec lien', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile().':'.$e->getLine(),
             ]);
 
             return redirect()->route('login')
