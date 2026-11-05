@@ -29,7 +29,8 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $activateUrl = route('activate.index');
+        $magicUrl = route('activate.account', ['code' => $this->activationCode]);
+        $activatePageUrl = route('activate.index');
         $packagesUrl = route('subscriptions.index');
 
         $message = (new MailMessage)
@@ -48,10 +49,11 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
         }
 
         $message->line('**Comment activer votre compte :**')
-            ->line('1. **Achat d\'un package en ligne** — souscrivez depuis votre espace membre.')
-            ->line('2. **Paiement au guichet** — saisissez le code ci-dessus sur la page d\'activation.')
-            ->line('3. **Demande à l\'administration** — depuis la page d\'activation, envoyez une demande ; l\'équipe pourra activer votre compte manuellement.')
-            ->action('Page d\'activation', $activateUrl)
+            ->line('1. Cliquez sur le bouton ci-dessous pour activer immédiatement (lien magique).')
+            ->line('2. Ou saisissez le code guichet sur la page d\'activation (après connexion).')
+            ->line('3. Ou achetez un package en ligne / demandez l\'activation à l\'administration.')
+            ->action('Activer mon compte', $magicUrl)
+            ->line('Lien de secours (saisie manuelle) : '.$activatePageUrl)
             ->line('Packages en ligne : '.$packagesUrl)
             ->salutation('L\'équipe Salang MLM');
 
@@ -60,13 +62,12 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
 
     public function toArray($notifiable): array
     {
-        $activateUrl = route('activate.index');
+        $magicUrl = route('activate.account', ['code' => $this->activationCode]);
+        $activatePageUrl = route('activate.index');
         $packagesUrl = route('subscriptions.index');
 
-        $instructions = 'Votre compte est inactif. Pour l\'activer : (1) achetez un package en ligne ; '
-            .'(2) payez au guichet et saisissez votre code '.$this->activationCode.' ; '
-            .'(3) demandez l\'activation à l\'administration depuis la page d\'activation. '
-            .'Code valable 7 jours.';
+        $instructions = 'Votre compte est inactif. Activez-le via le lien magique, ou saisissez le code '
+            .$this->activationCode.' sur la page d\'activation (valable 7 jours).';
 
         $data = [
             'type' => 'account_pending_activation',
@@ -74,9 +75,10 @@ class ActivationCodeNotification extends Notification implements ShouldQueue
             'message' => $instructions,
             'code' => $this->activationCode,
             'expires_in' => '7 jours',
-            'activate_url' => $activateUrl,
+            'activate_url' => $activatePageUrl,
+            'magic_url' => $magicUrl,
             'packages_url' => $packagesUrl,
-            'action_url' => $activateUrl,
+            'action_url' => $magicUrl,
         ];
 
         if ($this->package) {
