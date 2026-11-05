@@ -4,7 +4,20 @@
 @section('title', 'Portefeuille')
 
 @section('content')
-<div class="member-wallet member-wallet--fintech space-y-4 sm:space-y-6">
+<div class="member-wallet member-wallet--fintech space-y-4 sm:space-y-6"
+     @if(!empty($autoRefreshPending))
+         data-wallet-auto-refresh="1"
+         data-refresh-interval="10000"
+         data-pending-count="{{ (int) ($pendingDepositCount ?? 0) }"
+     @endif
+>
+    @if(!empty($autoRefreshPending))
+        <div class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+            {{ (int) ($pendingDepositCount ?? 0) }} dépôt(s) en attente de confirmation réseau.
+            Cette page se rafraîchit automatiquement toutes les 10&nbsp;secondes.
+        </div>
+    @endif
+
     {{-- Mobile : style Binance / fintech --}}
     <div class="member-fintech-shell">
         @include('wallet.partials.fintech-hero')
@@ -108,3 +121,17 @@
     </div>
 </div>
 @endsection
+
+@if(!empty($autoRefreshPending))
+@push('scripts')
+<script>
+(function () {
+    var el = document.querySelector('[data-wallet-auto-refresh="1"]');
+    if (!el) return;
+    var ms = parseInt(el.getAttribute('data-refresh-interval') || '10000', 10) || 10000;
+    setTimeout(function () { window.location.reload(); }, ms);
+})();
+</script>
+@endpush
+@endif
+

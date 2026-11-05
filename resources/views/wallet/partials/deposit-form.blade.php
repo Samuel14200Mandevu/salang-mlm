@@ -10,6 +10,7 @@
     class="member-withdraw-form member-deposit-form {{ $isFintech ? 'member-withdraw-form--fintech' : '' }}"
     data-withdraw-form
     data-require-dest="0"
+    data-require-phone-for="mobile_money"
     data-min="1"
     data-max="{{ $maxAmount }}"
     data-fee-rate="0"
@@ -127,8 +128,20 @@
                 <option value="mpesa">M-Pesa</option>
             </select>
             <label class="member-withdraw-field__label mt-3" for="{{ $formId }}_phone">Numéro Mobile Money</label>
-            <input type="tel" name="phone_number" id="{{ $formId }}_phone" class="member-withdraw-field__input" placeholder="2438XXXXXXXX" autocomplete="tel" inputmode="tel">
-            <p class="member-withdraw-amount__avail mt-1">Format RDC : 243XXXXXXXXX (12 chiffres)</p>
+            <input
+                type="tel"
+                name="phone_number"
+                id="{{ $formId }}_phone"
+                class="member-withdraw-field__input @error('phone_number') input-error @enderror"
+                placeholder="2438XXXXXXXX"
+                autocomplete="tel"
+                inputmode="tel"
+                data-deposit-phone
+            >
+            @error('phone_number')
+                <p class="member-withdraw-form__error">{{ $message }}</p>
+            @enderror
+            <p class="member-withdraw-amount__avail mt-1">Format RDC : 243XXXXXXXXX (12 chiffres) — obligatoire</p>
         </div>
 
         <div class="member-withdraw-dest hidden" data-withdraw-fields="bank" hidden>
@@ -142,7 +155,7 @@
             Confirmer le dépôt
         </button>
         <p class="member-withdraw-form__legal">
-            Le crédit est immédiat après validation du paiement. Conservez votre preuve de transaction.
+            Votre paiement sera traité dès validation par l'opérateur. Conservez votre preuve de transaction.
         </p>
     </div>
 </form>

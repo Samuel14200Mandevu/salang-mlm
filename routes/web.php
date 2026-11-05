@@ -115,8 +115,9 @@ Route::view('/cookie-policy', 'pages.cookie-policy')->name('cookie-policy');
 // WEBHOOKS (PUBLIC) - Sans CSRF
 // ============================================================
 Route::prefix('webhook')->group(function () {
+    // Pas de middleware HMAC générique : FlexPay ne signe pas comme Stripe.
+    // Validité via FlexPayService::handleCallback (+ check statut optionnel).
     Route::post('/flexpay', [WebhookController::class, 'flexpay'])
-        ->middleware('webhook.verify:flexpay')
         ->name('webhook.flexpay')
         ->withoutMiddleware(['csrf']);
 

@@ -12,7 +12,17 @@
     ];
 @endphp
 
-<div class="member-deposit member-deposit--fintech">
+<div class="member-deposit member-deposit--fintech"
+     @if(!empty($autoRefreshPending))
+         data-wallet-auto-refresh="1"
+         data-refresh-interval="10000"
+     @endif
+>
+    @if(!empty($autoRefreshPending))
+        <div class="mx-3 sm:mx-0 mb-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+            Dépôt(s) en attente de confirmation. Actualisation automatique toutes les 10&nbsp;secondes.
+        </div>
+    @endif
     <div class="member-fintech-shell">
         @include('wallet.partials.fintech-deposit-hero')
 
@@ -79,3 +89,17 @@
     </div>
 </div>
 @endsection
+
+@if(!empty($autoRefreshPending))
+@push('scripts')
+<script>
+(function () {
+    var el = document.querySelector('[data-wallet-auto-refresh="1"]');
+    if (!el) return;
+    var ms = parseInt(el.getAttribute('data-refresh-interval') || '10000', 10) || 10000;
+    setTimeout(function () { window.location.reload(); }, ms);
+})();
+</script>
+@endpush
+@endif
+

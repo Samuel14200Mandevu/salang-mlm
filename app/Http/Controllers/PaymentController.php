@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\FlexPayService;
 use App\Services\PaymentService;
 use App\Models\Order;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -192,7 +193,34 @@ class PaymentController extends Controller
     {
         $message = $request->session()->get('success', 'Votre paiement a été effectué avec succès.');
 
-        return view('payment.success', compact('message'));
+        // Binance append ?trx-id={transaction.id} sur returnUrl
+        $trxId = $request->query('trx-id') ?? $request->query('trx_id');
+        $reference = $request->query('reference');
+
+        $transaction = null;
+        if ($trxId) {
+            $transaction = Transaction::query()->find($trxId);
+        } elseif ($reference) {
+            $transaction = Transaction::query()->where('reference', $reference)->first();
+        }
+
+        // Sécurité : un membre ne voit que ses propres tx (sauf admin)
+        if ($transaction && Auth::check()) {
+            $user = Auth::user();
+            if ((int) $transaction->user_id !== (int) $user->id && ! $user->hasRole('admin')) {
+                $transaction = null;
+            }
+        }
+
+        $paymentStatus = $transaction?->status ?? 'unknown';
+        $autoRefreshPending = $paymentStatus === 'pending';
+
+        return view('payment.success', compact(
+            'message',
+            'transaction',
+            'paymentStatus',
+            'autoRefreshPending'
+        ));
     }
 
     public function cancel(Request $request)

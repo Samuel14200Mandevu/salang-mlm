@@ -40,7 +40,8 @@ class WebhookController extends Controller
 
     /**
      * Webhook FlexPay (Orange Money, Airtel Money, M-Pesa).
-     * La logique métier (idempotence + crédit) est dans FlexPayService.
+     * Pas de middleware HMAC générique : validation via SDK handleCallback (+ check statut).
+     * Crédit idempotent dans FlexPayService::processCallback.
      */
     public function flexpay(Request $request)
     {

@@ -76,6 +76,19 @@ class WalletController extends Controller
 
         $bonusByType = $this->commissionBreakdown->paidByType($user->id);
 
+        $pendingDepositCount = Transaction::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'deposit')
+            ->where('status', 'pending')
+            ->where(function ($q) {
+                $q->whereIn('provider', ['orange', 'airtel', 'mpesa', 'flexpay', 'binance'])
+                    ->orWhere('reference', 'like', 'FP-%')
+                    ->orWhere('reference', 'like', 'BP%');
+            })
+            ->count();
+
+        $autoRefreshPending = $pendingDepositCount > 0;
+
         return view('wallet.index', compact(
             'balance',
             'pendingBalance',
@@ -87,7 +100,9 @@ class WalletController extends Controller
             'bonusByType',
             'activityOverview',
             'activityPeriod',
-            'activityPeriodLabel'
+            'activityPeriodLabel',
+            'pendingDepositCount',
+            'autoRefreshPending'
         ));
     }
 
@@ -205,7 +220,15 @@ class WalletController extends Controller
             ->take(10)
             ->get();
 
-        return view('wallet.deposit', compact('balance', 'deposits'));
+        $pendingDepositCount = $deposits->where('status', 'pending')->count();
+        $autoRefreshPending = $pendingDepositCount > 0;
+
+        return view('wallet.deposit', compact(
+            'balance',
+            'deposits',
+            'pendingDepositCount',
+            'autoRefreshPending'
+        ));
     }
 
     public function storeDeposit(Request $request)

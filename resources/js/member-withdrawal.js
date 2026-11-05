@@ -13,6 +13,7 @@ function initWithdrawForm(form) {
     const feeRate = parseFloat(form.dataset.feeRate || '0.025') || 0.025;
     const minAmount = parseFloat(form.dataset.min || '10') || 10;
     const requireDest = form.dataset.requireDest !== '0';
+    const requirePhoneFor = (form.dataset.requirePhoneFor || '').trim();
     const maxAmount = form.dataset.max
         ? parseFloat(form.dataset.max) || 0
         : balance;
@@ -35,13 +36,25 @@ function initWithdrawForm(form) {
         return methodSelect ? methodSelect.value : 'crypto';
     }
 
+    function phoneRequiredForActiveMethod() {
+        return requirePhoneFor !== '' && activeMethod() === requirePhoneFor;
+    }
+
+    function visiblePhoneInput() {
+        const group = form.querySelector('[data-withdraw-fields="mobile_money"]');
+        if (!group || group.hidden) {
+            return null;
+        }
+        return group.querySelector('[data-deposit-phone], input[name="phone_number"]');
+    }
+
     function visibleDestInput() {
         const method = activeMethod();
         const group = form.querySelector('[data-withdraw-fields="' + method + '"]');
         if (!group) {
             return null;
         }
-        return group.querySelector('input, textarea');
+        return group.querySelector('input:not([data-deposit-phone]), textarea');
     }
 
     function syncFieldRequirements() {
@@ -50,8 +63,16 @@ function initWithdrawForm(form) {
             const isActive = method === activeMethod();
             group.hidden = !isActive;
             group.classList.toggle('hidden', !isActive);
-            group.querySelectorAll('input, textarea').forEach(function (el) {
-                el.required = isActive && requireDest;
+
+            group.querySelectorAll('input, textarea, select').forEach(function (el) {
+                const isPhone = el.matches('[data-deposit-phone], input[name="phone_number"]');
+                if (isPhone) {
+                    el.required = isActive && phoneRequiredForActiveMethod();
+                } else if (el.tagName === 'SELECT' && el.name === 'provider') {
+                    el.required = false;
+                } else {
+                    el.required = isActive && requireDest && !isPhone;
+                }
                 if (!isActive) {
                     el.removeAttribute('aria-invalid');
                 }
@@ -95,14 +116,23 @@ function initWithdrawForm(form) {
 
         const dest = visibleDestInput();
         const destOk = !requireDest || (dest ? String(dest.value || '').trim().length > 0 : false);
+
+        let phoneOk = true;
+        if (phoneRequiredForActiveMethod()) {
+            const phone = visiblePhoneInput();
+            phoneOk = !!(phone && String(phone.value || '').trim().length >= 9);
+        }
+
         let amountOk = amount >= minAmount && amount <= maxAmount;
         if (!isDeposit && balance <= 0) {
             amountOk = false;
         }
 
+        const canSubmit = amountOk && destOk && phoneOk;
+
         if (submitBtn) {
-            submitBtn.disabled = !(amountOk && destOk);
-            if (amountOk && destOk) {
+            submitBtn.disabled = !canSubmit;
+            if (canSubmit) {
                 submitBtn.textContent = 'Confirmer ' + formatUsd(amount);
             } else {
                 submitBtn.textContent = defaultSubmitLabel;
@@ -130,9 +160,25 @@ function initWithdrawForm(form) {
     }
 
     fieldGroups.forEach(function (group) {
-        group.querySelectorAll('input, textarea').forEach(function (el) {
+        group.querySelectorAll('input, textarea, select').forEach(function (el) {
             el.addEventListener('input', updateSummary);
+            el.addEventListener('change', updateSummary);
         });
+    });
+
+    form.addEventListener('submit', function (event) {
+        if (phoneRequiredForActiveMethod()) {
+            const phone = visiblePhoneInput();
+            if (!phone || String(phone.value || '').trim().length < 9) {
+                event.preventDefault();
+                if (phone) {
+                    phone.setAttribute('aria-invalid', 'true');
+                    phone.focus();
+                }
+                return false;
+            }
+        }
+        return true;
     });
 
     const preselected = form.querySelector('.member-withdraw-method.is-selected');

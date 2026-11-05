@@ -197,7 +197,16 @@ class FlexPayService
             ];
         }
 
+        // handleCallback parse la réponse ; en cas de succès déclaré, on confirme
+        // éventuellement auprès de l'API FlexPay (check) avant de créditer.
         $isPaid = $payment->isSuccessful();
+        if ($isPaid && $orderNumber) {
+            $check = $this->verifierStatut((string) $orderNumber);
+            if (($check['success'] ?? false) === true) {
+                $isPaid = (bool) ($check['paid'] ?? false);
+            }
+            // Si le check API échoue (réseau), on s'appuie sur handleCallback ($isPaid reste true).
+        }
 
         return DB::transaction(function () use ($payment, $payload, $reference, $orderNumber, $isPaid) {
             $query = Transaction::query()->where(function ($q) use ($reference, $orderNumber) {
