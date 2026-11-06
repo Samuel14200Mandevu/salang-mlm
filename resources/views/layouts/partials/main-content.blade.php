@@ -1,5 +1,12 @@
         @php
             $isMemberHomeTopbar = request()->routeIs('dashboard');
+            $memberTopTabs = [
+                ['label' => 'Accueil', 'route' => 'dashboard', 'match' => 'dashboard', 'params' => []],
+                ['label' => 'Services', 'route' => 'services.index', 'match' => 'services.*', 'params' => []],
+                ['label' => 'Boutique', 'route' => 'products.index', 'match' => 'products.*', 'params' => []],
+                ['label' => 'Réseau', 'route' => 'network.index', 'match' => 'network.*', 'params' => []],
+                ['label' => 'Portefeuille', 'route' => 'wallet.index', 'match' => 'wallet.*', 'params' => []],
+            ];
         @endphp
         <div class="main-wrapper {{ $isMemberHomeTopbar ? 'main-wrapper--member-home' : '' }}"
              :style="{
@@ -9,9 +16,24 @@
 
             <nav class="cashier-topbar member-topbar member-mobile-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0 {{ $isMemberHomeTopbar ? 'member-mobile-topbar--home' : '' }}" aria-label="Barre supérieure">
                 <div class="px-3 sm:px-4 lg:px-6">
-                    <div class="flex justify-between items-center h-14 sm:h-16">
-                        
-                        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 member-mobile-topbar__start">
+                    <div class="flex justify-between items-center h-14 sm:h-16 gap-2">
+
+                        <a href="{{ route('dashboard') }}"
+                           class="admin-topbar-brand items-center gap-2.5 shrink-0 no-underline"
+                           aria-label="Salang Group — Health Care International">
+                            <img src="{{ asset('images/salang_logo.png') }}"
+                                 alt="Salang"
+                                 width="120"
+                                 height="40"
+                                 decoding="async"
+                                 class="admin-topbar-brand__logo logo-themeable">
+                            <span class="admin-topbar-brand__text">
+                                <span class="admin-topbar-brand__title">Salang Group</span>
+                                <span class="admin-topbar-brand__subtitle">Health Care International</span>
+                            </span>
+                        </a>
+
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 member-mobile-topbar__start md:hidden">
                             <button type="button"
                                     @click="sidebarOpen = !sidebarOpen; if (!isMobile && typeof window.salangPersistSidebarOpen === 'function') window.salangPersistSidebarOpen(sidebarOpen)"
                                     class="member-mobile-topbar__menu p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0"
@@ -20,7 +42,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
-                            
+
                             <div class="min-w-0 flex-1 member-mobile-topbar__title">
                                 @if(isset($header) && $header)
                                     <div class="truncate text-base sm:text-lg font-semibold text-[var(--text-primary)]">{{ $header }}</div>
@@ -31,11 +53,35 @@
                                 @endif
                             </div>
                         </div>
-                        
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0 member-mobile-topbar__actions">
+
+                        {{-- Onglets Quixotic (desktop) — pas de classe "hidden" :
+                             .member-app .hidden { display:none } casse md:flex --}}
+                        <div class="admin-quixotic-tabs-host flex flex-1 items-center justify-center min-w-0 px-2 max-md:hidden">
+                            <div class="admin-quixotic-tabs flex items-center gap-1">
+                                @foreach($memberTopTabs as $tab)
+                                    @php
+                                        $tabActive = request()->routeIs($tab['match']);
+                                        try {
+                                            $tabHref = route($tab['route'], $tab['params']);
+                                        } catch (\Throwable $e) {
+                                            $tabHref = '#';
+                                        }
+                                    @endphp
+                                    <a href="{{ $tabHref }}"
+                                       @class([
+                                           'admin-quixotic-tab px-3 py-1.5 text-sm font-medium rounded-xl transition-colors whitespace-nowrap',
+                                           'is-active' => $tabActive,
+                                       ])>
+                                        {{ $tab['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 member-mobile-topbar__actions">
 
                             <a href="{{ route('cart.index') }}"
-                               class="member-topbar-hide-mobile member-mobile-topbar__cart p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors relative hidden md:inline-flex"
+                               class="member-topbar-hide-mobile member-mobile-topbar__cart p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors relative inline-flex max-md:hidden"
                                aria-label="Panier">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -47,10 +93,9 @@
                                 @include('layouts.partials.member-notifications-topbar')
                             @endauth
 
-                            <!-- Changement de thème -->
                             <button type="button"
                                     id="theme-toggle"
-                                    class="member-mobile-topbar__theme p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                                    class="member-mobile-topbar__theme p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors"
                                     aria-label="Changer de thème">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -58,94 +103,66 @@
                                 </svg>
                             </button>
 
-                            <!-- Profil -->
                             @auth
                                 <div class="relative member-mobile-topbar__profile" x-data="{ open: false }">
                                     <button type="button"
-                                            @click="open = !open" 
-                                            class="member-topbar-compact flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                                            @click="open = !open"
+                                            class="member-topbar-compact flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors"
                                             aria-label="Menu profil"
                                             :aria-expanded="open">
-                                        <span class="hidden md:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
+                                        <span class="inline max-md:hidden text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
                                             {{ Auth::user()?->name }}
                                         </span>
-                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 overflow-hidden">
                                             @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
-                                                <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}" 
-                                                     alt="Avatar" 
+                                                <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
+                                                     alt="Avatar"
                                                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover">
                                             @else
                                                 {{ strtoupper(substr((string) Auth::user()?->name, 0, 1)) }}
                                             @endif
                                         </div>
                                     </button>
-                                    
-                                    <div x-show="open" @click.away="open = false" 
-                                         class="absolute right-0 mt-2 w-48 sm:w-56 py-1 z-50 bg-[var(--bg-card)] rounded-lg shadow-sm border border-[var(--border-color)]"
+
+                                    <div x-show="open" @click.away="open = false"
+                                         class="absolute right-0 mt-2 w-48 sm:w-56 py-1 z-50 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-md)] border border-[var(--border-color)]"
                                          x-transition:enter="transition ease-out duration-200"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
                                          style="display: none;">
-                                        
+
                                         <div class="px-4 py-2 border-b border-[var(--border-color)] sm:hidden">
                                             <p class="text-sm font-medium text-[var(--text-primary)]">{{ Auth::user()?->name }}</p>
                                             <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()?->email }}</p>
                                         </div>
-                                        
-                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                                                </svg>
-                                                Accueil
-                                            </span>
+
+                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            Accueil
                                         </a>
-                                        
-                                        <a href="{{ route('profile.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                                </svg>
-                                                Profil
-                                            </span>
+
+                                        <a href="{{ route('profile.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            Profil
                                         </a>
-                                        
-                                        <a href="{{ route('subscriptions.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
-                                                </svg>
-                                                Packages
-                                            </span>
+
+                                        <a href="{{ route('subscriptions.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            Packages
                                         </a>
-                                        
+
                                         @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
-                                            <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-primary-600 font-semibold transition-colors">
-                                                <span class="flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                    </svg>
-                                                    Administration
-                                                </span>
+                                            <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--primary)] transition-colors">
+                                                Administration
                                             </a>
                                         @endif
-                                        
+
                                         <hr class="border-[var(--border-color)]">
-                                        
-                                        <!-- FORMULAIRE DE DÉCONNEXION AVEC CONFIRMATION -->
+
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">
                                             @csrf
-                                            <button type="button" 
+                                            <button type="button"
                                                     onclick="confirmLogout(event)"
-                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] text-sm text-red-500 transition-colors">
-                                                <span class="flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                                    </svg>
-                                                    Déconnexion
-                                                </span>
+                                                    class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--danger)] transition-colors">
+                                                Déconnexion
                                             </button>
                                         </form>
                                     </div>

@@ -25,15 +25,15 @@
                     </a>
                 </div>
 
-                <nav class="sidebar-mobile-drawer-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
+                <nav class="admin-sidebar-nav sidebar-mobile-drawer-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
                      @click="if (isMobile && $event.target.closest('a.sidebar-link, button.sidebar-link')) sidebarOpen = false">
                     @include('layouts.partials.sidebar-nav-menu')
                 </nav>
 
                 <p class="sidebar-mobile-drawer-version lg:hidden" aria-hidden="true">Version 1.0.0</p>
 
-                <!-- Pied de page de la sidebar (desktop) -->
-                <div class="sidebar-user hidden md:block flex-shrink-0">
+                <!-- Pied de page sidebar : avatar mobile ; caché en Quixotic desktop -->
+                <div class="sidebar-user admin-sidebar-profile-user md:hidden flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="avatar-ring w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth
