@@ -344,104 +344,96 @@
         </div>
     @endif
 
-    <!-- Statistiques -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
-        <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">{{ $totalWallets ?? 0 }}</p>
-        </div>
-        <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Solde total</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">{{ number_format($totalBalance ?? 0, 2) }} $</p>
-        </div>
-        <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-warning)]">{{ number_format($pendingBalance ?? 0, 2) }} $</p>
-        </div>
-        <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">{{ $activeWallets ?? 0 }}</p>
-        </div>
-    </div>
+    <!-- Statistiques — ids sur la valeur (x-ui.stat) pour sync AJAX -->
+    <x-ui.stat-grid class="mb-4 animate-fadeInUp" style="animation-delay: 0.05s;">
+        <x-ui.stat title="Total" :value="$totalWallets ?? 0" id="kpi-total" />
+        <x-ui.stat title="Solde total" :value="number_format($totalBalance ?? 0, 2) . ' $'" id="kpi-balance" />
+        <x-ui.stat title="En attente" :value="number_format($pendingBalance ?? 0, 2) . ' $'" id="kpi-pending" />
+        <x-ui.stat title="Actifs" :value="$activeWallets ?? 0" id="kpi-active" />
+    </x-ui.stat-grid>
 
     <!-- Liste des portefeuilles -->
     <div class="card p-3 sm:p-4 animate-fadeInUp" style="animation-delay: 0.1s;">
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Utilisateur</th>
-                        <th>Solde</th>
-                        <th class="hidden sm:table-cell">En attente</th>
-                        <th class="hidden md:table-cell">Retiré</th>
-                        <th class="hidden md:table-cell">Déposé</th>
-                        <th class="hidden lg:table-cell">Devise</th>
-                        <th class="text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="walletsTable">
-                    @forelse($wallets as $wallet)
-                        <tr class="wallet-row">
-                            <td class="font-medium text-sm">
-                                {{ $wallet->user?->name ?? 'N/A' }}
-                                <span class="text-[10px] text-[var(--text-secondary)] block">
-                                    {{ $wallet->user?->email ?? '' }}
-                                </span>
-                            </td>
-                            <td class="font-bold text-[var(--ui-stat-success)] text-sm">
-                                {{ number_format($wallet->balance, 2) }} $
-                            </td>
-                            <td class="hidden sm:table-cell text-[var(--ui-stat-warning)] text-sm">
-                                {{ number_format($wallet->pending_balance, 2) }} $
-                            </td>
-                            <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">
-                                {{ number_format($wallet->total_withdrawn, 2) }} $
-                            </td>
-                            <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">
-                                {{ number_format($wallet->total_deposited, 2) }} $
-                            </td>
-                            <td class="hidden lg:table-cell">
-                                <span class="badge badge-neutral text-[10px] sm:text-xs">
-                                    {{ $wallet->currency ?? 'USD' }}
-                                </span>
-                                @if(!$wallet->is_active)
-                                    <span class="badge badge-warning text-[10px] sm:text-xs ml-1">
-                                        Bloquer
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.wallets.show', $wallet->id) }}"
-                                       class="btn btn-outline btn-sm btn-icon" title="Voir">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="hidden md:block">
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun portefeuille</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">
-                                    @if(request('search') || request('status'))
-                                        Aucun résultat pour ces critères
-                                    @else
-                                        Les portefeuilles apparaîtront lors de l'inscription des utilisateurs
-                                    @endif
-                                </p>
-                            </td>
+                            <th>Utilisateur</th>
+                            <th>Solde</th>
+                            <th class="hidden sm:table-cell">En attente</th>
+                            <th class="hidden md:table-cell">Retiré</th>
+                            <th class="hidden md:table-cell">Déposé</th>
+                            <th class="hidden lg:table-cell">Devise</th>
+                            <th class="text-right">Action</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="walletsTable">
+                        @forelse($wallets as $wallet)
+                            <tr class="wallet-row">
+                                <td class="font-medium text-sm">
+                                    {{ $wallet->user?->name ?? 'N/A' }}
+                                    <span class="text-[10px] text-[var(--text-secondary)] block">
+                                        {{ $wallet->user?->email ?? '' }}
+                                    </span>
+                                </td>
+                                <td class="font-bold text-[var(--ui-stat-success)] text-sm">
+                                    {{ number_format($wallet->balance, 2) }} $
+                                </td>
+                                <td class="hidden sm:table-cell text-[var(--ui-stat-warning)] text-sm">
+                                    {{ number_format($wallet->pending_balance, 2) }} $
+                                </td>
+                                <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">
+                                    {{ number_format($wallet->total_withdrawn, 2) }} $
+                                </td>
+                                <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">
+                                    {{ number_format($wallet->total_deposited, 2) }} $
+                                </td>
+                                <td class="hidden lg:table-cell">
+                                    <span class="badge badge-neutral text-[10px] sm:text-xs">
+                                        {{ $wallet->currency ?? 'USD' }}
+                                    </span>
+                                    @if(!$wallet->is_active)
+                                        <span class="badge badge-warning text-[10px] sm:text-xs ml-1">
+                                            Bloquer
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ route('admin.wallets.show', $wallet->id) }}"
+                                           class="btn btn-outline btn-sm btn-icon" title="Voir">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                                    <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    <p class="text-base sm:text-lg font-medium">Aucun portefeuille</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">
+                                        @if(request('search') || request('status'))
+                                            Aucun résultat pour ces critères
+                                        @else
+                                            Les portefeuilles apparaîtront lors de l'inscription des utilisateurs
+                                        @endif
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        @include('admin.wallets._mobile_list', ['wallets' => $wallets])
 
         @if($wallets->hasPages())
             <x-salang-pagination :paginator="$wallets" id="paginationContainer" class="mt-3 sm:mt-4" />
@@ -530,6 +522,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('walletsTable');
         if (!tableBody) return;
 
+        const mobileEl = document.getElementById('walletsMobileList');
+
         tableBody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
@@ -544,6 +538,18 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>
         `;
 
+        if (mobileEl) {
+            mobileEl.innerHTML = `
+                <div class="flex items-center justify-center gap-3 py-8 text-sm text-[var(--text-secondary)]">
+                    <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Recherche en cours…</span>
+                </div>
+            `;
+        }
+
         fetch(url.toString(), {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -557,6 +563,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const newTableBody = doc.getElementById('walletsTable');
             if (newTableBody) {
                 tableBody.innerHTML = newTableBody.innerHTML;
+            }
+
+            const newMobileList = doc.getElementById('walletsMobileList');
+            if (newMobileList && mobileEl) {
+                mobileEl.innerHTML = newMobileList.innerHTML;
             }
 
             const newPagination = doc.getElementById('paginationContainer');
@@ -581,16 +592,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Mise à jour des statistiques
-            const statValues = doc.querySelectorAll('.card-stats .text-xl');
-            const currentStats = document.querySelectorAll('.card-stats .text-xl');
-            if (statValues.length === currentStats.length && statValues.length > 0) {
-                statValues.forEach((stat, index) => {
-                    if (currentStats[index]) {
-                        currentStats[index].textContent = stat.textContent;
-                    }
-                });
-            }
+            // KPI — ids stables sur le <p> valeur de x-ui.stat (textContent = valeur seule)
+            ['kpi-total', 'kpi-balance', 'kpi-pending', 'kpi-active'].forEach(function (id) {
+                const newEl = doc.getElementById(id);
+                const currentEl = document.getElementById(id);
+                if (newEl && currentEl) {
+                    currentEl.textContent = newEl.textContent;
+                }
+            });
         })
         .catch(error => {
             console.error('Erreur de recherche:', error);
@@ -601,6 +610,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                 </tr>
             `;
+            if (mobileEl) {
+                mobileEl.innerHTML = `
+                    <div class="py-8 text-center text-sm text-[var(--ui-stat-danger)]">
+                        Une erreur est survenue lors de la recherche
+                    </div>
+                `;
+            }
         });
     }
 });
