@@ -1,6 +1,7 @@
 {{--
   KPI card. Pour changer le padding, passer padding="p-3" (prop de x-ui.card) —
   ne pas override via class="p-*" (merge Tailwind non fiable sur le défaut p-5).
+  Les $attributes (ex. id="kpi-total") sont posés sur le <p> de la valeur pour sync AJAX.
 --}}
 @props([
     'title' => null,
@@ -19,10 +20,10 @@
     }
 @endphp
 
-<x-ui.card :padding="$padding" {{ $attributes->merge(['class' => 'flex flex-col gap-2']) }}>
+<x-ui.card :padding="$padding" class="flex flex-col gap-2">
     <p class="text-sm text-[var(--text-secondary)]">{{ $titleText }}</p>
 
-    <p class="text-3xl font-bold text-[var(--primary)] leading-tight">{{ $value }}</p>
+    <p class="text-3xl font-bold text-[var(--primary)] leading-tight" {{ $attributes }}>{{ $value }}</p>
 
     @if ($trend !== null && $trend !== '')
         <span @class([
