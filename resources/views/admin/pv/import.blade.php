@@ -344,66 +344,35 @@ body { background: var(--bg-page); color: var(--text-primary); }
         }
     }
 
-    $mobileGreetingTitle = $hasPreselectedUser
-        ? ('Ajout de PV · ' . $user->name)
+    $importTitle = $hasPreselectedUser
+        ? 'Ajout de PV pour '.$user->name
         : 'Import des PV mensuels';
-    $mobileGreetingSubtitle = $hasPreselectedUser
-        ? 'Saisie manuelle pour ce membre'
-        : 'Fichier CSV ou recherche d\'un membre';
+    $importSubtitle = $hasPreselectedUser
+        ? 'Ajoutez manuellement des PV à ce membre'
+        : 'Ajoutez des PV à un membre via fichier CSV ou saisie manuelle';
+    $importBackBtn = '<a href="'.e($backUrl).'" class="btn btn-outline btn-sm">'
+        .'<svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+        .'<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
+        .'</svg> '.e($backLabel).'</a>';
+    $importBackBtnMobile = '<a href="'.e($backUrl).'" class="btn btn-outline btn-sm btn-round-icon" title="'.e($backLabel).'" aria-label="'.e($backLabel).'">'
+        .'<svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
+        .'<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
+        .'</svg></a>';
 @endphp
 
 @push('admin_mobile_greeting')
     @include('admin.layouts.partials.mobile-greeting', [
-        'title' => $mobileGreetingTitle,
-        'subtitle' => $mobileGreetingSubtitle,
+        'title' => $importTitle,
+        'subtitle' => $importSubtitle,
+        'actions' => $importBackBtnMobile,
     ])
 @endpush
 
-@php
-    $importDesktopTitle = $hasPreselectedUser
-        ? 'Ajout de PV pour ' . $user->name
-        : 'Import des PV mensuels';
-    $importDesktopSubtitle = $hasPreselectedUser
-        ? 'Ajoutez manuellement des PV à ce membre'
-        : 'Ajoutez des PV à un membre via fichier CSV ou saisie manuelle';
-    $importBackBtn = '<a href="' . e($backUrl) . '" class="btn btn-outline btn-sm">'
-        . '<svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">'
-        . '<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>'
-        . '</svg> ' . e($backLabel) . '</a>';
-@endphp
-
 @include('admin.layouts.partials.desktop-page-header', [
-    'title' => $importDesktopTitle,
-    'subtitle' => $importDesktopSubtitle,
+    'title' => $importTitle,
+    'subtitle' => $importSubtitle,
     'actions' => $importBackBtn,
 ])
-
-<div class="admin-page-header page-header animate-fadeInUp md:hidden">
-    <div class="admin-mobile-page-head">
-        <h1 class="page-title">
-            @if($hasPreselectedUser)
-                Ajout de PV pour {{ $user->name }}
-            @else
-                Import des PV mensuels
-            @endif
-        </h1>
-        <p class="page-subtitle">
-            @if($hasPreselectedUser)
-                Ajoutez manuellement des PV à ce membre
-            @else
-                Ajoutez des PV à un membre via fichier CSV ou saisie manuelle
-            @endif
-        </p>
-    </div>
-    <div class="admin-page-header-actions flex flex-wrap gap-2">
-        <a href="{{ $backUrl }}" class="btn btn-outline btn-sm btn-round-icon" title="{{ $backLabel }}" aria-label="{{ $backLabel }}">
-            <svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            <span class="hidden sm:inline">{{ $backLabel }}</span>
-        </a>
-    </div>
-</div>
 
 <div id="toastContainer" class="toast-container"></div>
 

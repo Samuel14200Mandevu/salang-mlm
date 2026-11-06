@@ -1,5 +1,5 @@
 {{-- En-tête classique desktop (≥768px) — titre + actions optionnelles --}}
-<div class="page-header admin-desktop-page-head {{ $class ?? '' }}">
+<div class="page-header admin-desktop-page-head hidden md:block {{ $class ?? '' }}">
     <div class="top-row">
         <div>
             <h1 class="page-title">{{ $title }}</h1>
