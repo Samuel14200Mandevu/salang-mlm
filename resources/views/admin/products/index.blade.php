@@ -345,93 +345,97 @@
     @endif
 
     <div class="card p-3 sm:p-4">
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th class="hidden md:table-cell">Catégorie</th>
-                        <th>PV</th>
-                        <th>Prix</th>
-                        <th class="hidden sm:table-cell">Stock</th>
-                        <th class="hidden lg:table-cell">Statut</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="productsTableBody">
-                    @forelse($products as $product)
-                        <tr class="product-row"
-                            data-name="{{ strtolower($product->name) }}"
-                            data-category="{{ strtolower($product->category ?? '') }}">
-                            <td class="font-mono text-xs">{{ $product->id }}</td>
-                            <td class="font-medium text-sm">{{ $product->name }}</td>
-                            <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">{{ $product->category ?? '-' }}</td>
-                            <td>
-                                <span class="pv-badge">{{ $product->pv_value ?? 0 }} PV</span>
-                            </td>
-                            <td class="font-bold text-[var(--primary)] text-sm">{{ number_format($product->price, 2) }} $</td>
-                            <td class="hidden sm:table-cell">
-                                <span class="badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $product->stock }}
-                                </span>
-                            </td>
-                            <td class="hidden lg:table-cell">
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="badge {{ $product->is_active ? 'badge-success' : 'badge-danger' }}">
-                                        {{ $product->is_active ? 'Actif' : 'Inactif' }}
-                                    </span>
-                                    @if($product->is_featured)
-                                        <span class="badge badge-warning">Vedette</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.products.edit', $product->id) }}"
-                                       class="btn btn-outline btn-sm btn-icon" title="Modifier">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                    </a>
-                                    <a href="{{ route('admin.products.toggle-status', $product->id) }}"
-                                       class="btn btn-outline btn-sm btn-icon"
-                                       title="{{ $product->is_active ? 'Désactiver' : 'Activer' }}">
-                                        @if($product->is_active)
-                                            <svg class="w-4 h-4 text-[var(--warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                            </svg>
-                                        @else
-                                            <svg class="w-4 h-4 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                        @endif
-                                    </a>
-                                    <button type="button"
-                                            onclick="openDeleteModal('{{ $product->id }}', '{{ $product->name }}')"
-                                            class="btn btn-outline btn-sm btn-icon btn-danger-icon"
-                                            title="Supprimer">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="hidden md:block">
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun produit</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Créez votre premier produit</p>
-                            </td>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th class="hidden md:table-cell">Catégorie</th>
+                            <th>PV</th>
+                            <th>Prix</th>
+                            <th class="hidden sm:table-cell">Stock</th>
+                            <th class="hidden lg:table-cell">Statut</th>
+                            <th class="text-right">Actions</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        @forelse($products as $product)
+                            <tr class="product-row"
+                                data-name="{{ strtolower($product->name) }}"
+                                data-category="{{ strtolower($product->category ?? '') }}">
+                                <td class="font-mono text-xs">{{ $product->id }}</td>
+                                <td class="font-medium text-sm">{{ $product->name }}</td>
+                                <td class="hidden md:table-cell text-[var(--text-secondary)] text-sm">{{ $product->category ?? '-' }}</td>
+                                <td>
+                                    <span class="pv-badge">{{ $product->pv_value ?? 0 }} PV</span>
+                                </td>
+                                <td class="font-bold text-[var(--primary)] text-sm">{{ number_format($product->price, 2) }} $</td>
+                                <td class="hidden sm:table-cell">
+                                    <span class="badge {{ $product->stock > 10 ? 'badge-success' : ($product->stock > 0 ? 'badge-warning' : 'badge-danger') }}">
+                                        {{ $product->stock }}
+                                    </span>
+                                </td>
+                                <td class="hidden lg:table-cell">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="badge {{ $product->is_active ? 'badge-success' : 'badge-danger' }}">
+                                            {{ $product->is_active ? 'Actif' : 'Inactif' }}
+                                        </span>
+                                        @if($product->is_featured)
+                                            <span class="badge badge-warning">Vedette</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ route('admin.products.edit', $product->id) }}"
+                                           class="btn btn-outline btn-sm btn-icon" title="Modifier">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('admin.products.toggle-status', $product->id) }}"
+                                           class="btn btn-outline btn-sm btn-icon"
+                                           title="{{ $product->is_active ? 'Désactiver' : 'Activer' }}">
+                                            @if($product->is_active)
+                                                <svg class="w-4 h-4 text-[var(--warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-4 h-4 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            @endif
+                                        </a>
+                                        <button type="button"
+                                                onclick="openDeleteModal('{{ $product->id }}', '{{ $product->name }}')"
+                                                class="btn btn-outline btn-sm btn-icon btn-danger-icon"
+                                                title="Supprimer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                                    <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                    </svg>
+                                    <p class="text-base sm:text-lg font-medium">Aucun produit</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">Créez votre premier produit</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        @include('admin.products._mobile_list', ['products' => $products])
 
         @if($products->hasPages())
             <div class="mt-3 sm:mt-4">
@@ -499,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('productsTableBody');
         tableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
+                <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
                     <div class="flex items-center justify-center gap-3">
                         <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -510,6 +514,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
             </tr>
         `;
+
+        const mobileEl = document.getElementById('productsMobileList');
+        if (mobileEl) {
+            mobileEl.innerHTML = `
+                <div class="flex items-center justify-center gap-3 py-8 text-sm text-[var(--text-secondary)]">
+                    <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Recherche en cours…</span>
+                </div>
+            `;
+        }
 
         fetch(url.toString(), {
             headers: {
@@ -522,10 +539,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const doc = parser.parseFromString(html, 'text/html');
             
             const newTableBody = doc.getElementById('productsTableBody');
+            const newMobileList = doc.getElementById('productsMobileList');
             const newPagination = doc.querySelector('.mt-3.sm\\:mt-4');
             
             if (newTableBody) {
                 document.getElementById('productsTableBody').innerHTML = newTableBody.innerHTML;
+            }
+
+            // Contrôleur renvoie la vue HTML complète (pas de JSON) — sync mobile via parse DOM
+            if (mobileEl && newMobileList) {
+                mobileEl.innerHTML = newMobileList.innerHTML;
             }
             
             if (newPagination) {
@@ -547,11 +570,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur:', error);
             document.getElementById('productsTableBody').innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center py-8 text-[var(--danger)]">
+                    <td colspan="8" class="text-center py-8 text-[var(--danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>
             `;
+            if (mobileEl) {
+                mobileEl.innerHTML = `
+                    <div class="py-8 text-center text-sm text-[var(--danger)]">
+                        Une erreur est survenue lors de la recherche
+                    </div>
+                `;
+            }
         });
     }
 });
