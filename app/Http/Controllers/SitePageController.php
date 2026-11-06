@@ -2,19 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MlmSetting;
+use App\Services\SiteContentService;
 use Illuminate\View\View;
 
 class SitePageController extends Controller
 {
+    public function __construct(
+        protected SiteContentService $content
+    ) {
+    }
+
     public function about(): View
     {
-        return view('site.about');
+        return view('site.about', [
+            'aboutMission' => $this->content->aboutMission(),
+            'aboutWhoWeAre' => $this->content->aboutWhoWeAre(),
+        ]);
     }
 
     public function offer(): View
     {
-        return view('site.offer');
+        return view('site.offer', [
+            'offerLead' => $this->content->offerLead(),
+            'membershipFeeUsd' => $this->content->membershipFeeUsd(),
+        ]);
     }
 
     public function remuneration(): View
@@ -24,11 +35,9 @@ class SitePageController extends Controller
 
     public function contact(): View
     {
-        $site = config('salang-site');
-
         return view('site.contact', [
-            'supportEmail' => MlmSetting::getValue('support_email', $site['email'] ?? 'support@salanggroup.com'),
-            'supportPhone' => MlmSetting::getValue('support_phone', $site['phone'] ?? ''),
+            'supportEmail' => $this->content->supportEmail(),
+            'supportPhone' => $this->content->supportPhone(),
         ]);
     }
 }

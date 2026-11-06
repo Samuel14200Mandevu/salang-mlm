@@ -23,8 +23,8 @@
         <div class="public-why">
             <div>
                 <h2 class="public-heading">Notre histoire</h2>
-                <p class="public-prose mt-4">{{ $site['who_we_are'] }}</p>
-                <p class="public-prose mt-4 font-medium text-[var(--text-primary)]">{{ $site['mission'] }}</p>
+                <p class="public-prose mt-4">{{ $aboutWhoWeAre ?? $site['who_we_are'] }}</p>
+                <p class="public-prose mt-4 font-medium text-[var(--text-primary)]">{{ $aboutMission ?? $site['mission'] }}</p>
                 <ul class="public-check-list">
                     <li>Fondé en {{ $site['founded'] }} par {{ $site['founder'] }}</li>
                     <li>Siège social · {{ $site['hq'] }}</li>

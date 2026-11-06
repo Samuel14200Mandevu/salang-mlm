@@ -500,13 +500,13 @@ document.addEventListener('DOMContentLoaded', function() {
         user: 'Saisissez un code membre ou laissez vide pour génération automatique. Il pourra bénéficier du système MLM et des commissions.',
         cashier: 'Les caissiers sont des employés. Pas de code membre, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
         admin: 'Administrateur avec accès complet. Saisissez un code membre ou laissez vide pour génération automatique.',
-        it_manager: 'Accès Supervision (assistance membres, publications). Saisissez un code membre ou laissez vide pour génération automatique.'
+        it_manager: 'Responsable IT : messages du site, questions membres et publications. Compte staff (pas de réseau MLM).'
     };
 
     function updateRoleDisplay(role) {
         roleInfoText.textContent = infoMessages[role] || infoMessages.user;
 
-        if (role === 'cashier') {
+        if (role === 'cashier' || role === 'it_manager') {
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
             if (memberCodeGroup) memberCodeGroup.style.display = 'none';

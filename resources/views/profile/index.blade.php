@@ -48,7 +48,7 @@
             @include('profile.partials.account-subpage-header', [
                 'title' => 'Informations personnelles',
                 'sub' => 'Profil · coordonnées · sécurité',
-                'backUrl' => route('profile.index'),
+                'backUrl' => false,
             ])
         </div>
 

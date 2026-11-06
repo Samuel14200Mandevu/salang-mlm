@@ -27,6 +27,21 @@
         </div>
     </div>
 
+    @php
+        $guest = $activityEntry ?? null;
+        $prefillName = old('name', $guest?->displayName());
+        $prefillPhone = old('phone', $guest?->participant_phone);
+        $prefillEmail = old('email', $guest?->participant_email);
+        $prefillBirth = old('birth_date', $guest?->participant_birth_date?->toDateString());
+        $prefillGender = old('gender', $guest?->participant_gender);
+        $prefillAddress = old('address', $guest?->participant_address);
+        $prefillProfession = old('profession', $guest?->participant_profession);
+        $prefillIdentity = old('identity_number', $guest?->participant_identity_number);
+        $prefillSponsorCode = old('sponsor_code', $guest?->member_code ?? $guest?->member?->sponsor_id);
+        $prefillSponsorName = $guest?->member?->name;
+        $prefillEntryId = old('activity_entry_id', $guest?->id);
+    @endphp
+
     {{-- INFO BANNER --}}
     <div class="info-banner">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -35,13 +50,56 @@
         <div>
             <strong>Formulaire d'adhésion :</strong> Enregistrement des informations du nouveau distributeur.
             <br>
-            <span class="text-xs text-[var(--text-tertiary)]">Les champs marqués d'un <span class="text-[var(--danger)]">*</span> sont obligatoires.</span>
+            <span class="text-xs text-[var(--text-tertiary)]">Les champs marqués d'un <span class="text-[var(--danger)]">*</span> sont obligatoires. Cherchez l’invité du registre pour préremplir.</span>
         </div>
     </div>
 
     {{-- FORMULAIRE --}}
     <form action="{{ route('cashier.members.store') }}" method="POST" id="memberForm">
         @csrf
+        <input type="hidden" name="activity_entry_id" id="activity_entry_id" value="{{ $prefillEntryId }}">
+
+        <!-- Invité du registre IT -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Invité du registre
+            </div>
+
+            <div class="form-group sponsor-select-wrapper">
+                <label for="guest_search">Rechercher (téléphone ou nom)</label>
+                <div>
+                    <input type="text" id="guest_search" class="form-control" autocomplete="off"
+                           placeholder="Ex. 099… ou nom de l’invité">
+                    <div id="guestResults" class="sponsor-results"></div>
+                </div>
+            </div>
+
+            <div id="guestSelected" class="sponsor-selected {{ $guest ? 'active' : '' }}">
+                <div class="sponsor-avatar" id="selectedGuestAvatar">{{ $guest ? strtoupper(substr($guest->displayName(), 0, 1)) : 'I' }}</div>
+                <div class="sponsor-info-text">
+                    <div class="sponsor-name-text" id="selectedGuestName">{{ $guest?->displayName() ?? '-' }}</div>
+                    <div class="sponsor-detail-text" id="selectedGuestDetail">
+                        @if ($guest)
+                            {{ $guest->participant_phone }}
+                            @if ($guest->sheet?->activity_date)
+                                · Registre {{ $guest->sheet->activity_date->format('d/m/Y') }}
+                            @endif
+                            · Parrain {{ $guest->member?->name }} ({{ $guest->member_code ?? $guest->member?->sponsor_id }})
+                        @else
+                            -
+                        @endif
+                    </div>
+                </div>
+                <button type="button" class="btn-remove-sponsor" onclick="clearGuest()" title="Retirer">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
         <!-- Informations personnelles -->
         <div class="form-section">
@@ -54,7 +112,7 @@
 
             <div class="form-group">
                 <label for="name">Nom complet <span class="required">*</span></label>
-                <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}">
+                <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ $prefillName }}">
                 @error('name')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -63,46 +121,46 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="birth_date">Date de naissance</label>
-                    <input type="date" id="birth_date" name="birth_date" class="form-control" value="{{ old('birth_date') }}">
+                    <input type="date" id="birth_date" name="birth_date" class="form-control" value="{{ $prefillBirth }}">
                 </div>
                 <div class="form-group">
                     <label for="gender">Sexe</label>
                     <select id="gender" name="gender" class="form-control">
                         <option value="">Sélectionner</option>
-                        <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Masculin</option>
-                        <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Féminin</option>
+                        <option value="male" {{ $prefillGender == 'male' ? 'selected' : '' }}>Masculin</option>
+                        <option value="female" {{ $prefillGender == 'female' ? 'selected' : '' }}>Féminin</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="address">Adresse</label>
-                <input type="text" id="address" name="address" class="form-control" value="{{ old('address') }}">
+                <input type="text" id="address" name="address" class="form-control" value="{{ $prefillAddress }}">
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="phone">Téléphone <span class="required">*</span></label>
-                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}">
+                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ $prefillPhone }}">
                     @error('phone')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}">
+                    <input type="email" id="email" name="email" class="form-control" value="{{ $prefillEmail }}">
                     <div class="help-text">Si non renseigné : prenomnom@salanggroup.com (sans point entre prénom et nom).</div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="profession">Profession</label>
-                <input type="text" id="profession" name="profession" class="form-control" value="{{ old('profession') }}">
+                <input type="text" id="profession" name="profession" class="form-control" value="{{ $prefillProfession }}">
             </div>
 
             <div class="form-group">
                 <label for="identity_number">Numéro d'identité</label>
-                <input type="text" id="identity_number" name="identity_number" class="form-control" value="{{ old('identity_number') }}">
+                <input type="text" id="identity_number" name="identity_number" class="form-control" value="{{ $prefillIdentity }}">
             </div>
         </div>
 
@@ -219,17 +277,23 @@
                     <input type="text" id="sponsor_search" class="form-control" autocomplete="off" placeholder="Code ou nom du parrain...">
                     <div id="sponsorResults" class="sponsor-results"></div>
                 </div>
-                <input type="hidden" id="sponsor_id" name="sponsor_code" value="{{ old('sponsor_code') }}">
+                <input type="hidden" id="sponsor_id" name="sponsor_code" value="{{ $prefillSponsorCode }}">
                 @error('sponsor_code')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
 
-            <div id="sponsorSelected" class="sponsor-selected {{ old('sponsor_code') ? 'active' : '' }}">
-                <div class="sponsor-avatar" id="selectedAvatar">S</div>
+            <div id="sponsorSelected" class="sponsor-selected {{ $prefillSponsorCode ? 'active' : '' }}">
+                <div class="sponsor-avatar" id="selectedAvatar">{{ $prefillSponsorName ? strtoupper(substr($prefillSponsorName, 0, 1)) : 'S' }}</div>
                 <div class="sponsor-info-text">
-                    <div class="sponsor-name-text" id="selectedName">-</div>
-                    <div class="sponsor-detail-text" id="selectedDetail">-</div>
+                    <div class="sponsor-name-text" id="selectedName">{{ $prefillSponsorName ?? '-' }}</div>
+                    <div class="sponsor-detail-text" id="selectedDetail">
+                        @if ($prefillSponsorCode)
+                            Code: {{ $prefillSponsorCode }}
+                        @else
+                            -
+                        @endif
+                    </div>
                 </div>
                 <button type="button" class="btn-remove-sponsor" onclick="clearSponsor()" title="Changer">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -380,6 +444,111 @@
 
 @push('scripts')
 <script>
+const guestSearchInput = document.getElementById('guest_search');
+const guestResults = document.getElementById('guestResults');
+const guestSelected = document.getElementById('guestSelected');
+const activityEntryInput = document.getElementById('activity_entry_id');
+let guestSearchTimeout = null;
+const guestLookup = {};
+
+function escapeGuestHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function applyGuest(guest) {
+    if (!guest) return;
+
+    activityEntryInput.value = guest.id || '';
+    document.getElementById('name').value = guest.name || '';
+    document.getElementById('phone').value = guest.phone || '';
+    document.getElementById('email').value = guest.email || '';
+    document.getElementById('birth_date').value = guest.birth_date || '';
+    document.getElementById('gender').value = guest.gender || '';
+    document.getElementById('address').value = guest.address || '';
+    document.getElementById('profession').value = guest.profession || '';
+    document.getElementById('identity_number').value = guest.identity_number || '';
+
+    document.getElementById('selectedGuestAvatar').textContent = (guest.name || 'I').charAt(0).toUpperCase();
+    document.getElementById('selectedGuestName').textContent = guest.name || '-';
+    const guestDetails = [];
+    if (guest.phone) guestDetails.push(guest.phone);
+    if (guest.activity_date) guestDetails.push('Registre ' + guest.activity_date);
+    if (guest.member_name) guestDetails.push('Parrain ' + guest.member_name + (guest.member_code ? ' (' + guest.member_code + ')' : ''));
+    document.getElementById('selectedGuestDetail').textContent = guestDetails.join(' · ') || '-';
+    guestSelected.classList.add('active');
+
+    if (guest.member_code) {
+        selectSponsor(
+            guest.member_code,
+            guest.member_name || guest.member_code,
+            '',
+            ''
+        );
+    }
+
+    guestResults.classList.remove('show');
+    if (guestSearchInput) guestSearchInput.value = guest.name || '';
+    if (typeof validateForm === 'function') validateForm();
+}
+
+function clearGuest() {
+    activityEntryInput.value = '';
+    guestSelected.classList.remove('active');
+    if (guestSearchInput) guestSearchInput.value = '';
+    guestResults.classList.remove('show');
+}
+
+if (guestSearchInput) {
+    guestSearchInput.addEventListener('input', function () {
+        const query = this.value.trim();
+        clearTimeout(guestSearchTimeout);
+        if (query.length < 2) {
+            guestResults.classList.remove('show');
+            return;
+        }
+        guestSearchTimeout = setTimeout(() => {
+            fetch('{{ route("cashier.members.activity-guests") }}?q=' + encodeURIComponent(query), {
+                headers: { 'Accept': 'application/json' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        guestResults.innerHTML = '<div class="result-item" style="justify-content:center; color: var(--text-tertiary);">Aucun invité trouvé</div>';
+                        guestResults.classList.add('show');
+                        return;
+                    }
+                    guestResults.innerHTML = data.map(guest => {
+                        guestLookup[guest.id] = guest;
+                        const details = [guest.phone, guest.activity_date ? ('Registre ' + guest.activity_date) : null, guest.member_name]
+                            .filter(Boolean).join(' · ');
+                        return `<div class="result-item" data-guest-id="${guest.id}">
+                            <div class="avatar-sm">${escapeGuestHtml((guest.name || '?').charAt(0).toUpperCase())}</div>
+                            <div class="result-info">
+                                <div class="result-name">${escapeGuestHtml(guest.name || '')}</div>
+                                <div class="result-detail">${escapeGuestHtml(details)}</div>
+                            </div>
+                            <span class="result-code">${escapeGuestHtml(guest.member_code || '')}</span>
+                        </div>`;
+                    }).join('');
+                    guestResults.classList.add('show');
+                    guestResults.querySelectorAll('.result-item[data-guest-id]').forEach(el => {
+                        el.addEventListener('click', () => {
+                            applyGuest(guestLookup[el.getAttribute('data-guest-id')]);
+                        });
+                    });
+                })
+                .catch(() => {
+                    guestResults.innerHTML = '<div class="result-item" style="justify-content:center; color: var(--danger);">Erreur de recherche</div>';
+                    guestResults.classList.add('show');
+                });
+        }, 300);
+    });
+}
+
 function generateMemberCode() {
     let code = '';
     for (let i = 0; i < 6; i++) {

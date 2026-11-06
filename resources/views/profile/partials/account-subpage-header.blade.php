@@ -2,6 +2,6 @@
     'eyebrow' => 'Compte',
     'title' => $title,
     'sub' => $sub ?? null,
-    'backUrl' => $backUrl ?? route('profile.index'),
+    'backUrl' => ($backUrl ?? true) === false ? null : ($backUrl ?: route('profile.index')),
     'showAssistantFabSwitch' => $showAssistantFabSwitch ?? false,
 ])

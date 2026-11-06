@@ -53,5 +53,20 @@
             'icon' => '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>',
         ])
     </nav>
+
+    @php
+        $memberFaqs = app(\App\Services\SiteContentService::class)->faqs();
+    @endphp
+    @if (count($memberFaqs))
+        <section class="profile-subpage-body mt-6 space-y-3">
+            <h2 class="text-sm font-semibold text-[var(--text-primary)]">Questions fréquentes</h2>
+            @foreach ($memberFaqs as $faq)
+                <details class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2">
+                    <summary class="cursor-pointer text-sm font-medium text-[var(--text-primary)]">{{ $faq['question'] }}</summary>
+                    <p class="mt-2 text-sm text-[var(--text-secondary)] whitespace-pre-line">{{ $faq['answer'] }}</p>
+                </details>
+            @endforeach
+        </section>
+    @endif
 </div>
 @endsection

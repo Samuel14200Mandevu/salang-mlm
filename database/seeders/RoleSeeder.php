@@ -9,10 +9,13 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        Role::firstOrCreate(
-            ['name' => 'it_manager', 'guard_name' => 'web']
-        );
+        foreach (['user', 'cashier', 'admin', 'it_manager'] as $role) {
+            Role::firstOrCreate([
+                'name' => $role,
+                'guard_name' => 'web',
+            ]);
+        }
 
-        $this->command?->info('✅ Rôle it_manager créé ou déjà présent (guard: web).');
+        $this->command?->info('✅ Rôles Spatie synchronisés (user, cashier, admin, it_manager).');
     }
 }

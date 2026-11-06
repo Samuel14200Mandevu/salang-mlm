@@ -1,12 +1,24 @@
         @php
-            $isMemberHomeTopbar = request()->routeIs('dashboard');
-            $memberTopTabs = [
-                ['label' => 'Accueil', 'route' => 'dashboard', 'match' => 'dashboard', 'params' => []],
-                ['label' => 'Services', 'route' => 'services.index', 'match' => 'services.*', 'params' => []],
-                ['label' => 'Boutique', 'route' => 'products.index', 'match' => 'products.*', 'params' => []],
-                ['label' => 'Réseau', 'route' => 'network.index', 'match' => 'network.*', 'params' => []],
-                ['label' => 'Portefeuille', 'route' => 'wallet.index', 'match' => 'wallet.*', 'params' => []],
-            ];
+            $isItManagerShell = auth()->user()?->isItManagerOnly() ?? false;
+            $isMemberHomeTopbar = $isItManagerShell
+                ? request()->routeIs('it-manager.dashboard')
+                : request()->routeIs('dashboard');
+            $memberTopTabs = $isItManagerShell
+                ? [
+                    ['label' => 'Accueil', 'route' => 'it-manager.dashboard', 'match' => 'it-manager.dashboard', 'params' => []],
+                    ['label' => 'Registre', 'route' => 'it-manager.activity-register.show', 'match' => 'it-manager.activity-register.*', 'params' => []],
+                    ['label' => 'Suivi', 'route' => 'it-manager.follow-up.index', 'match' => 'it-manager.follow-up.*', 'params' => []],
+                    ['label' => 'Messages', 'route' => 'site-management.contacts.index', 'match' => 'site-management.contacts*', 'params' => []],
+                    ['label' => 'Annonces', 'route' => 'it-manager.announcements.create', 'match' => 'it-manager.announcements.*', 'params' => []],
+                ]
+                : [
+                    ['label' => 'Accueil', 'route' => 'dashboard', 'match' => 'dashboard', 'params' => []],
+                    ['label' => 'Services', 'route' => 'services.index', 'match' => 'services.*', 'params' => []],
+                    ['label' => 'Boutique', 'route' => 'products.index', 'match' => 'products.*', 'params' => []],
+                    ['label' => 'Réseau', 'route' => 'network.index', 'match' => 'network.*', 'params' => []],
+                    ['label' => 'Portefeuille', 'route' => 'wallet.index', 'match' => 'wallet.*', 'params' => []],
+                ];
+            $topbarBrandRoute = $isItManagerShell ? 'it-manager.dashboard' : 'dashboard';
         @endphp
         <div class="main-wrapper {{ $isMemberHomeTopbar ? 'main-wrapper--member-home' : '' }}"
              :style="{
@@ -18,7 +30,7 @@
                 <div class="px-3 sm:px-4 lg:px-6">
                     <div class="flex justify-between items-center h-14 sm:h-16 gap-2">
 
-                        <a href="{{ route('dashboard') }}"
+                        <a href="{{ route($topbarBrandRoute) }}"
                            class="admin-topbar-brand items-center gap-2.5 shrink-0 no-underline"
                            aria-label="Salang Group — Health Care International">
                             <img src="{{ asset('images/salang_logo.png') }}"
@@ -80,6 +92,7 @@
 
                         <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 member-mobile-topbar__actions">
 
+                            @unless ($isItManagerShell)
                             <a href="{{ route('cart.index') }}"
                                class="member-topbar-hide-mobile member-mobile-topbar__cart p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors relative inline-flex max-md:hidden"
                                aria-label="Panier">
@@ -88,6 +101,7 @@
                                 </svg>
                                 <x-ui.cart-badge variant="topbar" />
                             </a>
+                            @endunless
 
                             @auth
                                 @include('layouts.partials.member-notifications-topbar')
@@ -136,7 +150,7 @@
                                             <p class="text-xs text-[var(--text-secondary)] truncate">{{ Auth::user()?->email }}</p>
                                         </div>
 
-                                        <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                        <a href="{{ route($isItManagerShell ? 'it-manager.dashboard' : 'dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
                                             Accueil
                                         </a>
 
@@ -144,9 +158,11 @@
                                             Profil
                                         </a>
 
-                                        <a href="{{ route('subscriptions.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            Packages
-                                        </a>
+                                        @unless($isItManagerShell)
+                                            <a href="{{ route('subscriptions.index') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                                Packages
+                                            </a>
+                                        @endunless
 
                                         @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
