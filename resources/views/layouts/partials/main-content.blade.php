@@ -56,7 +56,7 @@
 
                         {{-- Onglets Quixotic (desktop) — pas de classe "hidden" :
                              .member-app .hidden { display:none } casse md:flex --}}
-                        <div class="admin-quixotic-tabs-host flex flex-1 items-center justify-center min-w-0 px-2 max-md:hidden">
+                        <div class="admin-quixotic-tabs-host flex flex-1 items-center justify-center min-w-0 px-2">
                             <div class="admin-quixotic-tabs flex items-center gap-1">
                                 @foreach($memberTopTabs as $tab)
                                     @php

@@ -56,8 +56,8 @@
                             </div>
                         </div>
 
-                        {{-- Onglets Quixotic (desktop) --}}
-                        <div class="hidden md:flex flex-1 items-center justify-center min-w-0 px-2">
+                        {{-- Onglets Quixotic (≥1024px via CSS) --}}
+                        <div class="admin-quixotic-tabs-host flex flex-1 items-center justify-center min-w-0 px-2">
                             <div class="admin-quixotic-tabs flex items-center gap-1">
                                 @foreach($cashierTopTabs as $tab)
                                     @php

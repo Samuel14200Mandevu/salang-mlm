@@ -35,7 +35,7 @@
             $drawerInitials = 'M';
         }
     @endphp
-    <div class="sidebar-mobile-drawer-head lg:hidden{{ $drawerRankImageUrl ? ' has-grade-badge' : '' }}">
+    <div class="sidebar-mobile-drawer-head md:hidden{{ $drawerRankImageUrl ? ' has-grade-badge' : '' }}">
         <span class="sidebar-mobile-drawer-head__glow" aria-hidden="true"></span>
         <span class="sidebar-mobile-drawer-head__orbit" aria-hidden="true"></span>
 

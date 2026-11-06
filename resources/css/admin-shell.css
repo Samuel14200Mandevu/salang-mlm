@@ -298,9 +298,9 @@ html.dark .admin-app .badge-admin {
 }
 
 /* =========================================
-   QUIXOTIC SHELL OVERRIDE (DESKTOP ONLY)
-   Layout image : topbar pleine largeur en haut,
-   rail flottant en dessous à gauche.
+   QUIXOTIC SHELL OVERRIDE (DESKTOP + TABLETTE)
+   ≥768px : topbar flottante + rail.
+   768–1023 : variante compacte (onglets / marque).
    ========================================= */
 @media (min-width: 768px) {
     /* Fond beige : les menus blancs (rail + topbar) se détachent */
@@ -899,6 +899,97 @@ html.dark .admin-app .badge-admin {
     .member-app .member-topbar {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+    }
+}
+
+/* ---- Tablette Quixotic : topbar compacte (évite chevauchement) ---- */
+@media (min-width: 768px) and (max-width: 1023px) {
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar {
+        height: 3.25rem !important;
+        min-height: 3.25rem !important;
+        left: 0.75rem !important;
+        right: 0.75rem !important;
+        top: 0.75rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar > div {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar > div > div {
+        gap: 0.5rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .admin-topbar-brand {
+        margin-right: 0.25rem !important;
+        max-width: 7.5rem;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .admin-topbar-brand__logo {
+        height: 1.6rem !important;
+        width: auto !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .admin-topbar-brand__subtitle {
+        display: none !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .admin-topbar-brand__title {
+        font-size: 0.75rem !important;
+        line-height: 1.1 !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .admin-quixotic-tabs-host {
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .admin-quixotic-tabs-host::-webkit-scrollbar {
+        display: none;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .admin-quixotic-tabs {
+        flex-shrink: 0;
+        padding: 0.2rem !important;
+        gap: 0.1rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .admin-quixotic-tab {
+        padding: 0.35rem 0.55rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .member-mobile-topbar__actions,
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .flex.items-center.gap-1 {
+        gap: 0.15rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .member-topbar-compact span,
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar .member-topbar-compact .hidden.md\:inline,
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar span.max-w-\[80px\],
+    :is(.admin-app, .cashier-app, .member-app) .cashier-topbar span.max-w-\[120px\] {
+        display: none !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) #sidebar {
+        top: calc(0.75rem + 3.25rem) !important;
+        left: 0.75rem !important;
+    }
+
+    :is(.admin-app, .cashier-app, .member-app) .main-wrapper {
+        padding-top: calc(0.75rem + 3.25rem + 0.5rem) !important;
+        padding-right: 0.75rem !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app, .member-app) .main-wrapper {
+        margin-left: calc(0.75rem + 4rem + 0.5rem) !important;
+        width: calc(100% - 5.25rem) !important;
     }
 }
 
