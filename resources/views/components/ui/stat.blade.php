@@ -1,12 +1,42 @@
-@props(['label', 'value', 'change' => null])
+{{--
+  KPI card. Pour changer le padding, passer padding="p-3" (prop de x-ui.card) —
+  ne pas override via class="p-*" (merge Tailwind non fiable sur le défaut p-5).
+--}}
+@props([
+    'title' => null,
+    'label' => null,
+    'value',
+    'trend' => null,
+    'trendPositive' => null,
+    'padding' => 'p-5',
+])
 
-<div class="bg-neutral-50 border border-neutral-200 rounded-lg p-5 shadow-sm">
-    <p class="text-sm text-neutral-600">{{ $label }}</p>
-    <p class="mt-1 text-2xl font-semibold text-neutral-900">{{ $value }}</p>
-    @if ($change)
-        <p class="mt-1 text-xs text-neutral-500">{{ $change }}</p>
+@php
+    $titleText = $title ?? $label ?? '';
+    $isPositive = $trendPositive;
+    if ($isPositive === null && is_string($trend)) {
+        $isPositive = ! str_starts_with(ltrim($trend), '-');
+    }
+@endphp
+
+<x-ui.card :padding="$padding" {{ $attributes->merge(['class' => 'flex flex-col gap-2']) }}>
+    <p class="text-sm text-[var(--text-secondary)]">{{ $titleText }}</p>
+
+    <p class="text-3xl font-bold text-[var(--primary)] leading-tight">{{ $value }}</p>
+
+    @if ($trend !== null && $trend !== '')
+        <span @class([
+            'inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-semibold',
+            'text-[var(--success)] bg-[var(--success-light)]' => $isPositive,
+            'text-[var(--danger)] bg-[var(--danger-light)]' => ! $isPositive,
+        ])>
+            {{ $trend }}
+        </span>
     @endif
-    @if (isset($icon))
-        <div class="mt-2 text-neutral-400">{{ $icon }}</div>
-    @endif
-</div>
+
+    @isset($chart)
+        <div class="mt-2 min-h-0 w-full">
+            {{ $chart }}
+        </div>
+    @endisset
+</x-ui.card>
