@@ -187,16 +187,27 @@
                  @click="if (isMobile && $event.target.closest('a.sidebar-link')) closeSidebar()">
                 <ul class="space-y-0.5">
 
-                    <!-- Dashboard -->
-                    <li>
-                        <a href="{{ route('admin.dashboard') }}"
-                           class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                           data-title="Accueil">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                            </svg>
-                            <span class="label" :class="!sidebarOpen ? 'hidden' : ''">Accueil</span>
-                        </a>
+                    <!-- Dashboard + bascule <> desktop -->
+                    <li class="admin-sidebar-home-item">
+                        <div class="admin-sidebar-home-row">
+                            <a href="{{ route('admin.dashboard') }}"
+                               class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                               data-title="Accueil">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                                <span class="label" :class="!sidebarOpen ? 'hidden' : ''">Accueil</span>
+                            </a>
+                            <button type="button"
+                                    class="admin-rail-chevron"
+                                    x-show="!isMobile"
+                                    x-cloak
+                                    @click.stop="toggleSidebar()"
+                                    :aria-label="sidebarOpen ? 'Réduire le menu' : 'Agrandir le menu'"
+                                    :title="sidebarOpen ? 'Réduire le menu' : 'Agrandir le menu'">
+                                <span class="admin-rail-chevron__icon" aria-hidden="true" x-text="sidebarOpen ? '‹' : '›'"></span>
+                            </button>
+                        </div>
                     </li>
 
                     <!-- Section Gestion -->
@@ -336,7 +347,7 @@
                            class="sidebar-link {{ request()->routeIs('admin.withdrawals*') ? 'active' : '' }}"
                            data-title="Retraits">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/>
                             </svg>
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">Retraits</span>
                         </a>
@@ -425,9 +436,9 @@
                 </ul>
             </nav>
 
-            <!-- Profil sidebar -->
+            <!-- Bas de sidebar : avatar (mobile) / déconnexion (desktop Quixotic) -->
             <div class="admin-sidebar-profile p-3 border-t border-[var(--border-color)] flex-shrink-0">
-                <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
+                <div class="admin-sidebar-profile-user flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                     <div class="w-9 h-9 rounded-full bg-[var(--primary)] flex items-center justify-center text-[var(--text-inverse)] font-medium text-sm flex-shrink-0">
                         @auth
                             @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
@@ -448,6 +459,20 @@
                         </p>
                     </div>
                 </div>
+
+                <form method="POST" action="{{ route('logout') }}" class="admin-sidebar-logout logout-form hidden">
+                    @csrf
+                    <button type="button"
+                            onclick="confirmLogout(event)"
+                            class="sidebar-link danger w-full justify-center"
+                            data-title="Déconnexion"
+                            aria-label="Déconnexion">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="label">Déconnexion</span>
+                    </button>
+                </form>
             </div>
             </div>
         </aside>
@@ -459,30 +484,77 @@
                 'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
              }">
 
+            @php
+                $adminTopTabs = [
+                    ['label' => 'Accueil', 'route' => 'admin.dashboard', 'match' => 'admin.dashboard', 'params' => []],
+                    ['label' => 'Utilisateurs', 'route' => 'admin.users', 'match' => 'admin.users*', 'params' => []],
+                    ['label' => 'Commandes', 'route' => 'admin.orders.index', 'match' => 'admin.orders*', 'params' => []],
+                    ['label' => 'Consultations', 'route' => 'admin.consultations.index', 'match' => 'admin.consultations*', 'params' => []],
+                    ['label' => 'Rapports caisse', 'route' => 'cashier.reports.index', 'match' => 'cashier.reports*', 'params' => ['status' => 'submitted']],
+                ];
+            @endphp
+
             <!-- Top Navigation -->
             <nav class="cashier-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
                 <div class="px-3 sm:px-4 lg:px-6">
-                    <div class="flex justify-between items-center h-14 sm:h-16">
+                    <div class="flex justify-between items-center h-14 sm:h-16 gap-2">
 
-                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <a href="{{ route('admin.dashboard') }}"
+                           class="admin-topbar-brand items-center gap-2.5 shrink-0 no-underline"
+                           aria-label="Salang Group — Health Care International">
+                            <img src="{{ asset('images/salang_logo.png') }}"
+                                 alt="Salang"
+                                 width="120"
+                                 height="40"
+                                 decoding="async"
+                                 class="admin-topbar-brand__logo logo-themeable">
+                            <span class="admin-topbar-brand__text">
+                                <span class="admin-topbar-brand__title">Salang Group</span>
+                                <span class="admin-topbar-brand__subtitle">Health Care International</span>
+                            </span>
+                        </a>
+
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0 md:hidden">
                             <button type="button"
                                     @click="toggleSidebar()"
                                     class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0"
                                     aria-label="Menu">
-                                <svg class="w-5 h-5 text-[var(--text-primary)] md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                                </svg>
-                                <svg class="w-5 h-5 text-[var(--text-primary)] hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
 
                             <div class="min-w-0 flex-1">
-                                <h1 id="pageTitle" class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">Administration</h1>
+                                <h1 id="pageTitle" class="text-base sm:text-lg font-semibold text-[var(--text-primary)] truncate">Administration</h1>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                        {{-- Onglets Quixotic (desktop) — pastille grise centrée --}}
+                        <div class="hidden md:flex flex-1 items-center justify-center min-w-0 px-2">
+                            <div class="admin-quixotic-tabs flex items-center gap-1">
+                                @foreach($adminTopTabs as $tab)
+                                    @php
+                                        $tabActive = request()->routeIs($tab['match']) && (
+                                            empty($tab['params']['status']) || request('status') === $tab['params']['status']
+                                        );
+                                        try {
+                                            $tabHref = route($tab['route'], $tab['params']);
+                                        } catch (\Throwable $e) {
+                                            $tabHref = '#';
+                                        }
+                                    @endphp
+                                    <a href="{{ $tabHref }}"
+                                       @class([
+                                           'admin-quixotic-tab px-3 py-1.5 text-sm font-medium rounded-xl transition-colors whitespace-nowrap',
+                                           'is-active' => $tabActive,
+                                       ])>
+                                        {{ $tab['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
 
                             @include('partials.shell.workflow-bell-dropdown', [
                                 'workflowBell' => [

@@ -5,16 +5,43 @@
                 'width': (!isMobile && sidebarOpen) ? 'calc(100% - 16rem)' : (!isMobile && !sidebarOpen) ? 'calc(100% - 5rem)' : '100%'
              }">
 
-            <!-- Top Navigation -->
+            @php
+                $cashierTopTabs = [
+                    ['label' => 'Accueil', 'route' => 'cashier.dashboard', 'match' => 'cashier.dashboard', 'params' => []],
+                    ['label' => 'Consultations', 'route' => 'cashier.consultations.index', 'match' => 'cashier.consultations*', 'params' => []],
+                    ['label' => 'Commandes', 'route' => 'cashier.orders', 'match' => 'cashier.orders*', 'params' => []],
+                    ['label' => 'Membres', 'route' => 'cashier.members', 'match' => 'cashier.members*', 'params' => []],
+                    ['label' => 'Rapports', 'route' => 'cashier.reports.index', 'match' => 'cashier.reports*', 'params' => []],
+                ];
+            @endphp
+
+            <!-- Top Navigation Quixotic -->
             <nav class="cashier-topbar bg-[var(--bg-navbar)] border-b border-[var(--border-color)] sticky top-0 z-40 flex-shrink-0">
                 <div class="px-3 sm:px-4 lg:px-6">
-                    <div class="flex justify-between items-center h-14 sm:h-16">
+                    <div class="flex justify-between items-center h-14 sm:h-16 gap-2">
 
-                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <button @click="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)"
-                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0">
-                                <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        <a href="{{ route('cashier.dashboard') }}"
+                           class="admin-topbar-brand items-center gap-2.5 shrink-0 no-underline"
+                           aria-label="Salang Group — Health Care International">
+                            <img src="{{ asset('images/salang_logo.png') }}"
+                                 alt="Salang"
+                                 width="120"
+                                 height="40"
+                                 decoding="async"
+                                 class="admin-topbar-brand__logo logo-themeable">
+                            <span class="admin-topbar-brand__text">
+                                <span class="admin-topbar-brand__title">Salang Group</span>
+                                <span class="admin-topbar-brand__subtitle">Health Care International</span>
+                            </span>
+                        </a>
+
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0 md:hidden">
+                            <button type="button"
+                                    @click="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)"
+                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors flex-shrink-0"
+                                    aria-label="Menu">
+                                <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                                 </svg>
                             </button>
 
@@ -22,14 +49,37 @@
                                 @if(isset($header) && $header)
                                     <div class="truncate">{{ $header }}</div>
                                 @else
-                                    <h1 id="pageTitle" class="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] truncate">
-                                        @yield('title', 'Dashboard Caissier')
+                                    <h1 id="pageTitle" class="text-base sm:text-lg font-semibold text-[var(--text-primary)] truncate">
+                                        @yield('title', 'Caisse')
                                     </h1>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                        {{-- Onglets Quixotic (desktop) --}}
+                        <div class="hidden md:flex flex-1 items-center justify-center min-w-0 px-2">
+                            <div class="admin-quixotic-tabs flex items-center gap-1">
+                                @foreach($cashierTopTabs as $tab)
+                                    @php
+                                        $tabActive = request()->routeIs($tab['match']);
+                                        try {
+                                            $tabHref = route($tab['route'], $tab['params']);
+                                        } catch (\Throwable $e) {
+                                            $tabHref = '#';
+                                        }
+                                    @endphp
+                                    <a href="{{ $tabHref }}"
+                                       @class([
+                                           'admin-quixotic-tab px-3 py-1.5 text-sm font-medium rounded-xl transition-colors whitespace-nowrap',
+                                           'is-active' => $tabActive,
+                                       ])>
+                                        {{ $tab['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
 
                             @include('partials.shell.workflow-bell-dropdown', [
                                 'workflowBell' => [
@@ -48,9 +98,10 @@
 
                             <!-- Theme Toggle -->
                             <button type="button" id="theme-toggle"
-                                    class="p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    class="p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors"
+                                    aria-label="Changer le thème">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
                                           d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" id="theme-icon"/>
                                 </svg>
                             </button>
@@ -61,11 +112,12 @@
                             @auth
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open"
-                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors">
+                                            class="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors"
+                                            aria-label="Profil">
                                         <span class="hidden sm:inline text-xs sm:text-sm text-[var(--text-primary)] truncate max-w-[80px] md:max-w-[120px]">
                                             {{ Auth::user()?->name }}
                                         </span>
-                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 overflow-hidden">
                                             @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
                                                 <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
                                                      alt="Avatar"
@@ -77,7 +129,7 @@
                                     </button>
 
                                     <div x-show="open" @click.away="open = false"
-                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-card)] rounded-lg shadow-sm py-1 border border-[var(--border-color)] z-50"
+                                         class="absolute right-0 mt-2 w-48 sm:w-56 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-md)] py-1 border border-[var(--border-color)] z-50"
                                          x-transition:enter="transition ease-out duration-150"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
@@ -89,33 +141,17 @@
                                         </div>
 
                                         <a href="{{ route('cashier.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                                                </svg>
-                                                Dashboard
-                                            </span>
+                                            Accueil
                                         </a>
 
                                         <a href="{{ route('cashier.profile') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                                </svg>
-                                                Mon Profil
-                                            </span>
+                                            Mon Profil
                                         </a>
 
                                         @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
                                             <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--primary)] transition-colors">
-                                                <span class="flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                    </svg>
-                                                    Administration
-                                                </span>
+                                                Administration
                                             </a>
                                         @endif
 
@@ -124,12 +160,7 @@
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile" class="logout-form">
                                             @csrf
                                             <button type="submit" class="block w-full text-left px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--danger)] transition-colors">
-                                                <span class="flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                                    </svg>
-                                                    Déconnexion
-                                                </span>
+                                                Déconnexion
                                             </button>
                                         </form>
                                     </div>

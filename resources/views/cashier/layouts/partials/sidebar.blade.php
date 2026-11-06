@@ -44,19 +44,30 @@
                 <nav class="admin-sidebar-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
                     <ul class="space-y-0.5">
 
-                        <!-- Dashboard -->
-                        <li>
-                            <a href="{{ route('cashier.dashboard') }}"
-                               class="sidebar-link {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}"
-                               data-title="Tableau de bord">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200"
-                                      :class="!sidebarOpen ? 'hidden' : ''">
-                                    Accueil
-                                </span>
-                            </a>
+                        <!-- Accueil + chevron <> desktop -->
+                        <li class="admin-sidebar-home-item">
+                            <div class="admin-sidebar-home-row">
+                                <a href="{{ route('cashier.dashboard') }}"
+                                   class="sidebar-link {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}"
+                                   data-title="Accueil">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                    </svg>
+                                    <span class="label transition-opacity duration-200"
+                                          :class="!sidebarOpen ? 'hidden' : ''">
+                                        Accueil
+                                    </span>
+                                </a>
+                                <button type="button"
+                                        class="admin-rail-chevron"
+                                        x-show="!isMobile"
+                                        x-cloak
+                                        @click.stop="sidebarOpen = !sidebarOpen; window.salangPersistSidebarOpen(sidebarOpen)"
+                                        :aria-label="sidebarOpen ? 'Réduire le menu' : 'Agrandir le menu'"
+                                        :title="sidebarOpen ? 'Réduire le menu' : 'Agrandir le menu'">
+                                    <span class="admin-rail-chevron__icon" aria-hidden="true" x-text="sidebarOpen ? '‹' : '›'"></span>
+                                </button>
+                            </div>
                         </li>
 
                         <!-- Consultations -->
@@ -287,8 +298,8 @@
                     </ul>
                 </nav>
 
-                <!-- Sidebar Footer -->
-                <div class="p-4 border-t border-[var(--border-color)] flex-shrink-0">
+                <!-- Footer : avatar mobile ; déconnexion déjà dans la nav -->
+                <div class="admin-sidebar-profile-user p-4 border-t border-[var(--border-color)] flex-shrink-0 md:hidden">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
                         <div class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             @auth

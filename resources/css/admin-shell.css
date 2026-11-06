@@ -286,3 +286,636 @@ html.dark .admin-app .badge-admin {
   background: var(--success);
   border-color: var(--success);
 }
+
+/* Marque topbar : mobile = cachée (titre + hamburger) */
+:is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand {
+    display: none;
+}
+
+/* =========================================
+   QUIXOTIC SHELL OVERRIDE (DESKTOP ONLY)
+   Layout image : topbar pleine largeur en haut,
+   rail flottant en dessous à gauche.
+   ========================================= */
+@media (min-width: 768px) {
+    /* Fond beige : les menus blancs (rail + topbar) se détachent */
+    :is(.admin-app, .cashier-app),
+    :is(.admin-app, .cashier-app) .app-container,
+    :is(.admin-app, .cashier-app) .main-wrapper,
+    :is(.admin-app, .cashier-app) .main-content {
+        background: #F4F5F7 !important; /* gris clair froid Quixotic */
+    }
+
+    html.dark :is(.admin-app, .cashier-app),
+    html.dark :is(.admin-app, .cashier-app) .app-container,
+    html.dark :is(.admin-app, .cashier-app) .main-wrapper,
+    html.dark :is(.admin-app, .cashier-app) .main-content {
+        background: var(--bg-page) !important;
+    }
+
+    /* ---- Topbar : gauche → droite, flottante ---- */
+    :is(.admin-app, .cashier-app) .cashier-topbar {
+        position: fixed !important;
+        top: 1rem !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        height: 3.75rem !important;
+        min-height: 3.75rem !important;
+        padding: 0 !important;
+        z-index: 60 !important;
+        display: flex !important;
+        align-items: center !important;
+        border-radius: 1.25rem !important;
+        background: var(--bg-card) !important;
+        border: none !important;
+        border-bottom: none !important;
+        box-shadow: var(--shadow-lg), var(--shadow-sm) !important;
+        box-sizing: border-box !important;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar > div {
+        width: 100% !important;
+        max-width: none !important;
+        height: 100% !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar > div > div {
+        width: 100% !important;
+        max-width: none !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 1rem !important;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar::after {
+        display: none !important;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center;
+        flex-shrink: 0;
+        order: 0;
+        margin-right: 0.75rem;
+        z-index: 2;
+        text-decoration: none;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand__logo {
+        display: block !important;
+        height: 2rem !important;
+        width: auto !important;
+        max-width: 7.5rem !important;
+        object-fit: contain;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand__text {
+        display: flex !important;
+        flex-direction: column;
+        line-height: 1.15;
+        min-width: 0;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand__title {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
+
+    :is(.admin-app, .cashier-app) .cashier-topbar .admin-topbar-brand__subtitle {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    /* Pastille onglets — clair + sombre (tokens) */
+    :is(.admin-app, .cashier-app) .admin-quixotic-tabs {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.3rem;
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color);
+        border-radius: 0.9rem;
+        flex-shrink: 1;
+        max-width: 100%;
+        animation: adminMenuIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab {
+        border-radius: 0.7rem !important;
+        color: var(--text-secondary) !important;
+        position: relative;
+        transform: translateZ(0);
+        transition:
+            color 0.22s ease,
+            background 0.22s ease,
+            box-shadow 0.22s ease,
+            transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab:not(.is-active):hover {
+        background: var(--bg-hover) !important;
+        color: var(--text-primary) !important;
+        transform: translateY(-1px);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab:not(.is-active):active {
+        transform: translateY(0) scale(0.97);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab.is-active {
+        background: var(--bg-card) !important;
+        color: var(--text-primary) !important;
+        box-shadow:
+            0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent),
+            0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent) !important;
+        transform: translateY(-1px);
+        animation: adminTabPulse 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* ---- Sidebar flottante : hauteur = contenu ; centrée verticalement ---- */
+    :is(.admin-app, .cashier-app) #sidebar {
+        top: calc(1rem + 3.75rem) !important; /* sous la topbar */
+        bottom: 1rem !important;
+        left: 1rem !important;
+        margin-top: auto !important;
+        margin-bottom: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        height: fit-content !important;
+        max-height: calc(100vh - 1rem - 3.75rem - 1rem) !important;
+        z-index: 40 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 1.25rem !important;
+        overflow: visible !important;
+        /* drop-shadow suit le contour opaque du panel (pas le bbox carré) */
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06));
+        transition:
+            width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+            filter 0.3s ease;
+        animation: adminRailIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar:hover {
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1))
+            drop-shadow(0 10px 22px color-mix(in srgb, var(--primary) 12%, transparent));
+    }
+
+    html.dark :is(.admin-app, .cashier-app) #sidebar {
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-panel {
+        position: relative;
+        height: auto !important;
+        max-height: inherit;
+        border-radius: 1.25rem !important;
+        border-right: none !important;
+        background: var(--bg-card) !important;
+        box-shadow: none !important;
+        transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-nav {
+        flex: 0 1 auto !important;
+        min-height: 0;
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link {
+        transition:
+            background 0.22s ease,
+            color 0.22s ease,
+            box-shadow 0.22s ease,
+            transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+            padding 0.35s ease,
+            gap 0.35s ease,
+            margin 0.35s ease;
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link svg {
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link:hover:not(.active) {
+        transform: translateX(2px);
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link:hover:not(.active) svg {
+        transform: scale(1.08);
+    }
+
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link:active {
+        transform: scale(0.96);
+    }
+
+    :is(.admin-app, .cashier-app) .sidebar-logo-bar,
+    :is(.admin-app, .cashier-app) .admin-sidebar-logo,
+    :is(.admin-app, .cashier-app) .cashier-sidebar-accent,
+    :is(.admin-app, .cashier-app) .admin-drawer-mobile-head,
+    :is(.admin-app, .cashier-app) .admin-sidebar-profile-user {
+        display: none !important;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-profile {
+        display: flex !important;
+        align-items: center;
+        margin-top: 0.25rem !important;
+        border-top: none !important;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-logout {
+        display: flex !important;
+        width: 100%;
+        margin: 0;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-logout .sidebar-link,
+    :is(.admin-app, .cashier-app) .admin-sidebar-logout .sidebar-link svg {
+        color: var(--danger) !important;
+        stroke: var(--danger) !important;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-logout .sidebar-link:hover,
+    :is(.admin-app, .cashier-app) .admin-sidebar-logout .sidebar-link:hover svg {
+        background: var(--bg-secondary) !important;
+        color: var(--danger) !important;
+        stroke: var(--danger) !important;
+    }
+
+    :is(.admin-app, .cashier-app) .sidebar-section {
+        display: none !important;
+    }
+
+    /* Items déjà dans la topbar / pages liées (admin + caisse) */
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Utilisateurs"]),
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Caissiers"]),
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Commandes"]),
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Consultations"]),
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Rapports à valider"]),
+    :is(.admin-app, .cashier-app) #sidebar li:has(> .sidebar-link[data-title="Packages"]),
+    .cashier-app #sidebar li:has(> .sidebar-link[data-title="Mes Consultations"]),
+    .cashier-app #sidebar li:has(> .sidebar-link[data-title="Membres"]),
+    .cashier-app #sidebar li:has(> .sidebar-link[data-title="Rapports journaliers"]) {
+        display: none !important;
+    }
+
+    :is(.admin-app, .cashier-app) .sidebar-link.active {
+        background: var(--primary) !important;
+        color: var(--text-inverse) !important;
+        border-radius: 12px !important;
+        box-shadow:
+            0 8px 18px color-mix(in srgb, var(--primary) 30%, transparent),
+            var(--shadow-sm) !important;
+        animation: adminActivePop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    :is(.admin-app, .cashier-app) .sidebar-link.active svg,
+    :is(.admin-app, .cashier-app) .sidebar-link.active .label {
+        color: var(--text-inverse) !important;
+    }
+
+    /* Accueil + chevron <> */
+    :is(.admin-app, .cashier-app) .admin-sidebar-home-row {
+        display: flex;
+        align-items: center;
+        gap: 0.15rem;
+        width: 100%;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-sidebar-home-row > .sidebar-link {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-rail-chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 1.75rem;
+        height: 1.75rem;
+        border: none;
+        border-radius: 0.5rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 1.25rem;
+        line-height: 1;
+        padding: 0;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.25s ease;
+    }
+
+    :is(.admin-app, .cashier-app) .admin-rail-chevron:hover {
+        background: var(--bg-hover);
+        color: var(--primary);
+        transform: scale(1.08);
+        box-shadow: var(--shadow-sm);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-rail-chevron:active {
+        transform: scale(0.94);
+    }
+
+    :is(.admin-app, .cashier-app) .admin-rail-chevron__icon {
+        display: block;
+        font-weight: 700;
+        transform: translateY(-0.05em);
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-rail-chevron__icon {
+        transform: translateY(-0.05em) scaleX(1);
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-rail-chevron__icon {
+        animation: adminChevronNudge 1.8s ease-in-out infinite;
+    }
+
+    :is(.admin-app, .cashier-app) .main-wrapper {
+        max-width: none !important;
+        padding-top: calc(1rem + 3.75rem + 0.75rem) !important;
+        padding-right: 1rem !important;
+        box-sizing: border-box !important;
+        transition:
+            margin-left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+            width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    :is(.admin-app, .cashier-app) .main-content {
+        padding-top: 0.5rem !important;
+    }
+
+    /* ========== RAIL (réduit) ========== */
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) #sidebar {
+        width: 4rem !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-panel {
+        width: 4rem !important;
+        overflow: visible !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-profile {
+        justify-content: center;
+        padding: 1rem 0.35rem 1.75rem !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-logout {
+        justify-content: center;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .sidebar-link .label {
+        display: none !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-nav {
+        padding-top: 1rem !important;
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+        overflow: visible !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-home-row {
+        position: relative;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-sidebar-home-row > .sidebar-link {
+        flex: 0 0 auto;
+    }
+
+    /* Chevron collé à droite d’Accueil (hors du rail) */
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .admin-rail-chevron {
+        position: absolute;
+        top: 0.4rem;
+        right: -0.7rem;
+        width: 1.35rem;
+        height: 1.35rem;
+        font-size: 1rem;
+        box-shadow: var(--shadow-sm);
+        z-index: 5;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .sidebar-link {
+        position: relative;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        padding: 0.5rem !important;
+        margin: 0 auto 0.4rem !important;
+        gap: 0 !important;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .sidebar-link svg {
+        width: 1.15rem !important;
+        height: 1.15rem !important;
+        flex-shrink: 0;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .sidebar-link:hover .label {
+        display: block !important;
+        position: absolute;
+        left: 100%;
+        margin-left: 10px;
+        top: 50%;
+        transform: translateY(-50%) translateX(4px);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        box-shadow: var(--shadow-md);
+        white-space: nowrap;
+        z-index: 50;
+        font-weight: 500;
+        font-size: 0.875rem;
+        pointer-events: none;
+        animation: adminTooltipIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .main-wrapper {
+        margin-left: calc(1rem + 4rem + 0.75rem) !important;
+        width: calc(100% - 5.75rem) !important;
+    }
+
+    /* ========== ÉLARGI (labels visibles) ========== */
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar {
+        width: 15rem !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-panel {
+        width: 15rem !important;
+        overflow: hidden !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-nav {
+        padding: 1rem 0.5rem !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-home-row {
+        padding: 0 0.35rem;
+        margin-bottom: 0.3rem;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-home-row > .sidebar-link {
+        margin: 0 !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link {
+        position: relative;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        width: auto !important;
+        height: auto !important;
+        min-height: 2.5rem;
+        padding: 0.6rem 0.85rem !important;
+        margin: 0 0.35rem 0.3rem !important;
+        gap: 0.75rem !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link svg {
+        width: 1.15rem !important;
+        height: 1.15rem !important;
+        flex-shrink: 0;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link .label,
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link:hover .label {
+        display: inline !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        white-space: nowrap;
+        pointer-events: auto;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: inherit;
+        animation: adminLabelIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li {
+        animation: adminItemIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(1) { animation-delay: 0.02s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(2) { animation-delay: 0.04s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(3) { animation-delay: 0.06s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(4) { animation-delay: 0.08s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(5) { animation-delay: 0.1s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(6) { animation-delay: 0.12s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(7) { animation-delay: 0.14s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(8) { animation-delay: 0.16s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(9) { animation-delay: 0.18s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(10) { animation-delay: 0.2s; }
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li:nth-child(n+11) { animation-delay: 0.22s; }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link.active .label {
+        color: var(--text-inverse) !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-profile {
+        justify-content: stretch;
+        padding: 0.75rem 0.5rem 1.25rem !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .admin-sidebar-logout .sidebar-link {
+        justify-content: flex-start !important;
+        width: auto !important;
+        margin: 0 0.35rem !important;
+    }
+
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .main-wrapper {
+        margin-left: calc(1rem + 15rem + 0.75rem) !important;
+        width: calc(100% - 16.75rem) !important;
+    }
+}
+
+/* Keyframes menus admin (desktop Quixotic) */
+@keyframes adminMenuIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes adminRailIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes adminTabPulse {
+    0% { transform: translateY(0) scale(0.96); }
+    60% { transform: translateY(-1px) scale(1.03); }
+    100% { transform: translateY(-1px) scale(1); }
+}
+
+@keyframes adminActivePop {
+    0% { transform: scale(0.92); }
+    70% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+@keyframes adminTooltipIn {
+    from { opacity: 0; transform: translateY(-50%) translateX(0); }
+    to { opacity: 1; transform: translateY(-50%) translateX(4px); }
+}
+
+@keyframes adminLabelIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes adminItemIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes adminChevronNudge {
+    0%, 100% { transform: translateY(-0.05em) translateX(0); }
+    50% { transform: translateY(-0.05em) translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is(.admin-app, .cashier-app) .admin-quixotic-tabs,
+    :is(.admin-app, .cashier-app) #sidebar,
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab,
+    :is(.admin-app, .cashier-app) .admin-quixotic-tab.is-active,
+    :is(.admin-app, .cashier-app) .sidebar-link.active,
+    :is(.admin-app, .cashier-app) #sidebar .sidebar-link,
+    :is(.admin-app, .cashier-app) .admin-rail-chevron,
+    :is(.admin-app, .cashier-app) .admin-rail-chevron__icon,
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) #sidebar .admin-sidebar-nav > ul > li,
+    html.shell-sidebar-rail :is(.admin-app, .cashier-app) .sidebar-link:hover .label,
+    html.shell-sidebar-expanded :is(.admin-app, .cashier-app) .sidebar-link .label {
+        animation: none !important;
+        transition: none !important;
+    }
+}
