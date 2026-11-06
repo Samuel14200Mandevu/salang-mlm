@@ -8,24 +8,6 @@
     cursor: pointer;
 }
 
-@media (max-width: 640px) {
-    .grid-cols-6 {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .grid-cols-6 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-    .grid-cols-6 {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
 .users-filter-menu {
     position: absolute;
     right: 0;
@@ -211,72 +193,14 @@
         </div>
     @endif
 
-    <!-- Statistiques -->
-    @php
-        $totalUsers = $users->total() ?? 0;
-        $activeUsers = isset($stats['active']) ? $stats['active'] : 0;
-        $inactiveUsers = isset($stats['inactive']) ? $stats['inactive'] : 0;
-        $adminUsers = isset($stats['admins']) ? $stats['admins'] : 0;
-        $cashierUsers = isset($stats['cashiers']) ? $stats['cashiers'] : 0;
-        $withPackage = isset($stats['with_package']) ? $stats['with_package'] : 0;
-    @endphp
-
-    <div class="admin-kpi-rail grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-primary)]">{{ $totalUsers }}</p>
-        </div>
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $activeUsers }}</p>
-        </div>
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">{{ $inactiveUsers }}</p>
-        </div>
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Admins</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">{{ $adminUsers }}</p>
-        </div>
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[#1A4A7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Caissiers</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[#1A4A7A]">{{ $cashierUsers }}</p>
-        </div>
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Avec package</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $withPackage }}</p>
-        </div>
-    </div>
+    <x-ui.stat-grid class="mb-4 lg:grid-cols-3">
+        <x-ui.stat title="Total" :value="$users->total()" id="kpi-total" />
+        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" />
+        <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" />
+        <x-ui.stat title="Admins" :value="$stats['admins'] ?? 0" id="kpi-admins" />
+        <x-ui.stat title="Caissiers" :value="$stats['cashiers'] ?? 0" id="kpi-cashiers" />
+        <x-ui.stat title="Avec package" :value="$stats['with_package'] ?? 0" id="kpi-with-package" />
+    </x-ui.stat-grid>
 
     @include('admin.users._mobile_list', ['users' => $users])
 
@@ -399,6 +323,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (subtitle && newSubtitle) {
                 subtitle.innerHTML = newSubtitle.innerHTML;
             }
+
+            ['kpi-total', 'kpi-active', 'kpi-inactive', 'kpi-admins', 'kpi-cashiers', 'kpi-with-package'].forEach(id => {
+                const newEl = doc.getElementById(id);
+                const currentEl = document.getElementById(id);
+                if (newEl && currentEl) {
+                    currentEl.textContent = newEl.textContent;
+                }
+            });
         })
         .catch(error => {
             console.error('Erreur:', error);

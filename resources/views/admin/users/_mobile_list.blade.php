@@ -38,8 +38,18 @@
         </div>
     </a>
 @empty
-    <div class="admin-empty-state">
-        <p>Aucun utilisateur trouvé</p>
-    </div>
+    @php
+        $emptyDescription = request()->filled('search')
+            ? 'Aucun résultat ne correspond à votre recherche « ' . request('search') . ' ».'
+            : (request()->filled('filter')
+                ? 'Aucun résultat pour ces filtres.'
+                : 'Commencez par ajouter votre premier utilisateur.');
+    @endphp
+    <x-ui.empty-state
+        title="Aucun utilisateur"
+        :description="$emptyDescription"
+    >
+        <x-slot:icon>👥</x-slot:icon>
+    </x-ui.empty-state>
 @endforelse
 </div>
