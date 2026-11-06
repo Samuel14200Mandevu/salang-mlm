@@ -408,58 +408,18 @@
         </div>
     </div>
 
-    {{-- STATISTIQUES --}}
-    @php
-        $totalOrders = $orders->total() ?? 0;
-        $posCount = isset($stats['pos_count']) ? $stats['pos_count'] : 0;
-        $mlmCount = isset($stats['mlm_count']) ? $stats['mlm_count'] : 0;
-        $pendingCount = isset($stats['pending']) ? $stats['pending'] : 0;
-    @endphp
+    {{-- STATISTIQUES — clés contrôleur : pos_count / mlm_count / pending --}}
+    <x-ui.stat-grid class="mb-4">
+        <x-ui.stat title="Total" :value="$orders->total()" id="kpi-total" />
+        <x-ui.stat title="POS" :value="$stats['pos_count'] ?? 0" id="kpi-pos" />
+        <x-ui.stat title="MLM" :value="$stats['mlm_count'] ?? 0" id="kpi-mlm" />
+        <x-ui.stat title="En attente" :value="$stats['pending'] ?? 0" id="kpi-pending" />
+    </x-ui.stat-grid>
 
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--primary-navy)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total commandes</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">{{ $totalOrders }}</p>
-        </div>
+    @include('cashier.orders._mobile_list', ['orders' => $orders])
 
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">POS</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $posCount }}</p>
-        </div>
-
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--primary-navy)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">MLM</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-navy)]">{{ $mlmCount }}</p>
-        </div>
-
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $pendingCount }}</p>
-        </div>
-    </div>
-
-    {{-- LISTE --}}
-    <div class="card p-3 sm:p-4">
+    {{-- TABLEAU DESKTOP --}}
+    <div class="card p-3 sm:p-4 hidden md:block">
         <div class="table-wrap" id="tableContainer">
             <table class="table table-striped" id="ordersTable">
                 <thead>
@@ -523,9 +483,12 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
+    {{-- Pagination hors wrapper table (visible mobile + desktop) --}}
+    <div id="paginationContainer" class="mt-3 sm:mt-4">
         @if(isset($orders) && $orders->hasPages())
-            <x-salang-pagination :paginator="$orders" id="paginationContainer" class="mt-3 sm:mt-4" />
+            <x-salang-pagination :paginator="$orders" />
         @endif
     </div>
 </div>
