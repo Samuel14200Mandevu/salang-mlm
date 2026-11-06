@@ -245,109 +245,100 @@
         </div>
     @endif
 
-    <!-- Statistics -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
-        <div class="card-stats border-l-4 border-[var(--primary-blue)] p-3 sm:p-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">{{ $stats['total'] ?? 0 }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-2 p-3 sm:p-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">{{ $stats['active'] ?? 0 }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-[#065F9C] animate-fadeInUp delay-3 p-3 sm:p-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Niveau max</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ $ranks->max('min_pv') ?? 0 }} PV</p>
-        </div>
-        <div class="card-stats border-l-4 border-[var(--primary-blue)] animate-fadeInUp delay-4 p-3 sm:p-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Bonus max</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">{{ $ranks->max('bonus_percentage') ?? 0 }}%</p>
-        </div>
-    </div>
+    <x-ui.stat-grid class="mb-4 animate-fadeInUp delay-1">
+        <x-ui.stat title="Total" :value="$stats['total'] ?? 0" id="kpi-total" />
+        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" />
+        <x-ui.stat title="PV max" :value="($ranks->max('min_pv') ?? 0) . ' PV'" id="kpi-max-pv" />
+        <x-ui.stat title="Bonus max" :value="($ranks->max('bonus_percentage') ?? 0) . '%'" id="kpi-max-bonus" />
+    </x-ui.stat-grid>
 
     <!-- Rank List -->
     <div class="card animate-fadeInUp delay-5 p-3 sm:p-4">
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="text-xs sm:text-sm">ID</th>
-                        <th class="text-xs sm:text-sm">Rang</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Min PV</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Min BV</th>
-                        <th class="text-xs sm:text-sm">Bonus</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Utilisateurs</th>
-                        <th class="text-xs sm:text-sm hidden xl:table-cell">Statut</th>
-                        <th class="text-xs sm:text-sm text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($ranks ?? [] as $rank)
-                        @php
-                            $userCount = $stats['users_by_rank'][$rank->id] ?? 0;
-                        @endphp
-                        <tr class="rank-row">
-                            <td class="font-mono text-xs sm:text-sm">{{ $rank->id }}</td>
-                            <td class="font-medium text-sm">
-                                <span class="rank-badge">{{ $rank->name }}</span>
-                            </td>
-                            <td class="hidden sm:table-cell text-sm">{{ number_format($rank->min_pv) }}</td>
-                            <td class="hidden md:table-cell text-sm">{{ number_format($rank->min_bv ?? 0) }}</td>
-                            <td class="font-bold text-[var(--primary-blue)] text-sm">{{ $rank->bonus_percentage }}%</td>
-                            <td class="hidden lg:table-cell">
-                                <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $userCount }} utilisateur(s)</span>
-                            </td>
-                            <td class="hidden xl:table-cell">
-                                <span class="badge {{ $rank->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                                    {{ $rank->is_active ? 'Actif' : 'Inactif' }}
-                                </span>
-                            </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.ranks.edit', $rank->id) }}"
-                                       class="btn btn-outline btn-sm btn-icon" title="Modifier">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                    </a>
-                                    <a href="{{ route('admin.ranks.toggle-status', $rank->id) }}"
-                                       class="btn btn-outline btn-sm btn-icon"
-                                       title="{{ $rank->is_active ? 'Désactiver' : 'Activer' }}">
-                                        @if($rank->is_active)
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                            </svg>
-                                        @else
-                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                        @endif
-                                    </a>
-                                    <button type="button"
-                                            onclick="openDeleteModal('{{ $rank->id }}', '{{ $rank->name }}', {{ $userCount }})"
-                                            class="btn btn-outline btn-sm btn-icon text-[var(--ui-stat-danger)] hover:text-[#991B1B]"
-                                            title="Supprimer">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="hidden md:block">
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td colspan="8" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                                </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun rang configuré</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Créez votre premier rang</p>
-                            </td>
+                            <th class="text-xs sm:text-sm">ID</th>
+                            <th class="text-xs sm:text-sm">Rang</th>
+                            <th class="text-xs sm:text-sm hidden sm:table-cell">Min PV</th>
+                            <th class="text-xs sm:text-sm hidden md:table-cell">Min BV</th>
+                            <th class="text-xs sm:text-sm">Bonus</th>
+                            <th class="text-xs sm:text-sm hidden lg:table-cell">Utilisateurs</th>
+                            <th class="text-xs sm:text-sm hidden xl:table-cell">Statut</th>
+                            <th class="text-xs sm:text-sm text-right">Actions</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($ranks ?? [] as $rank)
+                            @php
+                                $userCount = $stats['users_by_rank'][$rank->id] ?? 0;
+                            @endphp
+                            <tr class="rank-row">
+                                <td class="font-mono text-xs sm:text-sm">{{ $rank->id }}</td>
+                                <td class="font-medium text-sm">
+                                    <span class="rank-badge">{{ $rank->name }}</span>
+                                </td>
+                                <td class="hidden sm:table-cell text-sm">{{ number_format($rank->min_pv) }}</td>
+                                <td class="hidden md:table-cell text-sm">{{ number_format($rank->min_bv ?? 0) }}</td>
+                                <td class="font-bold text-[var(--primary-blue)] text-sm">{{ $rank->bonus_percentage }}%</td>
+                                <td class="hidden lg:table-cell">
+                                    <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $userCount }} utilisateur(s)</span>
+                                </td>
+                                <td class="hidden xl:table-cell">
+                                    <span class="badge {{ $rank->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
+                                        {{ $rank->is_active ? 'Actif' : 'Inactif' }}
+                                    </span>
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ route('admin.ranks.edit', $rank->id) }}"
+                                           class="btn btn-outline btn-sm btn-icon" title="Modifier">
+                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('admin.ranks.toggle-status', $rank->id) }}"
+                                           class="btn btn-outline btn-sm btn-icon"
+                                           title="{{ $rank->is_active ? 'Désactiver' : 'Activer' }}">
+                                            @if($rank->is_active)
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ui-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            @endif
+                                        </a>
+                                        <button type="button"
+                                                onclick="openDeleteModal('{{ $rank->id }}', '{{ $rank->name }}', {{ $userCount }})"
+                                                class="btn btn-outline btn-sm btn-icon text-[var(--ui-stat-danger)] hover:text-[#991B1B]"
+                                                title="Supprimer">
+                                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
+                                    <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                    </svg>
+                                    <p class="text-base sm:text-lg font-medium">Aucun rang configuré</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">Créez votre premier rang</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        @include('admin.ranks._mobile_list', ['ranks' => $ranks, 'stats' => $stats])
     </div>
 
 </div>
