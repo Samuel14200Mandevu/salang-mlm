@@ -255,8 +255,12 @@ class BinancePayService
      */
     public function processCallback(Request $request): array
     {
+        $notifier = app(PaymentNotificationService::class);
+
         $alreadyVerified = (bool) $request->attributes->get('binance_signature_verified', false);
         if (! $alreadyVerified && ! $this->verifySignature($request)) {
+            $notifier->recordWebhookFailure('binance', 'Invalid signature');
+
             return [
                 'returnCode' => 'FAIL',
                 'returnMessage' => 'Invalid signature',
@@ -274,6 +278,8 @@ class BinancePayService
 
         $merchantTradeNo = $data['merchantTradeNo'] ?? null;
         if (! $merchantTradeNo) {
+            $notifier->recordWebhookFailure('binance', 'merchantTradeNo missing');
+
             return [
                 'returnCode' => 'FAIL',
                 'returnMessage' => 'merchantTradeNo missing',
@@ -298,6 +304,7 @@ class BinancePayService
                         'returnCode' => 'FAIL',
                         'returnMessage' => 'Order not found',
                         'http_status' => 404,
+                        'notify' => null,
                     ];
                 }
 
@@ -308,6 +315,20 @@ class BinancePayService
                         'http_status' => 200,
                         'already_processed' => true,
                         'status' => 'completed',
+                        'transaction_id' => $transaction->id,
+                        'notify' => null,
+                    ];
+                }
+
+                if ($transaction->status === 'failed' || $transaction->status === 'cancelled') {
+                    return [
+                        'returnCode' => 'SUCCESS',
+                        'returnMessage' => null,
+                        'http_status' => 200,
+                        'already_processed' => true,
+                        'status' => $transaction->status,
+                        'transaction_id' => $transaction->id,
+                        'notify' => null,
                     ];
                 }
 
@@ -334,7 +355,11 @@ class BinancePayService
                         'returnCode' => 'SUCCESS',
                         'returnMessage' => null,
                         'http_status' => 200,
+                        'already_processed' => false,
                         'status' => 'failed',
+                        'transaction_id' => $transaction->id,
+                        'message' => 'Paiement Binance annulé (PAY_CLOSED)',
+                        'notify' => 'failed',
                     ];
                 }
 
@@ -347,6 +372,8 @@ class BinancePayService
                         'returnMessage' => null,
                         'http_status' => 200,
                         'status' => $bizStatus,
+                        'transaction_id' => $transaction->id,
+                        'notify' => null,
                     ];
                 }
 
@@ -384,8 +411,19 @@ class BinancePayService
                     'http_status' => 200,
                     'already_processed' => false,
                     'status' => 'completed',
+                    'transaction_id' => $transaction->id,
+                    'notify' => 'completed',
                 ];
             });
+
+            $notifier->dispatchFromCallbackResult($result, 'Binance Pay');
+
+            if (($result['returnCode'] ?? 'FAIL') !== 'SUCCESS') {
+                $notifier->recordWebhookFailure(
+                    'binance',
+                    (string) ($result['returnMessage'] ?? 'Échec callback Binance')
+                );
+            }
 
             return $result;
         } catch (\Throwable $e) {
@@ -393,6 +431,7 @@ class BinancePayService
                 'error' => $e->getMessage(),
                 'merchant_trade_no' => $merchantTradeNo,
             ]);
+            $notifier->recordWebhookFailure('binance', $e->getMessage());
 
             return [
                 'returnCode' => 'FAIL',

@@ -176,6 +176,10 @@ class FlexPayService
                 'error' => $e->getMessage(),
                 'payload_keys' => array_keys($payload),
             ]);
+            app(PaymentNotificationService::class)->recordWebhookFailure(
+                'flexpay',
+                'Payload invalide: '.$e->getMessage()
+            );
 
             return [
                 'success' => false,
@@ -190,6 +194,11 @@ class FlexPayService
             ?? ($payload['orderNumber'] ?? $payload['order_number'] ?? null);
 
         if (! $reference && ! $orderNumber) {
+            app(PaymentNotificationService::class)->recordWebhookFailure(
+                'flexpay',
+                'Référence ou orderNumber manquant'
+            );
+
             return [
                 'success' => false,
                 'message' => 'Référence ou orderNumber manquant',
@@ -208,7 +217,7 @@ class FlexPayService
             // Si le check API échoue (réseau), on s'appuie sur handleCallback ($isPaid reste true).
         }
 
-        return DB::transaction(function () use ($payment, $payload, $reference, $orderNumber, $isPaid) {
+        $result = DB::transaction(function () use ($payment, $payload, $reference, $orderNumber, $isPaid) {
             $query = Transaction::query()->where(function ($q) use ($reference, $orderNumber) {
                 if ($reference) {
                     $q->where('reference', $reference);
@@ -232,6 +241,7 @@ class FlexPayService
                     'success' => false,
                     'message' => 'Transaction introuvable',
                     'http_status' => 404,
+                    'notify' => null,
                 ];
             }
 
@@ -243,6 +253,7 @@ class FlexPayService
                     'message' => 'Transaction déjà traitée',
                     'transaction_id' => $transaction->id,
                     'http_status' => 200,
+                    'notify' => null,
                 ];
             }
 
@@ -254,6 +265,7 @@ class FlexPayService
                     'message' => 'Transaction déjà clôturée',
                     'transaction_id' => $transaction->id,
                     'http_status' => 200,
+                    'notify' => null,
                 ];
             }
 
@@ -278,10 +290,12 @@ class FlexPayService
 
                 return [
                     'success' => true,
+                    'already_processed' => false,
                     'status' => 'failed',
                     'message' => $payment->message ?: 'Paiement échoué',
                     'transaction_id' => $transaction->id,
                     'http_status' => 200,
+                    'notify' => 'failed',
                 ];
             }
 
@@ -296,6 +310,7 @@ class FlexPayService
                     'success' => false,
                     'message' => 'Portefeuille introuvable',
                     'http_status' => 404,
+                    'notify' => null,
                 ];
             }
 
@@ -334,8 +349,21 @@ class FlexPayService
                 'message' => 'Paiement confirmé et wallet crédité',
                 'transaction_id' => $transaction->id,
                 'http_status' => 200,
+                'notify' => 'completed',
             ];
         });
+
+        $notifier = app(PaymentNotificationService::class);
+        $notifier->dispatchFromCallbackResult($result, 'FlexPay');
+
+        if (($result['success'] ?? false) === false) {
+            $notifier->recordWebhookFailure(
+                'flexpay',
+                (string) ($result['message'] ?? 'Échec callback FlexPay')
+            );
+        }
+
+        return $result;
     }
 
     /**

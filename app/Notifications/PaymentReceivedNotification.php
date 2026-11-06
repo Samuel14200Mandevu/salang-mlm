@@ -3,55 +3,51 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class PaymentReceivedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $amount;
-    protected $method;
-    protected $transactionId;
+    public function __construct(
+        protected float|int|string $amount,
+        protected string $method,
+        protected int|string $transactionId,
+    ) {}
 
-    public function __construct($amount, $method, $transactionId)
-    {
-        $this->amount = $amount;
-        $this->method = $method;
-        $this->transactionId = $transactionId;
-    }
-
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return ['mail', 'database'];
     }
 
-    public function toMail($notifiable)
+    public function toMail(object $notifiable): MailMessage
     {
+        $amount = number_format((float) $this->amount, 2, '.', ' ');
+
         return (new MailMessage)
-            ->subject('💳 Paiement reçu - Salang MLM')
-            ->greeting('Bonjour ' . $notifiable->name . ' !')
-            ->line('Vous avez effectué un paiement avec succès.')
-            ->line('')
-            ->line("**Montant:** \${$this->amount}")
-            ->line("**Méthode:** {$this->method}")
-            ->line('')
-            ->line('Votre portefeuille a été crédité du montant correspondant.')
+            ->subject('Dépôt reçu — Salang MLM')
+            ->greeting('Bonjour '.$notifiable->name.',')
+            ->line('Votre dépôt a été crédité avec succès.')
+            ->line('**Montant :** $'.$amount)
+            ->line('**Méthode :** '.$this->method)
             ->action('Voir mon portefeuille', url('/wallet'))
-            ->line('')
-            ->line('Merci de faire partie de la communauté Salang !')
-            ->salutation('L\'équipe Salang');
+            ->salutation('L\'équipe Salang MLM');
     }
 
-    public function toArray($notifiable)
+    public function toArray(object $notifiable): array
     {
+        $amount = (float) $this->amount;
+
         return [
             'type' => 'payment_received',
-            'amount' => $this->amount,
+            'title' => 'Dépôt reçu',
+            'amount' => $amount,
             'method' => $this->method,
             'transaction_id' => $this->transactionId,
-            'message' => "Vous avez reçu un paiement de \${$this->amount} via {$this->method}",
+            'message' => 'Votre portefeuille a été crédité de $'.number_format($amount, 2, '.', ' ').' via '.$this->method.'.',
+            'action_url' => url('/wallet'),
         ];
     }
 }

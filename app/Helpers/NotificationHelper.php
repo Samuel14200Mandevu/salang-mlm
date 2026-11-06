@@ -173,6 +173,9 @@ class NotificationHelper
             'rank_upgraded' => 'Promotion de rang',
             'package_purchased' => 'Achat de package',
             'payment_received' => 'Paiement reçu',
+            'payment_failed' => 'Paiement non abouti',
+            'large_deposit_admin' => 'Dépôt important',
+            'payment_webhook_failure_admin' => 'Échecs webhook paiement',
             'withdrawal_approved' => 'Retrait approuvé',
             'withdrawal_rejected' => 'Retrait rejeté',
             'welcome' => 'Bienvenue',
@@ -259,6 +262,21 @@ class NotificationHelper
                 $amount = self::formatAmount($data['amount'] ?? 0);
                 $method = self::getPaymentMethodLabel($data['method'] ?? '');
                 return "Paiement de {$amount} reçu via {$method}.";
+
+            case 'payment_failed':
+                $amount = self::formatAmount($data['amount'] ?? 0);
+                $method = self::getPaymentMethodLabel($data['method'] ?? '');
+                return "Paiement de {$amount} via {$method} non abouti.";
+
+            case 'large_deposit_admin':
+                $amount = self::formatAmount($data['amount'] ?? 0);
+                $name = $data['member_name'] ?? 'Un membre';
+                return "{$name} a effectué un dépôt important de {$amount}.";
+
+            case 'payment_webhook_failure_admin':
+                $provider = $data['provider'] ?? 'paiement';
+                $count = $data['failure_count'] ?? 0;
+                return "{$provider} : {$count} échec(s) webhook récents.";
                 
             case 'withdrawal_approved':
                 $amount = self::formatAmount($data['amount'] ?? 0);
