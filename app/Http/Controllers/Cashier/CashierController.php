@@ -2651,6 +2651,7 @@ public function history(Request $request)
         $stats = [
             'total' => User::where('user_type', 'member')->count(),
             'active' => User::where('user_type', 'member')->where('is_active', true)->count(),
+            'inactive' => User::where('user_type', 'member')->where('is_active', false)->count(),
             'with_commissions' => Commission::where('status', 'paid')->distinct('user_id')->count('user_id'),
             'orders' => Order::where('source', 'pos')->count(),
         ];

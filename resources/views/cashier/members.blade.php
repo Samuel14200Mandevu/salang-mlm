@@ -72,59 +72,17 @@
         </div>
     </div>
 
-    {{-- STATISTIQUES --}}
-    @php
-        $totalMembers = $members->total() ?? 0;
-        $activeMembers = isset($stats['active']) ? $stats['active'] : 0;
-        $inactiveMembers = isset($stats['inactive']) ? $stats['inactive'] : 0;
-        $withCommissions = isset($stats['with_commissions']) ? $stats['with_commissions'] : 0;
-        $totalOrders = isset($stats['orders']) ? $stats['orders'] : 0;
-    @endphp
+    <x-ui.stat-grid class="mb-4">
+        <x-ui.stat title="Total" :value="$members->total()" id="kpi-total" />
+        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" />
+        <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" />
+        <x-ui.stat title="Commissions" :value="$stats['with_commissions'] ?? 0" id="kpi-with-commissions" />
+    </x-ui.stat-grid>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--cashier-stat-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--cashier-stat-primary)]">{{ $totalMembers }}</p>
-        </div>
+    @include('cashier.members._mobile_list', ['members' => $members])
 
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--cashier-stat-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--cashier-stat-success)]">{{ $activeMembers }}</p>
-        </div>
-
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--cashier-stat-danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--cashier-stat-danger)]">{{ $inactiveMembers }}</p>
-        </div>
-
-        <div class="card-stats">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-[var(--cashier-stat-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Commissions</span>
-            </div>
-            <p class="text-lg sm:text-xl font-bold text-[var(--cashier-stat-warning)]">{{ $withCommissions }}</p>
-        </div>
-    </div>
-
-    {{-- LISTE --}}
-    <div class="card p-3 sm:p-4">
+    {{-- TABLEAU DESKTOP --}}
+    <div class="card p-3 sm:p-4 hidden md:block">
         <div class="table-wrap" id="tableContainer">
             <table class="table table-striped" id="membersTable">
                 <thead>
@@ -144,9 +102,12 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
+    {{-- Pagination unique (desktop + mobile, hors wrapper table) --}}
+    <div id="paginationContainer" class="mt-3 sm:mt-4">
         @if($members->hasPages())
-            <x-salang-pagination :paginator="$members" id="paginationContainer" class="mt-3 sm:mt-4" />
+            <x-salang-pagination :paginator="$members" />
         @endif
     </div>
 </div>
@@ -236,6 +197,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     tableBody.innerHTML = newTableBody.innerHTML;
                 }
 
+                const newMobile = doc.getElementById('cashierMemberMobileList');
+                const currentMobile = document.getElementById('cashierMemberMobileList');
+                if (newMobile && currentMobile) {
+                    currentMobile.innerHTML = newMobile.innerHTML;
+                }
+
                 const paginationContainer = document.getElementById('paginationContainer');
                 if (paginationContainer && newPagination) {
                     paginationContainer.innerHTML = newPagination.innerHTML;
@@ -245,9 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 updateSubtitles(doc);
 
-                if (typeof window.refreshAdminMobileTables === 'function') {
-                    window.refreshAdminMobileTables(document.getElementById('tableContainer') || document);
-                }
+                ['kpi-total', 'kpi-active', 'kpi-inactive', 'kpi-with-commissions'].forEach(id => {
+                    const newEl = doc.getElementById(id);
+                    const currentEl = document.getElementById(id);
+                    if (newEl && currentEl) {
+                        currentEl.textContent = newEl.textContent;
+                    }
+                });
+
                 if (typeof window.initSalangPagination === 'function') {
                     window.initSalangPagination(document.getElementById('paginationContainer') || document);
                 }
