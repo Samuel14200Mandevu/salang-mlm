@@ -41,7 +41,7 @@
 | Dashboard admin | **~20+ requêtes agrégées** par chargement, **sans** `Cache::remember` | ⚠️ Quick win cache |
 | Middleware `active` | **`User::find` + 4× `Cache::forget`** à **chaque** requête authentifiée | ⚠️ Quick win |
 | Services MLM | Chargements **ensemble** (`User::…->get()`, arbres) | ⚠️ Mix quick win / lourd |
-| Cache métier stats | **`Cache::remember`** surtout `User.php`, SMS tokens ; **pas** dashboard | ⚠️ Quick win |
+| Cache métier stats | **`Cache::remember`** surtout `User.php` ; **pas** dashboard | ⚠️ Quick win |
 | Caches Laravel prod | `bootstrap/cache/` : **pas** de `config.php` / `routes-v7.php` versionnés ; doc checklist `config:cache` | ⚠️ Ops quick win |
 | Vite | CSS **~649 kB** gzip **~91 kB** ; JS principal **~34 kB** + Chart **~202 kB** chunk | ⚠️ Quick win (split CSS admin) |
 | Session / queue (exemple dev) | `.env.example:28-34` → `SESSION_DRIVER=database`, `QUEUE_CONNECTION=database` ; `config/queue.php:16` défaut env **`redis`** | ⚠️ Alignement env |
@@ -92,7 +92,7 @@
 
 | Pattern | Exemples | Gap |
 |---------|----------|-----|
-| `Cache::remember` | `User.php:436,763` ; `SmsService.php:170,244,318` | Pas de cache dashboard / rapports admin |
+| `Cache::remember` | `User.php:436,763` | Pas de cache dashboard / rapports admin |
 | `Cache::put/get` | Settings admin, rate limit, maintenance, activation | OK fonctionnel |
 | `Cache::forget` agressif | `EnsureUserActive.php:44-47` | Voir PA1 |
 
