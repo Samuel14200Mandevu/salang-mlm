@@ -36,7 +36,8 @@ return new class extends Migration
             $table->timestamp('adhesion_at')->nullable();
 
             $table->boolean('consultation_done')->default(false);
-            $table->foreignId('consultation_id')->nullable()->constrained('consultations')->nullOnDelete();
+            // Pas de FK : la table consultations peut être absente en tests SQLite
+            $table->unsignedBigInteger('consultation_id')->nullable()->index();
             $table->timestamp('consultation_at')->nullable();
 
             $table->boolean('purchase_done')->default(false);
