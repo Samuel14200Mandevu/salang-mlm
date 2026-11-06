@@ -455,47 +455,39 @@
         </div>
     @endif
 
-    <!-- Statistiques -->
-    <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
-        <div class="card-stats" id="stat-pending">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-warning)]">{{ $stats['pending'] ?? 0 }}</p>
-        </div>
-        <div class="card-stats" id="stat-processing">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">{{ $stats['processing'] ?? 0 }}</p>
-        </div>
-        <div class="card-stats" id="stat-total-amount">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Montant total</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">{{ number_format($stats['total_amount'] ?? 0, 2) }} $</p>
-        </div>
-        <div class="card-stats" id="stat-total-fees">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Frais totaux</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--text-secondary)]">{{ number_format($stats['total_fees'] ?? 0, 2) }} $</p>
-        </div>
-    </div>
+    <!-- Statistiques — ids sur la valeur (x-ui.stat) pour sync AJAX -->
+    <x-ui.stat-grid class="mb-4 animate-fadeInUp" style="animation-delay: 0.05s;">
+        <x-ui.stat title="En attente" :value="$stats['pending'] ?? 0" id="kpi-pending" />
+        <x-ui.stat title="En traitement" :value="$stats['processing'] ?? 0" id="kpi-processing" />
+        <x-ui.stat title="Montant total" :value="number_format($stats['total_amount'] ?? 0, 2) . ' $'" id="kpi-total-amount" />
+        <x-ui.stat title="Frais totaux" :value="number_format($stats['total_fees'] ?? 0, 2) . ' $'" id="kpi-total-fees" />
+    </x-ui.stat-grid>
 
     <!-- Liste des retraits -->
     <div class="card p-3 sm:p-4 animate-fadeInUp" style="animation-delay: 0.1s;">
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Utilisateur</th>
-                        <th class="hidden sm:table-cell">Email</th>
-                        <th>Montant</th>
-                        <th class="hidden md:table-cell">Méthode</th>
-                        <th>Statut</th>
-                        <th class="hidden lg:table-cell">Date</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="withdrawalsTableBody">
-                    @include('admin.withdrawals.partials.table_rows', ['withdrawals' => $withdrawals])
-                </tbody>
-            </table>
+        <div class="hidden md:block">
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Utilisateur</th>
+                            <th class="hidden sm:table-cell">Email</th>
+                            <th>Montant</th>
+                            <th class="hidden md:table-cell">Méthode</th>
+                            <th>Statut</th>
+                            <th class="hidden lg:table-cell">Date</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawalsTableBody">
+                        @include('admin.withdrawals.partials.table_rows', ['withdrawals' => $withdrawals])
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        @include('admin.withdrawals._mobile_list', ['withdrawals' => $withdrawals])
 
         <x-salang-pagination :paginator="$withdrawals" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
@@ -552,7 +544,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let searchTimeout;
     let currentPage = 1;
 
-    // Fonction pour mettre à jour le tableau et la pagination
+    const mobileEl = document.getElementById('withdrawalsMobileList');
+
+    // Fonction pour mettre à jour le tableau, mobile, pagination, KPI
     function updateTable(html) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -561,6 +555,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const newTableBody = doc.getElementById('withdrawalsTableBody');
         if (newTableBody) {
             tableBody.innerHTML = newTableBody.innerHTML;
+        }
+
+        // Sync mobile (indépendant de la table)
+        const newMobile = doc.getElementById('withdrawalsMobileList');
+        if (newMobile && mobileEl) {
+            mobileEl.innerHTML = newMobile.innerHTML;
         }
 
         // Mettre à jour la pagination
@@ -576,37 +576,30 @@ document.addEventListener('DOMContentLoaded', function() {
             subtitle.innerHTML = newSubtitle.innerHTML;
         }
 
-        // Mettre à jour les statistiques
-        updateStats(doc);
-
-        // Réinitialiser les événements des boutons d'action
-        initActionButtons();
-    }
-
-    // Fonction pour mettre à jour les statistiques
-    function updateStats(doc) {
-        const statIds = ['stat-pending', 'stat-processing', 'stat-total-amount', 'stat-total-fees'];
-        statIds.forEach(function(id) {
-            const newStat = doc.getElementById(id);
-            const currentStat = document.getElementById(id);
-            if (newStat && currentStat) {
-                const newValue = newStat.querySelector('.text-xl');
-                const currentValue = currentStat.querySelector('.text-xl');
-                if (newValue && currentValue) {
-                    currentValue.textContent = newValue.textContent;
-                }
+        // KPI — ids stables sur le <p> valeur de x-ui.stat
+        ['kpi-pending', 'kpi-processing', 'kpi-total-amount', 'kpi-total-fees'].forEach(function (id) {
+            const newEl = doc.getElementById(id);
+            const currentEl = document.getElementById(id);
+            if (newEl && currentEl) {
+                currentEl.textContent = newEl.textContent;
             }
         });
     }
 
-    // Fonction pour réinitialiser les événements des boutons d'action
-    function initActionButtons() {
-        // Les boutons d'action sont maintenant dans le DOM frais
-        // Les événements onclick sont déjà définis dans les attributs HTML
-    }
-
     // Fonction pour récupérer les données
     function fetchData(url) {
+        if (mobileEl) {
+            mobileEl.innerHTML = `
+                <div class="flex items-center justify-center gap-3 py-8 text-sm text-[var(--text-secondary)]">
+                    <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Recherche en cours…</span>
+                </div>
+            `;
+        }
+
         fetch(url, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -628,6 +621,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                 </tr>
             `;
+            if (mobileEl) {
+                mobileEl.innerHTML = `
+                    <div class="py-8 text-center text-sm text-[var(--ui-stat-danger)]">
+                        Une erreur est survenue lors de la recherche
+                    </div>
+                `;
+            }
         });
     }
 
