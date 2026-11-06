@@ -24,10 +24,11 @@
                              decoding="async"
                              class="sidebar-logo-img sidebar-logo-full logo-themeable">
                     </a>
+                    {{-- md:hidden (768px) : aligné sur Admin + Alpine isMobile=768 (js) + cashier-mobile.css (display:none ≥768px). Le CSS cache déjà la nav sur tablette, ce md:hidden est un filet de cohérence. Ne pas remonter à lg. --}}
                     <button type="button"
                             id="cashierDrawerCloseBtn"
                             @click="closeSidebar()"
-                            class="admin-drawer-close lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                            class="admin-drawer-close md:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
                             aria-label="Fermer le menu">
                         <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -35,7 +36,7 @@
                     </button>
                 </div>
 
-                <div class="admin-drawer-mobile-head lg:hidden" aria-hidden="true">
+                <div class="admin-drawer-mobile-head md:hidden" aria-hidden="true">
                     Menu caisse
                 </div>
 

@@ -60,11 +60,12 @@
          @admin-close-drawer.window="if (isMobile) closeSidebar()"
          @keydown.escape.window="if (isMobile && sidebarOpen) closeSidebar()">
 
+        {{-- md:hidden (768px) : aligné sur Admin + Alpine isMobile=768 (js) + cashier-mobile.css (display:none ≥768px). Le CSS cache déjà la nav sur tablette, ce md:hidden est un filet de cohérence. Ne pas remonter à lg. --}}
         <!-- Overlay mobile -->
         <div x-show="sidebarOpen && isMobile"
              x-cloak
              @click="closeSidebar()"
-             class="admin-mobile-drawer-backdrop fixed inset-0 bg-black/45 z-40 lg:hidden"
+             class="admin-mobile-drawer-backdrop fixed inset-0 bg-black/45 z-40 md:hidden"
              x-transition:enter="transition-opacity ease-linear duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"

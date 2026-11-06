@@ -1,6 +1,7 @@
 @include('cashier.layouts.partials.mobile-more-sheet')
 
-        <nav class="mobile-bottom-nav lg:hidden" id="mobileBottomNav" aria-label="Navigation caisse mobile">
+        {{-- md:hidden (768px) : aligné sur Admin + Alpine isMobile=768 (js) + cashier-mobile.css (display:none ≥768px). Le CSS cache déjà la nav sur tablette, ce md:hidden est un filet de cohérence. Ne pas remonter à lg. --}}
+        <nav class="mobile-bottom-nav md:hidden" id="mobileBottomNav" aria-label="Navigation caisse mobile">
             <a href="{{ route('cashier.dashboard') }}"
                class="nav-item {{ request()->routeIs('cashier.dashboard') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

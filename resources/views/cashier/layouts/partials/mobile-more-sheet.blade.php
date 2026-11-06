@@ -1,7 +1,8 @@
 {{-- Menu mobile caisse — routes hors barre du bas --}}
+{{-- md:hidden (768px) : aligné sur Admin + Alpine isMobile=768 (js) + cashier-mobile.css (display:none ≥768px). Le CSS cache déjà la nav sur tablette, ce md:hidden est un filet de cohérence. Ne pas remonter à lg. --}}
 <div x-show="mobileMoreOpen"
      x-cloak
-     class="admin-mobile-sheet-backdrop lg:hidden"
+     class="admin-mobile-sheet-backdrop md:hidden"
      @click="mobileMoreOpen = false"
      x-transition:enter="transition ease-out duration-200"
      x-transition:enter-start="opacity-0"
@@ -13,7 +14,7 @@
 
 <div x-show="mobileMoreOpen"
      x-cloak
-     class="admin-mobile-sheet lg:hidden"
+     class="admin-mobile-sheet md:hidden"
      role="dialog"
      aria-modal="true"
      aria-label="Menu caisse"
