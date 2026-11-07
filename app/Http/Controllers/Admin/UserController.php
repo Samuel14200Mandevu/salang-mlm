@@ -98,13 +98,18 @@ class UserController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
+        // whereHas (pas User::role) : ne plante pas si un rôle Spatie manque en tests/dev.
+        $countByRoleNames = fn (array $names) => User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', $names))
+            ->count();
+
         $stats = [
             'total' => $membersBase()->count(),
             'active' => $membersBase()->where('is_active', true)->count(),
             'inactive' => $membersBase()->where('is_active', false)->count(),
-            'admins' => User::role('admin')->count(),
-            'cashiers' => User::role('cashier')->count(),
-            'employees' => User::role($staffRoles)->count(),
+            'admins' => $countByRoleNames(['admin']),
+            'cashiers' => $countByRoleNames(['cashier']),
+            'employees' => $countByRoleNames($staffRoles),
             'with_package' => $membersBase()->whereNotNull('package_id')->count(),
             'with_kyc' => $membersBase()->where('kyc_status', 'verified')->count(),
             'pending_kyc' => $membersBase()->where('kyc_status', 'pending')->count(),

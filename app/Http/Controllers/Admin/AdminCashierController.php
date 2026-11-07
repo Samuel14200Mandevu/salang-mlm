@@ -22,18 +22,24 @@ class AdminCashierController extends Controller
     }
 
     /**
+     * Query employés via whereHas (évite Spatie::role() si un rôle manque).
+     */
+    protected function staffQuery(array $roleNames = self::STAFF_ROLES)
+    {
+        return User::query()->whereHas('roles', fn ($q) => $q->whereIn('name', $roleNames));
+    }
+
+    /**
      * Liste des employés (admin, responsable IT, caissier).
      */
     public function index(Request $request)
     {
-        $query = User::query()
-            ->with('roles')
-            ->role(self::STAFF_ROLES);
-
         $roleFilter = $request->string('role')->toString();
-        if (in_array($roleFilter, self::STAFF_ROLES, true)) {
-            $query->role($roleFilter);
-        }
+        $roles = in_array($roleFilter, self::STAFF_ROLES, true)
+            ? [$roleFilter]
+            : self::STAFF_ROLES;
+
+        $query = $this->staffQuery($roles)->with('roles');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -47,12 +53,12 @@ class AdminCashierController extends Controller
         $employees = $query->orderBy('name')->paginate(20)->withQueryString();
 
         $stats = [
-            'total' => User::role(self::STAFF_ROLES)->count(),
-            'admins' => User::role('admin')->count(),
-            'it_managers' => User::role('it_manager')->count(),
-            'cashiers' => User::role('cashier')->count(),
-            'active' => User::role(self::STAFF_ROLES)->where('is_active', true)->count(),
-            'inactive' => User::role(self::STAFF_ROLES)->where('is_active', false)->count(),
+            'total' => $this->staffQuery()->count(),
+            'admins' => $this->staffQuery(['admin'])->count(),
+            'it_managers' => $this->staffQuery(['it_manager'])->count(),
+            'cashiers' => $this->staffQuery(['cashier'])->count(),
+            'active' => $this->staffQuery()->where('is_active', true)->count(),
+            'inactive' => $this->staffQuery()->where('is_active', false)->count(),
         ];
 
         // Compat vues existantes ($cashiers)
@@ -66,7 +72,7 @@ class AdminCashierController extends Controller
      */
     public function show($id)
     {
-        $cashier = User::role(self::STAFF_ROLES)->with('roles')->findOrFail($id);
+        $cashier = $this->staffQuery()->with('roles')->findOrFail($id);
         $employee = $cashier;
 
         return view('admin.cashiers.show', compact('cashier', 'employee'));
@@ -174,7 +180,7 @@ class AdminCashierController extends Controller
     public function destroy($id)
     {
         try {
-            $cashier = User::role(self::STAFF_ROLES)->findOrFail($id);
+            $cashier = $this->staffQuery()->findOrFail($id);
 
             if ((int) $cashier->id === (int) auth()->id()) {
                 return redirect()->back()
@@ -211,7 +217,7 @@ class AdminCashierController extends Controller
     public function toggleStatus($id)
     {
         try {
-            $cashier = User::role(self::STAFF_ROLES)->findOrFail($id);
+            $cashier = $this->staffQuery()->findOrFail($id);
 
             if ((int) $cashier->id === (int) auth()->id() && $cashier->is_active) {
                 return redirect()->back()
