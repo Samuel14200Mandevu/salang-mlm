@@ -79,7 +79,7 @@ Route::get('/offre', [\App\Http\Controllers\SitePageController::class, 'offer'])
 Route::get('/remuneration', [\App\Http\Controllers\SitePageController::class, 'remuneration'])->name('site.remuneration');
 Route::get('/contact', [\App\Http\Controllers\SitePageController::class, 'contact'])->name('contact');
 Route::post('/contact', [\App\Http\Controllers\ContactMessageController::class, 'store'])
-    ->middleware('throttle:8,1')
+    ->middleware('throttle:contact')
     ->name('contact.store');
 
 // Sponsor & Email check (AJAX)
@@ -158,9 +158,10 @@ Route::middleware(['auth', 'active'])->prefix('wishlist')->name('wishlist.')->gr
 // ============================================================
 Route::middleware(['auth', 'active'])->prefix('notifications')->name('notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
-    Route::post('/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
     Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
     Route::post('/mark-action-feedback-read', [NotificationController::class, 'markActionFeedbackRead'])->name('mark-action-feedback-read');
+    Route::get('/{id}', [NotificationController::class, 'show'])->name('show');
+    Route::post('/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
     Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
 });

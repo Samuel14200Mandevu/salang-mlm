@@ -6,14 +6,7 @@
     $site = config('salang-site');
     $supportEmail = $supportEmail ?: $site['email'];
     $supportPhone = $supportPhone ?: $site['phone'];
-    $subjectOptions = [
-        'Adhésion / inscription',
-        'Produits & commandes',
-        'Plan de rémunération',
-        'Compte membre / connexion',
-        'Partenariat',
-        'Autre',
-    ];
+    $subjectOptions = $subjectOptions ?? \App\Services\ContactSpamGuard::SUBJECTS;
 @endphp
 
 @section('content')
@@ -89,14 +82,18 @@
 
             <form method="POST" action="{{ route('contact.store') }}" class="public-contact-form" novalidate>
                 @csrf
+                <input type="hidden" name="form_token" value="{{ $formToken ?? '' }}">
                 <div class="public-contact-form__head">
                     <h2 class="public-contact-form__title">Envoyer un message</h2>
                     <p class="public-contact-form__hint">Réponse sous 24–48&nbsp;h ouvrées en général.</p>
                 </div>
 
+                {{-- Honeypots : invisibles aux humains, souvent remplis par les bots --}}
                 <div class="public-hp" aria-hidden="true">
                     <label for="website">Site web</label>
                     <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+                    <label for="company_url">Company URL</label>
+                    <input type="url" name="company_url" id="company_url" tabindex="-1" autocomplete="off">
                 </div>
 
                 <div class="public-contact-form__row">

@@ -176,6 +176,7 @@ class NotificationHelper
             'payment_failed' => 'Paiement non abouti',
             'large_deposit_admin' => 'Dépôt important',
             'payment_webhook_failure_admin' => 'Échecs webhook paiement',
+            'contact_message_received' => 'Message contact',
             'withdrawal_approved' => 'Retrait approuvé',
             'withdrawal_rejected' => 'Retrait rejeté',
             'welcome' => 'Bienvenue',
@@ -277,6 +278,11 @@ class NotificationHelper
                 $provider = $data['provider'] ?? 'paiement';
                 $count = $data['failure_count'] ?? 0;
                 return "{$provider} : {$count} échec(s) webhook récents.";
+
+            case 'contact_message_received':
+                $name = $data['visitor_name'] ?? 'Un visiteur';
+                $subject = $data['subject'] ?? 'contact';
+                return "{$name} a laissé un message ({$subject}).";
                 
             case 'withdrawal_approved':
                 $amount = self::formatAmount($data['amount'] ?? 0);
