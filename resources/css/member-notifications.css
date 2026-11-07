@@ -106,6 +106,69 @@
   }
 }
 
+/* Desktop — recherche type admin (shell membre = cashier-app) */
+.notifications-page-header-desktop .notifications-desktop-search {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.notifications-page-header-desktop .search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.notifications-page-header-desktop .search-wrapper .search-input {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.5rem 1rem 0.5rem 2.35rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.notifications-page-header-desktop .search-wrapper .search-input:focus {
+  border-color: var(--color-primary-500, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500, var(--primary)) 18%, transparent);
+}
+
+.notifications-filters-panel__inner {
+  padding: 0.35rem 0.15rem 0.5rem;
+}
+
+.member-app .notifications-page .users-filter-menu.users-filter-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 40;
+  min-width: 16rem;
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg, 0 12px 28px rgba(15, 23, 42, 0.12));
+}
+
+.member-app .notifications-page .users-filter-panel label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.member-app .notifications-page .users-filter-panel .form-control {
+  width: 100%;
+  border-radius: 0.55rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  padding: 0.45rem 0.65rem;
+}
+
 /* Centre de notifications — liste + détail */
 .notifications-feed {
   display: flex;
