@@ -624,13 +624,13 @@ document.addEventListener('DOMContentLoaded', function() {
         user: 'Un code de parrain unique a été généré. Il peut bénéficier du système MLM et des commissions.',
         cashier: 'Les caissiers sont des employés. Pas de code de parrainage, pas de commissions, pas de réseau MLM. Accès POS uniquement.',
         admin: 'Administrateur avec accès complet. Un code de parrain a été généré automatiquement.',
-        it_manager: 'Accès Supervision (assistance membres, publications). Un code de parrain sera conservé ou généré si besoin.'
+        it_manager: 'Responsable IT : messages du site, questions membres et publications. Compte staff (pas de réseau MLM).'
     };
 
     function updateRoleDisplay(role) {
         roleInfoText.textContent = infoMessages[role] || infoMessages.user;
 
-        if (role === 'cashier') {
+        if (role === 'cashier' || role === 'it_manager') {
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
             if (rankGroup) rankGroup.style.display = 'none';

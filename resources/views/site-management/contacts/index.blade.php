@@ -3,12 +3,72 @@
 @section('title', 'Messages du site')
 
 @section('content')
-<div class="member-page-intro mb-4">
-    <h1 class="text-2xl font-bold text-[var(--text-primary)]">Messages du site officiel</h1>
-    <p class="text-sm text-[var(--text-secondary)] mt-1">Demandes des visiteurs — accessible admin &amp; responsable IT</p>
+@php $hasSearch = $q !== ''; @endphp
+
+{{-- Desktop --}}
+<div class="it-desktop-head it-desktop-only mb-6 items-end justify-between gap-4">
+    <div class="member-page-intro mb-0 min-w-0">
+        <h1 class="text-2xl font-bold text-[var(--text-primary)]">Messages du site officiel</h1>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">Demandes des visiteurs — accessible admin &amp; responsable IT</p>
+    </div>
+    <div class="member-shop-search search-wrapper w-full max-w-xs shrink-0">
+        <span class="member-shop-search__icon">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </span>
+        <input type="search"
+               id="contactsSearchInputDesktop"
+               value="{{ $q }}"
+               placeholder="Nom, email, sujet…"
+               autocomplete="off"
+               class="input search-input text-sm">
+    </div>
 </div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+{{-- Mobile --}}
+<div class="shop-catalog-head it-mobile-only mb-5">
+    <div class="shop-catalog-banner">
+        <div class="shop-catalog-banner__text">
+            <p class="shop-catalog-banner__eyebrow">Site officiel</p>
+            <p class="shop-catalog-banner__title">Messages du site</p>
+            <p class="shop-catalog-banner__sub">Demandes des visiteurs — admin &amp; responsable IT</p>
+        </div>
+        <div class="shop-catalog-banner__tools">
+            <button type="button"
+                    class="shop-banner-icon-btn {{ $hasSearch ? 'is-active' : '' }}"
+                    id="contactsSearchToggle"
+                    aria-expanded="{{ $hasSearch ? 'true' : 'false' }}"
+                    aria-controls="contactsSearchPanel"
+                    aria-label="Rechercher un message">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="shop-catalog-search-panel {{ $hasSearch ? 'is-open' : '' }}"
+         id="contactsSearchPanel"
+         aria-hidden="{{ $hasSearch ? 'false' : 'true' }}">
+        <div class="member-shop-search search-wrapper">
+            <span class="member-shop-search__icon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </span>
+            <input type="search"
+                   id="contactsSearchInput"
+                   value="{{ $q }}"
+                   placeholder="Nom, email, sujet…"
+                   inputmode="search"
+                   autocomplete="off"
+                   class="input search-input text-sm">
+        </div>
+    </div>
+</div>
+
+<div id="contactsStatGrid" class="follow-up-stat-grid mb-5">
     @foreach ([
         ['all', 'Tous', $counts['all']],
         ['new', 'Nouveaux', $counts['new']],
@@ -23,15 +83,6 @@
     @endforeach
 </div>
 
-<form method="GET" class="mb-4 flex flex-col sm:flex-row gap-2">
-    @if ($status !== '')
-        <input type="hidden" name="status" value="{{ $status }}">
-    @endif
-    <input type="search" name="q" value="{{ $q }}" placeholder="Rechercher nom, email, sujet…"
-           class="flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
-    <button type="submit" class="btn btn-primary">Filtrer</button>
-</form>
-
 <div class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -44,34 +95,129 @@
                     <th class="px-3 py-2.5"></th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse ($messages as $msg)
-                    <tr class="border-t border-[var(--border-light)] hover:bg-[var(--bg-hover)]">
-                        <td class="px-3 py-2.5">
-                            <span class="inline-flex rounded-md px-2 py-0.5 text-[0.625rem] font-semibold
-                                {{ $msg->status === 'new' ? 'bg-sky-100 text-sky-800' : ($msg->status === 'archived' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-800') }}">
-                                {{ $msg->statusLabel() }}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2.5">
-                            <p class="font-medium text-[var(--text-primary)]">{{ $msg->name }}</p>
-                            <p class="text-xs text-[var(--text-muted)]">{{ $msg->email }}</p>
-                        </td>
-                        <td class="px-3 py-2.5 text-[var(--text-secondary)]">{{ \Illuminate\Support\Str::limit($msg->subject, 48) }}</td>
-                        <td class="px-3 py-2.5 text-[var(--text-muted)] whitespace-nowrap">{{ $msg->created_at?->format('d/m/Y H:i') }}</td>
-                        <td class="px-3 py-2.5 text-right">
-                            <a href="{{ route('site-management.contacts.show', $msg) }}" class="text-sm font-semibold text-primary-600">Ouvrir</a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-3 py-10 text-center text-sm text-[var(--text-muted)]">Aucun message pour ce filtre.</td>
-                    </tr>
-                @endforelse
+            <tbody id="contactsTableBody">
+                @include('site-management.contacts._table_rows')
             </tbody>
         </table>
     </div>
 </div>
 
-<div class="mt-4">{{ $messages->links() }}</div>
+<div id="contactsPagination" class="mt-4">{{ $messages->links() }}</div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInputs = [
+        document.getElementById('contactsSearchInput'),
+        document.getElementById('contactsSearchInputDesktop'),
+    ].filter(Boolean);
+    const searchToggle = document.getElementById('contactsSearchToggle');
+    const searchPanel = document.getElementById('contactsSearchPanel');
+    let searchTimeout;
+    let requestId = 0;
+
+    if (searchToggle && searchPanel) {
+        searchToggle.addEventListener('click', function () {
+            const open = searchPanel.classList.toggle('is-open');
+            searchToggle.classList.toggle('is-active', open);
+            searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            searchPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+            const mobileInput = document.getElementById('contactsSearchInput');
+            if (open && mobileInput) {
+                mobileInput.focus();
+            }
+        });
+    }
+
+    if (!searchInputs.length) {
+        return;
+    }
+
+    searchInputs.forEach(function (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            searchInputs.forEach(function (other) {
+                if (other !== searchInput) {
+                    other.value = this.value;
+                }
+            }.bind(this));
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function () {
+                fetchContacts(query);
+            }, 300);
+        });
+    });
+
+    function fetchContacts(query) {
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('q', query);
+        } else {
+            url.searchParams.delete('q');
+        }
+        url.searchParams.set('page', '1');
+
+        const currentRequest = ++requestId;
+        const tableBody = document.getElementById('contactsTableBody');
+
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
+                        Recherche en cours…
+                    </td>
+                </tr>
+            `;
+        }
+
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) { return response.text(); })
+            .then(function (html) {
+                if (currentRequest !== requestId) {
+                    return;
+                }
+
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                const newTableBody = doc.getElementById('contactsTableBody');
+                if (tableBody && newTableBody) {
+                    tableBody.innerHTML = newTableBody.innerHTML;
+                }
+
+                const pagination = document.getElementById('contactsPagination');
+                const newPagination = doc.getElementById('contactsPagination');
+                if (pagination) {
+                    pagination.innerHTML = newPagination ? newPagination.innerHTML : '';
+                }
+
+                const statGrid = document.getElementById('contactsStatGrid');
+                const newStatGrid = doc.getElementById('contactsStatGrid');
+                if (statGrid && newStatGrid) {
+                    statGrid.innerHTML = newStatGrid.innerHTML;
+                }
+
+                if (searchToggle) {
+                    searchToggle.classList.toggle('is-active', !!query || (searchPanel && searchPanel.classList.contains('is-open')));
+                }
+
+                window.history.replaceState({}, '', url.toString());
+            })
+            .catch(function () {
+                if (currentRequest !== requestId || !tableBody) {
+                    return;
+                }
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-3 py-8 text-center text-sm text-[var(--danger)]">
+                            Une erreur est survenue lors de la recherche
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+});
+</script>
+@endpush

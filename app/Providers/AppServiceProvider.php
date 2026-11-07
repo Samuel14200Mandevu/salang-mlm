@@ -26,10 +26,12 @@ use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\PeriodCommissionCalculator;  // ✅ AJOUT
 use App\Services\MLM\PaymentEligibilityChecker;
 use App\Services\MLM\CommissionHistoryPaymentSync;
+use App\Models\Consultation;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Genealogy;
 use App\Models\PublicationMedia;
+use App\Observers\ConsultationObserver;
 use App\Observers\GenealogyObserver;
 use App\Observers\OrderObserver;
 use App\Observers\PublicationMediaObserver;
@@ -186,6 +188,7 @@ class AppServiceProvider extends ServiceProvider
         // ✅ ENREGISTRER LES OBSERVERS
         User::observe(UserObserver::class);
         Order::observe(OrderObserver::class);
+        Consultation::observe(ConsultationObserver::class);
         Genealogy::observe(GenealogyObserver::class);
         PublicationMedia::observe(PublicationMediaObserver::class);
 

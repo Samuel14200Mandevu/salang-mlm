@@ -964,12 +964,28 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Compte staff IT pur (pas admin, pas caissier, pas membre MLM).
+     */
+    public function isItManagerOnly(): bool
+    {
+        return $this->hasRole('it_manager') && ! $this->hasRole('admin');
+    }
+
+    /**
      * URL de redirection après connexion (email, Google, etc.).
      */
     public function loginRedirectUrl(): string
     {
         if ($this->hasRole('cashier')) {
             return route('cashier.dashboard');
+        }
+
+        if ($this->isItManagerOnly()) {
+            return route('it-manager.dashboard');
+        }
+
+        if ($this->hasRole('admin')) {
+            return route('admin.dashboard');
         }
 
         return route('dashboard');

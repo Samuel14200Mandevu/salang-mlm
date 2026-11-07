@@ -28,6 +28,11 @@ class RedirectIfAuthenticated
                 if ($user->hasRole('cashier')) {
                     return redirect()->route('cashier.dashboard');
                 }
+
+                // ✅ Redirection Responsable IT
+                if (method_exists($user, 'isItManagerOnly') && $user->isItManagerOnly()) {
+                    return redirect()->route('it-manager.dashboard');
+                }
                 
                 // ✅ Redirection par défaut pour les utilisateurs normaux
                 return redirect()->route('dashboard');

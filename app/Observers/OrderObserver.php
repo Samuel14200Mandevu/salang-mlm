@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
-
-use App\Support\MlmPeriod;
-use App\Models\Order;
 use App\Jobs\RecalculateAfterPVImport;
+use App\Models\Order;
+use App\Services\ActivityRegisterService;
+use App\Support\MlmPeriod;
 use Illuminate\Support\Facades\Log;
 
 class OrderObserver
@@ -21,7 +21,7 @@ class OrderObserver
     {
         $statusChanged = $order->wasChanged('status') || $order->wasChanged('payment_status');
 
-        if (!$statusChanged) {
+        if (! $statusChanged) {
             return;
         }
 
@@ -32,13 +32,13 @@ class OrderObserver
 
     private function handleCompletedOrder(Order $order): void
     {
-        if (!$order->user_id) {
+        if (! $order->user_id) {
             Log::warning('Order without user', ['order_id' => $order->id]);
+
             return;
         }
 
         try {
-            // ✅ UN SEUL job qui gère TOUT : team_pv + rank + ancêtres
             RecalculateAfterPVImport::dispatch([$order->user_id], MlmPeriod::current())
                 ->onQueue('rank-recalculation');
 
@@ -48,6 +48,15 @@ class OrderObserver
             ]);
         } catch (\Exception $e) {
             Log::error('Error processing completed order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            app(ActivityRegisterService::class)->markPurchase($order);
+        } catch (\Throwable $e) {
+            Log::warning('Activity register: markPurchase failed', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);

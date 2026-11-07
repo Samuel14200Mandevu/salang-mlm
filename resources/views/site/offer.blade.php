@@ -4,6 +4,8 @@
 
 @php
     $site = config('salang-site');
+    $fee = $membershipFeeUsd ?? $site['membership_fee_usd'];
+    $lead = $offerLead ?? 'Produits naturels, séances Ceragem & Détox, et un plan de carrière clair.';
     $services = $site['offer_services'] ?? [];
     $products = collect($site['offer_products'] ?? [])
         ->filter(fn ($p) => ! empty($p['image']) && is_file(public_path($p['image'])))
@@ -14,12 +16,12 @@
 <section class="public-page-hero">
     <div class="public-shell">
         <p class="public-kicker">Adhérer à Salang</p>
-        <h1 class="public-page-hero__title">Une opportunité en or — {{ $site['membership_fee_usd'] }}&nbsp;$ d’adhésion</h1>
+        <h1 class="public-page-hero__title">Une opportunité en or — {{ $fee }}&nbsp;$ d’adhésion</h1>
         <p class="public-page-hero__lead">
-            Produits naturels, séances Ceragem &amp; Détox, et un plan de carrière clair — avec seulement {{ $site['membership_fee_usd'] }}&nbsp;$ d’adhésion.
+            {{ $lead }} — avec seulement {{ $fee }}&nbsp;$ d’adhésion.
         </p>
         <div class="public-contact-hero-actions">
-            <a href="{{ route('register') }}" class="public-btn-primary">Adhérer — {{ $site['membership_fee_usd'] }}&nbsp;USD</a>
+            <a href="{{ route('register') }}" class="public-btn-primary">Adhérer — {{ $fee }}&nbsp;USD</a>
             <a href="#produits" class="public-btn-secondary">Voir les produits</a>
         </div>
     </div>

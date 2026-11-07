@@ -94,7 +94,10 @@ class MemberAssistantService
      */
     public function search(User $user, ?string $query): array
     {
-        $articles = config('member-assistant.articles', []);
+        $articles = array_merge(
+            app(SiteContentService::class)->faqArticlesForAssistant(),
+            config('member-assistant.articles', []),
+        );
         $limit = (int) config('member-assistant.max_results', 8);
         $context = $this->memberContext($user);
 

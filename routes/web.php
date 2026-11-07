@@ -291,6 +291,39 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/contacts/{contactMessage}', [\App\Http\Controllers\SiteContactController::class, 'destroy'])->name('contacts.destroy');
     });
 
+    // Tableau de bord Responsable IT
+    Route::prefix('it-manager')->name('it-manager.')->middleware('role:it_manager|admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ItManager\DashboardController::class, 'index'])->name('dashboard');
+
+        Route::prefix('activity-register')->name('activity-register.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'index'])->name('index');
+            Route::get('/day/{date?}', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'show'])
+                ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                ->name('show');
+            Route::get('/lookup-member', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'lookupMember'])->name('lookup-member');
+            Route::post('/', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'store'])->name('store');
+            Route::patch('/entries/{entry}', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'update'])->name('entries.update');
+            Route::delete('/entries/{entry}', [\App\Http\Controllers\ItManager\ActivityRegisterController::class, 'destroy'])->name('entries.destroy');
+        });
+
+        Route::get('/follow-up', [\App\Http\Controllers\ItManager\FollowUpController::class, 'index'])->name('follow-up.index');
+        Route::get('/follow-up/{entry}', [\App\Http\Controllers\ItManager\FollowUpController::class, 'show'])->name('follow-up.show');
+        Route::get('/members', [\App\Http\Controllers\ItManager\MembersController::class, 'index'])->name('members.index');
+
+        Route::get('/site-pages', [\App\Http\Controllers\ItManager\SitePagesController::class, 'edit'])->name('site-pages.edit');
+        Route::put('/site-pages', [\App\Http\Controllers\ItManager\SitePagesController::class, 'update'])->name('site-pages.update');
+
+        Route::get('/faq', [\App\Http\Controllers\ItManager\FaqController::class, 'edit'])->name('faq.edit');
+        Route::put('/faq', [\App\Http\Controllers\ItManager\FaqController::class, 'update'])->name('faq.update');
+
+        Route::get('/announcements', [\App\Http\Controllers\ItManager\AnnouncementController::class, 'create'])->name('announcements.create');
+        Route::post('/announcements', [\App\Http\Controllers\ItManager\AnnouncementController::class, 'store'])->name('announcements.store');
+
+        Route::get('/media', [\App\Http\Controllers\ItManager\MediaController::class, 'index'])->name('media.index');
+        Route::post('/media', [\App\Http\Controllers\ItManager\MediaController::class, 'store'])->name('media.store');
+        Route::delete('/media', [\App\Http\Controllers\ItManager\MediaController::class, 'destroy'])->name('media.destroy');
+    });
+
     // ============================================================
     // RAPPORTS
     // ============================================================
@@ -419,8 +452,9 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     
     // Membres
     Route::get('/members', [CashierController::class, 'members'])->name('members');
-    Route::get('/members/create', [CashierController::class, 'memberCreate'])->name('members.create');  
-    Route::post('/members', [CashierController::class, 'memberStore'])->name('members.store'); 
+    Route::get('/members/create', [CashierController::class, 'memberCreate'])->name('members.create');
+    Route::get('/members/activity-guests', [CashierController::class, 'searchActivityGuests'])->name('members.activity-guests');
+    Route::post('/members', [CashierController::class, 'memberStore'])->name('members.store');
     Route::get('/check-member-code', [CashierController::class, 'checkMemberCode'])->name('check-member-code');         
     Route::get('/search-sponsors', [CashierController::class, 'searchSponsors'])->name('search-sponsors');
     Route::get('/members/{member}', [CashierController::class, 'memberShow'])->name('members.show');

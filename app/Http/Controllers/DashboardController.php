@@ -37,6 +37,10 @@ class DashboardController extends Controller
             return redirect()->route('login');
         }
 
+        if ($user->isItManagerOnly()) {
+            return redirect()->route('it-manager.dashboard');
+        }
+
         // RAFRAÎCHIR L'UTILISATEUR DEPUIS LA BASE DE DONNÉES
         $freshUser = User::with(['rank', 'package', 'wallet'])->find($user->id);
         

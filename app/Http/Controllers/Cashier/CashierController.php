@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Models\ActivityEntry;
+use App\Services\ActivityRegisterService;
 use App\Services\ConsultationSaleService;
 use App\Services\PvManagementService;
 
@@ -1932,7 +1934,47 @@ public function destroyProfile(Request $request)
             $selectedPackageId = 0;
         }
 
-        return view('cashier.members.create', compact('packages', 'selectedPackageId'));
+        $activityEntry = null;
+        $entryId = $request->integer('activity_entry') ?: (int) old('activity_entry_id');
+        if ($entryId) {
+            $activityEntry = ActivityEntry::query()
+                ->with(['member:id,name,sponsor_id,phone,email', 'sheet:id,activity_date'])
+                ->where('adhesion_done', false)
+                ->find($entryId);
+        }
+
+        return view('cashier.members.create', compact('packages', 'selectedPackageId', 'activityEntry'));
+    }
+
+    /**
+     * Recherche d’invités du registre IT en attente d’adhésion.
+     */
+    public function searchActivityGuests(Request $request, ActivityRegisterService $register)
+    {
+        $guests = $register->searchPendingGuests((string) $request->query('q', ''));
+
+        return response()->json(
+            $guests->map(function (ActivityEntry $entry) {
+                return [
+                    'id' => $entry->id,
+                    'name' => $entry->displayName(),
+                    'nom' => $entry->participant_nom,
+                    'postnom' => $entry->participant_postnom,
+                    'prenom' => $entry->participant_prenom,
+                    'phone' => $entry->participant_phone,
+                    'email' => $entry->participant_email,
+                    'birth_date' => $entry->participant_birth_date?->toDateString(),
+                    'gender' => $entry->participant_gender,
+                    'address' => $entry->participant_address,
+                    'profession' => $entry->participant_profession,
+                    'identity_number' => $entry->participant_identity_number,
+                    'member_code' => $entry->member_code ?? $entry->member?->sponsor_id,
+                    'member_name' => $entry->member?->name,
+                    'activity_date' => $entry->sheet?->activity_date?->format('d/m/Y'),
+                    'url' => route('cashier.members.create', ['activity_entry' => $entry->id]),
+                ];
+            })->values()
+        );
     }
 
     /**
@@ -1965,6 +2007,7 @@ public function destroyProfile(Request $request)
             'signature_name' => 'nullable|string|max:255',
             'signature_date' => 'nullable|date',
             'signature_location' => 'nullable|string|max:255',
+            'activity_entry_id' => 'nullable|integer|exists:activity_entries,id',
         ]);
 
         if ($validator->fails()) {
@@ -2105,6 +2148,25 @@ public function destroyProfile(Request $request)
                 'sponsor_id' => $member->sponsor_id,
                 'rank' => $member->rank,
             ]);
+
+            // Lier explicitement la fiche invité du registre IT (si fournie)
+            if ($request->filled('activity_entry_id')) {
+                try {
+                    $forcedEntry = ActivityEntry::query()
+                        ->where('adhesion_done', false)
+                        ->find($request->integer('activity_entry_id'));
+
+                    if ($forcedEntry) {
+                        app(ActivityRegisterService::class)->markAdhesion($member, now(), $forcedEntry);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Lien registre activité échoué', [
+                        'member_id' => $member->id,
+                        'activity_entry_id' => $request->integer('activity_entry_id'),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // 6. Assigner le rôle
             try {

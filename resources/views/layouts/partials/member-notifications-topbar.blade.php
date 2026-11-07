@@ -4,6 +4,10 @@
 
     $notifyCategory = static function (array $data): string {
         $type = (string) ($data['type'] ?? '');
+        $category = (string) ($data['category'] ?? '');
+        if ($category === 'announcement' || \Illuminate\Support\Str::contains($type, ['staff_announcement', 'announcement'])) {
+            return 'announcement';
+        }
         if (\Illuminate\Support\Str::contains($type, ['commission', 'payment', 'withdrawal', 'wallet'])) {
             return 'finance';
         }
@@ -39,6 +43,7 @@
 
     $categoryOptions = [
         'all' => 'Toutes les catégories',
+        'announcement' => 'Annonces',
         'finance' => 'Finances & commissions',
         'account' => 'Compte & sécurité',
         'network' => 'Réseau & rang',

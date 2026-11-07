@@ -245,7 +245,7 @@ class UserController extends Controller
             'is_active' => 'boolean',
         ];
 
-        if ($request->role !== 'cashier') {
+        if (! in_array($request->role, ['cashier', 'it_manager'], true)) {
             $rules['sponsor_id'] = 'nullable|string|max:20|unique:users,sponsor_id|regex:/^[A-Za-z0-9_-]+$/';
             $rules['package_id'] = 'nullable|exists:packages,id';
             $rules['parrain_code'] = 'nullable|string|exists:users,sponsor_id';
@@ -258,7 +258,7 @@ class UserController extends Controller
             'sponsor_id.regex' => 'Le code membre ne peut contenir que des lettres, chiffres, tirets ou underscores.',
         ]);
 
-        if ($request->role !== 'cashier' && $request->filled('parrain_code')) {
+        if (! in_array($request->role, ['cashier', 'it_manager'], true) && $request->filled('parrain_code')) {
             $parrainCandidate = User::where('sponsor_id', trim($request->parrain_code))->first();
             if ($parrainCandidate?->hasRole('cashier')) {
                 return back()->withInput()->withErrors([
@@ -272,7 +272,7 @@ class UserController extends Controller
         try {
             $role = $request->role;
 
-            if ($role === 'cashier') {
+            if (in_array($role, ['cashier', 'it_manager'], true)) {
                 $user = User::create([
                     'name' => $request->name,
                     'email' => $request->email,
@@ -311,17 +311,20 @@ class UserController extends Controller
                     'is_active' => true,
                 ]);
 
-                $user->assignRole('cashier');
+                $user->assignRole($role);
 
                 DB::commit();
 
-                Log::info('Nouveau caissier créé', [
+                Log::info($role === 'it_manager' ? 'Nouveau responsable IT créé' : 'Nouveau caissier créé', [
                     'admin_id' => auth()->id(),
-                    'cashier_id' => $user->id,
+                    'user_id' => $user->id,
+                    'role' => $role,
                 ]);
 
                 return redirect()->route('admin.users')
-                    ->with('success', 'Caissier créé avec succès !');
+                    ->with('success', $role === 'it_manager'
+                        ? 'Responsable IT créé avec succès !'
+                        : 'Caissier créé avec succès !');
 
             } else {
                 $parrain = null;
