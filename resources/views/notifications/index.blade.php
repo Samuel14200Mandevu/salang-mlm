@@ -5,6 +5,13 @@
 @section('content')
 @php
     use App\Support\NotificationPresenter;
+    $filtersActive = ($status ?? 'all') !== 'all' || ($category ?? 'all') !== 'all';
+    $filterButtonLabel = match (true) {
+        ($status ?? 'all') === 'unread' => 'Non lues',
+        ($status ?? 'all') === 'read' => 'Lues',
+        ($category ?? 'all') !== 'all' => ($categories[$category] ?? 'Filtrer'),
+        default => 'Filtrer',
+    };
 @endphp
 <div class="notifications-page space-y-4 sm:space-y-6">
 
@@ -12,20 +19,93 @@
         'notifications' => $notifications,
         'unreadCount' => $unreadCount,
         'totalCount' => $totalCount ?? $notifications->total(),
+        'q' => $q ?? '',
+        'status' => $status ?? 'all',
+        'category' => $category ?? 'all',
+        'categories' => $categories ?? NotificationPresenter::CATEGORIES,
     ])
 
+    {{-- Desktop — titre + recherche + Filtrer (comme admin membres) --}}
     <div class="notifications-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Centre de notifications</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                 {{ $unreadCount ?? 0 }} non lue(s) · {{ $totalCount ?? $notifications->total() }} au total
+                @if(filled($q ?? null))
+                    <span class="text-xs text-[var(--text-tertiary)]">· « {{ $q }} »</span>
+                @endif
             </p>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end min-w-0">
+            <form method="GET" action="{{ route('notifications.index') }}" class="header-search admin-search-full notifications-desktop-search">
+                @if(($status ?? 'all') !== 'all')
+                    <input type="hidden" name="status" value="{{ $status }}">
+                @endif
+                @if(($category ?? 'all') !== 'all')
+                    <input type="hidden" name="category" value="{{ $category }}">
+                @endif
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           name="q"
+                           class="search-input"
+                           placeholder="Rechercher une notification"
+                           autocomplete="off"
+                           value="{{ $q ?? '' }}"
+                           aria-label="Rechercher une notification">
+                </div>
+            </form>
+
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm {{ $filtersActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>{{ $filterButtonLabel }}</span>
+                </button>
+                <div x-show="open"
+                     x-cloak
+                     x-transition
+                     @click.outside="open = false"
+                     class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('notifications.index') }}" class="space-y-2">
+                        @if(filled($q ?? null))
+                            <input type="hidden" name="q" value="{{ $q }}">
+                        @endif
+                        <div>
+                            <label for="notif-status-desktop">État</label>
+                            <select id="notif-status-desktop" name="status" class="form-control">
+                                <option value="all" @selected(($status ?? 'all') === 'all')>Toutes</option>
+                                <option value="unread" @selected(($status ?? '') === 'unread')>Non lues</option>
+                                <option value="read" @selected(($status ?? '') === 'read')>Lues</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="notif-category-desktop">Catégorie</label>
+                            <select id="notif-category-desktop" name="category" class="form-control">
+                                @foreach(($categories ?? NotificationPresenter::CATEGORIES) as $key => $label)
+                                    <option value="{{ $key }}" @selected(($category ?? 'all') === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('notifications.index') }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             @if(($unreadCount ?? 0) > 0)
                 <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="btn btn-primary btn-sm">Tout marquer comme lu</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Tout marquer lu</button>
                 </form>
             @endif
             @if(($totalCount ?? 0) > 0)
@@ -45,37 +125,7 @@
         </div>
     @endif
 
-    <form method="GET" action="{{ route('notifications.index') }}" class="notifications-filters card p-3 sm:p-4 animate-fadeInUp delay-1">
-        <div class="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-end">
-            <div class="flex-1 min-w-[10rem]">
-                <label for="notif-q" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Recherche</label>
-                <input id="notif-q" type="search" name="q" value="{{ $q }}" placeholder="Titre, message…"
-                       class="public-input w-full text-sm">
-            </div>
-            <div>
-                <label for="notif-status" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">État</label>
-                <select id="notif-status" name="status" class="public-input public-select text-sm">
-                    <option value="all" @selected($status === 'all')>Toutes</option>
-                    <option value="unread" @selected($status === 'unread')>Non lues</option>
-                    <option value="read" @selected($status === 'read')>Lues</option>
-                </select>
-            </div>
-            <div>
-                <label for="notif-category" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Catégorie</label>
-                <select id="notif-category" name="category" class="public-input public-select text-sm">
-                    @foreach($categories as $key => $label)
-                        <option value="{{ $key }}" @selected($category === $key)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
-            @if($q !== '' || $status !== 'all' || $category !== 'all')
-                <a href="{{ route('notifications.index') }}" class="btn btn-outline btn-sm">Réinitialiser</a>
-            @endif
-        </div>
-    </form>
-
-    <div class="notifications-feed animate-fadeInUp delay-2">
+    <div class="notifications-feed animate-fadeInUp delay-1">
         @forelse($notifications as $notification)
             @php $p = NotificationPresenter::make($notification); @endphp
             <a href="{{ route('notifications.show', $notification->id) }}"
@@ -104,7 +154,7 @@
                 </svg>
                 <h3 class="mt-3 text-lg font-semibold text-[var(--text-primary)]">Aucune notification</h3>
                 <p class="mt-1 text-sm text-[var(--text-secondary)]">
-                    @if($q !== '' || $status !== 'all' || $category !== 'all')
+                    @if(filled($q ?? null) || $filtersActive)
                         Aucun résultat pour ces filtres.
                     @else
                         Vous n’avez pas encore de notifications.
@@ -120,4 +170,46 @@
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var head = document.getElementById('notificationsCatalogHead');
+    var searchToggle = document.getElementById('notificationsSearchToggle');
+    var searchPanel = document.getElementById('notificationsSearchPanel');
+    var filterToggle = document.getElementById('notificationsFilterToggle');
+    var filterPanel = document.getElementById('notificationsFiltersPanel');
+
+    function setPanel(panel, toggle, open) {
+        if (!panel || !toggle) return;
+        panel.classList.toggle('is-open', open);
+        toggle.classList.toggle('is-active', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    if (searchToggle && searchPanel) {
+        searchToggle.addEventListener('click', function () {
+            var open = !searchPanel.classList.contains('is-open');
+            setPanel(searchPanel, searchToggle, open);
+            if (open) {
+                setPanel(filterPanel, filterToggle, false);
+                var input = searchPanel.querySelector('input[type="search"]');
+                if (input) input.focus();
+            }
+            if (head) head.classList.toggle('is-filters-open', open || (filterPanel && filterPanel.classList.contains('is-open')));
+        });
+    }
+
+    if (filterToggle && filterPanel) {
+        filterToggle.addEventListener('click', function () {
+            var open = !filterPanel.classList.contains('is-open');
+            setPanel(filterPanel, filterToggle, open);
+            if (open) setPanel(searchPanel, searchToggle, false);
+            if (head) head.classList.toggle('is-filters-open', open || (searchPanel && searchPanel.classList.contains('is-open')));
+        });
+    }
+});
+</script>
+@endpush
 @endsection
