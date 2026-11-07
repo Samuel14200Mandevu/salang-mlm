@@ -301,16 +301,16 @@
 
 @section('content')
 @include('admin.layouts.partials.desktop-page-header', [
-    'title' => 'Gestion des caissiers',
-    'subtitle' => 'Liste des caissiers pour les ventes au guichet',
+    'title' => 'Gestion des employés',
+    'subtitle' => 'Admins, responsables IT et caissiers',
     'actions' => view('admin.cashiers.partials.index-header-actions')->render(),
 ])
 
 <div class="admin-page-header page-header md:hidden animate-fadeInUp">
     <div class="admin-mobile-page-head is-mobile-banner">
         <div class="admin-title-banner__text">
-            <h1 class="page-title">Gestion des caissiers</h1>
-            <p class="page-subtitle">Liste des caissiers pour les ventes au guichet</p>
+            <h1 class="page-title">Gestion des employés</h1>
+            <p class="page-subtitle">Admins, responsables IT et caissiers</p>
         </div>
         @include('admin.cashiers.partials.mobile-banner-actions')
     </div>
@@ -322,34 +322,52 @@
     <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-[var(--primary-blue)]">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">{{ $cashiers->total() ?? 0 }}</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">{{ $stats['total'] ?? ($cashiers->total() ?? 0) }}</p>
         </div>
         <div class="card-stats border-l-4 border-[#1C7E4A] animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Actifs</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Admins</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-success)]">
-                {{ $cashiers->where('is_active', true)->count() }}
+                {{ $stats['admins'] ?? 0 }}
             </p>
         </div>
-        <div class="card-stats border-l-4 border-[#B91C1C] animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Inactifs</p>
-            <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-danger)]">
-                {{ $cashiers->where('is_active', false)->count() }}
+        <div class="card-stats border-l-4 border-[var(--color-primary-600)] animate-fadeInUp delay-3">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">IT</p>
+            <p class="text-lg sm:text-xl font-bold text-[var(--primary-blue)]">
+                {{ $stats['it_managers'] ?? 0 }}
             </p>
         </div>
         <div class="card-stats border-l-4 border-[#B54708] animate-fadeInUp delay-4">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Non vérifiés</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Caissiers</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">
-                {{ $cashiers->where('kyc_status', 'not_submitted')->count() }}
+                {{ $stats['cashiers'] ?? 0 }}
             </p>
         </div>
+    </div>
+
+    @php
+        $roleFilter = $roleFilter ?? '';
+        $roleFilters = [
+            '' => 'Tous',
+            'admin' => 'Admins',
+            'it_manager' => 'Responsables IT',
+            'cashier' => 'Caissiers',
+        ];
+    @endphp
+    <div class="flex flex-wrap gap-2 animate-fadeInUp delay-2">
+        @foreach($roleFilters as $key => $label)
+            <a href="{{ route('admin.cashiers.index', array_filter(['role' => $key ?: null, 'search' => request('search') ?: null])) }}"
+               class="btn btn-sm {{ $roleFilter === $key ? 'btn-primary' : 'btn-outline' }}">
+                {{ $label }}
+            </a>
+        @endforeach
     </div>
 
     <!-- List -->
     <div class="card animate-fadeInUp delay-3">
         <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Liste des caissiers</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Liste des employés</h3>
             <span class="badge badge-info text-[10px] sm:text-xs">
-                {{ $cashiers->total() ?? 0 }} caissiers
+                {{ $cashiers->total() ?? 0 }} employé(s)
             </span>
         </div>
 
@@ -368,6 +386,19 @@
                 </thead>
                 <tbody>
                     @forelse($cashiers as $cashier)
+                        @php
+                            $staffRole = $cashier->roles->pluck('name')->intersect(['admin', 'it_manager', 'cashier'])->first() ?? 'cashier';
+                            $staffRoleLabel = match ($staffRole) {
+                                'admin' => 'Admin',
+                                'it_manager' => 'Responsable IT',
+                                default => 'Caissier',
+                            };
+                            $staffRoleBadge = match ($staffRole) {
+                                'admin' => 'badge-danger',
+                                'it_manager' => 'badge-info',
+                                default => 'badge-cashier',
+                            };
+                        @endphp
                         <tr class="cashier-row">
                             <td class="font-mono text-xs">{{ $cashier->id }}</td>
                             <td class="font-medium text-sm">{{ $cashier->name }}</td>
@@ -375,7 +406,7 @@
                                 {{ $cashier->email }}
                             </td>
                             <td>
-                                <span class="badge badge-cashier">Caissier</span>
+                                <span class="badge {{ $staffRoleBadge }}">{{ $staffRoleLabel }}</span>
                             </td>
                             <td>
                                 @if($cashier->is_active)
@@ -437,8 +468,8 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                 </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucun caissier</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Créez votre premier caissier</p>
+                                <p class="text-base sm:text-lg font-medium">Aucun employé</p>
+                                <p class="text-sm text-[var(--text-tertiary)]">Créez un admin, un responsable IT ou un caissier</p>
                             </td>
                         </tr>
                     @endforelse
@@ -465,11 +496,11 @@
         </div>
         <h3 class="modal-title" id="toggleModalTitle">Confirmer le changement de statut</h3>
         <p class="modal-text" id="toggleModalText">
-            Êtes-vous sûr de vouloir <strong id="toggleActionText">désactiver</strong> le caissier
+            Êtes-vous sûr de vouloir <strong id="toggleActionText">désactiver</strong> l’employé
             <strong id="toggleUserName"></strong> ?
             <br>
             <span id="toggleActionDescription" class="text-warning">
-                Le caissier ne pourra plus effectuer de ventes.
+                L’employé ne pourra plus se connecter.
             </span>
         </p>
         <form id="toggleForm" action="" method="POST" class="modal-actions">
@@ -499,7 +530,7 @@
         <h3 class="modal-title">Confirmer la suppression</h3>
         <p class="modal-text">
             Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong>
-            le caissier <strong id="deleteUserName"></strong> ?
+            l’employé <strong id="deleteUserName"></strong> ?
             <br>
             Cette action est <strong class="text-danger">irréversible</strong>.
         </p>
@@ -542,7 +573,7 @@ function openToggleModal(userId, userName, isActive) {
         submitText.textContent = 'Désactiver';
         submitBtn.className = 'btn btn-warning btn-sm';
         title.textContent = 'Confirmer la désactivation';
-        description.innerHTML = 'Le caissier ne pourra plus effectuer de ventes.';
+        description.innerHTML = 'L’employé ne pourra plus se connecter.';
         description.className = 'text-warning';
         submitBtn.innerHTML = `
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -555,7 +586,7 @@ function openToggleModal(userId, userName, isActive) {
         submitText.textContent = 'Activer';
         submitBtn.className = 'btn btn-success btn-sm';
         title.textContent = 'Confirmer l\'activation';
-        description.innerHTML = 'Le caissier pourra à nouveau effectuer des ventes.';
+        description.innerHTML = 'L’employé pourra à nouveau se connecter.';
         description.className = 'text-success';
         submitBtn.innerHTML = `
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

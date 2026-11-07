@@ -57,8 +57,8 @@
             </button>
 
             @auth
-                <a href="{{ route('dashboard') }}" class="public-nav-cta">
-                    Espace membre
+                <a href="{{ auth()->user()->loginRedirectUrl() }}" class="public-nav-cta">
+                    {{ auth()->user()->homeSpaceLabel() }}
                     <span aria-hidden="true">→</span>
                 </a>
             @else
@@ -92,7 +92,7 @@
         <a href="{{ route('site.about') }}" @click="navOpen = false">À propos</a>
         <div class="public-nav-mobile-divider" aria-hidden="true"></div>
         @auth
-            <a href="{{ route('dashboard') }}" class="public-nav-mobile-cta" @click="navOpen = false">Mon espace membre</a>
+            <a href="{{ auth()->user()->loginRedirectUrl() }}" class="public-nav-mobile-cta" @click="navOpen = false">{{ auth()->user()->homeSpaceLabel() }}</a>
         @else
             <a href="{{ route('login') }}" class="public-nav-mobile-link-muted" @click="navOpen = false">Connexion</a>
             <a href="{{ route('register') }}" class="public-nav-mobile-cta" @click="navOpen = false">Adhérer — 30&nbsp;USD</a>

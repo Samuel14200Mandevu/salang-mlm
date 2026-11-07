@@ -114,7 +114,8 @@ class AuthenticatedSessionController extends Controller
                 ->with('warning', 'Votre compte est inactif. Veuillez l\'activer pour recevoir des commissions.');
         }
 
-        return redirect()->intended($user->loginRedirectUrl());
+        // Toujours l’espace du rôle (admin → admin, pas le dashboard membre).
+        return redirect()->to($user->loginRedirectUrl());
     }
 
     /**

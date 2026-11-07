@@ -473,12 +473,35 @@
                     @enderror
                 </div>
 
-                <!-- Sponsor Code (read-only) -->
+                <!-- Code membre (modifiable par admin) -->
+                <div class="form-group" id="memberCodeGroup">
+                    <label for="sponsor_id">Code membre</label>
+                    <input type="text"
+                           name="sponsor_id"
+                           id="sponsor_id"
+                           value="{{ old('sponsor_id', $user->sponsor_id) }}"
+                           class="form-control font-mono @error('sponsor_id') form-control-error @enderror"
+                           placeholder="Ex. 51001234"
+                           autocomplete="off"
+                           maxlength="20">
+                    <span class="help-text">Code unique du compte (utilisé comme code de parrainage).</span>
+                    @error('sponsor_id')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Date d’adhésion = date de création du compte -->
                 <div class="form-group">
-                    <label>Mon code de parrain</label>
-                    <input type="text" value="{{ $user->sponsor_id ?? 'Aucun' }}"
-                           class="form-control bg-[var(--bg-secondary)] cursor-not-allowed" disabled>
-                    <span class="help-text">Code unique de cet utilisateur (non modifiable)</span>
+                    <label for="created_at">Date d’adhésion</label>
+                    <input type="datetime-local"
+                           name="created_at"
+                           id="created_at"
+                           value="{{ old('created_at', optional($user->created_at)->format('Y-m-d\TH:i')) }}"
+                           class="form-control @error('created_at') form-control-error @enderror">
+                    <span class="help-text">Date de création du compte (adhésion). Modifiable par l’admin.</span>
+                    @error('created_at')
+                        <p class="text-xs text-[var(--ui-stat-danger)] mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- ═══════════════════════════════════════════════════════════ --}}
@@ -618,6 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleInfoText = document.getElementById('roleInfoText');
     const packageGroup = document.getElementById('packageGroup');
     const sponsorGroup = document.getElementById('sponsorGroup');
+    const memberCodeGroup = document.getElementById('memberCodeGroup');
     const rankGroup = document.getElementById('rankGroup');
 
     const infoMessages = {
@@ -633,10 +657,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (role === 'cashier' || role === 'it_manager') {
             if (packageGroup) packageGroup.style.display = 'none';
             if (sponsorGroup) sponsorGroup.style.display = 'none';
+            if (memberCodeGroup) memberCodeGroup.style.display = 'none';
             if (rankGroup) rankGroup.style.display = 'none';
         } else {
             if (packageGroup) packageGroup.style.display = 'block';
             if (sponsorGroup) sponsorGroup.style.display = 'block';
+            if (memberCodeGroup) memberCodeGroup.style.display = 'block';
             if (rankGroup) rankGroup.style.display = 'block';
         }
     }

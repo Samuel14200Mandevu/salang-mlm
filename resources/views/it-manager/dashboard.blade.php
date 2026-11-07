@@ -21,8 +21,15 @@
 .it-manager-shell .it-dash .stat-card:active {
     transform: scale(0.98);
 }
+/* Annule .member-app .stat-card .stat-icon { position:absolute } */
+.it-manager-shell .it-dash .stat-card {
+    position: relative;
+}
 .it-manager-shell .it-dash .stat-card .stat-icon,
 .it-manager-shell .it-dash .quick-action .quick-icon {
+    position: static !important;
+    inset: auto !important;
+    opacity: 1 !important; /* annule .member-app .stat-card .stat-icon { opacity: 0.12 } */
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 8px;
@@ -35,24 +42,30 @@
 .it-manager-shell .it-dash .quick-action .quick-icon svg {
     width: 1.25rem;
     height: 1.25rem;
-    stroke: currentColor;
+    opacity: 1 !important;
     color: inherit;
+    stroke: currentColor !important;
+    fill: none;
 }
 .it-manager-shell .it-dash .stat-icon-primary {
-    background: rgba(30, 93, 173, 0.14);
-    color: #1E5DAD;
+    background: rgba(30, 93, 173, 0.14) !important;
+    color: #1E5DAD !important;
 }
 .it-manager-shell .it-dash .stat-icon-success {
-    background: rgba(28, 126, 74, 0.14);
-    color: #1C7E4A;
+    background: rgba(28, 126, 74, 0.14) !important;
+    color: #1C7E4A !important;
 }
 .it-manager-shell .it-dash .stat-icon-info {
-    background: rgba(37, 99, 235, 0.14);
-    color: #2563EB;
+    background: rgba(37, 99, 235, 0.14) !important;
+    color: #2563EB !important;
 }
 .it-manager-shell .it-dash .stat-icon-warning {
-    background: rgba(245, 166, 35, 0.18);
-    color: #B54708;
+    background: rgba(245, 166, 35, 0.18) !important;
+    color: #B54708 !important;
+}
+.it-manager-shell .it-dash .stat-icon-purple {
+    background: rgba(124, 58, 237, 0.14) !important;
+    color: #7C3AED !important;
 }
 .it-manager-shell .it-dash .stat-card .stat-value {
     font-size: 1.375rem;
@@ -270,7 +283,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Sans adhésion</p>
-                    <p class="stat-value text-[var(--primary-blue)]">{{ number_format($stats['register_pending_adhesion']) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ number_format($stats['register_pending_adhesion']) }}</p>
                 </div>
                 <div class="stat-icon stat-icon-warning">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">

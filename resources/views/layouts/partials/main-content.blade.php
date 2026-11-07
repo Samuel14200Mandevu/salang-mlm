@@ -1,5 +1,5 @@
         @php
-            $isItManagerShell = auth()->user()?->isItManagerOnly() ?? false;
+            $isItManagerShell = auth()->user()?->usesItManagerShell() ?? false;
             $isMemberHomeTopbar = $isItManagerShell
                 ? request()->routeIs('it-manager.dashboard')
                 : request()->routeIs('dashboard');
@@ -163,6 +163,12 @@
                                                 Packages
                                             </a>
                                         @endunless
+
+                                        @if($isItManagerShell)
+                                            <a href="{{ url('/?site=1') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                                Voir le site
+                                            </a>
+                                        @endif
 
                                         @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">

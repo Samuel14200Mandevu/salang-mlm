@@ -274,15 +274,15 @@
 @endphp
 
 @include('admin.layouts.partials.desktop-page-header', [
-    'title' => 'Créer un utilisateur',
-    'subtitle' => 'Créer un nouveau compte utilisateur',
+    'title' => 'Créer un compte',
+    'subtitle' => 'Membre, caissier, admin ou responsable IT',
     'actions' => $createBackBtn,
 ])
 
 <div class="admin-page-header page-header md:hidden animate-fadeInUp">
     <div class="admin-mobile-page-head is-mobile-banner">
         <div class="admin-title-banner__text">
-            <h1 class="page-title">Créer un utilisateur</h1>
+            <h1 class="page-title">Créer un compte</h1>
             <p class="page-subtitle">Membre, caissier, admin ou responsable IT</p>
         </div>
         @include('admin.users.partials.create-mobile-banner-actions')
@@ -478,7 +478,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Créer l'utilisateur
+            Créer le compte
         </button>
         <a href="{{ route('admin.users') }}" class="btn btn-outline">
             Annuler

@@ -144,10 +144,26 @@
 @section('content')
 @php
     $cashierShowSubtitle = $cashier->name . ' · ID ' . $cashier->id;
+    $staffRole = $cashier->roles->pluck('name')->intersect(['admin', 'it_manager', 'cashier'])->first() ?? 'cashier';
+    $staffRoleLabel = match ($staffRole) {
+        'admin' => 'Admin',
+        'it_manager' => 'Responsable IT',
+        default => 'Caissier',
+    };
+    $staffRoleBadge = match ($staffRole) {
+        'admin' => 'badge-danger',
+        'it_manager' => 'badge-info',
+        default => 'badge-cashier',
+    };
+    $staffRoleHint = match ($staffRole) {
+        'admin' => 'Accès administration complète',
+        'it_manager' => 'Supervision IT, registre et contenus site',
+        default => 'Employé — accès POS / caisse',
+    };
 @endphp
 
 @include('admin.layouts.partials.desktop-page-header', [
-    'title' => 'Détails du caissier',
+    'title' => 'Détails de l’employé',
     'subtitle' => $cashierShowSubtitle,
     'actions' => view('admin.cashiers.partials.show-header-actions', compact('cashier'))->render(),
 ])
@@ -155,7 +171,7 @@
 <div class="admin-page-header page-header md:hidden animate-fadeInUp">
     <div class="admin-mobile-page-head is-mobile-banner">
         <div class="admin-title-banner__text">
-            <h1 class="page-title">Détails du caissier</h1>
+            <h1 class="page-title">Détails de l’employé</h1>
             <p class="page-subtitle">{{ $cashierShowSubtitle }}</p>
         </div>
         @include('admin.cashiers.partials.show-mobile-banner-actions', ['cashier' => $cashier])
@@ -167,7 +183,7 @@
     @method('POST')
 </form>
 @if(auth()->id() != $cashier->id)
-    <form id="cashierDeleteForm" action="{{ route('admin.users.destroy', $cashier->id) }}" method="POST" class="hidden" onsubmit="return confirm('Supprimer définitivement ce caissier ?')">
+    <form id="cashierDeleteForm" action="{{ route('admin.users.destroy', $cashier->id) }}" method="POST" class="hidden" onsubmit="return confirm('Supprimer définitivement cet employé ?')">
         @csrf
         @method('DELETE')
     </form>
@@ -213,7 +229,7 @@
                 <div>
                     <p class="label">Rôle</p>
                     <p class="value">
-                        <span class="badge badge-cashier">Caissier</span>
+                        <span class="badge {{ $staffRoleBadge }}">{{ $staffRoleLabel }}</span>
                     </p>
                 </div>
                 <div>
@@ -236,33 +252,19 @@
                 <div>
                     <p class="label">Rôle</p>
                     <p class="value">
-                        <span class="badge badge-cashier">Caissier</span>
+                        <span class="badge {{ $staffRoleBadge }}">{{ $staffRoleLabel }}</span>
                         <span class="text-xs text-[var(--text-tertiary)] block mt-1">
-                            Employé de la société — Accès POS uniquement
+                            {{ $staffRoleHint }}
                         </span>
                     </p>
-                </div>
-                <div>
-                    <p class="label">Accès</p>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                        <span class="badge badge-info">Point de Vente</span>
-                        <span class="badge badge-info">Ventes au guichet</span>
-                        <span class="badge badge-info">Gestion clients</span>
-                        <span class="badge badge-info">Traitement paiements</span>
-                    </div>
                 </div>
                 <div>
                     <p class="label">Type de compte</p>
                     <p class="value text-sm text-[var(--text-secondary)]">
-                        <span class="text-[var(--ui-stat-success)]">
-                            <svg class="inline-block w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                            </svg>
-                        </span>
                         Employé de la société
                     </p>
                     <p class="text-xs text-[var(--text-tertiary)] mt-1">
-                        <strong>Note :</strong> Les caissiers n'ont pas de code de parrainage et ne font pas partie du réseau MLM.
+                        <strong>Note :</strong> Les employés staff n’appartiennent pas au réseau MLM membre.
                     </p>
                 </div>
             </div>
@@ -336,7 +338,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger btn-sm"
-                            onclick="return confirm('Supprimer définitivement ce caissier ?')">
+                            onclick="return confirm('Supprimer définitivement cet employé ?')">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>

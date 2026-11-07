@@ -15,7 +15,7 @@
 
                 <div class="sidebar-logo-bar hidden md:flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
                      :class="sidebarOpen ? 'px-4' : 'px-2'">
-                    <a href="{{ route(auth()->user()?->isItManagerOnly() ? 'it-manager.dashboard' : 'dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
+                    <a href="{{ route(auth()->user()?->usesItManagerShell() ? 'it-manager.dashboard' : 'dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
                         <img src="{{ asset('images/salang_logo.png') }}"
                              alt="Salang"
                              width="160"
@@ -27,7 +27,7 @@
 
                 <nav class="admin-sidebar-nav sidebar-mobile-drawer-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
                      @click="if (isMobile && $event.target.closest('a.sidebar-link, button.sidebar-link')) sidebarOpen = false">
-                    @if(auth()->user()?->isItManagerOnly())
+                    @if(auth()->user()?->usesItManagerShell())
                         @include('layouts.partials.sidebar-nav-it-manager')
                     @else
                         @include('layouts.partials.sidebar-nav-menu')
@@ -36,7 +36,7 @@
 
                 <p class="sidebar-mobile-drawer-version lg:hidden" aria-hidden="true">Version 1.0.0</p>
 
-                @unless(auth()->user()?->isItManagerOnly())
+                @unless(auth()->user()?->usesItManagerShell())
                 {{-- Pied de page sidebar : avatar mobile (membres uniquement) --}}
                 <div class="sidebar-user admin-sidebar-profile-user md:hidden flex-shrink-0">
                     <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">

@@ -35,12 +35,21 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        $staffRoles = AdminCashierController::STAFF_ROLES;
+
+        // Membres = comptes hors staff (admin / it_manager / cashier)
+        $membersBase = fn () => User::query()->whereDoesntHave('roles', function ($q) use ($staffRoles) {
+            $q->whereIn('name', $staffRoles);
+        });
+
         $query = User::with([
             'rank',
             'package',
             'parrain:id,sponsor_id',
             'genealogy.sponsor:id,sponsor_id',
-        ]);
+        ])->whereDoesntHave('roles', function ($q) use ($staffRoles) {
+            $q->whereIn('name', $staffRoles);
+        });
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -52,13 +61,11 @@ class UserController extends Controller
             });
         }
 
-        // Filtre unifié (bouton Filtrer) : actifs / inactifs / admins / caissiers
+        // Filtre unifié (bouton Filtrer) : actifs / inactifs
         if ($request->filled('filter')) {
             match ($request->filter) {
                 'active' => $query->where('is_active', true),
                 'inactive' => $query->where('is_active', false),
-                'admin' => $query->whereHas('roles', fn ($q) => $q->where('name', 'admin')),
-                'cashier' => $query->whereHas('roles', fn ($q) => $q->where('name', 'cashier')),
                 default => null,
             };
         } else {
@@ -92,18 +99,15 @@ class UserController extends Controller
         $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         $stats = [
-            'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'inactive' => User::where('is_active', false)->count(),
-            'admins' => User::whereHas('roles', function($q) {
-                $q->where('name', 'admin');
-            })->count(),
-            'cashiers' => User::whereHas('roles', function($q) {
-                $q->where('name', 'cashier');
-            })->count(),
-            'with_package' => User::whereNotNull('package_id')->count(),
-            'with_kyc' => User::where('kyc_status', 'verified')->count(),
-            'pending_kyc' => User::where('kyc_status', 'pending')->count(),
+            'total' => $membersBase()->count(),
+            'active' => $membersBase()->where('is_active', true)->count(),
+            'inactive' => $membersBase()->where('is_active', false)->count(),
+            'admins' => User::role('admin')->count(),
+            'cashiers' => User::role('cashier')->count(),
+            'employees' => User::role($staffRoles)->count(),
+            'with_package' => $membersBase()->whereNotNull('package_id')->count(),
+            'with_kyc' => $membersBase()->where('kyc_status', 'verified')->count(),
+            'pending_kyc' => $membersBase()->where('kyc_status', 'pending')->count(),
         ];
 
         $ranks = Rank::orderBy('level')->get();
@@ -450,16 +454,22 @@ class UserController extends Controller
             'address' => 'nullable|string|max:500',
             'is_active' => 'required|in:0,1',
             'role' => 'required|in:user,cashier,admin,it_manager',
+            'created_at' => 'nullable|date',
         ];
 
-        if ($request->role !== 'cashier') {
+        if (! in_array($request->role, ['cashier', 'it_manager'], true)) {
+            $rules['sponsor_id'] = 'nullable|string|max:20|unique:users,sponsor_id,' . $id . '|regex:/^[A-Za-z0-9_-]+$/';
             $rules['package_id'] = 'nullable|exists:packages,id';
             $rules['parrain_code'] = 'nullable|string|exists:users,sponsor_id';
             $rules['rank_id'] = 'nullable|exists:ranks,id';
             $rules['kyc_status'] = 'nullable|in:not_submitted,pending,partial,verified,rejected';
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'sponsor_id.unique' => 'Ce code membre est déjà utilisé.',
+            'sponsor_id.regex' => 'Le code membre ne peut contenir que des lettres, chiffres, tirets ou underscores.',
+            'created_at.date' => 'La date d’adhésion n’est pas valide.',
+        ]);
 
         // Capturer l'ancien parrain AVANT la modification
         $oldParrainId = $user->getOriginal('parrain_id');
@@ -484,7 +494,7 @@ class UserController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
-            if ($request->role === 'cashier') {
+            if (in_array($request->role, ['cashier', 'it_manager'], true)) {
                 $data['sponsor_id'] = null;
                 $data['parrain_id'] = null;
                 $data['rank_id'] = null;
@@ -502,6 +512,21 @@ class UserController extends Controller
                 $data['qualified_branches'] = 0;
                 $data['direct_sponsors_count'] = 0;
             } else {
+                // Code membre (sponsor_id) — modifiable par l’admin
+                if ($request->has('sponsor_id')) {
+                    $newCode = trim((string) $request->input('sponsor_id'));
+                    $data['sponsor_id'] = $newCode !== '' ? $newCode : null;
+
+                    if ($data['sponsor_id'] !== $user->sponsor_id) {
+                        Log::info('Code membre modifié par admin', [
+                            'user_id' => $user->id,
+                            'old_code' => $user->sponsor_id,
+                            'new_code' => $data['sponsor_id'],
+                            'admin_id' => auth()->id(),
+                        ]);
+                    }
+                }
+
                 // ============================================================
                 // GESTION DU CHANGEMENT DE PARRAIN (par CODE)
                 // ============================================================
@@ -581,6 +606,26 @@ class UserController extends Controller
             }
 
             $user->update($data);
+
+            // Date d’adhésion = created_at (hors timestamps Eloquent)
+            if ($request->filled('created_at')) {
+                $newCreatedAt = \Illuminate\Support\Carbon::parse($request->input('created_at'));
+                if (! $user->created_at || ! $user->created_at->equalTo($newCreatedAt)) {
+                    $user->timestamps = false;
+                    $user->created_at = $newCreatedAt;
+                    if ($user->registered_at) {
+                        $user->registered_at = $newCreatedAt;
+                    }
+                    $user->save();
+                    $user->timestamps = true;
+
+                    Log::info('Date d’adhésion modifiée par admin', [
+                        'user_id' => $user->id,
+                        'created_at' => $newCreatedAt->toDateTimeString(),
+                        'admin_id' => auth()->id(),
+                    ]);
+                }
+            }
 
             $newRole = $request->role;
             $currentRole = $user->roles->first()?->name ?? 'user';

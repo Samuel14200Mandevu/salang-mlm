@@ -71,12 +71,12 @@
             <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            <p class="text-base sm:text-lg font-medium">Aucun utilisateur trouvé</p>
+            <p class="text-base sm:text-lg font-medium">Aucun membre trouvé</p>
             <p class="text-sm text-[var(--text-tertiary)]">
                 @if(request('search'))
                     Aucun résultat ne correspond à votre recherche "{{ request('search') }}"
                 @else
-                    Commencez par ajouter votre premier utilisateur
+                    Commencez par ajouter votre premier membre
                 @endif
             </p>
         </td>

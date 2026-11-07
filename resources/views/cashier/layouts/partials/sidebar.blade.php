@@ -280,6 +280,20 @@
                             @endif
                         @endauth
 
+                        <li class="pt-3 mt-3 border-t border-[var(--border-color)]">
+                            <a href="{{ url('/?site=1') }}"
+                               class="sidebar-link"
+                               data-title="Voir le site">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                <span class="label transition-opacity duration-200"
+                                      :class="!sidebarOpen ? 'hidden' : ''">
+                                    Voir le site
+                                </span>
+                            </a>
+                        </li>
+
                         <!-- Déconnexion -->
                         <li class="pt-4 mt-4 border-t border-[var(--border-color)]">
                             <form method="POST" action="{{ route('logout') }}" id="logout-form" class="logout-form">

@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 @include('layouts.partials.head')
 @php
-    $isItManagerShell = auth()->user()?->isItManagerOnly() ?? false;
+    $isItManagerShell = auth()->user()?->usesItManagerShell() ?? false;
     // Responsable IT = bleu admin (#1E5DAD), pas le thème grade membre
     $memberRankAccent = (auth()->check() && ! $isItManagerShell)
         ? \App\Support\MlmRank::dashboardAccent(auth()->user()?->rank_level)

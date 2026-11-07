@@ -10,35 +10,70 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Spatie\Permission\Models\Role;
 
 class AdminCashierController extends Controller
 {
+    /** Rôles staff gérés dans « Employés ». */
+    public const STAFF_ROLES = ['admin', 'it_manager', 'cashier'];
+
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
     }
 
     /**
-     * Liste des caissiers
+     * Liste des employés (admin, responsable IT, caissier).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $cashiers = User::role('cashier')->paginate(20);
-        return view('admin.cashiers.index', compact('cashiers'));
+        $query = User::query()
+            ->with('roles')
+            ->role(self::STAFF_ROLES);
+
+        $roleFilter = $request->string('role')->toString();
+        if (in_array($roleFilter, self::STAFF_ROLES, true)) {
+            $query->role($roleFilter);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->orderBy('name')->paginate(20)->withQueryString();
+
+        $stats = [
+            'total' => User::role(self::STAFF_ROLES)->count(),
+            'admins' => User::role('admin')->count(),
+            'it_managers' => User::role('it_manager')->count(),
+            'cashiers' => User::role('cashier')->count(),
+            'active' => User::role(self::STAFF_ROLES)->where('is_active', true)->count(),
+            'inactive' => User::role(self::STAFF_ROLES)->where('is_active', false)->count(),
+        ];
+
+        // Compat vues existantes ($cashiers)
+        $cashiers = $employees;
+
+        return view('admin.cashiers.index', compact('employees', 'cashiers', 'stats', 'roleFilter'));
     }
 
     /**
-     * Voir un caissier
+     * Voir un employé.
      */
     public function show($id)
     {
-        $cashier = User::role('cashier')->findOrFail($id);
-        return view('admin.cashiers.show', compact('cashier'));
+        $cashier = User::role(self::STAFF_ROLES)->with('roles')->findOrFail($id);
+        $employee = $cashier;
+
+        return view('admin.cashiers.show', compact('cashier', 'employee'));
     }
 
     /**
-     * Formulaire de création (redirige vers la création d'utilisateur)
+     * Formulaire de création (redirige vers la création d'utilisateur staff).
      */
     public function create()
     {
@@ -46,7 +81,7 @@ class AdminCashierController extends Controller
     }
 
     /**
-     * Créer un caissier (SANS code de parrain, SANS MLM)
+     * Créer un caissier (SANS code de parrain, SANS MLM).
      */
     public function store(Request $request)
     {
@@ -77,10 +112,8 @@ class AdminCashierController extends Controller
                 'city' => $request->city,
                 'country' => $request->country,
                 'is_active' => $request->is_active ?? true,
-                //  Pas de code de parrain
                 'sponsor_id' => null,
                 'parrain_id' => null,
-                //  Pas de grade MLM
                 'rank_id' => null,
                 'rank' => null,
                 'rank_level' => null,
@@ -100,7 +133,6 @@ class AdminCashierController extends Controller
                 'kyc_status' => 'not_submitted',
             ]);
 
-            //  Créer le wallet
             Wallet::create([
                 'user_id' => $user->id,
                 'balance' => 0,
@@ -109,116 +141,104 @@ class AdminCashierController extends Controller
                 'is_active' => true,
             ]);
 
-            //  Assigner le rôle cashier
             $user->assignRole('cashier');
 
-            Log::info('Nouveau caissier créé (sans code de parrain, sans MLM)', [
+            Log::info('Nouvel employé caissier créé', [
                 'admin_id' => auth()->id(),
-                'admin_name' => auth()->user()->name,
                 'cashier_id' => $user->id,
-                'cashier_name' => $user->name,
-                'cashier_email' => $user->email,
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', ' Caissier créé avec succès !');
-
+                ->with('success', 'Employé (caissier) créé avec succès !');
         } catch (\Exception $e) {
-            Log::error('Erreur création caissier', [
+            Log::error('Erreur création employé caissier', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
-                ->with('error', ' Erreur lors de la création: ' . $e->getMessage())
+                ->with('error', 'Erreur lors de la création: ' . $e->getMessage())
                 ->withInput();
         }
     }
 
-    /**
-     * Formulaire d'édition (redirige vers l'édition d'utilisateur)
-     */
     public function edit($id)
     {
         return redirect()->route('admin.users.edit', $id);
     }
 
-    /**
-     * Mettre à jour un caissier (redirige vers la mise à jour d'utilisateur)
-     */
     public function update(Request $request, $id)
     {
         return redirect()->route('admin.users.update', $id)->withInput();
     }
 
-    /**
-     * Supprimer un caissier
-     */
     public function destroy($id)
     {
         try {
-            $cashier = User::role('cashier')->findOrFail($id);
+            $cashier = User::role(self::STAFF_ROLES)->findOrFail($id);
+
+            if ((int) $cashier->id === (int) auth()->id()) {
+                return redirect()->back()
+                    ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+            }
+
             $cashierName = $cashier->name;
 
-            // Supprimer le wallet
             if ($cashier->wallet) {
                 $cashier->wallet->delete();
             }
 
             $cashier->delete();
 
-            Log::info('Caissier supprimé', [
+            Log::info('Employé supprimé', [
                 'admin_id' => auth()->id(),
-                'admin_name' => auth()->user()->name,
-                'cashier_id' => $id,
-                'cashier_name' => $cashierName,
+                'employee_id' => $id,
+                'employee_name' => $cashierName,
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', ' Caissier supprimé avec succès !');
-
+                ->with('success', 'Employé supprimé avec succès !');
         } catch (\Exception $e) {
-            Log::error('Erreur suppression caissier', [
-                'cashier_id' => $id,
+            Log::error('Erreur suppression employé', [
+                'employee_id' => $id,
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
-                ->with('error', ' Erreur lors de la suppression: ' . $e->getMessage());
+                ->with('error', 'Erreur lors de la suppression: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Activer/Désactiver un caissier
-     */
     public function toggleStatus($id)
     {
         try {
-            $cashier = User::role('cashier')->findOrFail($id);
-            $cashier->is_active = !$cashier->is_active;
+            $cashier = User::role(self::STAFF_ROLES)->findOrFail($id);
+
+            if ((int) $cashier->id === (int) auth()->id() && $cashier->is_active) {
+                return redirect()->back()
+                    ->with('error', 'Vous ne pouvez pas désactiver votre propre compte.');
+            }
+
+            $cashier->is_active = ! $cashier->is_active;
             $cashier->save();
 
             $status = $cashier->is_active ? 'activé' : 'désactivé';
 
-            Log::info('Statut du caissier modifié', [
+            Log::info('Statut employé modifié', [
                 'admin_id' => auth()->id(),
-                'admin_name' => auth()->user()->name,
-                'cashier_id' => $cashier->id,
-                'cashier_name' => $cashier->name,
+                'employee_id' => $cashier->id,
                 'new_status' => $status,
             ]);
 
             return redirect()->route('admin.cashiers.index')
-                ->with('success', " Caissier {$status} avec succès !");
-
+                ->with('success', "Employé {$status} avec succès !");
         } catch (\Exception $e) {
-            Log::error('Erreur changement statut caissier', [
-                'cashier_id' => $id,
+            Log::error('Erreur changement statut employé', [
+                'employee_id' => $id,
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()->back()
-                ->with('error', ' Erreur lors du changement de statut: ' . $e->getMessage());
+                ->with('error', 'Erreur lors du changement de statut: ' . $e->getMessage());
         }
     }
 }
