@@ -2,6 +2,8 @@
 
 @push('styles')
 <style>
+    [x-cloak] { display: none !important; }
+
     .commission-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -339,6 +341,19 @@
 @section('title', 'Toutes les commissions')
 
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $filterActive = filled(request('type'))
+        || filled(request('status'))
+        || filled(request('source'))
+        || filled(request('date_from'))
+        || filled(request('date_to'));
+    $commissionSubtitle = ($commissions->total() ?? 0).' commission(s)'
+        .(request('search') ? ' · Résultats pour "'.e(request('search')).'"' : '');
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+    ], fn ($v) => filled($v));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
     {{-- BANDEAU MOBILE : PDF + Commandes + Nouvelle vente dans le div --}}
@@ -346,9 +361,67 @@
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Toutes les commissions</h1>
-                <p class="page-subtitle">Commissions POS (CASH) et MLM</p>
+                <p id="listSubtitleMobile" class="page-subtitle">{!! $commissionSubtitle !!}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--commissions-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button" @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open" aria-label="Filtrer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                        <form method="GET" action="{{ route('cashier.commissions') }}" class="space-y-2">
+                            @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                            <div>
+                                <label for="type_m">Type</label>
+                                <select name="type" id="type_m" class="form-control">
+                                    <option value="">Tous les types</option>
+                                    @foreach($types ?? [] as $type)
+                                        @if(in_array($type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor']))
+                                            <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>{{ $type == 'cash_pos' ? 'CASH POS' : ucfirst($type) }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="status_m">Statut</label>
+                                <select name="status" id="status_m" class="form-control">
+                                    <option value="">Tous les statuts</option>
+                                    @foreach($statuses ?? [] as $key => $label)
+                                        <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="source_m">Source</label>
+                                <select name="source" id="source_m" class="form-control">
+                                    <option value="">Toutes les sources</option>
+                                    <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
+                                    <option value="mlm" {{ request('source') == 'mlm' ? 'selected' : '' }}>MLM</option>
+                                </select>
+                            </div>
+                            <div><label for="date_from_m">Du</label><input type="date" name="date_from" id="date_from_m" value="{{ request('date_from') }}" class="form-control"></div>
+                            <div><label for="date_to_m">Au</label><input type="date" name="date_to" id="date_to_m" value="{{ request('date_to') }}" class="form-control"></div>
+                            <div class="flex gap-2 pt-1">
+                                <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                                <a href="{{ route('cashier.commissions', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <button type="button" onclick="printPdfDirect()" class="btn btn-success btn-sm btn-round-icon" title="Imprimer PDF" aria-label="Imprimer PDF">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -366,6 +439,18 @@
                 </a>
             </div>
         </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="searchInput" class="search-input"
+                       placeholder="Rechercher une commission" autocomplete="off" value="{{ request('search') }}">
+            </div>
+        </div>
     </div>
 
     {{-- EN-TÊTE DESKTOP --}}
@@ -374,11 +459,67 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Toutes les commissions
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Commissions POS (CASH) et MLM
-            </p>
+            <p id="listSubtitle" class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">{!! $commissionSubtitle !!}</p>
         </div>
         <div class="flex gap-2 flex-wrap header-actions">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="searchInputDesktop" class="search-input"
+                           placeholder="Rechercher une commission" autocomplete="off" value="{{ request('search') }}">
+                </div>
+            </div>
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button" @click="open = !open"
+                        class="btn btn-outline btn-sm {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open" aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrer</span>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('cashier.commissions') }}" class="space-y-2">
+                        @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                        <div>
+                            <label for="type">Type</label>
+                            <select name="type" id="type" class="form-control">
+                                <option value="">Tous les types</option>
+                                @foreach($types ?? [] as $type)
+                                    @if(in_array($type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor']))
+                                        <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>{{ $type == 'cash_pos' ? 'CASH POS' : ucfirst($type) }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="status">Statut</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">Tous les statuts</option>
+                                @foreach($statuses ?? [] as $key => $label)
+                                    <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="source">Source</label>
+                            <select name="source" id="source" class="form-control">
+                                <option value="">Toutes les sources</option>
+                                <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
+                                <option value="mlm" {{ request('source') == 'mlm' ? 'selected' : '' }}>MLM</option>
+                            </select>
+                        </div>
+                        <div><label for="date_from">Du</label><input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="form-control"></div>
+                        <div><label for="date_to">Au</label><input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="form-control"></div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('cashier.commissions', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
             <button type="button" onclick="printPdfDirect()" class="btn btn-pdf btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -443,55 +584,6 @@
         </div>
     </div>
 
-    {{-- FILTRES --}}
-    <div class="card">
-        <form method="GET" action="{{ route('cashier.commissions') }}" class="filter-section" id="filterForm">
-            <div class="search-wrapper">
-                <span class="search-icon">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </span>
-                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher..." autocomplete="off">
-                <button type="button" id="clearSearch" class="clear-search">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <select name="type" id="typeFilter">
-                <option value="">Tous les types</option>
-                @foreach($types ?? [] as $type)
-                    @if(in_array($type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor']))
-                        <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
-                            {{ $type == 'cash_pos' ? 'CASH POS' : ucfirst($type) }}
-                        </option>
-                    @endif
-                @endforeach
-            </select>
-
-            <select name="status" id="statusFilter">
-                <option value="">Tous les statuts</option>
-                @foreach($statuses ?? [] as $key => $label)
-                    <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-
-            <select name="source" id="sourceFilter">
-                <option value="">Toutes les sources</option>
-                <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
-                <option value="mlm" {{ request('source') == 'mlm' ? 'selected' : '' }}>MLM</option>
-            </select>
-
-            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début" id="dateFrom">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin" id="dateTo">
-
-            <button type="submit" class="btn-filter">Filtrer</button>
-            <a href="{{ route('cashier.commissions') }}" class="btn-reset">↺ Réinitialiser</a>
-        </form>
-    </div>
-
     {{-- TABLEAU --}}
     <div class="card">
         <div class="table-wrap">
@@ -510,7 +602,7 @@
                         <th class="hidden lg:table-cell">Action</th>
                     </tr>
                 </thead>
-                <tbody id="commissionsTable">
+                <tbody id="tableBody">
                     @forelse($commissions ?? [] as $commission)
                         @php
                             $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
@@ -603,9 +695,11 @@
             </table>
         </div>
 
-        @if(isset($commissions) && $commissions->hasPages())
-            <div class="mt-4"><x-salang-pagination :paginator="$commissions" /></div>
-        @endif
+        <div id="paginationContainer" class="mt-4">
+            @if(isset($commissions) && $commissions->hasPages())
+                <x-salang-pagination :paginator="$commissions" />
+            @endif
+        </div>
     </div>
     
 </div>
@@ -620,103 +714,11 @@
 </div>
 
 @push('scripts')
+@include('cashier.partials.live-list-search', [
+    'inputs' => ['searchInput', 'searchInputDesktop'],
+    'replaceIds' => ['tableBody', 'paginationContainer', 'listSubtitle', 'listSubtitleMobile'],
+])
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearch');
-    const rows = document.querySelectorAll('#commissionsTable .commission-row');
-    const typeFilter = document.getElementById('typeFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    const sourceFilter = document.getElementById('sourceFilter');
-    const dateFrom = document.getElementById('dateFrom');
-    const dateTo = document.getElementById('dateTo');
-    let searchTimeout = null;
-
-    function filterRows() {
-        const searchTerm = searchInput.value.trim().toLowerCase();
-        const type = typeFilter.value;
-        const status = statusFilter.value;
-        const source = sourceFilter.value;
-        const dateFromVal = dateFrom.value;
-        const dateToVal = dateTo.value;
-
-        let visibleCount = 0;
-
-        rows.forEach(function(row) {
-            const searchData = row.dataset.search || '';
-            const rowType = row.dataset.type || '';
-            const rowStatus = row.dataset.status || '';
-            const rowSource = row.dataset.source || '';
-            const rowDate = row.dataset.date || '';
-
-            let show = true;
-
-            if (searchTerm && !searchData.includes(searchTerm)) show = false;
-            if (type && rowType !== type) show = false;
-            if (status && rowStatus !== status) show = false;
-            if (source && rowSource !== source) show = false;
-            if (dateFromVal && rowDate < dateFromVal) show = false;
-            if (dateToVal && rowDate > dateToVal) show = false;
-
-            if (show) {
-                row.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                row.classList.add('hidden');
-            }
-        });
-
-        clearSearchBtn.classList.toggle('visible', searchTerm.length > 0);
-
-        const noResultMsg = document.querySelector('#noResultsMsg');
-        if (visibleCount === 0 && rows.length > 0) {
-            if (!noResultMsg) {
-                const msg = document.createElement('tr');
-                msg.id = 'noResultsMsg';
-                msg.innerHTML = `
-                    <td colspan="10" class="text-center py-8 text-[var(--text-secondary)]">
-                        <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <p class="text-base font-medium text-[var(--text-primary)]">Aucun résultat</p>
-                        <p class="text-sm text-[var(--text-tertiary)] mt-1">Aucune commission ne correspond à votre recherche</p>
-                    </td>
-                `;
-                document.querySelector('#commissionsTable').appendChild(msg);
-            }
-        } else {
-            if (noResultMsg) noResultMsg.remove();
-        }
-    }
-
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(filterRows, 200);
-    });
-
-    [typeFilter, statusFilter, sourceFilter, dateFrom, dateTo].forEach(function(el) {
-        if (el) el.addEventListener('change', filterRows);
-    });
-
-    clearSearchBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        clearSearchBtn.classList.remove('visible');
-        filterRows();
-        searchInput.focus();
-    });
-
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            searchInput.value = '';
-            clearSearchBtn.classList.remove('visible');
-            filterRows();
-            searchInput.blur();
-        }
-    });
-
-    filterRows();
-});
-
 // ============================================================
 // IMPRIMER PDF DIRECTEMENT SANS NOUVELLE FENÊTRE
 // ============================================================
@@ -727,25 +729,22 @@ function printPdfDirect() {
     loader.classList.add('active');
     
     // Récupérer les filtres
-    const params = new URLSearchParams();
-    const type = document.getElementById('typeFilter')?.value;
-    const status = document.getElementById('statusFilter')?.value;
-    const source = document.getElementById('sourceFilter')?.value;
-    const dateFrom = document.getElementById('dateFrom')?.value;
-    const dateTo = document.getElementById('dateTo')?.value;
+    const params = new URLSearchParams(window.location.search);
+    params.delete('page');
+    const dateFrom = params.get('date_from');
+    const dateTo = params.get('date_to');
     const search = document.getElementById('searchInput')?.value;
 
-    if (type) params.append('type', type);
-    if (status) params.append('status', status);
-    if (source) params.append('source', source);
-    if (dateFrom) params.append('date_from', dateFrom);
-    if (dateTo) params.append('date_to', dateTo);
-    if (search) params.append('search', search);
+    if (search) {
+        params.set('search', search);
+    } else {
+        params.delete('search');
+    }
 
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    if (!dateFrom && !dateTo) params.append('period', year + '-' + month);
+    if (!dateFrom && !dateTo) params.set('period', year + '-' + month);
 
     const pdfUrl = '{{ route('cashier.commissions.export-pdf') }}?' + params.toString();
 

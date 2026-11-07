@@ -20,6 +20,7 @@ use App\Models\Genealogy;
 use App\Models\Rank;
 use App\Http\Controllers\Concerns\DispatchesMlmRecalculation;
 use App\Http\Controllers\Concerns\GeneratesPdfSafely;
+use App\Notifications\CashierMemberRegisteredNotification;
 use App\Notifications\CommissionPaidNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -2292,14 +2293,39 @@ public function destroyProfile(Request $request)
             DB::commit();
             Log::info('✅ Transaction DB validée avec succès!');
 
+            $emailSent = false;
+            // Mail d’accueil + identifiants uniquement si un e-mail a été renseigné (ex. Gmail)
+            if ($request->filled('email') && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $member->notify(new CashierMemberRegisteredNotification(
+                        $password,
+                        (string) $request->member_code,
+                        $sponsor->name,
+                        $package->name,
+                    ));
+                    $emailSent = true;
+                } catch (\Throwable $e) {
+                    Log::error('Envoi mail adhésion caissier échoué', [
+                        'member_id' => $member->id,
+                        'email' => $email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $successMessage = $emailSent
+                ? 'Membre enregistré avec succès ! Un e-mail avec les identifiants a été envoyé à '.$email.'.'
+                : 'Membre enregistré avec succès !';
+
             return redirect()->route('cashier.members.show', $member->id)
-                ->with('success', 'Membre enregistré avec succès !')
+                ->with('success', $successMessage)
                 ->with('password', $password)
                 ->with('email', $email)
                 ->with('member_code', $request->member_code)
                 ->with('package_name', $package->name)
                 ->with('rank_name', $rankName)
-                ->with('pv_value', $pvValue);
+                ->with('pv_value', $pvValue)
+                ->with('email_sent', $emailSent);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -2395,7 +2421,7 @@ public function history(Request $request)
         });
     }
     
-    $orders = $query->orderBy('created_at', 'desc')->paginate(20);
+    $orders = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
     
     // Statistiques incluant les adhésions
     $allOrdersQuery = Order::with(['items'])
@@ -2591,20 +2617,27 @@ public function history(Request $request)
     /**
      * Ventes du jour
      */
-    public function dailySales()
+    public function dailySales(Request $request)
     {
-        $sales = Order::whereDate('created_at', today())
-            ->where('status', 'completed')
-            ->with('user')
-            ->get();
+        $baseQuery = Order::whereDate('created_at', today())
+            ->where('status', 'completed');
+
+        $allToday = (clone $baseQuery)->with('user')->get();
+
+        $listQuery = (clone $baseQuery)->with('user')->orderByDesc('created_at');
+        if ($request->filled('search')) {
+            $search = ltrim(trim((string) $request->search), '#');
+            $listQuery->where('order_number', 'LIKE', "%{$search}%");
+        }
+        $sales = $listQuery->get();
 
         $stats = [
-            'total_orders' => $sales->count(),
-            'total_amount' => $sales->sum('total'),
-            'average_order' => $sales->count() > 0 ? $sales->sum('total') / $sales->count() : 0,
-            'pos_count' => $sales->where('source', 'pos')->count(),
-            'mlm_count' => $sales->where('source', 'mlm')->count(),
-            'payment_methods' => $sales->groupBy('payment_method')->map(function($group) {
+            'total_orders' => $allToday->count(),
+            'total_amount' => $allToday->sum('total'),
+            'average_order' => $allToday->count() > 0 ? $allToday->sum('total') / $allToday->count() : 0,
+            'pos_count' => $allToday->where('source', 'pos')->count(),
+            'mlm_count' => $allToday->where('source', 'mlm')->count(),
+            'payment_methods' => $allToday->groupBy('payment_method')->map(function ($group) {
                 return [
                     'count' => $group->count(),
                     'total' => $group->sum('total'),
@@ -2838,8 +2871,22 @@ public function history(Request $request)
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('type', 'LIKE', "%{$search}%")
+                    ->orWhere('source', 'LIKE', "%{$search}%")
+                    ->orWhere('id', $search)
+                    ->orWhereHas('user', function ($sub) use ($search) {
+                        $sub->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('sponsor_id', 'LIKE', "%{$search}%")
+                            ->orWhere('phone', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
         
-        $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
+        $commissions = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
         
         $stats = [
             'total_commissions' => Commission::whereNotIn('type', $excludedTypes)->sum('amount'),

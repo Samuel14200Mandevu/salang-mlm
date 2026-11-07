@@ -972,6 +972,22 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Caissiers et responsables IT n’ont pas de portefeuille membre.
+     */
+    public function isWalletEligible(): bool
+    {
+        if ($this->hasRole('cashier') && ! $this->hasRole('admin')) {
+            return false;
+        }
+
+        if ($this->isItManagerOnly()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Afficher le chrome Responsable IT (sidebar / topbar / bottom-nav).
      * Comme « Rapports caisse » pour le shell caissier : un admin qui ouvre
      * Messages site / routes IT bascule dans les interfaces IT.

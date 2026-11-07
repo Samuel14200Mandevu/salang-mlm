@@ -199,20 +199,10 @@
 .it-manager-shell .it-dash .badge-warning { background: rgba(245, 166, 35, 0.14); color: #B54708; border-color: rgba(245, 166, 35, 0.2); }
 .it-manager-shell .it-dash .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
 
-@keyframes it-dash-fadeInUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.it-manager-shell .it-dash .animate-fadeInUp { animation: it-dash-fadeInUp 0.3s ease forwards; }
-.it-manager-shell .it-dash .delay-1 { animation-delay: 0.05s; }
-.it-manager-shell .it-dash .delay-2 { animation-delay: 0.1s; }
-.it-manager-shell .it-dash .delay-3 { animation-delay: 0.15s; }
-.it-manager-shell .it-dash .delay-4 { animation-delay: 0.2s; }
-.it-manager-shell .it-dash .delay-5 { animation-delay: 0.25s; }
-.it-manager-shell .it-dash .delay-6 { animation-delay: 0.3s; }
-.it-manager-shell .it-dash .delay-7 { animation-delay: 0.35s; }
 </style>
 @endpush
+
+@include('partials.dashboard-entrance')
 
 @section('content')
 @php
@@ -247,7 +237,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Messages</p>
-                    <p class="stat-value text-[var(--primary-blue)]">{{ number_format($stats['messages_new']) }}</p>
+                    <p class="stat-value text-[var(--primary-blue)]" data-count-to="{{ (int) $stats['messages_new'] }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -256,8 +246,8 @@
                 </div>
             </div>
             <div class="stat-detail">
-                <span>Nouveaux <span class="value-warning">{{ number_format($stats['messages_new']) }}</span></span>
-                <span>Total <span class="value-success">{{ number_format($stats['messages_total']) }}</span></span>
+                <span>Nouveaux <span class="value-warning" data-count-to="{{ (int) $stats['messages_new'] }}">0</span></span>
+                <span>Total <span class="value-success" data-count-to="{{ (int) $stats['messages_total'] }}">0</span></span>
             </div>
         </a>
 
@@ -265,7 +255,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Questions</p>
-                    <p class="stat-value text-[var(--ui-stat-success)]">{{ number_format($stats['questions_open']) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]" data-count-to="{{ (int) $stats['questions_open'] }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-success">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -274,8 +264,8 @@
                 </div>
             </div>
             <div class="stat-detail">
-                <span>Ouvertes <span class="value-warning">{{ number_format($stats['questions_open']) }}</span></span>
-                <span>Total <span class="value-success">{{ number_format($stats['questions_total']) }}</span></span>
+                <span>Ouvertes <span class="value-warning" data-count-to="{{ (int) $stats['questions_open'] }}">0</span></span>
+                <span>Total <span class="value-success" data-count-to="{{ (int) $stats['questions_total'] }}">0</span></span>
             </div>
         </a>
 
@@ -283,7 +273,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Sans adhésion</p>
-                    <p class="stat-value text-[var(--ui-stat-warning)]">{{ number_format($stats['register_pending_adhesion']) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-warning)]" data-count-to="{{ (int) $stats['register_pending_adhesion'] }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-warning">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -293,7 +283,7 @@
             </div>
             <div class="stat-detail">
                 <span>14 derniers jours</span>
-                <span>À traiter <span class="value-warning">{{ number_format($stats['register_pending_adhesion']) }}</span></span>
+                <span>À traiter <span class="value-warning" data-count-to="{{ (int) $stats['register_pending_adhesion'] }}">0</span></span>
             </div>
         </a>
 
@@ -301,7 +291,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Registre du jour</p>
-                    <p class="stat-value text-[var(--ui-stat-info)]">{{ number_format($stats['register_today']) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-info)]" data-count-to="{{ (int) $stats['register_today'] }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-info">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -311,7 +301,7 @@
             </div>
             <div class="stat-detail">
                 <span>Participants aujourd’hui</span>
-                <span>Pubs <span class="value-success">{{ number_format($stats['publications_published']) }}</span></span>
+                <span>Pubs <span class="value-success" data-count-to="{{ (int) $stats['publications_published'] }}">0</span></span>
             </div>
         </a>
     </div>
@@ -404,8 +394,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-7">
-        <a href="{{ route('it-manager.activity-register.show') }}" class="quick-action">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <a href="{{ route('it-manager.activity-register.show') }}" class="quick-action animate-fadeInUp delay-7">
             <div class="quick-icon stat-icon-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -414,7 +404,7 @@
             <p class="quick-label">Ouvrir le registre</p>
         </a>
 
-        <a href="{{ route('it-manager.follow-up.index') }}" class="quick-action">
+        <a href="{{ route('it-manager.follow-up.index') }}" class="quick-action animate-fadeInUp delay-8">
             <div class="quick-icon stat-icon-warning">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
@@ -423,7 +413,7 @@
             <p class="quick-label">Suivi participants</p>
         </a>
 
-        <a href="{{ route('site-management.contacts.index') }}" class="quick-action">
+        <a href="{{ route('site-management.contacts.index') }}" class="quick-action animate-fadeInUp delay-9">
             <div class="quick-icon stat-icon-info">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -432,7 +422,7 @@
             <p class="quick-label">Messages du site</p>
         </a>
 
-        <a href="{{ route('it-manager.announcements.create') }}" class="quick-action">
+        <a href="{{ route('it-manager.announcements.create') }}" class="quick-action animate-fadeInUp delay-10">
             <div class="quick-icon stat-icon-success">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
@@ -469,21 +459,21 @@
             </div>
             <span class="it-home-hero__badge" title="Éléments à traiter">
                 <span class="it-home-hero__badge-pulse" aria-hidden="true"></span>
-                <span class="it-home-hero__badge-value">{{ $attention }}</span>
+                <span class="it-home-hero__badge-value" data-count-to="{{ (int) $attention }}">0</span>
             </span>
         </div>
 
         <div class="it-home-hero__spotlight">
-            <a href="{{ route('site-management.contacts.index', ['status' => 'new']) }}" class="it-home-spot">
-                <p class="it-home-spot__value">{{ $stats['messages_new'] }}</p>
+            <a href="{{ route('site-management.contacts.index', ['status' => 'new']) }}" class="it-home-spot animate-fadeInUp delay-1">
+                <p class="it-home-spot__value" data-count-to="{{ (int) $stats['messages_new'] }}">0</p>
                 <p class="it-home-spot__label">Messages</p>
             </a>
-            <a href="{{ route('questions.index', ['status' => 'open']) }}" class="it-home-spot">
-                <p class="it-home-spot__value">{{ $stats['questions_open'] }}</p>
+            <a href="{{ route('questions.index', ['status' => 'open']) }}" class="it-home-spot animate-fadeInUp delay-2">
+                <p class="it-home-spot__value" data-count-to="{{ (int) $stats['questions_open'] }}">0</p>
                 <p class="it-home-spot__label">Questions</p>
             </a>
-            <a href="{{ route('it-manager.follow-up.index', ['filter' => 'adhesion']) }}" class="it-home-spot">
-                <p class="it-home-spot__value">{{ $stats['register_pending_adhesion'] }}</p>
+            <a href="{{ route('it-manager.follow-up.index', ['filter' => 'adhesion']) }}" class="it-home-spot animate-fadeInUp delay-3">
+                <p class="it-home-spot__value" data-count-to="{{ (int) $stats['register_pending_adhesion'] }}">0</p>
                 <p class="it-home-spot__label">Sans adhésion</p>
             </a>
         </div>
@@ -525,29 +515,29 @@
     </nav>
 
     <div class="it-home-kpis">
-        <a href="{{ route('it-manager.activity-register.show') }}" class="it-home-kpi">
-            <p class="it-home-kpi__value">{{ $stats['register_today'] }}</p>
+        <a href="{{ route('it-manager.activity-register.show') }}" class="it-home-kpi animate-fadeInUp delay-4">
+            <p class="it-home-kpi__value" data-count-to="{{ (int) $stats['register_today'] }}">0</p>
             <p class="it-home-kpi__label">Registre du jour</p>
             <p class="it-home-kpi__meta">{{ $stats['register_pending_adhesion'] }} sans adhésion (14 j)</p>
         </a>
-        <a href="{{ route('publications.index') }}" class="it-home-kpi">
-            <p class="it-home-kpi__value">{{ $stats['publications_published'] }}</p>
+        <a href="{{ route('publications.index') }}" class="it-home-kpi animate-fadeInUp delay-5">
+            <p class="it-home-kpi__value" data-count-to="{{ (int) $stats['publications_published'] }}">0</p>
             <p class="it-home-kpi__label">Publications</p>
             <p class="it-home-kpi__meta">{{ $stats['publications'] }} au total</p>
         </a>
-        <a href="{{ route('site-management.contacts.index') }}" class="it-home-kpi">
-            <p class="it-home-kpi__value">{{ $stats['messages_total'] }}</p>
+        <a href="{{ route('site-management.contacts.index') }}" class="it-home-kpi animate-fadeInUp delay-6">
+            <p class="it-home-kpi__value" data-count-to="{{ (int) $stats['messages_total'] }}">0</p>
             <p class="it-home-kpi__label">Msgs site</p>
             <p class="it-home-kpi__meta">Historique complet</p>
         </a>
-        <a href="{{ route('questions.index') }}" class="it-home-kpi">
-            <p class="it-home-kpi__value">{{ $stats['questions_total'] }}</p>
+        <a href="{{ route('questions.index') }}" class="it-home-kpi animate-fadeInUp delay-7">
+            <p class="it-home-kpi__value" data-count-to="{{ (int) $stats['questions_total'] }}">0</p>
             <p class="it-home-kpi__label">Conversations</p>
             <p class="it-home-kpi__meta">{{ $stats['questions_open'] }} ouvertes</p>
         </a>
     </div>
 
-    <section class="it-home-panel">
+    <section class="it-home-panel animate-fadeInUp delay-8">
         <header class="it-home-panel__head">
             <h2 class="it-home-panel__title">Messages du site</h2>
             <a href="{{ route('site-management.contacts.index') }}" class="it-home-panel__link">Tout voir</a>
@@ -576,7 +566,7 @@
         </ul>
     </section>
 
-    <section class="it-home-panel">
+    <section class="it-home-panel animate-fadeInUp delay-9">
         <header class="it-home-panel__head">
             <h2 class="it-home-panel__title">Questions membres</h2>
             <a href="{{ route('questions.index') }}" class="it-home-panel__link">Tout voir</a>

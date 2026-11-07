@@ -381,7 +381,6 @@
                         <th class="text-xs sm:text-sm">Rôle</th>
                         <th class="text-xs sm:text-sm">Statut</th>
                         <th class="text-xs sm:text-sm hidden sm:table-cell">KYC</th>
-                        <th class="text-xs sm:text-sm text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -399,7 +398,8 @@
                                 default => 'badge-cashier',
                             };
                         @endphp
-                        <tr class="cashier-row">
+                        <tr class="cashier-row cursor-pointer hover:bg-[var(--bg-secondary)]"
+                            onclick="window.location='{{ route('admin.cashiers.show', $cashier->id) }}'">
                             <td class="font-mono text-xs">{{ $cashier->id }}</td>
                             <td class="font-medium text-sm">{{ $cashier->name }}</td>
                             <td class="hidden md:table-cell text-[var(--text-secondary)] text-xs sm:text-sm">
@@ -424,47 +424,10 @@
                                     <span class="badge badge-danger">Non soumis</span>
                                 @endif
                             </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.cashiers.show', $cashier->id) }}"
-                                       class="btn btn-primary btn-sm" title="Voir">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </a>
-                                    <a href="{{ route('admin.users.edit', $cashier->id) }}"
-                                       class="btn btn-primary btn-sm" title="Modifier">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                    </a>
-                                    <button type="button"
-                                            onclick="openToggleModal('{{ $cashier->id }}', '{{ $cashier->name }}', {{ $cashier->is_active ? 'true' : 'false' }})"
-                                            class="btn {{ $cashier->is_active ? 'btn-warning' : 'btn-success' }} btn-sm"
-                                            title="{{ $cashier->is_active ? 'Désactiver' : 'Activer' }}">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            @if($cashier->is_active)
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
-                                            @else
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            @endif
-                                        </svg>
-                                    </button>
-                                    <button type="button"
-                                            onclick="openDeleteModal('{{ $cashier->id }}', '{{ $cashier->name }}')"
-                                            class="btn btn-danger btn-sm"
-                                            title="Supprimer">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
+                            <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                 </svg>
@@ -485,169 +448,4 @@
     </div>
 
 </div>
-
-<!-- Toggle Modal -->
-<div id="toggleModal" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-icon modal-icon-warning">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
-            </svg>
-        </div>
-        <h3 class="modal-title" id="toggleModalTitle">Confirmer le changement de statut</h3>
-        <p class="modal-text" id="toggleModalText">
-            Êtes-vous sûr de vouloir <strong id="toggleActionText">désactiver</strong> l’employé
-            <strong id="toggleUserName"></strong> ?
-            <br>
-            <span id="toggleActionDescription" class="text-warning">
-                L’employé ne pourra plus se connecter.
-            </span>
-        </p>
-        <form id="toggleForm" action="" method="POST" class="modal-actions">
-            @csrf
-            @method('POST')
-            <button type="button" onclick="closeToggleModal()" class="btn btn-outline btn-sm">
-                Annuler
-            </button>
-            <button type="submit" class="btn btn-warning btn-sm" id="toggleSubmitBtn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
-                </svg>
-                <span id="toggleSubmitText">Désactiver</span>
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- Delete Modal -->
-<div id="deleteModal" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-icon modal-icon-danger">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-        </div>
-        <h3 class="modal-title">Confirmer la suppression</h3>
-        <p class="modal-text">
-            Êtes-vous sûr de vouloir <strong class="text-danger">supprimer définitivement</strong>
-            l’employé <strong id="deleteUserName"></strong> ?
-            <br>
-            Cette action est <strong class="text-danger">irréversible</strong>.
-        </p>
-        <form id="deleteForm" action="" method="POST" class="modal-actions">
-            @csrf
-            @method('DELETE')
-            <button type="button" onclick="closeDeleteModal()" class="btn btn-outline btn-sm">
-                Annuler
-            </button>
-            <button type="submit" class="btn btn-danger btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                Supprimer
-            </button>
-        </form>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-// ============================================================
-// MODAL TOGGLE
-// ============================================================
-function openToggleModal(userId, userName, isActive) {
-    const modal = document.getElementById('toggleModal');
-    const actionText = document.getElementById('toggleActionText');
-    const submitText = document.getElementById('toggleSubmitText');
-    const submitBtn = document.getElementById('toggleSubmitBtn');
-    const title = document.getElementById('toggleModalTitle');
-    const description = document.getElementById('toggleActionDescription');
-    const userNameEl = document.getElementById('toggleUserName');
-    const form = document.getElementById('toggleForm');
-
-    userNameEl.textContent = userName;
-    form.action = '/admin/users/toggle-status/' + userId;
-
-    if (isActive) {
-        actionText.textContent = 'désactiver';
-        submitText.textContent = 'Désactiver';
-        submitBtn.className = 'btn btn-warning btn-sm';
-        title.textContent = 'Confirmer la désactivation';
-        description.innerHTML = 'L’employé ne pourra plus se connecter.';
-        description.className = 'text-warning';
-        submitBtn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0a9 9 0 01-12.728 0m12.728 0L12 12m0 0l-6.364 6.364M12 12l6.364-6.364"/>
-            </svg>
-            Désactiver
-        `;
-    } else {
-        actionText.textContent = 'activer';
-        submitText.textContent = 'Activer';
-        submitBtn.className = 'btn btn-success btn-sm';
-        title.textContent = 'Confirmer l\'activation';
-        description.innerHTML = 'L’employé pourra à nouveau se connecter.';
-        description.className = 'text-success';
-        submitBtn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Activer
-        `;
-    }
-
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeToggleModal() {
-    document.getElementById('toggleModal').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-// ============================================================
-// MODAL DELETE
-// ============================================================
-function openDeleteModal(userId, userName) {
-    const modal = document.getElementById('deleteModal');
-    const userNameEl = document.getElementById('deleteUserName');
-    const form = document.getElementById('deleteForm');
-
-    userNameEl.textContent = userName;
-    form.action = '/admin/users/' + userId;
-
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-// ============================================================
-// CLOSE MODALS ON OUTSIDE CLICK
-// ============================================================
-document.querySelectorAll('.modal-overlay').forEach(function(modal) {
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-});
-
-// ============================================================
-// CLOSE MODALS WITH ESCAPE KEY
-// ============================================================
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-    }
-});
-</script>
-@endpush
 @endsection

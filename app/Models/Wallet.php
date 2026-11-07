@@ -10,6 +10,16 @@ class Wallet extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function (Wallet $wallet) {
+            $user = User::query()->find($wallet->user_id);
+            if ($user && ! $user->isWalletEligible()) {
+                return false;
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'balance',
@@ -58,6 +68,11 @@ class Wallet extends Model
     public static function creditCommissionToUser(int $userId, float $amount, string $description, array $metadata = []): ?self
     {
         if ($amount <= 0) {
+            return null;
+        }
+
+        $user = User::query()->find($userId);
+        if ($user && ! $user->isWalletEligible()) {
             return null;
         }
 

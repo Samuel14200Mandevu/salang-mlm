@@ -265,7 +265,7 @@
 @endphp
 
 @include('admin.layouts.partials.desktop-page-header', [
-    'title' => "Détails de l'utilisateur",
+    'title' => 'Détails de Membre',
     'subtitle' => $userShowSubtitle,
     'actions' => view('admin.users.partials.show-header-actions', compact('user'))->render(),
 ])
@@ -273,7 +273,7 @@
 <div class="admin-page-header page-header md:hidden animate-fadeInUp">
     <div class="admin-mobile-page-head is-mobile-banner">
         <div class="admin-title-banner__text">
-            <h1 class="page-title">Détails de l'utilisateur</h1>
+            <h1 class="page-title">Détails de Membre</h1>
             <p class="page-subtitle">{{ $userShowSubtitle }}</p>
         </div>
         @include('admin.users.partials.show-mobile-banner-actions', ['user' => $user])
@@ -566,12 +566,12 @@
                             <th class="text-xs">Grade</th>
                             <th class="text-xs hidden sm:table-cell">PV</th>
                             <th class="text-xs">Statut</th>
-                            <th class="text-xs">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($filleuls as $filleul)
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-[var(--bg-secondary)]"
+                            onclick="window.location='{{ route('admin.users.show', $filleul->id) }}'">
                             <td class="text-xs">{{ $filleul->id }}</td>
                             <td class="text-sm">{{ $filleul->name }}</td>
                             <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>
@@ -592,11 +592,6 @@
                                 <span class="badge {{ $filleul->is_active ? 'badge-success' : 'badge-danger' }}">
                                     {{ $filleul->is_active ? 'Actif' : 'Inactif' }}
                                 </span>
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.users.show', $filleul->id) }}" class="btn btn-sm btn-primary">
-                                    Voir
-                                </a>
                             </td>
                         </tr>
                         @endforeach

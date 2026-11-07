@@ -1,23 +1,61 @@
 @extends('cashier.layouts.app')
 
-@section('title', 'Nouveau Membre - Adhésion')
+@section('title', 'Formulaire d\'adhésion')
 
 @section('content')
+@php
+    $guest = $activityEntry ?? null;
+    $prefillName = old('name', $guest?->displayName());
+    $prefillPhone = old('phone', $guest?->participant_phone);
+    $prefillEmail = old('email', $guest?->participant_email);
+    $prefillBirth = old('birth_date', $guest?->participant_birth_date?->toDateString());
+    $prefillGender = old('gender', $guest?->participant_gender);
+    $prefillAddress = old('address', $guest?->participant_address);
+    $prefillProfession = old('profession', $guest?->participant_profession);
+    $prefillIdentity = old('identity_number', $guest?->participant_identity_number);
+    $prefillSponsorCode = old('sponsor_code', $guest?->member_code ?? $guest?->member?->sponsor_id);
+    $prefillSponsorName = $guest?->member?->name;
+    $prefillEntryId = old('activity_entry_id', $guest?->id);
+    $guestSearchOpen = (bool) $guest || filled($prefillEntryId);
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- EN-TÊTE --}}
+    {{-- EN-TÊTE : titre | Invité du registre (+ recherche) · Administrator · Retour --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Enregistrer un nouveau membre</h1>
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Formulaire d'adhésion</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Saisie des informations du distributeur</p>
         </div>
-        <div class="flex gap-2">
-            <span class="cashier-badge">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                {{ auth()->user()?->name }}
-            </span>
+        <div class="guest-registre-header-actions flex flex-wrap items-center justify-end gap-2">
+            <div class="guest-registre-toolbar">
+                <button type="button"
+                        id="guestSearchToggle"
+                        class="btn btn-outline btn-sm guest-registre-toggle{{ $guestSearchOpen ? ' is-active' : '' }}"
+                        aria-expanded="{{ $guestSearchOpen ? 'true' : 'false' }}"
+                        aria-controls="guestSearchPanel"
+                        title="Rechercher un invité du registre">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span>Invité du registre</span>
+                </button>
+
+                <div id="guestSearchPanel"
+                     class="guest-registre-search{{ $guestSearchOpen ? ' is-open' : '' }}"
+                     aria-hidden="{{ $guestSearchOpen ? 'false' : 'true' }}">
+                    <div class="sponsor-select-wrapper guest-registre-search__field">
+                        <input type="text"
+                               id="guest_search"
+                               class="form-control"
+                               autocomplete="off"
+                               placeholder="Téléphone ou nom de l’invité…"
+                               aria-label="Rechercher un invité du registre (téléphone ou nom)"
+                               value="{{ $guest?->displayName() }}">
+                        <div id="guestResults" class="sponsor-results"></div>
+                    </div>
+                </div>
+            </div>
+
             <a href="{{ route('cashier.members') }}" class="btn btn-secondary btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -27,78 +65,32 @@
         </div>
     </div>
 
-    @php
-        $guest = $activityEntry ?? null;
-        $prefillName = old('name', $guest?->displayName());
-        $prefillPhone = old('phone', $guest?->participant_phone);
-        $prefillEmail = old('email', $guest?->participant_email);
-        $prefillBirth = old('birth_date', $guest?->participant_birth_date?->toDateString());
-        $prefillGender = old('gender', $guest?->participant_gender);
-        $prefillAddress = old('address', $guest?->participant_address);
-        $prefillProfession = old('profession', $guest?->participant_profession);
-        $prefillIdentity = old('identity_number', $guest?->participant_identity_number);
-        $prefillSponsorCode = old('sponsor_code', $guest?->member_code ?? $guest?->member?->sponsor_id);
-        $prefillSponsorName = $guest?->member?->name;
-        $prefillEntryId = old('activity_entry_id', $guest?->id);
-    @endphp
-
-    {{-- INFO BANNER --}}
-    <div class="info-banner">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <div>
-            <strong>Formulaire d'adhésion :</strong> Enregistrement des informations du nouveau distributeur.
-            <br>
-            <span class="text-xs text-[var(--text-tertiary)]">Les champs marqués d'un <span class="text-[var(--danger)]">*</span> sont obligatoires. Cherchez l’invité du registre pour préremplir.</span>
-        </div>
-    </div>
-
     {{-- FORMULAIRE --}}
     <form action="{{ route('cashier.members.store') }}" method="POST" id="memberForm">
         @csrf
         <input type="hidden" name="activity_entry_id" id="activity_entry_id" value="{{ $prefillEntryId }}">
 
-        <!-- Invité du registre IT -->
-        <div class="form-section">
-            <div class="form-section-title">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                Invité du registre
-            </div>
-
-            <div class="form-group sponsor-select-wrapper">
-                <label for="guest_search">Rechercher (téléphone ou nom)</label>
-                <div>
-                    <input type="text" id="guest_search" class="form-control" autocomplete="off"
-                           placeholder="Ex. 099… ou nom de l’invité">
-                    <div id="guestResults" class="sponsor-results"></div>
-                </div>
-            </div>
-
-            <div id="guestSelected" class="sponsor-selected {{ $guest ? 'active' : '' }}">
-                <div class="sponsor-avatar" id="selectedGuestAvatar">{{ $guest ? strtoupper(substr($guest->displayName(), 0, 1)) : 'I' }}</div>
-                <div class="sponsor-info-text">
-                    <div class="sponsor-name-text" id="selectedGuestName">{{ $guest?->displayName() ?? '-' }}</div>
-                    <div class="sponsor-detail-text" id="selectedGuestDetail">
-                        @if ($guest)
-                            {{ $guest->participant_phone }}
-                            @if ($guest->sheet?->activity_date)
-                                · Registre {{ $guest->sheet->activity_date->format('d/m/Y') }}
-                            @endif
-                            · Parrain {{ $guest->member?->name }} ({{ $guest->member_code ?? $guest->member?->sponsor_id }})
-                        @else
-                            -
+        <div id="guestSelected" class="sponsor-selected guest-registre-selected {{ $guest ? 'active' : '' }}">
+            <div class="sponsor-avatar" id="selectedGuestAvatar">{{ $guest ? strtoupper(substr($guest->displayName(), 0, 1)) : 'I' }}</div>
+            <div class="sponsor-info-text">
+                <div class="sponsor-name-text" id="selectedGuestName">{{ $guest?->displayName() ?? '-' }}</div>
+                <div class="sponsor-detail-text" id="selectedGuestDetail">
+                    @if ($guest)
+                        {{ $guest->participant_phone }}
+                        @if ($guest->sheet?->activity_date)
+                            · Registre {{ $guest->sheet->activity_date->format('d/m/Y') }}
                         @endif
-                    </div>
+                        · Parrain {{ $guest->member?->name }} ({{ $guest->member_code ?? $guest->member?->sponsor_id }})
+                    @else
+                        -
+                    @endif
                 </div>
-                <button type="button" class="btn-remove-sponsor" onclick="clearGuest()" title="Retirer">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
             </div>
+            <button type="button" class="btn-remove-sponsor" onclick="clearGuest()" title="Retirer">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
 
         <!-- Informations personnelles -->
@@ -149,7 +141,7 @@
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-control" value="{{ $prefillEmail }}">
-                    <div class="help-text">Si non renseigné : prenomnom@salanggroup.com (sans point entre prénom et nom).</div>
+                    <div class="help-text">Renseignez le Gmail du membre pour lui envoyer ses identifiants. Sinon : prenomnom@salanggroup.com (sans point entre prénom et nom).</div>
                 </div>
             </div>
 
@@ -448,6 +440,8 @@ const guestSearchInput = document.getElementById('guest_search');
 const guestResults = document.getElementById('guestResults');
 const guestSelected = document.getElementById('guestSelected');
 const activityEntryInput = document.getElementById('activity_entry_id');
+const guestSearchToggle = document.getElementById('guestSearchToggle');
+const guestSearchPanel = document.getElementById('guestSearchPanel');
 let guestSearchTimeout = null;
 const guestLookup = {};
 
@@ -457,6 +451,19 @@ function escapeGuestHtml(value) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+function setGuestSearchOpen(open) {
+    if (!guestSearchToggle || !guestSearchPanel) return;
+    guestSearchPanel.classList.toggle('is-open', open);
+    guestSearchToggle.classList.toggle('is-active', open);
+    guestSearchToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    guestSearchPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open && guestSearchInput) {
+        requestAnimationFrame(() => guestSearchInput.focus());
+    } else if (guestResults) {
+        guestResults.classList.remove('show');
+    }
 }
 
 function applyGuest(guest) {
@@ -492,6 +499,7 @@ function applyGuest(guest) {
 
     guestResults.classList.remove('show');
     if (guestSearchInput) guestSearchInput.value = guest.name || '';
+    setGuestSearchOpen(false);
     if (typeof validateForm === 'function') validateForm();
 }
 
@@ -500,6 +508,13 @@ function clearGuest() {
     guestSelected.classList.remove('active');
     if (guestSearchInput) guestSearchInput.value = '';
     guestResults.classList.remove('show');
+}
+
+if (guestSearchToggle && guestSearchPanel) {
+    guestSearchToggle.addEventListener('click', function () {
+        const open = !guestSearchPanel.classList.contains('is-open');
+        setGuestSearchOpen(open);
+    });
 }
 
 if (guestSearchInput) {

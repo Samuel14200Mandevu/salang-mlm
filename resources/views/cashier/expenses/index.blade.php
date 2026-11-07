@@ -4,9 +4,8 @@
 
 @push('styles')
 <style>
-    /* ============================================================
-       STAT CARDS
-       ============================================================ */
+    [x-cloak] { display: none !important; }
+
     .stat-card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
@@ -44,9 +43,6 @@
         color: var(--text-tertiary);
     }
 
-    /* ============================================================
-       BOUTONS
-       ============================================================ */
     .btn {
         display: inline-flex;
         align-items: center;
@@ -91,9 +87,6 @@
         font-size: 0.65rem;
     }
 
-    /* ============================================================
-       TABLE
-       ============================================================ */
     .table-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -131,9 +124,6 @@
         background: var(--bg-secondary);
     }
 
-    /* ============================================================
-       BADGES
-       ============================================================ */
     .badge {
         display: inline-block;
         padding: 0.125rem 0.5rem;
@@ -149,9 +139,6 @@
     .badge-danger { background: rgba(179, 42, 42, 0.12); color: #b32a2a; }
     .badge-info { background: rgba(30, 93, 173, 0.10); color: var(--primary); }
 
-    /* ============================================================
-       FORMULAIRES
-       ============================================================ */
     .form-control {
         width: 100%;
         padding: 0.5rem 0.75rem;
@@ -170,59 +157,101 @@
         box-shadow: 0 0 0 3px rgba(30, 93, 173, 0.1);
     }
 
-    /* ============================================================
-       TABS (style POS)
-       ============================================================ */
-    .tabs {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.5rem;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .tab-btn {
-        padding: 0.4rem 1.25rem;
-        border: none;
-        border-radius: var(--radius-md, 6px);
-        font-weight: 600;
-        font-size: 0.813rem;
-        cursor: pointer;
-        transition: background 0.2s ease, color 0.2s ease;
-        background: transparent;
-        color: var(--text-secondary);
-    }
-    .tab-btn:hover {
-        color: var(--text-primary);
-        background: var(--bg-secondary);
-    }
-    .tab-btn.active {
-        background: var(--primary);
-        color: #FFFFFF;
-    }
-
     @media (max-width: 640px) {
         .stat-card { padding: 0.75rem 1rem; }
         .stat-value { font-size: 1.25rem; }
         .table thead th, .table tbody td { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
         .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
-        .tab-btn { padding: 0.3rem 0.75rem; font-size: 0.75rem; }
+    }
+
+    .expenses-history-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 14rem;
+        max-height: min(42vh, 22rem);
+    }
+    .expenses-history-panel .table-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+    .expenses-history-panel .table-wrap tbody td[colspan] {
+        height: 8rem;
+        vertical-align: middle;
     }
 </style>
 @endpush
 
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $filterActive = filled(request('category'))
+        || filled(request('expense_type'))
+        || filled(request('date_from'))
+        || filled(request('date_to'));
+    $expenseSubtitle = ($expenses->total() ?? 0).' dépense(s)'
+        .(request('search') ? ' · Résultats pour "'.e(request('search')).'"' : '');
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+    ], fn ($v) => filled($v));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE : Nouvelle dépense dans le div --}}
+    {{-- BANDEAU MOBILE --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Dépenses</h1>
-                <p class="page-subtitle">Gestion des sorties de caisse et remboursements</p>
+                <p id="listSubtitleMobile" class="page-subtitle">{!! $expenseSubtitle !!}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--expenses-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button" @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open" aria-label="Filtrer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                        <form method="GET" action="{{ route('cashier.expenses.index') }}" class="space-y-2">
+                            @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                            <div>
+                                <label for="category_m">Catégorie</label>
+                                <select id="category_m" name="category" class="form-control">
+                                    <option value="">Toutes</option>
+                                    @foreach($categories as $key => $label)
+                                        <option value="{{ $key }}" {{ request('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="expense_type_m">Type</label>
+                                <select id="expense_type_m" name="expense_type" class="form-control">
+                                    <option value="">Tous</option>
+                                    <option value="caisse" {{ request('expense_type') === 'caisse' ? 'selected' : '' }}>Caisse</option>
+                                    <option value="membre" {{ request('expense_type') === 'membre' ? 'selected' : '' }}>Membre</option>
+                                </select>
+                            </div>
+                            <div><label for="date_from_m">Du</label><input type="date" id="date_from_m" name="date_from" value="{{ request('date_from') }}" class="form-control"></div>
+                            <div><label for="date_to_m">Au</label><input type="date" id="date_to_m" name="date_to" value="{{ request('date_to') }}" class="form-control"></div>
+                            <div class="flex gap-2 pt-1">
+                                <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                                <a href="{{ route('cashier.expenses.index', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <a href="{{ route('cashier.expenses.create') }}"
                    class="btn btn-primary btn-sm btn-round-icon"
                    title="Nouvelle dépense"
@@ -233,6 +262,18 @@
                 </a>
             </div>
         </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="searchInput" class="search-input"
+                       placeholder="Rechercher une dépense" autocomplete="off" value="{{ request('search') }}">
+            </div>
+        </div>
     </div>
 
     {{-- EN-TÊTE DESKTOP --}}
@@ -241,16 +282,63 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Dépenses
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Gestion des sorties de caisse et remboursements
-            </p>
+            <p id="listSubtitle" class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">{!! $expenseSubtitle !!}</p>
         </div>
-        <a href="{{ route('cashier.expenses.create') }}" class="btn btn-primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouvelle dépense
-        </a>
+        <div class="flex items-center gap-2 flex-wrap">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="searchInputDesktop" class="search-input"
+                           placeholder="Rechercher une dépense" autocomplete="off" value="{{ request('search') }}">
+                </div>
+            </div>
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button" @click="open = !open"
+                        class="btn btn-outline btn-sm {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open" aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrer</span>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('cashier.expenses.index') }}" class="space-y-2">
+                        @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                        <div>
+                            <label for="category">Catégorie</label>
+                            <select id="category" name="category" class="form-control">
+                                <option value="">Toutes</option>
+                                @foreach($categories as $key => $label)
+                                    <option value="{{ $key }}" {{ request('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="expense_type">Type</label>
+                            <select id="expense_type" name="expense_type" class="form-control">
+                                <option value="">Tous</option>
+                                <option value="caisse" {{ request('expense_type') === 'caisse' ? 'selected' : '' }}>Caisse</option>
+                                <option value="membre" {{ request('expense_type') === 'membre' ? 'selected' : '' }}>Membre</option>
+                            </select>
+                        </div>
+                        <div><label for="date_from">Du</label><input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" class="form-control"></div>
+                        <div><label for="date_to">Au</label><input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" class="form-control"></div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('cashier.expenses.index', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <a href="{{ route('cashier.expenses.create') }}" class="btn btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouvelle dépense
+            </a>
+        </div>
     </div>
 
     {{-- STATISTIQUES --}}
@@ -312,63 +400,9 @@
         </div>
     </div>
 
-    {{-- BARRE DE RECHERCHE LIVE (style POS) --}}
-    <div class="flex flex-wrap items-center gap-2">
-        <div class="relative flex-1 min-w-[200px]">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text"
-                   id="expenseSearch"
-                   placeholder="Rechercher une dépense (titre, catégorie, référence...)"
-                   class="form-control pl-9">
-        </div>
-        <button type="button" id="clearSearchBtn"
-                class="btn btn-outline hidden">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            Effacer
-        </button>
-    </div>
-
-    <div id="searchResult" class="text-xs sm:text-sm text-[var(--text-secondary)] hidden">
-        Résultats: <span id="resultCount" class="font-semibold text-[var(--primary)]">0</span> dépense(s)
-    </div>
-
-    {{-- FILTRES AVANCÉS (recherche serveur via GET) --}}
-    <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
-        <form method="GET" action="{{ route('cashier.expenses.index') }}"
-              class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-
-            <select name="category" class="form-control">
-                <option value="">Catégorie</option>
-                @foreach($categories as $key => $label)
-                    <option value="{{ $key }}" {{ request('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-
-            <select name="expense_type" class="form-control">
-                <option value="">Type</option>
-                <option value="caisse" {{ request('expense_type') === 'caisse' ? 'selected' : '' }}>Caisse</option>
-                <option value="membre" {{ request('expense_type') === 'membre' ? 'selected' : '' }}>Membre</option>
-            </select>
-
-            <input type="date" name="date_from" value="{{ request('date_from') }}"
-                   class="form-control" placeholder="Du">
-
-            <input type="date" name="date_to" value="{{ request('date_to') }}"
-                   class="form-control" placeholder="Au">
-
-            <button type="submit" class="btn btn-primary">Filtrer</button>
-            <a href="{{ route('cashier.expenses.index') }}" class="btn btn-outline">Réinitialiser</a>
-        </form>
-    </div>
-
-    {{-- LISTE --}}
-    <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+    {{-- LISTE (div comme Historique ventes POS) --}}
+    <div class="card p-3 sm:p-4 expenses-history-panel">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 shrink-0">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des dépenses</h3>
             <div class="flex gap-2 text-sm">
                 <a href="{{ route('cashier.expenses.export', request()->query()) }}"
@@ -393,23 +427,9 @@
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($expenses as $expense)
-                        @php
-                            // Prépare les données pour la recherche live
-                            $searchText = strtolower(implode(' ', [
-                                $expense->title,
-                                $expense->description ?? '',
-                                $expense->category_label,
-                                $expense->reference ?? '',
-                                $expense->user->name ?? '',
-                                $expense->relatedUser->name ?? '',
-                                $expense->expense_type_label,
-                                $expense->payment_method_label,
-                                $expense->formatted_amount,
-                            ]));
-                        @endphp
-                        <tr class="expense-row" data-search="{{ $searchText }}">
+                        <tr>
                             <td class="text-xs">{{ $expense->expense_date->format('d/m/Y') }}</td>
                             <td>
                                 <span class="badge {{ $expense->expense_type === 'caisse' ? 'badge-info' : 'badge-warning' }}">
@@ -434,97 +454,35 @@
                         </tr>
                     @empty
                         <tr id="emptyRow">
-                            <td colspan="8" class="text-center py-6 text-[var(--text-tertiary)]">
-                                Aucune dépense enregistrée
+                            <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                                <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                <p class="text-base font-medium text-[var(--text-primary)]">Aucune dépense enregistrée</p>
+                                <p class="text-sm text-[var(--text-tertiary)] mt-1">L'historique des dépenses apparaîtra ici</p>
+                                <a href="{{ route('cashier.expenses.create') }}" class="btn btn-primary btn-sm mt-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Nouvelle dépense
+                                </a>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
-
-            {{-- Message "aucun résultat" pour la recherche live --}}
-            <div id="noResultMessage" class="hidden text-center py-8">
-                <svg class="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                <p class="text-[var(--text-tertiary)]">Aucune dépense ne correspond à votre recherche</p>
-            </div>
         </div>
 
-        <x-salang-pagination :paginator="$expenses" id="paginationWrapper" class="mt-3" />
+        <div id="paginationContainer" class="mt-3 shrink-0">
+            <x-salang-pagination :paginator="$expenses" />
+        </div>
     </div>
 </div>
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('expenseSearch');
-    const clearBtn = document.getElementById('clearSearchBtn');
-    const searchResult = document.getElementById('searchResult');
-    const resultCount = document.getElementById('resultCount');
-    const noResultMessage = document.getElementById('noResultMessage');
-    const paginationWrapper = document.getElementById('paginationWrapper');
-    const rows = document.querySelectorAll('.expense-row');
-    let timeout;
-
-    function performSearch(query) {
-        const q = query.trim().toLowerCase();
-        let count = 0;
-
-        rows.forEach(function (row) {
-            const text = row.dataset.search || '';
-            const match = q === '' || text.includes(q);
-            row.style.display = match ? '' : 'none';
-            if (match) count++;
-        });
-
-        // Afficher / masquer les infos
-        if (q === '') {
-            searchResult.classList.add('hidden');
-            clearBtn.classList.add('hidden');
-            noResultMessage.classList.add('hidden');
-            paginationWrapper.classList.remove('hidden');
-        } else {
-            searchResult.classList.remove('hidden');
-            clearBtn.classList.remove('hidden');
-            resultCount.textContent = count;
-
-            if (count === 0) {
-                noResultMessage.classList.remove('hidden');
-                paginationWrapper.classList.add('hidden');
-            } else {
-                noResultMessage.classList.add('hidden');
-                paginationWrapper.classList.add('hidden'); // cache la pagination pendant la recherche
-            }
-        }
-    }
-
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            clearTimeout(timeout);
-            const value = this.value;
-            timeout = setTimeout(function () {
-                performSearch(value);
-            }, 200); // debounce 200ms
-        });
-
-        // Raccourci clavier : Ctrl+K ou Cmd+K
-        document.addEventListener('keydown', function (e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                searchInput.focus();
-            }
-        });
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-            searchInput.value = '';
-            performSearch('');
-            searchInput.focus();
-        });
-    }
-});
-</script>
+@include('cashier.partials.live-list-search', [
+    'inputs' => ['searchInput', 'searchInputDesktop'],
+    'replaceIds' => ['tableBody', 'paginationContainer', 'listSubtitle', 'listSubtitleMobile'],
+])
 @endpush
 @endsection

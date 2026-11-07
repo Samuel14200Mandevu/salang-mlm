@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -139,13 +138,7 @@ class AdminCashierController extends Controller
                 'kyc_status' => 'not_submitted',
             ]);
 
-            Wallet::create([
-                'user_id' => $user->id,
-                'balance' => 0,
-                'pending_balance' => 0,
-                'currency' => 'USD',
-                'is_active' => true,
-            ]);
+            // Pas de portefeuille pour les employés caissiers
 
             $user->assignRole('cashier');
 

@@ -97,6 +97,32 @@
         line-height: 1.2;
     }
 
+    .cashier-dashboard-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    @media (min-width: 768px) {
+        .cashier-dashboard-stack {
+            gap: 1.25rem;
+        }
+    }
+    .cashier-dashboard-recent {
+        display: flex;
+        flex-direction: column;
+        min-height: 14rem;
+        max-height: min(42vh, 22rem);
+    }
+    .cashier-dashboard-recent .table-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+    .cashier-dashboard-recent .table-wrap tbody td[colspan] {
+        height: 8rem;
+        vertical-align: middle;
+    }
+
     /* ============================================================
        ALERTE – Compte inactif
        ============================================================ */
@@ -296,6 +322,8 @@
 </style>
 @endpush
 
+@include('partials.dashboard-entrance')
+
 @php
     $heure = date('H');
     if ($heure >= 5 && $heure < 12) {
@@ -314,6 +342,7 @@ admin-mobile-stack
 @endpush
 
 @section('content')
+<div class="cashier-dashboard-stack">
 
     {{-- ALERTE : Compte inactif --}}
     @if(isset($user) && !$user->is_active)
@@ -329,40 +358,25 @@ admin-mobile-stack
         </div>
     @endif
 
-    {{-- BANDEAU MOBILE : titre + Nouvelle vente dans le div --}}
+    {{-- BANDEAU MOBILE --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Tableau de bord</h1>
                 <p class="page-subtitle">{{ $salutation }}, {{ Auth::user()?->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
             </div>
-            <div class="admin-title-banner__tools admin-title-banner__tools--dashboard">
-                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle vente" aria-label="Nouvelle vente">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </a>
-            </div>
         </div>
     </div>
 
     {{-- EN-TÊTE desktop --}}
-    <div class="hidden md:flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Tableau de bord caisse
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()?->name ?? 'Caissier' }}</span>
-                <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
-            </p>
-        </div>
-        <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouvelle vente
-        </a>
+    <div class="hidden md:block animate-fadeInUp">
+        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+            Tableau de bord caisse
+        </h1>
+        <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+            {{ $salutation }}, <span class="font-semibold text-[var(--primary)]">{{ Auth::user()?->name ?? 'Caissier' }}</span>
+            <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ date('H:i') }})</span>
+        </p>
     </div>
 
     {{-- STATISTIQUES --}}
@@ -371,7 +385,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Commandes</p>
-                    <p class="stat-value text-[var(--primary)]">{{ $stats['total_orders_today'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--primary)]" data-count-to="{{ (int) ($stats['total_orders_today'] ?? 0) }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-orders">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -381,7 +395,7 @@ admin-mobile-stack
             </div>
             <div class="stat-detail">
                 <span>Aujourd'hui</span>
-                <span>En attente <span class="value-warning">{{ $stats['pending_orders'] ?? 0 }}</span></span>
+                <span>En attente <span class="value-warning" data-count-to="{{ (int) ($stats['pending_orders'] ?? 0) }}">0</span></span>
             </div>
         </div>
 
@@ -389,7 +403,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Ventes</p>
-                    <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($stats['total_sales_today'] ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]" data-count-to="{{ (float) ($stats['total_sales_today'] ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</p>
                 </div>
                 <div class="stat-icon stat-icon-sales">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -407,7 +421,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Clients</p>
-                    <p class="stat-value text-[var(--color-accent-600)]">{{ $stats['customers_today'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--color-accent-600)]" data-count-to="{{ (int) ($stats['customers_today'] ?? 0) }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-customers">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -425,7 +439,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">En attente</p>
-                    <p class="stat-value text-[var(--ui-stat-danger)]">{{ $stats['pending_orders'] ?? 0 }}</p>
+                    <p class="stat-value text-[var(--ui-stat-danger)]" data-count-to="{{ (int) ($stats['pending_orders'] ?? 0) }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-pending">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -440,9 +454,9 @@ admin-mobile-stack
         </div>
     </div>
 
-    {{-- COMMANDES RÉCENTES --}}
-    <div class="card p-3 sm:p-4 animate-fadeInUp delay-5">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+    {{-- COMMANDES RÉCENTES (div comme Historique ventes POS) --}}
+    <div class="card p-3 sm:p-4 animate-fadeInUp delay-5 cashier-dashboard-recent">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 shrink-0">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commandes récentes</h3>
             <a href="{{ route('cashier.orders') }}" class="text-sm text-[var(--primary)] hover:underline">
                 Voir tout
@@ -505,8 +519,18 @@ admin-mobile-stack
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-[var(--text-tertiary)] text-sm">
-                                Aucune commande récente
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                                <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                <p class="text-base font-medium text-[var(--text-primary)]">Aucune commande récente</p>
+                                <p class="text-sm text-[var(--text-tertiary)] mt-1">Les commandes de la caisse apparaîtront ici</p>
+                                <a href="{{ route('cashier.pos') }}" class="btn btn-primary btn-sm mt-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Faire une vente
+                                </a>
                             </td>
                         </tr>
                     @endforelse
@@ -516,8 +540,8 @@ admin-mobile-stack
     </div>
 
     {{-- ACTIONS RAPIDES --}}
-    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-6">
-        <a href="{{ route('cashier.pos') }}" class="quick-action">
+    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 shrink-0">
+        <a href="{{ route('cashier.pos') }}" class="quick-action animate-fadeInUp delay-6">
             <div class="quick-icon stat-icon-orders">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.4 8M17 13l2.4 8M9 21a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -526,7 +550,7 @@ admin-mobile-stack
             <p class="quick-label">Point de vente</p>
         </a>
 
-        <a href="{{ route('cashier.members') }}" class="quick-action">
+        <a href="{{ route('cashier.members') }}" class="quick-action animate-fadeInUp delay-7">
             <div class="quick-icon stat-icon-customers">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -535,7 +559,7 @@ admin-mobile-stack
             <p class="quick-label">Membres</p>
         </a>
 
-        <a href="{{ route('cashier.orders') }}" class="quick-action">
+        <a href="{{ route('cashier.orders') }}" class="quick-action animate-fadeInUp delay-8">
             <div class="quick-icon stat-icon-orders">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -544,7 +568,7 @@ admin-mobile-stack
             <p class="quick-label">Commandes</p>
         </a>
 
-        <a href="{{ route('cashier.commissions') }}" class="quick-action">
+        <a href="{{ route('cashier.commissions') }}" class="quick-action animate-fadeInUp delay-9">
             <div class="quick-icon stat-icon-sales">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -554,4 +578,5 @@ admin-mobile-stack
         </a>
     </div>
 
+</div>
 @endsection

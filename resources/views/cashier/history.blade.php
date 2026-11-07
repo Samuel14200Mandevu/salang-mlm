@@ -270,16 +270,67 @@
 @section('title', 'Historique des ventes POS')
 
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $hasDateFilter = filled(request('date_from')) || filled(request('date_to'));
+    $filterActive = $hasDateFilter;
+    $historySubtitle = ($orders->total() ?? 0).' vente(s)'
+        .($hasDateFilter ? ' · Période filtrée' : '')
+        .(request('search') ? ' · Résultats pour "'.e(request('search')).'"' : '');
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+    ], fn ($v) => filled($v));
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE : Nouvelle vente + Commandes dans le div --}}
+    {{-- BANDEAU MOBILE --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Historique des ventes POS</h1>
-                <p class="page-subtitle">Historique complet des ventes effectuées au guichet</p>
+                <p id="listSubtitleMobile" class="page-subtitle">{!! $historySubtitle !!}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--history-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="Filtrer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                        <form method="GET" action="{{ route('cashier.history') }}" class="space-y-2">
+                            @if(request('search'))
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                            @endif
+                            <div>
+                                <label for="date_from_m">Du</label>
+                                <input type="date" id="date_from_m" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                            </div>
+                            <div>
+                                <label for="date_to_m">Au</label>
+                                <input type="date" id="date_to_m" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                                <a href="{{ route('cashier.history', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <a href="{{ route('cashier.history.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="Rapport PDF" aria-label="Rapport PDF">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -297,6 +348,22 @@
                 </a>
             </div>
         </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="Rechercher (nom, téléphone, commande)"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
+            </div>
+        </div>
     </div>
 
     {{-- EN-TÊTE DESKTOP --}}
@@ -305,11 +372,55 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Historique des ventes POS
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Historique complet des ventes effectuées au guichet
+            <p id="listSubtitle" class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                {!! $historySubtitle !!}
             </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInputDesktop"
+                           class="search-input"
+                           placeholder="Rechercher (nom, téléphone, commande)"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrer</span>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('cashier.history') }}" class="space-y-2">
+                        @if(request('search'))
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
+                        <div>
+                            <label for="date_from">Du</label>
+                            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                        </div>
+                        <div>
+                            <label for="date_to">Au</label>
+                            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('cashier.history', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
             <a href="{{ route('cashier.history.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -374,17 +485,6 @@
         </div>
     </div>
 
-    {{-- FILTRES --}}
-    <div class="card">
-        <form method="GET" action="{{ route('cashier.history') }}" class="filter-section">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher (nom, téléphone, commande)">
-            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin">
-            <button type="submit" class="btn-filter">Filtrer</button>
-            <a href="{{ route('cashier.history') }}" class="btn-reset">↺ Réinitialiser</a>
-        </form>
-    </div>
-
     {{-- TABLEAU --}}
     <div class="card">
         <div class="table-wrap">
@@ -402,7 +502,7 @@
                         <th class="text-right">PV</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($orders ?? [] as $order)
                         @php
                             // Récupérer le package ou le produit de la commande
@@ -567,11 +667,18 @@
             </table>
         </div>
 
-        @if(isset($orders) && $orders->hasPages())
-            <div class="mt-4">
+        <div id="paginationContainer" class="mt-4">
+            @if(isset($orders) && $orders->hasPages())
                 <x-salang-pagination :paginator="$orders" />
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+@include('cashier.partials.live-list-search', [
+    'inputs' => ['searchInput', 'searchInputDesktop'],
+    'replaceIds' => ['tableBody', 'paginationContainer', 'listSubtitle', 'listSubtitleMobile'],
+])
+@endpush

@@ -23,7 +23,16 @@ class WalletController extends Controller
         protected PaymentService $paymentService,
         protected FlexPayService $flexPayService,
         protected BinancePayService $binancePayService,
-    ) {}
+    ) {
+        $this->middleware(function ($request, $next) {
+            $user = Auth::user();
+            if ($user && ! $user->isWalletEligible()) {
+                abort(403, 'Les caissiers et responsables IT n’ont pas de portefeuille.');
+            }
+
+            return $next($request);
+        });
+    }
 
     public function index(Request $request)
     {

@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Rank;
 use App\Models\Package;
-use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Commission;
 use App\Models\RankHistory;
@@ -311,13 +310,7 @@ class UserController extends Controller
                     'kyc_status' => 'not_submitted',
                 ]);
 
-                Wallet::create([
-                    'user_id' => $user->id,
-                    'balance' => 0,
-                    'pending_balance' => 0,
-                    'currency' => 'USD',
-                    'is_active' => true,
-                ]);
+                // Pas de portefeuille pour caissier / responsable IT
 
                 $user->assignRole($role);
 
@@ -635,6 +628,11 @@ class UserController extends Controller
             $currentRole = $user->roles->first()?->name ?? 'user';
             if ($currentRole !== $newRole) {
                 $user->syncRoles([$newRole]);
+            }
+
+            $user->load('roles', 'wallet');
+            if (! $user->isWalletEligible() && $user->wallet) {
+                $user->wallet->delete();
             }
 
             DB::commit();

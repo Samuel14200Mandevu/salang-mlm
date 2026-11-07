@@ -510,9 +510,13 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     // ============================================================
     Route::prefix('pv')->name('pv.')->group(function () {
         Route::get('/', [PvDistributionController::class, 'index'])->name('dashboard');
+        Route::get('/find-member', [PvDistributionController::class, 'findMemberByCode'])->name('find-member');
+        Route::get('/transactions', [PvDistributionController::class, 'transactions'])->name('transactions');
+        Route::get('/transactions/{transaction}', [PvDistributionController::class, 'showTransaction'])->name('transactions.show');
         Route::get('/distribute', [PvDistributionController::class, 'createDistribution'])->name('distribute');
         Route::post('/distribute', [PvDistributionController::class, 'distribute'])->name('distribute.post');
         Route::post('/approve/{allocation}', [PvDistributionController::class, 'approveAllocation'])->name('approve');
+        Route::get('/search-member', [PvDistributionController::class, 'searchNetworkMember'])->name('search-member');
         Route::get('/member/{member}', [PvDistributionController::class, 'getMemberPvDetails'])->name('member.details');
     });
 

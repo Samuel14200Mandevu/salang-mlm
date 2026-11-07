@@ -201,16 +201,32 @@
 @section('title', 'Ventes du jour')
 
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $listSubtitle = now()->format('d/m/Y')
+        .' · '.($sales->count() ?? 0).' affichée(s)'
+        .(request('search') ? ' · N° « '.e(request('search')).' »' : '');
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE : Commandes + Nouvelle vente dans le div --}}
+    {{-- BANDEAU MOBILE --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Ventes du jour</h1>
-                <p class="page-subtitle">{{ now()->format('d/m/Y') }}</p>
+                <p id="listSubtitleMobile" class="page-subtitle">{!! $listSubtitle !!}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--daily-sales">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher par N° commande">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
                 <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm btn-round-icon" title="Commandes" aria-label="Commandes">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -221,6 +237,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
                 </a>
+            </div>
+        </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="N° commande…"
+                       autocomplete="off"
+                       value="{{ request('search') }}">
             </div>
         </div>
     </div>
@@ -234,11 +266,24 @@
                 </svg>
                 Ventes du jour
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                {{ now()->format('d/m/Y') }}
+            <p id="listSubtitle" class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                {!! $listSubtitle !!}
             </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInputDesktop"
+                           class="search-input"
+                           placeholder="N° commande…"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
+            </div>
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -346,7 +391,7 @@
                         <th class="hidden sm:table-cell">Heure</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($sales ?? [] as $sale)
                         <tr>
                             <td class="font-mono text-[var(--primary)] text-xs sm:text-sm">#{{ $sale->order_number }}</td>
@@ -382,8 +427,13 @@
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                                 </svg>
-                                <p class="text-base font-medium">Aucune vente aujourd'hui</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Commencez à vendre !</p>
+                                @if(request('search'))
+                                    <p class="text-base font-medium">Aucune commande trouvée</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">Aucun N° ne correspond à « {{ request('search') }} »</p>
+                                @else
+                                    <p class="text-base font-medium">Aucune vente aujourd'hui</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">Commencez à vendre !</p>
+                                @endif
                             </td>
                         </tr>
                     @endforelse
@@ -393,3 +443,10 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+@include('cashier.partials.live-list-search', [
+    'inputs' => ['searchInput', 'searchInputDesktop'],
+    'replaceIds' => ['tableBody', 'listSubtitle', 'listSubtitleMobile'],
+])
+@endpush

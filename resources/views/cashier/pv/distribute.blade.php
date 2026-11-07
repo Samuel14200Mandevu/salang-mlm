@@ -7,6 +7,38 @@
         overflow-y: auto;
     }
 
+    .pv-code-search {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .pv-code-search input {
+        flex: 1;
+        min-width: 0;
+        padding: 0.45rem 0.65rem;
+        font-size: 0.8125rem;
+        border: 1px solid var(--border-color, #DCDEE3);
+        border-radius: 6px;
+        background: var(--bg-card, #FCFCFD);
+        color: var(--text-primary, #1A1A1E);
+        outline: none;
+    }
+    .pv-code-search input:focus {
+        border-color: #184f94;
+    }
+    .pv-code-search-msg {
+        font-size: 0.75rem;
+        margin: 0 0 0.75rem;
+        min-height: 1.1rem;
+    }
+    .pv-code-search-msg.is-error { color: #B32A2A; }
+    .pv-code-search-msg.is-ok { color: #1F7B4D; }
+    .pv-code-search-hint {
+        font-size: 0.7rem;
+        color: var(--text-tertiary, #7A7A82);
+        margin: -0.35rem 0 0.75rem;
+    }
+
     .member-item {
         display: flex;
         align-items: center;
@@ -168,9 +200,9 @@
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Distribuer des PV</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 @if(!empty($viewingMember))
-                    Portefeuille de {{ $subject->name }} — répartition dans son réseau
+                    Portefeuille de {{ $subject->name }} — saisie caisse après proposition verbale
                 @else
-                    Répartissez vos Points de Volume dans votre réseau
+                    Répartissez les Points de Volume dans le réseau
                 @endif
             </p>
         </div>
@@ -210,21 +242,43 @@
 
             {{-- Sélection --}}
             <div class="lg:col-span-1 card">
-                <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-3">
-                    Sélectionner un membre
-                    <span class="text-xs text-[var(--text-secondary)] font-normal">(cliquez pour ajouter)</span>
+                <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-2">
+                    Ajouter un membre du réseau
                 </h3>
+                <p class="pv-code-search-hint">
+                    Recherchez par code membre pour distribuer à n’importe quel niveau du réseau.
+                </p>
+
+                <div class="pv-code-search">
+                    <input type="text"
+                           id="networkMemberCode"
+                           inputmode="numeric"
+                           autocomplete="off"
+                           placeholder="Saisir le code membre…"
+                           aria-label="Code membre">
+                </div>
+                <p id="networkSearchMsg" class="pv-code-search-msg" role="status" aria-live="polite"></p>
+
+                <h4 class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-2">
+                    Aperçu niveaux 1–2
+                    <span class="font-normal normal-case">({{ count($networkMembers) }})</span>
+                </h4>
 
                 <div class="member-select space-y-1">
                     @if(empty($networkMembers))
-                        <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucun membre dans votre réseau</p>
+                        <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucun filleul proche — utilisez la recherche par code</p>
                     @else
                         @foreach($networkMembers as $member)
-                            <div class="member-item" data-id="{{ $member['id'] }}" onclick="addMember(this)">
+                            <div class="member-item"
+                                 data-id="{{ $member['id'] }}"
+                                 data-name="{{ $member['name'] }}"
+                                 data-level="{{ $member['level'] }}"
+                                 data-code="{{ $member['sponsor_id'] ?? '' }}"
+                                 onclick="addMemberFromElement(this)">
                                 <div class="avatar">{{ substr($member['name'], 0, 1) }}</div>
                                 <div class="info">
                                     <div class="name">{{ $member['name'] }}</div>
-                                    <div class="detail">Niveau {{ $member['level'] }} • {{ $member['phone'] ?? 'N/A' }}</div>
+                                    <div class="detail">Niveau {{ $member['level'] }} • {{ $member['sponsor_id'] ?? 'N/A' }}</div>
                                 </div>
                                 <div class="pv-info">{{ number_format($member['pv_balance']) }} PV</div>
                             </div>
@@ -260,24 +314,132 @@
 <script>
 let distributions = [];
 const maxAvailablePv = {{ $memberPv['available_pv'] ?? 0 }};
+const searchMemberUrl = @json(route('cashier.pv.search-member'));
+const subjectMemberId = @json(!empty($viewingMember) ? $subject->id : null);
 
-function addMember(element) {
-    const id = element.dataset.id;
-    const name = element.querySelector('.info .name').textContent;
-    const level = element.querySelector('.info .detail').textContent.trim();
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-    if (distributions.some(d => d.id == id)) {
-        alert('Ce membre est déjà dans la liste');
+function setSearchMessage(text, type) {
+    const el = document.getElementById('networkSearchMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.remove('is-error', 'is-ok');
+    if (type) el.classList.add(type === 'error' ? 'is-error' : 'is-ok');
+}
+
+function addMemberFromData(member) {
+    const id = String(member.id);
+    if (distributions.some(d => String(d.id) === id)) {
+        setSearchMessage('Ce membre est déjà dans la liste de distribution.', 'error');
+        return false;
+    }
+
+    const code = member.sponsor_id || member.code || '';
+    const levelLabel = `Niveau ${member.level}${code ? ' • ' + code : ''}`;
+
+    distributions.push({
+        id,
+        name: member.name,
+        level: levelLabel,
+        pv_amount: 0,
+        bv_amount: 0,
+        notes: '',
+    });
+
+    updateDistributionList();
+    updateSubmitButton();
+    return true;
+}
+
+function addMemberFromElement(element) {
+    addMemberFromData({
+        id: element.dataset.id,
+        name: element.dataset.name,
+        level: element.dataset.level,
+        sponsor_id: element.dataset.code,
+    });
+    element.classList.add('selected');
+}
+
+let searchTimer = null;
+let searchSeq = 0;
+let lastAddedCode = '';
+
+async function searchNetworkMember(opts = {}) {
+    const autoAdd = opts.autoAdd !== false;
+    const input = document.getElementById('networkMemberCode');
+    const code = (input?.value || '').trim();
+
+    if (!code) {
+        setSearchMessage('', null);
         return;
     }
 
-    distributions.push({ id, name, level, pv_amount: 0, bv_amount: 0, notes: '' });
-    updateDistributionList();
-    updateSubmitButton();
+    if (code.length < 3) {
+        setSearchMessage('Continuez de saisir le code…', null);
+        return;
+    }
+
+    const params = new URLSearchParams({ code });
+    if (subjectMemberId) params.set('member_id', String(subjectMemberId));
+
+    const seq = ++searchSeq;
+    setSearchMessage('Recherche…', null);
+
+    try {
+        const response = await fetch(`${searchMemberUrl}?${params.toString()}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        const data = await response.json();
+        if (seq !== searchSeq) return;
+
+        if (!data.ok || !data.member) {
+            setSearchMessage(data.message || 'Membre introuvable ou hors réseau.', 'error');
+            return;
+        }
+
+        if (!autoAdd) {
+            setSearchMessage(`${data.member.name} (niveau ${data.member.level})`, 'ok');
+            return;
+        }
+
+        if (lastAddedCode === code && distributions.some(d => String(d.id) === String(data.member.id))) {
+            setSearchMessage(`${data.member.name} déjà dans la liste.`, 'ok');
+            return;
+        }
+
+        if (addMemberFromData(data.member)) {
+            lastAddedCode = code;
+            setSearchMessage(
+                `${data.member.name} (niveau ${data.member.level}) ajouté.`,
+                'ok'
+            );
+            input.value = '';
+            lastAddedCode = '';
+        }
+    } catch (e) {
+        if (seq !== searchSeq) return;
+        setSearchMessage('Erreur de recherche. Réessayez.', 'error');
+    }
+}
+
+function scheduleNetworkSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => searchNetworkMember({ autoAdd: true }), 350);
 }
 
 function removeMember(id) {
-    distributions = distributions.filter(d => d.id != id);
+    distributions = distributions.filter(d => String(d.id) !== String(id));
     updateDistributionList();
     updateSubmitButton();
 }
@@ -286,7 +448,7 @@ function updateDistributionList() {
     const container = document.getElementById('distributionList');
 
     if (distributions.length === 0) {
-        container.innerHTML = `<p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Sélectionnez un membre pour commencer</p>`;
+        container.innerHTML = `<p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Recherchez un membre par code pour commencer</p>`;
         return;
     }
 
@@ -295,15 +457,15 @@ function updateDistributionList() {
         html += `
             <div class="dist-item">
                 <div class="flex-1">
-                    <p class="font-medium text-[var(--text-primary)] text-sm">${dist.name}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">${dist.level}</p>
+                    <p class="font-medium text-[var(--text-primary)] text-sm">${escapeHtml(dist.name)}</p>
+                    <p class="text-xs text-[var(--text-secondary)]">${escapeHtml(dist.level)}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="number" class="input-sm" style="width:100px;"
                            value="${dist.pv_amount || 0}" min="0" max="${maxAvailablePv}"
                            onchange="updatePv(${index}, this.value)" placeholder="PV">
                     <input type="text" class="input-sm" style="width:120px;"
-                           value="${dist.notes || ''}" onchange="updateNotes(${index}, this.value)" placeholder="Notes">
+                           value="${escapeHtml(dist.notes || '')}" onchange="updateNotes(${index}, this.value)" placeholder="Notes">
                     <button type="button" class="remove-btn" onclick="removeMember(${dist.id})">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -313,7 +475,7 @@ function updateDistributionList() {
             </div>
             <input type="hidden" name="distributions[${index}][user_id]" value="${dist.id}">
             <input type="hidden" name="distributions[${index}][pv_amount]" value="${dist.pv_amount}">
-            <input type="hidden" name="distributions[${index}][notes]" value="${dist.notes || ''}">
+            <input type="hidden" name="distributions[${index}][notes]" value="${escapeHtml(dist.notes || '')}">
         `;
     });
 
@@ -335,6 +497,7 @@ function updatePv(index, value) {
 
 function updateNotes(index, value) {
     distributions[index].notes = value;
+    updateDistributionList();
 }
 
 function updateSubmitButton() {
@@ -351,10 +514,31 @@ function updateSubmitButton() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const recipientId = new URLSearchParams(window.location.search).get('recipient_id');
+    const codeInput = document.getElementById('networkMemberCode');
+    codeInput?.addEventListener('input', scheduleNetworkSearch);
+    codeInput?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimer);
+            searchNetworkMember({ autoAdd: true });
+        }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const recipientId = params.get('recipient_id');
+    const recipientCode = params.get('recipient_code');
+
     if (recipientId) {
         const el = document.querySelector(`.member-item[data-id="${recipientId}"]`);
-        if (el) { addMember(el); el.classList.add('selected'); }
+        if (el) {
+            addMemberFromElement(el);
+            return;
+        }
+    }
+
+    if (recipientCode) {
+        if (codeInput) codeInput.value = recipientCode;
+        searchNetworkMember({ autoAdd: true });
     }
 });
 </script>

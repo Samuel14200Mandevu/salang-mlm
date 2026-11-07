@@ -186,65 +186,42 @@
 .badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
 .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
 
-/* Graph bars - CORRIGÉ */
-.graph-container {
+/* Inscriptions mensuelles — chart premium */
+.registrations-chart-meta {
     display: flex;
-    align-items: flex-end;
-    gap: 0.375rem;
-    height: 180px;
-    padding-top: 0.75rem;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
-
-.graph-bar-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    justify-content: flex-end;
+.registrations-chart-meta .meta-total {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-blue, #0A2A6C);
+    line-height: 1;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
 }
-
-.graph-bar {
-    width: 100%;
-    min-height: 8px;
-    border-radius: 4px 4px 0 0;
-    max-width: 48px;
-    margin: 0 auto;
-    position: relative;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    background: var(--primary-blue);
-}
-.graph-bar:hover {
-    opacity: 1;
-    transform: scaleY(1.02);
-}
-
-.graph-bar .tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bg-card);
-    color: var(--text-primary);
-    padding: 0.125rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.6rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    border: 1px solid var(--border-color);
-    white-space: nowrap;
-    box-shadow: var(--shadow-sm);
-}
-.graph-bar:hover .tooltip {
-    opacity: 1;
-}
-
-.graph-label {
-    font-size: 0.55rem;
+.registrations-chart-meta .meta-label {
+    font-size: 0.65rem;
     color: var(--text-tertiary);
-    margin-top: 0.25rem;
-    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.registrations-chart-shell {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    margin-top: 0.5rem;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: registrationsChartIn 0.7s ease-out 0.15s forwards;
+}
+@keyframes registrationsChartIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Progress bars - CORRIGÉ */
@@ -315,23 +292,44 @@
     background: var(--bg-hover);
 }
 
-/* Animations */
+/* Animations — fluides (eau) */
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
 }
-.animate-fadeInUp { animation: fadeInUp 0.3s ease forwards; }
-.animate-fadeInLeft { animation: fadeInUp 0.3s ease forwards; }
-.animate-fadeInRight { animation: fadeInUp 0.3s ease forwards; }
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.1s; }
-.delay-3 { animation-delay: 0.15s; }
-.delay-4 { animation-delay: 0.2s; }
-.delay-5 { animation-delay: 0.25s; }
-.delay-6 { animation-delay: 0.3s; }
-.delay-7 { animation-delay: 0.35s; }
-.delay-8 { animation-delay: 0.4s; }
-.delay-9 { animation-delay: 0.45s; }
+@keyframes progressFill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+.animate-fadeInUp {
+    opacity: 0;
+    animation: fadeInUp 0.85s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+.animate-fadeInLeft { opacity: 0; animation: fadeInUp 0.85s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+.animate-fadeInRight { opacity: 0; animation: fadeInUp 0.85s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+.delay-1 { animation-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; }
+.delay-5 { animation-delay: 0.42s; }
+.delay-6 { animation-delay: 0.52s; }
+.delay-7 { animation-delay: 0.62s; }
+.delay-8 { animation-delay: 0.72s; }
+.delay-9 { animation-delay: 0.82s; }
+.delay-10 { animation-delay: 0.92s; }
+.delay-11 { animation-delay: 1.02s; }
+.delay-12 { animation-delay: 1.12s; }
+.stat-card .stat-value,
+.stat-card .stat-detail .value-success,
+.stat-card .stat-detail .value-danger,
+.stat-card .stat-detail .value-warning {
+    font-variant-numeric: tabular-nums;
+}
+.progress-fill {
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: progressFill 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) 0.7s forwards;
+}
 
 /* Responsive */
 @media (max-width: 640px) {
@@ -352,16 +350,11 @@
     .stat-card .stat-detail {
         font-size: 0.55rem;
     }
-    .graph-container {
-        height: 130px;
-        gap: 0.25rem;
+    .registrations-chart-shell {
+        height: 180px;
     }
-    .graph-bar {
-        max-width: 32px;
-        min-height: 6px;
-    }
-    .graph-label {
-        font-size: 0.45rem;
+    .registrations-chart-meta .meta-total {
+        font-size: 1.05rem;
     }
     .quick-action {
         padding: 0.625rem 0.75rem;
@@ -417,8 +410,8 @@
     .stat-card .stat-value {
         font-size: 1.25rem;
     }
-    .graph-container {
-        height: 150px;
+    .registrations-chart-shell {
+        height: 200px;
     }
 }
 </style>
@@ -467,7 +460,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Utilisateurs</p>
-                    <p class="stat-value text-[var(--primary-blue)]">{{ number_format($totalUsers ?? 0) }}</p>
+                    <p class="stat-value text-[var(--primary-blue)]" data-count-to="{{ (int) ($totalUsers ?? 0) }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -476,8 +469,8 @@ admin-mobile-stack
                 </div>
             </div>
             <div class="stat-detail">
-                <span>Actifs <span class="value-success">{{ number_format($activeUsers ?? 0) }}</span></span>
-                <span>Inactifs <span class="value-danger">{{ number_format(($totalUsers ?? 0) - ($activeUsers ?? 0)) }}</span></span>
+                <span>Actifs <span class="value-success" data-count-to="{{ (int) ($activeUsers ?? 0) }}">0</span></span>
+                <span>Inactifs <span class="value-danger" data-count-to="{{ (int) (($totalUsers ?? 0) - ($activeUsers ?? 0)) }}">0</span></span>
             </div>
         </div>
 
@@ -486,7 +479,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Commissions</p>
-                    <p class="stat-value text-[var(--ui-stat-success)]">${{ number_format($totalCommissions ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-success)]" data-count-to="{{ (float) ($totalCommissions ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</p>
                 </div>
                 <div class="stat-icon stat-icon-success">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -495,8 +488,8 @@ admin-mobile-stack
                 </div>
             </div>
             <div class="stat-detail">
-                <span>En attente <span class="value-warning">${{ number_format($pendingCommissions ?? 0, 2) }}</span></span>
-                <span>Payées <span class="value-success">${{ number_format(($totalCommissions ?? 0) - ($pendingCommissions ?? 0), 2) }}</span></span>
+                <span>En attente <span class="value-warning" data-count-to="{{ (float) ($pendingCommissions ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
+                <span>Payées <span class="value-success" data-count-to="{{ (float) (($totalCommissions ?? 0) - ($pendingCommissions ?? 0)) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
             </div>
         </div>
 
@@ -505,7 +498,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Retraits</p>
-                    <p class="stat-value text-[var(--primary-blue)]">${{ number_format($totalWithdrawn ?? 0, 2) }}</p>
+                    <p class="stat-value text-[var(--primary-blue)]" data-count-to="{{ (float) ($totalWithdrawn ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</p>
                 </div>
                 <div class="stat-icon stat-icon-purple">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -514,8 +507,8 @@ admin-mobile-stack
                 </div>
             </div>
             <div class="stat-detail">
-                <span>En attente <span class="value-warning">{{ number_format($pendingWithdrawals ?? 0) }}</span></span>
-                <span>Traités <span class="value-success">{{ number_format(($totalWithdrawals ?? 0) - ($pendingWithdrawals ?? 0)) }}</span></span>
+                <span>En attente <span class="value-warning" data-count-to="{{ (int) ($pendingWithdrawals ?? 0) }}">0</span></span>
+                <span>Traités <span class="value-success" data-count-to="{{ (int) (($totalWithdrawals ?? 0) - ($pendingWithdrawals ?? 0)) }}">0</span></span>
             </div>
         </div>
 
@@ -524,7 +517,7 @@ admin-mobile-stack
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Packages</p>
-                    <p class="stat-value text-[var(--ui-stat-info)]">{{ number_format($totalPackages ?? 0) }}</p>
+                    <p class="stat-value text-[var(--ui-stat-info)]" data-count-to="{{ (int) ($totalPackages ?? 0) }}">0</p>
                 </div>
                 <div class="stat-icon stat-icon-info">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -533,8 +526,8 @@ admin-mobile-stack
                 </div>
             </div>
             <div class="stat-detail">
-                <span>Vendus <span class="value-success">{{ number_format($soldPackages ?? 0) }}</span></span>
-                <span>Produits <span class="value-success">{{ number_format($totalProducts ?? 0) }}</span></span>
+                <span>Vendus <span class="value-success" data-count-to="{{ (int) ($soldPackages ?? 0) }}">0</span></span>
+                <span>Produits <span class="value-success" data-count-to="{{ (int) ($totalProducts ?? 0) }}">0</span></span>
             </div>
         </div>
     </div>
@@ -542,41 +535,40 @@ admin-mobile-stack
     <!-- Graph + Distribution -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
 
-        <!-- Monthly registrations - CORRIGÉ -->
-        <div class="card lg:col-span-2 animate-fadeInUp delay-5">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                    Inscriptions mensuelles
-                </h3>
-                <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                    {{ now()->format('Y') }}
-                </span>
+        <!-- Monthly registrations — premium -->
+        @php
+            $registrationSeries = collect($monthlyData ?? []);
+            $registrationsTotal = (int) $registrationSeries->sum('users');
+            $registrationsPeak = (int) ($registrationSeries->max('users') ?? 0);
+        @endphp
+        <div class="card registrations-chart-card lg:col-span-2 animate-fadeInUp delay-5">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
+                <div>
+                    <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                        Inscriptions mensuelles
+                    </h3>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">
+                        Tendance sur 6 mois · {{ now()->format('Y') }}
+                    </p>
+                </div>
+                <div class="registrations-chart-meta">
+                    <span class="meta-total"
+                          id="registrationsTotalCount"
+                          data-count-to="{{ $registrationsTotal }}">0</span>
+                    <span class="meta-label">
+                        total · pic <span id="registrationsPeakCount" data-count-to="{{ $registrationsPeak }}">0</span>
+                    </span>
+                </div>
             </div>
 
-            <div class="graph-container">
-                @php
-                    $max = max(array_column($monthlyData ?? [], 'users') ?: [1]);
-                    $colors = ['#0A2A6C', '#1C7E4A', '#065F9C', '#B54708'];
-                @endphp
-
-                @forelse($monthlyData ?? [] as $index => $data)
-                    @php
-                        $height = ($data->users / max($max, 1)) * 100;
-                        $displayHeight = max(12, $height);
-                        $color = $colors[$index % count($colors)];
-                    @endphp
-                    <div class="graph-bar-wrapper">
-                        <div class="graph-bar" 
-                             style="height: {{ $displayHeight }}%; background: {{ $color }};">
-                            <span class="tooltip">{{ $data->users }} inscription(s)</span>
-                        </div>
-                        <span class="graph-label">{{ substr($data->month, 0, 3) }}</span>
-                    </div>
-                @empty
-                    <div class="w-full text-center text-[var(--text-secondary)] py-6 text-sm">
+            <div class="registrations-chart-shell">
+                @if($registrationSeries->isEmpty())
+                    <div class="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-sm">
                         Aucune donnée disponible
                     </div>
-                @endforelse
+                @else
+                    <canvas id="adminRegistrationsChart" aria-label="Graphique des inscriptions mensuelles"></canvas>
+                @endif
             </div>
         </div>
 
@@ -597,13 +589,13 @@ admin-mobile-stack
                     $displayPercent = max(8, $percent);
                     $color = $progressColors[$index % count($progressColors)];
                 @endphp
-                <div class="progress-item">
+                <div class="progress-item animate-fadeInUp" style="animation-delay: {{ 0.58 + ($index * 0.1) }}s;">
                     <div class="progress-header">
                         <span class="progress-label">{{ $pkg->name }}</span>
-                        <span class="progress-value">{{ $pkg->users_count }}</span>
+                        <span class="progress-value" data-count-to="{{ (int) $pkg->users_count }}">0</span>
                     </div>
                     <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ $displayPercent }}%; background: {{ $color }};"></div>
+                        <div class="progress-fill" style="width: {{ $displayPercent }}%; background: {{ $color }}; animation-delay: {{ 0.55 + ($index * 0.12) }}s;"></div>
                     </div>
                 </div>
             @empty
@@ -613,9 +605,7 @@ admin-mobile-stack
             @endforelse
 
             <div class="mt-3 p-2 bg-[var(--bg-secondary)] rounded-lg text-center">
-                <p class="text-xl font-bold text-[var(--primary-blue)]">
-                    {{ number_format($totalUsers ?? 0) }}
-                </p>
+                <p class="text-xl font-bold text-[var(--primary-blue)]" data-count-to="{{ (int) ($totalUsers ?? 0) }}">0</p>
                 <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
                     Total utilisateurs
                 </p>
@@ -720,9 +710,9 @@ admin-mobile-stack
     </div>
 
     <!-- Quick actions -->
-    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-9">
+    <div class="admin-quick-rail grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
 
-        <a href="{{ route('admin.users.create') }}" class="quick-action">
+        <a href="{{ route('admin.users.create') }}" class="quick-action animate-fadeInUp delay-9">
             <div class="quick-icon stat-icon-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -731,7 +721,7 @@ admin-mobile-stack
             <p class="quick-label">Ajouter un utilisateur</p>
         </a>
 
-        <a href="{{ route('admin.packages.create') }}" class="quick-action">
+        <a href="{{ route('admin.packages.create') }}" class="quick-action animate-fadeInUp delay-10">
             <div class="quick-icon stat-icon-success">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4"/>
@@ -740,7 +730,7 @@ admin-mobile-stack
             <p class="quick-label">Créer un package</p>
         </a>
 
-        <a href="{{ route('admin.products.create') }}" class="quick-action">
+        <a href="{{ route('admin.products.create') }}" class="quick-action animate-fadeInUp delay-11">
             <div class="quick-icon stat-icon-info">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
@@ -749,7 +739,7 @@ admin-mobile-stack
             <p class="quick-label">Ajouter un produit</p>
         </a>
 
-        <a href="{{ route('admin.commissions') }}" class="quick-action">
+        <a href="{{ route('admin.commissions') }}" class="quick-action animate-fadeInUp delay-12">
             <div class="quick-icon stat-icon-purple">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -761,3 +751,256 @@ admin-mobile-stack
     </div>
 
 @endsection
+
+@push('scripts')
+@php
+    $registrationsChartPayload = collect($monthlyData ?? [])->map(fn ($row) => [
+        'month' => (string) ($row->month ?? ''),
+        'users' => (int) ($row->users ?? 0),
+    ])->values();
+@endphp
+<script defer>
+document.addEventListener('DOMContentLoaded', function () {
+    function easeInOutSine(t) {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
+    }
+
+    function animateCount(el, duration) {
+        if (!el || el.dataset.countReady === '1') return;
+        el.dataset.countReady = '1';
+
+        const target = Number(el.getAttribute('data-count-to') || 0);
+        const prefix = el.getAttribute('data-count-prefix') || '';
+        const decimals = Number(el.getAttribute('data-count-decimals') || 0);
+        const start = performance.now();
+
+        const format = function (n) {
+            if (decimals > 0) {
+                return prefix + Number(n).toLocaleString('fr-FR', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals,
+                });
+            }
+            return prefix + Math.round(n).toLocaleString('fr-FR');
+        };
+
+        if (!Number.isFinite(target) || target <= 0) {
+            el.textContent = format(0);
+            return;
+        }
+
+        el.textContent = format(0);
+
+        function frame(now) {
+            const progress = Math.min(1, (now - start) / duration);
+            const value = target * easeInOutSine(progress);
+            el.textContent = format(value);
+            if (progress < 1) {
+                requestAnimationFrame(frame);
+            } else {
+                el.textContent = format(target);
+            }
+        }
+
+        requestAnimationFrame(frame);
+    }
+
+    document.querySelectorAll('[data-count-to]').forEach(function (el, index) {
+        const duration = el.id === 'registrationsTotalCount'
+            ? 3200
+            : (el.id === 'registrationsPeakCount' ? 2800 : 1800 + (index * 40));
+        animateCount(el, duration);
+    });
+});
+</script>
+@if($registrationsChartPayload->isNotEmpty())
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+<script defer>
+document.addEventListener('DOMContentLoaded', function () {
+    function bootAdminRegistrationsChart() {
+        if (typeof Chart === 'undefined') {
+            return false;
+        }
+
+        const canvas = document.getElementById('adminRegistrationsChart');
+        if (!canvas) {
+            return true;
+        }
+
+        if (canvas.dataset.chartReady === '1') {
+            return true;
+        }
+        canvas.dataset.chartReady = '1';
+
+        const monthlyData = @json($registrationsChartPayload);
+        const labels = monthlyData.map((item) => item.month);
+        const values = monthlyData.map((item) => Number(item.users || 0));
+        const shell = canvas.parentElement;
+        const height = (shell && shell.clientHeight) ? shell.clientHeight : 220;
+
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(30, 93, 173, 0.32)');
+        gradient.addColorStop(0.55, 'rgba(30, 93, 173, 0.10)');
+        gradient.addColorStop(1, 'rgba(30, 93, 173, 0.01)');
+
+        const totalDuration = 3200;
+        const delayBetweenPoints = totalDuration / Math.max(values.length, 1);
+        const previousY = function (ctx) {
+            if (ctx.index === 0) {
+                return ctx.chart.scales.y.getPixelForValue(0);
+            }
+            const meta = ctx.chart.getDatasetMeta(ctx.datasetIndex);
+            return meta.data[ctx.index - 1].getProps(['y'], true).y;
+        };
+
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Inscriptions',
+                    data: values,
+                    borderColor: '#1E5DAD',
+                    backgroundColor: gradient,
+                    borderWidth: 2.75,
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
+                    fill: true,
+                    tension: 0.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#FFFFFF',
+                    pointBorderColor: '#1E5DAD',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#1E5DAD',
+                    pointHoverBorderColor: '#FFFFFF',
+                    pointHoverBorderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    // Courbe qui avance doucement, comme de l’eau
+                    x: {
+                        type: 'number',
+                        easing: 'easeInOutSine',
+                        duration: delayBetweenPoints,
+                        from: NaN,
+                        delay: function (ctx) {
+                            if (ctx.type !== 'data' || ctx.xStarted) {
+                                return 0;
+                            }
+                            ctx.xStarted = true;
+                            return ctx.index * delayBetweenPoints;
+                        },
+                    },
+                    y: {
+                        type: 'number',
+                        easing: 'easeInOutSine',
+                        duration: delayBetweenPoints,
+                        from: previousY,
+                        delay: function (ctx) {
+                            if (ctx.type !== 'data' || ctx.yStarted) {
+                                return 0;
+                            }
+                            ctx.yStarted = true;
+                            return ctx.index * delayBetweenPoints;
+                        },
+                    },
+                    radius: {
+                        duration: 650,
+                        easing: 'easeOutQuad',
+                        from: 0,
+                        delay: function (ctx) {
+                            if (ctx.type !== 'data') return 0;
+                            return (ctx.index * delayBetweenPoints) + (delayBetweenPoints * 0.55);
+                        },
+                    },
+                },
+                transitions: {
+                    active: {
+                        animation: { duration: 320, easing: 'easeOutQuad' },
+                    },
+                },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 42, 108, 0.95)',
+                        titleColor: '#FFFFFF',
+                        bodyColor: 'rgba(255,255,255,0.9)',
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        animation: { duration: 220, easing: 'easeOutQuad' },
+                        callbacks: {
+                            label: function (context) {
+                                const n = context.parsed.y || 0;
+                                return n + ' inscription' + (n > 1 ? 's' : '');
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: {
+                            color: 'rgba(100, 116, 139, 0.9)',
+                            font: { size: 11, weight: '500' },
+                            maxRotation: 0,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grace: '12%',
+                        border: { display: false },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)',
+                            drawTicks: false,
+                        },
+                        ticks: {
+                            precision: 0,
+                            color: 'rgba(100, 116, 139, 0.85)',
+                            font: { size: 10 },
+                            padding: 8,
+                        },
+                    },
+                },
+            },
+            plugins: [{
+                id: 'revealPointsAfterFlow',
+                afterRender: function (chart) {
+                    if (chart.$pointsRevealed) return;
+                    chart.$pointsRevealed = true;
+                    const ds = chart.data.datasets[0];
+                    if (!ds) return;
+                    setTimeout(function () {
+                        ds.pointRadius = 4;
+                        chart.update({
+                            duration: 700,
+                            easing: 'easeInOutSine',
+                        });
+                    }, totalDuration + 120);
+                },
+            }],
+        });
+
+        return true;
+    }
+
+    if (!bootAdminRegistrationsChart()) {
+        let tries = 0;
+        const timer = setInterval(function () {
+            tries += 1;
+            if (bootAdminRegistrationsChart() || tries > 40) {
+                clearInterval(timer);
+            }
+        }, 100);
+    }
+});
+</script>
+@endif
+@endpush

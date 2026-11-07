@@ -416,36 +416,103 @@ class PvManagementService
     }
 
     /**
-     * ═══════════════════════════════════════════════════════════════════
-     * Vérifier si un membre est dans le réseau d'un autre
-     * ═══════════════════════════════════════════════════════════════════
+     * Recherche un membre par code (sponsor_id) et vérifie qu’il est
+     * dans le réseau (downline) du distributeur, à n’importe quelle profondeur.
+     *
+     * @return array{ok: bool, message?: string, member?: array}
      */
-    private function isInNetwork(User $distributor, User $recipient): bool
+    public function findNetworkMemberByCode(User $distributor, string $code): array
     {
+        $code = trim($code);
+
+        if ($code === '') {
+            return [
+                'ok' => false,
+                'message' => 'Veuillez saisir un code membre.',
+            ];
+        }
+
+        $member = User::query()
+            ->where('sponsor_id', $code)
+            ->where('user_type', 'member')
+            ->first();
+
+        if (! $member) {
+            return [
+                'ok' => false,
+                'message' => "Aucun membre trouvé avec le code « {$code} ».",
+            ];
+        }
+
+        if ((int) $member->id === (int) $distributor->id) {
+            return [
+                'ok' => false,
+                'message' => 'Impossible de distribuer des PV à soi-même.',
+            ];
+        }
+
+        $level = $this->networkDepth($distributor, $member);
+
+        if ($level === null) {
+            return [
+                'ok' => false,
+                'message' => "Le membre {$member->name} (code {$code}) ne fait pas partie du réseau de {$distributor->name}.",
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'sponsor_id' => $member->sponsor_id,
+                'phone' => $member->phone,
+                'level' => $level,
+                'pv_balance' => (int) round((float) ($member->pv_balance ?? 0)),
+            ],
+        ];
+    }
+
+    /**
+     * Vérifier si un membre est dans le réseau d'un autre (toute profondeur).
+     */
+    public function isInNetwork(User $distributor, User $recipient): bool
+    {
+        return $this->networkDepth($distributor, $recipient) !== null;
+    }
+
+    /**
+     * Niveau du destinataire sous le distributeur (1 = filleul direct), ou null hors réseau.
+     */
+    public function networkDepth(User $distributor, User $recipient): ?int
+    {
+        if ((int) $distributor->id === (int) $recipient->id) {
+            return null;
+        }
+
         $current = $recipient;
         $depth = 0;
-        $maxDepth = 10;
+        $maxDepth = 100;
         $processed = [];
 
         while ($current->parrain_id && $depth < $maxDepth) {
-            if (in_array($current->id, $processed)) {
-                break; // Protection anti-cycle
-            }
-            $processed[] = $current->id;
-
-            if ($current->parrain_id == $distributor->id) {
-                return true;
-            }
-
-            $current = User::find($current->parrain_id);
-            if (!$current) {
+            if (in_array($current->id, $processed, true)) {
                 break;
             }
-
+            $processed[] = $current->id;
             $depth++;
+
+            if ((int) $current->parrain_id === (int) $distributor->id) {
+                return $depth;
+            }
+
+            $current = User::query()->find($current->parrain_id);
+            if (! $current) {
+                break;
+            }
         }
 
-        return false;
+        return null;
     }
 
     /**

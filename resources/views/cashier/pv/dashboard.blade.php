@@ -275,6 +275,7 @@
             @if(!empty($viewingMember))
                 <a href="{{ route('cashier.members.show', $subject->id) }}" class="btn btn-outline btn-sm">Fiche membre</a>
             @endif
+            <a href="{{ route('cashier.pv.transactions', $pvQuery) }}" class="btn btn-outline btn-sm">Historique</a>
             @if(($memberPv['available_pv'] ?? 0) > 0)
                 <a href="{{ route('cashier.pv.distribute', $pvQuery) }}" class="btn btn-primary btn-sm">Distribuer des PV</a>
             @endif
@@ -353,10 +354,13 @@
 
         {{-- Allocations --}}
         <div class="lg:col-span-2 card">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-3">
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-1">
                 Allocations en attente
                 <span class="text-xs text-[var(--text-secondary)] font-normal">({{ $pendingAllocations->count() }})</span>
             </h3>
+            <p class="text-xs text-[var(--text-tertiary)] mb-3">
+                Après distribution, approuvez pour créditer les PV du filleul
+            </p>
 
             @if($pendingAllocations->isEmpty())
                 <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucune allocation en attente</p>
@@ -385,13 +389,27 @@
 
         {{-- Réseau --}}
         <div class="card">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-3">
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-2">
                 Membres du réseau
-                <span class="text-xs text-[var(--text-secondary)] font-normal">({{ count($networkMembers) }})</span>
             </h3>
+            <p class="text-xs text-[var(--text-tertiary)] mb-3">
+                Recherchez par code pour distribuer à n’importe quel niveau. L’aperçu ci-dessous montre les niveaux 1–2 ({{ count($networkMembers) }}).
+            </p>
+
+            <div class="mb-2">
+                <input type="text"
+                       id="dashboardNetworkCode"
+                       class="input w-full"
+                       inputmode="numeric"
+                       autocomplete="off"
+                       placeholder="Saisir le code membre…"
+                       aria-label="Code membre du réseau"
+                       style="width:100%;padding:0.45rem 0.65rem;font-size:0.8125rem;border:1px solid var(--border-color,#DCDEE3);border-radius:6px;background:var(--bg-card,#FCFCFD);">
+            </div>
+            <p id="dashboardNetworkSearchMsg" class="text-xs mb-3 min-h-[1.1rem]" role="status" aria-live="polite"></p>
 
             @if(empty($networkMembers))
-                <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucun membre dans votre réseau</p>
+                <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucun filleul proche — utilisez la recherche par code</p>
             @else
                 <div class="space-y-1 max-h-96 overflow-y-auto">
                     @foreach($networkMembers as $member)
@@ -399,7 +417,7 @@
                             <div class="avatar">{{ substr($member['name'], 0, 1) }}</div>
                             <div class="info">
                                 <div class="name">{{ $member['name'] }}</div>
-                                <div class="detail">Niveau {{ $member['level'] }} • {{ $member['phone'] ?? 'N/A' }}</div>
+                                <div class="detail">Niveau {{ $member['level'] }} • {{ $member['sponsor_id'] ?? 'N/A' }}</div>
                             </div>
                             <div class="pv-badge">{{ number_format($member['pv_balance']) }} PV</div>
                         </div>
@@ -409,76 +427,35 @@
         </div>
     </div>
 
-    {{-- HISTORIQUE --}}
-    <div class="card">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm mb-3">Historique des transactions</h3>
-
-        @if($transactions->isEmpty())
-            <p class="text-[var(--text-tertiary)] text-sm py-4 text-center">Aucune transaction</p>
-        @else
-            <div class="table-wrap">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th class="text-right">PV</th>
-                            <th>Source</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($transactions as $transaction)
-                            <tr>
-                                <td class="text-xs text-[var(--text-tertiary)]">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    @php
-                                        $typeLabels = [
-                                            'credit' => ['label' => 'Crédit', 'class' => 'badge-success'],
-                                            'debit' => ['label' => 'Débit', 'class' => 'badge-danger'],
-                                            'allocation' => ['label' => 'Allocation', 'class' => 'badge-info'],
-                                            'bonus' => ['label' => 'Bonus', 'class' => 'badge-warning'],
-                                        ];
-                                        $type = $typeLabels[$transaction->type] ?? ['label' => ucfirst($transaction->type), 'class' => 'badge-info'];
-                                    @endphp
-                                    <span class="badge {{ $type['class'] }}">{{ $type['label'] }}</span>
-                                </td>
-                                <td class="text-right font-semibold {{ $transaction->type == 'credit' || $transaction->type == 'bonus' ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }}">
-                                    {{ $transaction->type == 'credit' || $transaction->type == 'bonus' ? '+' : '-' }}
-                                    {{ $transaction->pv_amount }} PV
-                                    @if($transaction->bv_amount)
-                                        <span class="text-xs text-[var(--text-tertiary)]">({{ $transaction->bv_amount }} BV)</span>
-                                    @endif
-                                </td>
-                                <td><span class="text-xs text-[var(--text-secondary)]">{{ ucfirst(str_replace('_', ' ', $transaction->source)) }}</span></td>
-                                <td class="text-xs text-[var(--text-secondary)] max-w-xs truncate">{{ $transaction->description }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @if($transactions->hasPages())
-                <div class="mt-3"><x-salang-pagination :paginator="$transactions" /></div>
-            @endif
-        @endif
-    </div>
 </div>
 
 @push('scripts')
 <script>
+const searchMemberUrl = @json(route('cashier.pv.search-member'));
+const distributeUrl = @json(route('cashier.pv.distribute'));
+const subjectMemberId = @json(!empty($viewingMember) ? $subject->id : null);
+
 function approveAllocation(id) {
-    if (confirm('Approuver cette allocation de PV ?')) {
-        fetch(`/cashier/pv/approve/${id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => { if (data.success) window.location.reload(); else alert('Erreur'); })
-        .catch(() => alert('Erreur'));
-    }
+    if (!confirm('Approuver cette allocation de PV ?')) return;
+
+    fetch(`/cashier/pv/approve/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.success) {
+            window.location.reload();
+            return;
+        }
+        alert(data.error || 'Erreur lors de l’approbation');
+    })
+    .catch(() => alert('Erreur lors de l’approbation'));
 }
 
 function rejectAllocation(id) {
@@ -489,12 +466,88 @@ function rejectAllocation(id) {
 
 function selectNetworkMember(id) {
     const params = new URLSearchParams();
-    @if(!empty($viewingMember))
-    params.set('member_id', '{{ $subject->id }}');
-    @endif
+    if (subjectMemberId) params.set('member_id', String(subjectMemberId));
     params.set('recipient_id', String(id));
-    window.location.href = `{{ route('cashier.pv.distribute') }}?${params.toString()}`;
+    window.location.href = `${distributeUrl}?${params.toString()}`;
 }
+
+function setDashboardSearchMessage(text, isError) {
+    const el = document.getElementById('dashboardNetworkSearchMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.color = isError ? '#B32A2A' : '#1F7B4D';
+}
+
+let dashboardSearchTimer = null;
+let dashboardSearchSeq = 0;
+
+async function searchNetworkMemberFromDashboard() {
+    const input = document.getElementById('dashboardNetworkCode');
+    const code = (input?.value || '').trim();
+
+    if (!code) {
+        setDashboardSearchMessage('', false);
+        return;
+    }
+
+    if (code.length < 3) {
+        setDashboardSearchMessage('Continuez de saisir le code…', false);
+        return;
+    }
+
+    const params = new URLSearchParams({ code });
+    if (subjectMemberId) params.set('member_id', String(subjectMemberId));
+
+    const seq = ++dashboardSearchSeq;
+    setDashboardSearchMessage('Recherche…', false);
+
+    try {
+        const response = await fetch(`${searchMemberUrl}?${params.toString()}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        const data = await response.json();
+        if (seq !== dashboardSearchSeq) return;
+
+        if (!data.ok || !data.member) {
+            setDashboardSearchMessage(data.message || 'Membre introuvable ou hors réseau.', true);
+            return;
+        }
+
+        setDashboardSearchMessage(
+            `${data.member.name} trouvé (niveau ${data.member.level}) — ouverture…`,
+            false
+        );
+
+        const go = new URLSearchParams();
+        if (subjectMemberId) go.set('member_id', String(subjectMemberId));
+        go.set('recipient_id', String(data.member.id));
+        go.set('recipient_code', code);
+        window.location.href = `${distributeUrl}?${go.toString()}`;
+    } catch (e) {
+        if (seq !== dashboardSearchSeq) return;
+        setDashboardSearchMessage('Erreur de recherche. Réessayez.', true);
+    }
+}
+
+function scheduleDashboardNetworkSearch() {
+    clearTimeout(dashboardSearchTimer);
+    dashboardSearchTimer = setTimeout(searchNetworkMemberFromDashboard, 350);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('dashboardNetworkCode');
+    input?.addEventListener('input', scheduleDashboardNetworkSearch);
+    input?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(dashboardSearchTimer);
+            searchNetworkMemberFromDashboard();
+        }
+    });
+});
 </script>
 @endpush
 @endsection

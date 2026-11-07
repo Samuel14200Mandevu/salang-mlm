@@ -13,6 +13,18 @@ use Illuminate\Support\Facades\Log;
 
 class WithdrawalController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $user = Auth::user();
+            if ($user && ! $user->isWalletEligible()) {
+                abort(403, 'Les caissiers et responsables IT n’ont pas de portefeuille.');
+            }
+
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
