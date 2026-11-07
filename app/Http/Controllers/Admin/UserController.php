@@ -109,7 +109,6 @@ class UserController extends Controller
             'inactive' => $membersBase()->where('is_active', false)->count(),
             'admins' => $countByRoleNames(['admin']),
             'cashiers' => $countByRoleNames(['cashier']),
-            'employees' => $countByRoleNames($staffRoles),
             'with_package' => $membersBase()->whereNotNull('package_id')->count(),
             'with_kyc' => $membersBase()->where('kyc_status', 'verified')->count(),
             'pending_kyc' => $membersBase()->where('kyc_status', 'pending')->count(),

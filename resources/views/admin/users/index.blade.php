@@ -179,13 +179,12 @@
         </div>
     @endif
 
-    <x-ui.stat-grid class="mb-4 lg:grid-cols-3">
-        <x-ui.stat title="Total" :value="$stats['total'] ?? $users->total()" id="kpi-total" />
-        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" />
-        <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" />
-        <x-ui.stat title="Avec package" :value="$stats['with_package'] ?? 0" id="kpi-with-package" />
-        <x-ui.stat title="KYC vérifié" :value="$stats['with_kyc'] ?? 0" id="kpi-with-kyc" />
-        <x-ui.stat title="Employés" :value="$stats['employees'] ?? 0" id="kpi-employees" />
+    <x-ui.stat-grid class="mb-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <x-ui.stat title="Total" :value="$stats['total'] ?? $users->total()" id="kpi-total" padding="p-3" />
+        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" padding="p-3" />
+        <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" padding="p-3" />
+        <x-ui.stat title="Avec package" :value="$stats['with_package'] ?? 0" id="kpi-with-package" padding="p-3" />
+        <x-ui.stat title="KYC vérifié" :value="$stats['with_kyc'] ?? 0" id="kpi-with-kyc" padding="p-3" />
     </x-ui.stat-grid>
 
     @include('admin.users._mobile_list', ['users' => $users])
