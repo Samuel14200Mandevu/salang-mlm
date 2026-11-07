@@ -2,6 +2,61 @@
  * Espace membre — Notifications (bandeau mobile type boutique)
  */
 
+/* Cloche : Alpine x-show gère l’affichage du dropdown (pas de classe Tailwind "hidden",
+   écrasée par .member-app .hidden → cloche IT/desktop inerte). */
+@media (min-width: 768px) {
+  .member-mobile-topbar__notifications {
+    position: relative;
+    z-index: 70;
+    overflow: visible;
+  }
+
+  .member-mobile-topbar__actions {
+    position: relative;
+    z-index: 65;
+    flex-shrink: 0;
+  }
+
+  .member-mobile-topbar__notify {
+    pointer-events: auto;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+  }
+
+  .member-app .cashier-topbar.member-topbar,
+  .it-manager-shell .cashier-topbar.member-topbar {
+    overflow: visible !important;
+  }
+
+  .member-app .cashier-topbar.member-topbar > div,
+  .member-app .cashier-topbar.member-topbar > div > div,
+  .it-manager-shell .cashier-topbar.member-topbar > div,
+  .it-manager-shell .cashier-topbar.member-topbar > div > div {
+    overflow: visible !important;
+  }
+
+  /* Les onglets Quixotic ne doivent pas capturer les clics sur la cloche */
+  .it-manager-shell .admin-quixotic-tabs-host {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Mobile : uniquement le sheet plein écran */
+  .member-notify-dropdown {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Desktop : uniquement le dropdown */
+  .member-notify-sheet {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .member-app .notifications-page-header-desktop {
     display: none !important;
