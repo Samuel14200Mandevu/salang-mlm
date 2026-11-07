@@ -63,9 +63,12 @@
         isMobileViewport() { return window.innerWidth < 768; },
         openPanel() {
             if (this.isMobileViewport()) {
+                this.dropdownOpen = false;
                 this.sheetOpen = true;
                 document.body.classList.add('member-notify-sheet-open');
             } else {
+                this.sheetOpen = false;
+                document.body.classList.remove('member-notify-sheet-open');
                 this.dropdownOpen = !this.dropdownOpen;
             }
         },
@@ -80,9 +83,10 @@
         }
     }"
     @keydown.escape.window="dropdownOpen = false; closeSheet()"
+    @click.outside="dropdownOpen = false"
 >
     <button type="button"
-            @click="openPanel()"
+            @click.stop="openPanel()"
             class="member-mobile-topbar__notify p-1.5 sm:p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors relative"
             aria-label="Notifications"
             :aria-expanded="dropdownOpen || sheetOpen">
@@ -95,14 +99,15 @@
               class="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-primary-500 rounded-full"></span>
     </button>
 
-    {{-- Desktop : menu déroulant --}}
+    {{-- Desktop : menu déroulant
+         Ne pas utiliser la classe Tailwind "hidden" : .member-app .hidden { display:none }
+         écrase md:block et Alpine x-show (cloche IT/membre desktop inerte). --}}
     <div x-cloak
          x-show="dropdownOpen"
-         @click.away="dropdownOpen = false"
-         class="member-notify-dropdown hidden md:block absolute right-0 mt-2 w-80 lg:w-96 py-2 max-h-[80vh] overflow-y-auto z-50 bg-[var(--bg-card)] rounded-lg shadow-sm border border-[var(--border-color)]"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100">
+         x-transition:enter-end="opacity-100 scale-100"
+         class="member-notify-dropdown absolute right-0 mt-2 w-80 lg:w-96 py-2 max-h-[80vh] overflow-y-auto z-[80] bg-[var(--bg-card)] rounded-lg shadow-sm border border-[var(--border-color)]">
         <div class="px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
             <h4 class="font-semibold text-sm text-[var(--text-primary)]">Notifications</h4>
             <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">Voir tout</a>
@@ -134,7 +139,7 @@
     <template x-teleport="body">
         <div x-cloak
              x-show="sheetOpen"
-             class="member-notify-sheet md:hidden"
+             class="member-notify-sheet"
              role="dialog"
              aria-modal="true"
              aria-labelledby="memberNotifySheetTitle">
