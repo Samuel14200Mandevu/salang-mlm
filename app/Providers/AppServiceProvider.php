@@ -6,6 +6,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\App;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Route;
@@ -181,6 +184,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Configurer les timeouts
         $this->configureTimeouts();
+
+        // Rate limiters nommés (RouteServiceProvider n'est pas enregistré en Laravel 11+)
+        RateLimiter::for('contact', function (Request $request) {
+            return [
+                Limit::perMinute(3)->by('contact-m:'.$request->ip()),
+                Limit::perHour(10)->by('contact-h:'.$request->ip()),
+            ];
+        });
 
         // Configurer les middlewares
         $this->configureMiddleware();

@@ -113,5 +113,13 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('kyc', function (Request $request) {
             return Limit::perMinute(3)->by($request->user()?->id ?: $request->ip());
         });
+
+        // ✅ Contact public — anti-spam (IP)
+        RateLimiter::for('contact', function (Request $request) {
+            return [
+                Limit::perMinute(3)->by('contact-m:'.$request->ip()),
+                Limit::perHour(10)->by('contact-h:'.$request->ip()),
+            ];
+        });
     }
 }

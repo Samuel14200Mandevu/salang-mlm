@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ContactSpamGuard;
 use App\Services\SiteContentService;
 use Illuminate\View\View;
 
 class SitePageController extends Controller
 {
     public function __construct(
-        protected SiteContentService $content
+        protected SiteContentService $content,
+        protected ContactSpamGuard $contactSpamGuard
     ) {
     }
 
@@ -38,6 +40,8 @@ class SitePageController extends Controller
         return view('site.contact', [
             'supportEmail' => $this->content->supportEmail(),
             'supportPhone' => $this->content->supportPhone(),
+            'formToken' => $this->contactSpamGuard->issueFormToken(),
+            'subjectOptions' => ContactSpamGuard::SUBJECTS,
         ]);
     }
 }

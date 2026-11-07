@@ -13,17 +13,28 @@
     $urgentLabel = $bell['urgentLabel'] ?? 'Ouvrir la priorité';
 
     $actionNotifications = collect();
+    $inboxNotifications = collect();
     $actionUnread = 0;
+    $inboxUnread = 0;
     if (auth()->check() && auth()->user()) {
         $actionNotifications = auth()->user()?->notifications()
             ->where('type', ActionFeedbackNotification::class)
             ->latest()
-            ->limit(12)
+            ->limit(8)
             ->get();
         $actionUnread = auth()->user()?->unreadNotifications()
             ->where('type', ActionFeedbackNotification::class)
             ->count();
+        $inboxNotifications = auth()->user()?->notifications()
+            ->where('type', '!=', ActionFeedbackNotification::class)
+            ->latest()
+            ->limit(8)
+            ->get();
+        $inboxUnread = auth()->user()?->unreadNotifications()
+            ->where('type', '!=', ActionFeedbackNotification::class)
+            ->count();
     }
+    $bellUnread = $actionUnread + $inboxUnread;
 
     $actionIcon = static function (?string $action, string $tone): string {
         return match ($action) {
@@ -43,6 +54,8 @@
      x-data="{
         workflowOpen: false,
         actionUnread: {{ (int) $actionUnread }},
+        inboxUnread: {{ (int) $inboxUnread }},
+        get bellUnread() { return this.actionUnread + this.inboxUnread; },
         markActionFeedbackUrl: @js(route('notifications.mark-action-feedback-read')),
         csrf: @js(csrf_token()),
         async openBell() {
@@ -62,11 +75,6 @@
                     document.querySelectorAll('[data-action-feedback-item].is-unread').forEach(function (el) {
                         el.classList.remove('is-unread');
                     });
-                    var pulseBadge = document.getElementById('{{ $prefix }}ActionBadge');
-                    if (pulseBadge) {
-                        pulseBadge.style.display = 'none';
-                        pulseBadge.classList.add('hidden');
-                    }
                 } catch (e) {}
             }
         }
@@ -88,11 +96,11 @@
               class="workflow-notify-accent absolute -top-0.5 -right-0.5 text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden"
               style="display:none;">0</span>
         <span id="{{ $prefix }}ActionBadge"
-              x-show="actionUnread > 0"
+              x-show="bellUnread > 0"
               x-cloak
-              x-text="actionUnread > 99 ? '99+' : actionUnread"
-              class="action-feedback-badge absolute -top-0.5 -right-0.5 text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 {{ $actionUnread > 0 ? '' : 'hidden' }}"
-              @if($actionUnread <= 0) style="display:none;" @endif>{{ $actionUnread > 99 ? '99+' : $actionUnread }}</span>
+              x-text="bellUnread > 99 ? '99+' : bellUnread"
+              class="action-feedback-badge absolute -top-0.5 -right-0.5 text-[8px] sm:text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 {{ $bellUnread > 0 ? '' : 'hidden' }}"
+              @if($bellUnread <= 0) style="display:none;" @endif>{{ $bellUnread > 99 ? '99+' : $bellUnread }}</span>
     </button>
 
     <div x-show="workflowOpen"
@@ -110,7 +118,42 @@
                 <p class="text-sm font-semibold text-[var(--text-primary)]">{{ $panelTitle }}</p>
                 <p class="text-[11px] text-[var(--text-tertiary)]">Confirmations et alertes</p>
             </div>
-            <span id="{{ $prefix }}HeaderBadgeMirror" class="workflow-notify-total-pill hidden">0</span>
+            <a href="{{ route('notifications.index') }}" class="text-xs font-medium text-primary-500 hover:text-primary-600">Tout voir</a>
+        </div>
+
+        {{-- Alertes métier (contact, paiements, etc.) --}}
+        <div class="action-feedback-section border-b border-[var(--border-color)]">
+            <div class="px-4 pt-3 pb-1.5 flex items-center justify-between">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Boîte de notifications</p>
+                @if($inboxUnread > 0)
+                    <span class="text-[10px] font-semibold text-primary-500">{{ $inboxUnread }} non lue(s)</span>
+                @endif
+            </div>
+            @forelse($inboxNotifications as $notification)
+                @php
+                    $data = $notification->data ?? [];
+                    $title = $data['title'] ?? 'Notification';
+                    $message = $data['message'] ?? '';
+                    $isUnread = is_null($notification->read_at);
+                @endphp
+                <a href="{{ route('notifications.show', $notification->id) }}"
+                   class="action-feedback-item {{ $isUnread ? 'is-unread' : '' }} block no-underline text-inherit">
+                    <span class="action-feedback-icon" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="action-feedback-title">{{ $title }}</p>
+                            <time class="action-feedback-time shrink-0">{{ $notification->created_at?->diffForHumans(short: true) }}</time>
+                        </div>
+                        <p class="action-feedback-message">{{ Str::limit($message, 110) }}</p>
+                    </div>
+                </a>
+            @empty
+                <p class="px-4 py-3 text-sm text-[var(--text-secondary)]">Aucune alerte pour le moment.</p>
+            @endforelse
         </div>
 
         {{-- Confirmations d'actions (ajouter / modifier / supprimer) --}}
@@ -132,8 +175,9 @@
                     $path = $actionIcon($action, $tone);
                     $isUnread = is_null($notification->read_at);
                 @endphp
-                <div data-action-feedback-item
-                     class="action-feedback-item tone-{{ $tone }} {{ $isUnread ? 'is-unread' : '' }}">
+                <a href="{{ route('notifications.show', $notification->id) }}"
+                   data-action-feedback-item
+                   class="action-feedback-item tone-{{ $tone }} {{ $isUnread ? 'is-unread' : '' }} block no-underline text-inherit">
                     <span class="action-feedback-icon" aria-hidden="true">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}"/>
@@ -146,7 +190,7 @@
                         </div>
                         <p class="action-feedback-message">{{ Str::limit($message, 110) }}</p>
                     </div>
-                </div>
+                </a>
             @empty
                 <p class="px-4 py-3 text-sm text-[var(--text-secondary)]">{{ $emptyText }}</p>
             @endforelse
@@ -191,6 +235,12 @@
                id="{{ $prefix }}UrgentLink"
                class="workflow-notify-urgent flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-md text-sm font-semibold text-white bg-[var(--primary)] hover:opacity-95 transition-opacity">
                 {{ $urgentLabel }}
+            </a>
+        </div>
+
+        <div class="border-t border-[var(--border-color)] px-4 py-2.5 text-center bg-[var(--bg-secondary)]/30">
+            <a href="{{ route('notifications.index') }}" class="text-xs font-semibold text-primary-500 hover:text-primary-600">
+                Ouvrir le centre de notifications
             </a>
         </div>
     </div>

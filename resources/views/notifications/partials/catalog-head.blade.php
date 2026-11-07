@@ -4,7 +4,7 @@
             <p class="shop-catalog-banner__eyebrow">Salang MLM · Compte</p>
             <p class="shop-catalog-banner__title">Notifications</p>
             <p class="shop-catalog-banner__sub">
-                {{ $unreadCount ?? 0 }} non lue(s) · {{ $notifications->total() }} notification(s)
+                {{ $unreadCount ?? 0 }} non lue(s) · {{ $totalCount ?? $notifications->total() }} notification(s)
             </p>
         </div>
         <div class="shop-catalog-banner__tools">
