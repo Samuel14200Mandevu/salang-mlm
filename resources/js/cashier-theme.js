@@ -9,8 +9,16 @@ export function initThemeToggle() {
         localStorage.setItem('theme', theme);
     }
 
+    function resolveThemeIconPath() {
+        const byPathId = document.getElementById('theme-icon-path');
+        if (byPathId) return byPathId;
+        const byIconId = document.getElementById('theme-icon');
+        if (byIconId && byIconId.tagName === 'path') return byIconId;
+        return document.querySelector('#theme-toggle path');
+    }
+
     function updateIcon(isDark) {
-        const icon = document.getElementById('theme-icon');
+        const icon = resolveThemeIconPath();
         const toggleBtn = document.getElementById('theme-toggle');
         if (!icon) return;
 

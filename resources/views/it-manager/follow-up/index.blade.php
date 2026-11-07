@@ -5,24 +5,34 @@
 @section('content')
 @php $hasMemberCodeSearch = $memberCode !== ''; @endphp
 
-{{-- Desktop --}}
-<div class="it-desktop-head it-desktop-only mb-6 items-end justify-between gap-4">
+{{-- Desktop — titre à gauche, registre + recherche à droite --}}
+<div class="it-desktop-head it-desktop-only mb-6 items-center justify-between gap-4">
     <div class="member-page-intro mb-0 min-w-0">
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Suivi adhésions registre</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Invités des 30 derniers jours sans étape complétée.</p>
     </div>
-    <div class="member-shop-search search-wrapper w-full max-w-xs shrink-0">
-        <span class="member-shop-search__icon">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    <div class="flex items-center gap-2 min-w-0 flex-1 justify-end ml-4">
+        <a href="{{ route('it-manager.activity-register.show') }}"
+           class="shop-banner-icon-btn shrink-0"
+           title="Registre d’activité"
+           aria-label="Ouvrir le registre d’activité">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
-        </span>
-        <input type="search"
-               id="followUpSearchInputDesktop"
-               value="{{ $memberCode }}"
-               placeholder="Code membre (parrain)…"
-               autocomplete="off"
-               class="input search-input text-sm font-mono">
+        </a>
+        <div class="header-search admin-search-full">
+            <div class="search-wrapper">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="followUpSearchInputDesktop"
+                       class="search-input font-mono"
+                       placeholder="Code membre (parrain)…"
+                       autocomplete="off"
+                       value="{{ $memberCode }}">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -35,6 +45,14 @@
             <p class="shop-catalog-banner__sub">Invités sans étape complétée</p>
         </div>
         <div class="shop-catalog-banner__tools">
+            <a href="{{ route('it-manager.activity-register.show') }}"
+               class="shop-banner-icon-btn"
+               aria-label="Ouvrir le registre d’activité"
+               title="Registre">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+            </a>
             <button type="button"
                     class="shop-banner-icon-btn {{ $hasMemberCodeSearch ? 'is-active' : '' }}"
                     id="followUpSearchToggle"

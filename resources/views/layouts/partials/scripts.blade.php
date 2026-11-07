@@ -230,10 +230,15 @@
         
         function initTheme() {
             var toggle = document.getElementById('theme-toggle');
-            var iconPath = document.getElementById('theme-icon-path');
-            
-            if (!toggle || !iconPath) return;
-            
+            if (!toggle) return;
+
+            // Remplacer le bouton par une copie pour éviter les doublons d'écouteurs
+            var newToggle = toggle.cloneNode(true);
+            toggle.parentNode.replaceChild(newToggle, toggle);
+            // Reprendre le path du bouton visible (clone), pas l’ancien détaché
+            var iconPath = newToggle.querySelector('#theme-icon-path')
+                || document.getElementById('theme-icon-path');
+
             function setTheme(theme) {
                 if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
@@ -244,22 +249,24 @@
                 }
                 updateIcon();
             }
-            
+
             function updateIcon() {
+                if (!iconPath) {
+                    iconPath = document.getElementById('theme-icon-path');
+                }
                 if (!iconPath) return;
-                if (document.documentElement.classList.contains('dark')) {
-                    // Mode sombre : afficher un soleil (pour revenir en mode clair)
+                var isDark = document.documentElement.classList.contains('dark');
+                if (isDark) {
+                    // Mode sombre : soleil (pour revenir en clair)
                     iconPath.setAttribute('d', 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
                 } else {
-                    // Mode clair : afficher une lune (pour passer en mode sombre)
+                    // Mode clair : lune (pour passer en sombre)
                     iconPath.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
                 }
+                newToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+                newToggle.setAttribute('aria-label', isDark ? 'Activer le thème clair' : 'Activer le thème sombre');
             }
-            
-            // Remplacer le bouton par une copie pour éviter les doublons d'écouteurs
-            var newToggle = toggle.cloneNode(true);
-            toggle.parentNode.replaceChild(newToggle, toggle);
-            
+
             newToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (document.documentElement.classList.contains('dark')) {
@@ -268,7 +275,7 @@
                     setTheme('dark');
                 }
             });
-            
+
             // Appliquer le thème initial (aligné sur le script inline du <head>)
             var storedTheme = localStorage.getItem('theme');
             if (storedTheme !== 'dark' && storedTheme !== 'light') {
