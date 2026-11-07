@@ -5,24 +5,26 @@
 @section('content')
 @php $hasSearch = $q !== ''; @endphp
 
-{{-- Desktop --}}
-<div class="it-desktop-head it-desktop-only mb-6 items-end justify-between gap-4">
+{{-- Desktop — titre à gauche, recherche à droite (comme Utilisateurs admin) --}}
+<div class="it-desktop-head it-desktop-only mb-6 items-center justify-between gap-4">
     <div class="member-page-intro mb-0 min-w-0">
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Messages du site officiel</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Demandes des visiteurs — accessible admin &amp; responsable IT</p>
     </div>
-    <div class="member-shop-search search-wrapper w-full max-w-xs shrink-0">
-        <span class="member-shop-search__icon">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </span>
-        <input type="search"
-               id="contactsSearchInputDesktop"
-               value="{{ $q }}"
-               placeholder="Nom, email, sujet…"
-               autocomplete="off"
-               class="input search-input text-sm">
+    <div class="flex items-center gap-2 min-w-0 flex-1 justify-end ml-4">
+        <div class="header-search admin-search-full">
+            <div class="search-wrapper">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="contactsSearchInputDesktop"
+                       class="search-input"
+                       placeholder="Nom, email, sujet…"
+                       autocomplete="off"
+                       value="{{ $q }}">
+            </div>
+        </div>
     </div>
 </div>
 

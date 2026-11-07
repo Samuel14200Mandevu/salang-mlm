@@ -66,7 +66,8 @@
 }
 
 .admin-app .search-wrapper,
-.admin-app .admin-shop-search {
+.admin-app .admin-shop-search,
+.it-manager-shell .it-desktop-head .search-wrapper {
   position: relative;
   flex: 1 1 12rem;
   max-width: 100%;
@@ -76,7 +77,9 @@
 .admin-app .search-wrapper .search-input,
 .admin-app .search-wrapper .input,
 .admin-app .admin-shop-search .search-input,
-.admin-app .admin-shop-search .input {
+.admin-app .admin-shop-search .input,
+.it-manager-shell .it-desktop-head .search-wrapper .search-input,
+.it-manager-shell .it-desktop-head .search-wrapper .input {
   width: 100% !important;
   max-width: none;
   border-radius: 999px;
@@ -95,19 +98,25 @@
 
 .admin-app .search-wrapper .search-input:focus,
 .admin-app .search-wrapper .input:focus,
-.admin-app .admin-shop-search .search-input:focus {
+.admin-app .admin-shop-search .search-input:focus,
+.it-manager-shell .it-desktop-head .search-wrapper .search-input:focus,
+.it-manager-shell .it-desktop-head .search-wrapper .input:focus {
   border-color: var(--color-primary-400);
   transform: translateY(-1px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary-500) 12%, transparent);
 }
 
 .admin-app .search-wrapper .search-input::placeholder,
-.admin-app .search-wrapper .input::placeholder {
+.admin-app .search-wrapper .input::placeholder,
+.it-manager-shell .it-desktop-head .search-wrapper .search-input::placeholder,
+.it-manager-shell .it-desktop-head .search-wrapper .input::placeholder {
   color: var(--text-muted);
 }
 
 .admin-app .search-wrapper .search-icon,
-.admin-app .search-wrapper > svg:not(.clear-btn svg) {
+.admin-app .search-wrapper > svg:not(.clear-btn svg),
+.it-manager-shell .it-desktop-head .search-wrapper .search-icon,
+.it-manager-shell .it-desktop-head .search-wrapper > svg:not(.clear-btn svg) {
   position: absolute;
   left: 0.85rem;
   top: 50%;
@@ -119,8 +128,17 @@
 }
 
 .admin-app .search-wrapper:focus-within .search-icon,
-.admin-app .search-wrapper:focus-within > svg:not(.clear-btn svg) {
+.admin-app .search-wrapper:focus-within > svg:not(.clear-btn svg),
+.it-manager-shell .it-desktop-head .search-wrapper:focus-within .search-icon,
+.it-manager-shell .it-desktop-head .search-wrapper:focus-within > svg:not(.clear-btn svg) {
   color: var(--color-primary-500);
+}
+
+.it-manager-shell .it-desktop-head .header-search {
+  flex: 1 1 18rem;
+  min-width: 16rem;
+  max-width: 28rem;
+  width: auto;
 }
 
 .admin-app .search-wrapper .clear-btn {
@@ -1666,132 +1684,7 @@ html.dark .admin-app .badge-admin {
 }
 
 @media (min-width: 768px) {
-    /* Accueil IT — layout bureau (pas une copie agrandie du mobile) */
-    .it-manager-shell .it-home {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-        gap: 1.25rem;
-        max-width: 72rem;
-    }
-
-    .it-manager-shell .it-home-hero {
-        grid-column: 1 / -1;
-        padding: 1.75rem 1.75rem 1.5rem;
-        border-radius: 16px;
-    }
-
-    .it-manager-shell .it-home-hero__mesh,
-    .it-manager-shell .it-home-hero__orbit,
-    .it-manager-shell .it-home-hero__spark,
-    .it-manager-shell .it-home-hero__badge-pulse {
-        display: none;
-    }
-
-    .it-manager-shell .it-home-hero__glow {
-        animation: none;
-        opacity: 0.55;
-    }
-
-    .it-manager-shell .it-home-hero__title {
-        font-size: 1.85rem;
-    }
-
-    .it-manager-shell .it-home-hero__spotlight {
-        max-width: 28rem;
-        margin-top: 1.35rem;
-        gap: 0.65rem;
-    }
-
-    .it-manager-shell .it-home-spot {
-        opacity: 1;
-        animation: none;
-        padding: 0.9rem 0.85rem;
-    }
-
-    .it-manager-shell .it-home-actions {
-        grid-column: 1 / -1;
-        max-width: none;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 0.65rem;
-        padding: 0;
-    }
-
-    .it-manager-shell .it-home-actions__item {
-        flex: 0 0 auto;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.55rem;
-        opacity: 1;
-        animation: none;
-        padding: 0.55rem 0.95rem;
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-        box-shadow: none;
-    }
-
-    .it-manager-shell .it-home-actions__item.is-primary {
-        background: var(--color-primary-600);
-        border-color: var(--color-primary-600);
-        color: #fff;
-    }
-
-    .it-manager-shell .it-home-actions__item.is-primary .it-home-actions__label {
-        color: #fff;
-    }
-
-    .it-manager-shell .it-home-actions__item.is-primary .it-home-actions__icon {
-        background: rgba(255, 255, 255, 0.16);
-        border-color: transparent;
-        color: #fff;
-        box-shadow: none;
-        width: 2rem;
-        height: 2rem;
-    }
-
-    .it-manager-shell .it-home-actions__icon {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 8px;
-        box-shadow: none;
-    }
-
-    .it-manager-shell .it-home-actions__icon svg {
-        width: 1.1rem;
-        height: 1.1rem;
-    }
-
-    .it-manager-shell .it-home-actions__label {
-        font-size: 0.8125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .it-manager-shell .it-home-kpis {
-        grid-column: 1 / -1;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.85rem;
-    }
-
-    .it-manager-shell .it-home-kpi {
-        opacity: 1;
-        animation: none;
-        padding: 1.15rem 1.1rem;
-        border-radius: 12px;
-    }
-
-    .it-manager-shell .it-home-kpi__value {
-        font-size: 1.75rem;
-    }
-
-    .it-manager-shell .it-home-panel {
-        opacity: 1;
-        animation: none;
-        border-radius: 12px;
-    }
+    /* Accueil IT desktop = .it-dash (structure admin) ; .it-home reste mobile-only */
 
     /* En-têtes IT desktop — recherche inline classique */
     .it-manager-shell .it-desktop-head .member-shop-search .input,
