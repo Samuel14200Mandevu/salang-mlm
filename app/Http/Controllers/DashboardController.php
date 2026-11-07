@@ -25,6 +25,25 @@ class DashboardController extends Controller
     public function __construct(
         protected UserCommissionDisplayService $commissionDisplay
     ) {}
+
+    /**
+     * Espace membre — réservé aux admins (membre + admin).
+     */
+    public function viewAsMember()
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        if (! $user->hasRole('admin')) {
+            abort(403, 'Seul un administrateur peut accéder au compte membre.');
+        }
+
+        return redirect()->route('dashboard');
+    }
+
     /**
      * Afficher le tableau de bord selon le niveau
      */
@@ -39,6 +58,10 @@ class DashboardController extends Controller
 
         if ($user->isItManagerOnly()) {
             return redirect()->route('it-manager.dashboard');
+        }
+
+        if ($user->hasRole('cashier') && ! $user->hasRole('admin')) {
+            return redirect()->route('cashier.dashboard');
         }
 
         // RAFRAÎCHIR L'UTILISATEUR DEPUIS LA BASE DE DONNÉES

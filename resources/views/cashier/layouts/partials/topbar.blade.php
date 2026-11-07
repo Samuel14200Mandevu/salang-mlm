@@ -148,6 +148,10 @@
                                             Mon Profil
                                         </a>
 
+                                        <a href="{{ url('/?site=1') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] transition-colors">
+                                            Voir le site
+                                        </a>
+
                                         @if(Auth::user()?->hasRole('admin'))
                                             <hr class="border-[var(--border-color)]">
                                             <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 hover:bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--primary)] transition-colors">

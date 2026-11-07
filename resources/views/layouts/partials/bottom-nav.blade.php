@@ -1,5 +1,5 @@
 @php
-    $isItManagerShell = auth()->user()?->isItManagerOnly() ?? false;
+    $isItManagerShell = auth()->user()?->usesItManagerShell() ?? false;
 @endphp
 
 @if ($isItManagerShell)

@@ -972,10 +972,37 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Afficher le chrome Responsable IT (sidebar / topbar / bottom-nav).
+     * Comme « Rapports caisse » pour le shell caissier : un admin qui ouvre
+     * Messages site / routes IT bascule dans les interfaces IT.
+     */
+    public function usesItManagerShell(?string $routeName = null): bool
+    {
+        if ($this->isItManagerOnly()) {
+            return true;
+        }
+
+        if (! $this->hasAnyRole(['admin', 'it_manager'])) {
+            return false;
+        }
+
+        $routeName ??= request()->route()?->getName() ?? '';
+
+        return str_starts_with($routeName, 'it-manager.')
+            || str_starts_with($routeName, 'site-management.')
+            || str_starts_with($routeName, 'questions.');
+    }
+
+    /**
      * URL de redirection après connexion (email, Google, etc.).
+     * Admin (même s’il est aussi caissier) → interface admin.
      */
     public function loginRedirectUrl(): string
     {
+        if ($this->hasRole('admin')) {
+            return route('admin.dashboard');
+        }
+
         if ($this->hasRole('cashier')) {
             return route('cashier.dashboard');
         }
@@ -984,10 +1011,26 @@ class User extends Authenticatable implements MustVerifyEmail
             return route('it-manager.dashboard');
         }
 
+        return route('dashboard');
+    }
+
+    /**
+     * Libellé CTA « mon espace » sur le site public, selon le rôle.
+     */
+    public function homeSpaceLabel(): string
+    {
         if ($this->hasRole('admin')) {
-            return route('admin.dashboard');
+            return 'Espace admin';
         }
 
-        return route('dashboard');
+        if ($this->hasRole('cashier')) {
+            return 'Espace caisse';
+        }
+
+        if ($this->isItManagerOnly()) {
+            return 'Espace IT';
+        }
+
+        return 'Espace membre';
     }
 }

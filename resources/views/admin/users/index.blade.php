@@ -62,16 +62,14 @@
     <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3">
         <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Gestion des utilisateurs
+                Gestion des membres
             </h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminUsersSubtitle">
-                {{ $users->total() }} utilisateurs/membres enregistrés
+                {{ $users->total() }} membres enregistrés
                 @php
                     $subtitleFilterLabels = [
                         'active' => 'Actifs',
                         'inactive' => 'Inactifs',
-                        'admin' => 'Admins',
-                        'cashier' => 'Caissiers',
                     ];
                     $subtitleFilter = $subtitleFilterLabels[request('filter')] ?? null;
                 @endphp
@@ -95,17 +93,11 @@
                     <input type="text"
                            id="searchInput"
                            class="search-input"
-                           placeholder="Rechercher un utilisateur"
+                           placeholder="Rechercher un membre"
                            autocomplete="off"
                            value="{{ request('search') }}">
                 </div>
             </div>
-            <a href="{{ route('admin.cashiers.index') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                <span class="hidden xs:inline">Caissiers</span>
-            </a>
             <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm sm:btn-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -123,8 +115,6 @@
                 $filterLabels = [
                     'active' => 'Actifs',
                     'inactive' => 'Inactifs',
-                    'admin' => 'Admins',
-                    'cashier' => 'Caissiers',
                 ];
                 $filterButtonLabel = $filterLabels[$currentFilter] ?? 'Filtrer';
                 $filterQueryBase = array_filter([
@@ -164,16 +154,6 @@
                         <span>Inactifs</span>
                         <span class="filter-count">{{ $stats['inactive'] ?? 0 }}</span>
                     </a>
-                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'admin'])) }}"
-                       class="{{ $currentFilter === 'admin' ? 'is-active' : '' }}">
-                        <span>Admins</span>
-                        <span class="filter-count">{{ $stats['admins'] ?? 0 }}</span>
-                    </a>
-                    <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'cashier'])) }}"
-                       class="{{ $currentFilter === 'cashier' ? 'is-active' : '' }}">
-                        <span>Caissiers</span>
-                        <span class="filter-count">{{ $stats['cashiers'] ?? 0 }}</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -200,12 +180,12 @@
     @endif
 
     <x-ui.stat-grid class="mb-4 lg:grid-cols-3">
-        <x-ui.stat title="Total" :value="$users->total()" id="kpi-total" />
+        <x-ui.stat title="Total" :value="$stats['total'] ?? $users->total()" id="kpi-total" />
         <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" />
         <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" />
-        <x-ui.stat title="Admins" :value="$stats['admins'] ?? 0" id="kpi-admins" />
-        <x-ui.stat title="Caissiers" :value="$stats['cashiers'] ?? 0" id="kpi-cashiers" />
         <x-ui.stat title="Avec package" :value="$stats['with_package'] ?? 0" id="kpi-with-package" />
+        <x-ui.stat title="KYC vérifié" :value="$stats['with_kyc'] ?? 0" id="kpi-with-kyc" />
+        <x-ui.stat title="Employés" :value="$stats['employees'] ?? 0" id="kpi-employees" />
     </x-ui.stat-grid>
 
     @include('admin.users._mobile_list', ['users' => $users])

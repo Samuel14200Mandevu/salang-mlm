@@ -3,11 +3,11 @@
 @forelse($users as $user)
     @php
         $roleName = $user->getRoleNames()->first() ?? 'user';
-        $roleDisplay = 'Utilisateur';
+        $roleDisplay = 'Membre';
         if ($roleName === 'admin') {
             $roleDisplay = 'Admin';
         } elseif ($roleName === 'it_manager') {
-            $roleDisplay = 'IT / Supervision';
+            $roleDisplay = 'Responsable IT';
         } elseif ($roleName === 'cashier') {
             $roleDisplay = 'Caissier';
         } elseif ($roleName === 'caissier_principal') {
@@ -43,10 +43,10 @@
             ? 'Aucun résultat ne correspond à votre recherche « ' . request('search') . ' ».'
             : (request()->filled('filter')
                 ? 'Aucun résultat pour ces filtres.'
-                : 'Commencez par ajouter votre premier utilisateur.');
+                : 'Commencez par ajouter votre premier membre.');
     @endphp
     <x-ui.empty-state
-        title="Aucun utilisateur"
+        title="Aucun membre"
         :description="$emptyDescription"
     >
         <x-slot:icon>👥</x-slot:icon>

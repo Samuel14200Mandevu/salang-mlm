@@ -174,6 +174,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/stats', [DashboardController::class, 'apiStats'])->name('dashboard.stats');
     Route::get('/dashboard/chart', [DashboardController::class, 'chartData'])->name('dashboard.chart');
+    Route::get('/view-as-member', [DashboardController::class, 'viewAsMember'])
+        ->middleware('role:admin')
+        ->name('view-as-member');
 
     // ============================================================
     // PROFIL

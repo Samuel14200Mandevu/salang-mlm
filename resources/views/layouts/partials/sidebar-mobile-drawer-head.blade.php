@@ -1,7 +1,7 @@
 @auth
     @php
         $drawerUser = Auth::user()?->loadMissing(['package']);
-        $isItDrawer = $drawerUser?->isItManagerOnly() ?? false;
+        $isItDrawer = $drawerUser?->usesItManagerShell() ?? false;
     @endphp
     @if($drawerUser)
     @php
@@ -48,7 +48,9 @@
             $drawerCode = $drawerUser->sponsor_id ?: ('#' . $drawerUser->id);
             $drawerSubtitle = $drawerUser->package?->name;
         } else {
-            $drawerRankName = 'Responsable IT';
+            $drawerRankName = $drawerUser->hasRole('admin') && ! $drawerUser->isItManagerOnly()
+                ? 'Admin · Supervision IT'
+                : 'Responsable IT';
         }
     @endphp
     <div class="sidebar-mobile-drawer-head md:hidden{{ (! $isItDrawer && $drawerRankImageUrl) ? ' has-grade-badge' : ' has-profile-photo' }}">
