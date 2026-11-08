@@ -170,10 +170,9 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 mt-3 text-sm">
+            <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
                 <div class="auto-value"><span class="label">Commandes</span><span class="value">{{ $total_orders }}</span></div>
                 <div class="auto-value"><span class="label">PV</span><span class="value">{{ number_format($total_pv) }}</span></div>
-                <div class="auto-value"><span class="label">BV</span><span class="value">{{ number_format($total_bv) }}</span></div>
             </div>
         </div>
 

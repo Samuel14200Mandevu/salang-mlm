@@ -286,6 +286,23 @@
         .stat-card .stat-icon { width: 2rem; height: 2rem; }
         .stat-card .stat-icon svg { width: 1.25rem; height: 1.25rem; }
     }
+
+    /* Liste — même panel que Historique ventes POS / Dépenses */
+    .reports-history-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 14rem;
+        max-height: min(42vh, 22rem);
+    }
+    .reports-history-panel .table-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+    .reports-history-panel .table-wrap tbody td[colspan] {
+        height: 8rem;
+        vertical-align: middle;
+    }
 </style>
 @endpush
 
@@ -519,17 +536,14 @@
         </div>
     </div>
 
-    {{-- LISTE --}}
-    <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+    {{-- LISTE (div comme Historique ventes POS / Dépenses) --}}
+    <div class="card p-3 sm:p-4 reports-history-panel">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 shrink-0">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des rapports</h3>
-            <a href="{{ route('cashier.reports.create') }}" class="text-sm text-[var(--primary)] hover:underline">
-                + Nouveau rapport
-            </a>
         </div>
 
         <div class="table-wrap">
-            <table class="table">
+            <table class="table" id="reportsTable">
                 <thead>
                     <tr>
                         <th>N° Rapport</th>
@@ -541,7 +555,7 @@
                         <th>Statut</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse($reports as $report)
                         <tr class="cursor-pointer"
                             role="link"
@@ -573,11 +587,23 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-6 text-[var(--text-tertiary)]">
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                                <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
                                 @if($searchOpen || $filterActive)
-                                    Aucun rapport pour ces critères
+                                    <p class="text-base font-medium text-[var(--text-primary)]">Aucun rapport pour ces critères</p>
+                                    <p class="text-sm text-[var(--text-tertiary)] mt-1">Modifiez la recherche ou les filtres</p>
+                                    <a href="{{ route('cashier.reports.index') }}" class="btn btn-outline btn-sm mt-3">Effacer les filtres</a>
                                 @else
-                                    Aucun rapport enregistré
+                                    <p class="text-base font-medium text-[var(--text-primary)]">Aucun rapport enregistré</p>
+                                    <p class="text-sm text-[var(--text-tertiary)] mt-1">L'historique des rapports de caisse apparaîtra ici</p>
+                                    <a href="{{ route('cashier.reports.create') }}" class="btn btn-primary btn-sm mt-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        Nouveau rapport
+                                    </a>
                                 @endif
                             </td>
                         </tr>
@@ -586,8 +612,10 @@
             </table>
         </div>
 
-        <div class="mt-3">
-            <x-salang-pagination :paginator="$reports" />
+        <div id="paginationContainer" class="mt-3 shrink-0">
+            @if($reports->hasPages())
+                <x-salang-pagination :paginator="$reports" />
+            @endif
         </div>
     </div>
 </div>
