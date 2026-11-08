@@ -208,6 +208,7 @@ class ActivityRegisterService
 
     public function markConsultation(Consultation $consultation, ?Carbon $at = null): ?ActivityEntry
     {
+        // client_id = membre PV lié à la fiche (pas le patient)
         $memberId = $consultation->client_id;
         $name = $consultation->nom_complet;
         if (! $memberId || ! $name) {

@@ -294,10 +294,42 @@
 
         window.confirmClearCart = function () {
             window.cart = [];
-            window.saveCart();
-            window.renderCart();
+            if (typeof window.saveCart === 'function') window.saveCart();
+            else if (typeof localStorage !== 'undefined') localStorage.removeItem('pos_cart');
             window.closeClearCartModal();
-            window.showToast('Panier vidé avec succès', 'info');
+            var form = document.getElementById('clearCartForm');
+            if (form) {
+                form.submit();
+                return;
+            }
+            window.location.href = @json(route('cashier.pos'));
+        };
+
+        window.openCancelConsultationCheckoutModal = function () {
+            var modal = document.getElementById('cancelConsultationCheckoutModal');
+            if (modal) {
+                modal.classList.remove('opacity-0', 'invisible');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.closeCancelConsultationCheckoutModal = function () {
+            var modal = document.getElementById('cancelConsultationCheckoutModal');
+            if (modal) {
+                modal.classList.add('opacity-0', 'invisible');
+                document.body.style.overflow = '';
+            }
+        };
+
+        window.confirmCancelConsultationCheckout = function () {
+            var form = document.getElementById('cancelConsultationCheckoutForm');
+            window.closeCancelConsultationCheckoutModal();
+            try {
+                window.cart = [];
+                if (typeof window.saveCart === 'function') window.saveCart();
+                else if (typeof localStorage !== 'undefined') localStorage.removeItem('pos_cart');
+            } catch (e) {}
+            if (form) form.submit();
         };
 
         var confirmCallback = null;
@@ -405,12 +437,29 @@
                 e.preventDefault();
                 window.closeClearCartModal();
             });
-            document.getElementById('clearCartConfirmBtn')?.addEventListener('click', function (e) {
-                e.preventDefault();
-                window.confirmClearCart();
+            document.getElementById('clearCartForm')?.addEventListener('submit', function () {
+                window.cart = [];
+                if (typeof window.saveCart === 'function') window.saveCart();
+                else if (typeof localStorage !== 'undefined') localStorage.removeItem('pos_cart');
             });
             document.getElementById('clearCartModal')?.addEventListener('click', function (e) {
                 if (e.target === this) window.closeClearCartModal();
+            });
+
+            document.getElementById('cancelConsultationCheckoutBtn')?.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.openCancelConsultationCheckoutModal();
+            });
+            document.getElementById('cancelConsultationCheckoutCancelBtn')?.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.closeCancelConsultationCheckoutModal();
+            });
+            document.getElementById('cancelConsultationCheckoutConfirmBtn')?.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.confirmCancelConsultationCheckout();
+            });
+            document.getElementById('cancelConsultationCheckoutModal')?.addEventListener('click', function (e) {
+                if (e.target === this) window.closeCancelConsultationCheckoutModal();
             });
 
             document.getElementById('confirmCancelBtn')?.addEventListener('click', function (e) {
@@ -465,7 +514,24 @@
                 setTimeout(updatePageTitle, 50);
             }
 
+            @if(session('clear_cart'))
+            try {
+                window.cart = [];
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem('pos_cart');
+                }
+                if (typeof window.saveCart === 'function') {
+                    window.saveCart();
+                }
+                if (typeof window.renderCart === 'function') {
+                    window.renderCart();
+                } else if (typeof window.updateCartCount === 'function') {
+                    window.updateCartCount();
+                }
+            } catch (e) {}
+            @else
             window.loadCart();
+            @endif
         }
 
         if (document.readyState === 'loading') {

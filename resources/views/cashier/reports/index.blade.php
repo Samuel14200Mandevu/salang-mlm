@@ -290,16 +290,80 @@
 @endpush
 
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $filterActive = filled(request('status'))
+        || filled(request('date_from'))
+        || filled(request('date_to'));
+    $statusLabels = [
+        'draft' => 'Brouillon',
+        'submitted' => 'Soumis',
+        'approved' => 'Approuvé',
+        'rejected' => 'Rejeté',
+    ];
+    $filterButtonLabel = $statusLabels[request('status')] ?? 'Filtrer';
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+    ], fn ($v) => filled($v));
+    $reportsSubtitle = 'Rapports de caisse à soumettre en fin de journée'
+        .(request('search') ? ' · « '.e(request('search')).' »' : '')
+        .(isset($statusLabels[request('status')]) ? ' · '.$statusLabels[request('status')] : '');
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE : Nouveau rapport dans le div --}}
+    {{-- BANDEAU MOBILE --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Rapports journaliers</h1>
-                <p class="page-subtitle">Rapports de caisse à soumettre en fin de journée</p>
+                <p class="page-subtitle">{!! $reportsSubtitle !!}</p>
             </div>
             <div class="admin-title-banner__tools admin-title-banner__tools--reports-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button" @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open" aria-label="Filtrer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                        <form method="GET" action="{{ route('cashier.reports.index') }}" class="space-y-2">
+                            @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                            <div>
+                                <label for="status_m">Statut</label>
+                                <select id="status_m" name="status" class="form-control">
+                                    <option value="">Tous les statuts</option>
+                                    @foreach($statusLabels as $key => $label)
+                                        <option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="date_from_m">Du</label>
+                                <input type="date" id="date_from_m" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                            </div>
+                            <div>
+                                <label for="date_to_m">Au</label>
+                                <input type="date" id="date_to_m" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                                <a href="{{ route('cashier.reports.index', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <a href="{{ route('cashier.reports.create') }}"
                    class="btn btn-primary btn-sm btn-round-icon"
                    title="Nouveau rapport"
@@ -310,24 +374,90 @@
                 </a>
             </div>
         </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <form method="GET" action="{{ route('cashier.reports.index') }}" class="search-wrapper admin-shop-search">
+                @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
+                @if(request('date_from'))<input type="hidden" name="date_from" value="{{ request('date_from') }}">@endif
+                @if(request('date_to'))<input type="hidden" name="date_to" value="{{ request('date_to') }}">@endif
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="search" name="search" class="search-input"
+                       placeholder="N° rapport…" autocomplete="off" value="{{ request('search') }}"
+                       aria-label="Rechercher un rapport">
+            </form>
+        </div>
     </div>
 
-    {{-- EN-TÊTE DESKTOP --}}
+    {{-- EN-TÊTE DESKTOP : titre | recherche + Filtrer + Nouveau --}}
     <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div class="min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Rapports journaliers
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Rapports de caisse à soumettre en fin de journée
-            </p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">{!! $reportsSubtitle !!}</p>
         </div>
-        <a href="{{ route('cashier.reports.create') }}" class="btn btn-primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouveau rapport
-        </a>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <form method="GET" action="{{ route('cashier.reports.index') }}" class="header-search">
+                @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
+                @if(request('date_from'))<input type="hidden" name="date_from" value="{{ request('date_from') }}">@endif
+                @if(request('date_to'))<input type="hidden" name="date_to" value="{{ request('date_to') }}">@endif
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search" name="search" class="search-input"
+                           placeholder="Rechercher un rapport" autocomplete="off"
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher un rapport">
+                </div>
+            </form>
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button" @click="open = !open"
+                        class="btn btn-outline btn-sm {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open" aria-haspopup="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>{{ $filterButtonLabel }}</span>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('cashier.reports.index') }}" class="space-y-2">
+                        @if(request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                        <div>
+                            <label for="status">Statut</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="">Tous les statuts</option>
+                                @foreach($statusLabels as $key => $label)
+                                    <option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="date_from">Du</label>
+                            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                        </div>
+                        <div>
+                            <label for="date_to">Au</label>
+                            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('cashier.reports.index', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <a href="{{ route('cashier.reports.create') }}" class="btn btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouveau rapport
+            </a>
+        </div>
     </div>
 
     {{-- STATISTIQUES --}}
@@ -389,26 +519,6 @@
         </div>
     </div>
 
-    {{-- FILTRES --}}
-    <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
-        <form method="GET" action="{{ route('cashier.reports.index') }}"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
-            <select name="status" class="form-control">
-                <option value="">Tous les statuts</option>
-                <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Brouillon</option>
-                <option value="submitted" {{ request('status') === 'submitted' ? 'selected' : '' }}>Soumis</option>
-                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approuvé</option>
-                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejeté</option>
-            </select>
-            <div class="flex gap-2">
-                <button type="submit" class="btn btn-primary flex-1">Filtrer</button>
-                <a href="{{ route('cashier.reports.index') }}" class="btn btn-outline">×</a>
-            </div>
-        </form>
-    </div>
-
     {{-- LISTE --}}
     <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-3 sm:p-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -425,16 +535,20 @@
                         <th>N° Rapport</th>
                         <th>Date</th>
                         <th class="hidden sm:table-cell">Caissier</th>
-                        <th class="text-right">Ventes</th>
-                        <th class="text-right">Dépenses</th>
-                        <th class="text-right">Solde net</th>
+                        <th>Ventes</th>
+                        <th>Dépenses</th>
+                        <th>Solde net</th>
                         <th>Statut</th>
-                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($reports as $report)
-                        <tr>
+                        <tr class="cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ route('cashier.reports.show', $report->id) }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="font-mono text-[var(--primary)] text-xs">
                                 {{ $report->report_number }}
                             </td>
@@ -442,13 +556,13 @@
                             <td class="hidden sm:table-cell text-xs">
                                 {{ $report->user->name ?? 'N/A' }}
                             </td>
-                            <td class="text-right text-xs">
+                            <td class="text-xs font-semibold text-[var(--text-primary)]">
                                 ${{ number_format($report->total_sales, 2) }}
                             </td>
-                            <td class="text-right text-xs text-[var(--ui-stat-danger)]">
+                            <td class="text-xs font-semibold text-[var(--ui-stat-danger)]">
                                 ${{ number_format($report->total_expenses, 2) }}
                             </td>
-                            <td class="text-right font-semibold text-xs text-[var(--primary)]">
+                            <td class="font-semibold text-xs text-[var(--primary)]">
                                 ${{ number_format($report->net_balance, 2) }}
                             </td>
                             <td>
@@ -456,32 +570,15 @@
                                     {{ $report->status_label }}
                                 </span>
                             </td>
-                            <td class="text-right">
-                                <div class="flex justify-end gap-1 flex-wrap">
-                                    <a href="{{ route('cashier.reports.show', $report->id) }}"
-                                       class="btn btn-outline btn-xs">Voir</a>
-
-                                    <a href="{{ route('cashier.reports.pdf', $report->id) }}"
-                                       class="btn btn-primary btn-xs">PDF</a>
-
-                                    {{-- Bouton Supprimer : uniquement pour les brouillons --}}
-                                    @if($report->status === 'draft')
-                                        <button type="button"
-                                                onclick="openDeleteModal({{ $report->id }}, '{{ $report->report_number }}')"
-                                                class="btn btn-danger-outline btn-xs">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                            Supprimer
-                                        </button>
-                                    @endif
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-6 text-[var(--text-tertiary)]">
-                                Aucun rapport enregistré
+                            <td colspan="7" class="text-center py-6 text-[var(--text-tertiary)]">
+                                @if($searchOpen || $filterActive)
+                                    Aucun rapport pour ces critères
+                                @else
+                                    Aucun rapport enregistré
+                                @endif
                             </td>
                         </tr>
                     @endforelse

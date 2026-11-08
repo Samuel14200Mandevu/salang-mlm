@@ -169,7 +169,7 @@
                                 <th>Membre</th>
                             @endif
                             <th>Type</th>
-                            <th class="text-right">PV</th>
+                            <th>PV</th>
                             <th>Source</th>
                             <th>Description</th>
                         </tr>
@@ -188,9 +188,8 @@
                                     {{ $transaction->created_at->format('d/m/Y H:i') }}
                                 </td>
                                 @if($isGlobalHistory)
-                                    <td class="text-sm">
-                                        <span class="font-medium text-[var(--text-primary)]">{{ $transaction->user?->name ?? 'N/A' }}</span>
-                                        <span class="block text-xs text-[var(--text-tertiary)]">{{ $transaction->user?->sponsor_id ?? '' }}</span>
+                                    <td class="text-sm font-semibold text-[var(--text-primary)]">
+                                        @if(!empty($transaction->user?->sponsor_id)){{ $transaction->user->sponsor_id }} : @endif{{ $transaction->user?->name ?? 'N/A' }}
                                     </td>
                                 @endif
                                 <td>
@@ -205,7 +204,7 @@
                                     @endphp
                                     <span class="badge {{ $type['class'] }}">{{ $type['label'] }}</span>
                                 </td>
-                                <td class="text-right font-semibold {{ in_array($transaction->type, ['credit', 'bonus'], true) ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }}">
+                                <td class="font-semibold {{ in_array($transaction->type, ['credit', 'bonus'], true) ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }}">
                                     {{ in_array($transaction->type, ['credit', 'bonus'], true) ? '+' : '-' }}
                                     {{ $transaction->pv_amount }} PV
                                     @if($transaction->bv_amount)

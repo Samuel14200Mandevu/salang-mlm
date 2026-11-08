@@ -463,7 +463,7 @@
                 </thead>
                 <tbody id="tableBody">
                     @forelse($customers ?? [] as $customer)
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-[var(--bg-hover)]" onclick="window.location='{{ route('cashier.customers.show', $customer->id) }}'">
                             <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $customer->id }}</td>
                             <td>
                                 <div class="font-medium text-sm">{{ $customer->name }}</div>
@@ -477,10 +477,11 @@
                             </td>
                             <td class="hidden md:table-cell">
                                 @if($customer->parrain)
-                                    <span class="text-sm text-[var(--primary-navy)]">{{ $customer->parrain->name }}</span>
-                                    <div class="text-xs text-[var(--text-secondary)]">Code: {{ $customer->parrain->sponsor_id }}</div>
+                                    <span class="text-sm font-semibold text-[var(--text-primary)]">
+                                        @if(!empty($customer->parrain->sponsor_id)){{ $customer->parrain->sponsor_id }} : @endif{{ $customer->parrain->name }}
+                                    </span>
                                 @else
-                                    <span class="text-xs text-[var(--text-tertiary)]">Aucun</span>
+                                    <span class="text-xs text-[var(--text-tertiary)]">—</span>
                                 @endif
                             </td>
                             <td class="hidden lg:table-cell font-mono text-xs text-[var(--text-secondary)]">

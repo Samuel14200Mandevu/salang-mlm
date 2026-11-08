@@ -112,23 +112,36 @@
   z-index: 40;
 }
 
+.notifications-page-header-desktop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.notifications-page-header-desktop .member-page-intro {
+  flex: 1 1 auto;
+  min-width: 12rem;
+  max-width: 100%;
+}
+
 .notifications-page-header-desktop .notifications-header-actions {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  margin-left: auto;
   position: relative;
   z-index: 41;
 }
 
 .notifications-page-header-desktop .notifications-desktop-search {
-  flex: 1 1 14rem;
-  min-width: 11rem;
-  max-width: 20rem;
-  width: auto !important;
+  flex: 0 0 15rem;
+  width: 15rem;
+  max-width: 100%;
 }
 
 .notifications-page-header-desktop .search-wrapper {

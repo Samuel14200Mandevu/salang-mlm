@@ -421,15 +421,19 @@
                         <th>Type</th>
                         <th>Catégorie</th>
                         <th>Titre</th>
-                        <th class="text-right">Montant</th>
+                        <th>Montant</th>
                         <th>Paiement</th>
                         <th class="hidden sm:table-cell">Par</th>
-                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     @forelse($expenses as $expense)
-                        <tr>
+                        <tr class="cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ route('cashier.expenses.show', $expense->id) }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="text-xs">{{ $expense->expense_date->format('d/m/Y') }}</td>
                             <td>
                                 <span class="badge {{ $expense->expense_type === 'caisse' ? 'badge-info' : 'badge-warning' }}">
@@ -438,23 +442,15 @@
                             </td>
                             <td class="text-xs">{{ $expense->category_label }}</td>
                             <td class="text-sm">{{ $expense->title }}</td>
-                            <td class="text-right font-semibold text-[var(--danger)]">
+                            <td class="font-semibold text-[var(--danger)]">
                                 {{ $expense->formatted_amount }}
                             </td>
                             <td class="text-xs">{{ $expense->payment_method_label }}</td>
                             <td class="hidden sm:table-cell text-xs">{{ $expense->user->name ?? 'N/A' }}</td>
-                            <td class="text-right">
-                                <div class="flex justify-end gap-1">
-                                    <a href="{{ route('cashier.expenses.show', $expense->id) }}"
-                                       class="btn btn-outline btn-xs">Voir</a>
-                                    <a href="{{ route('cashier.expenses.edit', $expense->id) }}"
-                                       class="btn btn-outline btn-xs">Modifier</a>
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr id="emptyRow">
-                            <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>

@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\Admin\AdminCashierController;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -96,9 +97,40 @@ class Consultation extends Model
         return $this->belongsTo(User::class, 'admin_id');
     }
 
+    /**
+     * Membre destinataire des PV (colonne historique `client_id`).
+     * Ce n'est PAS le patient : le patient est `nom_complet` / `phone` / `email`.
+     */
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');
+    }
+
+    /**
+     * Alias explicite : même FK `client_id` (membre PV, pas le patient).
+     */
+    public function pvMember()
+    {
+        return $this->belongsTo(User::class, 'client_id');
+    }
+
+    /**
+     * Résout le membre actif (hors staff) destinataire des PV pour un Code ID.
+     */
+    public static function resolvePvMemberByCode(?string $code): ?User
+    {
+        if (! filled($code)) {
+            return null;
+        }
+
+        $staffRoles = AdminCashierController::STAFF_ROLES;
+
+        return User::query()
+            ->where('sponsor_id', $code)
+            ->where('is_active', true)
+            ->where('user_type', 'member')
+            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', $staffRoles))
+            ->first();
     }
 
     public function orders()

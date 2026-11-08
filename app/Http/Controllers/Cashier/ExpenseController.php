@@ -437,8 +437,12 @@ class ExpenseController extends Controller
             return response()->json([]);
         }
 
-        $members = User::where('is_active', true)
-            ->whereIn('user_type', ['member', 'client'])
+        $staffRoles = \App\Http\Controllers\Admin\AdminCashierController::STAFF_ROLES;
+
+        $members = User::query()
+            ->where('is_active', true)
+            ->where('user_type', 'member')
+            ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', $staffRoles))
             ->where(function ($query) use ($q) {
                 $query->where('name', 'LIKE', "%{$q}%")
                       ->orWhere('phone', 'LIKE', "%{$q}%")

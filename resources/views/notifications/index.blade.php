@@ -26,8 +26,8 @@
     ])
 
     {{-- Desktop — titre + recherche + Filtrer (comme admin membres) --}}
-    <div class="notifications-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="member-page-intro min-w-0">
+    <div class="notifications-page-header-desktop animate-fadeInUp">
+        <div class="member-page-intro">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Centre de notifications</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
                 {{ $unreadCount ?? 0 }} non lue(s) · {{ $totalCount ?? $notifications->total() }} au total

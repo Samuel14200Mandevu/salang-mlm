@@ -91,9 +91,8 @@ class ConsultationController extends Controller
                 'string',
                 'max:50',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    $member = User::where('sponsor_id', $value)->where('is_active', true)->first();
-                    if (! $member) {
-                        $fail('Le Code ID doit être un code membre actif (destinataire des PV).');
+                    if (! Consultation::resolvePvMemberByCode((string) $value)) {
+                        $fail('Le Code ID doit être un code membre actif hors staff (destinataire des PV).');
                     }
                 },
             ],
@@ -109,9 +108,11 @@ class ConsultationController extends Controller
             'adresse' => 'nullable|string|max:500',
         ]);
 
-        $pvMember = User::where('sponsor_id', $validated['code_id'])
-            ->where('is_active', true)
-            ->firstOrFail();
+        // client_id = membre PV (pas le patient ; patient = nom_complet/phone)
+        $pvMember = Consultation::resolvePvMemberByCode($validated['code_id']);
+        if (! $pvMember) {
+            return redirect()->back()->withInput()->with('error', 'Code ID membre invalide.');
+        }
 
         $consultation = Consultation::create([
             'cashier_id' => Auth::id(),
@@ -226,6 +227,26 @@ class ConsultationController extends Controller
         return redirect()
             ->route('cashier.checkout')
             ->with('success', count($cart) . ' produit(s) ajoutés au panier pour encaissement.');
+    }
+
+    /**
+     * Annuler l’encaissement en cours pour une fiche (quitte le checkout lié).
+     */
+    public function cancelCheckout(Consultation $consultation)
+    {
+        if ($consultation->cashier_id !== Auth::id()) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette fiche.');
+        }
+
+        $checkout = session('consultation_checkout');
+        if (is_array($checkout) && (int) ($checkout['consultation_id'] ?? 0) === (int) $consultation->id) {
+            session()->forget('consultation_checkout');
+            session()->forget('pos_cart');
+        }
+
+        return redirect()
+            ->route('cashier.consultations.show', $consultation)
+            ->with('success', 'Encaissement annulé. Vous pouvez resélectionner les produits sur la fiche.');
     }
 
     /**

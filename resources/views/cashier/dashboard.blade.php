@@ -469,21 +469,51 @@ admin-mobile-stack
                     <tr>
                         <th>N° commande</th>
                         <th>Client</th>
+                        <th>Membre</th>
                         <th>Type</th>
-                        <th class="text-right">Total</th>
+                        <th>Total</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($recentOrders ?? [] as $order)
                         @php
                             $isMembership = ($order->source ?? '') === 'membership' || isset($order->metadata['is_membership']);
+                            $client = $order->user;
+                            $member = null;
+                            $metaSponsorId = data_get($order->metadata, 'sponsor_id');
+                            if ($metaSponsorId && isset($sponsorsById) && $sponsorsById->has($metaSponsorId)) {
+                                $member = $sponsorsById->get($metaSponsorId);
+                            } elseif ($client?->parrain) {
+                                $member = $client->parrain;
+                            } elseif ($client && $client->user_type === 'member') {
+                                $member = $client;
+                            }
+                            $detailUrl = route('cashier.orders.show', $order->id);
+                            $statusMap = [
+                                'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
+                                'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
+                                'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
+                                'processing' => ['label' => 'En cours', 'class' => 'badge-info'],
+                            ];
+                            $status = $statusMap[$order->status] ?? ['label' => $order->status, 'class' => 'badge-info'];
                         @endphp
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-[var(--bg-secondary)]"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="font-mono text-[var(--primary)] text-xs sm:text-sm">#{{ $order->order_number }}</td>
-                            <td class="text-sm">{{ $order->user?->name ?? 'N/A' }}</td>
+                            <td class="text-sm font-semibold text-[var(--text-primary)]">{{ $client?->name ?? 'N/A' }}</td>
+                            <td class="text-sm font-semibold text-[var(--text-primary)]">
+                                @if($member)
+                                    @if(!empty($member->sponsor_id)){{ $member->sponsor_id }} : @endif{{ $member->name }}
+                                @else
+                                    <span class="text-[var(--text-tertiary)]">—</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($isMembership)
                                     <span class="badge-membership">Adhésion</span>
@@ -495,26 +525,12 @@ admin-mobile-stack
                                     <span class="badge badge-warning">{{ $order->source ?? 'N/A' }}</span>
                                 @endif
                             </td>
-                            <td class="text-right font-semibold text-sm">${{ number_format($order->total, 2) }}</td>
+                            <td class="font-semibold text-sm text-[var(--text-primary)]">${{ number_format($order->total, 2) }}</td>
                             <td>
-                                @php
-                                    $statusMap = [
-                                        'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
-                                        'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
-                                        'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
-                                        'processing' => ['label' => 'En cours', 'class' => 'badge-info'],
-                                    ];
-                                    $status = $statusMap[$order->status] ?? ['label' => $order->status, 'class' => 'badge-info'];
-                                @endphp
                                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                             </td>
                             <td class="hidden sm:table-cell text-[var(--text-tertiary)] text-xs">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="text-right">
-                                <a href="{{ route('cashier.orders.show', $order->id) }}" class="btn btn-primary btn-xs">
-                                    Voir
-                                </a>
                             </td>
                         </tr>
                     @empty
