@@ -258,12 +258,31 @@ html.salang-reduce-motion .member-app .services-featured__track {
   margin-bottom: 0;
 }
 
-/* Desktop — recherche + Filtrer (style admin) */
+/* Desktop — recherche + Filtrer (style admin)
+   z-index élevé : le menu ne doit pas passer sous la liste (animate-fadeInUp). */
+.member-app .supervision-page-header-desktop {
+  position: relative;
+  z-index: 40;
+}
+
+.member-app .supervision-page-header-desktop .supervision-header-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 41;
+}
+
 .member-app .supervision-page-header-desktop .questions-desktop-search,
 .member-app .supervision-page-header-desktop .publications-desktop-search {
   flex: 1 1 14rem;
-  min-width: 12rem;
-  max-width: 22rem;
+  min-width: 11rem;
+  max-width: 20rem;
+  width: auto !important;
 }
 
 .member-app .supervision-page-header-desktop .search-wrapper {
@@ -272,7 +291,8 @@ html.salang-reduce-motion .member-app .services-featured__track {
 }
 
 .member-app .supervision-page-header-desktop .search-wrapper .search-input {
-  width: 100%;
+  width: 100% !important;
+  max-width: none;
   border-radius: 999px;
   padding: 0.5rem 1rem 0.5rem 2.35rem;
   border: 1px solid var(--border-color);
@@ -285,13 +305,20 @@ html.salang-reduce-motion .member-app .services-featured__track {
 .member-app .supervision-page-header-desktop .search-wrapper .search-input:focus {
   border-color: var(--color-primary-500, var(--primary));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500, var(--primary)) 18%, transparent);
+  width: 100% !important;
+}
+
+.member-app .supervision-page-header-desktop .supervision-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 42;
 }
 
 .member-app .supervision-page .users-filter-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 0.4rem);
-  z-index: 40;
+  z-index: 80;
   min-width: 11rem;
   padding: 0.4rem;
   border-radius: 0.85rem;

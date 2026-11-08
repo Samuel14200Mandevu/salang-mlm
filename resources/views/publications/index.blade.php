@@ -39,8 +39,8 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap justify-end min-w-0">
-            <form method="GET" action="{{ route('publications.index') }}" class="header-search admin-search-full publications-desktop-search">
+        <div class="supervision-header-actions">
+            <form method="GET" action="{{ route('publications.index') }}" class="header-search publications-desktop-search">
                 @if(filled($typeFilter ?? null))
                     <input type="hidden" name="type" value="{{ $typeFilter }}">
                 @endif
@@ -61,7 +61,7 @@
                 </div>
             </form>
 
-            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button type="button"
                         @click="open = !open"
                         class="btn btn-outline btn-sm {{ $filtersActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"

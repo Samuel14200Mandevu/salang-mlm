@@ -107,10 +107,28 @@
 }
 
 /* Desktop — recherche type admin (shell membre = cashier-app) */
+.notifications-page-header-desktop {
+  position: relative;
+  z-index: 40;
+}
+
+.notifications-page-header-desktop .notifications-header-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 41;
+}
+
 .notifications-page-header-desktop .notifications-desktop-search {
   flex: 1 1 14rem;
-  min-width: 12rem;
-  max-width: 22rem;
+  min-width: 11rem;
+  max-width: 20rem;
+  width: auto !important;
 }
 
 .notifications-page-header-desktop .search-wrapper {
@@ -119,7 +137,8 @@
 }
 
 .notifications-page-header-desktop .search-wrapper .search-input {
-  width: 100%;
+  width: 100% !important;
+  max-width: none;
   border-radius: 999px;
   padding: 0.5rem 1rem 0.5rem 2.35rem;
   border: 1px solid var(--border-color);
@@ -132,6 +151,17 @@
 .notifications-page-header-desktop .search-wrapper .search-input:focus {
   border-color: var(--color-primary-500, var(--primary));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500, var(--primary)) 18%, transparent);
+  width: 100% !important;
+}
+
+.notifications-page-header-desktop .supervision-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 42;
+}
+
+.member-app .notifications-page .users-filter-menu {
+  z-index: 80;
 }
 
 .notifications-filters-panel__inner {
