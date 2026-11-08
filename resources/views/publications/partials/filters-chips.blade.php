@@ -1,9 +1,13 @@
 @php
     $type = $typeFilter ?? null;
     $activeOnly = $activeFilter ?? false;
+    $qValue = filled($q ?? null) ? $q : null;
 
-    $withType = static function (?string $typeValue) use ($activeOnly): array {
+    $withType = static function (?string $typeValue) use ($activeOnly, $qValue): array {
         $params = [];
+        if (filled($qValue)) {
+            $params['q'] = $qValue;
+        }
         if (filled($typeValue)) {
             $params['type'] = $typeValue;
         }
@@ -14,7 +18,10 @@
         return $params;
     };
 
-    $toggleActiveParams = filled($type) ? ['type' => $type] : [];
+    $toggleActiveParams = array_filter([
+        'q' => $qValue,
+        'type' => filled($type) ? $type : null,
+    ], fn ($v) => filled($v));
     if (! $activeOnly) {
         $toggleActiveParams['active'] = '1';
     }

@@ -26,6 +26,25 @@ class QuestionController extends Controller
             if ($request->filled('status') && in_array($request->status, [QuestionConversation::STATUS_OPEN, QuestionConversation::STATUS_RESOLVED], true)) {
                 $query->where('status', $request->status);
             }
+
+            $q = trim((string) $request->get('q', ''));
+            if ($q !== '') {
+                $like = '%'.$q.'%';
+                $query->where(function ($builder) use ($like) {
+                    $builder
+                        ->whereHas('member', function ($memberQuery) use ($like) {
+                            $memberQuery
+                                ->where('name', 'like', $like)
+                                ->orWhere('email', 'like', $like)
+                                ->orWhere('sponsor_id', 'like', $like);
+                        })
+                        ->orWhereHas('messages', function ($messageQuery) use ($like) {
+                            $messageQuery
+                                ->where('subject', 'like', $like)
+                                ->orWhere('body', 'like', $like);
+                        });
+                });
+            }
         } else {
             $query->where('user_id', $user->id);
         }
@@ -49,6 +68,7 @@ class QuestionController extends Controller
             'questions' => $conversations,
             'isSupervision' => $user->hasSupervisionAccess(),
             'statusFilter' => $request->get('status'),
+            'q' => trim((string) $request->get('q', '')),
         ]);
     }
 
