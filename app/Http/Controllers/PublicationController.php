@@ -48,6 +48,16 @@ class PublicationController extends Controller
             $query->active();
         }
 
+        $q = trim((string) $request->get('q', ''));
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $query->where(function ($builder) use ($like) {
+                $builder
+                    ->where('title', 'like', $like)
+                    ->orWhere('description', 'like', $like);
+            });
+        }
+
         $publications = $query->paginate(12)->withQueryString();
 
         $servicesFeaturedPublications = collect();
@@ -66,6 +76,7 @@ class PublicationController extends Controller
             'isSupervision' => $user->hasSupervisionAccess(),
             'typeFilter' => $request->get('type'),
             'activeFilter' => $request->boolean('active'),
+            'q' => $q,
             'servicesFeaturedPublications' => $servicesFeaturedPublications,
         ]);
     }

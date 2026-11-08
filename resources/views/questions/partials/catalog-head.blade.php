@@ -1,4 +1,5 @@
 @php
+    $hasSearch = $isSupervision && filled($q ?? null);
     $filtersActive = $isSupervision && filled($statusFilter ?? null);
 @endphp
 
@@ -13,6 +14,16 @@
         </div>
         <div class="shop-catalog-banner__tools">
             @if($isSupervision)
+                <button type="button"
+                        class="shop-banner-icon-btn {{ $hasSearch ? 'is-active' : '' }}"
+                        id="questionsSearchToggle"
+                        aria-expanded="{{ $hasSearch ? 'true' : 'false' }}"
+                        aria-controls="questionsSearchPanel"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
                 <button type="button"
                         class="shop-banner-icon-btn {{ $filtersActive ? 'is-active' : '' }}"
                         id="questionsFilterToggle"
@@ -34,9 +45,32 @@
     </div>
 
     @if($isSupervision)
-        <div class="shop-catalog-search-panel questions-filters-panel"
+        <div class="shop-catalog-search-panel {{ $hasSearch ? 'is-open' : '' }}"
+             id="questionsSearchPanel"
+             aria-hidden="{{ $hasSearch ? 'false' : 'true' }}">
+            <form method="GET" action="{{ route('questions.index') }}" class="member-shop-search search-wrapper">
+                @if(filled($statusFilter ?? null))
+                    <input type="hidden" name="status" value="{{ $statusFilter }}">
+                @endif
+                <span class="member-shop-search__icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input type="search"
+                       name="q"
+                       value="{{ $q ?? '' }}"
+                       placeholder="Nom, email, sujet…"
+                       inputmode="search"
+                       autocomplete="off"
+                       class="input search-input text-sm"
+                       aria-label="Rechercher une question">
+            </form>
+        </div>
+
+        <div class="shop-catalog-search-panel questions-filters-panel {{ $filtersActive ? 'is-open' : '' }}"
              id="questionsFiltersPanel"
-             aria-hidden="true">
+             aria-hidden="{{ $filtersActive ? 'false' : 'true' }}">
             <div class="questions-filters-panel__inner">
                 @include('questions.partials.filters-chips')
             </div>

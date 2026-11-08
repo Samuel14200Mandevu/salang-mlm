@@ -258,6 +258,70 @@ html.salang-reduce-motion .member-app .services-featured__track {
   margin-bottom: 0;
 }
 
+/* Desktop — recherche + Filtrer (style admin) */
+.member-app .supervision-page-header-desktop .questions-desktop-search,
+.member-app .supervision-page-header-desktop .publications-desktop-search {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.member-app .supervision-page-header-desktop .search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.member-app .supervision-page-header-desktop .search-wrapper .search-input {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.5rem 1rem 0.5rem 2.35rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.member-app .supervision-page-header-desktop .search-wrapper .search-input:focus {
+  border-color: var(--color-primary-500, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500, var(--primary)) 18%, transparent);
+}
+
+.member-app .supervision-page .users-filter-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 40;
+  min-width: 11rem;
+  padding: 0.4rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg, 0 12px 28px rgba(15, 23, 42, 0.12));
+}
+
+.member-app .supervision-page .users-filter-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.55rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.member-app .supervision-page .users-filter-menu a:hover {
+  background: var(--bg-secondary);
+}
+
+.member-app .supervision-page .users-filter-menu a.is-active {
+  background: color-mix(in srgb, var(--primary, #1E5DAD) 12%, transparent);
+  color: var(--primary, #1E5DAD);
+  font-weight: 600;
+}
+
 .member-app .supervision-page .questions-catalog-head .questions-filters-panel.is-open,
 .member-app .supervision-page .publications-catalog-head .publications-filters-panel.is-open {
   margin-top: 0.75rem;
