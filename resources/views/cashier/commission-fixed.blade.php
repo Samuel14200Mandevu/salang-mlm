@@ -66,6 +66,27 @@
     .commission-table tr:hover td {
         background: var(--bg-secondary);
     }
+    .commission-table tbody tr.commission-row {
+        cursor: pointer;
+    }
+    .commission-table tbody tr.commission-row:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--primary, #1E5DAD) 45%, transparent);
+        outline-offset: -2px;
+    }
+    .commission-table thead th.col-amount,
+    .commission-table tbody td.col-amount {
+        text-align: left;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--text-primary);
+    }
+    .commission-member {
+        font-size: 0.8125rem;
+        font-weight: 650;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
     .commission-table .badge {
         display: inline-block;
         padding: 0.1rem 0.5rem;
@@ -74,18 +95,6 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-    }
-
-    .badge-cash {
-        display: inline-block;
-        padding: 0.1rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.55rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        background: rgba(34, 197, 94, 0.12);
-        color: #16a34a;
-        border: 1px solid rgba(34, 197, 94, 0.15);
     }
 
     .card {
@@ -560,7 +569,7 @@
                 </svg>
             </div>
             <div class="number">${{ number_format($stats['pos_total'] ?? 0, 2) }}</div>
-            <div class="label">POS CASH</div>
+            <div class="label">POS</div>
         </div>
 
         <div class="commission-stat-card">
@@ -595,11 +604,10 @@
                         <th>Source</th>
                         <th>Type</th>
                         <th>%</th>
-                        <th>Montant</th>
+                        <th class="col-amount">Montant</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Période</th>
                         <th class="hidden md:table-cell">Date</th>
-                        <th class="hidden lg:table-cell">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -613,9 +621,24 @@
                                 $typeClass = 'type-badge-default';
                             }
                             $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
-                            if ($commission->type == 'cash_pos') { $typeLabel = 'CASH POS'; }
+                            if ($commission->type == 'cash_pos') { $typeLabel = 'POS'; }
+
+                            $detailUrl = route('cashier.commissions.show', $commission->id);
+                            $statusMap = [
+                                'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
+                                'approved' => ['label' => 'Approuvée', 'class' => 'badge-info'],
+                                'paid' => ['label' => 'Payée', 'class' => 'badge-success'],
+                                'rejected' => ['label' => 'Rejetée', 'class' => 'badge-danger'],
+                                'cancelled' => ['label' => 'Annulée', 'class' => 'badge-secondary'],
+                            ];
+                            $status = $statusMap[$commission->status] ?? ['label' => ucfirst($commission->status), 'class' => 'badge-secondary'];
                         @endphp
                         <tr class="commission-row"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}"
                             data-search="{{ strtolower($commission->user?->name ?? '') }} {{ strtolower($commission->user?->sponsor_id ?? '') }} {{ strtolower($commission->type ?? '') }} {{ $commission->id }}"
                             data-type="{{ $commission->type }}"
                             data-status="{{ $commission->status }}"
@@ -624,13 +647,11 @@
                             data-date="{{ $commission->created_at->format('Y-m-d') }}">
                             <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $commission->id }}</td>
                             <td>
-                                <div class="font-medium text-sm">{{ $commission->user?->name ?? 'N/A' }}</div>
-                                <div class="text-xs text-[var(--text-secondary)]">Code: {{ $commission->user?->sponsor_id ?? 'N/A' }}</div>
+                                <span class="commission-member">
+                                    @if(!empty($commission->user?->sponsor_id)){{ $commission->user->sponsor_id }} : @endif{{ $commission->user?->name ?? 'N/A' }}
+                                </span>
                                 @if($commission->fromUser)
                                     <div class="from-user-info">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
                                         De: {{ $commission->fromUser->name }}
                                     </div>
                                 @endif
@@ -644,25 +665,10 @@
                                 <span class="type-badge {{ $typeClass }}">{{ $typeLabel }}</span>
                             </td>
                             <td class="commission-percentage">{{ $commission->percentage ?? 0 }}%</td>
-                            <td>
-                                <span class="font-bold {{ $commission->amount > 0 ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }} text-sm">
-                                    {{ $commission->amount > 0 ? '+' : '' }}${{ number_format($commission->amount, 2) }}
-                                </span>
-                                @if($commission->source == 'pos')
-                                    <span class="badge-cash ml-1">CASH</span>
-                                @endif
+                            <td class="col-amount {{ $commission->amount > 0 ? 'text-[var(--ui-stat-success)]' : 'text-[var(--ui-stat-danger)]' }}">
+                                {{ $commission->amount > 0 ? '+' : '' }}${{ number_format($commission->amount, 2) }}
                             </td>
                             <td>
-                                @php
-                                    $statusMap = [
-                                        'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
-                                        'approved' => ['label' => 'Approuvée', 'class' => 'badge-info'],
-                                        'paid' => ['label' => 'Payée', 'class' => 'badge-success'],
-                                        'rejected' => ['label' => 'Rejetée', 'class' => 'badge-danger'],
-                                        'cancelled' => ['label' => 'Annulée', 'class' => 'badge-secondary'],
-                                    ];
-                                    $status = $statusMap[$commission->status] ?? ['label' => ucfirst($commission->status), 'class' => 'badge-secondary'];
-                                @endphp
                                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                             </td>
                             <td class="hidden sm:table-cell text-xs text-[var(--text-tertiary)]">
@@ -671,18 +677,10 @@
                             <td class="hidden md:table-cell text-xs text-[var(--text-tertiary)]">
                                 {{ $commission->created_at->format('d/m/Y H:i') }}
                             </td>
-                            <td class="hidden lg:table-cell">
-                                <a href="{{ route('cashier.commissions.show', $commission->id) }}" class="btn btn-primary btn-xs">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>

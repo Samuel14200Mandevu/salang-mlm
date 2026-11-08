@@ -111,6 +111,97 @@ class PvManagementService
     }
 
     /**
+     * Annule les PV encore disponibles crédités pour une vente (stockés dans user_pv_balances).
+     * Ne touche pas aux PV déjà alloués / distribués.
+     */
+    public function reversePvFromSale(Order $order): bool
+    {
+        try {
+            DB::beginTransaction();
+
+            $credits = PvTransaction::query()
+                ->where('order_id', $order->id)
+                ->where('type', 'credit')
+                ->where('source', 'sale')
+                ->lockForUpdate()
+                ->get();
+
+            if ($credits->isEmpty()) {
+                DB::commit();
+
+                return true;
+            }
+
+            foreach ($credits as $credit) {
+                $alreadyReversed = PvTransaction::query()
+                    ->where('order_id', $order->id)
+                    ->where('type', 'debit')
+                    ->where('source', 'sale_reversal')
+                    ->where('user_id', $credit->user_id)
+                    ->exists();
+
+                if ($alreadyReversed) {
+                    continue;
+                }
+
+                $pvToReverse = (float) $credit->pv_amount;
+                $bvToReverse = (float) ($credit->bv_amount ?? 0);
+
+                $balance = UserPvBalance::query()
+                    ->where('user_id', $credit->user_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($balance) {
+                    $pvToReverse = min($pvToReverse, (float) $balance->available_pv);
+                    $bvToReverse = min($bvToReverse, (float) $balance->available_bv);
+
+                    $balance->available_pv = max(0, (float) $balance->available_pv - $pvToReverse);
+                    $balance->total_pv = max(0, (float) $balance->total_pv - $pvToReverse);
+
+                    if ($bvToReverse > 0) {
+                        $balance->available_bv = max(0, (float) $balance->available_bv - $bvToReverse);
+                        $balance->total_bv = max(0, (float) $balance->total_bv - $bvToReverse);
+                    }
+
+                    $balance->last_updated_at = now();
+                    $balance->save();
+                }
+
+                if ($pvToReverse <= 0 && $bvToReverse <= 0) {
+                    continue;
+                }
+
+                PvTransaction::create([
+                    'user_id' => $credit->user_id,
+                    'order_id' => $order->id,
+                    'type' => 'debit',
+                    'source' => 'sale_reversal',
+                    'pv_amount' => $pvToReverse,
+                    'bv_amount' => $bvToReverse,
+                    'description' => "PV annulés suite à l'annulation de la vente #{$order->order_number}",
+                    'metadata' => [
+                        'order_number' => $order->order_number,
+                        'reversed_credit_id' => $credit->id,
+                        'reason' => 'order_cancellation',
+                    ],
+                ]);
+            }
+
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur reverse PV vente: '.$e->getMessage(), [
+                'order_id' => $order->id,
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * Distribuer les PV d'un membre vers son réseau
      * ═══════════════════════════════════════════════════════════════════

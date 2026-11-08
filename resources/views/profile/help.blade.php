@@ -58,14 +58,27 @@
         $memberFaqs = app(\App\Services\SiteContentService::class)->faqs();
     @endphp
     @if (count($memberFaqs))
-        <section class="profile-subpage-body mt-6 space-y-3">
-            <h2 class="text-sm font-semibold text-[var(--text-primary)]">Questions fréquentes</h2>
-            @foreach ($memberFaqs as $faq)
-                <details class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2">
-                    <summary class="cursor-pointer text-sm font-medium text-[var(--text-primary)]">{{ $faq['question'] }}</summary>
-                    <p class="mt-2 text-sm text-[var(--text-secondary)] whitespace-pre-line">{{ $faq['answer'] }}</p>
-                </details>
-            @endforeach
+        <section class="profile-subpage-body mt-6 space-y-3" aria-labelledby="help-faq-heading">
+            <div class="flex items-end justify-between gap-2">
+                <div>
+                    <h2 id="help-faq-heading" class="text-sm font-semibold text-[var(--text-primary)]">Questions fréquentes</h2>
+                    <p class="text-xs text-[var(--text-tertiary)] mt-0.5">Réponses officielles Salang</p>
+                </div>
+                <span class="text-[0.7rem] font-medium text-[var(--text-tertiary)] tabular-nums">{{ count($memberFaqs) }}</span>
+            </div>
+            <div class="space-y-2">
+                @foreach ($memberFaqs as $faq)
+                    <details class="group rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] px-3.5 py-2.5 open:shadow-sm transition-shadow">
+                        <summary class="cursor-pointer list-none flex items-start justify-between gap-3 text-sm font-medium text-[var(--text-primary)] [&::-webkit-details-marker]:hidden">
+                            <span>{{ $faq['question'] }}</span>
+                            <svg class="w-4 h-4 shrink-0 mt-0.5 text-[var(--text-tertiary)] transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </summary>
+                        <p class="mt-2.5 pt-2.5 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">{{ $faq['answer'] }}</p>
+                    </details>
+                @endforeach
+            </div>
         </section>
     @endif
 </div>

@@ -305,7 +305,7 @@
                 <div class="value">
                     {{ $consultation->code_id ?? 'N/A' }}
                     @if($consultation->client)
-                        <span class="text-xs text-[var(--text-secondary)] block">Membre : {{ $consultation->client->name }}</span>
+                        <span class="text-xs text-[var(--text-secondary)] block">Membre PV : {{ $consultation->client->name }}</span>
                     @endif
                 </div>
             </div>
@@ -460,7 +460,7 @@
                                                        name="portions[{{ $line['line_key'] }}]"
                                                        value="full"
                                                        checked>
-                                                <span>Complet</span>
+                                                <span>Flacon</span>
                                             </label>
                                             <label>
                                                 <input type="radio"
@@ -472,7 +472,7 @@
                                         </div>
                                     @elseif($isPending)
                                         <input type="hidden" name="portions[{{ $line['line_key'] }}]" value="full">
-                                        <span class="text-xs text-[var(--text-tertiary)]">Complet</span>
+                                        <span class="text-xs text-[var(--text-tertiary)]">Flacon</span>
                                     @else
                                         <span class="text-xs text-[var(--text-secondary)]">
                                             {{ \App\Services\ConsultationSaleService::portionLabel($line['portion'] ?? null) }}

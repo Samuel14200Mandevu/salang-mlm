@@ -82,15 +82,29 @@
                     <tr>
                         <th>N° commande</th>
                         <th>Source</th>
-                        <th class="text-right">Total</th>
+                        <th>Total</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($orders as $order)
-                        <tr>
+                        @php
+                            $detailUrl = route('cashier.orders.show', $order->id);
+                            $statusMap = [
+                                'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
+                                'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
+                                'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
+                                'processing' => ['label' => 'En traitement', 'class' => 'badge-info'],
+                            ];
+                            $status = $statusMap[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'badge-warning'];
+                        @endphp
+                        <tr class="cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="font-mono text-xs text-[var(--primary-navy)]">#{{ $order->order_number }}</td>
                             <td>
                                 @if($order->source == 'pos')
@@ -99,31 +113,17 @@
                                     <span class="badge badge-info">En ligne</span>
                                 @endif
                             </td>
-                            <td class="text-right font-bold text-sm">${{ number_format($order->total, 2) }}</td>
+                            <td class="font-bold text-sm text-[var(--text-primary)]">${{ number_format($order->total, 2) }}</td>
                             <td>
-                                @php
-                                    $statusMap = [
-                                        'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
-                                        'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
-                                        'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
-                                        'processing' => ['label' => 'En traitement', 'class' => 'badge-info'],
-                                    ];
-                                    $status = $statusMap[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'badge-warning'];
-                                @endphp
                                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                             </td>
                             <td class="hidden sm:table-cell text-xs text-[var(--text-tertiary)]">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
                             </td>
-                            <td class="text-right">
-                                <a href="{{ route('cashier.orders.show', $order->id) }}" class="btn btn-primary btn-sm">
-                                    Voir
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
+                            <td colspan="5" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>

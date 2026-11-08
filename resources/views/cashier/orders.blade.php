@@ -42,9 +42,14 @@
     /* ===== TABLE ===== */
     .order-row {
         transition: background 0.1s ease;
+        cursor: pointer;
     }
     .order-row:hover {
         background: var(--bg-hover);
+    }
+    .order-row:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--primary-navy) 45%, transparent);
+        outline-offset: -2px;
     }
 
     .table-wrap { overflow-x: auto; }
@@ -69,6 +74,27 @@
         color: var(--text-primary);
         vertical-align: middle;
         border-bottom: 1px solid var(--border-light);
+    }
+    .table thead th.col-total,
+    .table tbody td.col-total {
+        text-align: left;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .table tbody td.col-total {
+        vertical-align: bottom;
+        color: var(--text-primary);
+    }
+    .sale-party__name {
+        font-size: 0.8125rem;
+        font-weight: 650;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
+    .sale-party__empty {
+        font-size: 0.8125rem;
+        color: var(--text-tertiary);
     }
     .table-striped tbody tr:nth-child(even) {
         background: var(--bg-secondary);
@@ -426,19 +452,55 @@
                     <tr>
                         <th>N° commande</th>
                         <th>Client</th>
-                        <th class="text-right">Total</th>
+                        <th>Membre</th>
+                        <th class="col-total">Total</th>
                         <th>Source</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     @forelse($orders ?? [] as $order)
-                        <tr class="order-row">
+                        @php
+                            $client = $order->user;
+                            $member = null;
+                            $metaSponsorId = data_get($order->metadata, 'sponsor_id');
+                            if ($metaSponsorId && isset($sponsorsById) && $sponsorsById->has($metaSponsorId)) {
+                                $member = $sponsorsById->get($metaSponsorId);
+                            } elseif ($client?->parrain) {
+                                $member = $client->parrain;
+                            } elseif ($client && $client->user_type === 'member') {
+                                $member = $client;
+                            }
+                            $detailUrl = route('cashier.orders.show', $order->id);
+                            $statusMap = [
+                                'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
+                                'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
+                                'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
+                                'processing' => ['label' => 'En traitement', 'class' => 'badge-info'],
+                            ];
+                            $status = $statusMap[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'badge-info'];
+                        @endphp
+                        <tr class="order-row"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="font-mono text-xs text-[var(--primary-navy)]">#{{ $order->order_number }}</td>
-                            <td class="text-sm">{{ $order->user?->name ?? 'N/A' }}</td>
-                            <td class="text-right font-semibold text-sm">${{ number_format($order->total, 2) }}</td>
+                            <td>
+                                <span class="sale-party__name">{{ $client?->name ?? 'N/A' }}</span>
+                            </td>
+                            <td>
+                                @if($member)
+                                    <span class="sale-party__name">
+                                        @if(!empty($member->sponsor_id)){{ $member->sponsor_id }} : @endif{{ $member->name }}
+                                    </span>
+                                @else
+                                    <span class="sale-party__empty">—</span>
+                                @endif
+                            </td>
+                            <td class="col-total">${{ number_format($order->total, 2) }}</td>
                             <td>
                                 @if($order->source == 'pos')
                                     <span class="badge badge-source-pos">POS</span>
@@ -449,24 +511,10 @@
                                 @endif
                             </td>
                             <td>
-                                @php
-                                    $statusMap = [
-                                        'completed' => ['label' => 'Terminée', 'class' => 'badge-success'],
-                                        'pending' => ['label' => 'En attente', 'class' => 'badge-warning'],
-                                        'cancelled' => ['label' => 'Annulée', 'class' => 'badge-danger'],
-                                        'processing' => ['label' => 'En traitement', 'class' => 'badge-info'],
-                                    ];
-                                    $status = $statusMap[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'badge-info'];
-                                @endphp
                                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                             </td>
                             <td class="hidden sm:table-cell text-xs text-[var(--text-tertiary)]">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="text-right">
-                                <a href="{{ route('cashier.orders.show', $order->id) }}" class="btn btn-primary btn-xs">
-                                    Voir
-                                </a>
                             </td>
                         </tr>
                     @empty

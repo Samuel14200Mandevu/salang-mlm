@@ -58,6 +58,19 @@ class CashierReportController extends Controller
             $query->whereDate('report_date', '<=', $request->date_to);
         }
 
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('report_number', 'like', '%'.$search.'%');
+                if (auth()->user()->hasRole('admin')) {
+                    $q->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    });
+                }
+            });
+        }
+
         if ($request->filled('user_id') && auth()->user()->hasRole('admin')) {
             $query->where('user_id', $request->user_id);
         }
@@ -372,13 +385,15 @@ class CashierReportController extends Controller
      */
     protected function calculateReportData($userId, Carbon $date): array
     {
-        $ordersQuery = Order::whereDate('created_at', $date)
+        $ordersQuery = Order::where('cashier_id', $userId)
+            ->whereDate('created_at', $date)
             ->where('status', 'completed')
             ->where(function ($q) {
                 $q->where('source', 'pos')->orWhere('source', 'mlm');
             });
 
         $orders = $ordersQuery->get();
+        $orderIds = $orders->pluck('id');
 
         // ============================================================
         // VENTES (USD)
@@ -423,13 +438,15 @@ class CashierReportController extends Controller
             ->sum('amount');
 
         // ============================================================
-        // COMMISSIONS CASH POS (USD)
+        // COMMISSIONS CASH POS (USD) — y compris ventes consultation
+        // user_id de la commission = membre bénéficiaire, pas le caissier.
         // ============================================================
-        $commissionsUsd = Commission::where('user_id', $userId)
-            ->whereDate('created_at', $date)
-            ->where('type', 'cash_pos')
-            ->where('status', 'paid')
-            ->sum('amount');
+        $commissionsUsd = $orderIds->isEmpty()
+            ? 0
+            : (float) Commission::whereIn('order_id', $orderIds)
+                ->where('type', 'cash_pos')
+                ->where('status', 'paid')
+                ->sum('amount');
 
         $commissionsCdf = 0;
 
@@ -451,6 +468,7 @@ class CashierReportController extends Controller
         // ============================================================
         $productsSold = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.cashier_id', $userId)
             ->whereDate('orders.created_at', $date)
             ->where('orders.status', 'completed')
             ->whereIn('orders.source', ['pos', 'mlm'])

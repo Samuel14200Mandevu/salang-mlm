@@ -327,36 +327,37 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Nom</th>
+                        <th>Membre</th>
                         <th class="hidden sm:table-cell">Email</th>
-                        <th>Code</th>
                         <th class="hidden md:table-cell">Grade</th>
                         <th class="hidden lg:table-cell">PV</th>
                         <th>Statut</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody id="downlinesTable">
                     @forelse($downlines ?? [] as $downline)
                         @php
                             $level = (int) ($downline->rank_level ?? 0);
+                            $detailUrl = route('cashier.members.show', $downline->id);
                         @endphp
-                        <tr class="filleul-row"
+                        <tr class="filleul-row cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}"
                             data-name="{{ strtolower($downline->name) }}"
                             data-email="{{ strtolower($downline->email) }}"
                             data-level="{{ $level }}"
                             data-status="{{ $downline->is_active ? 1 : 0 }}">
-                            <td class="font-mono text-xs text-[var(--text-secondary)]">{{ $downline->id }}</td>
                             <td>
-                                <div class="font-medium text-sm text-[var(--text-primary)]">{{ $downline->name }}</div>
-                                <div class="text-xs text-[var(--text-tertiary)]">Tél: {{ $downline->phone ?? 'N/A' }}</div>
+                                <div class="font-semibold text-sm text-[var(--text-primary)]">
+                                    @if(!empty($downline->sponsor_id)){{ $downline->sponsor_id }} : @endif{{ $downline->name }}
+                                </div>
+                                <div class="text-xs text-[var(--text-tertiary)]">{{ $downline->phone ?? '' }}</div>
                             </td>
                             <td class="hidden sm:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $downline->email }}
-                            </td>
-                            <td>
-                                <span class="font-mono text-xs text-[var(--navy)]">{{ $downline->sponsor_id ?? 'N/A' }}</span>
                             </td>
                             <td class="hidden md:table-cell">
                                 <span class="{{ \App\Support\MlmRank::badgeClass($level) }}">
@@ -372,19 +373,10 @@
                                     {{ $downline->is_active ? 'Actif' : 'Inactif' }}
                                 </span>
                             </td>
-                            <td class="text-right">
-                                <a href="{{ route('cashier.members.show', $downline->id) }}"
-                                   class="btn btn-primary btn-sm" title="Voir">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                        <circle cx="12" cy="12" r="3"/>
-                                    </svg>
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="5" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-[var(--text-tertiary)]">
                                     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                                     <circle cx="9" cy="7" r="4"/>

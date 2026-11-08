@@ -26,88 +26,90 @@
         'q' => $q,
     ])
 
-    <div class="supervision-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="member-page-intro min-w-0">
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                {{ $isSupervision ? 'Publications' : 'Événements & promos' }}
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Photos et vidéos de l’équipe Salang
-                @if($q !== '')
-                    <span class="text-xs text-[var(--text-tertiary)]">· « {{ $q }} »</span>
-                @endif
-            </p>
-        </div>
-
-        <div class="supervision-header-actions">
-            <form method="GET" action="{{ route('publications.index') }}" class="header-search publications-desktop-search">
-                @if(filled($typeFilter ?? null))
-                    <input type="hidden" name="type" value="{{ $typeFilter }}">
-                @endif
-                @if($activeFilter)
-                    <input type="hidden" name="active" value="1">
-                @endif
-                <div class="search-wrapper">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="search"
-                           name="q"
-                           class="search-input"
-                           placeholder="Rechercher une publication"
-                           autocomplete="off"
-                           value="{{ $q }}"
-                           aria-label="Rechercher une publication">
-                </div>
-            </form>
-
-            <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
-                <button type="button"
-                        @click="open = !open"
-                        class="btn btn-outline btn-sm {{ $filtersActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
-                        :aria-expanded="open"
-                        aria-haspopup="true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                    <span>{{ $filterButtonLabel }}</span>
-                </button>
-                <div x-show="open"
-                     x-cloak
-                     x-transition
-                     @click.outside="open = false"
-                     class="users-filter-menu">
-                    <a href="{{ route('publications.index', array_filter(['q' => $q !== '' ? $q : null, 'active' => $activeFilter ? '1' : null], fn ($v) => filled($v))) }}"
-                       class="{{ ! filled($typeFilter) ? 'is-active' : '' }}">
-                        <span>Tous</span>
-                    </a>
-                    <a href="{{ route('publications.index', array_merge($filterQueryBase, ['type' => 'event'])) }}"
-                       class="{{ ($typeFilter ?? null) === 'event' ? 'is-active' : '' }}">
-                        <span>Événements</span>
-                    </a>
-                    <a href="{{ route('publications.index', array_merge($filterQueryBase, ['type' => 'promotion'])) }}"
-                       class="{{ ($typeFilter ?? null) === 'promotion' ? 'is-active' : '' }}">
-                        <span>Promotions</span>
-                    </a>
-                    @php
-                        $activeToggle = array_filter([
-                            'q' => $q !== '' ? $q : null,
-                            'type' => filled($typeFilter) ? $typeFilter : null,
-                        ], fn ($v) => filled($v));
-                        if (! $activeFilter) {
-                            $activeToggle['active'] = '1';
-                        }
-                    @endphp
-                    <a href="{{ route('publications.index', $activeToggle) }}"
-                       class="{{ $activeFilter ? 'is-active' : '' }}">
-                        <span>Actifs seulement</span>
-                    </a>
-                </div>
+    <div class="supervision-page-header-desktop animate-fadeInUp">
+        <div class="supervision-page-header-desktop__row">
+            <div class="member-page-intro">
+                <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+                    {{ $isSupervision ? 'Publications' : 'Événements & promos' }}
+                </h1>
+                <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                    Photos et vidéos de l’équipe Salang
+                    @if($q !== '')
+                        <span class="text-xs text-[var(--text-tertiary)]">· « {{ $q }} »</span>
+                    @endif
+                </p>
             </div>
 
-            @if($isSupervision)
-                <a href="{{ route('publications.create') }}" class="btn btn-primary btn-sm sm:btn-md shrink-0">Nouvelle publication</a>
-            @endif
+            <div class="supervision-header-actions">
+                <form method="GET" action="{{ route('publications.index') }}" class="header-search publications-desktop-search">
+                    @if(filled($typeFilter ?? null))
+                        <input type="hidden" name="type" value="{{ $typeFilter }}">
+                    @endif
+                    @if($activeFilter)
+                        <input type="hidden" name="active" value="1">
+                    @endif
+                    <div class="search-wrapper">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="search"
+                               name="q"
+                               class="search-input"
+                               placeholder="Rechercher une publication"
+                               autocomplete="off"
+                               value="{{ $q }}"
+                               aria-label="Rechercher une publication">
+                    </div>
+                </form>
+
+                <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="btn btn-outline btn-sm {{ $filtersActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                            :aria-expanded="open"
+                            aria-haspopup="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span>{{ $filterButtonLabel }}</span>
+                    </button>
+                    <div x-show="open"
+                         x-cloak
+                         x-transition
+                         @click.outside="open = false"
+                         class="users-filter-menu">
+                        <a href="{{ route('publications.index', array_filter(['q' => $q !== '' ? $q : null, 'active' => $activeFilter ? '1' : null], fn ($v) => filled($v))) }}"
+                           class="{{ ! filled($typeFilter) ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                        </a>
+                        <a href="{{ route('publications.index', array_merge($filterQueryBase, ['type' => 'event'])) }}"
+                           class="{{ ($typeFilter ?? null) === 'event' ? 'is-active' : '' }}">
+                            <span>Événements</span>
+                        </a>
+                        <a href="{{ route('publications.index', array_merge($filterQueryBase, ['type' => 'promotion'])) }}"
+                           class="{{ ($typeFilter ?? null) === 'promotion' ? 'is-active' : '' }}">
+                            <span>Promotions</span>
+                        </a>
+                        @php
+                            $activeToggle = array_filter([
+                                'q' => $q !== '' ? $q : null,
+                                'type' => filled($typeFilter) ? $typeFilter : null,
+                            ], fn ($v) => filled($v));
+                            if (! $activeFilter) {
+                                $activeToggle['active'] = '1';
+                            }
+                        @endphp
+                        <a href="{{ route('publications.index', $activeToggle) }}"
+                           class="{{ $activeFilter ? 'is-active' : '' }}">
+                            <span>Actifs seulement</span>
+                        </a>
+                    </div>
+                </div>
+
+                @if($isSupervision)
+                    <a href="{{ route('publications.create') }}" class="btn btn-primary btn-sm sm:btn-md supervision-header-cta">Nouvelle publication</a>
+                @endif
+            </div>
         </div>
     </div>
 

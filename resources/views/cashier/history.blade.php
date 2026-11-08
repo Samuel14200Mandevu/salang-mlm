@@ -71,8 +71,29 @@
     .history-table tr:hover td {
         background: var(--bg-secondary);
     }
+    .history-table tbody tr.history-row {
+        cursor: pointer;
+    }
+    .history-table tbody tr.history-row:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--primary, #1E5DAD) 45%, transparent);
+        outline-offset: -2px;
+    }
     .history-table .text-right { text-align: right; }
     .history-table .text-center { text-align: center; }
+    .history-table .col-amount {
+        text-align: left;
+        font-weight: 650;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        vertical-align: bottom;
+    }
+    .history-member {
+        font-size: 0.8125rem;
+        font-weight: 650;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
 
     .filter-section {
         display: flex;
@@ -494,73 +515,46 @@
                         <th>Date</th>
                         <th>N° commande</th>
                         <th>Client</th>
-                        <th>Package / Produit</th>
-                        <th>Code parrain</th>
-                        <th class="text-right">Prix</th>
+                        <th>Membre</th>
+                        <th class="col-amount">Prix</th>
                         <th class="text-right">Commission</th>
-                        <th class="text-right">Payé</th>
                         <th class="text-right">PV</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     @forelse($orders ?? [] as $order)
                         @php
-                            // Récupérer le package ou le produit de la commande
-                            $packageName = null;
-                            $productName = null;
-                            $itemType = 'product';
-                            
-                            if ($order->items->isNotEmpty()) {
-                                $firstItem = $order->items->first();
-                                if ($firstItem->package_id) {
-                                    $package = \App\Models\Package::find($firstItem->package_id);
-                                    $packageName = $package ? $package->name : 'Package #'.$firstItem->package_id;
-                                    $itemType = 'package';
-                                } elseif ($firstItem->product_id) {
-                                    $product = \App\Models\Product::find($firstItem->product_id);
-                                    $productName = $product ? $product->name : 'Produit #'.$firstItem->product_id;
-                                    $itemType = 'product';
-                                }
-                            }
-                            
                             $totalProducts = $order->subtotal;
 
-                            $sponsor = null;
-                            if (isset($order->metadata['sponsor_id'])) {
-                                $sponsor = \App\Models\User::find($order->metadata['sponsor_id']);
-                            }
+                            $client = $order->user;
+                            $metaSponsorId = data_get($order->metadata, 'sponsor_id');
+                            $sponsor = $metaSponsorId
+                                ? ($sponsorsById[$metaSponsorId] ?? null)
+                                : ($client?->parrain ?? ($client && $client->user_type === 'member' ? $client : null));
 
-                            // Récupérer les commissions de cette commande
-                            $sponsorCommission = \App\Models\Commission::where('order_id', $order->id)
-                                ->where('type', 'sponsor')
-                                ->first();
-                            $sponsorAmount = $sponsorCommission ? $sponsorCommission->amount : 0;
-                            
-                            $cashCommission = \App\Models\Commission::where('order_id', $order->id)
-                                ->where('type', 'cash_pos')
-                                ->first();
-                            $cashAmount = $cashCommission ? $cashCommission->amount : 0;
-                            
+                            $sponsorAmount = (float) $order->commissions->where('type', 'sponsor')->sum('amount');
+                            $cashAmount = (float) $order->commissions->where('type', 'cash_pos')->sum('amount');
                             $totalCommission = $sponsorAmount + $cashAmount;
-
-                            $paidAmount = $totalProducts;
-                            $rest = 0;
 
                             $totalPV = $order->items->sum(function($item) {
                                 return ($item->pv_value ?? 0) * $item->quantity;
                             });
-                            
-                            // Vérifier si c'est une adhésion
+
                             $isMembership = ($order->source ?? '') === 'membership' || isset($order->metadata['is_membership']);
-                            
-                            // Récupérer le team_pv du sponsor pour les adhésions
+
                             $teamPV = 0;
-                            if ($isMembership && isset($order->metadata['sponsor_id'])) {
-                                $sponsorUser = \App\Models\User::find($order->metadata['sponsor_id']);
-                                $teamPV = $sponsorUser ? $sponsorUser->team_pv : 0;
+                            if ($isMembership && $metaSponsorId && $sponsor) {
+                                $teamPV = $sponsor->team_pv ?? 0;
                             }
+
+                            $detailUrl = route('cashier.orders.show', ['id' => $order->id, 'from' => 'history']);
                         @endphp
-                        <tr>
+                        <tr class="history-row"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="whitespace-nowrap text-xs text-[var(--text-tertiary)]">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
                             </td>
@@ -568,72 +562,26 @@
                                 #{{ $order->order_number }}
                             </td>
                             <td>
-                                <div class="font-medium text-sm">{{ $order->user?->name ?? 'N/A' }}</div>
-                                <div class="text-xs text-[var(--text-secondary)]">{{ $order->user?->phone ?? 'N/A' }}</div>
-                            </td>
-                            <td>
-                                @if($isMembership)
-                                    <div class="flex items-center gap-1">
-                                        <span class="badge-membership">Adhésion</span>
-                                        @if($packageName)
-                                            <span class="text-sm font-medium text-[var(--primary)]">{{ $packageName }}</span>
-                                        @endif
-                                    </div>
-                                    @if($order->metadata['member_code'] ?? false)
-                                        <div class="text-xs text-[var(--text-secondary)]">Code: {{ $order->metadata['member_code'] }}</div>
-                                    @endif
-                                @elseif($packageName)
-                                    <div class="flex items-center gap-1">
-                                        <span class="badge-cash">Package</span>
-                                        <span class="text-sm font-medium text-[var(--primary)]">{{ $packageName }}</span>
-                                    </div>
-                                    <div class="text-xs text-[var(--text-secondary)]">Quantité: {{ $order->items->sum('quantity') }}</div>
-                                @elseif($productName)
-                                    <div class="flex items-center gap-1">
-                                        <span class="badge-cash">Produit</span>
-                                        <span class="text-sm font-medium text-[var(--primary)]">{{ $productName }}</span>
-                                    </div>
-                                    <div class="text-xs text-[var(--text-secondary)]">Quantité: {{ $order->items->sum('quantity') }}</div>
-                                @else
-                                    <span class="text-xs text-[var(--text-tertiary)]">
-                                        {{ $order->items->count() }} article(s)
-                                    </span>
-                                @endif
+                                <span class="history-member">{{ $client?->name ?? 'N/A' }}</span>
                             </td>
                             <td>
                                 @if($sponsor)
-                                    <div class="font-mono text-xs text-[var(--primary)]">{{ $sponsor->sponsor_id ?? 'N/A' }}</div>
-                                    <div class="text-xs text-[var(--text-secondary)]">{{ $sponsor->name }}</div>
-                                @else
-                                    <span class="text-xs text-[var(--text-tertiary)]">Aucun</span>
-                                @endif
-                            </td>
-                            <td class="text-right font-medium">
-                                ${{ number_format($totalProducts, 2) }}
-                            </td>
-                            <td class="text-right">
-                                @if($totalCommission > 0)
-                                    @if($sponsorAmount > 0)
-                                        <div>
-                                            <span class="sponsor-amount">${{ number_format($sponsorAmount, 2) }}</span>
-                                            <span class="badge-sponsor ml-1">Sponsor</span>
-                                        </div>
-                                    @endif
-                                    @if($cashAmount > 0)
-                                        <div>
-                                            <span class="commission-amount">${{ number_format($cashAmount, 2) }}</span>
-                                            <span class="badge-commission ml-1">CASH</span>
-                                        </div>
-                                    @endif
+                                    <span class="history-member">
+                                        @if(!empty($sponsor->sponsor_id)){{ $sponsor->sponsor_id }} : @endif{{ $sponsor->name }}
+                                    </span>
                                 @else
                                     <span class="text-xs text-[var(--text-tertiary)]">—</span>
                                 @endif
                             </td>
+                            <td class="col-amount">
+                                ${{ number_format($totalProducts, 2) }}
+                            </td>
                             <td class="text-right">
-                                <span class="text-[var(--ui-stat-success)] font-semibold">
-                                    ${{ number_format($paidAmount, 2) }}
-                                </span>
-                                <span class="badge-paid ml-1">Payé</span>
+                                @if($totalCommission > 0)
+                                    <span class="commission-amount">${{ number_format($totalCommission, 2) }}</span>
+                                @else
+                                    <span class="text-xs text-[var(--text-tertiary)]">—</span>
+                                @endif
                             </td>
                             <td class="text-right">
                                 <div>
@@ -648,7 +596,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>

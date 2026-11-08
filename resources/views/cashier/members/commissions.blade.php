@@ -85,25 +85,30 @@
                         <th>ID</th>
                         <th>Type</th>
                         <th>Source</th>
-                        <th class="text-right">Montant</th>
+                        <th>Montant</th>
                         <th>Statut</th>
                         <th class="hidden md:table-cell">Date</th>
-                        <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($commissions ?? [] as $commission)
-                        <tr class="commission-row">
+                        @php
+                            $typeClass = 'type-badge-' . $commission->type;
+                            if (!in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos'])) {
+                                $typeClass = 'type-badge-default';
+                            }
+                            $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
+                            if ($commission->type == 'cash_pos') { $typeLabel = 'POS'; }
+                            $detailUrl = route('cashier.commissions.show', $commission->id);
+                        @endphp
+                        <tr class="commission-row cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            data-href="{{ $detailUrl }}"
+                            onclick="window.location.href=this.dataset.href"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
                             <td class="font-mono text-xs">#{{ $commission->id }}</td>
                             <td>
-                                @php
-                                    $typeClass = 'type-badge-' . $commission->type;
-                                    if (!in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos'])) {
-                                        $typeClass = 'type-badge-default';
-                                    }
-                                    $typeLabel = $commission->type_label ?? ucfirst(str_replace('_', ' ', $commission->type));
-                                    if ($commission->type == 'cash_pos') { $typeLabel = 'CASH POS'; }
-                                @endphp
                                 <span class="type-badge {{ $typeClass }}">
                                     {{ $typeLabel }}
                                 </span>
@@ -121,21 +126,15 @@
                                     <span class="badge-status" style="background: var(--bg-secondary); color:var(--text-secondary);">—</span>
                                 @endif
                             </td>
-                            <td class="text-right font-bold 
-                                @if($commission->amount > 0 && in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos']))
-                                    text-[var(--ui-stat-success)]
-                                @elseif($commission->amount > 0)
+                            <td class="font-bold 
+                                @if($commission->amount > 0)
                                     text-[var(--ui-stat-success)]
                                 @else
                                     text-[var(--ui-stat-danger)]
                                 @endif
                                 text-sm">
-                                @if($commission->amount > 0)
-                                    @if(in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos']))
-                                        +${{ number_format($commission->amount, 2) }}
-                                    @else
-                                        ${{ number_format($commission->amount, 2) }}
-                                    @endif
+                                @if($commission->amount > 0 && in_array($commission->type, ['sponsor', 'direct', 'indirect', 'leadership', 'cash_pos']))
+                                    +${{ number_format($commission->amount, 2) }}
                                 @else
                                     ${{ number_format($commission->amount, 2) }}
                                 @endif
@@ -154,19 +153,10 @@
                             <td class="hidden md:table-cell text-xs text-[var(--text-secondary)]">
                                 {{ $commission->created_at->format('d/m/Y H:i') }}
                             </td>
-                            <td class="text-right">
-                                <a href="{{ route('cashier.commissions.show', $commission->id) }}"
-                                   class="btn btn-primary btn-sm" title="Détails">
-                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.-402.2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>

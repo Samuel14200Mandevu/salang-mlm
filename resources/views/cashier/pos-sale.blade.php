@@ -442,8 +442,8 @@
 
                 <div class="form-group">
                     <label>Commission CASH <span class="text-xs text-[var(--text-tertiary)]">(optionnelle)</span></label>
-                    <input type="number" name="commission_amount" class="input" placeholder="5.00" step="0.50" min="0" max="15" value="5">
-                    <p class="text-[10px] text-[var(--text-tertiary)] mt-1">Entre 5$ et 15$</p>
+                    <input type="number" name="commission_amount" class="input" placeholder="0 ou 4–15" step="0.50" min="0" max="15" value="0" title="0 = aucune ; sinon 4$–15$">
+                    <p class="text-[10px] text-[var(--text-tertiary)] mt-1">Entre 4$ et 15$</p>
                 </div>
             </div>
 

@@ -75,9 +75,8 @@ class ConsultationController extends Controller
                 'string',
                 'max:50',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    $member = User::where('sponsor_id', $value)->where('is_active', true)->first();
-                    if (! $member) {
-                        $fail('Le Code ID doit être un code membre actif (destinataire des PV).');
+                    if (! Consultation::resolvePvMemberByCode((string) $value)) {
+                        $fail('Le Code ID doit être un code membre actif hors staff (destinataire des PV).');
                     }
                 },
             ],
@@ -99,9 +98,11 @@ class ConsultationController extends Controller
             'status' => 'required|in:pending,processing,completed,cancelled',
         ]);
 
-        $pvMember = User::where('sponsor_id', $request->code_id)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // client_id = membre PV (pas le patient)
+        $pvMember = Consultation::resolvePvMemberByCode($request->code_id);
+        if (! $pvMember) {
+            return redirect()->back()->withInput()->with('error', 'Code ID membre invalide.');
+        }
 
         // ============================================================
         // TRAITER LES PRODUITS RECOMMANDÉS

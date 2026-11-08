@@ -426,6 +426,8 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     
     // Panier multi-produits
     Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
+    Route::post('/cart/portion', [CashierController::class, 'updateCartPortion'])->name('cart.portion');
+    Route::post('/cart/clear', [CashierController::class, 'clearCart'])->name('cart.clear');
     Route::get('/checkout', [CashierController::class, 'checkout'])->name('checkout');
     Route::post('/checkout/order', [CashierController::class, 'createCheckoutOrder'])->name('checkout.order');
     
@@ -452,6 +454,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/consultations', [ConsultationController::class, 'store'])->name('consultations.store');
     Route::get('/consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('/consultations/{consultation}/checkout-selection', [ConsultationController::class, 'checkoutSelection'])->name('consultations.checkout-selection');
+    Route::post('/consultations/{consultation}/cancel-checkout', [ConsultationController::class, 'cancelCheckout'])->name('consultations.cancel-checkout');
     Route::get('/consultations/{consultation}/print', [ConsultationController::class, 'print'])->name('consultations.print');
     
     // Membres

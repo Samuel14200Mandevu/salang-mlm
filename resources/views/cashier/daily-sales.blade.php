@@ -124,8 +124,17 @@
         border-bottom: 1px solid var(--border-color);
     }
 
-    .table tbody tr:last-child td {
-        border-bottom: none;
+    .table thead th.col-total,
+    .table tbody td.col-total {
+        text-align: left;
+    }
+
+    .table tbody td.col-total {
+        vertical-align: bottom;
+        font-weight: 650;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
     }
 
     .table tbody tr:hover td {
@@ -147,27 +156,36 @@
     .badge-danger { background: rgba(179, 42, 42, 0.12); color: #b32a2a; }
     .badge-info { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
 
-    .payment-method-card {
-        background: var(--bg-secondary);
-        border-radius: var(--radius-md, 8px);
-        padding: 0.75rem 1rem;
-        border: 1px solid var(--border-color);
+    .sale-party {
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+        line-height: 1.25;
+        min-width: 0;
     }
-
-    .payment-method-card .method-name {
-        font-size: 0.813rem;
-        color: var(--text-secondary);
+    .sale-party__name {
+        font-size: 0.8125rem;
+        font-weight: 650;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
     }
-
-    .payment-method-card .method-count {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--primary);
+    .sale-party__code {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 650;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.02em;
+        color: var(--primary, #1E5DAD);
+        background: color-mix(in srgb, var(--primary, #1E5DAD) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--primary, #1E5DAD) 18%, var(--border-color));
     }
-
-    .payment-method-card .method-total {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
+    .sale-party__empty {
+        font-size: 0.8125rem;
+        color: var(--text-tertiary);
     }
 
     @media (max-width: 640px) {
@@ -182,8 +200,6 @@
         }
         .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
         .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
-        .payment-method-card { padding: 0.5rem 0.75rem; }
-        .payment-method-card .method-count { font-size: 1rem; }
     }
 
     @media (max-width: 480px) {
@@ -360,22 +376,6 @@
         </div>
     </div>
 
-    {{-- PAR MÉTHODE DE PAIEMENT --}}
-    @if(isset($stats['payment_methods']) && count($stats['payment_methods']) > 0)
-    <div class="card">
-        <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">Par méthode de paiement</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            @foreach($stats['payment_methods'] as $method => $data)
-                <div class="payment-method-card">
-                    <p class="method-name">{{ ucfirst(str_replace('_', ' ', $method)) }}</p>
-                    <p class="method-count">{{ $data['count'] }} commandes</p>
-                    <p class="method-total">${{ number_format($data['total'], 2) }}</p>
-                </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
-
     {{-- LISTE DES VENTES --}}
     <div class="card">
         <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">Détail des ventes</h3>
@@ -384,18 +384,44 @@
                 <thead>
                     <tr>
                         <th>N° commande</th>
-                        <th>Client / Membre</th>
+                        <th>Client</th>
+                        <th>Membre</th>
                         <th>Source</th>
-                        <th class="text-right">Total</th>
+                        <th class="col-total">Total</th>
                         <th>Paiement</th>
                         <th class="hidden sm:table-cell">Heure</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     @forelse($sales ?? [] as $sale)
+                        @php
+                            $client = $sale->user;
+                            $member = null;
+                            $metaSponsorId = data_get($sale->metadata, 'sponsor_id');
+                            if ($metaSponsorId && isset($sponsorsById) && $sponsorsById->has($metaSponsorId)) {
+                                $member = $sponsorsById->get($metaSponsorId);
+                            } elseif ($client?->parrain) {
+                                $member = $client->parrain;
+                            } elseif ($client && $client->user_type === 'member') {
+                                $member = $client;
+                            }
+                        @endphp
                         <tr>
                             <td class="font-mono text-[var(--primary)] text-xs sm:text-sm">#{{ $sale->order_number }}</td>
-                            <td class="text-sm">{{ $sale->user?->name ?? 'N/A' }}</td>
+                            <td>
+                                <div class="sale-party">
+                                    <span class="sale-party__name">{{ $client?->name ?? 'N/A' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if($member)
+                                    <span class="sale-party__name">
+                                        @if(!empty($member->sponsor_id)){{ $member->sponsor_id }} : @endif{{ $member->name }}
+                                    </span>
+                                @else
+                                    <span class="sale-party__empty">—</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($sale->source == 'pos')
                                     <span class="badge badge-source-pos">POS</span>
@@ -405,7 +431,7 @@
                                     <span class="badge badge-info">{{ strtoupper($sale->source ?? 'N/A') }}</span>
                                 @endif
                             </td>
-                            <td class="text-right font-semibold text-sm">${{ number_format($sale->total, 2) }}</td>
+                            <td class="col-total">${{ number_format($sale->total, 2) }}</td>
                             <td>
                                 @if($sale->payment_method == 'cash')
                                     <span class="badge badge-success">Espèces</span>
@@ -423,7 +449,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-6 sm:py-8 text-[var(--text-tertiary)] text-sm sm:text-base">
+                            <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-tertiary)] text-sm sm:text-base">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                                 </svg>

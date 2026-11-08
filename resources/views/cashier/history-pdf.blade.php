@@ -230,15 +230,14 @@
     <table class="global-table">
         <thead>
             <tr>
-                <th style="width:9%;">Date</th>
-                <th style="width:10%;">N° commande</th>
-                <th style="width:14%;">Client</th>
-                <th style="width:18%;">Package / Produit</th>
-                <th style="width:10%;">Code parrain</th>
-                <th style="width:9%;">Prix</th>
-                <th style="width:11%;">Commission</th>
-                <th style="width:9%;">Payé</th>
-                <th style="width:10%;">PV</th>
+                <th style="width:12%;">Date</th>
+                <th style="width:14%;">N° commande</th>
+                <th style="width:18%;">Client</th>
+                <th style="width:18%;">Membre</th>
+                <th style="width:10%;">Prix</th>
+                <th style="width:12%;">Commission</th>
+                <th style="width:10%;">Payé</th>
+                <th style="width:6%;">PV</th>
             </tr>
         </thead>
         <tbody>
@@ -248,29 +247,12 @@
                     <td style="color:#0E2F76; font-weight:bold;">#{{ $row['order_number'] }}</td>
                     <td class="text-left">
                         <strong>{{ $row['client_name'] }}</strong>
-                        @if($row['client_phone'])
-                            <div class="sub">{{ $row['client_phone'] }}</div>
-                        @endif
                     </td>
                     <td class="text-left">
-                        @if($row['item_kind'] === 'membership')
-                            <span class="badge badge-membership">Adhésion</span>
-                        @elseif($row['item_kind'] === 'package')
-                            <span class="badge badge-package">Package</span>
-                        @elseif($row['item_kind'] === 'product')
-                            <span class="badge badge-product">Produit</span>
-                        @endif
-                        <strong>{{ $row['item_label'] }}</strong>
-                        @if(!empty($row['item_extra']))
-                            <div class="sub">{{ $row['item_extra'] }}</div>
-                        @endif
-                    </td>
-                    <td>
-                        @if($row['sponsor_code'])
-                            <strong style="color:#0E2F76;">{{ $row['sponsor_code'] }}</strong>
-                            @if($row['sponsor_name'])
-                                <div class="sub">{{ $row['sponsor_name'] }}</div>
-                            @endif
+                        @if($row['sponsor_code'] || $row['sponsor_name'])
+                            <strong>
+                                @if($row['sponsor_code']){{ $row['sponsor_code'] }} : @endif{{ $row['sponsor_name'] }}
+                            </strong>
                         @else
                             —
                         @endif
@@ -291,14 +273,14 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9">Aucune vente POS pour cette période</td>
+                    <td colspan="8">Aucune vente POS pour cette période</td>
                 </tr>
             @endforelse
         </tbody>
         @if($rows->isNotEmpty())
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="5" style="text-align:right;">TOTAL GÉNÉRAL :</td>
+                    <td colspan="4" style="text-align:right;">TOTAL GÉNÉRAL :</td>
                     <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['price'], 2) }}</td>
                     <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['commission'], 2) }}</td>
                     <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['paid'], 2) }}</td>

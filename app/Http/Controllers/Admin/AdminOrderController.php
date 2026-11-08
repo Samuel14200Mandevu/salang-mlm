@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Models\Order;
@@ -132,12 +133,28 @@ public function handleCancellation(Request $request, Order $order)
         $metadata['cancellation_request']['status'] = 'approved';
         $metadata['cancellation_request']['processed_at'] = now()->toISOString();
         $metadata['cancellation_request']['processed_by'] = auth()->id();
-        
-        $order->metadata = $metadata;
-        $order->status = 'cancelled';
-        $order->cancelled_at = now();
-        $order->cancelled_by = auth()->id();
-        $order->save();
+
+        try {
+            DB::beginTransaction();
+
+            app(CashierController::class)->applyPosOrderCancellationEffects($order);
+
+            $order->metadata = $metadata;
+            $order->status = 'cancelled';
+            $order->payment_status = 'cancelled';
+            $order->cancelled_at = now();
+            $order->cancelled_by = auth()->id();
+            $order->save();
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Erreur approbation annulation: '.$e->getMessage(), [
+                'order_id' => $order->id,
+            ]);
+
+            return redirect()->back()->with('error', 'Erreur lors de l\'annulation: '.$e->getMessage());
+        }
         
         Log::info('Demande d\'annulation approuvée', [
             'order_id' => $order->id,
@@ -146,7 +163,7 @@ public function handleCancellation(Request $request, Order $order)
         ]);
         
         return redirect()->route('admin.orders.show', $order)
-            ->with('success', 'La commande a été annulée avec succès.');
+            ->with('success', 'La commande a été annulée avec succès (stock / PV / commissions traités).');
         
     } else {
         // Rejeter l'annulation

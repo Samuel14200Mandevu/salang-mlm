@@ -36,7 +36,7 @@ class ConsultationSaleService
 
     public static function portionLabel(?string $portion): string
     {
-        return self::resolvePortion($portion) === self::PORTION_HALF ? '1/2' : 'Complet';
+        return self::resolvePortion($portion) === self::PORTION_HALF ? '1/2' : 'Flacon';
     }
 
     public static function priceForProduct(Product $product, ?string $portion): float

@@ -639,6 +639,12 @@ BOUTONS D'ACTION
 </div>
 
 <script>
+    @if(session('clear_cart'))
+        try {
+            localStorage.removeItem('pos_cart');
+        } catch (e) {}
+    @endif
+
     // Impression automatique si demandée
     @if(request()->has('print'))
         window.onload = function() {

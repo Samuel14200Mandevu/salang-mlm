@@ -77,6 +77,82 @@
         color: #e8940f;
     }
 
+    .product-pricing {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 0;
+    }
+    .product-pricing__row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.35rem;
+        line-height: 1.15;
+    }
+    .product-pricing__label {
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        min-width: 2.4rem;
+    }
+    .product-pricing__value {
+        font-size: 0.8125rem;
+        font-weight: 750;
+        color: var(--primary, #1E5DAD);
+        font-variant-numeric: tabular-nums;
+    }
+    .product-pricing__value.is-half {
+        font-size: 0.75rem;
+        color: var(--text-primary);
+    }
+    .product-meta-foot {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.35rem;
+        padding-top: 0.45rem;
+        border-top: 1px solid var(--border-color);
+    }
+    .product-stock {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.05rem;
+        flex-shrink: 0;
+        text-align: right;
+        line-height: 1.15;
+    }
+    .product-stock__label {
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+    }
+    .product-stock__qty {
+        font-size: 0.8125rem;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+    }
+    @media (min-width: 640px) {
+        .product-pricing__label {
+            font-size: 0.6rem;
+            min-width: 2.75rem;
+        }
+        .product-pricing__value {
+            font-size: 0.9375rem;
+        }
+        .product-pricing__value.is-half {
+            font-size: 0.8125rem;
+        }
+        .product-stock__qty {
+            font-size: 0.875rem;
+        }
+    }
+
     /* ============================================================
        BADGES
        ============================================================ */
@@ -480,13 +556,18 @@
                     <div class="product-grid">
                         @foreach($products as $product)
                             @php
-                                $pvClass = $product->pv_value ? 'pv-' . $product->pv_value : 'pv-default';
+                                $flaconPrice = $product->priceForPortion('full');
+                                $halfPrice = $product->hasHalfOption() ? $product->priceForPortion('half') : null;
+                                $displayPv = (int) $product->pvForPortion('full');
+                                $pvClass = $displayPv ? 'pv-' . $displayPv : 'pv-default';
                             @endphp
                             <div class="product-card"
                                  data-name="{{ strtolower($product->name) }}"
                                  data-description="{{ strtolower($product->description ?? '') }}"
                                  data-product-id="{{ $product->id }}"
-                                 data-type="product">
+                                 data-type="product"
+                                 data-stock="{{ (int) $product->stock }}"
+                                 data-price="{{ $flaconPrice }}">
 
                                 <div class="image-container" onclick="posAddToCart({{ $product->id }}, 'product')">
                                     @if($product->image && file_exists(storage_path('app/public/products/' . $product->image)))
@@ -536,9 +617,9 @@
                                     </p>
 
                                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                                        @if($product->pv_value)
+                                        @if($displayPv > 0)
                                             <span class="pv-badge pv-badge-sm {{ $pvClass }}">
-                                                {{ $product->pv_value }} PV
+                                                {{ $displayPv }} PV
                                             </span>
                                         @endif
                                         @if($product->bv_value)
@@ -548,14 +629,23 @@
                                         @endif
                                     </div>
 
-                                    <div class="flex items-center justify-between mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-[var(--border-color)]">
-                                        <span class="product-price text-sm sm:text-lg font-bold text-[var(--primary)]">${{ number_format($product->price, 2) }}</span>
-                                        <span class="product-stock text-[8px] sm:text-[10px] {{ $product->stock > 10 ? 'text-[var(--ui-stat-success)]' : ($product->stock > 0 ? 'text-[var(--ui-stat-warning)]' : 'text-[var(--ui-stat-danger)]') }}">
-                                            @if($product->stock > 10) En stock
-                                            @elseif($product->stock > 0) {{ $product->stock }} restants
-                                            @else Rupture
+                                    <div class="product-meta-foot">
+                                        <div class="product-pricing">
+                                            <div class="product-pricing__row">
+                                                <span class="product-pricing__label">{{ $product->hasHalfOption() ? 'Flacon' : 'Prix' }}</span>
+                                                <span class="product-price product-pricing__value">${{ number_format($flaconPrice, 2) }}</span>
+                                            </div>
+                                            @if($product->hasHalfOption() && $halfPrice !== null)
+                                                <div class="product-pricing__row">
+                                                    <span class="product-pricing__label">1/2</span>
+                                                    <span class="product-pricing__value is-half">${{ number_format($halfPrice, 2) }}</span>
+                                                </div>
                                             @endif
-                                        </span>
+                                        </div>
+                                        <div class="product-stock {{ $product->stock > 10 ? 'text-[var(--ui-stat-success)]' : ($product->stock > 0 ? 'text-[var(--ui-stat-warning)]' : 'text-[var(--ui-stat-danger)]') }}">
+                                            <span class="product-stock__label">Stock</span>
+                                            <span class="product-stock__qty">{{ (int) $product->stock }}</span>
+                                        </div>
                                     </div>
 
                                     <div class="mt-1 sm:mt-2">
@@ -743,14 +833,12 @@ function posAddToCart(productId, type) {
     }
 
     const name = card.querySelector('.product-name')?.textContent?.trim() || 'Produit';
-    const priceElement = card.querySelector('.product-price');
-    const price = parseFloat(priceElement?.textContent?.replace('$', '').replace(',', '')) || 0;
+    const price = parseFloat(card.dataset.price || card.querySelector('.product-price')?.textContent?.replace(/[^0-9.]/g, '') || '0') || 0;
     const pvElement = card.querySelector('.pv-badge');
     const pv = pvElement ? parseInt(pvElement.textContent) || 0 : 0;
 
-    const stockElement = card.querySelector('.product-stock');
-    const stockText = stockElement?.textContent?.trim() || '';
-    if (stockText.includes('Rupture') || stockText.includes('0 restants')) {
+    const stockQty = parseInt(card.dataset.stock || '0', 10);
+    if (Number.isFinite(stockQty) && stockQty <= 0) {
         showToast('Ce produit est en rupture de stock', true);
         return;
     }

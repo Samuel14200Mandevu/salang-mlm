@@ -293,7 +293,7 @@
                 Commande #{{ $order->order_number }}
             </h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
-                Détails de la commande
+                Produits achetés et détail de la commande
             </p>
         </div>
         <div class="flex gap-1.5 sm:gap-2">
@@ -303,7 +303,7 @@
                 </svg>
                 Facture
             </a>
-            <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
+            <a href="{{ !empty($fromHistory) ? route('cashier.history') : route('cashier.orders') }}" class="btn btn-outline btn-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -369,15 +369,30 @@
     {{-- DÉTAILS --}}
     <div class="detail-grid grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
 
-        {{-- ARTICLES --}}
+        {{-- PRODUITS ACHETÉS --}}
         <div class="lg:col-span-2 card">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">Articles</h3>
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">
+                Produits achetés
+                <span class="text-[var(--text-tertiary)] font-medium">({{ $order->items->count() }})</span>
+            </h3>
 
             <div class="space-y-1">
-                @foreach($order->items as $item)
+                @forelse($order->items as $item)
+                    @php
+                        $itemName = $item->name
+                            ?: ($item->product?->name ?? null)
+                            ?: ($item->package?->name ?? null)
+                            ?: ($item->package_id ? 'Adhésion #'.$item->package_id : 'Article');
+                        $isAdhesion = !empty($item->package_id);
+                    @endphp
                     <div class="item-line">
                         <div>
-                            <p class="item-name">{{ $item->name }}</p>
+                            <p class="item-name">
+                                {{ $itemName }}
+                                @if($isAdhesion)
+                                    <span class="badge badge-info ml-1">Adhésion</span>
+                                @endif
+                            </p>
                             <p class="item-meta">
                                 Qté: {{ $item->quantity }} x ${{ number_format($item->price, 2) }}
                                 @if($item->pv_value > 0)
@@ -390,7 +405,9 @@
                         </div>
                         <p class="item-total">${{ number_format($item->total, 2) }}</p>
                     </div>
-                @endforeach
+                @empty
+                    <p class="text-sm text-[var(--text-tertiary)] py-4 text-center">Aucun produit sur cette commande</p>
+                @endforelse
 
                 @php
                     $totalPV = $order->items->sum(function($item) {
@@ -420,34 +437,37 @@
         <div class="card">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">Résumé</h3>
 
+            @php
+                $sponsorCommission = (float) ($sponsorCommission ?? 0);
+                $cashCommission = (float) ($cashCommission ?? 0);
+                $totalCommission = (float) ($totalCommission ?? ($sponsorCommission + $cashCommission));
+                $saleTotal = (float) ($order->total ?? $order->subtotal ?? 0);
+                $companyShare = max(0, $saleTotal - $totalCommission);
+            @endphp
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-[var(--text-secondary)]">Sous-total</span>
-                    <span class="font-medium">${{ number_format($order->subtotal, 2) }}</span>
+                    <span class="text-[var(--text-secondary)]">Vente</span>
+                    <span class="font-semibold text-[var(--text-primary)]">${{ number_format($saleTotal, 2) }}</span>
                 </div>
-                @if($order->tax > 0)
                 <div class="flex justify-between">
-                    <span class="text-[var(--text-secondary)]">Taxe</span>
-                    <span class="font-medium">${{ number_format($order->tax, 2) }}</span>
+                    <span class="text-[var(--text-secondary)]">Commission membre</span>
+                    <span class="font-semibold">${{ number_format($totalCommission, 2) }}</span>
                 </div>
-                @endif
-                @if($order->shipping > 0)
-                <div class="flex justify-between">
-                    <span class="text-[var(--text-secondary)]">Livraison</span>
-                    <span class="font-medium">${{ number_format($order->shipping, 2) }}</span>
-                </div>
-                @endif
-                @if($order->discount > 0)
-                <div class="flex justify-between">
-                    <span class="text-[var(--text-secondary)]">Réduction</span>
-                    <span class="font-medium text-[var(--ui-stat-danger)]">-${{ number_format($order->discount, 2) }}</span>
-                </div>
-                @endif
-                <div class="border-t border-[var(--border-color)] pt-3 mt-2">
-                    <div class="flex justify-between text-base sm:text-lg font-bold">
-                        <span>Total</span>
-                        <span class="text-[var(--primary)]">${{ number_format($order->total, 2) }}</span>
+                @if($sponsorCommission > 0 && $cashCommission > 0)
+                    <div class="flex justify-between text-xs pl-2">
+                        <span class="text-[var(--text-tertiary)]">dont sponsor</span>
+                        <span>${{ number_format($sponsorCommission, 2) }}</span>
                     </div>
+                    <div class="flex justify-between text-xs pl-2">
+                        <span class="text-[var(--text-tertiary)]">dont POS</span>
+                        <span>${{ number_format($cashCommission, 2) }}</span>
+                    </div>
+                @endif
+                <div class="border-t border-[var(--border-color)] pt-3 mt-2 flex justify-between items-baseline gap-2">
+                    <span class="text-sm text-[var(--text-secondary)]">
+                        Vente ${{ number_format($saleTotal, 2) }} − commission ${{ number_format($totalCommission, 2) }} :
+                    </span>
+                    <span class="font-bold text-[var(--primary)]">${{ number_format($companyShare, 2) }}</span>
                 </div>
             </div>
 
@@ -484,12 +504,10 @@
                     @endphp
                     @if($sponsor)
                     <div class="flex justify-between">
-                        <span class="text-[var(--text-secondary)]">Parrain</span>
-                        <span class="font-medium text-[var(--primary)]">{{ $sponsor->name }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-[var(--text-secondary)]">Code parrain</span>
-                        <span class="font-mono text-xs">{{ $sponsor->sponsor_id ?? 'N/A' }}</span>
+                        <span class="text-[var(--text-secondary)]">Membre</span>
+                        <span class="font-medium text-[var(--primary)]">
+                            @if(!empty($sponsor->sponsor_id)){{ $sponsor->sponsor_id }} : @endif{{ $sponsor->name }}
+                        </span>
                     </div>
                     @endif
                 @endif
@@ -546,7 +564,8 @@
                 $cancellationStatus = $hasCancellationRequest ? $order->metadata['cancellation_request']['status'] : null;
             @endphp
 
-            @if($order->status == 'pending' || $order->status == 'processing')
+            @if(in_array($order->status, ['pending', 'processing'], true)
+                || ($order->status === 'completed' && ($canRequestCancellation || $hasCancellationRequest)))
                 <div class="mt-3 pt-3 border-t border-[var(--border-color)]">
 
                     {{-- TIMER --}}
