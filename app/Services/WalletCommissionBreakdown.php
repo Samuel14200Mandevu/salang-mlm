@@ -3,14 +3,18 @@
 namespace App\Services;
 
 use App\Models\Commission;
+use App\Models\CommissionHistory;
 use App\Support\CareerQualificationPrizes;
+use App\Support\MlmPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class WalletCommissionBreakdown
 {
     /**
-     * Mois affichés dans Portefeuille → Détail des bonus (août + septembre).
+     * Mois affichés dans Portefeuille → Détail des bonus.
+     * À partir d’août de l’année, jusqu’à la période MLM courante
+     * (et tout mois suivant déjà présent dans commission_history).
      *
      * @return array<string, string> period => label
      */
@@ -19,43 +23,59 @@ class WalletCommissionBreakdown
         $now = $now?->copy() ?? now();
         $year = (int) $now->year;
 
-        // Avant août : on montre encore août/septembre de l’année précédente.
+        // Avant août : on reste sur la saison août→… de l’année précédente.
         if ((int) $now->month < 8) {
             $year--;
         }
 
-        $august = Carbon::create($year, 8, 1)->locale('fr');
-        $september = Carbon::create($year, 9, 1)->locale('fr');
+        $start = sprintf('%04d-08', $year);
+        $minEnd = sprintf('%04d-09', $year);
+        $current = MlmPeriod::current($now);
+        $end = $current >= $start ? $current : $minEnd;
 
-        return [
-            sprintf('%04d-08', $year) => ucfirst($august->translatedFormat('F Y')),
-            sprintf('%04d-09', $year) => ucfirst($september->translatedFormat('F Y')),
-        ];
+        if ($end < $minEnd) {
+            $end = $minEnd;
+        }
+
+        $latestHistory = CommissionHistory::query()
+            ->where('period', '>=', $start)
+            ->where('period', '<=', sprintf('%04d-12', $year))
+            ->max('period');
+
+        if (is_string($latestHistory) && $latestHistory > $end) {
+            $end = $latestHistory;
+        }
+
+        $options = [];
+        $cursor = Carbon::createFromFormat('Y-m', $start)->startOfMonth()->locale('fr');
+        $endDate = Carbon::createFromFormat('Y-m', $end)->startOfMonth();
+
+        while ($cursor->lte($endDate)) {
+            $key = $cursor->format('Y-m');
+            $options[$key] = ucfirst($cursor->translatedFormat('F Y'));
+            $cursor->addMonth();
+        }
+
+        return $options;
     }
 
     /**
-     * Montants payés par type (commissions visibles membre), optionnellement pour un mois MLM.
+     * Montants par type pour le portefeuille.
+     * Priorité : commissions payées visibles ; sinon historique MLM (commission_history) du mois.
      *
      * @return array<string, array{label: string, short: string, total: float, count: int}>
      */
     public function paidByType(int $userId, ?string $period = null): array
     {
         $types = CareerQualificationPrizes::walletBonusTypes();
-        $query = Commission::query()
-            ->where('user_id', $userId)
-            ->visibleToMember()
-            ->where('status', 'paid')
-            ->whereIn('type', array_keys($types));
+        $typeKeys = array_keys($types);
 
-        if ($period !== null && $period !== '') {
-            $query->where('period', $period);
-        }
+        $fromCommissions = $this->aggregateCommissions($userId, $typeKeys, $period);
+        $hasCommissionRows = $fromCommissions->sum(fn ($row) => (int) $row->count) > 0;
 
-        $aggregates = $query
-            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
-            ->groupBy('type')
-            ->get()
-            ->keyBy('type');
+        $aggregates = $hasCommissionRows
+            ? $fromCommissions
+            : $this->aggregateHistory($userId, $typeKeys, $period);
 
         $result = [];
         foreach ($types as $key => $meta) {
@@ -69,5 +89,51 @@ class WalletCommissionBreakdown
         }
 
         return $result;
+    }
+
+    /**
+     * @param  list<string>  $typeKeys
+     * @return \Illuminate\Support\Collection<string, object{type: string, total: mixed, count: mixed}>
+     */
+    private function aggregateCommissions(int $userId, array $typeKeys, ?string $period)
+    {
+        $query = Commission::query()
+            ->where('user_id', $userId)
+            ->visibleToMember()
+            ->where('status', 'paid')
+            ->whereIn('type', $typeKeys);
+
+        if ($period !== null && $period !== '') {
+            $query->where('period', $period);
+        }
+
+        return $query
+            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->keyBy('type');
+    }
+
+    /**
+     * Historique importé quand la table commissions n’a pas encore de lignes payées.
+     *
+     * @param  list<string>  $typeKeys
+     * @return \Illuminate\Support\Collection<string, object{type: string, total: mixed, count: mixed}>
+     */
+    private function aggregateHistory(int $userId, array $typeKeys, ?string $period)
+    {
+        $query = CommissionHistory::query()
+            ->where('user_id', $userId)
+            ->whereIn('type', $typeKeys);
+
+        if ($period !== null && $period !== '') {
+            $query->where('period', $period);
+        }
+
+        return $query
+            ->select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->keyBy('type');
     }
 }
