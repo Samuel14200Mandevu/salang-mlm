@@ -512,11 +512,10 @@
             </p>
         </div>
         <div class="flex gap-2 flex-wrap items-center">
-            {{-- SCANNER QR / CODE-BARRES --}}
+            {{-- SCANNER CODE-BARRES --}}
             <div class="scanner-container" id="scannerContainer">
-                <span class="scanner-text">Scanner QR / Code-barres</span>
-                <input type="text" id="qrScanner" class="scanner-input" autofocus>
-            </div>
+                <span class="scanner-text">Scanner code-barres</span>
+                <input type="text" id="qrScanner" class="scanner-input" autofocus>            </div>
             <div id="qrResult" class="qr-result"></div>
 
             <a href="{{ route('cashier.orders') }}" class="btn btn-outline btn-sm">
@@ -958,7 +957,7 @@ window.clearCart = function() {
 };
 
 // ================================================================
-//  SCANNER QR / CODE-BARRES
+//  SCANNER CODE-BARRES (SKU en priorité, puis ID)
 // ================================================================
 document.addEventListener('DOMContentLoaded', function() {
     const scannerInput = document.getElementById('qrScanner');
@@ -987,22 +986,36 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function processScannedCode(code) {
-    const qrResult = document.getElementById('qrResult');
-    const codeValue = code.trim();
-    const isNumeric = /^\d+$/.test(codeValue);
+    findProductBySku(code.trim(), true);
+}
 
-    if (isNumeric) {
-        findProductById(parseInt(codeValue));
-    } else {
-        findProductBySku(codeValue);
-    }
+function onScanSuccess(product) {
+    const qrResult = document.getElementById('qrResult');
+    qrResult.className = 'qr-result show success';
+    qrResult.innerHTML = ' ' + product.name + ' ajouté au panier!';
+    posAddToCart(product.id, 'product');
+
+    const container = document.getElementById('scannerContainer');
+    container.style.borderColor = '#22c55e';
+    setTimeout(() => container.style.borderColor = '', 2000);
+    setTimeout(() => qrResult.className = 'qr-result', 5000);
+}
+
+function onScanError(message) {
+    const qrResult = document.getElementById('qrResult');
+    qrResult.className = 'qr-result show error';
+    qrResult.innerHTML = ' ' + message;
+
+    const container = document.getElementById('scannerContainer');
+    container.style.borderColor = '#b32a2a';
+    setTimeout(() => container.style.borderColor = '', 2000);
+    setTimeout(() => qrResult.className = 'qr-result', 5000);
 }
 
 function findProductById(id) {
     const qrResult = document.getElementById('qrResult');
-
     qrResult.className = 'qr-result show';
-    qrResult.innerHTML = '🔍 Recherche du produit...';
+    qrResult.innerHTML = 'Recherche du produit...';
 
     fetch(`/cashier/product/find/${id}`, {
         method: 'GET',
@@ -1014,35 +1027,18 @@ function findProductById(id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            qrResult.className = 'qr-result show success';
-            qrResult.innerHTML = ' ' + data.product.name + ' ajouté au panier!';
-            posAddToCart(data.product.id, 'product');
-
-            const container = document.getElementById('scannerContainer');
-            container.style.borderColor = '#22c55e';
-            setTimeout(() => container.style.borderColor = '', 2000);
+            onScanSuccess(data.product);
         } else {
-            qrResult.className = 'qr-result show error';
-            qrResult.innerHTML = ' ' + (data.message || 'Produit non trouvé (ID: ' + id + ')');
-
-            const container = document.getElementById('scannerContainer');
-            container.style.borderColor = '#b32a2a';
-            setTimeout(() => container.style.borderColor = '', 2000);
+            onScanError(data.message || 'Produit non trouvé (ID: ' + id + ')');
         }
     })
-    .catch(error => {
-        qrResult.className = 'qr-result show error';
-        qrResult.innerHTML = ' Erreur: ' + error.message;
-    });
-
-    setTimeout(() => qrResult.className = 'qr-result', 5000);
+    .catch(error => onScanError('Erreur: ' + error.message));
 }
 
-function findProductBySku(sku) {
+function findProductBySku(sku, fallbackToId) {
     const qrResult = document.getElementById('qrResult');
-
     qrResult.className = 'qr-result show';
-    qrResult.innerHTML = '🔍 Recherche du produit (SKU: ' + sku + ')...';
+    qrResult.innerHTML = 'Recherche (SKU: ' + sku + ')...';
 
     fetch(`/cashier/product/find-by-sku/${encodeURIComponent(sku)}`, {
         method: 'GET',
@@ -1054,28 +1050,16 @@ function findProductBySku(sku) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            qrResult.className = 'qr-result show success';
-            qrResult.innerHTML = ' ' + data.product.name + ' ajouté au panier!';
-            posAddToCart(data.product.id, 'product');
-
-            const container = document.getElementById('scannerContainer');
-            container.style.borderColor = '#22c55e';
-            setTimeout(() => container.style.borderColor = '', 2000);
-        } else {
-            qrResult.className = 'qr-result show error';
-            qrResult.innerHTML = ' ' + (data.message || 'Produit non trouvé (SKU: ' + sku + ')');
-
-            const container = document.getElementById('scannerContainer');
-            container.style.borderColor = '#b32a2a';
-            setTimeout(() => container.style.borderColor = '', 2000);
+            onScanSuccess(data.product);
+            return;
         }
+        if (fallbackToId && /^\d+$/.test(sku)) {
+            findProductById(parseInt(sku, 10));
+            return;
+        }
+        onScanError(data.message || 'Produit non trouvé (SKU: ' + sku + ')');
     })
-    .catch(error => {
-        qrResult.className = 'qr-result show error';
-        qrResult.innerHTML = ' Erreur: ' + error.message;
-    });
-
-    setTimeout(() => qrResult.className = 'qr-result', 5000);
+    .catch(error => onScanError('Erreur: ' + error.message));
 }
 </script>
 @endpush

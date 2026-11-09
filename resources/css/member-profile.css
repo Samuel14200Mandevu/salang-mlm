@@ -1377,3 +1377,148 @@ html.dark .member-app .member-assistant-fab__svg--close {
   text-decoration: none;
   justify-content: center;
 }
+
+/* —— Desktop : pages profil sous-remplies (password / referral / help / about) —— */
+.member-app .profile-password-layout,
+.member-app .profile-referral-layout,
+.member-app .profile-help-layout,
+.member-app .profile-about-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.member-app .profile-about-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-app .profile-about-section-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.member-app .profile-about-block__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.member-app .profile-about-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.member-app .profile-help-tiles {
+  display: none;
+  gap: 0.75rem;
+}
+
+.member-app .profile-help-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.member-app .profile-help-tile:hover {
+  border-color: color-mix(in srgb, var(--color-primary-500) 35%, var(--border-color));
+  background: color-mix(in srgb, var(--color-primary-500) 4%, var(--bg-card));
+}
+
+.member-app .profile-help-tile__label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.member-app .profile-help-tile__desc {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  line-height: 1.35;
+}
+
+@media (min-width: 769px) {
+  .member-app .profile-page--password-only .profile-subpage-body,
+  .member-app .profile-referral-page .profile-subpage-body,
+  .member-app .profile-help-page .profile-subpage-body,
+  .member-app .profile-about-page .profile-subpage-body {
+    padding: 0;
+    margin: 0;
+  }
+
+  .member-app .profile-password-layout,
+  .member-app .profile-referral-layout,
+  .member-app .profile-about-layout {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    align-items: start;
+    gap: 1.25rem;
+  }
+
+  .member-app .profile-help-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: start;
+    gap: 1.25rem;
+  }
+
+  .member-app .profile-password-aside,
+  .member-app .profile-referral-aside,
+  .member-app .profile-about-aside {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .member-app .profile-help-tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .member-app .profile-about-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+  }
+
+  .member-app .profile-about-logo {
+    max-width: 10rem;
+    max-height: 3rem;
+  }
+
+  .member-app .profile-about-legal-menu {
+    margin: 0;
+  }
+
+  .member-app .profile-referral-qr svg {
+    width: 12rem;
+    height: 12rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .member-app .profile-password-layout,
+  .member-app .profile-referral-layout,
+  .member-app .profile-about-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+
+  .member-app .profile-help-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

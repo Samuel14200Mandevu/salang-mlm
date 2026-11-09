@@ -169,18 +169,32 @@ class Product extends Model
         return null;
     }
 
-    // QR Code
-    public function getQrCodeUrlAttribute()
+    // Code-barres (Code 128 = SKU)
+    public function getBarcodeUrlAttribute()
     {
-        if (isset($this->metadata['qr_code_svg'])) {
-            return asset('storage/' . $this->metadata['qr_code_svg']);
+        if (isset($this->metadata['barcode_svg'])) {
+            return asset('storage/'.$this->metadata['barcode_svg']);
         }
+
         return null;
     }
 
+    public function getBarcodeBase64Attribute()
+    {
+        return $this->metadata['barcode_base64'] ?? null;
+    }
+
+    /** @deprecated Utiliser barcode_url */
+    public function getQrCodeUrlAttribute()
+    {
+        return $this->barcode_url
+            ?? (isset($this->metadata['qr_code_svg']) ? asset('storage/'.$this->metadata['qr_code_svg']) : null);
+    }
+
+    /** @deprecated Utiliser barcode_base64 */
     public function getQrCodeBase64Attribute()
     {
-        return $this->metadata['qr_base64'] ?? null;
+        return $this->barcode_base64 ?? ($this->metadata['qr_base64'] ?? null);
     }
 
     // Relations
@@ -197,6 +211,11 @@ class Product extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class)->latest();
     }
 
     public function isInWishlist($userId)

@@ -6,17 +6,79 @@
 @section('content')
 <div class="orders-page space-y-4 sm:space-y-6">
 
-    <div class="orders-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="orders-page-header-desktop member-list-header animate-fadeInUp">
         <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes commandes</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez toutes vos commandes</p>
         </div>
-        <a href="{{ route('products.index') }}" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouvelle commande
-        </a>
+        <div class="member-header-actions">
+            <div class="header-search member-desktop-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           id="searchInputDesktop"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           aria-label="Rechercher une commande">
+                </div>
+            </div>
+
+            <div class="orders-header-tools">
+                <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="btn btn-outline btn-sm btn-icon orders-header-icon-btn"
+                            id="ordersFilterBtn"
+                            title="Filtrer"
+                            :aria-expanded="open"
+                            aria-haspopup="true"
+                            aria-label="Filtrer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span id="ordersFilterLabel" class="sr-only">Filtrer</span>
+                    </button>
+                    <div x-show="open"
+                         x-cloak
+                         x-transition
+                         @click.outside="open = false"
+                         class="users-filter-menu users-filter-panel">
+                        <div class="space-y-2">
+                            <div>
+                                <label for="statusFilterDesktop">Statut</label>
+                                <select id="statusFilterDesktop" class="form-control">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="pending">En attente</option>
+                                    <option value="processing">En traitement</option>
+                                    <option value="completed">Terminée</option>
+                                    <option value="cancelled">Annulée</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="dateFromDesktop">Du</label>
+                                <input type="date" id="dateFromDesktop" class="form-control">
+                            </div>
+                            <div>
+                                <label for="dateToDesktop">Au</label>
+                                <input type="date" id="dateToDesktop" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{{ route('products.index') }}"
+                   class="btn btn-primary btn-sm btn-icon orders-header-icon-btn"
+                   title="Nouvelle commande"
+                   aria-label="Nouvelle commande">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
     @include('orders.partials.catalog-head')
@@ -38,26 +100,6 @@
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total dépensé</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">${{ number_format($totalSpent ?? 0, 2) }}</p>
         </div>
-    </div>
-
-    <div class="orders-filters-desktop filters-wrapper animate-fadeInUp delay-5">
-        <div class="relative flex-1 min-w-[120px] sm:min-w-[150px] max-w-xs sm:max-w-sm">
-            <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </span>
-            <input type="text" id="searchInputDesktop" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
-        </div>
-        <select id="statusFilterDesktop" class="input w-auto min-w-[100px] sm:min-w-[140px] text-sm sm:text-base">
-            <option value="">Tous les statuts</option>
-            <option value="pending">En attente</option>
-            <option value="processing">En traitement</option>
-            <option value="completed">Terminée</option>
-            <option value="cancelled">Annulée</option>
-        </select>
-        <input type="date" id="dateFromDesktop" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Du">
-        <input type="date" id="dateToDesktop" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base" placeholder="Au">
     </div>
 
     <div class="orders-table-card card animate-fadeInUp delay-6">
@@ -208,6 +250,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     [searchInput, statusFilter, dateFrom, dateTo].forEach(function(el) { bindFilter(el, 'mobile'); });
     [searchInputDesktop, statusFilterDesktop, dateFromDesktop, dateToDesktop].forEach(function(el) { bindFilter(el, 'desktop'); });
+
+    function syncOrdersFilterLabel() {
+        var label = document.getElementById('ordersFilterLabel');
+        var btn = document.getElementById('ordersFilterBtn');
+        if (!label || !btn) return;
+        var status = statusFilterDesktop ? statusFilterDesktop.value : '';
+        var from = dateFromDesktop ? dateFromDesktop.value : '';
+        var to = dateToDesktop ? dateToDesktop.value : '';
+        var active = !!(status || from || to);
+        var text = 'Filtrer';
+        if (status === 'pending') text = 'En attente';
+        else if (status === 'processing') text = 'En traitement';
+        else if (status === 'completed') text = 'Terminée';
+        else if (status === 'cancelled') text = 'Annulée';
+        else if (from || to) text = 'Période';
+        label.textContent = text;
+        btn.classList.toggle('border-[var(--primary)]', active);
+        btn.classList.toggle('text-[var(--primary)]', active);
+    }
+    [statusFilterDesktop, dateFromDesktop, dateToDesktop].forEach(function (el) {
+        if (!el) return;
+        el.addEventListener('change', syncOrdersFilterLabel);
+    });
 });
 </script>
 @endpush

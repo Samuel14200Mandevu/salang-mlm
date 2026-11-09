@@ -220,8 +220,8 @@
             <a href="{{ route('admin.products.download-qr', $product->id) }}" class="btn btn-download">
                 Télécharger
             </a>
-            <a href="{{ route('admin.products.qr-codes') }}" class="btn btn-back">
-                Retour
+            <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-back">
+                Retour au détail
             </a>
         </div>
     </div>

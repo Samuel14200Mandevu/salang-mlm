@@ -6,24 +6,88 @@
 @section('content')
 <div class="commissions-page space-y-4 sm:space-y-6">
 
-    <div class="commissions-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="commissions-page-header-desktop member-list-header animate-fadeInUp">
         <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Mes Commissions</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Suivez vos gains en detail</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                Suivez vos gains en détail
+                <span id="resultCount" class="text-xs text-[var(--text-tertiary)]">· {{ $commissions->total() ?? 0 }} commissions</span>
+            </p>
         </div>
-        <div class="flex flex-wrap gap-1.5 sm:gap-2">
-            <a href="{{ route('commissions.dashboard') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                </svg>
-                Tableau de bord
-            </a>
-            <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                </svg>
-                Par niveau
-            </a>
+        <div class="member-header-actions">
+            <div class="header-search member-desktop-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           id="searchInputDesktop"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           aria-label="Rechercher une commission">
+                </div>
+            </div>
+
+            <div class="commissions-header-tools">
+                <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="btn btn-outline btn-sm btn-icon commissions-header-icon-btn"
+                            id="commissionsFilterBtn"
+                            title="Filtrer"
+                            :aria-expanded="open"
+                            aria-haspopup="true"
+                            aria-label="Filtrer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span id="commissionsFilterLabel" class="sr-only">Filtrer</span>
+                    </button>
+                    <div x-show="open"
+                         x-cloak
+                         x-transition
+                         @click.outside="open = false"
+                         class="users-filter-menu users-filter-panel">
+                        <button type="button" class="users-filter-menu__item is-active" data-commission-filter="">
+                            <span>Toutes</span>
+                        </button>
+                        <button type="button" class="users-filter-menu__item" data-commission-filter="pending">
+                            <span>En attente</span>
+                        </button>
+                        <button type="button" class="users-filter-menu__item" data-commission-filter="paid">
+                            <span>Payées</span>
+                        </button>
+                    </div>
+                </div>
+
+                <a href="{{ route('commissions.dashboard') }}"
+                   class="btn btn-outline btn-sm btn-icon commissions-header-icon-btn"
+                   title="Tableau de bord"
+                   aria-label="Tableau de bord">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                </a>
+                <a href="{{ route('commissions.levels') }}"
+                   class="btn btn-outline btn-sm btn-icon commissions-header-icon-btn"
+                   title="Par niveau"
+                   aria-label="Par niveau">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                </a>
+                <a href="{{ route('commissions.export-pdf', request()->all()) }}"
+                   class="btn btn-primary btn-sm btn-icon commissions-header-icon-btn"
+                   title="Exporter PDF"
+                   aria-label="Exporter PDF"
+                   target="_blank"
+                   rel="noopener">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -46,29 +110,6 @@
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['total_count'] ?? 0 }}</p>
         </div>
-    </div>
-
-    <div class="commissions-search-desktop flex flex-wrap items-center justify-end gap-2 sm:gap-3 animate-fadeInUp delay-5 search-container">
-        <div class="relative flex-1 sm:flex-none w-full sm:w-auto min-w-[150px] sm:min-w-[250px] max-w-full sm:max-w-sm">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </span>
-            <input type="text" id="searchInputDesktop" placeholder="Rechercher une commission..." class="input pl-9 text-sm sm:text-base w-full">
-        </div>
-        
-        <span id="resultCount" class="result-count">{{ $commissions->total() ?? 0 }} commissions</span>
-        
-        <a href="{{ route('commissions.export-pdf', request()->all()) }}" 
-           class="btn btn-primary btn-sm sm:btn-md flex-shrink-0" 
-           target="_blank">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span class="hidden sm:inline">Exporter PDF</span>
-            <span class="sm:hidden">PDF</span>
-        </a>
     </div>
 
     <p class="commissions-history-label">Historique</p>
@@ -170,20 +211,6 @@
     </div>
     @endif
 
-    <div class="commissions-quick-nav-desktop flex flex-wrap gap-2 sm:gap-3 animate-fadeInUp delay-7">
-        <a href="{{ route('commissions.dashboard') }}" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-            Tableau de bord
-        </a>
-        <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-            </svg>
-            Commissions par niveau
-        </a>
-    </div>
 </div>
 
 <!-- ===== MODAL DETAILS ===== -->
@@ -473,7 +500,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var resultCount = document.getElementById('resultCount');
     var resultCountMobile = document.getElementById('resultCountMobile');
     var totalBadge = document.getElementById('totalBadge');
+    var filterLabel = document.getElementById('commissionsFilterLabel');
+    var filterBtn = document.getElementById('commissionsFilterBtn');
     var totalRows = tableRows.length || mobileRows.length;
+    var statusFilter = '';
 
     function getSearchValue() {
         if (searchInput && searchInput.offsetParent !== null) {
@@ -491,14 +521,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateCounters(visibleCount, search) {
-        var label = search === ''
-            ? totalRows + ' commissions'
-            : visibleCount + ' résultat(s) sur ' + totalRows;
+        var label = (search === '' && !statusFilter)
+            ? '· ' + totalRows + ' commissions'
+            : '· ' + visibleCount + ' résultat(s) sur ' + totalRows;
 
         if (resultCount) resultCount.textContent = label;
-        if (resultCountMobile) resultCountMobile.textContent = label;
+        if (resultCountMobile) resultCountMobile.textContent = label.replace(/^·\s*/, '');
         if (totalBadge) {
-            totalBadge.textContent = search === '' ? totalRows + ' commissions' : visibleCount + ' / ' + totalRows;
+            totalBadge.textContent = (search === '' && !statusFilter)
+                ? totalRows + ' commissions'
+                : visibleCount + ' / ' + totalRows;
         }
     }
 
@@ -513,16 +545,19 @@ document.addEventListener('DOMContentLoaded', function() {
             ? mobileRows
             : (tableRows.length ? tableRows : mobileRows);
 
-        tableRows.forEach(function(row) {
+        function applyRow(row) {
             var text = row.textContent.toLowerCase();
-            var show = search === '' || text.includes(search);
+            var rowStatus = (row.dataset.status || '').toLowerCase();
+            var show = (search === '' || text.includes(search))
+                && (!statusFilter || rowStatus === statusFilter);
             row.style.display = show ? '' : 'none';
-        });
+            return show;
+        }
+
+        tableRows.forEach(function(row) { applyRow(row); });
 
         mobileRows.forEach(function(row) {
-            var text = row.textContent.toLowerCase();
-            var show = search === '' || text.includes(search);
-            row.style.display = show ? '' : 'none';
+            var show = applyRow(row);
             var item = row.closest('li');
             if (item) item.style.display = show ? '' : 'none';
         });
@@ -536,6 +571,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (searchInput) searchInput.addEventListener('input', function() { filterRows(searchInput); });
     if (searchInputDesktop) searchInputDesktop.addEventListener('input', function() { filterRows(searchInputDesktop); });
+
+    document.querySelectorAll('[data-commission-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            statusFilter = btn.getAttribute('data-commission-filter') || '';
+            document.querySelectorAll('[data-commission-filter]').forEach(function (el) {
+                el.classList.toggle('is-active', el === btn);
+            });
+            if (filterLabel) {
+                filterLabel.textContent = statusFilter
+                    ? (btn.textContent || '').trim()
+                    : 'Filtrer';
+            }
+            if (filterBtn) {
+                filterBtn.classList.toggle('border-[var(--primary)]', !!statusFilter);
+                filterBtn.classList.toggle('text-[var(--primary)]', !!statusFilter);
+            }
+            filterRows();
+        });
+    });
 });
 
 function showToast(message, type) {

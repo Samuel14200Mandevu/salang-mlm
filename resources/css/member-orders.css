@@ -2,6 +2,54 @@
  * Espace membre — Mes commandes (mobile : bandeau boutique + liste)
  */
 
+/* En-tête desktop : titre | recherche + Filtrer + Nouvelle (icônes, une ligne) */
+.member-app .orders-page-header-desktop.member-list-header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.member-app .orders-page-header-desktop .member-page-intro {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.member-app .orders-page-header-desktop .member-header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.member-app .orders-page-header-desktop .member-desktop-search {
+  flex: 0 0 12rem;
+  width: 12rem;
+  max-width: 12rem;
+}
+
+.member-app .orders-header-tools {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.member-app .orders-header-tools .orders-header-icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .member-app .orders-page-header-desktop {
     display: none !important;

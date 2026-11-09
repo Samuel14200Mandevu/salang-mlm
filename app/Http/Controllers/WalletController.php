@@ -60,12 +60,23 @@ class WalletController extends Controller
         ];
         $activityPeriodLabel = $activityPeriodLabels[$activityPeriod];
 
+        $bonusMonths = $this->commissionBreakdown->bonusMonthOptions();
+        $defaultBonusMonth = array_key_last($bonusMonths) ?: '';
+        $bonusMonth = (string) $request->query('bonus_month', $defaultBonusMonth);
+        if (! array_key_exists($bonusMonth, $bonusMonths)) {
+            $bonusMonth = $defaultBonusMonth;
+        }
+        $bonusMonthLabel = $bonusMonths[$bonusMonth] ?? $bonusMonth;
+
         // 🔥 EXCLURE LES TRANSACTIONS DE TYPE 'pv_credit' ET 'bv_credit'
         $transactions = Transaction::where('user_id', $user->id)
             ->whereNotIn('type', ['pv_credit', 'bv_credit'])
             ->orderBy('created_at', 'desc')
             ->paginate(15)
-            ->appends(['period' => $activityPeriod]);
+            ->appends([
+                'period' => $activityPeriod,
+                'bonus_month' => $bonusMonth,
+            ]);
 
         $transactionStats = $this->transactionStatsForUser($user->id, null);
         $activityOverview = $this->buildActivityOverview($user->id, $activitySince);
@@ -83,7 +94,7 @@ class WalletController extends Controller
             ->reverse()
             ->values();
 
-        $bonusByType = $this->commissionBreakdown->paidByType($user->id);
+        $bonusByType = $this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null);
 
         $pendingDepositCount = Transaction::query()
             ->where('user_id', $user->id)
@@ -107,6 +118,9 @@ class WalletController extends Controller
             'transactionStats',
             'monthlyCommissions',
             'bonusByType',
+            'bonusMonths',
+            'bonusMonth',
+            'bonusMonthLabel',
             'activityOverview',
             'activityPeriod',
             'activityPeriodLabel',

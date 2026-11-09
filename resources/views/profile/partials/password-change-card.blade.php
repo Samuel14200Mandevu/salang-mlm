@@ -14,18 +14,18 @@
     <form action="{{ route('profile.update-password') }}" method="POST">
         @csrf @method('PUT')
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             <div>
                 <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Mot de passe actuel</label>
-                <input type="password" name="current_password" value="{{ old('current_password') }}" class="input text-sm sm:text-base" placeholder="Entrez votre mot de passe actuel" required autocomplete="current-password">
+                <input type="password" name="current_password" value="{{ old('current_password') }}" class="input text-sm sm:text-base" placeholder="Mot de passe actuel" required autocomplete="current-password">
             </div>
             <div>
                 <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Nouveau mot de passe</label>
-                <input type="password" name="password" class="input text-sm sm:text-base" placeholder="Entrez un nouveau mot de passe" required autocomplete="new-password">
+                <input type="password" name="password" class="input text-sm sm:text-base" placeholder="Nouveau mot de passe" required autocomplete="new-password">
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-1">
                 <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">Confirmer le mot de passe</label>
-                <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="Confirmez le nouveau mot de passe" required autocomplete="new-password">
+                <input type="password" name="password_confirmation" class="input text-sm sm:text-base" placeholder="Confirmation" required autocomplete="new-password">
             </div>
         </div>
 

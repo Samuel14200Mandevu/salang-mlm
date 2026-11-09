@@ -11,7 +11,7 @@
     ];
 @endphp
 
-{{-- Mobile : bandeau selon le grade --}}
+{{-- Mobile uniquement — le desktop suit la structure IT (titre + KPI + cartes) --}}
 <div class="member-dashboard-greeting md:hidden">
     <div class="flex flex-wrap items-center gap-2 mb-1">
         <span class="{{ $currentRankBadgeClass ?? \App\Support\MlmRank::badgeClass($dashboardLevelNumber) }}">
@@ -23,29 +23,6 @@
     <p>{{ $dashboardLevel['welcome_message'] }}</p>
 </div>
 
-{{-- Desktop / tablette --}}
-<div class="dashboard-welcome-card animate-fadeInUp delay-1 hidden md:block rounded-2xl border-slate-200/90 dark:border-slate-700/80">
-    <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
-        <span class="{{ $currentRankBadgeClass ?? \App\Support\MlmRank::badgeClass($dashboardLevelNumber) }}">
-            {{ $currentRankName }}
-        </span>
-        <span class="dashboard-level-badge">Niv. {{ $dashboardLevelNumber }}</span>
-    </div>
-    <h3 class="font-bold text-[var(--text-primary)] text-base sm:text-lg">{{ $dashboardLevel['welcome_title'] }}</h3>
-    <p class="text-sm text-[var(--text-secondary)] mt-1">{{ $dashboardLevel['welcome_message'] }}</p>
-    <div class="mt-3 flex flex-wrap gap-2">
-        @foreach($ctaKeys as $key)
-            @php $cta = $ctaDefinitions[$key] ?? null; @endphp
-            @if($cta)
-                <a href="{{ route($cta['route']) }}" class="btn {{ ($cta['primary'] ?? false) ? 'btn-primary' : 'btn-outline' }} btn-sm">
-                    {{ $cta['label'] }}
-                </a>
-            @endif
-        @endforeach
-    </div>
-</div>
-
-{{-- Mobile : actions sous le bandeau --}}
 <div class="member-mobile-stack-actions md:hidden">
     @foreach($ctaKeys as $key)
         @php $cta = $ctaDefinitions[$key] ?? null; @endphp

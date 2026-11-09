@@ -4,6 +4,144 @@
  * Mobile : member-mobile.css + fintech (inchangé).
  */
 
+/* Titre + recherche + Filtrer (listes membre) */
+.member-app .member-list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  position: relative;
+  z-index: 40;
+}
+
+.member-app .member-list-header .member-page-intro,
+.member-app .member-list-header > .min-w-0 {
+  flex: 1 1 auto;
+  min-width: 12rem;
+  max-width: 100%;
+}
+
+.member-app .member-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+  position: relative;
+  z-index: 41;
+}
+
+.member-app .member-header-actions .member-desktop-search {
+  flex: 0 0 14rem;
+  width: 14rem;
+  max-width: 100%;
+}
+
+.member-app .member-header-actions .search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.member-app .member-header-actions .search-wrapper .search-input {
+  width: 100% !important;
+  max-width: none;
+  border-radius: 999px;
+  padding: 0.5rem 1rem 0.5rem 2.35rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.member-app .member-header-actions .search-wrapper .search-input:focus {
+  border-color: var(--color-primary-500, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500, var(--primary)) 18%, transparent);
+}
+
+.member-app .member-header-actions .supervision-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 42;
+}
+
+.member-app .users-filter-menu.users-filter-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 50;
+  min-width: 15rem;
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg, 0 12px 28px rgba(15, 23, 42, 0.12));
+}
+
+.member-app .users-filter-menu.users-filter-panel label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.member-app .users-filter-menu.users-filter-panel .form-control,
+.member-app .users-filter-menu.users-filter-panel select,
+.member-app .users-filter-menu.users-filter-panel input[type="date"] {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.member-app .users-filter-menu__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.member-app .users-filter-menu__item:hover {
+  background: var(--bg-secondary);
+}
+
+.member-app .users-filter-menu__item.is-active {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.member-app .dashboard-welcome-card--desktop .dashboard-welcome-card__grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+}
+
+.member-app .dashboard-welcome-card--desktop .dashboard-welcome-card__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 @media (min-width: 768px) {
   /* —— Canvas (comme cashier-mobile-pages @768) —— */
   .member-app .main-content {
@@ -215,9 +353,100 @@
     box-shadow: 0 4px 14px rgba(245, 166, 35, 0.22);
   }
 
-  /* Accueil membre — shell classique */
-  .member-app .member-classic-shell .dashboard-welcome-card {
-    padding: 1rem 1.25rem;
+  /* Accueil membre — structure type IT (titre + KPI + cartes + raccourcis) */
+  .member-app .member-classic-shell.member-dash {
+    max-width: none;
+  }
+
+  .member-app .member-classic-shell .member-dash-head {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  /* Premier bloc Accueil : profil + PV en une rangée */
+  .member-app .member-classic-shell .member-dash-hero {
+    align-items: stretch;
+  }
+
+  .member-app .member-classic-shell .member-dash-profile-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .member-app .member-classic-shell .member-dash-hero .card-stats {
+    min-height: 100%;
+  }
+
+  .member-app .member-header-actions .member-desktop-search {
+    flex-basis: 15rem;
+    width: 15rem;
+  }
+
+  .member-app .my-pv-page .my-pv-period-picker-wrap--desktop {
+    display: none !important;
+  }
+
+  .member-app .my-pv-page .my-pv-page-intro-desktop.member-list-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .member-app .my-pv-page .my-pv-page-intro-desktop .min-w-0 {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .member-app .my-pv-page .my-pv-page-intro-desktop .member-header-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .member-app .my-pv-page .my-pv-page-intro-desktop .member-desktop-search {
+    flex: 0 0 12rem;
+    width: 12rem;
+    max-width: 12rem;
+  }
+
+  .member-app .my-pv-page .my-pv-header-tools {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .member-app .my-pv-page .my-pv-period-picker-wrap--header .my-pv-period-picker__btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+  }
+
+  .member-app .my-pv-page .my-pv-period-picker-wrap--header .my-pv-period-picker__btn svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .member-app .my-pv-page .my-pv-period-picker-wrap--header .my-pv-period-picker__btn.has-filter {
+    border-color: var(--primary);
+    color: var(--primary);
   }
 
   .member-app .member-classic-shell .dashboard-stat-card {

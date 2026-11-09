@@ -35,6 +35,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ActivityEntry;
 use App\Services\ActivityRegisterService;
 use App\Services\ConsultationSaleService;
+use App\Services\ProductStockService;
 use App\Services\PvManagementService;
 
 class CashierController extends Controller
@@ -44,10 +45,13 @@ class CashierController extends Controller
 
     protected $pvService;
 
-    public function __construct(PvManagementService $pvService)
+    protected ProductStockService $stockService;
+
+    public function __construct(PvManagementService $pvService, ProductStockService $stockService)
     {
         // INITIALISER LE SERVICE
         $this->pvService = $pvService;
+        $this->stockService = $stockService;
         
         $this->middleware(['auth', 'active']);
         
@@ -117,7 +121,7 @@ public function dashboard()
     }
 
     /**
-     * Trouver un produit par son ID (pour le scanner QR)
+     * Trouver un produit par son ID (fallback scanner)
      */
     public function findProduct($id)
     {
@@ -144,18 +148,23 @@ public function dashboard()
     }
 
     /**
-     * Trouver un produit par son SKU (code-barres)
+     * Trouver un produit par son SKU (code-barres douchette)
      */
     public function findProductBySku($sku)
     {
-        $product = Product::where('sku', $sku)
-            ->where('is_active', true)
+        $sku = trim((string) $sku);
+
+        $product = Product::where('is_active', true)
+            ->where(function ($query) use ($sku) {
+                $query->where('sku', $sku)
+                    ->orWhere('metadata->barcode_content', $sku);
+            })
             ->first();
-        
-        if (!$product) {
+
+        if (! $product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Produit non trouvé (SKU: ' . $sku . ')'
+                'message' => 'Produit non trouvé (SKU: '.$sku.')',
             ], 404);
         }
         
@@ -280,8 +289,6 @@ public function createOrder(Request $request)
         DB::beginTransaction();
         
         try {
-            $this->decrementProductStock((int) $product->id, (int) $quantity, $product->name);
-
             $orderNumber = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(6));
             
             $order = Order::create([
@@ -322,6 +329,8 @@ public function createOrder(Request $request)
                 'pv_value' => $product->pv_value ?? 0,
                 'bv_value' => $product->bv_value ?? 0,
             ]);
+
+            $this->decrementProductStock((int) $product->id, (int) $quantity, $product->name, $order);
             
             // ============================================================
             // GESTION DES PV - VENTE POS
@@ -1403,7 +1412,8 @@ public function createCheckoutOrder(Request $request)
                     $this->decrementProductStock(
                         (int) $product->id,
                         (int) $item['quantity'],
-                        $item['name'] ?? $product->name
+                        $item['name'] ?? $product->name,
+                        $order
                     );
                 }
             }
@@ -2561,43 +2571,16 @@ public function destroyProfile(Request $request)
     }
 
     /**
-     * Décrémente le stock de façon atomique ; refuse si insuffisant.
+     * Décrémente le stock de façon atomique ; refuse si insuffisant + journal.
      */
-    protected function decrementProductStock(int $productId, int $quantity, ?string $productName = null): void
+    protected function decrementProductStock(int $productId, int $quantity, ?string $productName = null, ?Order $order = null): void
     {
-        if ($quantity < 1) {
-            return;
-        }
-
-        $affected = Product::query()
-            ->where('id', $productId)
-            ->where('stock', '>=', $quantity)
-            ->decrement('stock', $quantity);
-
-        if ($affected === 0) {
-            $product = Product::query()->find($productId);
-            $available = (int) ($product?->stock ?? 0);
-            $label = $productName ?: ($product?->name ?? ('#'.$productId));
-
-            throw new \RuntimeException(
-                "Stock insuffisant pour {$label} (disponible: {$available}, demandé: {$quantity})."
-            );
-        }
+        $this->stockService->consumeForSale($productId, $quantity, $order, $productName);
     }
 
     protected function restoreOrderStock(Order $order): void
     {
-        $order->loadMissing('items');
-
-        foreach ($order->items as $item) {
-            if (! $item->product_id || (int) $item->quantity < 1) {
-                continue;
-            }
-
-            Product::query()
-                ->where('id', $item->product_id)
-                ->increment('stock', (int) $item->quantity);
-        }
+        $this->stockService->restoreForCancelledOrder($order);
     }
 
     /**

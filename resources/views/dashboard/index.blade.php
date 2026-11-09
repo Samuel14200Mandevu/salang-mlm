@@ -39,23 +39,26 @@
         @endif
     </div>
 
-    {{-- Desktop : mise en page classique --}}
-    <div class="member-classic-shell hidden md:block space-y-4 sm:space-y-6">
-        @include('dashboard.partials.welcome')
-        @include('dashboard.partials.commission-bands')
+    {{-- Desktop : structure alignée sur l’accueil IT manager --}}
+    <div class="member-classic-shell member-dash hidden md:block space-y-4">
+        @include('dashboard.partials.desktop-header')
+
+        {{-- Premier bloc : profil + PV (comme sur la capture) --}}
+        @include('dashboard.partials.profile-stats')
+
         @include('dashboard.partials.stats-primary')
 
-        @if($dashboardLevel['show_leaders'] ?? false)
-            @include('dashboard.partials.leaders')
-        @endif
-
-        @include('dashboard.partials.profile-stats')
+        @include('dashboard.partials.commission-bands')
 
         @if($dashboardLevel['show_max_banner'] ?? false)
             @include('dashboard.partials.max-banner')
         @endif
 
         @include('dashboard.partials.rank-progress')
+
+        @if($dashboardLevel['show_leaders'] ?? false)
+            @include('dashboard.partials.leaders')
+        @endif
 
         @if($dashboardLevel['show_chart'] ?? true)
             @include('dashboard.partials.chart-activities')

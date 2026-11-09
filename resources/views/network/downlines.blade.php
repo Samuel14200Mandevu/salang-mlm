@@ -7,18 +7,69 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
     
-    <!-- Header -->
-    <div class="downline-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="member-page-intro network-page-intro-desktop">
+    <div class="downline-header member-list-header network-page-intro-desktop animate-fadeInUp">
+        <div class="member-page-intro min-w-0">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mes filleuls</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Tous les membres de votre généalogie</p>
         </div>
-        <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md network-page-back-desktop">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Retour à l'arbre
-        </a>
+        <div class="member-header-actions">
+            <div class="header-search member-desktop-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           aria-label="Rechercher un filleul">
+                </div>
+            </div>
+
+            <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm"
+                        id="downlinesFilterBtn"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        aria-label="Filtrer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span id="downlinesFilterLabel">Filtrer</span>
+                </button>
+                <div x-show="open"
+                     x-cloak
+                     x-transition
+                     @click.outside="open = false"
+                     class="users-filter-menu users-filter-panel">
+                    <div class="space-y-2">
+                        <div>
+                            <label for="levelFilter">Niveau</label>
+                            <select id="levelFilter" class="form-control">
+                                <option value="">Tous les niveaux</option>
+                                <option value="1">Niveau 1</option>
+                                <option value="2">Niveau 2</option>
+                                <option value="3">Niveau 3</option>
+                                <option value="4">Niveau 4+</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="statusFilter">Statut</label>
+                            <select id="statusFilter" class="form-control">
+                                <option value="">Tous les statuts</option>
+                                <option value="1">Actif</option>
+                                <option value="0">Inactif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm network-page-back-desktop">← Arbre</a>
+        </div>
     </div>
 
     <div class="network-mobile-banner animate-fadeInUp">
@@ -38,33 +89,32 @@
         </div>
     </div>
 
-    <!-- ✅ Affichage du code de parrain -->
     <div class="animate-fadeInUp delay-1 p-3 bg-primary-500/5 border border-primary-500/20 rounded-lg">
         <p class="text-sm text-[var(--text-secondary)]">
-            <span class="font-semibold text-primary-500">Votre code de parrain :</span> 
+            <span class="font-semibold text-primary-500">Votre code de parrain :</span>
             <span class="font-mono text-primary-500 font-bold">{{ Auth::user()?->sponsor_id }}</span>
             <span class="text-[var(--text-tertiary)] ml-2">(Partagez ce code pour parrainer de nouveaux membres)</span>
         </p>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-wrapper animate-fadeInUp delay-2">
-        <div class="relative flex-1 min-w-[120px] sm:min-w-[180px] max-w-xs sm:max-w-sm">
-            <span class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    {{-- Mobile : recherche + filtres (desktop = header) --}}
+    <div class="downlines-filters-mobile filters-wrapper animate-fadeInUp delay-2 md:hidden">
+        <div class="relative flex-1 min-w-0">
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Rechercher..." class="input pl-7 sm:pl-9 text-sm sm:text-base">
+            <input type="search" id="searchInputMobile" placeholder="Rechercher…" class="input pl-9 text-sm" autocomplete="off">
         </div>
-        <select id="levelFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
+        <select id="levelFilterMobile" class="input text-sm">
             <option value="">Tous les niveaux</option>
             <option value="1">Niveau 1</option>
             <option value="2">Niveau 2</option>
             <option value="3">Niveau 3</option>
             <option value="4">Niveau 4+</option>
         </select>
-        <select id="statusFilter" class="input w-auto min-w-[100px] sm:min-w-[130px] text-sm sm:text-base">
+        <select id="statusFilterMobile" class="input text-sm">
             <option value="">Tous les statuts</option>
             <option value="1">Actif</option>
             <option value="0">Inactif</option>
@@ -162,32 +212,48 @@ document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('searchInput');
     var levelFilter = document.getElementById('levelFilter');
     var statusFilter = document.getElementById('statusFilter');
-    var rows = document.querySelectorAll('#downlinesTable tr');
+    var searchInputMobile = document.getElementById('searchInputMobile');
+    var levelFilterMobile = document.getElementById('levelFilterMobile');
+    var statusFilterMobile = document.getElementById('statusFilterMobile');
+    var rows = document.querySelectorAll('#downlinesTable tr.downline-row');
+
+    function currentFilters() {
+        var isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile) {
+            return {
+                search: (searchInputMobile && searchInputMobile.value || '').trim().toLowerCase(),
+                level: levelFilterMobile ? levelFilterMobile.value : '',
+                status: statusFilterMobile ? statusFilterMobile.value : '',
+            };
+        }
+        return {
+            search: (searchInput && searchInput.value || '').trim().toLowerCase(),
+            level: levelFilter ? levelFilter.value : '',
+            status: statusFilter ? statusFilter.value : '',
+        };
+    }
 
     function filterRows() {
-        var search = searchInput.value.trim().toLowerCase();
-        var level = levelFilter.value;
-        var status = statusFilter.value;
+        var filters = currentFilters();
 
         rows.forEach(function(row) {
             var name = row.dataset.name || '';
             var email = row.dataset.email || '';
             var rowLevel = row.dataset.level || '1';
             var rowStatus = row.dataset.status || '1';
-
             var show = true;
 
-            if (search && !name.includes(search) && !email.includes(search)) {
+            if (filters.search && !name.includes(filters.search) && !email.includes(filters.search)) {
                 show = false;
             }
 
-            if (level === '4') {
+            if (filters.level === '4') {
                 if (parseInt(rowLevel, 10) < 4) show = false;
-            } else if (level && rowLevel != level) {
+            } else if (filters.level && rowLevel != filters.level) {
                 show = false;
             }
 
-            if (status && rowStatus != status) {
+            if (filters.status && rowStatus != filters.status) {
                 show = false;
             }
 
@@ -195,9 +261,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    searchInput.addEventListener('input', filterRows);
-    levelFilter.addEventListener('change', filterRows);
-    statusFilter.addEventListener('change', filterRows);
+    function syncFilterLabel() {
+        var label = document.getElementById('downlinesFilterLabel');
+        var btn = document.getElementById('downlinesFilterBtn');
+        if (!label || !btn || !levelFilter || !statusFilter) return;
+        var level = levelFilter.value;
+        var status = statusFilter.value;
+        var active = !!(level || status);
+        var text = 'Filtrer';
+        if (level === '1') text = 'Niveau 1';
+        else if (level === '2') text = 'Niveau 2';
+        else if (level === '3') text = 'Niveau 3';
+        else if (level === '4') text = 'Niveau 4+';
+        else if (status === '1') text = 'Actifs';
+        else if (status === '0') text = 'Inactifs';
+        label.textContent = text;
+        btn.classList.toggle('border-[var(--primary)]', active);
+        btn.classList.toggle('text-[var(--primary)]', active);
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterRows);
+    if (levelFilter) levelFilter.addEventListener('change', function () { filterRows(); syncFilterLabel(); });
+    if (statusFilter) statusFilter.addEventListener('change', function () { filterRows(); syncFilterLabel(); });
+    if (searchInputMobile) searchInputMobile.addEventListener('input', filterRows);
+    if (levelFilterMobile) levelFilterMobile.addEventListener('change', filterRows);
+    if (statusFilterMobile) statusFilterMobile.addEventListener('change', filterRows);
 });
 
 function exportCSV() {
