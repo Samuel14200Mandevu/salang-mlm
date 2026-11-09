@@ -25,17 +25,71 @@
 @endphp
 <div class="kyc-page space-y-4 sm:space-y-6">
 
-    <div class="kyc-page-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+    <div class="kyc-page-header-desktop member-list-header animate-fadeInUp">
         <div class="member-page-intro kyc-page-intro-desktop min-w-0">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Vérification KYC</h1>
             <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité pour sécuriser votre compte</p>
         </div>
-        <a href="{{ route('kyc.create') }}" class="btn btn-primary btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Soumettre un document
-        </a>
+        <div class="member-header-actions">
+            <div class="header-search member-desktop-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           id="kycSearchInput"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           aria-label="Rechercher un document">
+                </div>
+            </div>
+
+            <div class="kyc-header-tools">
+                <div class="supervision-filter-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="btn btn-outline btn-sm btn-icon kyc-header-icon-btn"
+                            id="kycFilterBtn"
+                            title="Filtrer"
+                            :aria-expanded="open"
+                            aria-haspopup="true"
+                            aria-label="Filtrer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span id="kycFilterLabel" class="sr-only">Filtrer</span>
+                    </button>
+                    <div x-show="open"
+                         x-cloak
+                         x-transition
+                         @click.outside="open = false"
+                         class="users-filter-menu users-filter-panel">
+                        <button type="button" class="users-filter-menu__item is-active" data-kyc-filter="">
+                            <span>Tous</span>
+                        </button>
+                        <button type="button" class="users-filter-menu__item" data-kyc-filter="pending">
+                            <span>En attente</span>
+                        </button>
+                        <button type="button" class="users-filter-menu__item" data-kyc-filter="verified">
+                            <span>Vérifiés</span>
+                        </button>
+                        <button type="button" class="users-filter-menu__item" data-kyc-filter="rejected">
+                            <span>Rejetés</span>
+                        </button>
+                    </div>
+                </div>
+
+                <a href="{{ route('kyc.create') }}"
+                   class="btn btn-primary btn-sm btn-icon kyc-header-icon-btn"
+                   title="Soumettre un document"
+                   aria-label="Soumettre un document">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="kyc-mobile-banner animate-fadeInUp">
@@ -114,7 +168,7 @@
         @if($documents->count() > 0)
             <div class="doc-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 @foreach($documents as $doc)
-                    <div class="document-card">
+                    <div class="document-card" data-kyc-status="{{ $doc->status }}" data-kyc-text="{{ strtolower($doc->document_type_label.' '.($doc->document_number ?? '').' '.$doc->file_name.' '.$doc->status_label) }}">
                         <span class="doc-icon">
                             @if($doc->document_type == 'id_card')
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,4 +280,50 @@
         </button>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var searchInput = document.getElementById('kycSearchInput');
+    var filterLabel = document.getElementById('kycFilterLabel');
+    var filterBtn = document.getElementById('kycFilterBtn');
+    var cards = document.querySelectorAll('.document-card');
+    var statusFilter = '';
+
+    function applyKycFilters() {
+        var q = (searchInput && searchInput.value || '').trim().toLowerCase();
+        cards.forEach(function (card) {
+            var text = (card.getAttribute('data-kyc-text') || card.textContent || '').toLowerCase();
+            var status = (card.getAttribute('data-kyc-status') || '').toLowerCase();
+            var matchQ = !q || text.indexOf(q) !== -1;
+            var matchS = !statusFilter || status === statusFilter;
+            card.style.display = (matchQ && matchS) ? '' : 'none';
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyKycFilters);
+    }
+
+    document.querySelectorAll('[data-kyc-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            statusFilter = btn.getAttribute('data-kyc-filter') || '';
+            document.querySelectorAll('[data-kyc-filter]').forEach(function (el) {
+                el.classList.toggle('is-active', el === btn);
+            });
+            if (filterLabel) {
+                filterLabel.textContent = statusFilter
+                    ? (btn.textContent || '').trim()
+                    : 'Filtrer';
+            }
+            if (filterBtn) {
+                filterBtn.classList.toggle('border-[var(--primary)]', !!statusFilter);
+                filterBtn.classList.toggle('text-[var(--primary)]', !!statusFilter);
+            }
+            applyKycFilters();
+        });
+    });
+});
+</script>
+@endpush
 @endsection

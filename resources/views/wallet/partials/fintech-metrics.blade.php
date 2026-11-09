@@ -7,6 +7,9 @@
     <div class="member-wallet-salang-section__head">
         <h2 id="wallet-activity-heading" class="member-wallet-salang-section__title">Aperçu de votre activité</h2>
         <form method="get" action="{{ route('wallet.index') }}" class="member-wallet-salang-period">
+            @if(!empty($bonusMonth))
+                <input type="hidden" name="bonus_month" value="{{ $bonusMonth }}">
+            @endif
             <label class="sr-only" for="wallet-activity-period">Période</label>
             <span class="member-wallet-salang-period__icon" aria-hidden="true">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">

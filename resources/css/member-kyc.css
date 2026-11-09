@@ -2,6 +2,54 @@
  * Espace membre — KYC (mobile)
  */
 
+/* En-tête desktop : titre | recherche + Filtrer + Soumettre (icônes, une ligne) */
+.member-app .kyc-page-header-desktop.member-list-header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.member-app .kyc-page-header-desktop .member-page-intro {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.member-app .kyc-page-header-desktop .member-header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.member-app .kyc-page-header-desktop .member-desktop-search {
+  flex: 0 0 12rem;
+  width: 12rem;
+  max-width: 12rem;
+}
+
+.member-app .kyc-header-tools {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.member-app .kyc-header-tools .kyc-header-icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .member-app .kyc-page-intro-desktop {
     display: none !important;
@@ -59,5 +107,77 @@
 @media (min-width: 769px) {
   .member-app .kyc-mobile-banner {
     display: none;
+  }
+}
+
+/* KYC create — layout pleine largeur desktop */
+.member-app .kyc-create-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.member-app .kyc-create-section {
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.member-app .kyc-create-section__head {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.member-app .kyc-create-section__head h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.member-app .kyc-create-section__head p {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.member-app .kyc-create-checklist {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.member-app .kyc-create-checklist--muted {
+  color: var(--text-tertiary);
+}
+
+.member-app .kyc-create-dropzone {
+  min-height: 11rem;
+}
+
+@media (min-width: 1024px) {
+  .member-app .kyc-create-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+    gap: 1.25rem;
+  }
+
+  .member-app .kyc-create-aside {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .member-app .kyc-create-dropzone {
+    min-height: 14rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .member-app .kyc-create-layout {
+    grid-template-columns: minmax(0, 1fr) 22rem;
   }
 }

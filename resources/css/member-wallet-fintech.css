@@ -494,6 +494,13 @@
     padding: 0 0.05rem;
   }
 
+  .member-app .member-wallet-salang-section__tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
   .member-app .member-wallet-salang-section__title {
     margin: 0;
     font-size: 0.9375rem;

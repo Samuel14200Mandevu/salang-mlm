@@ -315,13 +315,13 @@
                         <th class="text-right">Total</th>
                         <th>Statut</th>
                         <th>Paiement</th>
-                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTable">
                     @forelse($orders ?? [] as $order)
-                        <tr class="order-row"
-                            data-search="{{ strtolower($order->order_number . ' ' . ($order->user?->name ?? '') . ' ' . ($order->user?->email ?? '')) }}">
+                        <tr class="order-row cursor-pointer hover:bg-[var(--bg-secondary)]"
+                            data-search="{{ strtolower($order->order_number . ' ' . ($order->user?->name ?? '') . ' ' . ($order->user?->email ?? '')) }}"
+                            onclick="window.location='{{ route('admin.orders.show', $order) }}'">
                             <td>
                                 <span class="font-mono font-semibold text-[var(--text-primary)] text-xs sm:text-sm">
                                     #{{ $order->order_number }}
@@ -354,44 +354,10 @@
                                     {{ $order->payment_status == 'completed' ? 'Payé' : ($order->payment_status == 'pending' ? 'En attente' : 'Échoué') }}
                                 </span>
                             </td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-primary btn-sm" title="Voir">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </a>
-                                    @if($order->status == 'pending' || $order->status == 'processing')
-                                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="hidden" name="status" value="completed">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Marquer comme terminée">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-                                    @if($order->status == 'pending')
-                                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="hidden" name="status" value="cancelled">
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Annuler" onclick="return confirm('Annuler cette commande ?')">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>

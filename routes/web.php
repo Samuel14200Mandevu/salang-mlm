@@ -712,20 +712,33 @@ Route::prefix('pv')->name('pv.')->group(function () {
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
             Route::post('/', [AdminProductController::class, 'store'])->name('store');
+            Route::get('/barcodes', [AdminProductController::class, 'showBarcodes'])->name('barcodes');
+            Route::get('/barcodes/print-all', [AdminProductController::class, 'printAllBarcodes'])->name('print-all-barcodes');
+            Route::get('/generate-all-barcodes', [AdminProductController::class, 'generateAllBarcodes'])->name('generate-all-barcodes');
+            // Alias historiques QR → code-barres
+            Route::get('/qr-codes', [AdminProductController::class, 'showBarcodes'])->name('qr-codes');
+            Route::get('/qr-codes/print-all', [AdminProductController::class, 'printAllBarcodes'])->name('print-all-qr');
+            Route::get('/generate-all-qr', [AdminProductController::class, 'generateAllBarcodes'])->name('generate-all-qr');
+            Route::post('/generate-qr-codes', [AdminProductController::class, 'generateQrCodesBatch'])->name('generate-qr-codes');
+            // Stock multi-produits (avant /{id})
+            Route::get('/stock', [AdminProductController::class, 'stockOverview'])->name('stock-overview');
+            Route::post('/stock', [AdminProductController::class, 'bulkUpdateStock'])->name('stock-bulk');
+            Route::get('/stock/history', [AdminProductController::class, 'stockHistory'])->name('stock-history');
+            Route::get('/{id}', [AdminProductController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [AdminProductController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AdminProductController::class, 'update'])->name('update');
             Route::delete('/{id}', [AdminProductController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/stock', [AdminProductController::class, 'stock'])->name('stock');
+            Route::post('/{id}/stock', [AdminProductController::class, 'updateStock'])->name('stock.update');
             Route::get('/{id}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('toggle-status');
             Route::get('/{id}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('toggle-featured');
             Route::delete('/{id}/gallery', [AdminProductController::class, 'removeGalleryImage'])->name('remove-gallery');
-            
-            // Routes QR Codes
-            Route::get('/{id}/qr-code', [AdminProductController::class, 'showQrCode'])->name('qr-code');
-            Route::get('/{id}/download-qr', [AdminProductController::class, 'downloadQrCode'])->name('download-qr');
-            Route::post('/generate-qr-codes', [AdminProductController::class, 'generateQrCodesBatch'])->name('generate-qr-codes');
-            Route::get('/generate-all-qr', [AdminProductController::class, 'generateAllQrCodes'])->name('generate-all-qr');
-            Route::get('/qr-codes', [AdminProductController::class, 'showQrCodes'])->name('qr-codes');
-            Route::get('/qr-codes/print-all', [AdminProductController::class, 'printAllQrCodes'])->name('print-all-qr');
+            Route::get('/{id}/barcode', [AdminProductController::class, 'showBarcode'])->name('barcode');
+            Route::get('/{id}/generate-barcode', [AdminProductController::class, 'generateBarcode'])->name('generate-barcode');
+            Route::get('/{id}/download-barcode', [AdminProductController::class, 'downloadBarcode'])->name('download-barcode');
+            Route::get('/{id}/qr-code', [AdminProductController::class, 'showBarcode'])->name('qr-code');
+            Route::get('/{id}/generate-qr', [AdminProductController::class, 'generateBarcode'])->name('generate-qr');
+            Route::get('/{id}/download-qr', [AdminProductController::class, 'downloadBarcode'])->name('download-qr');
         });
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
 

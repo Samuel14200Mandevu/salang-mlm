@@ -2,6 +2,61 @@
  * Espace membre — Mes commissions (mobile : bandeau boutique)
  */
 
+/* En-tête desktop : titre | recherche + Filtrer + Tableau + Niveaux + PDF (une seule ligne) */
+.member-app .commissions-page-header-desktop.member-list-header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.member-app .commissions-page-header-desktop .member-page-intro {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.member-app .commissions-page-header-desktop .member-header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.member-app .commissions-page-header-desktop .member-desktop-search {
+  flex: 0 0 12rem;
+  width: 12rem;
+  max-width: 12rem;
+}
+
+.member-app .commissions-header-tools {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.member-app .commissions-header-tools .btn,
+.member-app .commissions-header-tools .supervision-filter-wrap {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
+}
+
+.member-app .commissions-header-tools .commissions-header-icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .member-app .commissions-page-header-desktop {
     display: none !important;

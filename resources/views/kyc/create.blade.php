@@ -2,14 +2,15 @@
 
 @section('title', 'Soumettre le KYC')
 
-
-
 @section('content')
-<div class="kyc-page space-y-4 sm:space-y-6">
+<div class="kyc-page kyc-page--create space-y-4 sm:space-y-6">
 
-    <div class="member-page-intro kyc-page-intro-desktop animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Soumettre un document KYC</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité en soumettant vos documents</p>
+    <div class="member-page-intro kyc-page-intro-desktop animate-fadeInUp flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Soumettre un document KYC</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vérifiez votre identité en soumettant vos documents</p>
+        </div>
+        <a href="{{ route('kyc.index') }}" class="btn btn-outline btn-sm hidden md:inline-flex">← Mes documents</a>
     </div>
 
     <div class="kyc-mobile-banner animate-fadeInUp">
@@ -39,16 +40,17 @@
         </div>
     @endif
 
-    <div class="card animate-fadeInUp delay-1 max-w-2xl mx-auto">
-        <form action="{{ route('kyc.store') }}" method="POST" enctype="multipart/form-data" id="kycForm">
-            @csrf
+    <form action="{{ route('kyc.store') }}" method="POST" enctype="multipart/form-data" id="kycForm" class="kyc-create-layout animate-fadeInUp delay-1">
+        @csrf
 
-            <!-- Type de document -->
-            <div class="mb-4 sm:mb-6">
-                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2 sm:mb-3">
-                    Type de document *
-                </label>
-                <div class="doc-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <div class="kyc-create-main space-y-4">
+            <section class="card kyc-create-section">
+                <div class="kyc-create-section__head">
+                    <h3>Type de document</h3>
+                    <p>Choisissez le document à vérifier.</p>
+                </div>
+
+                <div class="doc-grid grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                     <div class="document-type-card" data-value="id_card" onclick="selectDocumentType(this)">
                         <span class="doc-icon">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,29 +86,29 @@
                 </div>
                 <input type="hidden" name="document_type" id="document_type" required>
                 @error('document_type')
-                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                    <p class="text-xs text-red-500 mt-2">{{ $message }}</p>
                 @enderror
-            </div>
 
-            <!-- Numéro de document -->
-            <div class="mb-3 sm:mb-4">
-                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Numéro de document (optionnel)
-                </label>
-                <input type="text" 
-                       name="document_number" 
-                       class="input text-sm sm:text-base" 
-                       placeholder="ex. AB123456"
-                       value="{{ old('document_number') }}">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">Optionnel, mais recommandé pour accélérer la vérification</p>
-            </div>
+                <div class="mt-4 sm:mt-5">
+                    <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                        Numéro de document (optionnel)
+                    </label>
+                    <input type="text"
+                           name="document_number"
+                           class="input text-sm sm:text-base"
+                           placeholder="ex. AB123456"
+                           value="{{ old('document_number') }}">
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">Recommandé pour accélérer la vérification</p>
+                </div>
+            </section>
 
-            <!-- Téléchargement de fichier -->
-            <div class="mb-3 sm:mb-4">
-                <label class="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Fichier * (max 5 Mo)
-                </label>
-                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <section class="card kyc-create-section">
+                <div class="kyc-create-section__head">
+                    <h3>Fichier</h3>
+                    <p>JPG, PNG ou PDF · 5 Mo max.</p>
+                </div>
+
+                <div class="drop-zone kyc-create-dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
                     <div id="dropZoneContent">
                         <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-[var(--text-tertiary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -122,9 +124,9 @@
                         <p id="filePreviewSize" class="text-[10px] sm:text-xs text-[var(--text-secondary)]"></p>
                     </div>
                 </div>
-                <input type="file" 
-                       id="fileInput" 
-                       name="file" 
+                <input type="file"
+                       id="fileInput"
+                       name="file"
                        accept=".jpg,.jpeg,.png,.pdf"
                        class="hidden"
                        onchange="handleFileSelect(this)"
@@ -132,26 +134,10 @@
                 @error('file')
                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                 @enderror
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1">
-                    Formats : JPG, PNG, PDF • Taille max : 5 Mo
-                </p>
-            </div>
+            </section>
 
-            <!-- Informations importantes -->
-            <div class="p-2 sm:p-4 bg-[var(--bg-secondary)] rounded-lg mb-4 sm:mb-6">
-                <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
-                    <span class="font-semibold text-[var(--text-primary)]">Important :</span>
-                    <br>
-                    • Les documents doivent être clairs et lisibles.<br>
-                    • Seuls les formats JPG, PNG et PDF sont acceptés.<br>
-                    • La taille maximale du fichier est de 5 Mo.<br>
-                    • La vérification peut prendre jusqu'à 48 heures.
-                </p>
-            </div>
-
-            <!-- Boutons -->
-            <div class="flex flex-wrap gap-2 sm:gap-3">
-                <button type="submit" class="btn btn-primary w-full sm:flex-1 text-sm sm:text-base py-2 sm:py-2.5" id="submitBtn">
+            <div class="kyc-create-actions flex flex-wrap gap-2 sm:gap-3">
+                <button type="submit" class="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 sm:py-2.5" id="submitBtn">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -161,8 +147,36 @@
                     Annuler
                 </a>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <aside class="kyc-create-aside space-y-4">
+            <section class="card kyc-create-section">
+                <div class="kyc-create-section__head">
+                    <h3>Checklist</h3>
+                    <p>Documents attendus pour valider le KYC.</p>
+                </div>
+                <ul class="kyc-create-checklist">
+                    <li>Pièce d’identité (carte ou passeport)</li>
+                    <li>Justificatif de domicile récent</li>
+                    <li>Selfie net, visage bien visible</li>
+                    <li>Fichier lisible, sans flou ni découpe</li>
+                </ul>
+            </section>
+
+            <section class="card kyc-create-section kyc-create-section--tips">
+                <div class="kyc-create-section__head">
+                    <h3>Important</h3>
+                    <p>Délai de vérification jusqu’à 48 h.</p>
+                </div>
+                <ul class="kyc-create-checklist kyc-create-checklist--muted">
+                    <li>Formats : JPG, PNG, PDF uniquement</li>
+                    <li>Taille maximale : 5 Mo</li>
+                    <li>Un document à la fois</li>
+                    <li>Suivez le statut depuis « Mes documents »</li>
+                </ul>
+            </section>
+        </aside>
+    </form>
 </div>
 
 @push('scripts')
@@ -232,7 +246,7 @@ dropZone.addEventListener('dragleave', function(e) {
 dropZone.addEventListener('drop', function(e) {
     e.preventDefault();
     this.classList.remove('dragover');
-    
+
     var files = e.dataTransfer.files;
     if (files.length > 0) {
         var input = document.getElementById('fileInput');
@@ -244,13 +258,13 @@ dropZone.addEventListener('drop', function(e) {
 document.getElementById('kycForm').addEventListener('submit', function(e) {
     var docType = document.getElementById('document_type').value;
     var fileInput = document.getElementById('fileInput');
-    
+
     if (!docType) {
         e.preventDefault();
         alert('Veuillez sélectionner un type de document.');
         return;
     }
-    
+
     if (!fileInput.files || !fileInput.files[0]) {
         e.preventDefault();
         alert('Veuillez sélectionner un fichier.');

@@ -1,6 +1,6 @@
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 animate-fadeInUp delay-5">
-    <div class="card lg:col-span-2 member-dashboard-performance-card">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 animate-fadeInUp delay-5">
+    <div class="card member-dashboard-performance-card">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Performance</h3>
             <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">PV crédités et commissions · 6 mois</span>
         </div>
@@ -24,31 +24,37 @@
     </div>
 
     <div class="card">
-        <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Activites recentes</h3>
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Activités récentes</h3>
             <span class="badge badge-neutral text-[10px] sm:text-xs">{{ $recentActivities->count() ?? 0 }}</span>
         </div>
 
-        <div class="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
+        <div class="space-y-1 max-h-56 overflow-y-auto custom-scrollbar">
             @forelse($recentActivities ?? [] as $activity)
-                <div class="dashboard-activity-item">
-                    <div class="avatar avatar-sm avatar-gradient flex-shrink-0">
+                <div class="member-dash-activity">
+                    <div class="member-dash-activity__avatar">
                         {{ substr($activity->fromUser?->name ?? 'S', 0, 1) }}
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs sm:text-sm text-[var(--text-primary)] truncate">
-                            <span class="font-semibold">{{ $activity->fromUser?->name ?? 'Systeme' }}</span>
-                            <span class="text-[var(--text-secondary)]">{{ $activity->type_label ?? $activity->type ?? 'action' }}</span>
+                    <div class="member-dash-activity__body">
+                        <p class="member-dash-activity__title">
+                            {{ $activity->fromUser?->name ?? 'Système' }}
+                            <span class="text-[var(--text-secondary)] font-normal">{{ $activity->type_label ?? $activity->type ?? 'action' }}</span>
                         </p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $activity->created_at->diffForHumans() }}</p>
+                        <p class="member-dash-activity__time">{{ $activity->created_at->diffForHumans() }}</p>
                     </div>
                     @if($activity->amount)
-                        <span class="text-xs sm:text-sm font-bold text-green-500 flex-shrink-0">+${{ number_format($activity->amount, 2) }}</span>
+                        <span class="member-dash-activity__amount">+${{ number_format($activity->amount, 2) }}</span>
                     @endif
                 </div>
             @empty
-                <p class="text-center text-[var(--text-secondary)] py-8 text-sm">Aucune activite recente</p>
+                <p class="text-center text-[var(--text-secondary)] py-8 text-sm">Aucune activité récente</p>
             @endforelse
+        </div>
+
+        <div class="mt-2 text-right">
+            <a href="{{ route('commissions.index') }}" class="text-xs text-primary-500 hover:underline font-medium">
+                Voir les commissions →
+            </a>
         </div>
     </div>
 </div>

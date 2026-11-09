@@ -12,9 +12,39 @@
 
 @section('content')
 <div class="space-y-4 sm:space-y-6 my-pv-page">
-    <div class="member-page-intro my-pv-page-intro-desktop animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Historique des PV</h1>
-        <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vos points de volume enregistrés par période</p>
+    <div class="member-page-intro my-pv-page-intro-desktop member-list-header animate-fadeInUp">
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Historique des PV</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                Vos points de volume enregistrés par période
+                @if($activePeriodLabel)
+                    <span class="text-xs text-[var(--text-tertiary)]">· {{ $activePeriodLabel }}</span>
+                @endif
+            </p>
+        </div>
+        <div class="member-header-actions">
+            <div class="header-search member-desktop-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           id="myPvSearchInput"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           aria-label="Rechercher un mouvement PV">
+                </div>
+            </div>
+            <div class="my-pv-header-tools">
+                <div class="my-pv-period-picker-wrap my-pv-period-picker-wrap--header">
+                    @include('my-pv.partials.period-picker', [
+                        'pickerVariant' => 'card',
+                        'activePeriod' => $activePeriod,
+                    ])
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="my-pv-mobile-banner animate-fadeInUp">
@@ -211,6 +241,20 @@ document.addEventListener('DOMContentLoaded', function () {
             closeAll(null);
         }
     });
+
+    var pvSearch = document.getElementById('myPvSearchInput');
+    if (pvSearch) {
+        pvSearch.addEventListener('input', function () {
+            var q = pvSearch.value.trim().toLowerCase();
+            document.querySelectorAll('.my-pv-movements-desktop tbody tr, .my-pv-movements-mobile article').forEach(function (row) {
+                var text = (row.textContent || '').toLowerCase();
+                var show = !q || text.indexOf(q) !== -1;
+                row.style.display = show ? '' : 'none';
+                var item = row.closest('li');
+                if (item) item.style.display = show ? '' : 'none';
+            });
+        });
+    }
 });
 </script>
 @endpush
