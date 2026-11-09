@@ -8,6 +8,7 @@
         'direct' => 'direct',
         'indirect' => 'indirect',
         'leadership' => 'leadership',
+        'cash_pos' => 'cash_pos',
     ];
 @endphp
 <section class="member-wallet-salang-section member-fintech-animate member-fintech-animate--d4" aria-labelledby="wallet-bonus-heading">

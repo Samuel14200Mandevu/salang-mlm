@@ -111,5 +111,7 @@ class WalletCommissionBreakdownTest extends TestCase
         $this->assertSame(12.5, $august['direct']['total']);
         $this->assertSame(7.5, $august['indirect']['total']);
         $this->assertSame(0.0, $august['leadership']['total']);
+        $this->assertSame(0.0, $august['cash_pos']['total']);
+        $this->assertArrayHasKey('cash_pos', $august);
     }
 }

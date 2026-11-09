@@ -21,6 +21,10 @@ return [
             'label' => 'Leadership',
             'short' => 'Bonus leadership',
         ],
+        'cash_pos' => [
+            'label' => 'Profit POS',
+            'short' => 'Détail profit (POS)',
+        ],
     ],
 
     /*
