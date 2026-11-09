@@ -4,8 +4,8 @@
 
 @php
     $site = config('salang-site');
-    $supportEmail = $supportEmail ?: $site['email'];
-    $supportPhone = $supportPhone ?: $site['phone'];
+    $supportEmail = ($supportEmail ?? null) ?: $site['email'];
+    $supportPhone = ($supportPhone ?? null) ?: $site['phone'];
     $subjectOptions = $subjectOptions ?? \App\Services\ContactSpamGuard::SUBJECTS;
 @endphp
 

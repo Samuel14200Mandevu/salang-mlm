@@ -77,7 +77,7 @@
         ['read', 'Lus', $counts['read']],
         ['archived', 'Archivés', $counts['archived']],
     ] as [$key, $label, $count])
-        <a href="{{ route('site-management.contacts.index', array_filter(['status' => $key === 'all' ? null : $key, 'q' => $q ?: null])) }}"
+        <a href="{{ route('site-management.contacts.index', array_filter(['status' => $key === 'all' ? null : $key, 'q' => ($q ?? null) ?: null])) }}"
            class="rounded-lg border px-3 py-3 {{ ($status === $key || ($key === 'all' && $status === '')) ? 'border-[var(--color-primary-600)] bg-[var(--bg-secondary)]' : 'border-[var(--border-color)] bg-[var(--bg-card)]' }}">
             <p class="text-lg font-bold tabular-nums text-[var(--text-primary)]">{{ $count }}</p>
             <p class="text-xs text-[var(--text-muted)] uppercase tracking-wide">{{ $label }}</p>

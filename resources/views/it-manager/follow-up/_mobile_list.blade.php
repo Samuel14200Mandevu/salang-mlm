@@ -1,5 +1,5 @@
 @forelse ($entries as $entry)
-    <a href="{{ route('it-manager.follow-up.show', array_filter(['entry' => $entry, 'filter' => $filter, 'member_code' => $memberCode ?: null])) }}"
+    <a href="{{ route('it-manager.follow-up.show', array_filter(['entry' => $entry, 'filter' => $filter, 'member_code' => ($memberCode ?? null) ?: null])) }}"
        class="follow-up-mobile-card block rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-3">
         <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
