@@ -17,13 +17,9 @@ return [
             'label' => 'Indirect',
             'short' => 'Bonus indirect',
         ],
-        'sponsor' => [
-            'label' => 'Parrainage',
-            'short' => 'Bonus de parrainage',
-        ],
-        'cash_pos' => [
-            'label' => 'Profit POS',
-            'short' => 'Détail profit (POS)',
+        'leadership' => [
+            'label' => 'Leadership',
+            'short' => 'Bonus leadership',
         ],
     ],
 

@@ -7,8 +7,7 @@
     $bonusIcons = [
         'direct' => 'direct',
         'indirect' => 'indirect',
-        'sponsor' => 'sponsor',
-        'cash_pos' => 'cash_pos',
+        'leadership' => 'leadership',
     ];
 @endphp
 <section class="member-wallet-salang-section member-fintech-animate member-fintech-animate--d4" aria-labelledby="wallet-bonus-heading">
