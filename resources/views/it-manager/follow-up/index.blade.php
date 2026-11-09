@@ -93,7 +93,7 @@
         ['consultation', 'Sans consult.', $counts['consultation']],
         ['purchase', 'Sans achat', $counts['purchase']],
     ] as [$key, $label, $count])
-        <a href="{{ route('it-manager.follow-up.index', array_filter(['filter' => $key, 'member_code' => $memberCode ?: null])) }}"
+        <a href="{{ route('it-manager.follow-up.index', array_filter(['filter' => $key, 'member_code' => ($memberCode ?? null) ?: null])) }}"
            class="rounded-lg border px-3 py-3 {{ $filter === $key ? 'border-[var(--color-primary-600)] bg-[var(--bg-secondary)]' : 'border-[var(--border-color)] bg-[var(--bg-card)]' }}">
             <p class="text-lg font-bold tabular-nums text-[var(--text-primary)]" data-follow-up-count="{{ $key }}">{{ $count }}</p>
             <p class="text-xs text-[var(--text-muted)] uppercase tracking-wide">{{ $label }}</p>

@@ -43,7 +43,7 @@
 
     <div class="member-wallet-salang-grid member-wallet-salang-grid--bonus">
         @foreach($bonusByType as $key => $row)
-            <a href="{{ route('commissions.index', array_filter(['type' => $key, 'period' => $bonusMonth ?: null])) }}" class="member-wallet-bonus-card">
+            <a href="{{ route('commissions.index', array_filter(['type' => $key, 'period' => ($bonusMonth ?? null) ?: null])) }}" class="member-wallet-bonus-card">
                 @include('wallet.partials.fintech-wallet-icon', ['name' => $bonusIcons[$key] ?? 'document'])
                 <div class="member-wallet-bonus-card__text">
                     <span class="member-wallet-bonus-card__label">{{ $row['label'] }}</span>

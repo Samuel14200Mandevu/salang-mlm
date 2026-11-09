@@ -2,7 +2,7 @@
     <tr class="border-t border-[var(--border-light)]">
         <td class="px-3 py-2.5 whitespace-nowrap">{{ $entry->sheet?->activity_date?->format('d/m/Y') }}</td>
         <td class="px-3 py-2.5">
-            <a href="{{ route('it-manager.follow-up.show', array_filter(['entry' => $entry, 'filter' => $filter, 'member_code' => $memberCode ?: null])) }}"
+            <a href="{{ route('it-manager.follow-up.show', array_filter(['entry' => $entry, 'filter' => $filter, 'member_code' => ($memberCode ?? null) ?: null])) }}"
                class="font-medium text-[var(--text-primary)] hover:text-primary-600">{{ $entry->displayName() }}</a>
             <p class="text-xs text-[var(--text-muted)]">{{ $entry->participant_phone }}</p>
         </td>

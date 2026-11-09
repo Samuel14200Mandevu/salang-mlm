@@ -19,7 +19,7 @@
 @endphp
 
 <div class="mb-4">
-    <a href="{{ route('it-manager.follow-up.index', array_filter(['filter' => $filter, 'member_code' => $memberCode ?: null])) }}"
+    <a href="{{ route('it-manager.follow-up.index', array_filter(['filter' => $filter, 'member_code' => ($memberCode ?? null) ?: null])) }}"
        class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
