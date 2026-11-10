@@ -184,6 +184,24 @@
   flex: 1 1 100%;
 }
 
+/* Menu filtre Alpine : au-dessus des KPI / stats */
+.admin-app .admin-page-header,
+.admin-app .admin-page-header-actions,
+.admin-app .admin-sticky-toolbar {
+  overflow: visible;
+}
+.admin-app .admin-page-header {
+  position: relative;
+  z-index: 30;
+}
+.admin-app .admin-kpi-rail {
+  position: relative;
+  z-index: 1;
+}
+.admin-app .users-filter-menu {
+  z-index: 80;
+}
+
 .admin-app .card-stats {
   padding: 0.875rem 1rem;
 }

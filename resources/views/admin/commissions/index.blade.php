@@ -191,23 +191,66 @@
     color: var(--text-tertiary);
 }
 
-.filter-select {
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A52' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    outline: none;
-    transition: border-color 0.15s ease;
-    min-width: 120px;
+[x-cloak] { display: none !important; }
+
+.admin-page-header.header-with-search {
+    position: relative;
+    z-index: 30;
+    overflow: visible;
 }
-.filter-select:focus {
-    border-color: var(--primary-navy);
+.admin-page-header-actions,
+.admin-sticky-toolbar {
+    overflow: visible !important;
+}
+.admin-kpi-rail.stats-grid {
+    position: relative;
+    z-index: 1;
+}
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 13rem;
+    max-height: min(70vh, 28rem);
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 80;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.users-filter-menu a:hover { background: var(--bg-secondary); }
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+.users-filter-menu .filter-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+.users-filter-menu a.is-active .filter-count { color: var(--primary); }
+.users-filter-menu .products-filter-sep {
+    padding: 0.4rem 0.65rem 0.2rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
 }
 
 /* ===== HEADER AVEC RECHERCHE À DROITE ===== */
@@ -257,10 +300,6 @@
         min-width: 0;
         max-width: none;
     }
-    .filter-select {
-        flex: 1;
-        min-width: 100px;
-    }
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
     }
@@ -298,9 +337,6 @@
         flex-direction: column;
         align-items: stretch;
     }
-    .filter-select {
-        width: 100%;
-    }
 }
 </style>
 @endpush
@@ -336,69 +372,117 @@
                 @endif
             </p>
         </div>
+        @php
+            $typeFilter = request('type');
+            $statusFilter = request('status');
+            $periodFilter = request('period');
+            $filterActive = filled($typeFilter) || filled($statusFilter) || filled($periodFilter);
+            $statusLabels = [
+                'pending' => 'En attente',
+                'paid' => 'Payé',
+                'cancelled' => 'Annulé',
+            ];
+            $filterButtonLabel = filled($typeFilter)
+                ? ucfirst(str_replace('_', ' ', $typeFilter))
+                : ($statusLabels[$statusFilter] ?? (filled($periodFilter) ? $periodFilter : 'Filtrer'));
+            $filterQueryBase = array_filter([
+                'search' => request('search'),
+                'type' => $typeFilter,
+                'status' => $statusFilter,
+                'period' => $periodFilter,
+            ], fn ($v) => filled($v));
+            $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
+                return route('admin.commissions', array_filter(
+                    array_merge($filterQueryBase, $overrides),
+                    fn ($v) => $v !== null && $v !== ''
+                ));
+            };
+        @endphp
         <div class="admin-sticky-toolbar md:contents">
         <div class="header-right admin-page-header-actions">
-            <div class="search-wrapper admin-search-full">
-                <span class="search-icon">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <div class="header-search admin-search-full">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                </span>
-                <input type="text"
-                       id="searchInput"
-                       placeholder="Rechercher un utilisateur"
-                       class="search-input"
-                       autocomplete="off"
-                       value="{{ request('search') }}">
-                <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+                    <input type="text"
+                           id="searchInput"
+                           placeholder="Rechercher un utilisateur"
+                           class="search-input"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                    <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <select id="typeFilter" class="filter-select text-sm">
-                <option value="" {{ !request('type') ? 'selected' : '' }}>Tous types</option>
-                @foreach($types as $type)
-                    <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
-                        {{ ucfirst(str_replace('_', ' ', $type)) }}
-                    </option>
-                @endforeach
-            </select>
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ $filterButtonLabel }}"
+                        aria-label="{{ $filterButtonLabel }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
+                    <a href="{{ $filterUrl(['type' => null, 'status' => null, 'period' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                        <span>Tous</span>
+                    </a>
 
-            <select id="statusFilter" class="filter-select text-sm">
-                <option value="" {{ !request('status') ? 'selected' : '' }}>Tous statuts</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>En attente</option>
-                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Payé</option>
-                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Annulé</option>
-            </select>
-
-            @if($periods->isNotEmpty())
-                <select id="periodFilter" class="filter-select text-sm">
-                    <option value="" {{ !request('period') ? 'selected' : '' }}>Toutes périodes</option>
-                    @foreach($periods as $period)
-                        <option value="{{ $period }}" {{ request('period') == $period ? 'selected' : '' }}>
-                            {{ $period }}
-                        </option>
+                    <div class="products-filter-sep">Type</div>
+                    <a href="{{ $filterUrl(['type' => null]) }}" class="{{ ! $typeFilter ? 'is-active' : '' }}">
+                        <span>Tous types</span>
+                    </a>
+                    @foreach($types as $type)
+                        <a href="{{ $filterUrl(['type' => $type]) }}" class="{{ $typeFilter === $type ? 'is-active' : '' }}">
+                            <span>{{ ucfirst(str_replace('_', ' ', $type)) }}</span>
+                        </a>
                     @endforeach
-                </select>
-            @endif
 
-            <button id="resetFilters" class="btn btn-outline btn-sm btn-round-icon" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-            </button>
+                    <div class="products-filter-sep">Statut</div>
+                    <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $statusFilter ? 'is-active' : '' }}">
+                        <span>Tous statuts</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                        <span>En attente</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'paid']) }}" class="{{ $statusFilter === 'paid' ? 'is-active' : '' }}">
+                        <span>Payé</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                        <span>Annulé</span>
+                    </a>
+
+                    @if($periods->isNotEmpty())
+                        <div class="products-filter-sep">Période</div>
+                        <a href="{{ $filterUrl(['period' => null]) }}" class="{{ ! $periodFilter ? 'is-active' : '' }}">
+                            <span>Toutes périodes</span>
+                        </a>
+                        @foreach($periods as $period)
+                            <a href="{{ $filterUrl(['period' => $period]) }}" class="{{ $periodFilter == $period ? 'is-active' : '' }}">
+                                <span>{{ $period }}</span>
+                            </a>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
 
             {{-- Rapport Individuel --}}
-            <a href="{{ route('admin.commissions.export-pdf', request()->all()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
+            <a href="{{ route('admin.commissions.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </a>
 
             {{-- Rapport Global --}}
-            <a href="{{ route('admin.commissions.export-global-pdf', request()->all()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
+            <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -560,11 +644,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearBtn = document.getElementById('clearBtn');
-    const typeFilter = document.getElementById('typeFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    const periodFilter = document.getElementById('periodFilter');
-    const resetBtn = document.getElementById('resetFilters');
     let searchTimeout;
+
+    function currentParam(name) {
+        return new URL(window.location.href).searchParams.get(name) || '';
+    }
 
     // Recherche avec debounce
     if (searchInput) {
@@ -575,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearBtn.classList.toggle('visible', query.length > 0);
             
             searchTimeout = setTimeout(() => {
-                fetchCommissions(query, typeFilter.value, statusFilter.value, periodFilter ? periodFilter.value : '');
+                fetchCommissions(query, currentParam('type'), currentParam('status'), currentParam('period'));
             }, 300);
         });
 
@@ -584,40 +668,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.key === 'Escape') {
                 this.value = '';
                 clearBtn.classList.remove('visible');
-                fetchCommissions('', typeFilter.value, statusFilter.value, periodFilter ? periodFilter.value : '');
+                fetchCommissions('', currentParam('type'), currentParam('status'), currentParam('period'));
                 this.blur();
             }
-        });
-    }
-
-    // Filtres
-    if (typeFilter) {
-        typeFilter.addEventListener('change', function() {
-            fetchCommissions(searchInput.value.trim(), this.value, statusFilter.value, periodFilter ? periodFilter.value : '');
-        });
-    }
-
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            fetchCommissions(searchInput.value.trim(), typeFilter.value, this.value, periodFilter ? periodFilter.value : '');
-        });
-    }
-
-    if (periodFilter) {
-        periodFilter.addEventListener('change', function() {
-            fetchCommissions(searchInput.value.trim(), typeFilter.value, statusFilter.value, this.value);
-        });
-    }
-
-    // Réinitialisation
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            if (searchInput) searchInput.value = '';
-            if (typeFilter) typeFilter.value = '';
-            if (statusFilter) statusFilter.value = '';
-            if (periodFilter) periodFilter.value = '';
-            if (clearBtn) clearBtn.classList.remove('visible');
-            fetchCommissions('', '', '', '');
         });
     }
 
@@ -626,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             clearBtn.classList.remove('visible');
-            fetchCommissions('', typeFilter.value, statusFilter.value, periodFilter ? periodFilter.value : '');
+            fetchCommissions('', currentParam('type'), currentParam('status'), currentParam('period'));
             searchInput.focus();
         });
     }
