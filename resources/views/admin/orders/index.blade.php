@@ -3,6 +3,44 @@
 
 @push('styles')
 <style>
+[x-cloak] { display: none !important; }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 12rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 40;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.users-filter-menu a:hover { background: var(--bg-secondary); }
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+.users-filter-menu .filter-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+.users-filter-menu a.is-active .filter-count { color: var(--primary); }
+
 .order-row {
     transition: background 0.1s ease;
 }
@@ -241,13 +279,39 @@
                         · Résultats pour "{{ request('search') }}"
                     </span>
                 @endif
+                @if(request('status'))
+                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
+                        · {{ [
+                            'pending' => 'En attente',
+                            'processing' => 'En traitement',
+                            'completed' => 'Terminées',
+                            'cancelled' => 'Annulées',
+                        ][request('status')] ?? ucfirst(request('status')) }}
+                    </span>
+                @endif
             </p>
         </div>
+        @php
+            $statusFilter = request('status');
+            $filterActive = filled($statusFilter);
+            $statusLabels = [
+                'pending' => 'En attente',
+                'processing' => 'En traitement',
+                'completed' => 'Terminées',
+                'cancelled' => 'Annulées',
+            ];
+            $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
+            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+            $filterUrl = fn (array $overrides = []) => route('admin.orders.index', array_filter(
+                array_merge($filterQueryBase, $overrides),
+                fn ($v) => $v !== null && $v !== ''
+            ));
+        @endphp
         <div class="admin-sticky-toolbar md:contents">
         <div class="admin-page-header-actions flex items-center gap-2 w-full md:w-auto">
         <div class="header-search admin-search-full flex-1 md:flex-none">
             <div class="search-wrapper">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text"
@@ -256,11 +320,47 @@
                        placeholder="Rechercher une commande"
                        autocomplete="off"
                        value="{{ request('search') }}">
-                <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+            </div>
+        </div>
+
+        <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <button type="button"
+                    @click="open = !open"
+                    class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                    :aria-expanded="open"
+                    aria-haspopup="true"
+                    title="{{ $filterButtonLabel }}"
+                    aria-label="{{ $filterButtonLabel }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+            </button>
+            <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
+                <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                    <span>Tous</span>
+                    <span class="filter-count">{{ $totalOrders ?? 0 }}</span>
+                </a>
+                <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                    <span>En attente</span>
+                    <span class="filter-count">{{ $pendingCount ?? 0 }}</span>
+                </a>
+                <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                    <span>En traitement</span>
+                    <span class="filter-count">{{ $processingCount ?? 0 }}</span>
+                </a>
+                <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                    <span>Terminées</span>
+                    <span class="filter-count">{{ $completedCount ?? 0 }}</span>
+                </a>
+                <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                    <span>Annulées</span>
+                    <span class="filter-count">{{ $cancelledCount ?? 0 }}</span>
+                </a>
             </div>
         </div>
         </div>
@@ -380,6 +480,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearBtn = document.getElementById('clearBtn');
     let searchTimeout;
 
+    function currentStatus() {
+        return new URL(window.location.href).searchParams.get('status') || '';
+    }
+
     // Gestion de la recherche
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -390,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearBtn.classList.toggle('visible', query.length > 0);
             
             searchTimeout = setTimeout(() => {
-                fetchOrders(query);
+                fetchOrders(query, currentStatus());
             }, 300);
         });
 
@@ -399,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.key === 'Escape') {
                 this.value = '';
                 clearBtn.classList.remove('visible');
-                fetchOrders('');
+                fetchOrders('', currentStatus());
                 this.blur();
             }
         });
@@ -423,17 +527,22 @@ document.addEventListener('DOMContentLoaded', function() {
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             clearBtn.classList.remove('visible');
-            fetchOrders('');
+            fetchOrders('', currentStatus());
             searchInput.focus();
         });
     }
 
-    function fetchOrders(query) {
+    function fetchOrders(query, status) {
         const url = new URL(window.location.href);
         if (query) {
             url.searchParams.set('search', query);
         } else {
             url.searchParams.delete('search');
+        }
+        if (status) {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
         }
         url.searchParams.set('page', '1');
 
@@ -538,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentQuery = searchInput.value.trim();
             // Ne recharger que si la recherche est vide
             if (!currentQuery) {
-                fetchOrders('');
+                fetchOrders('', currentStatus());
             }
         }
     });

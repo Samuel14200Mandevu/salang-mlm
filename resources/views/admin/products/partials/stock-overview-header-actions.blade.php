@@ -43,14 +43,14 @@
     <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
         <button type="button"
                 @click="open = !open"
-                class="btn btn-outline btn-sm sm:btn-md {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
                 :aria-expanded="open"
                 aria-haspopup="true"
-                aria-label="Filtrer">
+                title="{{ $filterButtonLabel }}"
+                aria-label="{{ $filterButtonLabel }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
-            <span>{{ $filterButtonLabel }}</span>
         </button>
         <div x-show="open"
              x-cloak
@@ -89,18 +89,17 @@
     </div>
 
     <a href="{{ route('admin.products.stock-history') }}"
-       class="btn btn-outline btn-sm sm:btn-md"
-       title="Historique des mouvements">
+       class="btn btn-outline btn-sm btn-round-icon"
+       title="Historique des mouvements"
+       aria-label="Historique des mouvements">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span class="hidden sm:inline">Historique</span>
     </a>
 </div>
 
-<a href="{{ route('admin.products') }}" class="btn btn-outline btn-sm">
+<a href="{{ route('admin.products') }}" class="btn btn-outline btn-sm btn-round-icon" title="Catalogue produits" aria-label="Catalogue produits">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
     </svg>
-    Catalogue
 </a>

@@ -384,18 +384,24 @@
                 </select>
             @endif
 
-            <button id="resetFilters" class="btn btn-outline btn-sm text-xs" title="Réinitialiser les filtres">
-                Réinitialiser
+            <button id="resetFilters" class="btn btn-outline btn-sm btn-round-icon" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
             </button>
 
             {{-- Rapport Individuel --}}
-            <a href="{{ route('admin.commissions.export-pdf', request()->all()) }}" class="btn btn-outline btn-sm">
-                PDF Détaillé
+            <a href="{{ route('admin.commissions.export-pdf', request()->all()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
             </a>
 
             {{-- Rapport Global --}}
-            <a href="{{ route('admin.commissions.export-global-pdf', request()->all()) }}" class="btn btn-primary btn-sm">
-                PDF Global
+            <a href="{{ route('admin.commissions.export-global-pdf', request()->all()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
             </a>
         </div>
         </div>

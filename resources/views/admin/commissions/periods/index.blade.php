@@ -268,11 +268,10 @@
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Périodes de commissions</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Gérer les périodes de calcul</p>
         </div>
-        <button onclick="openCreateModal()" class="btn btn-primary btn-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <button type="button" onclick="openCreateModal()" class="btn btn-primary btn-sm btn-round-icon" title="Nouvelle période" aria-label="Nouvelle période">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Nouvelle période
         </button>
     </div>
 

@@ -411,24 +411,21 @@
             </p>
         </div>
         <div class="header-actions flex flex-wrap gap-2">
-            <a href="{{ route('admin.commissions') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.commissions') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                Retour
             </a>
             @if($commission->status == 'pending')
-                <button onclick="openConfirmModal('approve')" class="btn btn-success btn-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <button type="button" onclick="openConfirmModal('approve')" class="btn btn-success btn-sm btn-round-icon" title="Approuver" aria-label="Approuver">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Approuver
                 </button>
-                <button onclick="openConfirmModal('reject')" class="btn btn-danger btn-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <button type="button" onclick="openConfirmModal('reject')" class="btn btn-danger btn-sm btn-round-icon" title="Rejeter" aria-label="Rejeter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                    Rejeter
                 </button>
             @endif
         </div>

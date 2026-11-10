@@ -98,57 +98,44 @@
 .badge-danger { background: rgba(185, 28, 28, 0.12); color: #B91C1C; border-color: rgba(185, 28, 28, 0.15); }
 .badge-info { background: rgba(6, 95, 156, 0.12); color: #065F9C; border-color: rgba(6, 95, 156, 0.15); }
 
-.filter-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+[x-cloak] { display: none !important; }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 16rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.75rem;
+    z-index: 40;
 }
-.filter-section select,
-.filter-section input {
-    padding: 0.375rem 0.75rem;
+.users-filter-menu.users-filter-panel label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+.users-filter-menu.users-filter-panel .form-control,
+.users-filter-menu.users-filter-panel select,
+.users-filter-menu.users-filter-panel input[type="date"],
+.users-filter-menu.users-filter-panel input[type="text"] {
+    width: 100%;
+    padding: 0.375rem 0.65rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background: var(--bg-input);
     color: var(--text-primary);
     font-size: 0.813rem;
-    flex: 1;
-    min-width: 120px;
     outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.filter-section select:focus,
-.filter-section input:focus {
+.users-filter-menu.users-filter-panel .form-control:focus,
+.users-filter-menu.users-filter-panel select:focus,
+.users-filter-menu.users-filter-panel input:focus {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px var(--primary-blue-border);
-}
-.filter-section .btn-filter {
-    padding: 0.375rem 1.25rem;
-    background: var(--primary-blue);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.813rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-.filter-section .btn-filter:hover {
-    background: var(--primary-blue-dark);
-}
-.filter-section .btn-reset {
-    padding: 0.375rem 1.25rem;
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.813rem;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-.filter-section .btn-reset:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-color);
 }
 
 .table-wrap { overflow-x: auto; }
@@ -185,8 +172,6 @@
 
 @media (max-width: 640px) {
     .stat-card .number { font-size: 1.125rem; }
-    .filter-section { flex-direction: column; }
-    .filter-section select, .filter-section input, .filter-section button { width: 100%; }
     .table thead th, .table tbody td { padding: 0.3rem 0.4rem; font-size: 0.7rem; }
     .card { padding: 0.875rem; }
 }
@@ -196,26 +181,91 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
+    @php
+        $filterActive = filled(request('date_from')) || filled(request('date_to')) || filled(request('cashier_id'));
+        $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+    @endphp
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
+    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
+        <div class="admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Ventes POS</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">
                 Liste détaillée des ventes au guichet
             </p>
         </div>
-        <div class="flex gap-2 flex-wrap">
-            <a href="{{ route('admin.pos-reports.index') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <div class="admin-page-header-actions flex items-center gap-2 flex-wrap">
+            <div class="header-search admin-search-full">
+                <form method="GET" action="{{ route('admin.pos-reports.sales') }}" class="search-wrapper" id="posSalesSearchForm">
+                    @foreach(request()->except('search', 'page') as $key => $value)
+                        @if(filled($value))
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           name="search"
+                           class="search-input"
+                           placeholder="Rechercher…"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </form>
+            </div>
+
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="Filtrer"
+                        aria-label="Filtrer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu users-filter-panel">
+                    <form method="GET" action="{{ route('admin.pos-reports.sales') }}" class="space-y-2">
+                        @if(request('search'))
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
+                        <div>
+                            <label for="pos_date_from">Du</label>
+                            <input type="date" id="pos_date_from" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                        </div>
+                        <div>
+                            <label for="pos_date_to">Au</label>
+                            <input type="date" id="pos_date_to" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                        </div>
+                        <div>
+                            <label for="pos_cashier_id">Caissier</label>
+                            <select id="pos_cashier_id" name="cashier_id" class="form-control">
+                                <option value="">Tous les caissiers</option>
+                                @foreach($cashiers ?? [] as $cashier)
+                                    <option value="{{ $cashier->id }}" {{ request('cashier_id') == $cashier->id ? 'selected' : '' }}>
+                                        {{ $cashier->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" class="btn btn-primary btn-sm flex-1">Appliquer</button>
+                            <a href="{{ route('admin.pos-reports.sales', $filterQueryBase) }}" class="btn btn-outline btn-sm">Effacer</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <a href="{{ route('admin.pos-reports.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                Retour
             </a>
-            <a href="{{ route('admin.pos-reports.export') }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.pos-reports.export', request()->query()) }}" class="btn btn-primary btn-sm btn-round-icon" title="Exporter" aria-label="Exporter">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Exporter
             </a>
         </div>
     </div>
@@ -279,27 +329,8 @@
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
-        <form method="GET" action="{{ route('admin.pos-reports.sales') }}" class="filter-section">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher..." class="flex-1">
-            <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Date début" class="flex-1">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Date fin" class="flex-1">
-            <select name="cashier_id" class="flex-1">
-                <option value="">Tous les caissiers</option>
-                @foreach($cashiers ?? [] as $cashier)
-                    <option value="{{ $cashier->id }}" {{ request('cashier_id') == $cashier->id ? 'selected' : '' }}>
-                        {{ $cashier->name }}
-                    </option>
-                @endforeach
-            </select>
-            <button type="submit" class="btn-filter">Filtrer</button>
-            <a href="{{ route('admin.pos-reports.sales') }}" class="btn-reset">Réinitialiser</a>
-        </form>
-    </div>
-
     <!-- Sales List -->
-    <div class="card animate-fadeInUp delay-3 p-3 sm:p-4">
+    <div class="card animate-fadeInUp delay-2 p-3 sm:p-4">
         <div class="table-wrap">
             <table class="table">
                 <thead>

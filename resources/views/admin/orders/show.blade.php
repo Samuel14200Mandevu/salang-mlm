@@ -358,17 +358,15 @@
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Détails de la commande</p>
         </div>
         <div class="flex gap-1.5 sm:gap-2 flex-wrap">
-            <a href="{{ route('admin.orders.invoice', $order) }}" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.orders.invoice', $order) }}" class="btn btn-primary btn-sm btn-round-icon" title="Facture" aria-label="Facture">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
                 </svg>
-                Facture
             </a>
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                Retour
             </a>
         </div>
     </div>
