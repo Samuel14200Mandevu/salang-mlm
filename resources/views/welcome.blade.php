@@ -74,14 +74,10 @@
 
     <div class="public-onboarding-chrome" id="publicOnboardingChrome" hidden>
         <div class="public-onboarding-chrome-inner">
-            <p class="public-onboarding-step" aria-live="polite">
-                <span class="public-onboarding-step-label">Étape</span>
-                <span id="publicOnboardingStepNum">1</span><span class="public-onboarding-step-total">/4</span>
-            </p>
             <div class="public-onboarding-dots" id="publicOnboardingDots" role="tablist" aria-label="Étapes de découverte"></div>
             <div class="public-onboarding-actions">
-                <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Passer</button>
                 <button type="button" class="public-btn-primary public-onboarding-next" id="publicOnboardingNext">Suivant</button>
+                <button type="button" class="public-onboarding-back" id="publicOnboardingBack" hidden>Retour</button>
             </div>
         </div>
     </div>

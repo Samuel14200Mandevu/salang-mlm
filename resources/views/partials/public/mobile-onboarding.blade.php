@@ -1,201 +1,95 @@
-{{-- Onboarding app mobile — carrousel horizontal (images + vidéo + grades live) --}}
+{{-- Onboarding — slide 1 photo thèmes / 2–3 iPhones CSS --}}
 @php
-    use App\Support\MlmRank;
-
-    $gradeShowcase = [];
-    foreach (MlmRank::levelImageFiles() as $level => $file) {
-        $url = MlmRank::imageUrl($level);
-        if (! $url) {
-            continue;
-        }
-        $gradeShowcase[] = [
-            'level' => $level,
-            'label' => MlmRank::label($level),
-            'src' => $url,
-            'accent' => MlmRank::dashboardAccent($level),
-        ];
-    }
-
-    $networkWebp = public_path('images/onboarding/onboarding-network@2x.webp');
-    $statsWebp = public_path('images/onboarding/onboarding-stats@2x.webp');
-    $videoPath = public_path('images/onboarding/onboarding4.mp4');
+    $fee = config('salang-site.membership_fee_usd', 30);
+    $slide1Light = 'images/onboarding/slide1-light.png';
+    $slide1Dark = 'images/onboarding/slide1-dark.png';
+    $slide1LightUrl = asset($slide1Light).(file_exists(public_path($slide1Light)) ? '?v='.filemtime(public_path($slide1Light)) : '');
+    $slide1DarkUrl = asset($slide1Dark).(file_exists(public_path($slide1Dark)) ? '?v='.filemtime(public_path($slide1Dark)) : '');
 
     $slides = [
         [
-            'type' => 'image',
-            'src' => asset('images/onboarding/onboarding1.png'),
-            'srcset' => file_exists($networkWebp)
-                ? asset('images/onboarding/onboarding-network@2x.webp').' 1600w'
-                : null,
-            'alt' => 'Réseau Salang Group',
-            'anim' => 'network',
-            'kicker' => 'Réseau',
-            'title' => 'Connectez-vous à une communauté mondiale',
-            'text' => 'Développez votre réseau avec des outils clairs et un accompagnement Salang Group.',
+            'type' => 'theme-image',
+            'light' => $slide1LightUrl,
+            'dark' => $slide1DarkUrl,
+            'alt' => 'Produits naturels Salang autour de l’application',
+            'title' => 'Des produits 100 % naturels',
+            'text' => 'Vision, beauté, immunité et bien-être : la gamme Salang Group pour votre santé au quotidien.',
+            'legal' => true,
         ],
         [
-            'type' => 'image',
-            'src' => asset('images/onboarding/onboarding2.png'),
-            'srcset' => file_exists($statsWebp)
-                ? asset('images/onboarding/onboarding-stats@2x.webp').' 1600w'
-                : null,
-            'alt' => 'Performance et revenus',
-            'anim' => 'stats',
-            'kicker' => 'Performance',
-            'title' => 'Suivez vos résultats en temps réel',
-            'text' => 'Commissions, grades et objectifs : tout est visible dans votre espace membre.',
-            'stats' => [
-                ['value' => 0.7, 'suffix' => '%+', 'decimals' => 1, 'label' => 'Croissance'],
-                ['value' => 27.59, 'suffix' => '', 'decimals' => 2, 'label' => 'Fiscal'],
-                ['value' => 100, 'suffix' => '%', 'decimals' => 0, 'label' => 'Objectif'],
-                ['value' => 18.36, 'suffix' => '', 'decimals' => 2, 'label' => 'Marché'],
-            ],
+            'type' => 'iphone-pay',
+            'alt' => 'Paiement Mobile Money sur iPhone',
+            'title' => 'Payez simplement vos soins Salang',
+            'text' => 'Commandes, Mobile Money et suivi clair — compléments, Ceragem et Détox.',
         ],
         [
-            'type' => 'grades',
-            'anim' => 'grades',
-            'kicker' => 'Carrière',
-            'title' => 'Évoluez à travers les grades',
-            'text' => 'Du Distributeur au Diamond Pearl : un parcours de distinctions motivant.',
-            'grades' => $gradeShowcase,
-        ],
-        [
-            'type' => 'video',
-            'src' => asset('images/onboarding/onboarding4.mp4').'?v='.(file_exists($videoPath) ? filemtime($videoPath) : time()),
-            'alt' => 'Découvrir Salang Group',
-            'anim' => 'video',
-            'kicker' => 'Bienvenue',
-            'title' => 'Prêt à démarrer ?',
-            'text' => 'Connectez-vous ou créez votre compte pour accéder à votre espace.',
+            'type' => 'iphone-salang',
+            'alt' => 'Application Salang Group sur iPhone',
+            'title' => 'Rejoignez Salang Group',
+            'title_accent' => 'Santé · Prospérité · Liberté',
+            'text' => 'Entreprise internationale de santé naturelle (Hong Kong, depuis 2015). Adhésion '.$fee.' USD — accompagnement et commissions dans votre espace membre.',
         ],
     ];
 @endphp
 
 <div class="public-app-onboarding" id="publicAppOnboarding" hidden>
+    <button type="button" class="public-onboarding-skip" id="publicOnboardingSkip">Passer</button>
+
     <div class="public-app-onboarding__track" id="publicAppOnboardingTrack" tabindex="0" aria-label="Présentation Salang Group">
         @foreach ($slides as $index => $slide)
             <article
                 class="public-app-onboarding__slide{{ $index === 0 ? ' is-active' : '' }}"
                 data-slide-index="{{ $index }}"
-                data-anim="{{ $slide['anim'] }}"
                 aria-roledescription="slide"
                 aria-label="Étape {{ $index + 1 }} sur {{ count($slides) }}"
             >
-                <div class="public-app-onboarding__media public-app-onboarding__media--{{ $slide['anim'] }}">
-                    @if ($slide['type'] === 'video')
-                        <video
-                            class="public-app-onboarding__video"
-                            src="{{ $slide['src'] }}"
-                            playsinline
-                            webkit-playsinline
-                            muted
-                            defaultMuted
-                            autoplay
-                            loop
-                            preload="auto"
-                            aria-label="{{ $slide['alt'] }}"
-                        ></video>
-                    @elseif ($slide['type'] === 'grades')
-                        <div class="public-app-onboarding__grades" data-grade-rotator>
-                            <div class="public-app-onboarding__grades-motifs" aria-hidden="true">
-                                <span class="public-app-onboarding__grades-orbit public-app-onboarding__grades-orbit--outer"></span>
-                                <span class="public-app-onboarding__grades-orbit public-app-onboarding__grades-orbit--mid"></span>
-                                <span class="public-app-onboarding__grades-orbit public-app-onboarding__grades-orbit--inner"></span>
-                                <span class="public-app-onboarding__grades-sparkles">
-                                    @for ($i = 1; $i <= 10; $i++)
-                                        <i style="--s: {{ $i }}"></i>
-                                    @endfor
-                                </span>
-                                <span class="public-app-onboarding__grades-rays">
-                                    <i></i><i></i><i></i><i></i><i></i><i></i>
-                                </span>
-                                <span class="public-app-onboarding__grades-ghosts">
-                                    <i class="is-rect is-a"></i>
-                                    <i class="is-rect is-b"></i>
-                                    <i class="is-square is-c"></i>
-                                    <i class="is-rect is-d"></i>
-                                    <i class="is-square is-e"></i>
-                                    <i class="is-rect is-f"></i>
-                                    <i class="is-square is-g"></i>
-                                    <i class="is-rect is-h"></i>
-                                </span>
-                            </div>
-                            <div class="public-app-onboarding__grades-stage" aria-hidden="true">
-                                <span class="public-app-onboarding__grades-glow"></span>
-                                <span class="public-app-onboarding__grades-ring"></span>
-                            </div>
-                            @foreach ($slide['grades'] as $gIndex => $grade)
-                                <figure
-                                    class="public-app-onboarding__grade{{ $gIndex === 0 ? ' is-current' : '' }}"
-                                    data-grade-index="{{ $gIndex }}"
-                                    style="--grade-accent: {{ $grade['accent'] }}"
-                                >
-                                    <img
-                                        class="public-app-onboarding__grade-img"
-                                        src="{{ $grade['src'] }}"
-                                        alt="{{ $grade['label'] }}"
-                                        width="320"
-                                        height="320"
-                                        loading="{{ $gIndex < 2 ? 'eager' : 'lazy' }}"
-                                        decoding="async"
-                                    >
-                                </figure>
-                            @endforeach
-                            <p class="public-app-onboarding__grade-label" data-grade-label>
-                                {{ $slide['grades'][0]['label'] ?? '' }}
-                            </p>
-                            <p class="public-app-onboarding__grade-step" data-grade-step aria-live="polite">
-                                1 / {{ count($slide['grades']) }}
-                            </p>
-                            <script type="application/json" data-grade-labels>
-                                @json(collect($slide['grades'])->pluck('label')->values())
-                            </script>
-                        </div>
-                    @else
-                        <picture>
-                            @if (! empty($slide['srcset']) && str_contains($slide['srcset'], '.webp'))
-                                <source
-                                    type="image/webp"
-                                    srcset="{{ $slide['srcset'] }}"
-                                    sizes="(max-width: 767px) 100vw, 640px"
-                                >
-                            @endif
+                <div
+                    class="public-app-onboarding__media @if($slide['type'] === 'theme-image') public-app-onboarding__media--theme-image @else public-app-onboarding__media--iphone @endif"
+                    role="img"
+                    aria-label="{{ $slide['alt'] }}"
+                >
+                    @if ($slide['type'] === 'theme-image')
+                        <div class="public-onb-theme-pic">
                             <img
-                                class="public-app-onboarding__image"
-                                src="{{ $slide['src'] }}"
-                                @if (! empty($slide['srcset']))
-                                    srcset="{{ $slide['srcset'] }}"
-                                    sizes="(max-width: 767px) 100vw, 640px"
-                                @endif
+                                class="public-onb-theme-pic__img public-onb-theme-pic__img--light"
+                                src="{{ $slide['light'] }}"
                                 alt="{{ $slide['alt'] }}"
-                                width="1600"
-                                height="889"
+                                width="864"
+                                height="1152"
                                 loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
                                 decoding="async"
-                                fetchpriority="{{ $index === 0 ? 'high' : 'auto' }}"
                             >
-                        </picture>
-                        @if (!empty($slide['stats']))
-                            <div class="public-app-onboarding__stats" aria-hidden="true">
-                                @foreach ($slide['stats'] as $stat)
-                                    <div class="public-app-onboarding__stat" style="--stat-i: {{ $loop->index }}">
-                                        <span
-                                            class="public-app-onboarding__stat-value"
-                                            data-count-to="{{ $stat['value'] }}"
-                                            data-decimals="{{ $stat['decimals'] }}"
-                                            data-suffix="{{ $stat['suffix'] }}"
-                                        >0</span>
-                                        <span class="public-app-onboarding__stat-label">{{ $stat['label'] }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+                            <img
+                                class="public-onb-theme-pic__img public-onb-theme-pic__img--dark"
+                                src="{{ $slide['dark'] }}"
+                                alt=""
+                                width="864"
+                                height="1152"
+                                loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                decoding="async"
+                                aria-hidden="true"
+                            >
+                        </div>
+                    @elseif ($slide['type'] === 'iphone-pay')
+                        @include('partials.public.onboarding-iphone-pay')
+                    @else
+                        @include('partials.public.onboarding-iphone-salang')
                     @endif
                 </div>
                 <div class="public-app-onboarding__copy">
-                    <p class="public-app-onboarding__kicker">{{ $slide['kicker'] }}</p>
                     <h2 class="public-app-onboarding__title">{{ $slide['title'] }}</h2>
+                    @if (! empty($slide['title_accent']))
+                        <p class="public-app-onboarding__title-accent">{{ $slide['title_accent'] }}</p>
+                    @endif
                     <p class="public-app-onboarding__text">{{ $slide['text'] }}</p>
+                    @if (! empty($slide['legal']))
+                        <p class="public-app-onboarding__legal">
+                            En utilisant cette application, vous acceptez les
+                            <a href="{{ route('legal.terms') }}">Conditions d’utilisation</a>
+                            et reconnaissez avoir lu notre
+                            <a href="{{ route('legal.privacy') }}">Politique de confidentialité</a>.
+                        </p>
+                    @endif
                 </div>
             </article>
         @endforeach

@@ -125,6 +125,32 @@
         ])
     </nav>
 
+    <p class="profile-account-section-title">Application</p>
+    <nav class="profile-account-menu" aria-label="Application" id="profileAppInstallSection">
+        <button
+            type="button"
+            id="profileInstallAppBtn"
+            class="profile-account-row force-install-pwa-app"
+            data-install-app="1"
+        >
+            <span class="profile-account-row__icon profile-account-row__icon--tone-teal" aria-hidden="true">{!! $icon('M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4') !!}</span>
+            <span class="profile-account-row__label">Télécharger l’application</span>
+            <svg class="profile-account-row__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <div id="profileInstallAppHint" class="profile-install-hint" hidden>
+            <p class="profile-install-hint__title">Installer Salang</p>
+            <p class="profile-install-hint__text" data-install-hint-android>
+                Sur Android (Chrome) : menu ⋮ → <strong>Installer l’application</strong> ou <strong>Ajouter à l’écran d’accueil</strong>.
+            </p>
+            <p class="profile-install-hint__text" data-install-hint-ios hidden>
+                Sur iPhone (Safari) : touchez <strong>Partager</strong>
+                <svg class="profile-install-hint__share" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                puis <strong>Sur l’écran d’accueil</strong>.
+            </p>
+            <button type="button" class="profile-install-hint__close" id="profileInstallAppHintClose">Compris</button>
+        </div>
+    </nav>
+
     <p class="profile-account-section-title">Assistance</p>
     <nav class="profile-account-menu" aria-label="Assistance">
         @include('profile.partials.account-menu-row', [

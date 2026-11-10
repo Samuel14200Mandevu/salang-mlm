@@ -12,9 +12,19 @@
             fetchpriority="high"
         >
         <p class="public-mobile-splash-tagline">Health Care International</p>
-        <div class="public-mobile-splash-loader" aria-hidden="true">
-            <span></span><span></span><span></span>
+        <div class="public-mobile-splash-progress-wrap">
+            <div
+                class="public-mobile-splash-progress"
+                role="progressbar"
+                aria-label="Chargement"
+                aria-valuemin="1"
+                aria-valuemax="100"
+                aria-valuenow="1"
+                id="publicSplashProgress"
+            >
+                <span class="public-mobile-splash-progress__bar" id="publicSplashProgressBar" style="width:1%"></span>
+            </div>
+            <p class="public-mobile-splash-progress__label" id="publicSplashProgressLabel" aria-live="polite">1%</p>
         </div>
     </div>
-    <button type="button" class="public-mobile-splash-skip" id="publicSplashSkip">Continuer</button>
 </div>
