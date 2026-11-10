@@ -312,6 +312,11 @@
 
 @push('scripts')
 <script>
+window.__salangPwaCanInstall = window.__salangPwaCanInstall || false;
+window.addEventListener('beforeinstallprompt', function () {
+    window.__salangPwaCanInstall = true;
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     var profileRoot = document.getElementById('profilePageRoot');
 
@@ -392,6 +397,94 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    (function initProfileAppInstall() {
+        var btn = document.getElementById('profileInstallAppBtn');
+        var hint = document.getElementById('profileInstallAppHint');
+        var closeBtn = document.getElementById('profileInstallAppHintClose');
+        if (!btn || !hint) {
+            return;
+        }
+
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+        }
+
+        function isAlreadyInstalled() {
+            return isStandalone() || localStorage.getItem('pwaInstalled') === 'true';
+        }
+
+        function isIos() {
+            return /iphone|ipad|ipod/i.test(navigator.userAgent || '')
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
+        function showHint(kind) {
+            var android = hint.querySelector('[data-install-hint-android]');
+            var ios = hint.querySelector('[data-install-hint-ios]');
+            if (android) {
+                android.hidden = kind !== 'android';
+            }
+            if (ios) {
+                ios.hidden = kind !== 'ios';
+            }
+            hint.hidden = false;
+        }
+
+        function showInstalledDialog() {
+            if (typeof window.showConfirmDialog === 'function') {
+                window.showConfirmDialog({
+                    type: 'success',
+                    title: 'Application',
+                    message: 'Application déjà installée sur cet appareil.',
+                    confirmText: 'OK',
+                    onConfirm: function () {
+                        if (typeof window.closeConfirmDialog === 'function') {
+                            window.closeConfirmDialog();
+                        }
+                    }
+                });
+                return;
+            }
+            window.alert('Application déjà installée sur cet appareil.');
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                hint.hidden = true;
+            });
+        }
+
+        window.addEventListener('appinstalled', function () {
+            localStorage.setItem('pwaInstalled', 'true');
+        });
+
+        btn.addEventListener('click', function (event) {
+            if (isAlreadyInstalled()) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                hint.hidden = true;
+                showInstalledDialog();
+                return;
+            }
+
+            if (isIos()) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                showHint('ios');
+                return;
+            }
+
+            if (!window.__salangPwaCanInstall) {
+                setTimeout(function () {
+                    if (!isAlreadyInstalled()) {
+                        showHint('android');
+                    }
+                }, 80);
+            }
+        }, true);
+    })();
 });
 </script>
 @endpush

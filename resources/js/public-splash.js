@@ -1,8 +1,11 @@
 /**
- * Splash mobile (logo Salang) — style app iOS avant onboarding / auth.
+ * Splash mobile (logo Salang) — barre 1% → 100% puis onboarding / auth.
  */
 (function () {
     const MOBILE_MAX = 767;
+    const SPLASH_MS = 2200;
+    const PROGRESS_FROM = 1;
+    const PROGRESS_TO = 100;
 
     function isMobile() {
         return window.matchMedia(`(max-width: ${MOBILE_MAX}px)`).matches;
@@ -54,15 +57,40 @@
         document.documentElement.classList.add('salang-mobile-app');
         body.classList.add('public-splash-active', 'public-onboarding-active');
 
-        const skipBtn = document.getElementById('publicSplashSkip');
+        const progress = document.getElementById('publicSplashProgress');
+        const bar = document.getElementById('publicSplashProgressBar');
+        const label = document.getElementById('publicSplashProgressLabel');
         let closed = false;
+        let progressTimer = null;
+        let rafId = 0;
+
+        function setProgress(pct) {
+            const value = Math.max(PROGRESS_FROM, Math.min(PROGRESS_TO, Math.round(pct)));
+            if (progress) {
+                progress.setAttribute('aria-valuenow', String(value));
+            }
+            if (bar) {
+                bar.style.width = value + '%';
+            }
+            if (label) {
+                label.textContent = value + '%';
+            }
+        }
 
         function closeSplash() {
             if (closed) {
                 return;
             }
             closed = true;
-            // Préparer l’onboarding AVANT de retirer le splash (évite le flash du site).
+            if (progressTimer) {
+                window.clearInterval(progressTimer);
+                progressTimer = null;
+            }
+            if (rafId) {
+                window.cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+            setProgress(PROGRESS_TO);
             dispatchDone();
             splash.classList.add('is-leaving');
             body.classList.remove('public-splash-active');
@@ -72,11 +100,20 @@
             }, 380);
         }
 
-        if (skipBtn) {
-            skipBtn.addEventListener('click', closeSplash);
-        }
+        setProgress(PROGRESS_FROM);
+        const started = Date.now();
+        const span = PROGRESS_TO - PROGRESS_FROM;
 
-        window.setTimeout(closeSplash, 2200);
+        function tick() {
+            const t = Math.min(1, (Date.now() - started) / SPLASH_MS);
+            setProgress(PROGRESS_FROM + t * span);
+            if (t < 1 && !closed) {
+                rafId = window.requestAnimationFrame(tick);
+            }
+        }
+        rafId = window.requestAnimationFrame(tick);
+
+        window.setTimeout(closeSplash, SPLASH_MS);
     }
 
     if (document.readyState === 'loading') {
