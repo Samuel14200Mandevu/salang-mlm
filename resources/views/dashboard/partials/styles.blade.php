@@ -372,4 +372,41 @@
         flex-shrink: 0;
         font-variant-numeric: tabular-nums;
     }
+
+    /* Performance — même shell que Inscriptions mensuelles (admin) */
+    .member-performance-chart-meta {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .member-performance-chart-meta .meta-total {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--dashboard-accent, var(--color-primary-600, #1E5DAD));
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+    }
+    .member-performance-chart-meta .meta-label {
+        font-size: 0.65rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .member-performance-chart-shell {
+        position: relative;
+        width: 100%;
+        height: 220px;
+        margin-top: 0.5rem;
+        opacity: 0;
+        transform: translateY(10px);
+        animation: memberPerformanceChartIn 0.7s ease-out 0.15s forwards;
+    }
+    @keyframes memberPerformanceChartIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>

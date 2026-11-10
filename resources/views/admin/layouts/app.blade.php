@@ -151,11 +151,13 @@
                   'w-64 -translate-x-full pointer-events-none': !sidebarOpen && isMobile
                }">
 
-            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden sidebar-shell">
                 <div class="cashier-sidebar-accent" aria-hidden="true"></div>
 
-            <!-- Logo -->
-            <div class="sidebar-logo-bar flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
+                @include('layouts.partials.sidebar-mobile-drawer-head', ['drawerVariant' => 'admin'])
+
+            <!-- Logo (desktop) -->
+            <div class="sidebar-logo-bar hidden md:flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
                  :class="sidebarOpen ? 'px-4' : 'px-2'">
                 <a href="{{ route('admin.dashboard') }}"
                    class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0"
@@ -167,24 +169,11 @@
                          decoding="async"
                          class="sidebar-logo-img sidebar-logo-full logo-themeable">
                 </a>
-                <button type="button"
-                        id="adminDrawerCloseBtn"
-                        @click="closeSidebar()"
-                        class="admin-drawer-close lg:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
-                        aria-label="Fermer le menu">
-                    <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="admin-drawer-mobile-head lg:hidden" aria-hidden="true">
-                <span>Menu administration</span>
             </div>
 
             <!-- Menu -->
-            <nav class="admin-sidebar-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
-                 @click="if (isMobile && $event.target.closest('a.sidebar-link')) closeSidebar()">
+            <nav class="admin-sidebar-nav sidebar-mobile-drawer-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
+                 @click="if (isMobile && $event.target.closest('a.sidebar-link, button.sidebar-link')) closeSidebar()">
                 <ul class="space-y-0.5">
 
                     <!-- Dashboard + bascule <> desktop -->
@@ -411,34 +400,28 @@
                             <span class="label" :class="!sidebarOpen ? 'hidden' : ''">Compte membre</span>
                         </a>
                     </li>
+
+                    <li class="admin-sidebar-logout-item pt-4 mt-4 border-t border-[var(--border-color)] md:hidden">
+                        <form method="POST" action="{{ route('logout') }}" class="admin-sidebar-logout logout-form sidebar-logout-form">
+                            @csrf
+                            <button type="button"
+                                    onclick="confirmLogout(event)"
+                                    class="sidebar-link sidebar-link--button sidebar-link--logout danger w-full"
+                                    data-title="Déconnexion"
+                                    aria-label="Déconnexion">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                <span class="label">Déconnexion</span>
+                            </button>
+                        </form>
+                    </li>
                 </ul>
             </nav>
 
-            <!-- Bas de sidebar : avatar (mobile) / déconnexion (desktop Quixotic) -->
-            <div class="admin-sidebar-profile p-3 border-t border-[var(--border-color)] flex-shrink-0">
-                <div class="admin-sidebar-profile-user flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                    <div class="w-9 h-9 rounded-full bg-[var(--primary)] flex items-center justify-center text-[var(--text-inverse)] font-medium text-sm flex-shrink-0">
-                        @auth
-                            @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
-                                <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
-                                     alt="Avatar" class="w-9 h-9 rounded-full object-cover">
-                            @else
-                                {{ strtoupper(substr(Auth::user()?->name, 0, 1)) }}
-                            @endif
-                        @endauth
-                    </div>
-                    <div class="sidebar-user-text transition-all duration-250 overflow-hidden min-w-0"
-                         :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 w-0'">
-                        <p class="text-sm font-medium text-[var(--text-primary)] truncate">
-                            @auth {{ Auth::user()?->name }} @endauth
-                        </p>
-                        <p class="text-xs text-[var(--text-secondary)] truncate">
-                            @auth {{ Auth::user()?->email }} @endauth
-                        </p>
-                    </div>
-                </div>
-
-                <form method="POST" action="{{ route('logout') }}" class="admin-sidebar-logout logout-form hidden">
+            <!-- Bas de sidebar : déconnexion (desktop Quixotic) -->
+            <div class="admin-sidebar-profile p-3 border-t border-[var(--border-color)] flex-shrink-0 max-md:hidden">
+                <form method="POST" action="{{ route('logout') }}" class="admin-sidebar-logout logout-form">
                     @csrf
                     <button type="button"
                             onclick="confirmLogout(event)"
@@ -452,6 +435,8 @@
                     </button>
                 </form>
             </div>
+
+            <p class="sidebar-mobile-drawer-version md:hidden" aria-hidden="true">Version 1.0.0</p>
             </div>
         </aside>
 

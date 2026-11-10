@@ -1,15 +1,15 @@
-<div class="card animate-fadeInUp delay-4">
+<div class="card member-dash-progress-card animate-fadeInUp delay-4">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Progression vers le prochain grade</h3>
             <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                 Actuel: <span class="font-bold text-primary-500">{{ $currentRankName ?? 'Distributeur' }}</span>
                 @if(isset($rankProgress['next']) && $rankProgress['next'] != 'Maximum Level')
-                    -> Prochain: <span class="font-bold text-purple-500">{{ $rankProgress['next'] }}</span>
+                    -> Prochain: <span class="font-bold text-primary-600">{{ $rankProgress['next'] }}</span>
                 @endif
             </p>
         </div>
-        <span class="text-sm font-bold text-primary-500">{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</span>
+        <span class="member-dash-progress-card__pct">{{ number_format($rankProgress['progress'] ?? 0, 1) }}%</span>
     </div>
 
     <div class="dashboard-rank-progress-bar">

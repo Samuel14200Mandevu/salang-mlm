@@ -26,7 +26,7 @@
   margin: 0;
 }
 
-.member-app .network-tree-panel-head p {
+.member-app .network-tree-panel-head .network-tree-panel-desc {
   font-size: 0.75rem;
   color: var(--text-secondary);
   margin: 0.25rem 0 0;
@@ -178,6 +178,7 @@
   width: 10.5rem;
   min-height: 7.25rem;
   padding: 0.75rem 0.65rem 0.85rem;
+  overflow: visible;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
@@ -198,29 +199,47 @@
   border-color: var(--color-primary-500);
 }
 
-.member-app .network-node-avatar {
-  width: 3rem;
-  height: 3rem;
+.member-app .network-node-mark {
+  position: relative;
+  width: 3.25rem;
+  height: 3.75rem;
   margin: 0 auto;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: #fff;
-  position: relative;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, #fff 35%, transparent);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.member-app .network-node-mark:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.member-app .network-node-card.is-root .network-node-mark {
+  width: 3.75rem;
+  height: 4.25rem;
+}
+
+.member-app .network-node-insignia {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22));
 }
 
 .member-app .network-node-status {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 0.1rem;
+  right: 0.05rem;
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
   border: 2px solid var(--bg-card);
+  z-index: 1;
 }
 
 .member-app .network-node-status.is-active {
@@ -357,31 +376,6 @@
   flex: 1;
 }
 
-.member-app .network-show-downline-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2.625rem;
-  height: 2.625rem;
-  margin-left: auto;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--color-primary-500);
-  color: #fff;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.member-app .network-show-downline-btn:hover {
-  background: var(--color-primary-600);
-}
-
-.member-app .network-show-downline-btn:active {
-  transform: scale(0.94);
-}
-
 .member-app .network-show-stats--mobile {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
@@ -389,6 +383,81 @@
 
 .member-app .network-show-stats--mobile .card-stats p:last-child {
   font-size: 1.125rem;
+}
+
+.member-app .network-referral-card {
+  padding: 1rem 1.1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.member-app .network-referral-label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.member-app .network-referral-code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-primary-600);
+}
+
+.member-app .network-referral-link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.65rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.member-app .network-referral-link {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.member-app .network-referral-icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--color-primary-600);
+  cursor: pointer;
+}
+
+.member-app .network-referral-icon-btn:active {
+  background: color-mix(in srgb, var(--color-primary-600) 8%, var(--bg-card));
+}
+
+.member-app .network-referral-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.member-app .network-referral-action {
+  width: 100%;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {
@@ -440,15 +509,26 @@
   }
 
   .member-app .network-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    display: none !important;
   }
 
-  .member-app .network-stats .card-stats {
-    padding: 0.65rem 0.75rem;
+  .member-app .network-tree-panel-head {
+    padding: 0.85rem 1rem;
   }
 
-  .member-app .network-stats .card-stats p:last-child {
-    font-size: 1.125rem;
+  .member-app .network-tree-panel-head .network-tree-panel-desc,
+  .member-app .network-tree-toolbar {
+    display: none !important;
+  }
+
+  .member-app .network-referral-card {
+    margin-top: 0.15rem;
+    padding: 1.1rem 1rem 1.2rem;
+    border-radius: 14px;
+  }
+
+  .member-app .network-referral-code {
+    font-size: 1.75rem;
   }
 }
 
@@ -459,6 +539,38 @@
 
   .member-app .network-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .member-app .network-referral-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding: 1.1rem 1.35rem;
+  }
+
+  .member-app .network-referral-label {
+    width: 100%;
+  }
+
+  .member-app .network-referral-code {
+    font-size: 1.35rem;
+    margin-right: auto;
+  }
+
+  .member-app .network-referral-link-row {
+    flex: 1 1 18rem;
+    max-width: 28rem;
+  }
+
+  .member-app .network-referral-actions {
+    display: flex;
+    width: auto;
+    grid-template-columns: none;
+  }
+
+  .member-app .network-referral-action {
+    width: auto;
   }
 }
 

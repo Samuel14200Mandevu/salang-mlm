@@ -13,14 +13,14 @@
 <div class="space-y-4 sm:space-y-6 network-page network-show-page">
 
     {{-- Desktop — même structure que admin/users/show --}}
-    <div class="page-header network-show-desktop-page-head hidden md:block animate-fadeInUp">
+    <div class="page-header network-show-desktop-page-head max-md:hidden animate-fadeInUp">
         <div class="top-row">
             <div class="min-w-0">
                 <h1 class="page-title">Profil du membre</h1>
                 <p class="page-subtitle">{{ $memberSubtitle }}</p>
             </div>
             <div class="header-actions flex flex-wrap gap-2 items-center">
-                <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md">
+                <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm sm:btn-md" onclick="return networkShowGoBack(event)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -39,7 +39,7 @@
                 <p class="shop-catalog-banner__sub">Détails et réseau de {{ $member->name }}</p>
             </div>
             <div class="shop-catalog-banner__tools">
-                <a href="{{ route('network.index') }}" class="shop-banner-icon-btn" aria-label="Retour au réseau">
+                <a href="{{ route('network.index') }}" class="shop-banner-icon-btn" aria-label="Retour" onclick="return networkShowGoBack(event)">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -101,7 +101,7 @@
     </div>
 
     {{-- Desktop — carte unique (informations + stats + filleuls) --}}
-    <div class="network-show-desktop-panel hidden md:block animate-fadeInUp delay-1">
+    <div class="network-show-desktop-panel max-md:hidden animate-fadeInUp delay-1">
         <div class="card p-3 sm:p-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
                 <div class="px-0 sm:px-4 py-2 sm:py-0">
@@ -186,10 +186,9 @@
                                     <th class="text-xs">Nom</th>
                                     <th class="text-xs">Code</th>
                                     <th class="text-xs">Grade</th>
-                                    <th class="text-xs hidden sm:table-cell">Niveau</th>
-                                    <th class="text-xs hidden sm:table-cell">PV</th>
+                                    <th class="text-xs max-sm:hidden">Niveau</th>
+                                    <th class="text-xs max-sm:hidden">PV</th>
                                     <th class="text-xs">Statut</th>
-                                    <th class="text-xs">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -201,23 +200,18 @@
                                         $dlRankColor = $controller->getRankColor($dlRankLevel);
                                         $level = $downline->level ?? 1;
                                     @endphp
-                                    <tr class="cursor-pointer hover:bg-[var(--bg-hover)]" onclick="navigateToUser({{ $downline->id }})">
+                                    <tr class="cursor-pointer hover:bg-[var(--bg-hover)]" onclick="navigateToUser({{ $downline->id }})" role="link" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navigateToUser({{ $downline->id }})}">
                                         <td class="text-sm font-medium">{{ $downline->name }}</td>
                                         <td class="text-xs font-mono text-primary-500">{{ $downline->sponsor_id }}</td>
                                         <td>
                                             <span class="badge {{ $dlRankColor }} text-[10px]">{{ $dlRankName }}</span>
                                         </td>
-                                        <td class="hidden sm:table-cell text-xs text-[var(--text-secondary)]">Niv. {{ $level }}</td>
-                                        <td class="hidden sm:table-cell text-sm font-medium font-mono text-green-600">{{ number_format($downline->pv_balance ?? 0) }}</td>
+                                        <td class="max-sm:hidden text-xs text-[var(--text-secondary)]">Niv. {{ $level }}</td>
+                                        <td class="max-sm:hidden text-sm font-medium font-mono text-green-600">{{ number_format($downline->pv_balance ?? 0) }}</td>
                                         <td>
                                             <span class="badge {{ $downline->is_active ? 'badge-success' : 'badge-danger' }} text-[10px]">
                                                 {{ $downline->is_active ? 'Actif' : 'Inactif' }}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('network.show', $downline->id) }}" class="btn btn-sm btn-primary" onclick="event.stopPropagation()">
-                                                Voir
-                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -254,7 +248,7 @@
                         $avatarColor = $controller->getAvatarColor($downline);
                         $level = $downline->level ?? 1;
                     @endphp
-                    <div class="downline-card network-show-downline" onclick="navigateToUser({{ $downline->id }})">
+                    <div class="downline-card network-show-downline" role="link" tabindex="0" onclick="navigateToUser({{ $downline->id }})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navigateToUser({{ $downline->id }})}" aria-label="Voir le profil de {{ $downline->name }}">
                         <div class="network-show-downline-main">
                             <div class="avatar avatar-md {{ $avatarColor }}">
                                 {{ strtoupper(substr($downline->name, 0, 1)) }}
@@ -266,12 +260,6 @@
                                 </p>
                             </div>
                         </div>
-                        <button type="button" class="network-show-downline-btn" onclick="event.stopPropagation(); navigateToUser({{ $downline->id }})" aria-label="Voir le profil de {{ $downline->name }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                        </button>
                     </div>
                 @endforeach
             </div>
@@ -289,6 +277,15 @@
 <script>
 function navigateToUser(userId) {
     window.location.href = @json(url('/network/show')) + '/' + userId;
+}
+
+function networkShowGoBack(event) {
+    if (window.history.length > 1) {
+        event.preventDefault();
+        window.history.back();
+        return false;
+    }
+    return true;
 }
 </script>
 @endpush

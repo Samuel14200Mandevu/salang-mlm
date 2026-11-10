@@ -72,11 +72,9 @@ class DashboardController extends Controller
             Auth::setUser($user);
         }
 
-        // VIDER LE CACHE POUR AVOIR DES DONNÉES FRAÎCHES
+        // Ne pas vider descendants_* ici : rebuild ~5s sur gros réseau à chaque Accueil.
         Cache::forget("user_rank_{$user->id}");
         Cache::forget("user_{$user->id}");
-        Cache::forget("descendants_{$user->id}");
-        Cache::forget("descendants_count_{$user->id}");
 
         // RÉCUPÉRER LE GRADE DE L'UTILISATEUR
         $userRank = $user->rank;
@@ -106,7 +104,17 @@ class DashboardController extends Controller
         // ✅ CALCUL DES PV
         $pvPersonnel = $user->pv_balance ?? 0;
         $pvCumul = $user->team_pv ?? 0;
-        $monthlyPv = $user->monthly_pv ?? 0;
+        $currentMlmPeriod = \App\Support\MlmPeriod::current();
+        // PV mensuel perso : compteur live si cohérent, sinon historique période courante
+        $monthlyPvFromHistory = (float) (\App\Models\PVHistory::query()
+            ->where('user_id', $user->id)
+            ->where('period', $currentMlmPeriod)
+            ->where('amount', '>', 0)
+            ->sum('amount') ?? 0);
+        $monthlyPv = $monthlyPvFromHistory > 0
+            ? $monthlyPvFromHistory
+            : (float) ($user->monthly_pv ?? 0);
+        $pvMensuelEquipe = $user->getTeamMonthlyPV($currentMlmPeriod);
 
         // TROUVER LE PROCHAIN GRADE
         $nextRank = Rank::where('level', '>', $currentRankLevel)
@@ -386,6 +394,7 @@ class DashboardController extends Controller
             'currentRankLevel' => $currentRankLevel,
             'pvPersonnel' => $pvPersonnel,
             'pvCumul' => $pvCumul,
+            'pvMensuelEquipe' => $pvMensuelEquipe,
             'topDownlines' => $topDownlines,
             'commissionBands' => $commissionBands,
         ];
