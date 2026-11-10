@@ -51,14 +51,14 @@
     <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
         <button type="button"
                 @click="open = !open"
-                class="btn btn-outline btn-sm sm:btn-md {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
                 :aria-expanded="open"
                 aria-haspopup="true"
-                aria-label="Filtrer">
+                title="{{ $filterButtonLabel }}"
+                aria-label="{{ $filterButtonLabel }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
-            <span>{{ $filterButtonLabel }}</span>
         </button>
     <div x-show="open"
          x-cloak
@@ -106,27 +106,24 @@
     </div>
 </div>
 
-<a href="{{ route('admin.products.stock-overview') }}" class="btn btn-outline btn-sm" title="Gérer le stock">
+<a href="{{ route('admin.products.stock-overview') }}" class="btn btn-outline btn-sm btn-round-icon" title="Gérer le stock" aria-label="Gérer le stock">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
     </svg>
-    <span class="hidden sm:inline">Stock</span>
 </a>
-<a href="{{ route('admin.products.barcodes') }}" class="btn btn-outline btn-sm" title="Codes-barres">
+<a href="{{ route('admin.products.barcodes') }}" class="btn btn-outline btn-sm btn-round-icon" title="Codes-barres" aria-label="Codes-barres">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h2m4 0h10M4 12h16M4 18h2m4 0h10"/>
     </svg>
-    <span class="hidden sm:inline">Codes-barres</span>
 </a>
-<a href="{{ route('admin.packages') }}" class="btn btn-outline btn-sm">
+<a href="{{ route('admin.packages') }}" class="btn btn-outline btn-sm btn-round-icon" title="Packages" aria-label="Packages">
+    {{-- Icône distincte du stock (box) : piles / collection --}}
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
     </svg>
-    Packages
 </a>
-<a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
+<a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm btn-round-icon" title="Ajouter un produit" aria-label="Ajouter un produit">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
     </svg>
-    Ajouter
 </a>

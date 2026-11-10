@@ -149,24 +149,43 @@
     color: var(--text-tertiary);
 }
 
-.filter-select {
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+[x-cloak] { display: none !important; }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 11.5rem;
     background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 40;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
     color: var(--text-primary);
-    font-size: 0.875rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A52' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    outline: none;
-    transition: border-color 0.15s ease;
-    min-width: 120px;
+    text-decoration: none;
 }
-.filter-select:focus {
-    border-color: var(--primary-navy);
+.users-filter-menu a:hover { background: var(--bg-secondary); }
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
 }
+.users-filter-menu .filter-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+.users-filter-menu a.is-active .filter-count { color: var(--primary); }
 
 /* ===== HEADER AVEC RECHERCHE À DROITE ===== */
 .header-with-search {
@@ -210,10 +229,6 @@
         min-width: 0;
         max-width: none;
     }
-    .filter-select {
-        flex: 1;
-        min-width: 100px;
-    }
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
     }
@@ -251,9 +266,6 @@
         flex-direction: column;
         align-items: stretch;
     }
-    .filter-select {
-        width: 100%;
-    }
 }
 </style>
 @endpush
@@ -286,41 +298,69 @@
                 @endif
             </p>
         </div>
+        @php
+            $statusFilter = request('status');
+            $filterActive = filled($statusFilter);
+            $filterButtonLabel = $statusFilter === 'active' ? 'Actifs' : ($statusFilter === 'inactive' ? 'Inactifs' : 'Filtrer');
+            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+            $filterUrl = fn (array $overrides = []) => route('admin.wallets', array_filter(
+                array_merge($filterQueryBase, $overrides),
+                fn ($v) => $v !== null && $v !== ''
+            ));
+            $inactiveWallets = max(0, ($totalWallets ?? 0) - ($activeWallets ?? 0));
+        @endphp
         <div class="header-right admin-page-header-actions">
-            <div class="search-wrapper admin-search-full">
-                <span class="search-icon">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <div class="header-search admin-search-full">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                </span>
-                <input type="text"
-                       id="searchInput"
-                       placeholder="Rechercher un utilisateur"
-                       class="search-input"
-                       autocomplete="off"
-                       value="{{ request('search') }}">
-                <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+                    <input type="text"
+                           id="searchInput"
+                           placeholder="Rechercher un utilisateur"
+                           class="search-input"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                    <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <select id="statusFilter" class="filter-select text-sm">
-                <option value="" {{ !request('status') ? 'selected' : '' }}>Tous statuts</option>
-                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actifs</option>
-                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactifs</option>
-            </select>
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ $filterButtonLabel }}"
+                        aria-label="{{ $filterButtonLabel }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
+                    <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                        <span>Tous</span>
+                        <span class="filter-count">{{ $totalWallets ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'active']) }}" class="{{ $statusFilter === 'active' ? 'is-active' : '' }}">
+                        <span>Actifs</span>
+                        <span class="filter-count">{{ $activeWallets ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'inactive']) }}" class="{{ $statusFilter === 'inactive' ? 'is-active' : '' }}">
+                        <span>Inactifs</span>
+                        <span class="filter-count">{{ $inactiveWallets }}</span>
+                    </a>
+                </div>
+            </div>
 
-            <button id="resetFilters" class="btn btn-outline btn-sm text-xs" title="Réinitialiser les filtres">
-                Réinitialiser
-            </button>
-
-            <a href="{{ route('admin.wallets.export', request()->all()) }}" class="btn btn-outline btn-sm" title="Exporter">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.wallets.export', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="Exporter" aria-label="Exporter">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                <span class="hidden sm:inline">Exporter</span>
             </a>
         </div>
     </div>
@@ -447,9 +487,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearBtn = document.getElementById('clearBtn');
-    const statusFilter = document.getElementById('statusFilter');
-    const resetBtn = document.getElementById('resetFilters');
     let searchTimeout;
+
+    function currentStatus() {
+        return new URL(window.location.href).searchParams.get('status') || '';
+    }
 
     // Recherche avec debounce
     if (searchInput) {
@@ -460,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearBtn.classList.toggle('visible', query.length > 0);
             
             searchTimeout = setTimeout(() => {
-                fetchWallets(query, statusFilter.value);
+                fetchWallets(query, currentStatus());
             }, 300);
         });
 
@@ -469,26 +511,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.key === 'Escape') {
                 this.value = '';
                 clearBtn.classList.remove('visible');
-                fetchWallets('', statusFilter.value);
+                fetchWallets('', currentStatus());
                 this.blur();
             }
-        });
-    }
-
-    // Filtre par statut
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            fetchWallets(searchInput.value.trim(), this.value);
-        });
-    }
-
-    // Réinitialisation
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            if (searchInput) searchInput.value = '';
-            if (statusFilter) statusFilter.value = '';
-            if (clearBtn) clearBtn.classList.remove('visible');
-            fetchWallets('', '');
         });
     }
 
@@ -497,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             clearBtn.classList.remove('visible');
-            fetchWallets('', statusFilter.value);
+            fetchWallets('', currentStatus());
             searchInput.focus();
         });
     }

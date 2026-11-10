@@ -335,23 +335,20 @@
             </div>
         </div>
         <div class="flex gap-2 flex-wrap">
-            <a href="{{ route('admin.consultations.print', $consultation) }}" target="_blank" class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.consultations.print', $consultation) }}" target="_blank" class="btn btn-primary btn-sm btn-round-icon" title="Imprimer" aria-label="Imprimer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
-                Imprimer
             </a>
-            <button type="button" id="openConsultationDeleteModal" class="btn btn-sm" style="background:#B91C1C;color:#fff;border-color:#B91C1C;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <button type="button" id="openConsultationDeleteModal" class="btn btn-danger btn-sm btn-round-icon" title="Supprimer" aria-label="Supprimer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
-                Supprimer
             </button>
-            <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                Retour
             </a>
         </div>
     </div>

@@ -165,28 +165,43 @@
     color: var(--text-tertiary);
 }
 
-/* ===== FILTRES ===== */
-.filter-select {
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+[x-cloak] { display: none !important; }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 12rem;
     background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 40;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
     color: var(--text-primary);
-    font-size: 0.875rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A52' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    outline: none;
-    transition: border-color 0.15s ease;
+    text-decoration: none;
 }
-.filter-select:focus {
-    border-color: var(--primary-navy);
+.users-filter-menu a:hover { background: var(--bg-secondary); }
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
 }
-.filter-select:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.users-filter-menu .filter-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
 }
+.users-filter-menu a.is-active .filter-count { color: var(--primary); }
 
 /* ===== HEADER AVEC RECHERCHE À DROITE ===== */
 .header-with-search {
@@ -222,10 +237,6 @@
         flex: 1;
         min-width: 0;
         max-width: none;
-    }
-    .filter-select {
-        flex: 1;
-        min-width: 120px;
     }
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
@@ -305,32 +316,72 @@
                 @endif
             </p>
         </div>
+        @php
+            $statusFilter = request('status');
+            $filterActive = filled($statusFilter) && $statusFilter !== 'all';
+            $statusLabels = [
+                'pending' => 'En attente',
+                'processing' => 'En traitement',
+                'completed' => 'Terminées',
+                'cancelled' => 'Annulées',
+            ];
+            $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
+            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+            $filterUrl = fn (array $overrides = []) => route('admin.consultations.index', array_filter(
+                array_merge($filterQueryBase, $overrides),
+                fn ($v) => $v !== null && $v !== '' && $v !== 'all'
+            ));
+        @endphp
         <div class="header-right admin-page-header-actions">
-            <div class="search-wrapper admin-search-full">
-                <span class="search-icon">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <div class="header-search admin-search-full">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                </span>
-                <input type="text"
-                       id="searchInput"
-                       placeholder="Rechercher patient, motif ou ID"
-                       class="search-input"
-                       value="{{ request('search') }}">
+                    <input type="text"
+                           id="searchInput"
+                           placeholder="Rechercher patient, motif ou ID"
+                           class="search-input"
+                           autocomplete="off"
+                           value="{{ request('search') }}">
+                </div>
             </div>
-            <select id="statusFilter" class="filter-select text-sm">
-                <option value="all" {{ request('status') == 'all' || !request('status') ? 'selected' : '' }}>Tous</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>En attente</option>
-                <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>En traitement</option>
-                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Terminées</option>
-                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Annulées</option>
-            </select>
-            <button id="resetFilters" class="btn btn-outline btn-sm text-xs" title="Réinitialiser les filtres">
-                Réinitialiser
-            </button>
-            <span class="px-3 py-1 bg-[#FEF1E6] border border-[#FADCB8] rounded-lg text-[var(--ui-stat-warning)] text-sm font-medium whitespace-nowrap">
-                {{ $pendingCount ?? 0 }} en attente
-            </span>
+
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ $filterButtonLabel }}"
+                        aria-label="{{ $filterButtonLabel }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
+                    <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                        <span>Tous</span>
+                        <span class="filter-count">{{ $statusCounts['all'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                        <span>En attente</span>
+                        <span class="filter-count">{{ $statusCounts['pending'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                        <span>En traitement</span>
+                        <span class="filter-count">{{ $statusCounts['processing'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                        <span>Terminées</span>
+                        <span class="filter-count">{{ $statusCounts['completed'] ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                        <span>Annulées</span>
+                        <span class="filter-count">{{ $statusCounts['cancelled'] ?? 0 }}</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -456,9 +507,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const resetBtn = document.getElementById('resetFilters');
     let searchTimeout;
+
+    function currentStatus() {
+        return new URL(window.location.href).searchParams.get('status') || 'all';
+    }
 
     const tableBody = document.getElementById('consultationsTableBody');
     if (tableBody) {
@@ -485,25 +538,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const query = this.value.trim();
             
             searchTimeout = setTimeout(() => {
-                fetchConsultations(query, statusFilter.value);
+                fetchConsultations(query, currentStatus());
             }, 300);
-        });
-    }
-
-    // Filtre par statut
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            const query = searchInput ? searchInput.value.trim() : '';
-            fetchConsultations(query, this.value);
-        });
-    }
-
-    // Réinitialisation
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            if (searchInput) searchInput.value = '';
-            if (statusFilter) statusFilter.value = 'all';
-            fetchConsultations('', 'all');
         });
     }
 
