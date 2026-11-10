@@ -831,10 +831,33 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->getAllDescendants()->count();
     }
 
-    public function getTeamMonthlyPV(): float
+    public function getTeamMonthlyPV(?string $period = null): float
     {
         try {
-            return (float) $this->getAllDescendants()->sum('monthly_pv');
+            $period = $period ?: MlmPeriod::current();
+            $cacheKey = "team_monthly_pv_{$this->id}_{$period}";
+
+            return (float) Cache::remember($cacheKey, 300, function () use ($period) {
+                // CTE : évite de charger tout le réseau en mémoire (getAllDescendants).
+                $row = DB::selectOne(
+                    'WITH RECURSIVE team AS (
+                        SELECT id FROM users WHERE parrain_id = ? AND is_active = 1
+                        UNION ALL
+                        SELECT u.id
+                        FROM users u
+                        INNER JOIN team t ON u.parrain_id = t.id
+                        WHERE u.is_active = 1
+                    )
+                    SELECT COALESCE(SUM(h.amount), 0) AS total
+                    FROM pv_history h
+                    INNER JOIN team ON team.id = h.user_id
+                    WHERE h.period = ?
+                      AND h.amount > 0',
+                    [(int) $this->id, $period]
+                );
+
+                return (float) ($row->total ?? 0);
+            });
         } catch (\Exception $e) {
             Log::error('Erreur getTeamMonthlyPV', [
                 'user_id' => $this->id,
@@ -856,6 +879,8 @@ class User extends Authenticatable implements MustVerifyEmail
         Cache::forget("descendants_{$this->id}");
         Cache::forget("descendants_count_{$this->id}");
         Cache::forget("team_pv_{$this->id}");
+        Cache::forget('team_monthly_pv_'.$this->id.'_'.MlmPeriod::current());
+        Cache::forget('network_stats_'.$this->id);
     }
 
     // ══════════════════════════════════════════════════════════════

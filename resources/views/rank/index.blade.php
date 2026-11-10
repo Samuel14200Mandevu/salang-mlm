@@ -75,13 +75,6 @@
                     <p class="shop-catalog-banner__sub">Grade maximum atteint</p>
                 @endif
             </div>
-            <div class="shop-catalog-banner__tools">
-                <a href="{{ route('rank.history') }}" class="shop-banner-icon-btn" aria-label="Historique des grades">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </a>
-            </div>
         </div>
     </div>
 
@@ -429,55 +422,6 @@
             </div>
         </div>
     @endif
-
-    <div class="rank-card animate-fadeInUp delay-6">
-        <div class="flex items-center justify-between mb-2 sm:mb-3">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                Historique des grades
-            </h3>
-            <a href="{{ route('rank.history') }}" class="text-xs sm:text-sm text-primary-500 hover:text-primary-600 transition font-medium">
-                Voir tout →
-            </a>
-        </div>
-        <p class="text-xs text-[var(--text-secondary)] mb-2">
-            Suivi de votre progression dans le systeme de grades
-        </p>
-        <div class="space-y-1.5 sm:space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-            @forelse($history ?? [] as $item)
-                @php
-                    $oldLevel = $item->oldRank?->level ?? 0;
-                    $newLevel = $item->newRank?->level ?? 0;
-                    $type = $newLevel > $oldLevel ? 'promotion' : ($newLevel < $oldLevel ? 'demotion' : 'update');
-                    $typeLabel = $newLevel > $oldLevel ? 'Promotion' : ($newLevel < $oldLevel ? 'Retrogradation' : 'Mise a jour');
-                @endphp
-                <div class="rank-history-item {{ $type }}">
-                    <div>
-                        <span class="text-xs sm:text-sm font-medium text-[var(--text-primary)]">
-                            {{ $item->old_rank_name ?? 'Distributeur' }}
-                        </span>
-                        <svg class="w-3 h-3 sm:w-4 sm:h-4 inline mx-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                        </svg>
-                        <span class="text-xs sm:text-sm font-bold text-primary-500">
-                            {{ $item->new_rank_name ?? 'Distributeur' }}
-                        </span>
-                    </div>
-                    <div class="ml-auto flex items-center gap-2">
-                        <span class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                            {{ $item->created_at->diffForHumans() }}
-                        </span>
-                        <span class="rank-badge text-[8px] sm:text-[10px] {{ $type === 'promotion' ? 'rank-badge-green' : ($type === 'demotion' ? 'rank-badge-purple' : 'rank-badge-gray') }}">
-                            {{ $typeLabel }}
-                        </span>
-                    </div>
-                </div>
-            @empty
-                <p class="text-center text-[var(--text-secondary)] py-4 text-sm">
-                    Aucun historique de grade
-                </p>
-            @endforelse
-        </div>
-    </div>
 
 </div>
 

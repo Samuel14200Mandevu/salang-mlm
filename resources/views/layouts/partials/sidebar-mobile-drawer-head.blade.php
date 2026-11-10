@@ -1,7 +1,12 @@
 @auth
     @php
         $drawerUser = Auth::user()?->loadMissing(['package']);
-        $isItDrawer = $drawerUser?->usesItManagerShell() ?? false;
+        $drawerVariant = $drawerVariant ?? (
+            ($drawerUser?->usesItManagerShell() ?? false)
+                ? 'it'
+                : 'member'
+        );
+        $isStaffDrawer = in_array($drawerVariant, ['admin', 'cashier', 'it'], true);
     @endphp
     @if($drawerUser)
     @php
@@ -25,7 +30,7 @@
         $drawerCode = null;
         $drawerSubtitle = null;
 
-        if (! $isItDrawer) {
+        if ($drawerVariant === 'member') {
             $rawRankLevel = $drawerUser->getAttributes()['rank_level'] ?? null;
 
             if ($rawRankLevel !== null && $rawRankLevel !== '') {
@@ -47,19 +52,29 @@
             $drawerRankImageUrl = \App\Support\MlmRank::imageUrl($drawerRankLevel);
             $drawerCode = $drawerUser->sponsor_id ?: ('#' . $drawerUser->id);
             $drawerSubtitle = $drawerUser->package?->name;
+        } elseif ($drawerVariant === 'admin') {
+            $drawerRankName = 'Administrateur';
+            $drawerSubtitle = $drawerUser->email;
+        } elseif ($drawerVariant === 'cashier') {
+            $drawerRankName = 'Caissier';
+            $drawerSubtitle = $drawerUser->email;
         } else {
             $drawerRankName = $drawerUser->hasRole('admin') && ! $drawerUser->isItManagerOnly()
                 ? 'Admin · Supervision IT'
                 : 'Responsable IT';
         }
+
+        $headModifier = ($drawerVariant === 'member' && $drawerRankImageUrl)
+            ? ' has-grade-badge'
+            : ' has-profile-photo';
     @endphp
-    <div class="sidebar-mobile-drawer-head md:hidden{{ (! $isItDrawer && $drawerRankImageUrl) ? ' has-grade-badge' : ' has-profile-photo' }}">
+    <div class="sidebar-mobile-drawer-head md:hidden{{ $headModifier }}">
         <span class="sidebar-mobile-drawer-head__glow" aria-hidden="true"></span>
         <span class="sidebar-mobile-drawer-head__orbit" aria-hidden="true"></span>
 
         <button type="button"
                 class="sidebar-mobile-drawer-head__close"
-                @click="sidebarOpen = false"
+                @click="typeof closeSidebar === 'function' ? closeSidebar() : (sidebarOpen = false)"
                 aria-label="Fermer le menu">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -67,7 +82,7 @@
         </button>
 
         <div class="sidebar-mobile-drawer-head__badge">
-            @if($isItDrawer)
+            @if($isStaffDrawer || ! $drawerRankImageUrl)
                 <div class="sidebar-mobile-drawer-head__avatar" aria-hidden="true">
                     @if($drawerAvatarUrl)
                         <img src="{{ $drawerAvatarUrl }}"
@@ -81,7 +96,7 @@
                         <span class="sidebar-mobile-drawer-head__initials">{{ $drawerInitials }}</span>
                     @endif
                 </div>
-            @elseif($drawerRankImageUrl)
+            @else
                 <span class="sidebar-mobile-drawer-head__badge-glow" aria-hidden="true"></span>
                 <img
                     src="{{ $drawerRankImageUrl }}"
@@ -92,17 +107,13 @@
                     loading="eager"
                     decoding="async"
                 >
-            @else
-                <div class="sidebar-mobile-drawer-head__avatar" aria-hidden="true">
-                    <span class="sidebar-mobile-drawer-head__initials">{{ $drawerInitials }}</span>
-                </div>
             @endif
         </div>
 
         <p class="sidebar-mobile-drawer-head__grade">{{ $drawerRankName }}</p>
         <p class="sidebar-mobile-drawer-head__name">{{ $drawerUser->name }}</p>
 
-        @unless($isItDrawer)
+        @if($drawerVariant === 'member')
             <p class="sidebar-mobile-drawer-head__code">
                 Code&nbsp;: <strong>{{ $drawerCode }}</strong>
             </p>
@@ -110,7 +121,9 @@
             @if($drawerSubtitle)
                 <p class="sidebar-mobile-drawer-head__meta">{{ $drawerSubtitle }}</p>
             @endif
-        @endunless
+        @elseif($drawerSubtitle)
+            <p class="sidebar-mobile-drawer-head__meta">{{ $drawerSubtitle }}</p>
+        @endif
     </div>
     @endif
 @endauth

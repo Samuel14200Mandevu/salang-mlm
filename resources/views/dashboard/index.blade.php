@@ -39,16 +39,14 @@
         @endif
     </div>
 
-    {{-- Desktop : structure alignée sur l’accueil IT manager --}}
-    <div class="member-classic-shell member-dash hidden md:block space-y-4">
+    {{-- Desktop : bento type Quixotic, même contenu --}}
+    <div class="member-classic-shell member-dash member-dash--bento hidden md:block space-y-4">
         @include('dashboard.partials.desktop-header')
 
         {{-- Premier bloc : profil + PV (comme sur la capture) --}}
         @include('dashboard.partials.profile-stats')
 
         @include('dashboard.partials.stats-primary')
-
-        @include('dashboard.partials.commission-bands')
 
         @if($dashboardLevel['show_max_banner'] ?? false)
             @include('dashboard.partials.max-banner')
@@ -68,3 +66,7 @@
     </div>
 </div>
 @endsection
+
+@if($dashboardLevel['show_chart'] ?? true)
+    @include('dashboard.partials.chart-activities-scripts')
+@endif

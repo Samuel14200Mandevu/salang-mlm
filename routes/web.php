@@ -226,7 +226,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     // ============================================================
     Route::prefix('rank')->name('rank.')->group(function () {
         Route::get('/', [RankController::class, 'index'])->name('index');
-        Route::get('/history', [RankController::class, 'history'])->name('history');
         Route::get('/leaderboard', [RankController::class, 'leaderboard'])->name('leaderboard');
         Route::get('/progress', [RankController::class, 'apiProgress'])->name('progress');
     });

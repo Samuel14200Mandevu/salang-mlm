@@ -64,11 +64,6 @@ class RankController extends Controller
             ->with('rank')
             ->first();
 
-        $history = RankHistory::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-
         $rankStats = [
             'total_promotions' => RankHistory::where('user_id', $user->id)
                 ->whereHas('newRank', function($q) {
@@ -103,7 +98,6 @@ class RankController extends Controller
             'nextPv',
             'conditions',
             'lastMonthRank',
-            'history',
             'rankStats',
             'rankDistribution'
         ));
@@ -228,40 +222,6 @@ class RankController extends Controller
         }
 
         return false;
-    }
-
-    public function history(Request $request)
-    {
-        $user = Auth::user();
-
-        $history = RankHistory::where('user_id', $user->id)
-            ->with(['oldRank', 'newRank'])
-            ->when($request->filled('year'), function($query) use ($request) {
-                return $query->whereYear('created_at', $request->year);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        $stats = [
-            'total' => RankHistory::where('user_id', $user->id)->count(),
-            'promotions' => RankHistory::where('user_id', $user->id)
-                ->whereHas('newRank', function($q) {
-                    $q->where('level', '>', DB::raw('(SELECT level FROM ranks WHERE id = rank_history.old_rank_id)'));
-                })
-                ->count(),
-            'demotions' => RankHistory::where('user_id', $user->id)
-                ->whereHas('newRank', function($q) {
-                    $q->where('level', '<', DB::raw('(SELECT level FROM ranks WHERE id = rank_history.old_rank_id)'));
-                })
-                ->count(),
-        ];
-
-        $years = RankHistory::where('user_id', $user->id)
-            ->select(DB::raw('DISTINCT YEAR(created_at) as year'))
-            ->orderBy('year', 'desc')
-            ->pluck('year');
-
-        return view('rank.history', compact('history', 'stats', 'years'));
     }
 
     public function leaderboard(Request $request)

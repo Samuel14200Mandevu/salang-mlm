@@ -58,38 +58,19 @@
         </div>
     </div>
 
-    <div class="card network-referral-card animate-fadeInUp delay-2">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div class="min-w-0">
-                <p class="text-xs text-[var(--text-secondary)]">Votre code parrain</p>
-                <p class="text-base font-mono font-semibold text-primary-500">{{ $user->sponsor_id }}</p>
-                <p class="text-xs text-[var(--text-tertiary)] mt-1 break-all" id="sponsorLink">{{ $referralUrl }}</p>
-            </div>
-            <div class="flex flex-wrap gap-2 shrink-0">
-                <button type="button" onclick="copyReferralLink()" class="btn btn-primary btn-sm">Copier le lien</button>
-                <a href="{{ route('network.downlines') }}" class="btn btn-outline btn-sm">Tous les filleuls</a>
-            </div>
-        </div>
-    </div>
-
     @if($parrain)
-        <div class="card p-3 sm:p-4 animate-fadeInUp delay-2">
+        <div class="card p-3 sm:p-4 animate-fadeInUp delay-2 network-parrain-card">
             <p class="text-xs text-[var(--text-secondary)]">Mon parrain</p>
             <p class="text-sm font-medium text-[var(--text-primary)]">{{ $parrain->name }}</p>
             <p class="text-xs font-mono text-[var(--text-tertiary)]">Code {{ $parrain->sponsor_id }}</p>
         </div>
     @endif
 
-    <div class="network-view-tabs animate-fadeInUp delay-3" role="tablist" aria-label="Vue du réseau">
-        <button type="button" class="network-view-tab is-active" id="treeViewBtn" onclick="setNetworkView('tree')" aria-selected="true">Arbre</button>
-        <button type="button" class="network-view-tab" id="listViewBtn" onclick="setNetworkView('list')" aria-selected="false">Filleuls directs</button>
-    </div>
-
     <div id="treeView" class="card network-genealogy-card">
         <div class="network-tree-panel-head">
             <div>
                 <h2>Généalogie de parrainage</h2>
-                <p>Cliquez sur une carte pour ouvrir le profil. Utilisez « Afficher filleuls » pour développer une branche.</p>
+                <p class="network-tree-panel-desc">Cliquez sur une carte pour ouvrir le profil. Utilisez « Afficher filleuls » pour développer une branche.</p>
             </div>
             <div class="network-tree-toolbar">
                 <span class="network-tree-legend">
@@ -114,72 +95,20 @@
         </div>
     </div>
 
-    <div id="listView" class="hidden animate-fadeInUp delay-4 space-y-3">
-        <div class="relative">
-            <label for="searchMember" class="sr-only">Rechercher un filleul</label>
-            <input type="search" id="searchMember" placeholder="Rechercher par nom ou e-mail…" class="input pl-9 text-sm" autocomplete="off">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] pointer-events-none" aria-hidden="true">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
+    <div class="card network-referral-card animate-fadeInUp delay-2">
+        <p class="network-referral-label">Lien de parrainage</p>
+        <p class="network-referral-code" id="sponsorCode">{{ $user->sponsor_id }}</p>
+        <div class="network-referral-link-row">
+            <p class="network-referral-link" id="sponsorLink">{{ $referralUrl }}</p>
+            <button type="button" class="network-referral-icon-btn" onclick="copyReferralLink()" aria-label="Copier le lien">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+            </button>
         </div>
-
-        <div class="md:hidden space-y-2" id="memberListMobile">
-            @forelse($filleuls as $member)
-                @php
-                    $mRank = $controller->getUserRankInfo($member);
-                    $mAvatar = $controller->getAvatarColor($member);
-                @endphp
-                <a href="{{ route('network.show', $member->id) }}" class="network-member-card" data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
-                    <div class="avatar avatar-md {{ $mAvatar }}">{{ strtoupper(substr($member->name, 0, 2)) }}</div>
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium text-sm truncate">{{ $member->name }}</p>
-                        <p class="text-xs text-[var(--text-secondary)]">{{ number_format($member->pv_balance ?? 0) }} PV · {{ $member->downline_count ?? 0 }} filleul(s)</p>
-                    </div>
-                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-[10px]">{{ $member->is_active ? 'Actif' : 'Inactif' }}</span>
-                </a>
-            @empty
-                <div class="card network-empty-state">Aucun filleul direct.</div>
-            @endforelse
-        </div>
-
-        <div class="card hidden md:block">
-            <div class="table-wrap">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Rang</th>
-                            <th>PV</th>
-                            <th>Filleuls</th>
-                            <th>Statut</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="memberList">
-                        @forelse($filleuls as $member)
-                            @php $mRank = $controller->getUserRankInfo($member); @endphp
-                            <tr data-name="{{ strtolower($member->name) }}" data-email="{{ strtolower($member->email) }}">
-                                <td class="font-medium">{{ $member->name }}</td>
-                                <td><span class="badge badge-neutral text-xs">{{ $mRank['name'] }}</span></td>
-                                <td>{{ number_format($member->pv_balance ?? 0) }}</td>
-                                <td>{{ $member->downline_count ?? 0 }}</td>
-                                <td>
-                                    <span class="badge {{ $member->is_active ? 'badge-success' : 'badge-danger' }} text-xs">
-                                        {{ $member->is_active ? 'Actif' : 'Inactif' }}
-                                    </span>
-                                </td>
-                                <td class="text-right">
-                                    <a href="{{ route('network.show', $member->id) }}" class="btn btn-outline btn-sm">Voir</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">Aucun filleul direct.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        <div class="network-referral-actions">
+            <button type="button" class="btn btn-primary network-referral-action" onclick="copyReferralLink()">Copier le lien</button>
+            <button type="button" class="btn btn-outline network-referral-action network-referral-share-btn" onclick="shareReferralLink()">Partager</button>
         </div>
     </div>
 
@@ -201,6 +130,51 @@
             return;
         }
         window.location.href = networkShowUrlFor(userId);
+    };
+
+    function networkExpandLabel(count) {
+        const n = parseInt(count, 10) || 0;
+        return 'Développer · ' + n + ' filleul' + (n > 1 ? 's' : '');
+    }
+
+    window.toggleNetworkBranch = function (markEl, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        const branch = markEl && markEl.closest ? markEl.closest('.network-branch') : null;
+        if (!branch) {
+            return;
+        }
+
+        const userId = branch.dataset.userId;
+        const row = branch.querySelector(':scope > .network-children-row');
+        const expandSlot = branch.querySelector(':scope > .network-tree-expand');
+
+        if (row) {
+            const count = row.querySelectorAll(':scope > .network-branch').length;
+            branch.dataset.childrenCount = String(count);
+            row.remove();
+
+            const slot = document.createElement('div');
+            slot.className = 'network-tree-expand';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'network-tree-expand-btn';
+            btn.textContent = networkExpandLabel(count);
+            btn.setAttribute('onclick', 'event.stopPropagation(); loadChildren(' + userId + ', this)');
+            slot.appendChild(btn);
+            branch.appendChild(slot);
+            requestAnimationFrame(drawNetworkTreeLines);
+            return;
+        }
+
+        if (expandSlot) {
+            const btn = expandSlot.querySelector('.network-tree-expand-btn');
+            if (btn) {
+                loadChildren(userId, btn);
+            }
+        }
     };
 
     function drawNetworkTreeLines() {
@@ -325,23 +299,21 @@
         li.className = 'network-branch';
         li.dataset.userId = child.id;
         li.dataset.level = level;
+        li.dataset.childrenCount = String(child.children_count || 0);
 
-        const initials = escapeHtml(
-            (child.avatar || (child.name ? child.name.substring(0, 2) : '?')).toUpperCase()
-        );
-        const avatarClass = escapeHtml(child.avatar_color || 'avatar-rank-1');
         const statusClass = child.is_active ? 'is-active' : 'is-inactive';
         const rankName = escapeHtml((child.rank && child.rank.name) ? child.rank.name : 'Distributeur');
         const safeName = escapeHtml(child.name || '');
+        const mark = child.rank_image
+            ? '<img class="network-node-insignia" src="' + escapeHtml(child.rank_image) + '" alt="' + rankName + '" width="48" height="56" loading="lazy" decoding="async">'
+            : '';
 
         let inner =
             '<div class="network-node-card" role="button" tabindex="0" onclick="expandNode(' +
             child.id +
             ', this)">' +
-            '<div class="network-node-avatar ' +
-            avatarClass +
-            '">' +
-            initials +
+            '<div class="network-node-mark" role="button" tabindex="0" onclick="event.stopPropagation(); toggleNetworkBranch(this, event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleNetworkBranch(this,event);}">' +
+            mark +
             '<span class="network-node-status ' +
             statusClass +
             '"></span></div>' +
@@ -361,10 +333,8 @@
             inner +=
                 '<div class="network-tree-expand"><button type="button" class="network-tree-expand-btn" onclick="event.stopPropagation(); loadChildren(' +
                 child.id +
-                ', this)">Développer · ' +
-                (child.children_count || 0) +
-                ' filleul' +
-                ((child.children_count || 0) > 1 ? 's' : '') +
+                ', this)">' +
+                networkExpandLabel(child.children_count || 0) +
                 '</button></div>';
         }
 
@@ -381,20 +351,6 @@
         } else {
             el.scrollTo({ left: (el.scrollWidth - el.clientWidth) / 2, top: 0, behavior: 'smooth' });
         }
-    };
-
-    window.setNetworkView = function (view) {
-        const treeView = document.getElementById('treeView');
-        const listView = document.getElementById('listView');
-        const treeBtn = document.getElementById('treeViewBtn');
-        const listBtn = document.getElementById('listViewBtn');
-        const isTree = view === 'tree';
-        treeView.classList.toggle('hidden', !isTree);
-        listView.classList.toggle('hidden', isTree);
-        treeBtn.classList.toggle('is-active', isTree);
-        listBtn.classList.toggle('is-active', !isTree);
-        treeBtn.setAttribute('aria-selected', isTree ? 'true' : 'false');
-        listBtn.setAttribute('aria-selected', !isTree ? 'true' : 'false');
     };
 
     window.copyReferralLink = function () {
@@ -414,6 +370,21 @@
         }
     };
 
+    window.shareReferralLink = function () {
+        const link = document.getElementById('sponsorLink')?.textContent?.trim() || '';
+        const code = document.getElementById('sponsorCode')?.textContent?.trim() || '';
+        if (!link) return;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Rejoins Salang',
+                text: code ? ('Inscris-toi avec mon code ' + code) : 'Inscris-toi sur Salang',
+                url: link,
+            }).catch(function () {});
+            return;
+        }
+        window.copyReferralLink();
+    };
+
     function fallbackCopy(text, cb) {
         const input = document.createElement('input');
         input.value = text;
@@ -425,8 +396,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        setNetworkView('tree');
-
         const mount = document.getElementById('networkTreeMount');
         if (mount && typeof ResizeObserver !== 'undefined') {
             var ro = new ResizeObserver(function () {
@@ -441,23 +410,6 @@
         requestAnimationFrame(function () {
             drawNetworkTreeLines();
             centerNetworkTree();
-        });
-
-        const searchInput = document.getElementById('searchMember');
-        if (!searchInput) return;
-
-        searchInput.addEventListener('input', function () {
-            const q = this.value.trim().toLowerCase();
-            document.querySelectorAll('#memberList tr[data-name]').forEach(function (row) {
-                const name = row.dataset.name || '';
-                const email = row.dataset.email || '';
-                row.style.display = !q || name.includes(q) || email.includes(q) ? '' : 'none';
-            });
-            document.querySelectorAll('#memberListMobile .network-member-card').forEach(function (card) {
-                const name = card.dataset.name || '';
-                const email = card.dataset.email || '';
-                card.style.display = !q || name.includes(q) || email.includes(q) ? '' : 'none';
-            });
         });
     });
 })();

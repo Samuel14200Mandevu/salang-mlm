@@ -8,14 +8,16 @@
     };
     $userName = $user->name ?? 'Membre';
 @endphp
-<div class="member-dash-head animate-fadeInUp">
+<div class="member-dash-head member-dash-head--bento animate-fadeInUp">
     <div class="min-w-0">
-        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Accueil</h1>
-        <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-            {{ $salutation }},
-            <span class="font-semibold text-primary-500">{{ $userName }}</span>
-            <span class="text-[var(--text-tertiary)] text-xs ml-1">({{ now()->format('H:i') }})</span>
-            <span class="text-[var(--text-tertiary)] text-xs">· {{ $currentRankName ?? 'Distributeur' }} · Niv. {{ $dashboardLevelNumber }}</span>
+        <p class="member-dash-head__eyebrow">Accueil</p>
+        <h1 class="member-dash-head__title">
+            {{ $salutation }}, <span>{{ $userName }}</span>
+        </h1>
+        <p class="member-dash-head__sub">
+            <span>{{ now()->translatedFormat('l j F') }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ now()->format('H:i') }}</span>
         </p>
     </div>
 </div>

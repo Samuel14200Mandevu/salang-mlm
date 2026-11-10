@@ -79,7 +79,7 @@ Route::middleware(['auth:sanctum', 'api.auth', 'active'])->group(function () {
     // Rank
     Route::get('/rank', [RankController::class, 'current'])->name('api.rank.current');
     Route::get('/rank/progress', [RankController::class, 'progress'])->name('api.rank.progress');
-    Route::get('/rank/history', [RankController::class, 'history'])->name('api.rank.history');
+    Route::get('/rank/history', [RankController::class, 'apiHistory'])->name('api.rank.history');
     Route::get('/rank/leaderboard', [RankController::class, 'leaderboard'])->name('api.rank.leaderboard');
 
     // Wallet

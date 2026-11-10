@@ -9,7 +9,7 @@
 @if(!empty($bonusByType))
 <div class="wallet-bonus-desktop animate-fadeInUp delay-3 space-y-4" data-wallet-bonus-desktop>
     <div class="card p-4 sm:p-5">
-        <div class="wallet-bonus-desktop__head flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
+        <div class="wallet-bonus-desktop__head mb-3">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base shrink-0">Détail des bonus (payés)</h3>
 
             <div class="wallet-bonus-desktop__tools member-header-actions">

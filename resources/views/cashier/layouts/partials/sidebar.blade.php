@@ -10,11 +10,13 @@
                   'w-64 -translate-x-full': !sidebarOpen && isMobile
                }">
 
-            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden">
+            <div class="admin-sidebar-panel h-full bg-[var(--bg-navbar)] border-r border-[var(--border-color)] flex flex-col overflow-hidden sidebar-shell">
                 <div class="cashier-sidebar-accent" aria-hidden="true"></div>
 
-                <!-- Logo -->
-                <div class="sidebar-logo-bar flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
+                @include('layouts.partials.sidebar-mobile-drawer-head', ['drawerVariant' => 'cashier'])
+
+                <!-- Logo (desktop) -->
+                <div class="sidebar-logo-bar hidden md:flex items-center justify-between h-16 border-b border-[var(--border-color)] flex-shrink-0"
                      :class="sidebarOpen ? 'px-4' : 'px-2'">
                     <a href="{{ route('cashier.dashboard') }}" class="sidebar-brand-link flex items-center justify-center flex-1 min-w-0">
                         <img src="{{ asset('images/salang_logo.png') }}"
@@ -24,24 +26,11 @@
                              decoding="async"
                              class="sidebar-logo-img sidebar-logo-full logo-themeable">
                     </a>
-                    {{-- md:hidden (768px) : aligné sur Admin + Alpine isMobile=768 (js) + cashier-mobile.css (display:none ≥768px). Le CSS cache déjà la nav sur tablette, ce md:hidden est un filet de cohérence. Ne pas remonter à lg. --}}
-                    <button type="button"
-                            id="cashierDrawerCloseBtn"
-                            @click="closeSidebar()"
-                            class="admin-drawer-close md:hidden p-2 rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
-                            aria-label="Fermer le menu">
-                        <svg class="w-5 h-5 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="admin-drawer-mobile-head md:hidden" aria-hidden="true">
-                    Menu caisse
                 </div>
 
                 <!-- Menu -->
-                <nav class="admin-sidebar-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar">
+                <nav class="admin-sidebar-nav sidebar-mobile-drawer-nav flex-1 overflow-y-auto py-4 px-2 custom-scrollbar"
+                     @click="if (isMobile && $event.target.closest('a.sidebar-link, button.sidebar-link')) closeSidebar()">
                     <ul class="space-y-0.5">
 
                         <!-- Accueil + chevron <> desktop -->
@@ -328,30 +317,6 @@
                     </ul>
                 </nav>
 
-                <!-- Footer : avatar mobile ; déconnexion déjà dans la nav -->
-                <div class="admin-sidebar-profile-user p-4 border-t border-[var(--border-color)] flex-shrink-0 md:hidden">
-                    <div class="flex items-center gap-3" :class="sidebarOpen ? 'justify-start' : 'justify-center'">
-                        <div class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            @auth
-                                @if(Auth::user()?->avatar && file_exists(public_path('storage/avatars/' . Auth::user()?->avatar)))
-                                    <img src="{{ asset('storage/avatars/' . Auth::user()?->avatar) }}"
-                                         alt="Avatar"
-                                         class="w-8 h-8 rounded-full object-cover">
-                                @else
-                                    {{ strtoupper(substr(Auth::user()?->name, 0, 1)) }}
-                                @endif
-                            @endauth
-                        </div>
-                        <div class="sidebar-user-text transition-all duration-200 overflow-hidden min-w-0"
-                             :class="sidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 w-0'">
-                            <p class="text-sm font-medium text-[var(--text-primary)] truncate whitespace-nowrap">
-                                @auth {{ Auth::user()?->name }} @endauth
-                            </p>
-                            <p class="text-xs text-[var(--text-secondary)] truncate whitespace-nowrap">
-                                @auth Caissier @endauth
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <p class="sidebar-mobile-drawer-version md:hidden" aria-hidden="true">Version 1.0.0</p>
             </div>
         </aside>
