@@ -207,7 +207,24 @@
     background: var(--bg-primary, #fff);
   }
 
+  /* Light : même polish iOS que le dark — bande brand sous la status bar (pas de 2e barre titre) */
+  .public-app-onboarding::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--color-primary-700, #1E5DAD);
+    z-index: 4;
+    pointer-events: none;
+  }
+
   html.dark .public-app-onboarding {
+    background: var(--bg-primary, #0f172a);
+  }
+
+  html.dark .public-app-onboarding::before {
     background: var(--bg-primary, #0f172a);
   }
 
@@ -2203,7 +2220,7 @@
   /* —— Navigation —— */
   .public-nav {
     position: sticky;
-    padding-top: calc(0.35rem + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .public-nav-inner {
@@ -2391,7 +2408,7 @@
   }
 
   /* —— Auth (mobile app / Binance-like) —— */
-  /* Bande brand sous status bar (black-translucent) : icônes blanches lisibles, contenu inchangé */
+  /* Safe-area brand : polish iOS identique light + dark (icônes status bar lisibles) */
   .auth-mobile-app::before {
     content: '';
     position: fixed;
@@ -2437,7 +2454,7 @@
 
   .auth-form-panel {
     justify-content: flex-start;
-    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 0 calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 0 calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Choix de compte : contenu centré, légal collé en bas */
