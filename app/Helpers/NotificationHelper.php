@@ -294,11 +294,14 @@ class NotificationHelper
                 return "Votre demande de retrait de {$amount} a été rejetée. Motif : {$reason}.";
                 
             case 'welcome':
+                if (! empty($data['pending_activation'])) {
+                    return 'Votre compte a été créé avec succès. Bienvenue chez Salang Group ! Activez-le via package en ligne, code guichet ou demande admin.';
+                }
                 $sponsor = $data['sponsor_name'] ?? '';
                 if ($sponsor) {
-                    return "Bienvenue sur Salang MLM ! Vous avez été parrainé par {$sponsor}.";
+                    return "Bienvenue chez Salang Group ! Vous avez été parrainé par {$sponsor}.";
                 }
-                return "Bienvenue sur Salang MLM ! Nous sommes ravis de vous accueillir.";
+                return "Bienvenue chez Salang Group ! Nous sommes ravis de vous accueillir.";
                 
             case 'new_downline':
                 $name = $data['downline_name'] ?? 'Un nouveau membre';
