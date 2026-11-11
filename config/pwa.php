@@ -53,10 +53,9 @@ return [
             '/apple-touch-icon.png',
         ],
         'cache' => [
-            /* networkFirst : la mini-app iOS doit prendre le CSS/HTML frais après deploy */
-            'strategy' => 'networkFirst',
+            'strategy' => 'cacheFirst',
             'max_entries' => 100,
-            'max_age_seconds' => 300,
+            'max_age_seconds' => 3600,
         ],
     ],
 
