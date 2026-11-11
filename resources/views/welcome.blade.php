@@ -50,10 +50,18 @@
         })();
     </script>
     <style>
+        /* Plein écran comme auth : fond fixe avant paint (évite trous thème) */
+        html.salang-mobile-app {
+            background: #111827 !important;
+            min-height: 100%;
+            min-height: -webkit-fill-available;
+        }
         html.salang-mobile-app body.public-welcome-page {
             overflow: hidden !important;
-            height: 100dvh !important;
-            background: var(--bg-page, #0b1220);
+            height: 100% !important;
+            min-height: 100dvh !important;
+            min-height: -webkit-fill-available !important;
+            background: #111827 !important;
         }
         html.salang-mobile-app .public-nav,
         html.salang-mobile-app .public-footer,
