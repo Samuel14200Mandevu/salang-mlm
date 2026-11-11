@@ -50,18 +50,20 @@
         })();
     </script>
     <style>
-        /* Plein écran comme auth : fond fixe avant paint (évite trous thème) */
+        /* Avant paint : dégradé splash (pas #111827 uni → bandes). Onboarding blanc via CSS. */
         html.salang-mobile-app {
-            background: #111827 !important;
             min-height: 100%;
             min-height: -webkit-fill-available;
+            background-color: #0f2744 !important;
+            background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
         }
         html.salang-mobile-app body.public-welcome-page {
             overflow: hidden !important;
             height: 100% !important;
             min-height: 100dvh !important;
             min-height: -webkit-fill-available !important;
-            background: #111827 !important;
+            background-color: #0f2744 !important;
+            background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
         }
         html.salang-mobile-app .public-nav,
         html.salang-mobile-app .public-footer,

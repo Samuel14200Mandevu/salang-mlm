@@ -7,17 +7,16 @@
   }
 
   /* —— Splash accueil (app mobile uniquement, jamais site officiel) —— */
-  /*
-   * Comme auth (body = surface plein écran) : html/body + overlay
-   * partagent le même fond sombre pour couvrir status bar / home indicator.
-   */
+  /* Même dégradé que l’overlay — évite les bandes unies haut/bas */
   html:has(body.public-splash-active),
   body.public-splash-active {
     overflow: hidden;
     height: 100%;
     min-height: 100dvh;
+    min-height: 100svh;
     min-height: -webkit-fill-available;
-    background: #111827 !important;
+    background-color: #0f2744 !important;
+    background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
   }
 
   body.public-splash-active .public-nav,
@@ -26,6 +25,18 @@
   body.public-splash-active .public-onboarding-chrome {
     visibility: hidden;
     pointer-events: none;
+  }
+
+  /* Après splash : fond onboarding = thème (plus de barre bleue sous Suivant) */
+  html.salang-mobile-app:has(body.public-onboarding-active:not(.public-splash-active)),
+  html.salang-mobile-app body.public-welcome-page.public-onboarding-active:not(.public-splash-active) {
+    background: var(--bg-primary, #ffffff) !important;
+    background-image: none !important;
+  }
+
+  html.dark.salang-mobile-app:has(body.public-onboarding-active:not(.public-splash-active)),
+  html.dark.salang-mobile-app body.public-welcome-page.public-onboarding-active:not(.public-splash-active) {
+    background: var(--bg-primary, #0f172a) !important;
   }
 
   html.salang-no-splash .public-mobile-splash,
@@ -48,13 +59,11 @@
 
   .public-mobile-splash {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     min-height: 100dvh;
+    min-height: 100svh;
     min-height: -webkit-fill-available;
     z-index: 120;
     display: flex;
@@ -62,10 +71,9 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    /* Contenu inset ; le fond remplit tout (comme auth-split 100dvh) */
     padding: max(1.5rem, env(safe-area-inset-top, 0px)) max(1.25rem, env(safe-area-inset-right, 0px))
       max(1.5rem, env(safe-area-inset-bottom, 0px)) max(1.25rem, env(safe-area-inset-left, 0px));
-    background-color: #111827;
+    background-color: #0f2744;
     background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%);
     color: #fff;
     transition: opacity 0.35s ease, transform 0.35s ease;
@@ -193,14 +201,15 @@
     --public-onboarding-accent: var(--color-primary-600, #1e5dad);
   }
 
-  body.public-welcome-page.public-onboarding-active {
+  body.public-welcome-page.public-onboarding-active:not(.public-splash-active) {
     overflow: hidden;
     height: 100dvh;
-    background: var(--bg-primary, #fff);
+    background: var(--bg-primary, #fff) !important;
+    background-image: none !important;
   }
 
-  html.dark body.public-welcome-page.public-onboarding-active {
-    background: var(--bg-primary, #0f172a);
+  html.dark body.public-welcome-page.public-onboarding-active:not(.public-splash-active) {
+    background: var(--bg-primary, #0f172a) !important;
   }
 
   body.public-welcome-page.public-onboarding-active .public-nav,
@@ -2144,12 +2153,13 @@
     bottom: 0;
     z-index: 55;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--bg-primary, #fff);
+    /* Opaque : ne laisse pas voir un fond splash sombre derrière Suivant */
+    background: #ffffff !important;
     border-top: none;
   }
 
   html.dark .public-onboarding-chrome {
-    background: var(--bg-primary, #0f172a);
+    background: var(--bg-primary, #0f172a) !important;
   }
 
   .public-onboarding-chrome-inner {
