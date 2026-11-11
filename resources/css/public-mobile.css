@@ -7,15 +7,9 @@
   }
 
   /* —— Splash accueil (app mobile uniquement, jamais site officiel) —— */
-  /*
-   * iOS home-indicator / overscroll : le fond html/body ne doit PAS suivre le thème
-   * (sinon une bande claire/sombre apparaît en bas du splash).
-   */
-  html:has(body.public-splash-active),
   body.public-splash-active {
     overflow: hidden;
     height: 100dvh;
-    background: #111827 !important;
   }
 
   body.public-splash-active .public-nav,
@@ -52,11 +46,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Couvre aussi la safe-area bas (home indicator) — pas de “trou” thème */
     padding: max(1.5rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right))
       max(1.5rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
     background: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%);
-    background-color: #111827;
     color: #fff;
     transition: opacity 0.35s ease, transform 0.35s ease;
   }

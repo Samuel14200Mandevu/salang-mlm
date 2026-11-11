@@ -7,8 +7,7 @@
     <title>@yield('title', 'Salang Group — Connexion')</title>
     <meta name="theme-color" content="#1E5DAD">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    {{-- Toujours sombre (black-translucent), indépendant du thème light/dark --}}
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <script>
         (function () {
