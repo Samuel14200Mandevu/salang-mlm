@@ -1133,11 +1133,11 @@ html.dark .admin-app .badge-admin {
     }
 }
 
-/* Drawer IT — tête bleue plus généreuse (photo seule = trop compacte sinon) */
+/* Drawer IT — tête bleue + safe-area (prépare polish iOS sans toucher le contenu) */
 @media (max-width: 767px) {
     .it-manager-shell #sidebar .sidebar-mobile-drawer-head {
-        padding: 1.35rem 1rem 1.4rem;
-        min-height: 11.5rem;
+        padding: calc(1.55rem + env(safe-area-inset-top, 0px)) 1rem 1.5rem;
+        min-height: calc(12rem + env(safe-area-inset-top, 0px));
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1172,10 +1172,21 @@ html.dark .admin-app .badge-admin {
     }
 
     .it-manager-shell #sidebar .sidebar-mobile-drawer-head__close {
-        top: 0.85rem;
+        top: calc(0.95rem + env(safe-area-inset-top, 0px));
         right: 0.85rem;
         width: 2.25rem;
         height: 2.25rem;
+    }
+
+    /* Barre titre IT — même style qu’avant + marge safe-area uniquement */
+    .it-manager-shell .cashier-topbar,
+    .it-manager-shell .member-mobile-topbar {
+        padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
+    }
+
+    .it-manager-shell .cashier-topbar > div > div {
+        min-height: 3.4rem;
+        height: auto;
     }
 }
 

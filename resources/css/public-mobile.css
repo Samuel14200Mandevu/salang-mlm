@@ -2203,7 +2203,7 @@
   /* —— Navigation —— */
   .public-nav {
     position: sticky;
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: calc(0.35rem + env(safe-area-inset-top, 0px));
   }
 
   .public-nav-inner {
@@ -2391,6 +2391,19 @@
   }
 
   /* —— Auth (mobile app / Binance-like) —— */
+  /* Bande brand sous status bar (black-translucent) : icônes blanches lisibles, contenu inchangé */
+  .auth-mobile-app::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--color-primary-700, #1E5DAD);
+    z-index: 80;
+    pointer-events: none;
+  }
+
   .auth-mobile-app {
     background: var(--bg-page);
   }
@@ -2424,7 +2437,7 @@
 
   .auth-form-panel {
     justify-content: flex-start;
-    padding: calc(0.5rem + env(safe-area-inset-top, 0px)) 0 calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 0 calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Choix de compte : contenu centré, légal collé en bas */

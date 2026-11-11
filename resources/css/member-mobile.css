@@ -45,9 +45,28 @@
       color-mix(in srgb, var(--color-primary-600) 58%, var(--color-accent-500) 42%) 100%
     );
     /* Barre jusqu’au milieu vertical de la carte hero (accueil) */
-    --member-home-header-band-height: calc(env(safe-area-inset-top, 0px) + 10.75rem);
-    --member-sticky-topbar-offset: calc(env(safe-area-inset-top, 0px) + 3.5rem);
+    --member-home-header-band-height: calc(env(safe-area-inset-top, 0px) + 11.25rem);
+    --member-sticky-topbar-offset: calc(env(safe-area-inset-top, 0px) + 3.9rem);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+   * Mini-app iOS : fond html = couleur de page (pas de bleu rubber-band).
+   * Status bar couverte par topbar / bandeau dégradé (+ safe-area), pas par html.
+   */
+  html:has(body.member-app) {
+    background: var(--bg-secondary, var(--bg-page, #f1f5f9));
+  }
+
+  html.dark:has(body.member-app) {
+    background: var(--bg-page, #0b1220);
+  }
+
+  .member-app {
+    background: var(--bg-secondary, var(--bg-page));
+    min-height: 100dvh;
+    min-height: 100vh;
+    overscroll-behavior-y: none;
   }
 
   .member-app .main-wrapper {
@@ -56,11 +75,12 @@
   }
 
   .member-app .cashier-topbar {
-    padding-top: env(safe-area-inset-top, 0px);
+    /* Marge safe-area seulement — pas de barre supplémentaire */
+    padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
   }
 
   .member-app .cashier-topbar > div > div {
-    min-height: 3.25rem;
+    min-height: 3.4rem;
     height: auto;
   }
 
@@ -89,37 +109,101 @@
     bottom: calc(var(--member-nav-bar-inset-bottom) + env(safe-area-inset-bottom, 0px));
     left: var(--member-nav-bar-inset-x);
     right: var(--member-nav-bar-inset-x);
-    /* Garde position: fixed du .member-mobile-nav-bar (conteneur pour le logo) */
+    /* Conteneur sans border-radius : WebKit clippe sinon le logo Services qui dépasse en haut */
     isolation: isolate;
-    overflow: visible;
-    background-color: transparent;
+    overflow: visible !important;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Surface visuelle du dock (coins + fond) — séparée pour ne pas clipper le rond Services */
+  .member-app .member-mobile-nav-bar--salang::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: var(--bg-navbar, #ffffff);
     background-image: var(--member-nav-bar-bg);
     background-repeat: no-repeat;
     background-size: 100% 100%;
-    border: 1px solid color-mix(in srgb, var(--color-primary-200) 65%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary-200) 55%, transparent);
     border-radius: var(--member-nav-bar-radius);
+    /* Ombre teintée selon le grade */
     box-shadow:
-      0 4px 22px color-mix(in srgb, var(--color-primary-900) 10%, transparent),
-      0 1px 4px color-mix(in srgb, var(--color-primary-900) 6%, transparent);
-    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      0 8px 28px color-mix(
+        in srgb,
+        var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-600))) 28%,
+        transparent
+      ),
+      0 2px 8px color-mix(
+        in srgb,
+        var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-700))) 16%,
+        transparent
+      );
   }
 
-  .member-app .member-mobile-nav-bar .mobile-bottom-nav {
+  html.dark .member-app .member-mobile-nav-bar--salang::before {
+    /* Pas de filet rectangulaire en sombre : forme = radius + ombre grade */
+    background-color: var(--bg-navbar, #0f172a);
+    border: none;
+    box-shadow:
+      0 0 0 1px color-mix(
+        in srgb,
+        var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-400))) 22%,
+        transparent
+      ),
+      0 10px 32px color-mix(
+        in srgb,
+        var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-500))) 36%,
+        transparent
+      ),
+      0 2px 10px color-mix(
+        in srgb,
+        var(--member-rank-accent, var(--dashboard-accent, var(--color-primary-400))) 18%,
+        transparent
+      );
+  }
+
+  /*
+   * Le body membre a aussi .cashier-app : le dock caisse (fixed !important)
+   * ne doit PAS s’appliquer au nav Salang, sinon la barre interne sort du flux,
+   * le conteneur s’effondre et le logo Services bascule sous le dock.
+   */
+  .member-app .member-mobile-nav-bar .mobile-bottom-nav,
+  .member-app .member-mobile-nav-bar .mobile-bottom-nav--salang {
     pointer-events: auto;
-    position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    width: 100%;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
     z-index: 1;
+    /* Annule le border rectangulaire du dock caisse (.cashier-app sur le body) */
+    border: none !important;
+    border-top: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .member-app .member-mobile-nav__services-logo {
     position: absolute;
     left: 50%;
-    top: 0;
+    top: 0 !important;
+    bottom: auto !important;
     z-index: 20;
-    transform: translate(-50%, -50%);
+    /* Moitié au-dessus du dock */
+    transform: translate(-50%, -50%) !important;
     margin: 0;
     padding: 0;
     border: none;
@@ -210,10 +294,6 @@
     color: var(--member-nav-tab-active-fg);
   }
 
-  html.dark .member-app .member-mobile-nav-bar--salang {
-    border-color: color-mix(in srgb, var(--border-color) 80%, var(--color-primary-400) 20%);
-  }
-
   html.dark .member-app {
     --member-nav-bar-bg: linear-gradient(
       90deg,
@@ -264,17 +344,24 @@
     text-overflow: ellipsis;
   }
 
-  .member-app .mobile-bottom-nav--salang .nav-item--services-slot {
+  .member-app .mobile-bottom-nav--salang .nav-item--services-slot,
+  .member-app .mobile-bottom-nav--salang .nav-item--services-slot.active,
+  .member-app .mobile-bottom-nav--salang .nav-item--services-slot.is-active {
     pointer-events: none;
     flex: 1;
     min-width: 0;
     color: var(--member-nav-tab-inactive-fg);
+    /* Jamais de pastille / rectangle (le rond logo suffit) */
     background: transparent !important;
     border: none !important;
-    border-radius: 0;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
     padding: 0.3rem 0.2rem;
   }
 
+  .member-app .mobile-bottom-nav--salang .nav-item--services-slot.active span:last-child,
   .member-app .mobile-bottom-nav--salang .nav-item--services-slot.is-active span:last-child {
     color: var(--member-nav-tab-active-fg);
     font-weight: 600;
@@ -302,9 +389,11 @@
     background-position: center center, center center;
     background-clip: padding-box, border-box;
     background-origin: border-box;
-    box-shadow:
-      0 2px 8px color-mix(in srgb, var(--color-primary-900) 12%, transparent),
-      0 1px 2px color-mix(in srgb, var(--color-primary-900) 8%, transparent);
+    box-shadow: var(
+      --member-nav-services-disc-shadow,
+      0 4px 14px color-mix(in srgb, var(--member-rank-accent, var(--color-primary-600)) 22%, transparent),
+      0 1px 4px color-mix(in srgb, var(--member-rank-accent, var(--color-primary-700)) 12%, transparent)
+    );
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -318,8 +407,8 @@
   .member-app .member-mobile-nav__services-logo.is-active .member-mobile-nav__services-disc {
     transform: scale(1.03);
     box-shadow:
-      0 3px 12px color-mix(in srgb, var(--color-primary-900) 16%, transparent),
-      0 1px 3px color-mix(in srgb, var(--color-primary-900) 10%, transparent);
+      0 5px 16px color-mix(in srgb, var(--member-rank-accent, var(--color-primary-600)) 32%, transparent),
+      0 2px 6px color-mix(in srgb, var(--member-rank-accent, var(--color-primary-700)) 18%, transparent);
   }
 
   .member-app .mobile-bottom-nav--salang .nav-item .badge-count {
@@ -360,7 +449,7 @@
   .member-app #sidebar .sidebar-mobile-drawer-head {
     position: relative;
     text-align: center;
-    padding: 0.85rem 1rem 0.9rem;
+    padding: calc(1.2rem + env(safe-area-inset-top, 0px)) 1rem 1.1rem;
     background: var(--member-mobile-head-gradient);
     color: #fff;
     flex-shrink: 0;
@@ -371,7 +460,7 @@
 
   .member-app #sidebar .sidebar-mobile-drawer-head__close {
     position: absolute;
-    top: 0.65rem;
+    top: calc(0.85rem + env(safe-area-inset-top, 0px));
     right: 0.65rem;
     display: inline-flex;
     align-items: center;
@@ -849,7 +938,7 @@
     pointer-events: none;
   }
 
-  /* Accueil : barre transparente sur le bandeau étendu */
+  /* Accueil : barre transparente sur le bandeau étendu (pas de 2e barre titre) */
   .member-app .main-wrapper--member-home .member-mobile-topbar {
     background: transparent !important;
     border-bottom-color: transparent !important;

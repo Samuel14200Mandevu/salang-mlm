@@ -80,9 +80,10 @@ return [
             '/apple-touch-icon.png',
         ],
         'cache' => [
-            'strategy' => 'cacheFirst',
+            /* networkFirst : évite de garder l’ancien shell en mini-app iOS */
+            'strategy' => 'networkFirst',
             'max_entries' => 100,
-            'max_age_seconds' => 3600,
+            'max_age_seconds' => 300,
         ],
     ],
 
