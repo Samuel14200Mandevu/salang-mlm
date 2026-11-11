@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Genealogy;
 use App\Models\Rank;
+use App\Notifications\WelcomeNotification;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
@@ -234,10 +235,19 @@ class SocialiteController extends Controller
             session()->forget('sponsor_id');
             session()->forget('social_provider');
 
+            try {
+                $user->notify(new WelcomeNotification($sponsor->name, pendingActivation: true));
+            } catch (\Exception $e) {
+                Log::error('Welcome notification failed after social registration', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             Auth::login($user);
 
             return redirect()->route('activate.index')
-                ->with('warning', 'Votre compte est en attente d\'activation. L\'administrateur vous enverra un code d\'activation.');
+                ->with('success', 'Compte créé avec succès. Bienvenue chez Salang Group ! Activez votre compte pour continuer.');
 
         } catch (\Exception $e) {
             Log::error('Social registration error: ' . $e->getMessage());
