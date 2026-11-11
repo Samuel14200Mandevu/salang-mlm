@@ -198,8 +198,7 @@
     z-index: 30;
     overflow: visible;
 }
-.admin-page-header-actions,
-.admin-sticky-toolbar {
+.admin-page-header-actions {
     overflow: visible !important;
 }
 .admin-kpi-rail.stats-grid {
@@ -331,7 +330,7 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     .header-right {
         flex-direction: column;
@@ -341,64 +340,162 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Commissions',
-        'subtitle' => $commissions->total() . ' lignes · filtres et recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
-    <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+@php
+    $typeFilter = request('type');
+    $statusFilter = request('status');
+    $periodFilter = request('period');
+    $filterActive = filled($typeFilter) || filled($statusFilter) || filled($periodFilter);
+    $statusLabels = [
+        'pending' => 'En attente',
+        'paid' => 'Payé',
+        'cancelled' => 'Annulé',
+    ];
+    $filterButtonLabel = filled($typeFilter)
+        ? ucfirst(str_replace('_', ' ', $typeFilter))
+        : ($statusLabels[$statusFilter] ?? (filled($periodFilter) ? $periodFilter : 'Filtrer'));
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+        'type' => $typeFilter,
+        'status' => $statusFilter,
+        'period' => $periodFilter,
+    ], fn ($v) => filled($v));
+    $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
+        return route('admin.commissions', array_filter(
+            array_merge($filterQueryBase, $overrides),
+            fn ($v) => $v !== null && $v !== ''
+        ));
+    };
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [$commissions->total().' commissions'];
+    if ($typeFilter) {
+        $subtitleBits[] = ucfirst(str_replace('_', ' ', $typeFilter));
+    }
+    if ($statusFilter && isset($statusLabels[$statusFilter])) {
+        $subtitleBits[] = $statusLabels[$statusFilter];
+    }
+    if ($periodFilter) {
+        $subtitleBits[] = $periodFilter;
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $commissionsSubtitle = implode(' · ', $subtitleBits);
+@endphp
+
+    {{-- Mobile : bandeau Commissions + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Commissions</h1>
+                <p id="adminCommissionsSubtitleMobile">{{ $commissionsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminCommissionsSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ $filterUrl(['type' => null, 'status' => null, 'period' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                        </a>
+
+                        <div class="products-filter-sep">Type</div>
+                        <a href="{{ $filterUrl(['type' => null]) }}" class="{{ ! $typeFilter ? 'is-active' : '' }}">
+                            <span>Tous types</span>
+                        </a>
+                        @foreach($types as $type)
+                            <a href="{{ $filterUrl(['type' => $type]) }}" class="{{ $typeFilter === $type ? 'is-active' : '' }}">
+                                <span>{{ ucfirst(str_replace('_', ' ', $type)) }}</span>
+                            </a>
+                        @endforeach
+
+                        <div class="products-filter-sep">Statut</div>
+                        <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $statusFilter ? 'is-active' : '' }}">
+                            <span>Tous statuts</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                            <span>En attente</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'paid']) }}" class="{{ $statusFilter === 'paid' ? 'is-active' : '' }}">
+                            <span>Payé</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                            <span>Annulé</span>
+                        </a>
+
+                        @if($periods->isNotEmpty())
+                            <div class="products-filter-sep">Période</div>
+                            <a href="{{ $filterUrl(['period' => null]) }}" class="{{ ! $periodFilter ? 'is-active' : '' }}">
+                                <span>Toutes périodes</span>
+                            </a>
+                            @foreach($periods as $period)
+                                <a href="{{ $filterUrl(['period' => $period]) }}" class="{{ $periodFilter == $period ? 'is-active' : '' }}">
+                                    <span>{{ $period }}</span>
+                                </a>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.commissions.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </a>
+
+                <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="adminCommissionsSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un utilisateur"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher un utilisateur">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + filtres --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commissions</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminCommissionsSubtitle">
-                {{ $commissions->total() }} commissions
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('type'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Type: {{ ucfirst(request('type')) }}
-                    </span>
-                @endif
-                @if(request('status'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Statut: {{ ucfirst(request('status')) }}
-                    </span>
-                @endif
+                {{ $commissionsSubtitle }}
             </p>
         </div>
-        @php
-            $typeFilter = request('type');
-            $statusFilter = request('status');
-            $periodFilter = request('period');
-            $filterActive = filled($typeFilter) || filled($statusFilter) || filled($periodFilter);
-            $statusLabels = [
-                'pending' => 'En attente',
-                'paid' => 'Payé',
-                'cancelled' => 'Annulé',
-            ];
-            $filterButtonLabel = filled($typeFilter)
-                ? ucfirst(str_replace('_', ' ', $typeFilter))
-                : ($statusLabels[$statusFilter] ?? (filled($periodFilter) ? $periodFilter : 'Filtrer'));
-            $filterQueryBase = array_filter([
-                'search' => request('search'),
-                'type' => $typeFilter,
-                'status' => $statusFilter,
-                'period' => $periodFilter,
-            ], fn ($v) => filled($v));
-            $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
-                return route('admin.commissions', array_filter(
-                    array_merge($filterQueryBase, $overrides),
-                    fn ($v) => $v !== null && $v !== ''
-                ));
-            };
-        @endphp
-        <div class="admin-sticky-toolbar md:contents">
         <div class="header-right admin-page-header-actions">
             <div class="header-search admin-search-full">
                 <div class="search-wrapper">
@@ -410,7 +507,8 @@
                            placeholder="Rechercher un utilisateur"
                            class="search-input"
                            autocomplete="off"
-                           value="{{ request('search') }}">
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher un utilisateur">
                     <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -487,7 +585,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </a>
-        </div>
         </div>
     </div>
 
@@ -642,7 +739,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     let searchTimeout;
 
@@ -650,37 +750,46 @@ document.addEventListener('DOMContentLoaded', function() {
         return new URL(window.location.href).searchParams.get(name) || '';
     }
 
-    // Recherche avec debounce
-    if (searchInput) {
+    function syncSearchInputs(source, query) {
+        searchInputs.forEach(function (other) {
+            if (other !== source) {
+                other.value = query;
+            }
+        });
+        if (clearBtn) {
+            clearBtn.classList.toggle('visible', query.length > 0);
+        }
+    }
+
+    // Recherche avec debounce (desktop + mobile)
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
-            clearBtn.classList.toggle('visible', query.length > 0);
-            
+            syncSearchInputs(searchInput, query);
             searchTimeout = setTimeout(() => {
                 fetchCommissions(query, currentParam('type'), currentParam('status'), currentParam('period'));
             }, 300);
         });
 
-        // Raccourci ESC
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
-                clearBtn.classList.remove('visible');
+                syncSearchInputs(searchInput, '');
                 fetchCommissions('', currentParam('type'), currentParam('status'), currentParam('period'));
                 this.blur();
             }
         });
-    }
+    });
 
-    // Bouton clear
+    // Bouton clear (desktop)
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
+            searchInputs.forEach(function (el) { el.value = ''; });
             clearBtn.classList.remove('visible');
             fetchCommissions('', currentParam('type'), currentParam('status'), currentParam('period'));
-            searchInput.focus();
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
         });
     }
 
@@ -772,6 +881,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const newSubtitle = doc.getElementById('adminCommissionsSubtitle');
             if (subtitle && newSubtitle) {
                 subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+            const subtitleMobile = document.getElementById('adminCommissionsSubtitleMobile');
+            const newSubtitleMobile = doc.getElementById('adminCommissionsSubtitleMobile');
+            if (subtitleMobile && newSubtitleMobile) {
+                subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
             }
 
             // Mise à jour des statistiques

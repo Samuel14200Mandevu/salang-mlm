@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Notifications\ActionFeedbackNotification;
 use App\Support\NotificationPresenter;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $user = Auth::user();
+
+        if ($user?->hasRole('admin')) {
+            return redirect()->route('admin.notifications.index');
+        }
+
         $status = $request->query('status', 'all');
         $category = $request->query('category', 'all');
         $q = trim((string) $request->query('q', ''));
@@ -61,11 +67,15 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function show(string $id): View
+    public function show(string $id): View|RedirectResponse
     {
         $user = Auth::user();
-        $notification = $user->notifications()->findOrFail($id);
 
+        if ($user?->hasRole('admin')) {
+            return redirect()->route('admin.notifications.show', $id);
+        }
+
+        $notification = $user->notifications()->findOrFail($id);
         if ($notification->read_at === null) {
             $notification->markAsRead();
             $notification->refresh();

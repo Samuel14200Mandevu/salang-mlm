@@ -267,7 +267,9 @@
     @if(isset($stats))
         <x-ui.stat-grid class="mb-4">
             <x-ui.stat title="Total packages" :value="$stats['total'] ?? 0" />
-            <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" />
+            <div class="hidden md:contents">
+                <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" />
+            </div>
             <x-ui.stat title="Prix cumulé" :value="number_format($stats['total_price'] ?? 0, 2) . ' $'" />
         </x-ui.stat-grid>
     @endif

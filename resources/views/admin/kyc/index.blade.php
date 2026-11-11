@@ -3,6 +3,38 @@
 
 @push('styles')
 <style>
+[x-cloak] { display: none !important; }
+
+.users-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    min-width: 11.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 40;
+}
+.users-filter-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.users-filter-menu a:hover { background: var(--bg-secondary); }
+.users-filter-menu a.is-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+}
+
 /* ===== CARTES ===== */
 .card {
     background: var(--bg-card);
@@ -400,7 +432,7 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     .header-right {
         flex-direction: column;
@@ -413,38 +445,132 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Vérification KYC',
-        'subtitle' => ($documents->total() ?? 0) . ' documents · recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
+@php
+    $searchOpen = filled(request('search'));
+    $currentStatus = request('status');
+    $currentType = request('type');
+    $filtersActive = filled($currentStatus) || filled($currentType);
+    $statusLabels = [
+        'pending' => 'En attente',
+        'verified' => 'Vérifié',
+        'rejected' => 'Rejeté',
+    ];
+    $typeLabels = [
+        'id_card' => "Carte d'identité",
+        'passport' => 'Passeport',
+        'proof_of_address' => 'Justificatif domicile',
+        'selfie' => 'Selfie',
+    ];
+    $kycSubtitleBits = [($documents->total() ?? 0).' documents'];
+    if (request('search')) {
+        $kycSubtitleBits[] = '« '.request('search').' »';
+    }
+    if ($currentStatus && isset($statusLabels[$currentStatus])) {
+        $kycSubtitleBits[] = $statusLabels[$currentStatus];
+    }
+    if ($currentType && isset($typeLabels[$currentType])) {
+        $kycSubtitleBits[] = $typeLabels[$currentType];
+    }
+    $kycSubtitle = implode(' · ', $kycSubtitleBits);
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+    {{-- Mobile : bandeau KYC + outils --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Vérification KYC</h1>
+                <p>{{ $kycSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminKycSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ filled($currentStatus) ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="Filtrer par statut">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'type' => $currentType], fn ($v) => filled($v))) }}"
+                           class="{{ ! filled($currentStatus) ? 'is-active' : '' }}"><span>Tous statuts</span></a>
+                        <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'status' => 'pending', 'type' => $currentType], fn ($v) => filled($v))) }}"
+                           class="{{ $currentStatus === 'pending' ? 'is-active' : '' }}"><span>En attente</span></a>
+                        <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'status' => 'verified', 'type' => $currentType], fn ($v) => filled($v))) }}"
+                           class="{{ $currentStatus === 'verified' ? 'is-active' : '' }}"><span>Vérifié</span></a>
+                        <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'status' => 'rejected', 'type' => $currentType], fn ($v) => filled($v))) }}"
+                           class="{{ $currentStatus === 'rejected' ? 'is-active' : '' }}"><span>Rejeté</span></a>
+                    </div>
+                </div>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ filled($currentType) ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="Filtrer par type">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'status' => $currentStatus], fn ($v) => filled($v))) }}"
+                           class="{{ ! filled($currentType) ? 'is-active' : '' }}"><span>Tous types</span></a>
+                        @foreach($typeLabels as $typeValue => $typeLabel)
+                            <a href="{{ route('admin.kyc.index', array_filter(['search' => request('search'), 'status' => $currentStatus, 'type' => $typeValue], fn ($v) => filled($v))) }}"
+                               class="{{ $currentType === $typeValue ? 'is-active' : '' }}"><span>{{ $typeLabel }}</span></a>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if($filtersActive || $searchOpen)
+                    <a href="{{ route('admin.kyc.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Réinitialiser" aria-label="Réinitialiser les filtres">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <div id="adminKycSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un utilisateur"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher un utilisateur">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + filtres --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Vérification KYC</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $documents->total() ?? 0 }} documents
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('status') && request('status') !== 'all')
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Filtre: {{ ucfirst(request('status')) }}
-                    </span>
-                @endif
-                @if(request('type'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Type: {{ str_replace('_', ' ', ucfirst(request('type'))) }}
-                    </span>
-                @endif
-            </p>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">{{ $kycSubtitle }}</p>
             <div class="stats-mini">
                 <span class="badge badge-warning">{{ $pendingCount ?? 0 }} En attente</span>
                 <span class="badge badge-success">{{ $verifiedCount ?? 0 }} Vérifiés</span>
@@ -721,54 +847,79 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     const statusFilter = document.getElementById('statusFilter');
     const typeFilter = document.getElementById('typeFilter');
     const resetBtn = document.getElementById('resetFilters');
     let searchTimeout;
 
-    // Recherche avec debounce
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            
-            clearBtn.classList.toggle('visible', query.length > 0);
-            
-            searchTimeout = setTimeout(() => {
-                fetchKycData(query, statusFilter.value, typeFilter.value);
-            }, 300);
-        });
+    function currentSearch() {
+        const active = searchInputs.find((el) => el === document.activeElement) || searchInputs[0];
+        return (active?.value || '').trim();
+    }
 
-        // Raccourci ESC
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                clearBtn.classList.remove('visible');
-                fetchKycData('', statusFilter.value, typeFilter.value);
-                this.blur();
+    function syncSearchInputs(value, except) {
+        searchInputs.forEach(function (el) {
+            if (el !== except) {
+                el.value = value;
             }
         });
     }
 
+    function currentStatus() {
+        return statusFilter ? statusFilter.value : '';
+    }
+
+    function currentType() {
+        return typeFilter ? typeFilter.value : '';
+    }
+
+    // Recherche avec debounce (desktop + mobile)
+    searchInputs.forEach(function (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            syncSearchInputs(this.value, searchInput);
+            if (clearBtn) {
+                clearBtn.classList.toggle('visible', query.length > 0);
+            }
+            searchTimeout = setTimeout(() => {
+                fetchKycData(query, currentStatus(), currentType());
+            }, 300);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                syncSearchInputs('', this);
+                if (clearBtn) clearBtn.classList.remove('visible');
+                fetchKycData('', currentStatus(), currentType());
+                this.blur();
+            }
+        });
+    });
+
     // Filtres
     if (statusFilter) {
         statusFilter.addEventListener('change', function() {
-            fetchKycData(searchInput.value.trim(), this.value, typeFilter.value);
+            fetchKycData(currentSearch(), this.value, currentType());
         });
     }
 
     if (typeFilter) {
         typeFilter.addEventListener('change', function() {
-            fetchKycData(searchInput.value.trim(), statusFilter.value, this.value);
+            fetchKycData(currentSearch(), currentStatus(), this.value);
         });
     }
 
     // Réinitialisation
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            if (searchInput) searchInput.value = '';
+            syncSearchInputs('');
             if (statusFilter) statusFilter.value = '';
             if (typeFilter) typeFilter.value = '';
             if (clearBtn) clearBtn.classList.remove('visible');
@@ -779,10 +930,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Bouton clear
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
+            syncSearchInputs('');
             clearBtn.classList.remove('visible');
-            fetchKycData('', statusFilter.value, typeFilter.value);
-            searchInput.focus();
+            fetchKycData('', currentStatus(), currentType());
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
         });
     }
 

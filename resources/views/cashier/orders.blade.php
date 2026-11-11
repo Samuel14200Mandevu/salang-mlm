@@ -322,7 +322,7 @@
 
     @media (max-width: 480px) {
         .stats-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         }
         .table thead th, .table tbody td {
             padding: 0.25rem 0.375rem;

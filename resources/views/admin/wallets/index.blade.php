@@ -260,7 +260,7 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     .header-right {
         flex-direction: column;
@@ -270,45 +270,111 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Portefeuilles',
-        'subtitle' => $wallets->total() . ' portefeuilles · recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
+@php
+    $statusFilter = request('status');
+    $filterActive = filled($statusFilter);
+    $filterButtonLabel = $statusFilter === 'active' ? 'Actifs' : ($statusFilter === 'inactive' ? 'Inactifs' : 'Filtrer');
+    $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+    $filterUrl = fn (array $overrides = []) => route('admin.wallets', array_filter(
+        array_merge($filterQueryBase, $overrides),
+        fn ($v) => $v !== null && $v !== ''
+    ));
+    $inactiveWallets = max(0, ($totalWallets ?? 0) - ($activeWallets ?? 0));
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [$wallets->total().' portefeuilles'];
+    if ($statusFilter === 'active') {
+        $subtitleBits[] = 'Actifs';
+    } elseif ($statusFilter === 'inactive') {
+        $subtitleBits[] = 'Inactifs';
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $walletsSubtitle = implode(' · ', $subtitleBits);
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+    {{-- Mobile : bandeau Portefeuilles + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Portefeuilles</h1>
+                <p id="adminWalletsSubtitleMobile">{{ $walletsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminWalletsSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                            <span class="filter-count">{{ $totalWallets ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'active']) }}" class="{{ $statusFilter === 'active' ? 'is-active' : '' }}">
+                            <span>Actifs</span>
+                            <span class="filter-count">{{ $activeWallets ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'inactive']) }}" class="{{ $statusFilter === 'inactive' ? 'is-active' : '' }}">
+                            <span>Inactifs</span>
+                            <span class="filter-count">{{ $inactiveWallets }}</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.wallets.export', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="Exporter" aria-label="Exporter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="adminWalletsSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un utilisateur"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher un utilisateur">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + icônes --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Portefeuilles</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $wallets->total() }} portefeuilles
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('status'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Statut: {{ request('status') == 'active' ? 'Actifs' : 'Inactifs' }}
-                    </span>
-                @endif
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminWalletsSubtitle">
+                {{ $walletsSubtitle }}
             </p>
         </div>
-        @php
-            $statusFilter = request('status');
-            $filterActive = filled($statusFilter);
-            $filterButtonLabel = $statusFilter === 'active' ? 'Actifs' : ($statusFilter === 'inactive' ? 'Inactifs' : 'Filtrer');
-            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
-            $filterUrl = fn (array $overrides = []) => route('admin.wallets', array_filter(
-                array_merge($filterQueryBase, $overrides),
-                fn ($v) => $v !== null && $v !== ''
-            ));
-            $inactiveWallets = max(0, ($totalWallets ?? 0) - ($activeWallets ?? 0));
-        @endphp
         <div class="header-right admin-page-header-actions">
             <div class="header-search admin-search-full">
                 <div class="search-wrapper">
@@ -320,7 +386,8 @@
                            placeholder="Rechercher un utilisateur"
                            class="search-input"
                            autocomplete="off"
-                           value="{{ request('search') }}">
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher un utilisateur">
                     <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -485,7 +552,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     let searchTimeout;
 
@@ -493,37 +563,46 @@ document.addEventListener('DOMContentLoaded', function() {
         return new URL(window.location.href).searchParams.get('status') || '';
     }
 
-    // Recherche avec debounce
-    if (searchInput) {
+    function syncSearchInputs(source, query) {
+        searchInputs.forEach(function (other) {
+            if (other !== source) {
+                other.value = query;
+            }
+        });
+        if (clearBtn) {
+            clearBtn.classList.toggle('visible', query.length > 0);
+        }
+    }
+
+    // Recherche avec debounce (desktop + mobile)
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
-            clearBtn.classList.toggle('visible', query.length > 0);
-            
+            syncSearchInputs(searchInput, query);
             searchTimeout = setTimeout(() => {
                 fetchWallets(query, currentStatus());
             }, 300);
         });
 
-        // Raccourci ESC
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
-                clearBtn.classList.remove('visible');
+                syncSearchInputs(searchInput, '');
                 fetchWallets('', currentStatus());
                 this.blur();
             }
         });
-    }
+    });
 
-    // Bouton clear
+    // Bouton clear (desktop)
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
+            searchInputs.forEach(function (el) { el.value = ''; });
             clearBtn.classList.remove('visible');
             fetchWallets('', currentStatus());
-            searchInput.focus();
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
         });
     }
 
@@ -601,20 +680,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 paginationContainer.innerHTML = newPagination.innerHTML;
             }
 
-            // Mise à jour du titre et du compte
-            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (subtitle) {
-                const totalMatch = html.match(/(\d+)\s+portefeuilles?/);
-                if (totalMatch) {
-                    let text = totalMatch[0];
-                    if (search) {
-                        text += ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Résultats pour "' + search + '"</span>';
-                    }
-                    if (status) {
-                        text += ' <span class="text-xs text-[var(--text-tertiary)] ml-2">· Statut: ' + (status === 'active' ? 'Actifs' : 'Inactifs') + '</span>';
-                    }
-                    subtitle.innerHTML = text;
-                }
+            // Mise à jour du titre et du compte (desktop + mobile)
+            const newSubtitle = doc.getElementById('adminWalletsSubtitle');
+            const newSubtitleMobile = doc.getElementById('adminWalletsSubtitleMobile');
+            const subtitle = document.getElementById('adminWalletsSubtitle');
+            const subtitleMobile = document.getElementById('adminWalletsSubtitleMobile');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+            if (subtitleMobile && newSubtitleMobile) {
+                subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
             }
 
             // KPI — ids stables sur le <p> valeur de x-ui.stat (textContent = valeur seule)

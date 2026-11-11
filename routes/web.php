@@ -593,6 +593,14 @@ Route::prefix('admin')
         Route::get('/workflow-pending-counts', [\App\Http\Controllers\WorkflowPendingCountController::class, 'admin'])
             ->name('workflow-pending-counts');
 
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
+            Route::post('/mark-all-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllRead'])->name('mark-all-read');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'show'])->name('show');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+            Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'destroyAll'])->name('destroy-all');
+        });
+
         Route::prefix('consultations')->name('consultations.')->group(function () {
             Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
             Route::get('/', [App\Http\Controllers\Admin\ConsultationController::class, 'index'])->name('index');

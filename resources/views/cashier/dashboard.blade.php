@@ -2,6 +2,10 @@
 
 @section('title', 'Tableau de bord')
 
+@push('cashier_mobile_page_extra_classes')
+admin-mobile-no-auto-greeting
+@endpush
+
 @push('styles')
 <style>
     /* ============================================================
@@ -357,16 +361,6 @@ admin-mobile-stack
             </a>
         </div>
     @endif
-
-    {{-- BANDEAU MOBILE --}}
-    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
-        <div class="admin-mobile-page-head is-mobile-banner">
-            <div class="admin-title-banner__text">
-                <h1 class="page-title">Tableau de bord</h1>
-                <p class="page-subtitle">{{ $salutation }}, {{ Auth::user()?->name ?? 'Caissier' }} · {{ date('H:i') }}</p>
-            </div>
-        </div>
-    </div>
 
     {{-- EN-TÊTE desktop --}}
     <div class="hidden md:block animate-fadeInUp">

@@ -553,17 +553,6 @@
             'reports' => ['badge' => 'cashierReportBadge', 'dot' => 'cashierReportDot'],
             'header' => ['badge' => 'cashierWorkflowHeaderBadge', 'dot' => 'cashierWorkflowHeaderDot'],
             'mobileNav' => ['badge' => 'cashierMobileNavBadge'],
-            'dropdown' => [
-                'consultationCount' => 'cashierWorkflowDropdownConsultationCount',
-                'reportCount' => 'cashierWorkflowDropdownReportCount',
-                'totalMirror' => 'cashierWorkflowHeaderBadgeMirror',
-                'empty' => 'cashierWorkflowDropdownEmpty',
-                'items' => 'cashierWorkflowDropdownItems',
-                'urgentWrap' => 'cashierWorkflowUrgentWrap',
-                'urgentLink' => 'cashierWorkflowUrgentLink',
-                'consultationRow' => 'cashierWorkflowConsultationRow',
-                'reportRow' => 'cashierWorkflowReportRow',
-            ],
         ];
     @endphp
     @include('partials.shell.workflow-notification-poll')

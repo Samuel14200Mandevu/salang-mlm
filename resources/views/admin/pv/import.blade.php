@@ -360,19 +360,23 @@ body { background: var(--bg-page); color: var(--text-primary); }
         .'</svg></a>';
 @endphp
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => $importTitle,
-        'subtitle' => $importSubtitle,
-        'actions' => $importBackBtnMobile,
-    ])
-@endpush
-
 @include('admin.layouts.partials.desktop-page-header', [
     'title' => $importTitle,
     'subtitle' => $importSubtitle,
     'actions' => $importBackBtn,
 ])
+
+<div class="admin-page-header page-header md:hidden animate-fadeInUp">
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">{{ $importTitle }}</h1>
+            <p class="page-subtitle">{{ $importSubtitle }}</p>
+        </div>
+        <div class="admin-title-banner__tools">
+            {!! $importBackBtnMobile !!}
+        </div>
+    </div>
+</div>
 
 <div id="toastContainer" class="toast-container"></div>
 
