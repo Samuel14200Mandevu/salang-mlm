@@ -207,19 +207,6 @@
     background: var(--bg-primary, #fff);
   }
 
-  /* Status bar iOS toujours sombre (light + dark) */
-  .public-app-onboarding::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: #0f172a;
-    z-index: 4;
-    pointer-events: none;
-  }
-
   html.dark .public-app-onboarding {
     background: var(--bg-primary, #0f172a);
   }
@@ -2404,19 +2391,6 @@
   }
 
   /* —— Auth (mobile app / Binance-like) —— */
-  /* Status bar iOS toujours sombre, quel que soit le thème */
-  .auth-mobile-app::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: #0f172a;
-    z-index: 80;
-    pointer-events: none;
-  }
-
   .auth-mobile-app {
     background: var(--bg-page);
   }

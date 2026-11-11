@@ -77,11 +77,9 @@
     min-height: 100vh;
   }
 
-  .member-app .cashier-topbar,
-  .member-app .member-mobile-topbar {
-    /* Marge safe-area + status bar iOS toujours sombre (indépendant du thème) */
+  .member-app .cashier-topbar {
+    /* Marge safe-area seulement — pas de barre supplémentaire */
     padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
-    box-shadow: inset 0 env(safe-area-inset-top, 0px) 0 0 #0f172a;
   }
 
   .member-app .cashier-topbar > div > div {
