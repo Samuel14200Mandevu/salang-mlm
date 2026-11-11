@@ -51,8 +51,6 @@
     background: var(--bg-navbar) !important;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    /* Status bar iOS toujours sombre (indépendant du thème) */
-    box-shadow: inset 0 env(safe-area-inset-top, 0px) 0 0 #0f172a;
   }
 
   @media (display-mode: standalone), (display-mode: fullscreen) {
