@@ -5,7 +5,7 @@
         <img
             src="{{ asset('images/salang_logo.png') }}"
             alt="Salang Group"
-            class="public-mobile-splash-logo"
+            class="public-mobile-splash-logo logo-themeable"
             width="280"
             height="72"
             decoding="async"

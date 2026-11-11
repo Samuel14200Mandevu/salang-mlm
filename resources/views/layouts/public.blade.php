@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Salang Group — Health Care International')</title>
-    {{-- Splash / mini-app : chrome iOS toujours sombre (ne suit pas le thème) --}}
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#1E5DAD">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <script>
         (function () {
