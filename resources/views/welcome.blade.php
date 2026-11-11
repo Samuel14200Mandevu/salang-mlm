@@ -50,10 +50,14 @@
         })();
     </script>
     <style>
+        /* Avant/pendant splash : fond fixe sombre (évite bande bas light/dark sur iOS) */
+        html.salang-mobile-app {
+            background: #111827 !important;
+        }
         html.salang-mobile-app body.public-welcome-page {
             overflow: hidden !important;
             height: 100dvh !important;
-            background: var(--bg-page, #0b1220);
+            background: #111827 !important;
         }
         html.salang-mobile-app .public-nav,
         html.salang-mobile-app .public-footer,
