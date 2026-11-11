@@ -28,13 +28,6 @@
         document.dispatchEvent(new CustomEvent('salang:splash-done'));
     }
 
-    function setStatusBarStyle(style) {
-        var meta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if (meta) {
-            meta.setAttribute('content', style);
-        }
-    }
-
     function initPublicSplash() {
         const body = document.body;
         if (!body.classList.contains('public-welcome-page')) {
@@ -63,8 +56,6 @@
 
         document.documentElement.classList.add('salang-mobile-app');
         body.classList.add('public-splash-active', 'public-onboarding-active');
-        /* Splash : status bar default (comme le matin). Après : polish iOS light+dark. */
-        setStatusBarStyle('default');
 
         const progress = document.getElementById('publicSplashProgress');
         const bar = document.getElementById('publicSplashProgressBar');
@@ -103,7 +94,6 @@
             dispatchDone();
             splash.classList.add('is-leaving');
             body.classList.remove('public-splash-active');
-            setStatusBarStyle('black-translucent');
 
             window.setTimeout(function () {
                 splash.remove();
