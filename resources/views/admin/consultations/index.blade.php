@@ -276,7 +276,7 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     .table thead th, .table tbody td {
         padding: 0.25rem 0.375rem;
@@ -288,50 +288,116 @@
 
 @section('title', 'Consultations')
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Fiches de consultation',
-        'subtitle' => $consultations->total() . ' consultations · recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
+@php
+    $statusFilter = request('status');
+    $filterActive = filled($statusFilter) && $statusFilter !== 'all';
+    $statusLabels = [
+        'pending' => 'En attente',
+        'processing' => 'En traitement',
+        'completed' => 'Terminées',
+        'cancelled' => 'Annulées',
+    ];
+    $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
+    $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+    $filterUrl = fn (array $overrides = []) => route('admin.consultations.index', array_filter(
+        array_merge($filterQueryBase, $overrides),
+        fn ($v) => $v !== null && $v !== '' && $v !== 'all'
+    ));
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [$consultations->total().' consultations'];
+    if ($filterActive && isset($statusLabels[$statusFilter])) {
+        $subtitleBits[] = $statusLabels[$statusFilter];
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $consultationsSubtitle = implode(' · ', $subtitleBits);
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+    {{-- Mobile : bandeau Consultations + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Consultations</h1>
+                <p id="adminConsultationsSubtitleMobile">{{ $consultationsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminConsultationsSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                            <span class="filter-count">{{ $statusCounts['all'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                            <span>En attente</span>
+                            <span class="filter-count">{{ $statusCounts['pending'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                            <span>En traitement</span>
+                            <span class="filter-count">{{ $statusCounts['processing'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                            <span>Terminées</span>
+                            <span class="filter-count">{{ $statusCounts['completed'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                            <span>Annulées</span>
+                            <span class="filter-count">{{ $statusCounts['cancelled'] ?? 0 }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="adminConsultationsSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher patient, motif ou ID"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher patient, motif ou ID">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + filtres --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Fiches de consultation</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                {{ $consultations->total() }} consultations
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('status') && request('status') !== 'all')
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Filtre: {{ ucfirst(request('status')) }}
-                    </span>
-                @endif
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminConsultationsSubtitle">
+                {{ $consultationsSubtitle }}
             </p>
         </div>
-        @php
-            $statusFilter = request('status');
-            $filterActive = filled($statusFilter) && $statusFilter !== 'all';
-            $statusLabels = [
-                'pending' => 'En attente',
-                'processing' => 'En traitement',
-                'completed' => 'Terminées',
-                'cancelled' => 'Annulées',
-            ];
-            $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
-            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
-            $filterUrl = fn (array $overrides = []) => route('admin.consultations.index', array_filter(
-                array_merge($filterQueryBase, $overrides),
-                fn ($v) => $v !== null && $v !== '' && $v !== 'all'
-            ));
-        @endphp
         <div class="header-right admin-page-header-actions">
             <div class="header-search admin-search-full">
                 <div class="search-wrapper">
@@ -343,7 +409,8 @@
                            placeholder="Rechercher patient, motif ou ID"
                            class="search-input"
                            autocomplete="off"
-                           value="{{ request('search') }}">
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher patient, motif ou ID">
                 </div>
             </div>
 
@@ -506,7 +573,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     let searchTimeout;
 
     function currentStatus() {
@@ -531,17 +601,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Recherche avec debounce
-    if (searchInput) {
+    // Recherche avec debounce (desktop + mobile)
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
+            searchInputs.forEach(function (other) {
+                if (other !== searchInput) {
+                    other.value = query;
+                }
+            });
             searchTimeout = setTimeout(() => {
                 fetchConsultations(query, currentStatus());
             }, 300);
         });
-    }
+    });
 
     function fetchConsultations(query, status) {
         const url = new URL(window.location.href);
@@ -599,13 +673,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Mise à jour du titre et du compte
-            const subtitle = document.querySelector('.text-sm.text-\\[var\\(--text-secondary\\)\\]');
-            if (subtitle) {
-                const totalMatch = html.match(/(\d+)\s+consultations?/);
-                if (totalMatch) {
-                    subtitle.textContent = totalMatch[0];
-                }
+            // Mise à jour du titre et du compte (desktop + mobile)
+            const newSubtitle = doc.getElementById('adminConsultationsSubtitle');
+            const newSubtitleMobile = doc.getElementById('adminConsultationsSubtitleMobile');
+            const subtitle = document.getElementById('adminConsultationsSubtitle');
+            const subtitleMobile = document.getElementById('adminConsultationsSubtitleMobile');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+            if (subtitleMobile && newSubtitleMobile) {
+                subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
             }
 
             // Mise à jour des statistiques

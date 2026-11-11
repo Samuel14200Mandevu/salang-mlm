@@ -110,7 +110,19 @@
                     setBadge(config.reports.badge, config.reports.dot, data.reports);
                 }
                 if (config.header) {
-                    setBadge(config.header.badge, config.header.dot, data.total);
+                    // Badge cloche : max(non lues notifications, validations workflow)
+                    var headerUnread = 0;
+                    var headerBadge = config.header.badge
+                        ? document.getElementById(config.header.badge)
+                        : null;
+                    if (headerBadge && headerBadge.dataset.notifUnread) {
+                        headerUnread = Number(headerBadge.dataset.notifUnread) || 0;
+                    }
+                    setBadge(
+                        config.header.badge,
+                        config.header.dot,
+                        Math.max(Number(data.total) || 0, headerUnread)
+                    );
                 }
                 if (config.mobileNav) {
                     setBadge(config.mobileNav.badge, config.mobileNav.dot || null, data.total);

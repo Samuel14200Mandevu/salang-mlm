@@ -303,45 +303,60 @@
     color: rgba(255, 255, 255, 0.88) !important;
   }
 
-  /* Bandeau KPI horizontal (snap) */
-  .cashier-app .admin-kpi-rail {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding: 0.15rem 0.1rem 0.35rem;
-    margin: 0 -0.1rem;
-    scrollbar-width: none;
+  /* KPI mobile — grille 2×2 (comme membre), plus de rail horizontal */
+  .cashier-app .admin-kpi-rail,
+  .cashier-app .stats-grid,
+  .cashier-app .admin-mobile-page .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+    padding: 0;
+    margin: 0;
   }
 
-  .cashier-app .admin-kpi-rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  .cashier-app .admin-kpi-rail > * {
-    scroll-snap-align: start;
-    flex: 0 0 min(42vw, 10rem);
+  .cashier-app .admin-kpi-rail > *,
+  .cashier-app .stats-grid > * {
+    flex: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   .cashier-app .admin-kpi-rail .card-stats,
-  .cashier-app .admin-kpi-rail .stat-card {
+  .cashier-app .admin-kpi-rail .stat-card,
+  .cashier-app .stats-grid .card-stats,
+  .cashier-app .stats-grid .stat-card,
+  .cashier-app .stats-grid > .card,
+  .cashier-app .stats-grid > [class*='rounded'] {
     min-height: 4.85rem;
     border-radius: 14px;
-    border: none;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
     padding: 0.65rem 0.75rem !important;
   }
 
-  .cashier-app .admin-kpi-rail .stat-card .stat-value {
+  .cashier-app .stats-grid .text-3xl {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .cashier-app .stats-grid .text-sm {
+    font-size: 0.6875rem !important;
+  }
+
+  .cashier-app .admin-kpi-rail .stat-card .stat-value,
+  .cashier-app .stats-grid .stat-card .stat-value {
     font-size: 1.125rem;
   }
 
-  .cashier-app .admin-kpi-rail .stat-card .stat-label {
+  .cashier-app .admin-kpi-rail .stat-card .stat-label,
+  .cashier-app .stats-grid .stat-card .stat-label {
     font-size: 0.5625rem;
   }
 
-  .cashier-app .admin-kpi-rail .stat-card .stat-detail {
+  .cashier-app .admin-kpi-rail .stat-card .stat-detail,
+  .cashier-app .stats-grid .stat-card .stat-detail {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.1rem;
@@ -797,41 +812,36 @@
     padding: 0 !important;
   }
 
-  /* Accès rapides dashboard */
+  /* Accès rapides dashboard — grille 2×2 mobile */
   .cashier-app .admin-quick-rail {
-    display: flex;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.5rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 0.25rem;
-    scrollbar-width: none;
-  }
-
-  .cashier-app .admin-quick-rail::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding-bottom: 0.15rem;
   }
 
   .cashier-app .admin-quick-rail .quick-action {
-    scroll-snap-align: start;
-    flex: 0 0 7.25rem;
-    min-height: 6.75rem;
-    border-radius: 16px;
-    padding: 0.85rem 0.55rem;
+    flex: none;
+    min-height: 0;
+    border-radius: 12px;
+    padding: 0.75rem 0.65rem;
   }
 
   .cashier-app .admin-quick-rail .quick-action .quick-icon {
-    width: 2.875rem;
-    height: 2.875rem;
-    margin-bottom: 0.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: 0.4rem;
   }
 
   .cashier-app .admin-quick-rail .quick-action .quick-icon svg {
-    width: 1.375rem;
-    height: 1.375rem;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   .cashier-app .admin-quick-rail .quick-action .quick-label {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.2;
   }

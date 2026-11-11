@@ -431,18 +431,11 @@
     }
 @endphp
 @push('admin_mobile_page_extra_classes')
-admin-mobile-stack
-@endpush
-
-@push('admin_mobile_greeting')
-    <div class="admin-mobile-greeting md:hidden animate-fadeInUp">
-        <h1>Tableau de bord</h1>
-        <p>{{ $salutation }}, {{ Auth::user()?->name }} · {{ date('H:i') }}</p>
-    </div>
+admin-mobile-stack admin-mobile-no-auto-greeting
 @endpush
 
     <!-- Header desktop -->
-    <div class="admin-mobile-page-head animate-fadeInUp">
+    <div class="admin-mobile-page-head hidden md:block animate-fadeInUp">
         <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
             Tableau de bord Admin
         </h1>

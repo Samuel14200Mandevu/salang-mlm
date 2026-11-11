@@ -356,13 +356,21 @@
       return;
     }
 
+    // Panel déjà en Blade : bind only (pas de déplacement → pas de flash).
     if (page.querySelector('[data-admin-search-panel]')) {
       bindAdminSearchToggle(page);
+      const panelEl = page.querySelector('#adminSearchPanel, [data-admin-search-panel]');
       mountAdminSearchToggles(
         page,
-        'adminSearchPanel',
-        page.querySelector('#adminSearchPanel')?.classList.contains('is-open') ?? false
+        panelEl?.id || 'adminSearchPanel',
+        panelEl?.classList.contains('is-open') ?? false
       );
+      return;
+    }
+
+    // Bandeau mobile fixe sans panel déclaré : ne pas extraire la recherche du header.
+    if (page.querySelector('.admin-mobile-page-head.is-mobile-banner')) {
+      bindAdminSearchToggle(page);
       return;
     }
 
@@ -459,7 +467,7 @@
   }
 
   function relocateAdminTitleActions(root) {
-    if (!root || !document.body.classList.contains('admin-app')) {
+    if (!root || !isBackofficeShell()) {
       return;
     }
 
@@ -471,56 +479,10 @@
       return;
     }
 
-    page.querySelectorAll('.admin-mobile-greeting').forEach((greeting) => {
-      wrapAdminTitleText(greeting);
-      const tools = ensureAdminTitleTools(greeting);
-      const header = page.querySelector('.admin-page-header:not(.admin-desktop-page-head)');
-      const actions = header?.querySelector('.admin-page-header-actions');
-      collectHeaderActionNodes(actions).forEach((node) => {
-        if (!tools.contains(node)) {
-          tools.appendChild(node);
-        }
-      });
-    });
-
-    page.querySelectorAll('.admin-page-header').forEach((header) => {
-      if (header.classList.contains('admin-desktop-page-head')) {
-        return;
-      }
-      const head = header.querySelector('.admin-mobile-page-head');
-      if (!head) {
-        return;
-      }
-      if (head.classList.contains('is-mobile-banner') && head.querySelector('.admin-title-banner__tools')) {
-        wrapAdminTitleText(head);
-        return;
-      }
+    // Plus de déplacement DOM au refresh (évite l’effet « quitte / entre »).
+    // Les outils doivent être déclarés en Blade dans .is-mobile-banner > .admin-title-banner__tools.
+    page.querySelectorAll('.admin-mobile-page-head, .admin-mobile-greeting').forEach((head) => {
       wrapAdminTitleText(head);
-      const tools = ensureAdminTitleTools(head);
-      const actions = header.querySelector('.admin-page-header-actions');
-      collectHeaderActionNodes(actions).forEach((node) => {
-        if (!tools.contains(node)) {
-          tools.appendChild(node);
-        }
-      });
-    });
-
-    page.querySelectorAll('.admin-mobile-page-head').forEach((head) => {
-      if (head.closest('.admin-page-header')) {
-        return;
-      }
-      const rail = head.nextElementSibling;
-      if (!rail?.classList.contains('admin-action-rail')) {
-        return;
-      }
-      wrapAdminTitleText(head);
-      const tools = ensureAdminTitleTools(head);
-      rail.querySelectorAll('.btn, a[class*="btn-"], form').forEach((node) => {
-        if (!tools.contains(node)) {
-          tools.appendChild(node);
-        }
-      });
-      rail.classList.add('hidden');
     });
   }
 
@@ -554,9 +516,35 @@
       page.querySelector('.admin-profile-hero') ||
       hasCustomMobileBanner;
 
-    if (!hasGreeting && page.dataset.adminMobileGreetingAuto !== '1') {
+    // Accueil admin/caisse : pas de bandeau auto « Tableau de bord / Bonjour… »
+    const skipAutoGreeting =
+      page.classList.contains('admin-mobile-no-auto-greeting') ||
+      page.closest('.admin-mobile-no-auto-greeting') ||
+      document.body.classList.contains('admin-dashboard') ||
+      document.body.classList.contains('cashier-dashboard');
+
+    if (skipAutoGreeting) {
+      page.querySelectorAll('.admin-mobile-greeting[data-auto-greeting="1"]').forEach((el) => {
+        el.remove();
+      });
+      if (page.dataset.adminMobileGreetingAuto === '1') {
+        delete page.dataset.adminMobileGreetingAuto;
+      }
+    }
+
+    if (!skipAutoGreeting && !hasGreeting && page.dataset.adminMobileGreetingAuto !== '1') {
+      const isDesktopOnly = function (el) {
+        return Boolean(
+          el.closest('.admin-desktop-page-head') ||
+          el.closest('.admin-mobile-greeting') ||
+          el.closest('.admin-profile-hero') ||
+          el.closest('.hidden.md\\:block') ||
+          el.closest('.hidden.md\\:flex') ||
+          el.closest('.hidden.md\\:contents')
+        );
+      };
       const h1 = Array.from(page.querySelectorAll('h1')).find(function (el) {
-        return !el.closest('.admin-desktop-page-head, .admin-mobile-greeting, .admin-profile-hero');
+        return !isDesktopOnly(el);
       });
       if (h1 && !h1.closest('.admin-mobile-greeting, .admin-profile-hero')) {
         const titleBlock = h1.parentElement;

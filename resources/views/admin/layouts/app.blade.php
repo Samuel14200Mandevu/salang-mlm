@@ -522,7 +522,8 @@
                             @include('partials.shell.workflow-bell-dropdown', [
                                 'workflowBell' => [
                                     'idPrefix' => 'adminWorkflow',
-                                    'panelTitle' => 'Validations en attente',
+                                    'panelTitle' => 'Notifications admin',
+                                    'indexUrl' => route('admin.notifications.index'),
                                     'consultationsUrl' => route('admin.consultations.index'),
                                     'reportsUrl' => route('cashier.reports.index', ['status' => 'submitted']),
                                     'consultationsLabel' => 'Consultations',
@@ -848,17 +849,6 @@
             'reports' => ['badge' => 'adminReportBadge', 'dot' => 'adminReportDot'],
             'header' => ['badge' => 'adminWorkflowHeaderBadge', 'dot' => 'adminWorkflowHeaderDot'],
             'mobileNav' => ['badge' => 'adminMobileNavBadge'],
-            'dropdown' => [
-                'consultationCount' => 'adminWorkflowDropdownConsultationCount',
-                'reportCount' => 'adminWorkflowDropdownReportCount',
-                'totalMirror' => 'adminWorkflowHeaderBadgeMirror',
-                'empty' => 'adminWorkflowDropdownEmpty',
-                'items' => 'adminWorkflowDropdownItems',
-                'urgentWrap' => 'adminWorkflowUrgentWrap',
-                'urgentLink' => 'adminWorkflowUrgentLink',
-                'consultationRow' => 'adminWorkflowConsultationRow',
-                'reportRow' => 'adminWorkflowReportRow',
-            ],
         ];
     @endphp
     @include('partials.shell.workflow-notification-poll')

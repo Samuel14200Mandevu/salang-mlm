@@ -50,44 +50,117 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Membres',
-        'subtitle' => $users->total() . ' comptes · recherche et actions ci-dessous',
-    ])
-@endpush
-
 @section('content')
-    <!-- En-tête -->
-    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3">
-        <div class="admin-mobile-page-head">
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Gestion des membres
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminUsersSubtitle">
-                {{ $users->total() }} membres enregistrés
-                @php
-                    $subtitleFilterLabels = [
-                        'active' => 'Actifs',
-                        'inactive' => 'Inactifs',
-                    ];
-                    $subtitleFilter = $subtitleFilterLabels[request('filter')] ?? null;
-                @endphp
-                @if($subtitleFilter)
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">· {{ $subtitleFilter }}</span>
-                @endif
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-            </p>
+@php
+    $currentFilter = request('filter');
+    $filterLabels = [
+        'active' => 'Actifs',
+        'inactive' => 'Inactifs',
+    ];
+    $filterButtonLabel = $filterLabels[$currentFilter] ?? 'Filtrer';
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+    ], fn ($v) => filled($v));
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [$users->total().' membres'];
+    if ($currentFilter && isset($filterLabels[$currentFilter])) {
+        $subtitleBits[] = $filterLabels[$currentFilter];
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $membersSubtitle = implode(' · ', $subtitleBits);
+@endphp
+
+    {{-- Mobile : bandeau Membres + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Membres</h1>
+                <p id="adminUsersSubtitleMobile">{{ $membersSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools admin-title-banner__tools--members-index">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminUsersSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $currentFilter ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ route('admin.users', $filterQueryBase) }}"
+                           class="{{ ! $currentFilter ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                        </a>
+                        <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'active'])) }}"
+                           class="{{ $currentFilter === 'active' ? 'is-active' : '' }}">
+                            <span>Actifs</span>
+                            <span class="filter-count">{{ $stats['active'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ route('admin.users', array_merge($filterQueryBase, ['filter' => 'inactive'])) }}"
+                           class="{{ $currentFilter === 'inactive' ? 'is-active' : '' }}">
+                            <span>Inactifs</span>
+                            <span class="filter-count">{{ $stats['inactive'] ?? 0 }}</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm btn-round-icon" title="Ajouter" aria-label="Ajouter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </a>
+                <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Importer PV" aria-label="Importer PV">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                </a>
+            </div>
         </div>
-        <div class="admin-sticky-toolbar md:contents">
-        <div class="admin-page-header-actions flex items-center gap-2">
+
+        <div id="adminUsersSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un membre"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher un membre">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + icônes --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
+        <div class="header-left admin-mobile-page-head">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Gestion des membres</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminUsersSubtitle">{{ $membersSubtitle }}</p>
+        </div>
+        <div class="header-right admin-page-header-actions flex items-center gap-2">
             <div class="header-search admin-search-full">
                 <div class="search-wrapper">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
@@ -95,52 +168,25 @@
                            class="search-input"
                            placeholder="Rechercher un membre"
                            autocomplete="off"
-                           value="{{ request('search') }}">
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher un membre">
                 </div>
             </div>
-            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span class="hidden xs:inline">Ajouter</span>
-            </a>
-            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                <span class="hidden xs:inline">Importer PV</span>
-            </a>
-            @php
-                $currentFilter = request('filter');
-                $filterLabels = [
-                    'active' => 'Actifs',
-                    'inactive' => 'Inactifs',
-                ];
-                $filterButtonLabel = $filterLabels[$currentFilter] ?? 'Filtrer';
-                $filterQueryBase = array_filter([
-                    'search' => request('search'),
-                ], fn ($v) => filled($v));
-            @endphp
-            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button type="button"
                         @click="open = !open"
-                        class="btn btn-outline btn-sm sm:btn-md {{ $currentFilter ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $currentFilter ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
                         :aria-expanded="open"
-                        aria-haspopup="true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        aria-haspopup="true"
+                        title="{{ $filterButtonLabel }}"
+                        aria-label="{{ $filterButtonLabel }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="hidden xs:inline">{{ $filterButtonLabel }}</span>
-                    @if($currentFilter)
-                        <span class="inline-flex xs:hidden w-2 h-2 rounded-full bg-[var(--primary)]"></span>
-                    @endif
                 </button>
-                <div x-show="open"
-                     x-cloak
-                     x-transition
-                     @click.outside="open = false"
-                     class="users-filter-menu">
-                    <a href="{{ route('admin.users', array_merge($filterQueryBase, [])) }}"
+                <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                    <a href="{{ route('admin.users', $filterQueryBase) }}"
                        class="{{ ! $currentFilter ? 'is-active' : '' }}">
                         <span>Tous</span>
                     </a>
@@ -156,7 +202,17 @@
                     </a>
                 </div>
             </div>
-        </div>
+
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm btn-round-icon" title="Ajouter" aria-label="Ajouter">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+            </a>
+            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Importer PV" aria-label="Importer PV">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+            </a>
         </div>
     </div>
 
@@ -184,7 +240,9 @@
         <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-active" padding="p-3" />
         <x-ui.stat title="Inactifs" :value="$stats['inactive'] ?? 0" id="kpi-inactive" padding="p-3" />
         <x-ui.stat title="Avec package" :value="$stats['with_package'] ?? 0" id="kpi-with-package" padding="p-3" />
-        <x-ui.stat title="KYC vérifié" :value="$stats['with_kyc'] ?? 0" id="kpi-with-kyc" padding="p-3" />
+        <div class="hidden md:contents">
+            <x-ui.stat title="KYC vérifié" :value="$stats['with_kyc'] ?? 0" id="kpi-with-kyc" padding="p-3" />
+        </div>
     </x-ui.stat-grid>
 
     @include('admin.users._mobile_list', ['users' => $users])
@@ -227,19 +285,26 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     let searchTimeout;
 
-    if (searchInput) {
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
+            searchInputs.forEach(function (other) {
+                if (other !== searchInput) {
+                    other.value = query;
+                }
+            });
             searchTimeout = setTimeout(() => {
                 fetchUsers(query);
             }, 300);
         });
-    }
+    });
 
     function fetchUsers(query) {
         const url = new URL(window.location.href);

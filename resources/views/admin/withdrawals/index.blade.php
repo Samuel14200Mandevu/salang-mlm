@@ -361,7 +361,7 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     .header-right {
         flex-direction: column;
@@ -371,62 +371,141 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Retraits',
-        'subtitle' => $withdrawals->total() . ' retraits · recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
+@php
+    $statusFilter = request('status');
+    $methodFilter = request('method');
+    $filterActive = filled($statusFilter) || filled($methodFilter);
+    $statusLabels = [
+        'pending' => 'En attente',
+        'processing' => 'En traitement',
+        'completed' => 'Terminé',
+        'failed' => 'Échoué',
+    ];
+    $filterButtonLabel = $statusLabels[$statusFilter] ?? (filled($methodFilter) ? ucfirst($methodFilter) : 'Filtrer');
+    $filterQueryBase = array_filter([
+        'search' => request('search'),
+        'status' => $statusFilter,
+        'method' => $methodFilter,
+    ], fn ($v) => filled($v));
+    $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
+        return route('admin.withdrawals', array_filter(
+            array_merge($filterQueryBase, $overrides),
+            fn ($v) => $v !== null && $v !== ''
+        ));
+    };
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [$withdrawals->total().' retraits'];
+    if ($statusFilter && isset($statusLabels[$statusFilter])) {
+        $subtitleBits[] = $statusLabels[$statusFilter];
+    }
+    if ($methodFilter) {
+        $subtitleBits[] = ucfirst($methodFilter);
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $withdrawalsSubtitle = implode(' · ', $subtitleBits);
+@endphp
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- En-tête avec recherche à droite -->
-    <div class="admin-page-header page-header header-with-search animate-fadeInUp">
+    {{-- Mobile : bandeau Retraits + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Retraits</h1>
+                <p id="adminWithdrawalsSubtitleMobile">{{ $withdrawalsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminWithdrawalsSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ $filterUrl(['status' => null, 'method' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                        </a>
+                        <div class="products-filter-sep">Statut</div>
+                        <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                            <span>En attente</span>
+                            <span class="filter-count">{{ $stats['pending'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                            <span>En traitement</span>
+                            <span class="filter-count">{{ $stats['processing'] ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                            <span>Terminé</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'failed']) }}" class="{{ $statusFilter === 'failed' ? 'is-active' : '' }}">
+                            <span>Échoué</span>
+                        </a>
+                        @if(isset($methods) && $methods->isNotEmpty())
+                            <div class="products-filter-sep">Méthode</div>
+                            <a href="{{ $filterUrl(['method' => null]) }}" class="{{ ! $methodFilter ? 'is-active' : '' }}">
+                                <span>Toutes</span>
+                            </a>
+                            @foreach($methods as $method)
+                                <a href="{{ $filterUrl(['method' => $method]) }}" class="{{ $methodFilter === $method ? 'is-active' : '' }}">
+                                    <span>{{ ucfirst($method) }}</span>
+                                </a>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.withdrawals.export', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="Exporter" aria-label="Exporter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="adminWithdrawalsSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un utilisateur"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher un utilisateur">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + filtres --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
         <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Retraits</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="subtitleCount">
-                {{ $withdrawals->total() }} retraits
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('status'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Statut: {{ ucfirst(request('status')) }}
-                    </span>
-                @endif
-                @if(request('method'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Méthode: {{ ucfirst(request('method')) }}
-                    </span>
-                @endif
+                {{ $withdrawalsSubtitle }}
             </p>
         </div>
-        @php
-            $statusFilter = request('status');
-            $methodFilter = request('method');
-            $filterActive = filled($statusFilter) || filled($methodFilter);
-            $statusLabels = [
-                'pending' => 'En attente',
-                'processing' => 'En traitement',
-                'completed' => 'Terminé',
-                'failed' => 'Échoué',
-            ];
-            $filterButtonLabel = $statusLabels[$statusFilter] ?? (filled($methodFilter) ? ucfirst($methodFilter) : 'Filtrer');
-            $filterQueryBase = array_filter([
-                'search' => request('search'),
-                'status' => $statusFilter,
-                'method' => $methodFilter,
-            ], fn ($v) => filled($v));
-            $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
-                return route('admin.withdrawals', array_filter(
-                    array_merge($filterQueryBase, $overrides),
-                    fn ($v) => $v !== null && $v !== ''
-                ));
-            };
-        @endphp
         <div class="header-right admin-page-header-actions">
             <div class="header-search admin-search-full">
                 <div class="search-wrapper">
@@ -438,7 +517,8 @@
                            placeholder="Rechercher un utilisateur"
                            class="search-input"
                            autocomplete="off"
-                           value="{{ request('search') }}">
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher un utilisateur">
                     <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -598,7 +678,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     const tableBody = document.getElementById('withdrawalsTableBody');
     const paginationContainer = document.getElementById('paginationContainer');
@@ -609,6 +692,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function currentParam(name) {
         return new URL(window.location.href).searchParams.get(name) || '';
+    }
+
+    function syncSearchInputs(source, query) {
+        searchInputs.forEach(function (other) {
+            if (other !== source) {
+                other.value = query;
+            }
+        });
+        if (clearBtn) {
+            clearBtn.classList.toggle('visible', query.length > 0);
+        }
+    }
+
+    function getSearchQuery() {
+        const desktop = document.getElementById('searchInput');
+        if (desktop) return desktop.value.trim();
+        return searchInputs[0] ? searchInputs[0].value.trim() : '';
     }
 
     // Fonction pour mettre à jour le tableau, mobile, pagination, KPI
@@ -634,11 +734,16 @@ document.addEventListener('DOMContentLoaded', function() {
             paginationContainer.innerHTML = newPagination.innerHTML;
         }
 
-        // Mettre à jour le compteur
+        // Mettre à jour le compteur (desktop + mobile)
         const newSubtitle = doc.querySelector('#subtitleCount');
         const subtitle = document.getElementById('subtitleCount');
         if (newSubtitle && subtitle) {
             subtitle.innerHTML = newSubtitle.innerHTML;
+        }
+        const newSubtitleMobile = doc.getElementById('adminWithdrawalsSubtitleMobile');
+        const subtitleMobile = document.getElementById('adminWithdrawalsSubtitleMobile');
+        if (newSubtitleMobile && subtitleMobile) {
+            subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
         }
 
         // KPI — ids stables sur le <p> valeur de x-ui.stat
@@ -699,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fonction pour construire l'URL avec les paramètres
     function buildUrl(page) {
         const params = new URLSearchParams();
-        const search = searchInput ? searchInput.value.trim() : '';
+        const search = getSearchQuery();
         const status = currentParam('status');
         const method = currentParam('method');
 
@@ -712,14 +817,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return window.location.pathname + (queryString ? '?' + queryString : '');
     }
 
-    // Recherche avec debounce
-    if (searchInput) {
+    // Recherche avec debounce (desktop + mobile)
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
-            clearBtn.classList.toggle('visible', query.length > 0);
-            
+            syncSearchInputs(searchInput, query);
             searchTimeout = setTimeout(() => {
                 currentPage = 1;
                 const url = buildUrl(currentPage);
@@ -727,41 +830,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
 
-        // Raccourci ESC
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
-                clearBtn.classList.remove('visible');
+                syncSearchInputs(searchInput, '');
                 currentPage = 1;
                 const url = buildUrl(currentPage);
                 fetchData(url);
                 this.blur();
             }
         });
+    });
 
-        // Raccourci / pour focus
-        document.addEventListener('keydown', function(e) {
-            if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                const active = document.activeElement;
-                if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-                    return;
-                }
-                e.preventDefault();
-                searchInput.focus();
-                searchInput.select();
+    // Raccourci / pour focus (desktop)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+                return;
             }
-        });
-    }
+            const desktop = document.getElementById('searchInput');
+            if (!desktop) return;
+            e.preventDefault();
+            desktop.focus();
+            desktop.select();
+        }
+    });
 
-    // Bouton clear
+    // Bouton clear (desktop)
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
+            searchInputs.forEach(function (el) { el.value = ''; });
             clearBtn.classList.remove('visible');
             currentPage = 1;
             const url = buildUrl(currentPage);
             fetchData(url);
-            searchInput.focus();
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
         });
     }
 

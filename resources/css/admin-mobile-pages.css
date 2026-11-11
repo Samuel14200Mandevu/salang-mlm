@@ -1,5 +1,32 @@
 /* Admin — écrans contenu (style application mobile) */
 
+/*
+ * Anti-flash refresh : les actions restent invisibles dans la barre sticky /
+ * header tant qu’elles n’ont pas été montées (ou déjà déclarées) dans le bandeau.
+ * Les pages avec .is-mobile-banner + tools en Blade n’utilisent plus le déplacement JS.
+ */
+@media (max-width: 767px) {
+  .admin-app .admin-page-header:not(:has(.is-mobile-banner)) .admin-page-header-actions > .btn,
+  .admin-app .admin-page-header:not(:has(.is-mobile-banner)) .admin-page-header-actions > a,
+  .admin-app .admin-page-header:not(:has(.is-mobile-banner)) .admin-page-header-actions > form,
+  .admin-app .admin-page-header:not(:has(.is-mobile-banner)) .admin-page-header-actions > .relative,
+  .admin-app .admin-sticky-toolbar > .btn,
+  .admin-app .admin-sticky-toolbar > a,
+  .admin-app .admin-sticky-toolbar > form,
+  .admin-app .admin-sticky-toolbar > .relative {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+}
+
 /* Bandeau titres mobile — même dégradé que shop-catalog-banner (membre) */
 @media (max-width: 767px) {
   .admin-app .admin-mobile-greeting,
@@ -252,6 +279,10 @@
     max-width: min(36%, 4.5rem);
   }
 
+  .admin-app .admin-mobile-page-head.is-mobile-banner .admin-title-banner__tools--members-index {
+    max-width: none;
+  }
+
   .admin-app .admin-mobile-page-head.is-mobile-banner .admin-title-banner__tools--products-index {
     max-width: min(58%, 11.5rem);
     flex-wrap: wrap;
@@ -301,45 +332,60 @@
     min-height: 2.375rem;
   }
 
-  /* Bandeau KPI horizontal (snap) */
-  .admin-app .admin-kpi-rail {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding: 0.15rem 0.1rem 0.35rem;
-    margin: 0 -0.1rem;
-    scrollbar-width: none;
+  /* KPI mobile — grille 2×2 (comme membre), plus de rail horizontal */
+  .admin-app .admin-kpi-rail,
+  .admin-app .stats-grid,
+  .admin-app .admin-mobile-page .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+    padding: 0;
+    margin: 0;
   }
 
-  .admin-app .admin-kpi-rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  .admin-app .admin-kpi-rail > * {
-    scroll-snap-align: start;
-    flex: 0 0 min(42vw, 10rem);
+  .admin-app .admin-kpi-rail > *,
+  .admin-app .stats-grid > * {
+    flex: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   .admin-app .admin-kpi-rail .card-stats,
-  .admin-app .admin-kpi-rail .stat-card {
+  .admin-app .admin-kpi-rail .stat-card,
+  .admin-app .stats-grid .card-stats,
+  .admin-app .stats-grid .stat-card,
+  .admin-app .stats-grid > .card,
+  .admin-app .stats-grid > [class*='rounded'] {
     min-height: 4.85rem;
     border-radius: 14px;
-    border: none;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
     padding: 0.65rem 0.75rem !important;
   }
 
-  .admin-app .admin-kpi-rail .stat-card .stat-value {
+  .admin-app .stats-grid .text-3xl {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .admin-app .stats-grid .text-sm {
+    font-size: 0.6875rem !important;
+  }
+
+  .admin-app .admin-kpi-rail .stat-card .stat-value,
+  .admin-app .stats-grid .stat-card .stat-value {
     font-size: 1.125rem;
   }
 
-  .admin-app .admin-kpi-rail .stat-card .stat-label {
+  .admin-app .admin-kpi-rail .stat-card .stat-label,
+  .admin-app .stats-grid .stat-card .stat-label {
     font-size: 0.5625rem;
   }
 
-  .admin-app .admin-kpi-rail .stat-card .stat-detail {
+  .admin-app .admin-kpi-rail .stat-card .stat-detail,
+  .admin-app .stats-grid .stat-card .stat-detail {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.1rem;
@@ -877,11 +923,11 @@
     padding: 0 !important;
   }
 
-  /* Accès rapides dashboard — 4 tuiles sur une ligne mobile */
+  /* Accès rapides dashboard — grille 2×2 mobile */
   .admin-app .admin-quick-rail {
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.35rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem;
     overflow: visible;
     scroll-snap-type: none;
     padding-bottom: 0.15rem;
@@ -890,24 +936,24 @@
   .admin-app .admin-quick-rail .quick-action {
     min-height: 0;
     border-radius: 12px;
-    padding: 0.45rem 0.2rem 0.5rem;
+    padding: 0.75rem 0.65rem;
   }
 
   .admin-app .admin-quick-rail .quick-action .quick-icon {
-    width: 2rem;
-    height: 2rem;
-    margin-bottom: 0.3rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: 0.4rem;
   }
 
   .admin-app .admin-quick-rail .quick-action .quick-icon svg {
-    width: 1.0625rem;
-    height: 1.0625rem;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   .admin-app .admin-quick-rail .quick-action .quick-label {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1.2;
   }
 
   /* Blocs dashboard secondaires */

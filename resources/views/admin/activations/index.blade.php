@@ -2,25 +2,89 @@
 
 @section('title', 'Activations en attente')
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Activations',
-        'subtitle' => ($stats['total_inactive'] ?? 0).' comptes inactifs',
-    ])
-@endpush
-
 @section('content')
-<div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3">
-    <div class="admin-mobile-page-head">
-        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Activations en attente</h1>
-        <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-            Comptes inactifs — générer un code, renvoyer un e-mail ou activer manuellement.
-        </p>
+@php
+    $searchOpen = filled(request('search'));
+    $activationsSubtitle = ($stats['total_inactive'] ?? 0).' comptes inactifs'
+        .(request('search') ? ' · « '.request('search').' »' : '');
+@endphp
+
+    {{-- Mobile : bandeau Activations + outils --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Activations</h1>
+                <p>{{ $activationsSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminActivationsSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <a href="{{ route('admin.users', ['filter' => 'inactive']) }}"
+                   class="btn btn-outline btn-sm btn-round-icon"
+                   title="Voir tous les inactifs"
+                   aria-label="Voir tous les inactifs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="adminActivationsSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <form method="GET" action="{{ route('admin.activations.index') }}" class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="search"
+                       name="search"
+                       class="search-input"
+                       placeholder="Nom, e-mail ou code parrain…"
+                       autocomplete="off"
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher une activation">
+            </form>
+        </div>
     </div>
-    <a href="{{ route('admin.users', ['filter' => 'inactive']) }}" class="btn btn-outline btn-sm">
-        Voir tous les inactifs (membres)
-    </a>
-</div>
+
+    {{-- Desktop : titre + recherche + action --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
+        <div class="header-left admin-mobile-page-head">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Activations en attente</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
+                Comptes inactifs — générer un code, renvoyer un e-mail ou activer manuellement.
+            </p>
+        </div>
+        <div class="header-right admin-page-header-actions flex items-center gap-2">
+            <form method="GET" action="{{ route('admin.activations.index') }}" class="header-search admin-search-full">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="search"
+                           name="search"
+                           class="search-input"
+                           placeholder="Nom, e-mail ou code parrain…"
+                           autocomplete="off"
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher une activation">
+                </div>
+            </form>
+            <a href="{{ route('admin.users', ['filter' => 'inactive']) }}" class="btn btn-outline btn-sm">
+                Voir tous les inactifs (membres)
+            </a>
+        </div>
+    </div>
 
 @if(session('success'))
     <div class="mb-4 p-3 rounded-lg border border-green-200 bg-green-50 text-green-800 text-sm whitespace-pre-line">{{ session('success') }}</div>
@@ -42,22 +106,6 @@
         <p class="text-xs uppercase tracking-wide text-[var(--text-tertiary)] font-semibold">Sans code</p>
         <p class="text-2xl font-bold text-amber-600 mt-1">{{ number_format($stats['without_code'] ?? 0) }}</p>
     </div>
-</div>
-
-<div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3 sm:p-4 mb-4">
-    <form method="GET" action="{{ route('admin.activations.index') }}" class="flex flex-col sm:flex-row gap-2">
-        <input type="search"
-               name="search"
-               value="{{ request('search') }}"
-               placeholder="Nom, e-mail ou code parrain…"
-               class="input flex-1 text-sm">
-        <div class="flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">Rechercher</button>
-            @if(request('search'))
-                <a href="{{ route('admin.activations.index') }}" class="btn btn-outline btn-sm">Réinitialiser</a>
-            @endif
-        </div>
-    </form>
 </div>
 
 <div class="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg overflow-hidden">

@@ -2,7 +2,12 @@
 
 @media (max-width: 767px) {
   .cashier-app {
-    --mobile-nav-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    --mobile-nav-dock-inset-x: 0.7rem;
+    --mobile-nav-dock-inset-bottom: 0.55rem;
+    --mobile-nav-dock-height: 3.65rem;
+    --mobile-nav-height: calc(
+      var(--mobile-nav-dock-height) + var(--mobile-nav-dock-inset-bottom) + env(safe-area-inset-bottom, 0px)
+    );
     /* Même dégradé que le bandeau titre Packages */
     --member-mobile-head-gradient: linear-gradient(
       145deg,
@@ -19,15 +24,39 @@
     touch-action: none;
   }
 
-  .cashier-app .main-wrapper {
+  /* Mini app / Safari : fond sous la status bar (comme auth) */
+  html:has(body.cashier-app) {
+    background: var(--bg-navbar, #ffffff);
+  }
+
+  html.dark:has(body.cashier-app) {
+    background: var(--bg-navbar, #0f172a);
+  }
+
+  .cashier-app {
+    background: var(--bg-page);
     min-height: 100dvh;
     min-height: 100vh;
   }
 
+  .cashier-app .main-wrapper {
+    min-height: 100dvh;
+    min-height: 100vh;
+    background: var(--bg-page);
+  }
+
   .cashier-app .cashier-topbar {
     padding-top: env(safe-area-inset-top, 0px);
-    backdrop-filter: blur(12px);
-    background: color-mix(in srgb, var(--bg-navbar) 92%, transparent);
+    background: var(--bg-navbar) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    .cashier-app .cashier-topbar {
+      padding-top: max(env(safe-area-inset-top, 0px), 0px);
+      background: var(--bg-navbar) !important;
+    }
   }
 
   .cashier-app .cashier-topbar > div > div {
@@ -49,73 +78,152 @@
     padding-bottom: calc(var(--mobile-nav-height) + 0.85rem) !important;
   }
 
-  /* Bottom nav */
+  @keyframes admin-nav-icon-pop {
+    0% {
+      transform: scale(0.82);
+    }
+    55% {
+      transform: scale(1.14);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes admin-nav-active-in {
+    from {
+      background-color: transparent;
+      box-shadow: inset 0 0 0 0 transparent;
+      transform: scale(0.92);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  /* Bottom nav — dock flottant (aligné admin) */
   .cashier-app .mobile-bottom-nav {
+    position: fixed !important;
+    left: var(--mobile-nav-dock-inset-x) !important;
+    right: var(--mobile-nav-dock-inset-x) !important;
+    bottom: calc(var(--mobile-nav-dock-inset-bottom) + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
     display: flex !important;
-    align-items: stretch;
-    justify-content: space-around;
-    gap: 0.125rem;
-    padding: 0.375rem 0.375rem env(safe-area-inset-bottom, 0.375rem);
-    height: auto;
-    min-height: var(--mobile-nav-height);
-    background: var(--bg-navbar);
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.06);
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.2rem;
+    padding: 0.3rem 0.35rem !important;
+    height: var(--mobile-nav-dock-height) !important;
+    min-height: var(--mobile-nav-dock-height) !important;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg-navbar) 88%, #fff 12%) 0%,
+        color-mix(in srgb, var(--bg-navbar) 96%, transparent) 100%
+      ) !important;
+    backdrop-filter: blur(18px) saturate(1.15);
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    border: 1px solid color-mix(in srgb, var(--color-primary-200) 55%, var(--border-color)) !important;
+    border-top: 1px solid color-mix(in srgb, var(--color-primary-200) 55%, var(--border-color)) !important;
+    border-radius: 1.35rem !important;
+    box-shadow:
+      0 8px 28px color-mix(in srgb, var(--color-primary-900) 12%, transparent),
+      0 1px 3px color-mix(in srgb, var(--color-primary-900) 8%, transparent) !important;
     z-index: 100;
+  }
+
+  html.dark .cashier-app .mobile-bottom-nav {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg-navbar) 92%, var(--color-primary-900) 8%) 0%,
+        var(--bg-navbar) 100%
+      ) !important;
+    border-color: color-mix(in srgb, var(--border-color) 75%, var(--color-primary-400) 25%) !important;
   }
 
   .cashier-app .mobile-bottom-nav .nav-item,
   .cashier-app .mobile-bottom-nav .nav-item--button {
-    min-height: 3rem;
-    min-width: 3rem;
-    padding: 0.35rem 0.25rem;
-    border-radius: 10px;
+    min-height: 0;
+    min-width: 0;
+    padding: 0.35rem 0.2rem;
+    border-radius: 1.05rem;
     border: none;
     background: transparent;
     font: inherit;
     cursor: pointer;
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
+    gap: 0.12rem;
+    color: color-mix(in srgb, var(--text-secondary) 88%, var(--text-tertiary));
     text-decoration: none;
     position: relative;
+    transition:
+      background 0.22s ease,
+      color 0.22s ease,
+      transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.22s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cashier-app .mobile-bottom-nav .nav-item:active,
+  .cashier-app .mobile-bottom-nav .nav-item--button:active {
+    transform: scale(0.92);
   }
 
   .cashier-app .mobile-bottom-nav .nav-item svg {
-    width: 1.375rem;
-    height: 1.375rem;
+    width: 1.3rem;
+    height: 1.3rem;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
   }
 
-  .cashier-app .mobile-bottom-nav .nav-item span {
+  .cashier-app .mobile-bottom-nav .nav-item span:not(.badge-count) {
     font-size: 0.625rem;
     line-height: 1.1;
-    margin-top: 0.15rem;
-    font-weight: 500;
-    max-width: 4.75rem;
+    margin-top: 0;
+    font-weight: 560;
+    letter-spacing: 0.01em;
+    max-width: 4.6rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
   .cashier-app .mobile-bottom-nav .nav-item.active,
   .cashier-app .mobile-bottom-nav .nav-item--button.active {
     background: color-mix(in srgb, var(--color-primary-600) 14%, transparent);
     color: var(--color-primary-600);
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+    animation: admin-nav-active-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .cashier-app .mobile-bottom-nav .nav-item.active svg,
   .cashier-app .mobile-bottom-nav .nav-item--button.active svg {
     color: var(--color-primary-600);
+    animation: admin-nav-icon-pop 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html.dark .cashier-app .mobile-bottom-nav .nav-item.active,
+  html.dark .cashier-app .mobile-bottom-nav .nav-item--button.active {
+    background: color-mix(in srgb, var(--color-primary-400) 18%, transparent);
+    color: var(--color-primary-200);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-300) 22%, transparent);
+  }
+
+  html.dark .cashier-app .mobile-bottom-nav .nav-item.active svg,
+  html.dark .cashier-app .mobile-bottom-nav .nav-item--button.active svg {
+    color: var(--color-primary-200);
   }
 
   .cashier-app .mobile-bottom-nav .nav-item .badge-count {
     position: absolute;
-    top: 0.15rem;
-    right: calc(50% - 1.35rem);
+    top: 0.1rem;
+    right: calc(50% - 1.2rem);
     min-width: 1rem;
     height: 1rem;
     font-size: 0.5625rem;
@@ -127,6 +235,17 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    border: 1.5px solid var(--bg-navbar);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cashier-app .mobile-bottom-nav .nav-item.active,
+    .cashier-app .mobile-bottom-nav .nav-item--button.active,
+    .cashier-app .mobile-bottom-nav .nav-item.active svg,
+    .cashier-app .mobile-bottom-nav .nav-item--button.active svg {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 
   /* Drawer sidebar — structure alignée membre */
@@ -281,17 +400,18 @@
 
   .admin-mobile-sheet {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: var(--mobile-nav-dock-inset-x, 0.7rem);
+    right: var(--mobile-nav-dock-inset-x, 0.7rem);
+    bottom: calc(var(--mobile-nav-height) + 0.35rem);
     z-index: 111;
-    max-height: min(85dvh, 36rem);
+    max-height: min(72dvh, 32rem);
     background: var(--bg-card);
-    border-top: 1px solid var(--border-color);
-    border-radius: 14px 14px 0 0;
-    padding: 0.75rem 1rem calc(var(--mobile-nav-height) + 0.5rem);
+    border: 1px solid var(--border-color);
+    border-radius: 1.15rem;
+    padding: 0.75rem 1rem 1rem;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
   }
 
   .admin-mobile-sheet__handle {

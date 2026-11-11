@@ -254,116 +254,177 @@
 
 @media (max-width: 480px) {
     .stats-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 }
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Commandes',
-        'subtitle' => ($orders->total() ?? 0) . ' commandes · recherche ci-dessous',
-    ])
-@endpush
-
 @section('content')
-    <!-- Header with Search -->
-    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="admin-mobile-page-head">
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commandes</h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminOrdersSubtitle">
-                {{ $orders->total() ?? 0 }} commandes
-                @if(request('search'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · Résultats pour "{{ request('search') }}"
-                    </span>
-                @endif
-                @if(request('status'))
-                    <span class="text-xs text-[var(--text-tertiary)] ml-2">
-                        · {{ [
-                            'pending' => 'En attente',
-                            'processing' => 'En traitement',
-                            'completed' => 'Terminées',
-                            'cancelled' => 'Annulées',
-                        ][request('status')] ?? ucfirst(request('status')) }}
-                    </span>
-                @endif
-            </p>
+@php
+    $statusFilter = request('status');
+    $filterActive = filled($statusFilter);
+    $statusLabels = [
+        'pending' => 'En attente',
+        'processing' => 'En traitement',
+        'completed' => 'Terminées',
+        'cancelled' => 'Annulées',
+    ];
+    $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
+    $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
+    $filterUrl = fn (array $overrides = []) => route('admin.orders.index', array_filter(
+        array_merge($filterQueryBase, $overrides),
+        fn ($v) => $v !== null && $v !== ''
+    ));
+    $searchOpen = filled(request('search'));
+    $subtitleBits = [($orders->total() ?? 0).' commandes'];
+    if ($statusFilter && isset($statusLabels[$statusFilter])) {
+        $subtitleBits[] = $statusLabels[$statusFilter];
+    }
+    if (request('search')) {
+        $subtitleBits[] = '« '.request('search').' »';
+    }
+    $ordersSubtitle = implode(' · ', $subtitleBits);
+@endphp
+
+    {{-- Mobile : bandeau Commandes + outils (pas de relocation JS) --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Commandes</h1>
+                <p id="adminOrdersSubtitleMobile">{{ $ordersSubtitle }}</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminOrdersSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+
+                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                    <button type="button"
+                            @click="open = !open"
+                            class="admin-banner-icon-btn{{ $filterActive ? ' is-active' : '' }}"
+                            :aria-expanded="open"
+                            aria-label="{{ $filterButtonLabel }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" class="users-filter-menu">
+                        <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                            <span>Tous</span>
+                            <span class="filter-count">{{ $totalOrders ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                            <span>En attente</span>
+                            <span class="filter-count">{{ $pendingCount ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                            <span>En traitement</span>
+                            <span class="filter-count">{{ $processingCount ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                            <span>Terminées</span>
+                            <span class="filter-count">{{ $completedCount ?? 0 }}</span>
+                        </a>
+                        <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                            <span>Annulées</span>
+                            <span class="filter-count">{{ $cancelledCount ?? 0 }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        @php
-            $statusFilter = request('status');
-            $filterActive = filled($statusFilter);
-            $statusLabels = [
-                'pending' => 'En attente',
-                'processing' => 'En traitement',
-                'completed' => 'Terminées',
-                'cancelled' => 'Annulées',
-            ];
-            $filterButtonLabel = $statusLabels[$statusFilter] ?? 'Filtrer';
-            $filterQueryBase = array_filter(['search' => request('search')], fn ($v) => filled($v));
-            $filterUrl = fn (array $overrides = []) => route('admin.orders.index', array_filter(
-                array_merge($filterQueryBase, $overrides),
-                fn ($v) => $v !== null && $v !== ''
-            ));
-        @endphp
-        <div class="admin-sticky-toolbar md:contents">
-        <div class="admin-page-header-actions flex items-center gap-2 w-full md:w-auto">
-        <div class="header-search admin-search-full flex-1 md:flex-none">
-            <div class="search-wrapper">
+
+        <div id="adminOrdersSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text"
-                       id="searchInput"
+                       id="searchInputMobile"
                        class="search-input"
                        placeholder="Rechercher une commande"
                        autocomplete="off"
-                       value="{{ request('search') }}">
-                <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
+                       value="{{ request('search') }}"
+                       aria-label="Rechercher une commande">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + filtres --}}
+    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 hidden md:flex animate-fadeInUp">
+        <div class="admin-mobile-page-head">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Commandes</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5" id="adminOrdersSubtitle">
+                {{ $ordersSubtitle }}
+            </p>
+        </div>
+        <div class="admin-page-header-actions flex items-center gap-2">
+            <div class="header-search admin-search-full">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Rechercher une commande"
+                           autocomplete="off"
+                           value="{{ request('search') }}"
+                           aria-label="Rechercher une commande">
+                    <button type="button" id="clearBtn" class="clear-btn {{ request('search') ? 'visible' : '' }}" title="Effacer" aria-label="Effacer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button type="button"
+                        @click="open = !open"
+                        class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ $filterButtonLabel }}"
+                        aria-label="{{ $filterButtonLabel }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
                 </button>
+                <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
+                    <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
+                        <span>Tous</span>
+                        <span class="filter-count">{{ $totalOrders ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
+                        <span>En attente</span>
+                        <span class="filter-count">{{ $pendingCount ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
+                        <span>En traitement</span>
+                        <span class="filter-count">{{ $processingCount ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
+                        <span>Terminées</span>
+                        <span class="filter-count">{{ $completedCount ?? 0 }}</span>
+                    </a>
+                    <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
+                        <span>Annulées</span>
+                        <span class="filter-count">{{ $cancelledCount ?? 0 }}</span>
+                    </a>
+                </div>
             </div>
-        </div>
-
-        <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
-            <button type="button"
-                    @click="open = !open"
-                    class="btn btn-outline btn-sm btn-round-icon {{ $filterActive ? 'border-[var(--primary)] text-[var(--primary)]' : '' }}"
-                    :aria-expanded="open"
-                    aria-haspopup="true"
-                    title="{{ $filterButtonLabel }}"
-                    aria-label="{{ $filterButtonLabel }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                </svg>
-            </button>
-            <div x-show="open" x-cloak x-transition @click.outside="open = false" class="users-filter-menu">
-                <a href="{{ $filterUrl(['status' => null]) }}" class="{{ ! $filterActive ? 'is-active' : '' }}">
-                    <span>Tous</span>
-                    <span class="filter-count">{{ $totalOrders ?? 0 }}</span>
-                </a>
-                <a href="{{ $filterUrl(['status' => 'pending']) }}" class="{{ $statusFilter === 'pending' ? 'is-active' : '' }}">
-                    <span>En attente</span>
-                    <span class="filter-count">{{ $pendingCount ?? 0 }}</span>
-                </a>
-                <a href="{{ $filterUrl(['status' => 'processing']) }}" class="{{ $statusFilter === 'processing' ? 'is-active' : '' }}">
-                    <span>En traitement</span>
-                    <span class="filter-count">{{ $processingCount ?? 0 }}</span>
-                </a>
-                <a href="{{ $filterUrl(['status' => 'completed']) }}" class="{{ $statusFilter === 'completed' ? 'is-active' : '' }}">
-                    <span>Terminées</span>
-                    <span class="filter-count">{{ $completedCount ?? 0 }}</span>
-                </a>
-                <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
-                    <span>Annulées</span>
-                    <span class="filter-count">{{ $cancelledCount ?? 0 }}</span>
-                </a>
-            </div>
-        </div>
-        </div>
         </div>
     </div>
 
@@ -377,7 +438,7 @@
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-warning)]">{{ $pendingCount ?? 0 }}</p>
         </div>
-        <div class="card-stats animate-fadeInUp delay-3">
+        <div class="card-stats animate-fadeInUp delay-3 hidden md:block">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En traitement</p>
             <p class="text-lg sm:text-xl font-bold text-[var(--ui-stat-info)]">{{ $processingCount ?? 0 }}</p>
         </div>
@@ -476,7 +537,10 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     let searchTimeout;
 
@@ -484,51 +548,59 @@ document.addEventListener('DOMContentLoaded', function() {
         return new URL(window.location.href).searchParams.get('status') || '';
     }
 
-    // Gestion de la recherche
-    if (searchInput) {
+    function syncSearchInputs(source, query) {
+        searchInputs.forEach(function (other) {
+            if (other !== source) {
+                other.value = query;
+            }
+        });
+        if (clearBtn) {
+            clearBtn.classList.toggle('visible', query.length > 0);
+        }
+    }
+
+    searchInputs.forEach(function (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
-            
-            // Afficher/masquer le bouton clear
-            clearBtn.classList.toggle('visible', query.length > 0);
-            
+            syncSearchInputs(searchInput, query);
             searchTimeout = setTimeout(() => {
                 fetchOrders(query, currentStatus());
             }, 300);
         });
 
-        // Raccourci ESC pour effacer
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
-                clearBtn.classList.remove('visible');
+                syncSearchInputs(searchInput, '');
                 fetchOrders('', currentStatus());
                 this.blur();
             }
         });
+    });
 
-        // Focus avec la touche /
-        document.addEventListener('keydown', function(e) {
-            if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                const active = document.activeElement;
-                if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-                    return;
-                }
-                e.preventDefault();
-                searchInput.focus();
-                searchInput.select();
+    // Focus avec la touche / (desktop)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+                return;
             }
-        });
-    }
+            const desktop = document.getElementById('searchInput');
+            if (!desktop) return;
+            e.preventDefault();
+            desktop.focus();
+            desktop.select();
+        }
+    });
 
-    // Bouton clear
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
+            searchInputs.forEach(function (el) { el.value = ''; });
             clearBtn.classList.remove('visible');
             fetchOrders('', currentStatus());
-            searchInput.focus();
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
         });
     }
 
@@ -612,6 +684,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (subtitle && newSubtitle) {
                 subtitle.innerHTML = newSubtitle.innerHTML;
             }
+            const subtitleMobile = document.getElementById('adminOrdersSubtitleMobile');
+            const newSubtitleMobile = doc.getElementById('adminOrdersSubtitleMobile');
+            if (subtitleMobile && newSubtitleMobile) {
+                subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
+            }
 
             // Mettre à jour les statistiques
             updateStats(doc);
@@ -643,9 +720,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Recharger les données lors du retour sur la page
     document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && searchInput) {
-            const currentQuery = searchInput.value.trim();
-            // Ne recharger que si la recherche est vide
+        if (!document.hidden && searchInputs.length) {
+            const currentQuery = (document.getElementById('searchInput') || searchInputs[0]).value.trim();
             if (!currentQuery) {
                 fetchOrders('', currentStatus());
             }

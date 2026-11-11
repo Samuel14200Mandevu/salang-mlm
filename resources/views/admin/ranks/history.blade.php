@@ -132,19 +132,56 @@
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Historique des promotions',
-        'subtitle' => 'Suivi de toutes les promotions de rang',
-    ])
-@endpush
-
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- Header with Search -->
-    <div class="admin-page-header page-header flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div class="admin-mobile-page-head">
+    {{-- Mobile : bandeau Historique + outils --}}
+    <div class="admin-page-header page-header md:hidden animate-fadeInUp">
+        <div class="admin-mobile-page-head is-mobile-banner">
+            <div class="admin-title-banner__text">
+                <h1>Historique des promotions</h1>
+                <p>Suivi de toutes les promotions de rang</p>
+            </div>
+            <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminRanksHistorySearchPanel"
+                        aria-expanded="false"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <a href="{{ route('admin.ranks') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="adminRanksHistorySearchPanel"
+             class="admin-search-panel"
+             data-admin-search-panel="1"
+             aria-hidden="true">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un utilisateur..."
+                       autocomplete="off"
+                       aria-label="Rechercher un utilisateur">
+            </div>
+        </div>
+    </div>
+
+    {{-- Desktop : titre + recherche + retour --}}
+    <div class="admin-page-header page-header header-with-search hidden md:flex animate-fadeInUp">
+        <div class="header-left admin-mobile-page-head">
             <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Historique des promotions</h1>
             <p class="text-sm text-[var(--text-secondary)] mt-0.5">Suivi de toutes les promotions de rang</p>
         </div>
@@ -242,12 +279,25 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
     const clearBtn = document.getElementById('clearBtn');
     const rows = document.querySelectorAll('#historyTable tr');
 
-    function filterRows() {
-        const search = searchInput.value.trim().toLowerCase();
+    function syncSearchInputs(value, except) {
+        searchInputs.forEach(function (el) {
+            if (el !== except) {
+                el.value = value;
+            }
+        });
+    }
+
+    function filterRows(fromInput) {
+        const source = fromInput || searchInputs.find((el) => el === document.activeElement) || searchInputs[0];
+        const search = (source?.value || '').trim().toLowerCase();
+        syncSearchInputs(source?.value || '', source);
 
         let visibleCount = 0;
 
@@ -271,26 +321,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        clearBtn.classList.toggle('visible', search.length > 0);
+        if (clearBtn) {
+            clearBtn.classList.toggle('visible', search.length > 0);
+        }
     }
 
-    searchInput.addEventListener('input', filterRows);
+    searchInputs.forEach(function (searchInput) {
+        searchInput.addEventListener('input', function () {
+            filterRows(searchInput);
+        });
 
-    clearBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        clearBtn.classList.remove('visible');
-        filterRows();
-        searchInput.focus();
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                syncSearchInputs('', this);
+                if (clearBtn) clearBtn.classList.remove('visible');
+                filterRows(this);
+                this.blur();
+            }
+        });
     });
 
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            this.value = '';
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            syncSearchInputs('');
             clearBtn.classList.remove('visible');
             filterRows();
-            this.blur();
-        }
-    });
+            const desktop = document.getElementById('searchInput');
+            if (desktop) desktop.focus();
+        });
+    }
 
     document.addEventListener('keydown', function(e) {
         if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -299,8 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
+            const target = window.matchMedia('(min-width: 768px)').matches
+                ? document.getElementById('searchInput')
+                : document.getElementById('searchInputMobile');
+            if (target) {
+                target.focus();
+                target.select();
+            }
         }
     });
 });

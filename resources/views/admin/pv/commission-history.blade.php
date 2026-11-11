@@ -682,13 +682,6 @@ body {
 </style>
 @endpush
 
-@push('admin_mobile_greeting')
-    @include('admin.layouts.partials.mobile-greeting', [
-        'title' => 'Commissions historiques',
-        'subtitle' => 'Recalcul à partir des PV historiques',
-    ])
-@endpush
-
 @section('content')
 <div class="commission-history-page">
 
@@ -708,15 +701,42 @@ body {
 </div>
 
 <div class="admin-page-header page-header animate-fadeInUp md:hidden">
-    <div class="admin-mobile-page-head">
-        <h1 class="page-title">Commissions historiques</h1>
-        <p class="page-subtitle">Recalcul à partir des PV historiques</p>
-    </div>
-    <div class="admin-page-header-actions header-actions flex flex-wrap gap-2">
-        @include('admin.pv.partials.commission-history-header-actions', [
-            'selectedPeriod' => $selectedPeriod,
-            'userId' => $userId,
-        ])
+    <div class="admin-mobile-page-head is-mobile-banner">
+        <div class="admin-title-banner__text">
+            <h1 class="page-title">Commissions historiques</h1>
+            <p class="page-subtitle">Recalcul à partir des PV historiques</p>
+        </div>
+        <div class="admin-title-banner__tools admin-title-banner__tools--commission-history">
+            <button type="button" class="btn btn-warning btn-sm btn-round-icon" onclick="openRecalculateModal()" title="Recalculer" aria-label="Recalculer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+            @if($selectedPeriod)
+                <a href="{{ url('/admin/pv/commission-history/' . $selectedPeriod . '/pdf?user_id=' . $userId) }}"
+                   class="btn btn-primary btn-sm btn-round-icon"
+                   title="Rapport détaillé"
+                   aria-label="Rapport détaillé">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </a>
+                <a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}"
+                   class="btn btn-danger btn-sm btn-round-icon"
+                   target="_blank"
+                   title="Rapport global"
+                   aria-label="Rapport global">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </a>
+            @endif
+            <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+        </div>
     </div>
 </div>
 
