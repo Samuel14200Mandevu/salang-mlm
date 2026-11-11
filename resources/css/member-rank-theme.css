@@ -78,7 +78,9 @@
     var(--color-accent-400) 72%,
     var(--color-accent-500) 100%
   );
-  --member-nav-services-disc-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary-900) 14%, transparent);
+  --member-nav-services-disc-shadow:
+    0 4px 14px color-mix(in srgb, var(--member-rank-accent) 26%, transparent),
+    0 1px 4px color-mix(in srgb, var(--member-rank-accent) 14%, transparent);
   --member-nav-bar-bg: linear-gradient(
     90deg,
     var(--color-primary-50) 0%,
