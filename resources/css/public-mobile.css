@@ -7,16 +7,21 @@
   }
 
   /* —— Splash accueil (app mobile uniquement, jamais site officiel) —— */
-  /* Même dégradé que l’overlay — évite les bandes unies haut/bas */
+  /*
+   * Fond html/body = bas du dégradé (#111827), PAS le bleu #0f2744.
+   * Sur iOS Safari le splash ne couvre pas toujours 100 % du viewport :
+   * une fente en bas montrait alors une barre bleu marine solide.
+   */
   html:has(body.public-splash-active),
   body.public-splash-active {
     overflow: hidden;
     height: 100%;
     min-height: 100dvh;
     min-height: 100svh;
+    min-height: 100lvh;
     min-height: -webkit-fill-available;
-    background-color: #0f2744 !important;
-    background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
+    background: #111827 !important;
+    background-image: none !important;
   }
 
   body.public-splash-active .public-nav,
@@ -59,11 +64,15 @@
 
   .public-mobile-splash {
     position: fixed;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     min-height: 100dvh;
     min-height: 100svh;
+    min-height: 100lvh;
     min-height: -webkit-fill-available;
     z-index: 120;
     display: flex;
@@ -73,7 +82,8 @@
     box-sizing: border-box;
     padding: max(1.5rem, env(safe-area-inset-top, 0px)) max(1.25rem, env(safe-area-inset-right, 0px))
       max(1.5rem, env(safe-area-inset-bottom, 0px)) max(1.25rem, env(safe-area-inset-left, 0px));
-    background-color: #0f2744;
+    /* Dégradé sur l’overlay ; fallback sombre = même teinte que html (pas de bande bleue) */
+    background-color: #111827;
     background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%);
     color: #fff;
     transition: opacity 0.35s ease, transform 0.35s ease;
@@ -2419,13 +2429,26 @@
   }
 
   /* —— Auth (mobile app / Binance-like) —— */
+  /* Fond opaque plein écran : pas de zone floue / translucide sous la status bar */
+  html:has(body.auth-mobile-app),
+  body.auth-mobile-app {
+    background: var(--bg-page, #ffffff) !important;
+    background-image: none !important;
+  }
+
   .auth-mobile-app {
-    background: var(--bg-page);
+    background: var(--bg-page, #ffffff);
+    min-height: 100dvh;
+    min-height: 100lvh;
+    min-height: -webkit-fill-available;
   }
 
   .auth-mobile-app .auth-split {
     display: block;
     min-height: 100dvh;
+    min-height: 100lvh;
+    min-height: -webkit-fill-available;
+    background: inherit;
   }
 
   .auth-mobile-logo {
