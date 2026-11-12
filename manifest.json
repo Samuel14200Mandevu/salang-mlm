@@ -1,24 +1,33 @@
 {
-    "name": "Advance eCommerce",
-    "short_name": "Advance eCommerce",
-    "start_url": "/",
-    "scope": "/",
-    "author": "Rabiul Islam",
-    "version": "1.0",
-    "description": "A description of your web app.",
-    "orientation": "portrait",
-    "dir": "auto",
-    "lang": "en",
+    "name": "Salang MLM",
+    "short_name": "Salang",
+    "description": "Salang Multi-Level Marketing Platform",
+    "theme_color": "#111827",
+    "background_color": "#111827",
     "display": "standalone",
-    "themeColor": " #FF5733",
-    "theme_color": " #FF5733",
-    "backgroundColor": "#ffffff",
-    "background_color": " #FF5733",
+    "orientation": "portrait",
+    "scope": "/",
+    "start_url": "/",
+    "dir": "ltr",
+    "lang": "fr",
     "icons": [
         {
-            "src": "logo.png",
+            "src": "/favicon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
         }
     ]
 }
