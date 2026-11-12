@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Salang Group — Connexion')</title>
-    <meta name="theme-color" content="#1E5DAD">
+    {{-- Auth mobile : pas de chrome bleu ; black-translucent sans bande floue opaque --}}
+    <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <script>
         (function () {
