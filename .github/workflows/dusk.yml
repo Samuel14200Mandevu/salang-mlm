@@ -44,12 +44,21 @@ jobs:
           cp .env.dusk .env
 
       # chromium-browser apt package is a snap stub; snap store often fails on GHA.
+      # Install matching chromedriver with the same action to avoid version skew.
       - name: Setup Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
 
-      - name: Install ChromeDriver
-        run: php artisan dusk:chrome-driver --detect
+      - name: Link ChromeDriver for Dusk
+        run: |
+          mkdir -p vendor/laravel/dusk/bin
+          cp "${{ steps.setup-chrome.outputs.chromedriver-path }}" vendor/laravel/dusk/bin/chromedriver-linux
+          chmod +x vendor/laravel/dusk/bin/chromedriver-linux
+          "${{ steps.setup-chrome.outputs.chrome-path }}" --version
+          vendor/laravel/dusk/bin/chromedriver-linux --version
 
       - name: Start application server
         run: |
