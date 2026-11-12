@@ -50,20 +50,18 @@
         })();
     </script>
     <style>
-        /* Avant paint : dégradé splash (pas #111827 uni → bandes). Onboarding blanc via CSS. */
+        /* Avant paint : fond sombre uni (évite fente bleu #0f2744 sous le splash iOS). */
         html.salang-mobile-app {
             min-height: 100%;
             min-height: -webkit-fill-available;
-            background-color: #0f2744 !important;
-            background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
+            background: #111827 !important;
         }
         html.salang-mobile-app body.public-welcome-page {
             overflow: hidden !important;
             height: 100% !important;
             min-height: 100dvh !important;
             min-height: -webkit-fill-available !important;
-            background-color: #0f2744 !important;
-            background-image: linear-gradient(165deg, #0f2744 0%, #111827 42%, #1a1208 100%) !important;
+            background: #111827 !important;
         }
         html.salang-mobile-app .public-nav,
         html.salang-mobile-app .public-footer,
