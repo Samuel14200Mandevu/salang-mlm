@@ -283,7 +283,7 @@ return [
             'bonus' => '26 %',
             'commissions' => ['Bonus direct (26 %)', 'Bonus indirect'],
             'conditions' => [
-                'Voie solo : sans filleul direct actif — ≥ 1000 PV personnels sur le mois',
+                'Voie solo : sans filleul direct actif — ≥ 1000 PV personnels cumulés',
                 'Voie réseau : 3 branches qualifiées (≥ niv. 3) + ≥ 1000 PV cumul d’équipe',
                 'Double cumulatif : 1 à 2 branches qualifiées (≥ niv. 3) + ≥ 2200 PV cumul d’équipe',
             ],

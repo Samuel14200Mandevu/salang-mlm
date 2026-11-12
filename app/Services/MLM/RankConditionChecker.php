@@ -2,12 +2,9 @@
 
 namespace App\Services\MLM;
 
-use App\Models\PVHistory;
 use App\Models\User;
 use App\Models\Rank;
-use App\Support\MlmPeriod;
 use App\Support\SqlDialect;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -121,42 +118,15 @@ class RankConditionChecker
             return true;
         }
 
-        $soloMonthlyPv = (float) ($rules['personal_monthly_pv_solo'] ?? 1000);
-        $monthlyPv = $this->getEffectivePersonalMonthlyPv($user);
+        // Voie solo : PV personnels cumulés (tous mois), pas le seul mois en cours.
+        $soloPersonalPv = (float) ($rules['personal_pv_solo'] ?? $rules['personal_monthly_pv_solo'] ?? 1000);
+        $personalPv = $this->normalizePV($user->pv_balance);
 
-        if ($directReferrals === 0 && $monthlyPv >= $soloMonthlyPv) {
+        if ($directReferrals === 0 && $personalPv >= $soloPersonalPv) {
             return true;
         }
 
         return false;
-    }
-
-    /**
-     * PV personnels du mois MLM pour le grade : colonne users.monthly_pv + historique
-     * (période courante et période précédente, ex. septembre après import historique).
-     */
-    private function getEffectivePersonalMonthlyPv(User $user): float
-    {
-        $fromColumn = $this->normalizePV($user->monthly_pv);
-
-        $currentPeriod = MlmPeriod::current();
-        $fromCurrentHistory = $this->sumPersonalPvHistoryForPeriod($user->id, $currentPeriod);
-
-        $previousPeriod = Carbon::createFromFormat('Y-m', $currentPeriod)->subMonth()->format('Y-m');
-        $fromPreviousHistory = $this->sumPersonalPvHistoryForPeriod($user->id, $previousPeriod);
-
-        return max($fromColumn, $fromCurrentHistory, $fromPreviousHistory);
-    }
-
-    private function sumPersonalPvHistoryForPeriod(int $userId, string $period): float
-    {
-        $sum = PVHistory::query()
-            ->where('user_id', $userId)
-            ->where('period', $period)
-            ->where('type', 'personal')
-            ->sum('amount');
-
-        return $this->normalizePV($sum);
     }
 
     private function countDirectActiveReferrals(User $user): int

@@ -236,16 +236,15 @@ return [
     |--------------------------------------------------------------------------
     | Niveau 4 — Directeur (qualification depuis le 10/2026)
     |--------------------------------------------------------------------------
-    | - Sans filleul direct actif : 1000 PV personnels sur le mois (monthly_pv ou somme
-    |   PVHistory « personal » pour la période MLM courante ou la précédente, ex. import sept.).
-    | - Avec filleul(s) : voie réseau uniquement (pas la voie mensuelle solo).
+    | - Sans filleul direct actif : ≥ 1000 PV personnels cumulés (pv_balance, tous mois).
+    | - Avec filleul(s) : voie réseau uniquement (pas la voie solo).
     |   • 3 branches qualifiées (≥ niv. 3) + 1000 PV cumul d'équipe (team_pv)
     |   • 1 à 2 branches qualifiées + 2200 PV cumul (double cumulatif)
     | Les membres déjà niv. 4+ au déploiement : rank4_grandfathered (pas de rétroactivité).
     */
 
     'level_4_qualification' => [
-        'personal_monthly_pv_solo' => 1000,
+        'personal_pv_solo' => 1000,
         'team_cumul_simple' => 1000,
         'team_cumul_double' => 2200,
         'branches_simple_count' => 3,
