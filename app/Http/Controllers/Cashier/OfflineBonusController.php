@@ -45,10 +45,32 @@ class OfflineBonusController extends Controller
             : null;
 
         $summary = null;
+        $membersWithPv = collect();
+
         if ($selectedPeriod) {
             $commissions = Commission::query()
                 ->where('period', $selectedPeriod)
                 ->whereIn('type', ['direct', 'indirect', 'leadership']);
+
+            $pvRows = PVHistory::query()
+                ->where('period', $selectedPeriod)
+                ->selectRaw('user_id, SUM(amount) as pv_total')
+                ->groupBy('user_id')
+                ->orderByDesc('pv_total')
+                ->get();
+
+            $users = User::query()
+                ->with('parrain:id,sponsor_id,name')
+                ->whereIn('id', $pvRows->pluck('user_id'))
+                ->get(['id', 'name', 'sponsor_id', 'rank_level', 'parrain_id'])
+                ->keyBy('id');
+
+            $membersWithPv = $pvRows->map(function ($row) use ($users) {
+                return [
+                    'user' => $users->get($row->user_id),
+                    'pv' => (float) $row->pv_total,
+                ];
+            })->values();
 
             $summary = [
                 'pv_rows' => PVHistory::where('period', $selectedPeriod)->count(),
@@ -57,7 +79,7 @@ class OfflineBonusController extends Controller
                 'commission_total' => (float) (clone $commissions)->sum('amount'),
                 'pending_total' => (float) (clone $commissions)->whereIn('status', ['pending', 'approved'])->sum('amount'),
                 'paid_total' => (float) (clone $commissions)->where('status', 'paid')->sum('amount'),
-                'members' => (clone $commissions)->pluck('user_id')->unique()->count(),
+                'members' => $membersWithPv->count(),
             ];
         }
 
@@ -65,7 +87,8 @@ class OfflineBonusController extends Controller
             'periodsWithPv',
             'selectedPeriod',
             'periodRecord',
-            'summary'
+            'summary',
+            'membersWithPv'
         ));
     }
 
