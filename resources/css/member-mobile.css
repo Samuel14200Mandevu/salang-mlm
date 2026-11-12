@@ -1161,6 +1161,10 @@
     border-left-color: #f97316;
   }
 
+  .member-notify-card--red {
+    border-left-color: #dc2626;
+  }
+
   .member-notify-card__icon {
     display: flex;
     align-items: flex-start;
@@ -1189,6 +1193,11 @@
   .member-notify-card--orange .member-notify-card__icon {
     background: color-mix(in srgb, #f97316 16%, var(--bg-card));
     color: #ea580c;
+  }
+
+  .member-notify-card--red .member-notify-card__icon {
+    background: color-mix(in srgb, #dc2626 16%, var(--bg-card));
+    color: #dc2626;
   }
 
   .member-notify-card__title {

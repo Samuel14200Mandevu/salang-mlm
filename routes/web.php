@@ -493,6 +493,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::get('/calculate', [OfflineBonusController::class, 'calculateIndex'])->name('calculate');
         Route::post('/calculate', [OfflineBonusController::class, 'calculate'])->name('calculate.run');
         Route::get('/pay', [OfflineBonusController::class, 'payIndex'])->name('pay');
+        Route::get('/pay/{userId}', [OfflineBonusController::class, 'payShow'])->name('pay.show');
         Route::post('/pay-period', [OfflineBonusController::class, 'payPeriod'])->name('pay.period');
         Route::post('/pay-member/{userId}', [OfflineBonusController::class, 'payMember'])->name('pay.member');
     });

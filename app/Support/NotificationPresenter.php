@@ -106,7 +106,7 @@ class NotificationPresenter
         $type = $this->type();
         $ui = (string) ($data['ui_type'] ?? $data['tone'] ?? '');
 
-        if ($ui === 'danger' || Str::contains($type, ['reject', 'failed'])) {
+        if (in_array($ui, ['danger', 'error'], true) || Str::contains($type, ['reject', 'failed', 'error'])) {
             return 'danger';
         }
         if ($ui === 'warning') {

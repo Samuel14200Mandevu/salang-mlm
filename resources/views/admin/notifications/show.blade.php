@@ -85,7 +85,7 @@
                 <div class="question-chat-avatar question-chat-avatar--sm" aria-hidden="true">S</div>
                 <div class="question-chat-bubble-group">
                     <p class="question-chat-bubble-meta">Salang Group</p>
-                    <div class="question-chat-bubble notifications-detail-bubble">
+                    <div class="question-chat-bubble notifications-detail-bubble notifications-detail-bubble--{{ $presenter->tone() }}">
                         <p class="question-chat-bubble__subject">{{ $presenter->title() }}</p>
                         <div class="question-chat-bubble__text">{{ $presenter->message() }}</div>
                         @if(count($detailRows) > 0)
