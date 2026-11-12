@@ -136,17 +136,40 @@
         ? ($periodLabel.($summary ? ' · '.number_format($summary['pv_rows']).' ligne(s) PV' : ''))
         : 'Importez d’abord les PV Excel';
     $periodStatusLabel = $periodRecord?->status_label;
+    $searchValue = $search ?? request('search');
+    $searchOpen = filled($searchValue);
 @endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE --}}
+    {{-- BANDEAU MOBILE : loupe comme « Toutes les commissions » --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Calculer les bonus</h1>
-                <p class="page-subtitle">{{ $subtitle }}</p>
+                <p class="page-subtitle">{{ $subtitle }}@if(filled($searchValue)) <span class="text-xs opacity-90">· « {{ $searchValue }} »</span>@endif</p>
             </div>
             <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <button type="button"
+                        class="admin-banner-icon-btn"
+                        data-offline-calc-toggle="1"
+                        aria-controls="offlineCalcMonthCard"
+                        aria-expanded="false"
+                        aria-label="Calculer les bonus du mois"
+                        title="Calculer les bonus du mois">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </button>
                 <a href="{{ route('cashier.commissions') }}"
                    class="btn btn-outline btn-sm btn-round-icon" title="Commissions" aria-label="Commissions">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -155,16 +178,61 @@
                 </a>
             </div>
         </div>
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
+                       placeholder="Rechercher un membre"
+                       autocomplete="off"
+                       value="{{ $searchValue }}"
+                       aria-label="Rechercher un membre">
+            </div>
+        </div>
     </div>
 
     {{-- EN-TÊTE DESKTOP --}}
     <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Calculer les bonus</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">{{ $subtitle }}</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1" id="offlineCalcSubtitle">{{ $subtitle }}@if(filled($searchValue)) · « {{ $searchValue }} »@endif</p>
         </div>
         <div class="flex gap-2 flex-wrap header-actions">
+            <div class="header-search">
+                <div class="search-wrapper">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Rechercher un membre"
+                           autocomplete="off"
+                           value="{{ $searchValue }}"
+                           aria-label="Rechercher un membre">
+                </div>
+            </div>
+            <button type="button"
+                    class="btn btn-outline btn-sm btn-round-icon"
+                    data-offline-calc-toggle="1"
+                    aria-controls="offlineCalcMonthCard"
+                    aria-expanded="false"
+                    aria-label="Calculer les bonus du mois"
+                    title="Calculer les bonus du mois">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </button>
             <a href="{{ route('cashier.commissions') }}" class="btn btn-outline btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
                 Retour commissions
             </a>
         </div>
@@ -214,8 +282,8 @@
     </div>
     @endif
 
-    {{-- FORMULAIRE (style Ajouter des PV manuellement) --}}
-    <div class="card offline-calc-card">
+    {{-- FORMULAIRE (affiché via bouton calendrier) --}}
+    <div class="card offline-calc-card" id="offlineCalcMonthCard" hidden aria-hidden="true">
         <div class="card-title">Calculer les bonus du mois</div>
 
         @if($periodsWithPv->isEmpty())
@@ -226,6 +294,9 @@
         @else
             <div class="offline-calc-grid">
                 <form method="GET" action="{{ route('cashier.offline-bonus.calculate') }}" class="form-group">
+                    @if(filled($searchValue))
+                        <input type="hidden" name="search" value="{{ $searchValue }}">
+                    @endif
                     <label class="form-label" for="offlineCalcPeriod">Période <span class="required">*</span></label>
                     <input type="month"
                            id="offlineCalcPeriod"
@@ -264,8 +335,9 @@
                 </span>
 
                 <div class="offline-calc-footer">
-                    <form method="POST" action="{{ route('cashier.offline-bonus.calculate.run') }}"
-                          onsubmit="return confirm('Calculer les bonus pour {{ $periodLabel }} ?');">
+                    <form method="POST"
+                          action="{{ route('cashier.offline-bonus.calculate.run') }}"
+                          id="offlineCalcBonusForm">
                         @csrf
                         <input type="hidden" name="period" value="{{ $selectedPeriod }}">
                         <button type="submit" class="btn btn-primary">
@@ -285,11 +357,11 @@
         @endif
     </div>
 
-    @if($selectedPeriod && ($membersWithPv ?? collect())->isNotEmpty())
-    <div class="card">
+    @if($selectedPeriod && (($summary['members'] ?? 0) > 0))
+    <div class="card" id="offlineCalcMembersCard">
         <div class="card-title" style="font-size:1rem;font-weight:700;margin-bottom:1rem;">
             Membres — {{ $periodLabel }}
-            <span class="text-sm font-medium text-[var(--text-tertiary)]">({{ $membersWithPv->count() }})</span>
+            <span class="text-sm font-medium text-[var(--text-tertiary)]" id="offlineCalcMembersCount">({{ $membersWithPv->count() }})</span>
         </div>
         <div class="table-wrap">
             <table class="commission-table">
@@ -304,8 +376,8 @@
                         <th class="col-amount">PV</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach($membersWithPv as $row)
+                <tbody id="offlineCalcTableBody">
+                    @forelse($membersWithPv as $row)
                         @php
                             $user = $row['user'] ?? null;
                             $rankLevel = (int) ($user?->rank_level ?? 0);
@@ -323,9 +395,15 @@
                             </td>
                             <td class="col-amount">{{ number_format($row['pv'] ?? 0, 1) }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                                Aucun membre trouvé pour cette recherche.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
-                <tfoot>
+                <tfoot id="offlineCalcTableFoot">
                     <tr class="font-semibold">
                         <td colspan="6" style="text-align:right;">Total PV</td>
                         <td class="col-amount">{{ number_format($membersWithPv->sum('pv'), 1) }}</td>
@@ -337,3 +415,161 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const calcCard = document.getElementById('offlineCalcMonthCard');
+    const calcToggles = document.querySelectorAll('[data-offline-calc-toggle]');
+
+    function setCalcCardOpen(open) {
+        if (!calcCard) return;
+        calcCard.hidden = !open;
+        calcCard.setAttribute('aria-hidden', open ? 'false' : 'true');
+        calcToggles.forEach(function (btn) {
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.classList.toggle('is-active', open);
+            if (btn.classList.contains('btn-outline')) {
+                btn.classList.toggle('border-[var(--primary)]', open);
+                btn.classList.toggle('text-[var(--primary)]', open);
+            }
+        });
+        if (open) {
+            calcCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    calcToggles.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const open = calcCard ? calcCard.hidden : true;
+            setCalcCardOpen(open);
+        });
+    });
+
+    const calcForm = document.getElementById('offlineCalcBonusForm');
+    if (calcForm) {
+        calcForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            if (typeof window.showConfirmDialog !== 'function') {
+                form.submit();
+                return;
+            }
+            window.showConfirmDialog({
+                type: 'primary',
+                title: 'Calculer les bonus',
+                message: 'Calculer les bonus Direct, Indirect et Leadership pour {{ $periodLabel }} à partir des PV importés ?',
+                confirmText: 'Calculer',
+                onConfirm: function () {
+                    form.submit();
+                },
+                form: form
+            });
+        });
+    }
+
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
+    if (!searchInputs.length) return;
+
+    let searchTimeout;
+
+    searchInputs.forEach(function (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            searchInputs.forEach(function (other) {
+                if (other !== searchInput) {
+                    other.value = query;
+                }
+            });
+            searchTimeout = setTimeout(function () {
+                fetchMembers(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchInputs.forEach(function (other) {
+                    if (other !== searchInput) other.value = '';
+                });
+                clearTimeout(searchTimeout);
+                fetchMembers('');
+            }
+        });
+    });
+
+    function fetchMembers(query) {
+        const tableBody = document.getElementById('offlineCalcTableBody');
+        if (!tableBody) return;
+
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                    <div class="flex items-center justify-center gap-3">
+                        <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Recherche en cours…</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (response) { return response.text(); })
+        .then(function (html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+
+            const newTableBody = doc.getElementById('offlineCalcTableBody');
+            if (newTableBody) {
+                tableBody.innerHTML = newTableBody.innerHTML;
+            }
+
+            const count = document.getElementById('offlineCalcMembersCount');
+            const newCount = doc.getElementById('offlineCalcMembersCount');
+            if (count && newCount) {
+                count.textContent = newCount.textContent;
+            }
+
+            const foot = document.getElementById('offlineCalcTableFoot');
+            const newFoot = doc.getElementById('offlineCalcTableFoot');
+            if (foot && newFoot) {
+                foot.innerHTML = newFoot.innerHTML;
+            }
+
+            const subtitle = document.getElementById('offlineCalcSubtitle');
+            const newSubtitle = doc.getElementById('offlineCalcSubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+
+            window.history.replaceState({}, '', url.toString());
+        })
+        .catch(function (error) {
+            console.error(error);
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-[var(--ui-stat-danger,#b32a2a)]">
+                        Une erreur est survenue lors de la recherche
+                    </td>
+                </tr>
+            `;
+        });
+    }
+});
+</script>
+@endpush

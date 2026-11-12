@@ -3,24 +3,6 @@
 @push('styles')
 @include('cashier.partials.commission-ui-styles')
 <style>
-    .offline-pay-tools .header-search {
-        flex: 1 1 18rem;
-        min-width: 14rem;
-        max-width: 28rem;
-    }
-    .offline-pay-tools .header-search .search-wrapper {
-        width: 100%;
-    }
-    .offline-pay-tools .header-search .search-wrapper .search-input {
-        width: 100% !important;
-        min-height: 2.4rem;
-        padding: 0.5rem 0.9rem 0.5rem 2.4rem;
-        font-size: 0.875rem;
-        border-radius: 999px;
-    }
-    .offline-pay-tools .header-search .search-wrapper .search-input:focus {
-        width: 100% !important;
-    }
     .offline-pay-period-menu .form-label {
         display: block;
         margin-bottom: 0.25rem;
@@ -72,24 +54,35 @@
         'period' => $selectedPeriod,
         'search' => $search ?? request('search'),
     ], fn ($v) => filled($v));
-    $searchOpen = filled($search ?? request('search'));
+    $searchValue = $search ?? request('search');
+    $searchOpen = filled($searchValue);
     $subtitleHtml = ($totals['count'] ?? 0).' membre(s) · À créditer $'.number_format($totals['pending'] ?? 0, 2)
         .($filterActive ? ' · '.e($filterButtonLabel) : '')
         .($selectedPeriod ? ' · '.e($periodLabel) : '')
-        .(filled($search ?? request('search'))
-            ? ' <span class="text-xs opacity-90">· Résultats pour "'.e($search ?? request('search')).'"</span>'
+        .(filled($searchValue)
+            ? ' <span class="text-xs opacity-90">· « '.e($searchValue).' »</span>'
             : '');
 @endphp
 <div class="space-y-4 sm:space-y-6">
 
-    {{-- BANDEAU MOBILE --}}
+    {{-- BANDEAU MOBILE : loupe comme Calculer les bonus --}}
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">
                 <h1 class="page-title">Paiement des bonus</h1>
-                <p class="page-subtitle">{!! $subtitleHtml !!}</p>
+                <p class="page-subtitle" id="offlinePaySubtitleMobile">{!! $subtitleHtml !!}</p>
             </div>
             <div class="admin-title-banner__tools">
+                <button type="button"
+                        class="admin-banner-icon-btn{{ $searchOpen ? ' is-active' : '' }}"
+                        data-admin-search-toggle="1"
+                        aria-controls="adminSearchPanel"
+                        aria-expanded="{{ $searchOpen ? 'true' : 'false' }}"
+                        aria-label="Rechercher">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
                 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                     <button type="button"
                             @click="open = !open"
@@ -106,8 +99,8 @@
                          @click.outside="open = false"
                          class="users-filter-menu">
                         <form method="GET" action="{{ route('cashier.offline-bonus.pay') }}" class="px-2 pt-1 pb-2 offline-pay-period-menu">
-                            @if(filled($search ?? request('search')))
-                                <input type="hidden" name="search" value="{{ $search ?? request('search') }}">
+                            @if(filled($searchValue))
+                                <input type="hidden" name="search" value="{{ $searchValue }}">
                             @endif
                             <input type="hidden" name="status" value="{{ $currentStatus }}">
                             <label class="form-label" for="offlinePayPeriodMobile">Période</label>
@@ -143,41 +136,46 @@
                 </a>
             </div>
         </div>
-        <div class="admin-search-panel is-open" aria-hidden="false">
-            <form method="GET" action="{{ route('cashier.offline-bonus.pay') }}" class="search-wrapper admin-shop-search">
-                <input type="hidden" name="period" value="{{ $selectedPeriod }}">
-                <input type="hidden" name="status" value="{{ $currentStatus }}">
+        <div id="adminSearchPanel"
+             class="admin-search-panel{{ $searchOpen ? ' is-open' : '' }}"
+             data-admin-search-panel="1"
+             aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
+            <div class="search-wrapper admin-shop-search">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <input type="text" name="search" class="search-input"
+                <input type="text"
+                       id="searchInputMobile"
+                       class="search-input"
                        placeholder="Rechercher un membre"
                        autocomplete="off"
-                       value="{{ $search ?? request('search') }}">
-            </form>
+                       value="{{ $searchValue }}"
+                       aria-label="Rechercher un membre">
+            </div>
         </div>
     </div>
 
-    {{-- EN-TÊTE DESKTOP : recherche + 2 icônes --}}
+    {{-- EN-TÊTE DESKTOP --}}
     <div class="hidden md:flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Paiement des bonus</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">{!! $subtitleHtml !!}</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1" id="offlinePaySubtitle">{!! $subtitleHtml !!}</p>
         </div>
-        <div class="offline-pay-tools flex items-center gap-2 flex-1 justify-end min-w-0">
-            <form method="GET" action="{{ route('cashier.offline-bonus.pay') }}" class="header-search">
-                <input type="hidden" name="period" value="{{ $selectedPeriod }}">
-                <input type="hidden" name="status" value="{{ $currentStatus }}">
+        <div class="flex gap-2 flex-wrap header-actions">
+            <div class="header-search">
                 <div class="search-wrapper">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    <input type="text" name="search" class="search-input"
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
                            placeholder="Rechercher un membre"
                            autocomplete="off"
-                           value="{{ $search ?? request('search') }}">
+                           value="{{ $searchValue }}"
+                           aria-label="Rechercher un membre">
                 </div>
-            </form>
+            </div>
             <div class="relative shrink-0" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button type="button"
                         @click="open = !open"
@@ -196,8 +194,8 @@
                      @click.outside="open = false"
                      class="users-filter-menu">
                     <form method="GET" action="{{ route('cashier.offline-bonus.pay') }}" class="px-2 pt-1 pb-2 offline-pay-period-menu">
-                        @if(filled($search ?? request('search')))
-                            <input type="hidden" name="search" value="{{ $search ?? request('search') }}">
+                        @if(filled($searchValue))
+                            <input type="hidden" name="search" value="{{ $searchValue }}">
                         @endif
                         <input type="hidden" name="status" value="{{ $currentStatus }}">
                         <label class="form-label" for="offlinePayPeriodDesktop">Période</label>
@@ -226,7 +224,7 @@
                 </div>
             </div>
             <a href="{{ route('cashier.guichet.index') }}"
-               class="btn btn-primary btn-sm btn-round-icon shrink-0"
+               class="btn btn-primary btn-sm btn-round-icon"
                title="Retraits guichet"
                aria-label="Retraits guichet">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -252,22 +250,29 @@
             <div class="icon icon-orange">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </div>
-            <div class="number">{{ $totals['count'] }}</div>
+            <div class="number">{{ $totals['count'] ?? 0 }}</div>
             <div class="label">Membres</div>
         </div>
         <div class="commission-stat-card">
             <div class="icon icon-blue">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="number">${{ number_format($totals['pending'], 2) }}</div>
+            <div class="number">${{ number_format($totals['pending'] ?? 0, 2) }}</div>
             <div class="label">À créditer</div>
         </div>
         <div class="commission-stat-card">
             <div class="icon icon-green">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="number">${{ number_format($totals['paid'], 2) }}</div>
+            <div class="number">${{ number_format($totals['paid'] ?? 0, 2) }}</div>
             <div class="label">Déjà payé</div>
+        </div>
+        <div class="commission-stat-card">
+            <div class="icon icon-purple">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </div>
+            <div class="number">${{ number_format($totals['in_wallet'] ?? 0, 2) }}</div>
+            <div class="label">Dans portefeuille</div>
         </div>
     </div>
 
@@ -282,32 +287,44 @@
         </form>
     @endif
 
-    {{-- TABLEAU --}}
+    {{-- TABLEAU — clic ligne → détail + actions --}}
     <div class="card">
         <div class="table-wrap">
             <table class="commission-table">
                 <thead>
                     <tr>
+                        <th>N°</th>
                         <th>Code Membre</th>
+                        <th>Nom &amp; Post-Nom</th>
+                        <th>Code Parrain</th>
                         <th>Nom &amp; Post-Nom</th>
                         <th class="col-amount">À payer</th>
                         <th class="col-amount">Payé</th>
                         <th>Statut</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="offlinePayTableBody">
                     @forelse($byMember as $row)
                         @php
                             $isPending = $row['pending_amount'] > 0;
+                            $user = $row['user'] ?? null;
+                            $detailUrl = $user
+                                ? route('cashier.offline-bonus.pay.show', ['userId' => $user->id, 'period' => $selectedPeriod])
+                                : null;
                         @endphp
-                        <tr>
+                        <tr @if($detailUrl) class="commission-row" role="link" tabindex="0"
+                            onclick="window.location='{{ $detailUrl }}'"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location='{{ $detailUrl }}';}"
+                            @endif>
+                            <td>{{ $loop->iteration }}</td>
                             <td>
-                                <span class="commission-member">{{ $row['user']?->sponsor_id ?? '—' }}</span>
+                                <span class="commission-member">{{ $user?->sponsor_id ?? '—' }}</span>
                             </td>
                             <td>
-                                <span class="commission-member">{{ $row['user']?->name ?? '—' }}</span>
+                                <span class="commission-member">{{ $user?->name ?? '—' }}</span>
                             </td>
+                            <td>{{ $user?->parrain?->sponsor_id ?? ($user?->parrainSponsorCode() ?: '—') }}</td>
+                            <td>{{ $user?->parrain?->name ?? '—' }}</td>
                             <td class="col-amount {{ $isPending ? 'text-[var(--ui-stat-success)]' : '' }}">
                                 ${{ number_format($row['pending_amount'], 2) }}
                             </td>
@@ -319,22 +336,10 @@
                                     <span class="badge badge-success">Payé</span>
                                 @endif
                             </td>
-                            <td>
-                                @if($isPending && $row['user'])
-                                    <form method="POST" action="{{ route('cashier.offline-bonus.pay.member', $row['user']->id) }}"
-                                          onsubmit="return confirm('Créditer ${{ number_format($row['pending_amount'], 2) }} à {{ $row['user']->name }} ?');">
-                                        @csrf
-                                        <input type="hidden" name="period" value="{{ $selectedPeriod }}">
-                                        <button type="submit" class="btn btn-primary btn-sm">Envoyer</button>
-                                    </form>
-                                @else
-                                    <span class="text-xs text-[var(--text-tertiary)]">—</span>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
                                 <p class="text-base font-medium text-[var(--text-primary)]">Aucun bonus</p>
                                 <p class="text-sm text-[var(--text-tertiary)] mt-1">
                                     @if(filled($search ?? request('search')))
@@ -352,3 +357,103 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('searchInputMobile'),
+    ].filter(Boolean);
+    if (!searchInputs.length) return;
+
+    let searchTimeout;
+
+    searchInputs.forEach(function (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            searchInputs.forEach(function (other) {
+                if (other !== searchInput) other.value = query;
+            });
+            searchTimeout = setTimeout(function () {
+                fetchMembers(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchInputs.forEach(function (other) {
+                    if (other !== searchInput) other.value = '';
+                });
+                clearTimeout(searchTimeout);
+                fetchMembers('');
+            }
+        });
+    });
+
+    function fetchMembers(query) {
+        const tableBody = document.getElementById('offlinePayTableBody');
+        if (!tableBody) return;
+
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
+                    <div class="flex items-center justify-center gap-3">
+                        <svg class="animate-spin h-5 w-5 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Recherche en cours…</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (response) { return response.text(); })
+        .then(function (html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newTableBody = doc.getElementById('offlinePayTableBody');
+            if (newTableBody) {
+                tableBody.innerHTML = newTableBody.innerHTML;
+            }
+
+            const subtitle = document.getElementById('offlinePaySubtitle');
+            const newSubtitle = doc.getElementById('offlinePaySubtitle');
+            if (subtitle && newSubtitle) {
+                subtitle.innerHTML = newSubtitle.innerHTML;
+            }
+
+            const subtitleMobile = document.getElementById('offlinePaySubtitleMobile');
+            const newSubtitleMobile = doc.getElementById('offlinePaySubtitleMobile');
+            if (subtitleMobile && newSubtitleMobile) {
+                subtitleMobile.innerHTML = newSubtitleMobile.innerHTML;
+            }
+
+            window.history.replaceState({}, '', url.toString());
+        })
+        .catch(function (error) {
+            console.error(error);
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-[var(--ui-stat-danger,#b32a2a)]">
+                        Une erreur est survenue lors de la recherche
+                    </td>
+                </tr>
+            `;
+        });
+    }
+});
+</script>
+@endpush

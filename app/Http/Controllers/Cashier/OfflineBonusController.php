@@ -8,7 +8,9 @@ use App\Models\CommissionPeriod;
 use App\Models\PVHistory;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\Withdrawal;
 use App\Services\MLM\OfflinePeriodBonusService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +41,7 @@ class OfflineBonusController extends Controller
             ->pluck('period');
 
         $selectedPeriod = $request->input('period', $periodsWithPv->first());
+        $search = trim((string) $request->input('search', ''));
 
         $periodRecord = $selectedPeriod
             ? CommissionPeriod::query()->where('period', $selectedPeriod)->first()
@@ -81,6 +84,21 @@ class OfflineBonusController extends Controller
                 'paid_total' => (float) (clone $commissions)->where('status', 'paid')->sum('amount'),
                 'members' => $membersWithPv->count(),
             ];
+
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+                $membersWithPv = $membersWithPv->filter(function ($row) use ($needle) {
+                    $user = $row['user'] ?? null;
+                    if (! $user) {
+                        return false;
+                    }
+
+                    return str_contains(mb_strtolower((string) $user->name), $needle)
+                        || str_contains(mb_strtolower((string) $user->sponsor_id), $needle)
+                        || str_contains(mb_strtolower((string) ($user->parrain?->name ?? '')), $needle)
+                        || str_contains(mb_strtolower((string) ($user->parrain?->sponsor_id ?? '')), $needle);
+                })->values();
+            }
         }
 
         return view('cashier.offline-bonus.calculate', compact(
@@ -88,7 +106,8 @@ class OfflineBonusController extends Controller
             'selectedPeriod',
             'periodRecord',
             'summary',
-            'membersWithPv'
+            'membersWithPv',
+            'search'
         ));
     }
 
@@ -131,12 +150,12 @@ class OfflineBonusController extends Controller
         $search = trim((string) $request->input('search', ''));
 
         $byMember = collect();
-        $totals = ['pending' => 0.0, 'paid' => 0.0, 'count' => 0];
+        $totals = ['pending' => 0.0, 'paid' => 0.0, 'in_wallet' => 0.0, 'count' => 0];
         $stats = ['all' => 0, 'pending' => 0, 'paid' => 0];
 
         if ($selectedPeriod) {
             $rows = Commission::query()
-                ->with('user:id,name,sponsor_id')
+                ->with(['user:id,name,sponsor_id,parrain_id', 'user.parrain:id,name,sponsor_id'])
                 ->where('period', $selectedPeriod)
                 ->whereIn('type', ['direct', 'indirect', 'leadership'])
                 ->orderBy('user_id')
@@ -158,9 +177,36 @@ class OfflineBonusController extends Controller
                 ];
             })->sortByDesc('pending_amount')->values();
 
+            $memberIds = $byMember->pluck('user.id')->filter()->values();
+
+            $inWallet = 0.0;
+            $alreadyWithdrawn = 0.0;
+            if ($memberIds->isNotEmpty()) {
+                // Solde encore disponible dans les portefeuilles de ces membres.
+                $inWallet = (float) Wallet::query()
+                    ->whereIn('user_id', $memberIds)
+                    ->sum('balance');
+
+                // Déjà payé = retraits déjà effectués (complétés) par ces membres sur le mois.
+                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
+                $periodEnd = $periodStart->copy()->endOfMonth();
+                $alreadyWithdrawn = (float) Withdrawal::query()
+                    ->whereIn('user_id', $memberIds)
+                    ->where('status', 'completed')
+                    ->where(function ($q) use ($periodStart, $periodEnd) {
+                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
+                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
+                                $q2->whereNull('completed_at')
+                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
+                            });
+                    })
+                    ->sum('amount');
+            }
+
             $totals = [
                 'pending' => (float) $byMember->sum('pending_amount'),
-                'paid' => (float) $byMember->sum('paid_amount'),
+                'paid' => $alreadyWithdrawn,
+                'in_wallet' => $inWallet,
                 'count' => $byMember->count(),
             ];
 
@@ -185,7 +231,9 @@ class OfflineBonusController extends Controller
                     }
 
                     return str_contains(mb_strtolower((string) $user->name), $needle)
-                        || str_contains(mb_strtolower((string) $user->sponsor_id), $needle);
+                        || str_contains(mb_strtolower((string) $user->sponsor_id), $needle)
+                        || str_contains(mb_strtolower((string) ($user->parrain?->name ?? '')), $needle)
+                        || str_contains(mb_strtolower((string) ($user->parrain?->sponsor_id ?? '')), $needle);
                 })->values();
             }
         }
@@ -198,6 +246,56 @@ class OfflineBonusController extends Controller
             'stats',
             'status',
             'search'
+        ));
+    }
+
+    /**
+     * Détail bonus d'un membre pour une période (actions de paiement).
+     */
+    public function payShow(Request $request, int $userId)
+    {
+        $request->validate([
+            'period' => ['required', 'date_format:Y-m'],
+        ]);
+
+        $period = $request->period;
+        $member = User::query()
+            ->with('parrain:id,name,sponsor_id')
+            ->findOrFail($userId);
+
+        $commissions = Commission::query()
+            ->with('fromUser:id,name,sponsor_id')
+            ->where('user_id', $member->id)
+            ->where('period', $period)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->orderByRaw("FIELD(type, 'direct', 'indirect', 'leadership')")
+            ->orderBy('generation')
+            ->orderBy('id')
+            ->get();
+
+        if ($commissions->isEmpty()) {
+            return redirect()
+                ->route('cashier.offline-bonus.pay', ['period' => $period])
+                ->with('info', 'Aucun bonus pour ce membre sur cette période.');
+        }
+
+        $pending = $commissions->whereIn('status', ['pending', 'approved']);
+        $paid = $commissions->where('status', 'paid');
+
+        $summary = [
+            'pending_amount' => (float) $pending->sum('amount'),
+            'paid_amount' => (float) $paid->sum('amount'),
+            'pending_count' => $pending->count(),
+            'paid_count' => $paid->count(),
+            'total_amount' => (float) $commissions->sum('amount'),
+            'line_count' => $commissions->count(),
+        ];
+
+        return view('cashier.offline-bonus.pay-show', compact(
+            'member',
+            'period',
+            'commissions',
+            'summary'
         ));
     }
 
@@ -247,14 +345,25 @@ class OfflineBonusController extends Controller
             ->get();
 
         if ($commissions->isEmpty()) {
-            return back()->with('info', 'Aucune commission à payer pour ce membre.');
+            return redirect()
+                ->route('cashier.offline-bonus.pay.show', ['userId' => $member->id, 'period' => $period])
+                ->with('info', 'Aucune commission à payer pour ce membre.');
         }
 
-        return $this->payCommissionCollection($commissions, $period, $member->name);
+        return $this->payCommissionCollection(
+            $commissions,
+            $period,
+            $member->name,
+            route('cashier.offline-bonus.pay.show', ['userId' => $member->id, 'period' => $period])
+        );
     }
 
-    protected function payCommissionCollection($commissions, string $period, ?string $memberName = null)
-    {
+    protected function payCommissionCollection(
+        $commissions,
+        string $period,
+        ?string $memberName = null,
+        ?string $redirectUrl = null
+    ) {
         $paid = 0;
         $total = 0.0;
 
@@ -314,12 +423,15 @@ class OfflineBonusController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Erreur paiement : '.$e->getMessage());
+            $fail = $redirectUrl ? redirect($redirectUrl) : back();
+
+            return $fail->with('error', 'Erreur paiement : '.$e->getMessage());
         }
 
         $who = $memberName ? " pour {$memberName}" : '';
+        $ok = $redirectUrl ? redirect($redirectUrl) : back();
 
-        return back()->with(
+        return $ok->with(
             'success',
             "{$paid} commission(s) créditées{$who} · $".number_format($total, 2).
             ' — portefeuilles mis à jour / créés. Les montants sont dans l’historique.'

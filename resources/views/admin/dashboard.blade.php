@@ -610,8 +610,8 @@ admin-mobile-stack admin-mobile-no-auto-greeting
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
 
         <!-- Recent users -->
-        <div class="card animate-fadeInUp delay-7">
-            <div class="flex items-center justify-between mb-3">
+        <div class="card animate-fadeInUp delay-7 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3 shrink-0">
                 <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
                     Derniers inscrits
                 </h3>
@@ -620,7 +620,7 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                 </span>
             </div>
 
-            <div class="table-wrap">
+            <div class="table-wrap flex-1 min-h-0">
                 <table class="table">
                     <thead>
                         <tr>
@@ -651,7 +651,7 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                 </table>
             </div>
 
-            <div class="mt-2 text-right">
+            <div class="mt-2 text-right shrink-0">
                 <a href="{{ route('admin.users') }}"
                    class="text-xs text-[var(--primary-blue)] hover:underline font-medium transition">
                     Voir tous →
@@ -660,8 +660,8 @@ admin-mobile-stack admin-mobile-no-auto-greeting
         </div>
 
         <!-- Recent commissions -->
-        <div class="card animate-fadeInUp delay-8">
-            <div class="flex items-center justify-between mb-3">
+        <div class="card animate-fadeInUp delay-8 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3 shrink-0">
                 <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
                     Dernières commissions
                 </h3>
@@ -670,7 +670,7 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                 </span>
             </div>
 
-            <div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+            <div class="space-y-1 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 @forelse($recentCommissions ?? [] as $commission)
                     <div class="activity-item">
                         <div class="activity-avatar">
@@ -681,8 +681,10 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                                 <span class="highlight">{{ $commission->user?->name ?? 'Système' }}</span>
                                 <span class="text-[var(--text-secondary)]">{{ $commission->type_label ?? 'commission' }}</span>
                             </p>
-                            <p class="activity-subtitle">de {{ $commission->fromUser?->name ?? 'Système' }}</p>
-                            <p class="activity-time">{{ $commission->created_at->diffForHumans() }}</p>
+                            <p class="activity-subtitle">
+                                de {{ $commission->fromUser?->name ?? 'Système' }}
+                                <span class="activity-time"> · {{ $commission->created_at->diffForHumans() }}</span>
+                            </p>
                         </div>
                         <span class="activity-amount">+${{ number_format($commission->amount, 2) }}</span>
                     </div>
@@ -693,7 +695,7 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                 @endforelse
             </div>
 
-            <div class="mt-2 text-right">
+            <div class="mt-2 text-right shrink-0">
                 <a href="{{ route('admin.commissions') }}"
                    class="text-xs text-[var(--primary-blue)] hover:underline font-medium transition">
                     Voir toutes →

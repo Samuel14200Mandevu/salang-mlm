@@ -111,9 +111,9 @@ class OfflinePeriodBonusService
                 'type' => $commission->type,
                 'amount' => $commission->amount,
                 'percentage' => $commission->percentage,
-                'pv_used' => $commission->pv_used ?? null,
+                'pv_used' => (float) ($commission->pv_used ?? 0),
                 'generation' => $commission->generation,
-                'status' => 'calculated',
+                'status' => 'pending',
                 'description' => $commission->description,
             ]);
 

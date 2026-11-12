@@ -55,6 +55,38 @@
   .member-notify-sheet {
     display: none !important;
   }
+
+  .member-notify-dropdown__item {
+    border-left: 3px solid transparent;
+  }
+
+  .member-notify-dropdown__item--red {
+    border-left-color: #dc2626;
+  }
+
+  .member-notify-dropdown__item--red.is-unread {
+    background: color-mix(in srgb, #dc2626 8%, transparent);
+  }
+
+  .member-notify-dropdown__item--red .text-sm.font-medium {
+    color: #dc2626;
+  }
+
+  .member-notify-dropdown__item--orange {
+    border-left-color: #f97316;
+  }
+
+  .member-notify-dropdown__item--green {
+    border-left-color: #22c55e;
+  }
+
+  .member-notify-dropdown__item--teal {
+    border-left-color: #14b8a6;
+  }
+
+  .member-notify-dropdown__item--blue {
+    border-left-color: var(--color-primary-500, #1e5dad);
+  }
 }
 
 @media (max-width: 768px) {
@@ -391,6 +423,34 @@ html.dark .admin-app .question-chat-bubble.notifications-detail-bubble .notifica
 html.dark .member-app .question-chat-bubble.notifications-detail-bubble .notifications-detail-bubble__row dt,
 html.dark .admin-app .question-chat-bubble.notifications-detail-bubble .notifications-detail-bubble__row dt {
   color: rgba(255, 255, 255, 0.78);
+}
+
+/* Erreurs : toujours rouge, quel que soit le grade membre (après les règles grade/dark) */
+.member-app .question-chat-bubble.notifications-detail-bubble--danger,
+.admin-app .question-chat-bubble.notifications-detail-bubble--danger,
+html.dark .member-app .question-chat-bubble.notifications-detail-bubble--danger,
+html.dark .admin-app .question-chat-bubble.notifications-detail-bubble--danger {
+  --notif-grade: #dc2626;
+  background: #dc2626;
+  border-color: color-mix(in srgb, #dc2626 70%, #000);
+  box-shadow: 0 4px 14px color-mix(in srgb, #dc2626 32%, transparent);
+}
+
+.notifications-feed__item--danger {
+  border-color: color-mix(in srgb, #dc2626 35%, var(--border-color));
+}
+
+.notifications-feed__item--danger.is-unread {
+  border-left-color: #dc2626;
+  background: color-mix(in srgb, #dc2626 7%, var(--bg-card));
+}
+
+.notifications-feed__item--danger.is-unread .notifications-feed__dot {
+  background: #dc2626;
+}
+
+.notifications-feed__item--danger .notifications-feed__cat {
+  color: #dc2626;
 }
 
 .notifications-detail-bubble__rows {

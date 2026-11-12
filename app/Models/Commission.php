@@ -20,6 +20,7 @@ class Commission extends Model
         'source', 
         'amount',
         'percentage',
+        'pv_used',
         'description',
         'notes',
         'order_id',
@@ -35,6 +36,7 @@ class Commission extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'percentage' => 'decimal:2',
+        'pv_used' => 'decimal:2',
         'paid_at' => 'datetime',
         'approved_at' => 'datetime',
         'generation' => 'integer',

@@ -43,8 +43,10 @@ jobs:
           php artisan db:seed --class=DuskSeeder --env=dusk
           cp .env.dusk .env
 
-      - name: Install Chromium
-        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+      # chromium-browser apt package is a snap stub; snap store often fails on GHA.
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
 
       - name: Install ChromeDriver
         run: php artisan dusk:chrome-driver --detect
@@ -61,5 +63,5 @@ jobs:
 
       - name: Run Dusk
         env:
-          DUSK_CHROME_BINARY: /usr/bin/chromium-browser
+          DUSK_CHROME_BINARY: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: php artisan dusk --env=dusk tests/Browser/LoginTest.php tests/Browser/WalletTest.php tests/Browser/CommissionTest.php tests/Browser/PurchaseTest.php --without-tty

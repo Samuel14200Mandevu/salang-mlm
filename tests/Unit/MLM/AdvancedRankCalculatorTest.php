@@ -78,7 +78,7 @@ class AdvancedRankCalculatorTest extends TestCase
         $this->assertEquals('Cumul Directeur', $rank->name);
     }
 
-    public function test_user_with_1000_lifetime_pv_without_monthly_stays_assistant_manager(): void
+    public function test_user_with_1000_lifetime_pv_without_monthly_gets_directeur_via_solo(): void
     {
         $user = User::factory()->create([
             'pv_balance' => 1000,
@@ -90,7 +90,8 @@ class AdvancedRankCalculatorTest extends TestCase
         ]);
         $rank = $this->calculator->calculateAdvancedRank($user);
         $this->assertNotNull($rank);
-        $this->assertEquals('Cumul Directeur', $rank->name);
+        // Voie solo niveau 4 : PV personnels cumulés (pv_balance), pas seulement le mois.
+        $this->assertEquals('Directeur', $rank->name);
     }
 
     public function test_user_with_1000_monthly_pv_and_no_referrals_gets_directeur(): void

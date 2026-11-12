@@ -580,7 +580,7 @@
             <table class="commission-table">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th>N°</th>
                         <th>Membre</th>
                         <th>Source</th>
                         <th>Type</th>
@@ -592,10 +592,12 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
+                    @php $commissionRowNo = 0; @endphp
                     @forelse($commissions ?? [] as $commission)
                         @php
                             $excludedTypes = ['purchase', 'new_client', 'pos_transaction'];
                             if (in_array($commission->type, $excludedTypes)) { continue; }
+                            $commissionRowNo++;
 
                             $typeClass = 'type-badge-' . $commission->type;
                             if (!in_array($commission->type, ['cash_pos', 'direct', 'indirect', 'leadership', 'sponsor'])) {
@@ -626,7 +628,7 @@
                             data-source="{{ $commission->source }}"
                             data-user="{{ $commission->user_id }}"
                             data-date="{{ $commission->created_at->format('Y-m-d') }}">
-                            <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $commission->id }}</td>
+                            <td>{{ $commissionRowNo }}</td>
                             <td>
                                 <span class="commission-member">
                                     @if(!empty($commission->user?->sponsor_id)){{ $commission->user->sponsor_id }} : @endif{{ $commission->user?->name ?? 'N/A' }}
