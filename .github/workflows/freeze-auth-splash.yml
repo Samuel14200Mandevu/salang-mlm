@@ -1,0 +1,65 @@
+name: Freeze auth/splash/onboarding
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure frozen paths match commit 1f60e51
+        env:
+          FROZEN_SHA: 1f60e5107d07e98a42e76d18dec81bdc0d0f99b3
+          ALLOW_LABEL: allow-auth-splash
+        run: |
+          set -euo pipefail
+
+          PATHS=(
+            resources/views/layouts/auth.blade.php
+            resources/views/layouts/public.blade.php
+            resources/css/public-mobile.css
+            resources/js/public-splash.js
+            resources/js/public-onboarding.js
+            resources/views/welcome.blade.php
+            resources/views/partials/public
+            resources/views/partials/auth
+            resources/views/auth
+          )
+
+          if ! git cat-file -e "${FROZEN_SHA}^{commit}" 2>/dev/null; then
+            git fetch --depth=1 origin "${FROZEN_SHA}" || git fetch --unshallow || true
+          fi
+
+          DIFF=$(git diff --name-only "${FROZEN_SHA}" -- "${PATHS[@]}" || true)
+
+          if [ -z "$DIFF" ]; then
+            echo "OK — auth/splash/onboarding identiques à ${FROZEN_SHA}"
+            exit 0
+          fi
+
+          echo "Les chemins gelés divergent de ${FROZEN_SHA} :"
+          echo "$DIFF"
+          echo
+
+          # Sur PR : autoriser uniquement avec le label allow-auth-splash
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+            if echo "$LABELS" | grep -q "\"${ALLOW_LABEL}\""; then
+              echo "Label ${ALLOW_LABEL} présent — divergence autorisée pour cette PR."
+              exit 0
+            fi
+            echo "::error::Auth/splash/onboarding sont gelés (commit ${FROZEN_SHA})."
+            echo "Ne pas les modifier dans un autre chantier. Demander à l'utilisateur, puis ajouter le label ${ALLOW_LABEL}."
+            exit 1
+          fi
+
+          # Sur push main : toujours exiger l'alignement (pas de label)
+          echo "::error::Push main avec fichiers gelés modifiés — restaurer depuis ${FROZEN_SHA}."
+          exit 1
