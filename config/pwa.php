@@ -9,8 +9,8 @@ return [
         'name' => 'Salang MLM',  // ← Nom complet CORRECT
         'short_name' => 'Salang',  // ← Nom court CORRECT
         'description' => 'Salang Multi-Level Marketing Platform',
-        'theme_color' => '#111827',
-        'background_color' => '#111827',
+        'theme_color' => '#1f33cf',
+        'background_color' => '#ffffff',
         'display' => 'standalone',
         'orientation' => 'portrait',
         'scope' => '/',
@@ -53,10 +53,9 @@ return [
             '/apple-touch-icon.png',
         ],
         'cache' => [
-            /* networkFirst : la mini-app iOS doit prendre le CSS/HTML frais après deploy */
-            'strategy' => 'networkFirst',
+            'strategy' => 'cacheFirst',
             'max_entries' => 100,
-            'max_age_seconds' => 300,
+            'max_age_seconds' => 3600,
         ],
     ],
 

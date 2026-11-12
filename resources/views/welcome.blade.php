@@ -50,20 +50,10 @@
         })();
     </script>
     <style>
-        /* Avant paint : uni #111827 (aucun bleu marine / indigo dans les fentes iOS). */
-        html.salang-mobile-app {
-            min-height: 100%;
-            min-height: -webkit-fill-available;
-            background: #111827 !important;
-            background-image: none !important;
-        }
         html.salang-mobile-app body.public-welcome-page {
             overflow: hidden !important;
-            height: 100% !important;
-            min-height: 100dvh !important;
-            min-height: -webkit-fill-available !important;
-            background: #111827 !important;
-            background-image: none !important;
+            height: 100dvh !important;
+            background: var(--bg-page, #0b1220);
         }
         html.salang-mobile-app .public-nav,
         html.salang-mobile-app .public-footer,
