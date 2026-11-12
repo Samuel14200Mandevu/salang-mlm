@@ -548,9 +548,11 @@
             'links' => [
                 'consultations' => route('cashier.consultations.index'),
                 'reports' => route('cashier.reports.index'),
+                'guichet' => route('cashier.guichet.index'),
             ],
             'consultations' => ['badge' => 'cashierConsultationBadge', 'dot' => 'cashierConsultationDot'],
             'reports' => ['badge' => 'cashierReportBadge', 'dot' => 'cashierReportDot'],
+            'guichet' => ['badge' => 'cashierGuichetBadge', 'dot' => 'cashierGuichetDot'],
             'header' => ['badge' => 'cashierWorkflowHeaderBadge', 'dot' => 'cashierWorkflowHeaderDot'],
             'mobileNav' => ['badge' => 'cashierMobileNavBadge'],
         ];

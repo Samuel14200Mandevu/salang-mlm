@@ -5,6 +5,7 @@
 @section('content')
 @php
     $methodLabels = [
+        'guichet' => 'Guichet',
         'crypto' => 'Crypto',
         'mobile_money' => 'Mobile Money',
         'bank' => 'Banque',

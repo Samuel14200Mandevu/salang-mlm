@@ -52,6 +52,8 @@ use App\Http\Controllers\Admin\AdminPVImportController;
 
 // Controllers Cashier
 use App\Http\Controllers\Cashier\CashierController;
+use App\Http\Controllers\Cashier\OfflineBonusController;
+use App\Http\Controllers\Cashier\GuichetWithdrawalController;
 
 use App\Http\Controllers\Cashier\PvDistributionController;
 use App\Http\Controllers\Admin\AdminCashierController;
@@ -485,6 +487,23 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/commissions/{id}/pay', [CashierController::class, 'commissionPay'])->name('commissions.pay');
     Route::post('/commissions/{id}/cancel', [CashierController::class, 'commissionCancel'])->name('commissions.cancel');
     Route::post('/commissions/batch-approve', [CashierController::class, 'batchApproveCommissions'])->name('commissions.batch-approve');
+
+    // Bonus hors système (PV importés → calcul → portefeuilles)
+    Route::prefix('offline-bonus')->name('offline-bonus.')->group(function () {
+        Route::get('/calculate', [OfflineBonusController::class, 'calculateIndex'])->name('calculate');
+        Route::post('/calculate', [OfflineBonusController::class, 'calculate'])->name('calculate.run');
+        Route::get('/pay', [OfflineBonusController::class, 'payIndex'])->name('pay');
+        Route::post('/pay-period', [OfflineBonusController::class, 'payPeriod'])->name('pay.period');
+        Route::post('/pay-member/{userId}', [OfflineBonusController::class, 'payMember'])->name('pay.member');
+    });
+
+    // Retraits guichet (espèces + reçu thermique)
+    Route::prefix('guichet')->name('guichet.')->group(function () {
+        Route::get('/', [GuichetWithdrawalController::class, 'index'])->name('index');
+        Route::get('/export-daily-pdf', [GuichetWithdrawalController::class, 'exportDailyPdf'])->name('export-daily-pdf');
+        Route::get('/{id}', [GuichetWithdrawalController::class, 'show'])->name('show');
+        Route::post('/{id}/fulfill', [GuichetWithdrawalController::class, 'fulfill'])->name('fulfill');
+    });
     
     // Ventes du jour
     Route::get('/daily-sales', [CashierController::class, 'dailySales'])->name('daily-sales');
@@ -656,6 +675,7 @@ Route::prefix('pv')->name('pv.')->group(function () {
     // ============================================================
     Route::prefix('commission-history')->name('commission-history.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'index'])->name('index');
+        // UI Recalculer retirée — calcul métier via caissier « Bonus hors système »
         Route::post('/recalculate', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'recalculate'])->name('recalculate');
         Route::get('/{period}/details', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'details'])->name('details');
         Route::get('/{period}/pdf', [\App\Http\Controllers\Admin\AdminCommissionHistoryController::class, 'exportPDF'])->name('commission-history.pdf');

@@ -24,6 +24,8 @@ class Withdrawal extends Model
         'notes',
         'processed_at',
         'completed_at',
+        'cashier_id',
+        'receipt_number',
     ];
 
     protected $casts = [
@@ -42,6 +44,11 @@ class Withdrawal extends Model
     public function wallet()
     {
         return $this->belongsTo(Wallet::class);
+    }
+
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
     }
 
     public function scopePending($query)
@@ -91,8 +98,10 @@ class Withdrawal extends Model
     public function getMethodLabelAttribute()
     {
         $labels = [
+            'guichet' => 'Guichet (espèces)',
             'crypto' => 'Cryptocurrency',
             'mobile_money' => 'Mobile Money',
+            'bank' => 'Virement bancaire',
             'bank_transfer' => 'Bank Transfer',
             'paypal' => 'PayPal',
         ];

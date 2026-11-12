@@ -10,8 +10,9 @@
     class="member-withdraw-form {{ $isFintech ? 'member-withdraw-form--fintech' : '' }}"
     data-withdraw-form
     data-balance="{{ $maxBalance }}"
-    data-fee-rate="0.025"
+    data-fee-rate="0"
     data-min="10"
+    data-require-dest="0"
 >
     @csrf
 
@@ -21,40 +22,52 @@
             <h3 class="member-withdraw-form__section-title">Méthode de retrait</h3>
         </div>
         <div class="member-withdraw-methods" role="radiogroup" aria-label="Méthode de retrait">
-            <button type="button" class="member-withdraw-method is-selected" data-method="crypto" data-withdraw-method>
-                <span class="member-withdraw-method__icon" aria-hidden="true">₿</span>
+            <button type="button" class="member-withdraw-method is-selected" data-method="guichet" data-fee-rate="0" data-withdraw-method>
+                <span class="member-withdraw-method__icon member-withdraw-method__icon--bank" aria-hidden="true">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </span>
                 <span class="member-withdraw-method__body">
-                    <span class="member-withdraw-method__label">Crypto</span>
-                    <span class="member-withdraw-method__hint">USDT · BTC · ETH</span>
+                    <span class="member-withdraw-method__label">Guichet (espèces)</span>
+                    <span class="member-withdraw-method__hint">Comptoir · reçu thermique · 0&nbsp;frais</span>
                 </span>
                 <svg class="member-withdraw-method__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
-            <button type="button" class="member-withdraw-method" data-method="mobile_money" data-withdraw-method>
+            <button type="button" class="member-withdraw-method" data-method="crypto" data-fee-rate="0.025" data-withdraw-method disabled title="Bientôt — API non branchée" aria-disabled="true">
+                <span class="member-withdraw-method__icon" aria-hidden="true">₿</span>
+                <span class="member-withdraw-method__body">
+                    <span class="member-withdraw-method__label">Crypto</span>
+                    <span class="member-withdraw-method__hint">Bientôt · USDT · BTC · ETH</span>
+                </span>
+                <svg class="member-withdraw-method__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <button type="button" class="member-withdraw-method" data-method="mobile_money" data-fee-rate="0.025" data-withdraw-method disabled title="Bientôt — API non branchée" aria-disabled="true">
                 <span class="member-withdraw-method__icon member-withdraw-method__icon--mobile" aria-hidden="true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 </span>
                 <span class="member-withdraw-method__body">
                     <span class="member-withdraw-method__label">Mobile Money</span>
-                    <span class="member-withdraw-method__hint">Orange · Airtel · M-Pesa</span>
+                    <span class="member-withdraw-method__hint">Bientôt · Orange · Airtel · M-Pesa</span>
                 </span>
                 <svg class="member-withdraw-method__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
-            <button type="button" class="member-withdraw-method" data-method="bank" data-withdraw-method>
+            <button type="button" class="member-withdraw-method" data-method="bank" data-fee-rate="0.025" data-withdraw-method disabled title="Bientôt — API non branchée" aria-disabled="true">
                 <span class="member-withdraw-method__icon member-withdraw-method__icon--bank" aria-hidden="true">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 </span>
                 <span class="member-withdraw-method__body">
                     <span class="member-withdraw-method__label">Virement bancaire</span>
-                    <span class="member-withdraw-method__hint">IBAN · RIB · SWIFT</span>
+                    <span class="member-withdraw-method__hint">Bientôt · IBAN · RIB · SWIFT</span>
                 </span>
                 <svg class="member-withdraw-method__chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
         </div>
         <select name="method" id="{{ $formId }}_method" class="sr-only" required data-withdraw-method-select>
+            <option value="guichet" selected>guichet</option>
             <option value="crypto">crypto</option>
             <option value="mobile_money">mobile_money</option>
             <option value="bank">bank</option>
         </select>
+        <p class="member-withdraw-field__hint mt-2">Accord verbal au comptoir, puis confirmez ici le montant. Le caissier reçoit une notification et vous remet l’argent + le reçu.</p>
     </div>
 
     <div class="member-withdraw-form__section">
@@ -96,7 +109,7 @@
                 <span data-withdraw-summary-gross>$0.00</span>
             </div>
             <div class="member-withdraw-summary__row">
-                <span>Frais (2,5&nbsp;%)</span>
+                <span data-withdraw-fee-label>Frais</span>
                 <span data-withdraw-summary-fee>$0.00</span>
             </div>
             <div class="member-withdraw-summary__row member-withdraw-summary__row--total">
@@ -112,7 +125,14 @@
             <h3 class="member-withdraw-form__section-title">Destination</h3>
         </div>
 
-        <div class="member-withdraw-dest" data-withdraw-fields="crypto">
+        <div class="member-withdraw-dest" data-withdraw-fields="guichet">
+            <p class="member-withdraw-field__hint" style="margin:0;">
+                Après confirmation, présentez-vous au guichet. Le caissier imprime le reçu thermique et vous donne les espèces.
+                Paiement partiel possible (ex. solde 250&nbsp;$ → retirer 100&nbsp;$ → reste 150&nbsp;$).
+            </p>
+        </div>
+
+        <div class="member-withdraw-dest hidden" data-withdraw-fields="crypto" hidden>
             <label class="member-withdraw-field__label" for="{{ $formId }}_address">Adresse du portefeuille</label>
             <input
                 type="text"

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CashierReport;
 use App\Models\Consultation;
+use App\Models\Withdrawal;
 use App\Notifications\CashierReportReviewedNotification;
 use App\Notifications\ConsultationReviewedNotification;
+use App\Notifications\GuichetWithdrawalRequestedNotification;
 use Illuminate\Http\JsonResponse;
 
 class WorkflowPendingCountController extends Controller
@@ -34,10 +36,21 @@ class WorkflowPendingCountController extends Controller
             ->where('type', CashierReportReviewedNotification::class)
             ->count();
 
+        $guichet = Withdrawal::query()
+            ->where('method', 'guichet')
+            ->where('status', 'pending')
+            ->count();
+
+        $guichetUnread = $user->unreadNotifications()
+            ->where('type', GuichetWithdrawalRequestedNotification::class)
+            ->count();
+
         return response()->json([
             'consultations' => $consultations,
             'reports' => $reports,
-            'total' => $consultations + $reports,
+            'guichet' => $guichet,
+            'guichet_unread' => $guichetUnread,
+            'total' => $consultations + $reports + $guichet,
         ]);
     }
 }

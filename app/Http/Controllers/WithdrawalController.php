@@ -6,10 +6,13 @@ namespace App\Http\Controllers;
 use App\Models\Withdrawal;
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Notifications\GuichetWithdrawalRequestedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class WithdrawalController extends Controller
 {
@@ -58,7 +61,8 @@ class WithdrawalController extends Controller
                 ->count(),
         ];
 
-        $methods = ['crypto', 'mobile_money', 'bank'];
+        // Guichet = méthode active aujourd'hui (pas d'API pour les autres encore)
+        $methods = ['guichet', 'crypto', 'mobile_money', 'bank'];
 
         return view('withdrawal.index', compact(
             'withdrawals',
@@ -76,18 +80,25 @@ class WithdrawalController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:10|max:10000',
-            'method' => 'required|in:crypto,mobile_money,bank',
-            'address' => 'required_if:method,crypto|string|max:255',
-            'phone' => 'required_if:method,mobile_money|string|max:20',
-            'bank_details' => 'required_if:method,bank|string|max:255',
+            'method' => 'required|in:guichet,crypto,mobile_money,bank',
+            'address' => 'required_if:method,crypto|nullable|string|max:255',
+            'phone' => 'required_if:method,mobile_money|nullable|string|max:20',
+            'bank_details' => 'required_if:method,bank|nullable|string|max:255',
         ]);
 
+        // Autres méthodes sans API : bloquer pour l'instant (guichet seul opérationnel)
+        if ($request->method !== 'guichet') {
+            return back()->with('error',
+                'Cette méthode n’est pas encore disponible. Utilisez le retrait guichet (espèces) au comptoir.'
+            )->withInput();
+        }
+
         if (!$wallet) {
-            return back()->with('error', 'Wallet not found.');
+            return back()->with('error', 'Portefeuille introuvable.');
         }
 
         if ($wallet->balance < $request->amount) {
-            return back()->with('error', 'Insufficient balance. You have $' . number_format($wallet->balance, 2));
+            return back()->with('error', 'Solde insuffisant. Disponible : $' . number_format($wallet->balance, 2));
         }
 
         $threshold = config('commission.kyc.withdrawal_threshold', 5000);
@@ -97,9 +108,9 @@ class WithdrawalController extends Controller
 
         if (($totalWithdrawn + $request->amount) >= $threshold && $user->kyc_status !== 'verified') {
             return back()->with('error',
-                'You must complete KYC verification to withdraw more than $' .
+                'Vous devez compléter le KYC pour retirer plus de $' .
                 number_format($threshold, 0) .
-                '. <a href="' . route('kyc.index') . '" style="color: #6366f1; text-decoration: underline;">Verify my identity</a>'
+                '. <a href="' . route('kyc.index') . '" style="color: #6366f1; text-decoration: underline;">Vérifier mon identité</a>'
             );
         }
 
@@ -109,10 +120,11 @@ class WithdrawalController extends Controller
             ->sum('amount');
 
         if ($todayWithdrawals + $request->amount > 5000) {
-            return back()->with('error', 'You have reached the daily withdrawal limit (5000 USD).');
+            return back()->with('error', 'Plafond journalier de retraits atteint (5 000 USD).');
         }
 
-        $fee = $request->amount * 0.025;
+        // Guichet : pas de frais (espèces au comptoir)
+        $fee = $request->method === 'guichet' ? 0 : ($request->amount * 0.025);
         $netAmount = $request->amount - $fee;
 
         DB::beginTransaction();
@@ -129,7 +141,9 @@ class WithdrawalController extends Controller
                 'phone_number' => $request->phone,
                 'bank_details' => $request->bank_details,
                 'status' => 'pending',
-                'notes' => 'Withdrawal request',
+                'notes' => $request->method === 'guichet'
+                    ? 'Retrait guichet — en attente remise espèces'
+                    : 'Withdrawal request',
             ]);
 
             $wallet->balance -= $request->amount;
@@ -146,11 +160,20 @@ class WithdrawalController extends Controller
                 'balance_before' => $wallet->balance + $request->amount,
                 'balance_after' => $wallet->balance,
                 'status' => 'pending',
-                'description' => 'Withdrawal request via ' . $request->method,
+                'description' => $request->method === 'guichet'
+                    ? 'Demande retrait guichet (espèces)'
+                    : 'Withdrawal request via ' . $request->method,
                 'completed_at' => null,
             ]);
 
             DB::commit();
+
+            if ($request->method === 'guichet') {
+                $cashiers = User::role('cashier')->get();
+                if ($cashiers->isNotEmpty()) {
+                    Notification::send($cashiers, new GuichetWithdrawalRequestedNotification($withdrawal->fresh('user')));
+                }
+            }
 
             Log::info('Withdrawal request', [
                 'user_id' => $user->id,
@@ -159,8 +182,12 @@ class WithdrawalController extends Controller
                 'method' => $request->method,
             ]);
 
-            return redirect()->route('withdrawal.index')
-                ->with('success', 'Withdrawal request of $' . number_format($request->amount, 2) . ' submitted successfully!');
+            $msg = $request->method === 'guichet'
+                ? 'Retrait guichet de $' . number_format($request->amount, 2) .
+                  ' confirmé. Présentez-vous au comptoir : le caissier a été notifié et vous remettra l’argent + le reçu.'
+                : 'Demande de retrait de $' . number_format($request->amount, 2) . ' enregistrée.';
+
+            return redirect()->route('withdrawal.index')->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -168,7 +195,7 @@ class WithdrawalController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 

@@ -35,7 +35,7 @@
             </a>
 
             <button type="button"
-                    class="nav-item nav-item--button {{ request()->routeIs('cashier.consultations*', 'cashier.reports*', 'cashier.commissions', 'cashier.daily-sales', 'cashier.expenses*', 'cashier.history', 'cashier.customers', 'cashier.profile') ? 'active' : '' }}"
+                    class="nav-item nav-item--button {{ request()->routeIs('cashier.consultations*', 'cashier.reports*', 'cashier.commissions*', 'cashier.offline-bonus*', 'cashier.guichet*', 'cashier.daily-sales', 'cashier.expenses*', 'cashier.history', 'cashier.customers', 'cashier.profile') ? 'active' : '' }}"
                     @click="mobileMoreOpen = !mobileMoreOpen"
                     :class="{ 'active': mobileMoreOpen }"
                     aria-label="Ouvrir le menu caisse"
