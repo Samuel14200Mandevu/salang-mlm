@@ -284,5 +284,56 @@
             @endif
         @endif
     </div>
+
+    @if($selectedPeriod && ($membersWithPv ?? collect())->isNotEmpty())
+    <div class="card">
+        <div class="card-title" style="font-size:1rem;font-weight:700;margin-bottom:1rem;">
+            Membres — {{ $periodLabel }}
+            <span class="text-sm font-medium text-[var(--text-tertiary)]">({{ $membersWithPv->count() }})</span>
+        </div>
+        <div class="table-wrap">
+            <table class="commission-table">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Code Membre</th>
+                        <th>Nom &amp; Post-Nom</th>
+                        <th>Code Parrain</th>
+                        <th>Nom &amp; Post-Nom</th>
+                        <th>Grade</th>
+                        <th class="col-amount">PV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($membersWithPv as $row)
+                        @php
+                            $user = $row['user'] ?? null;
+                            $rankLevel = (int) ($user?->rank_level ?? 0);
+                        @endphp
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td><span class="commission-member">{{ $user?->sponsor_id ?? '—' }}</span></td>
+                            <td><span class="commission-member">{{ $user?->name ?? '—' }}</span></td>
+                            <td>{{ $user?->parrain?->sponsor_id ?? ($user?->parrainSponsorCode() ?: '—') }}</td>
+                            <td>{{ $user?->parrain?->name ?? '—' }}</td>
+                            <td>
+                                <span class="{{ \App\Support\MlmRank::badgeClass($rankLevel) }}">
+                                    {{ \App\Support\MlmRank::label($rankLevel) }}
+                                </span>
+                            </td>
+                            <td class="col-amount">{{ number_format($row['pv'] ?? 0, 1) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="font-semibold">
+                        <td colspan="6" style="text-align:right;">Total PV</td>
+                        <td class="col-amount">{{ number_format($membersWithPv->sum('pv'), 1) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
