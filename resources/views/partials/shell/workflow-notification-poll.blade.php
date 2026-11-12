@@ -109,6 +109,9 @@
                 if (config.reports) {
                     setBadge(config.reports.badge, config.reports.dot, data.reports);
                 }
+                if (config.guichet) {
+                    setBadge(config.guichet.badge, config.guichet.dot, data.guichet);
+                }
                 if (config.header) {
                     // Badge cloche : max(non lues notifications, validations workflow)
                     var headerUnread = 0;

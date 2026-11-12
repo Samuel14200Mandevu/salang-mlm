@@ -689,7 +689,7 @@ body {
     <div class="top-row">
         <div>
             <h1 class="page-title">Commissions historiques</h1>
-            <p class="page-subtitle">Recalcul à partir des PV historiques</p>
+            <p class="page-subtitle">Historique des bonus (calcul caissier hors système)</p>
         </div>
         <div class="header-actions">
             @include('admin.pv.partials.commission-history-header-actions', [
@@ -704,14 +704,9 @@ body {
     <div class="admin-mobile-page-head is-mobile-banner">
         <div class="admin-title-banner__text">
             <h1 class="page-title">Commissions historiques</h1>
-            <p class="page-subtitle">Recalcul à partir des PV historiques</p>
+            <p class="page-subtitle">Historique des bonus</p>
         </div>
         <div class="admin-title-banner__tools admin-title-banner__tools--commission-history">
-            <button type="button" class="btn btn-warning btn-sm btn-round-icon" onclick="openRecalculateModal()" title="Recalculer" aria-label="Recalculer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-            </button>
             @if($selectedPeriod)
                 <a href="{{ url('/admin/pv/commission-history/' . $selectedPeriod . '/pdf?user_id=' . $userId) }}"
                    class="btn btn-primary btn-sm btn-round-icon"
@@ -973,69 +968,19 @@ body {
     </div>
     @else
     <div class="text-center text-muted py-4">
-        Aucune commission historique. Cliquez sur "Recalculer" pour générer.
+        Aucune commission historique. Utilisez le calcul caissier « Bonus hors système » après import PV.
     </div>
     @endif
 </div>
 
-<div id="recalculateModal" class="confirm-overlay">
-    <div class="confirm-box">
-        <h3>Recalculer les commissions</h3>
-        <p>Recalcul à partir des PV historiques.</p>
-        <form method="POST" action="{{ route('admin.pv.commission-history.recalculate') }}">
-            @csrf
-            <div style="margin: 1rem 0;">
-                <label style="display:block; font-size:0.813rem; font-weight:500; margin-bottom:0.25rem;">Période</label>
-                <select name="period" class="form-control">
-                    <option value="">Toutes les périodes</option>
-                    @foreach($periods as $p)
-                        <option value="{{ $p->period }}">{{ $p->period }}</option>
-                    @endforeach
-                </select>
-                <span style="font-size:0.75rem; color: #8E959C; display:block; margin-top:0.25rem;">
-                    Laissez vide pour toutes les périodes
-                </span>
-            </div>
-            <div style="margin: 1rem 0;">
-                <label style="display:block; font-size:0.813rem; font-weight:500; margin-bottom:0.25rem;">Utilisateur</label>
-                <select name="user_id" class="form-control">
-                    <option value="">Tous les utilisateurs</option>
-                    @foreach($users as $u)
-                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                    @endforeach
-                </select>
-                <span style="font-size:0.75rem; color: #8E959C; display:block; margin-top:0.25rem;">
-                    Laissez vide pour tous les utilisateurs
-                </span>
-            </div>
-            <div class="warning">Les commissions existantes seront supprimées puis recréées.</div>
-            <div class="actions">
-                <button type="button" class="btn btn-outline" onclick="closeModal('recalculateModal')">Annuler</button>
-                <button type="submit" class="btn btn-warning">
-                    <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Recalculer
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-function openRecalculateModal() {
-    document.getElementById('recalculateModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-    document.body.style.overflow = '';
+    var el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 }
-
-document.getElementById('recalculateModal').addEventListener('click', function(e) {
-    if (e.target === this) closeModal('recalculateModal');
-});
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {

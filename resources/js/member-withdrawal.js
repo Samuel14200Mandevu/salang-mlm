@@ -10,7 +10,7 @@ function initWithdrawForm(form) {
     form.dataset.withdrawInit = '1';
 
     const balance = parseFloat(form.dataset.balance || '0') || 0;
-    const feeRate = parseFloat(form.dataset.feeRate || '0.025') || 0.025;
+    let feeRate = parseFloat(form.dataset.feeRate || '0.025') || 0.025;
     const minAmount = parseFloat(form.dataset.min || '10') || 10;
     const requireDest = form.dataset.requireDest !== '0';
     const requirePhoneFor = (form.dataset.requirePhoneFor || '').trim();
@@ -28,12 +28,24 @@ function initWithdrawForm(form) {
 
     const grossEl = form.querySelector('[data-withdraw-summary-gross]');
     const feeEl = form.querySelector('[data-withdraw-summary-fee]');
+    const feeLabelEl = form.querySelector('[data-withdraw-fee-label]');
     const netEl = form.querySelector('[data-withdraw-summary-net]');
 
     const fieldGroups = form.querySelectorAll('[data-withdraw-fields]');
 
     function activeMethod() {
-        return methodSelect ? methodSelect.value : 'crypto';
+        return methodSelect ? methodSelect.value : 'guichet';
+    }
+
+    function syncFeeRateFromMethod(button) {
+        if (button && button.dataset.feeRate !== undefined) {
+            feeRate = parseFloat(button.dataset.feeRate) || 0;
+        } else {
+            feeRate = parseFloat(form.dataset.feeRate || '0.025') || 0.025;
+        }
+        if (feeLabelEl) {
+            feeLabelEl.textContent = feeRate > 0 ? 'Frais (2,5 %)' : 'Frais';
+        }
     }
 
     function phoneRequiredForActiveMethod() {
@@ -81,12 +93,16 @@ function initWithdrawForm(form) {
     }
 
     function selectMethod(method, button) {
+        if (button && (button.disabled || button.getAttribute('aria-disabled') === 'true')) {
+            return;
+        }
         if (methodSelect) {
             methodSelect.value = method;
         }
         methodButtons.forEach(function (btn) {
             btn.classList.toggle('is-selected', btn === button);
         });
+        syncFeeRateFromMethod(button);
         syncFieldRequirements();
         updateSummary();
     }
@@ -114,8 +130,10 @@ function initWithdrawForm(form) {
             netEl.textContent = formatUsd(net);
         }
 
+        const method = activeMethod();
         const dest = visibleDestInput();
-        const destOk = !requireDest || (dest ? String(dest.value || '').trim().length > 0 : false);
+        const needsDest = requireDest && method !== 'guichet';
+        const destOk = !needsDest || (dest ? String(dest.value || '').trim().length > 0 : false);
 
         let phoneOk = true;
         if (phoneRequiredForActiveMethod()) {

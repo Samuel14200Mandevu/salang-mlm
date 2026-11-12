@@ -133,7 +133,7 @@
                         </li>
                         <li>
                             <a href="{{ route('cashier.commissions') }}"
-                               class="sidebar-link {{ request()->routeIs('cashier.commissions') ? 'active' : '' }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.commissions*', 'cashier.offline-bonus.calculate*') ? 'active' : '' }}"
                                data-title="Commissions">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -141,6 +141,23 @@
                                 <span class="label transition-opacity duration-200"
                                       :class="!sidebarOpen ? 'hidden' : ''">
                                     Commissions
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('cashier.guichet.index') }}"
+                               class="sidebar-link {{ request()->routeIs('cashier.guichet.*', 'cashier.offline-bonus.pay*') ? 'active' : '' }}"
+                               data-title="Retraits guichet">
+                                <div class="relative flex-shrink-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span id="cashierGuichetDot" class="notification-dot workflow-notify-accent" style="display:none;"></span>
+                                </div>
+                                <span class="label transition-opacity duration-200"
+                                      :class="!sidebarOpen ? 'hidden' : ''">
+                                    Retraits guichet
+                                    <span id="cashierGuichetBadge" class="badge-count workflow-notify-accent" style="display:none;">0</span>
                                 </span>
                             </a>
                         </li>
@@ -238,21 +255,6 @@
                                 <span class="label transition-opacity duration-200"
                                       :class="!sidebarOpen ? 'hidden' : ''">
                                     Gestion des PV
-                                </span>
-                            </a>
-                        </li>
-
-                        <!-- Profil -->
-                        <li>
-                            <a href="{{ route('cashier.profile') }}"
-                               class="sidebar-link {{ request()->routeIs('cashier.profile') ? 'active' : '' }}"
-                               data-title="Mon Profil">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                                <span class="label transition-opacity duration-200"
-                                      :class="!sidebarOpen ? 'hidden' : ''">
-                                    Mon Profil
                                 </span>
                             </a>
                         </li>
