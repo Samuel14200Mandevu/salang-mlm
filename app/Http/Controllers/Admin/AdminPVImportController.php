@@ -207,7 +207,7 @@ class AdminPVImportController extends Controller
             fclose($handle);
             DB::commit();
 
-            $rankRecalc = $this->dispatchRankRecalculationAfterImport($usersUpdated, $period);
+            $rankRecalc = $this->dispatchRankRecalculationAfterImport($usersUpdated, $period, true);
 
             $message = "Import termine !\n";
             $message .= "Lignes importees: {$imported}\n";
@@ -598,10 +598,10 @@ class AdminPVImportController extends Controller
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
 
-        $recalcUserIds = array_keys($usersRankRecalc);
         $rankRecalc = ['count' => 0, 'mode' => 'none'];
-        if (!$dryRun && !empty($recalcUserIds)) {
-            $rankRecalc = $this->dispatchRankRecalculationAfterImport($recalcUserIds, $period);
+        if (!$dryRun && $imported > 0) {
+            // Recalcul team_pv + grades pour TOUS les membres actifs (pas seulement le fichier).
+            $rankRecalc = $this->dispatchRankRecalculationAfterImport([], $period, true);
         }
 
         $duration = round(microtime(true) - $startTime, 2);
@@ -667,32 +667,29 @@ class AdminPVImportController extends Controller
     /**
      * Recalcule automatiquement team_pv + grades après import PV.
      *
+     * @param  bool  $entireNetwork  Si true : tous les membres actifs (recommandé après import Excel).
      * @return array{count: int, mode: 'none'|'sync'|'queue'}
      */
-    protected function dispatchRankRecalculationAfterImport(array $userIds, string $period): array
+    protected function dispatchRankRecalculationAfterImport(array $userIds, string $period, bool $entireNetwork = false): array
     {
-        $userIds = array_values(array_unique(array_filter($userIds)));
+        if ($entireNetwork) {
+            $userIds = User::query()
+                ->where('is_active', true)
+                ->orderBy('id')
+                ->pluck('id')
+                ->all();
+        } else {
+            $userIds = array_values(array_unique(array_filter($userIds)));
+        }
+
         if ($userIds === []) {
             return ['count' => 0, 'mode' => 'none'];
         }
 
-        $syncLimit = 500;
+        // Toujours en synchrone pour éviter la file rank-recalculation (souvent sans worker).
+        $this->recalculateSync($userIds, $period);
 
-        if (count($userIds) <= $syncLimit) {
-            $this->recalculateSync($userIds, $period);
-
-            return ['count' => count($userIds), 'mode' => 'sync'];
-        }
-
-        RecalculateAfterPVImport::dispatch($userIds, $period)
-            ->onQueue('rank-recalculation');
-
-        Log::info('Import PV : recalcul grades en file (volume élevé)', [
-            'users_count' => count($userIds),
-            'period' => $period,
-        ]);
-
-        return ['count' => count($userIds), 'mode' => 'queue'];
+        return ['count' => count($userIds), 'mode' => 'sync'];
     }
 
     protected function formatRankRecalcImportMessage(array $rankRecalc, string $period, ?bool $isCurrentMonth = null): string
@@ -701,10 +698,7 @@ class AdminPVImportController extends Controller
             return '';
         }
 
-        $line = "\n Grades recalculés automatiquement pour {$rankRecalc['count']} membre(s)";
-        $line .= ($rankRecalc['mode'] === 'sync')
-            ? ' (immédiat).'
-            : ' (file rank-recalculation — worker requis).';
+        $line = "\n Grades recalculés automatiquement pour {$rankRecalc['count']} membre(s) actifs (immédiat).";
 
         if ($isCurrentMonth === false) {
             $line .= "\n Période {$period} : qualification grade via PVHistory (monthly_pv profil inchangé si mois passé).";
@@ -718,6 +712,9 @@ class AdminPVImportController extends Controller
         if ($userIds === []) {
             return;
         }
+
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
 
         Log::info('Recalcul synchrone démarré (RecalculateAfterPVImport)', [
             'users_count' => count($userIds),
