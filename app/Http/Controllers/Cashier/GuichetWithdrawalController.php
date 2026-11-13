@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Notifications\GuichetWithdrawalCancelledNotification;
+use App\Notifications\GuichetWithdrawalCompletedNotification;
 use App\Notifications\GuichetWithdrawalRequestedNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -153,10 +155,111 @@ class GuichetWithdrawalController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
+        $withdrawal->loadMissing('user');
+        if ($withdrawal->user) {
+            $withdrawal->user->notifyNow(new GuichetWithdrawalCompletedNotification(
+                $withdrawal->fresh()
+            ));
+        }
+
         return redirect()
             ->route('cashier.guichet.show', $withdrawal->id)
             ->with('success', 'Retrait confirmé. Imprimez le reçu et remettez l’argent au membre.')
             ->with('print_receipt', true);
+    }
+
+    /**
+     * Caissier annule le retrait guichet : montant recrédité au portefeuille + notif membre.
+     */
+    public function cancel(Request $request, int $id)
+    {
+        $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $withdrawal = Withdrawal::query()
+            ->with('user')
+            ->where('method', 'guichet')
+            ->findOrFail($id);
+
+        if ($withdrawal->status !== 'pending') {
+            return back()->with('error', 'Ce retrait n’est plus en attente.');
+        }
+
+        $reason = trim((string) $request->input('reason', ''));
+        if ($reason === '') {
+            $reason = 'Annulé au guichet par '.auth()->user()->name.' — montant recrédité au portefeuille.';
+        }
+
+        $amount = (float) $withdrawal->amount;
+
+        DB::beginTransaction();
+        try {
+            $wallet = Wallet::whereKey($withdrawal->wallet_id)->lockForUpdate()->first();
+            if (! $wallet) {
+                throw new \RuntimeException('Portefeuille introuvable.');
+            }
+
+            $balanceBefore = (float) $wallet->balance;
+            $wallet->balance = $balanceBefore + $amount;
+            $wallet->pending_balance = max(0, (float) $wallet->pending_balance - $amount);
+            $wallet->save();
+
+            Transaction::query()
+                ->where('user_id', $withdrawal->user_id)
+                ->where('type', 'withdrawal')
+                ->where('status', 'pending')
+                ->where('amount', -1 * $amount)
+                ->latest('id')
+                ->limit(1)
+                ->update([
+                    'status' => 'cancelled',
+                    'description' => 'Retrait guichet annulé #'.$withdrawal->id,
+                    'completed_at' => now(),
+                ]);
+
+            Transaction::create([
+                'user_id' => $withdrawal->user_id,
+                'wallet_id' => $wallet->id,
+                'type' => 'refund',
+                'amount' => $amount,
+                'fee' => 0,
+                'net_amount' => $amount,
+                'balance_before' => $balanceBefore,
+                'balance_after' => (float) $wallet->balance,
+                'status' => 'completed',
+                'description' => 'Retour de fonds — retrait guichet annulé #'.$withdrawal->id,
+                'completed_at' => now(),
+            ]);
+
+            $withdrawal->status = 'cancelled';
+            $withdrawal->processed_at = now();
+            $withdrawal->cashier_id = auth()->id();
+            $withdrawal->notes = trim(($withdrawal->notes ? $withdrawal->notes.' | ' : '').$reason);
+            $withdrawal->save();
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Guichet cancel failed', [
+                'withdrawal_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
+        }
+
+        if ($withdrawal->user) {
+            // Immédiat + database only : évite l’échec mail/queue qui bloquait la notif membre.
+            $withdrawal->user->notifyNow(new GuichetWithdrawalCancelledNotification(
+                $withdrawal->fresh(),
+                $reason
+            ));
+        }
+
+        return redirect()
+            ->route('cashier.guichet.index', ['status' => 'pending'])
+            ->with('success', 'Retrait annulé. $'.number_format($amount, 2).' recrédité au portefeuille du membre (notification envoyée).');
     }
 
     /**

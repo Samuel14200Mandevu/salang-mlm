@@ -88,17 +88,21 @@ class WithdrawalController extends Controller
 
         // Autres méthodes sans API : bloquer pour l'instant (guichet seul opérationnel)
         if ($request->method !== 'guichet') {
-            return back()->with('error',
-                'Cette méthode n’est pas encore disponible. Utilisez le retrait guichet (espèces) au comptoir.'
-            )->withInput();
+            return $this->redirectWithdrawalFailed(
+                'Cette méthode n’est pas encore disponible. Utilisez le retrait guichet (espèces) au comptoir.',
+                true
+            );
         }
 
         if (!$wallet) {
-            return back()->with('error', 'Portefeuille introuvable.');
+            return $this->redirectWithdrawalFailed('Portefeuille introuvable.', true);
         }
 
         if ($wallet->balance < $request->amount) {
-            return back()->with('error', 'Solde insuffisant. Disponible : $' . number_format($wallet->balance, 2));
+            return $this->redirectWithdrawalFailed(
+                'Solde insuffisant. Disponible : $' . number_format($wallet->balance, 2),
+                true
+            );
         }
 
         $threshold = config('commission.kyc.withdrawal_threshold', 5000);
@@ -107,10 +111,9 @@ class WithdrawalController extends Controller
             ->sum('amount');
 
         if (($totalWithdrawn + $request->amount) >= $threshold && $user->kyc_status !== 'verified') {
-            return back()->with('error',
-                'Vous devez compléter le KYC pour retirer plus de $' .
-                number_format($threshold, 0) .
-                '. <a href="' . route('kyc.index') . '" style="color: #6366f1; text-decoration: underline;">Vérifier mon identité</a>'
+            return $this->redirectWithdrawalFailed(
+                'Vous devez compléter le KYC pour retirer plus de $' . number_format($threshold, 0) . '.',
+                true
             );
         }
 
@@ -120,7 +123,7 @@ class WithdrawalController extends Controller
             ->sum('amount');
 
         if ($todayWithdrawals + $request->amount > 5000) {
-            return back()->with('error', 'Plafond journalier de retraits atteint (5 000 USD).');
+            return $this->redirectWithdrawalFailed('Plafond journalier de retraits atteint (5 000 USD).', true);
         }
 
         // Guichet : pas de frais (espèces au comptoir)
@@ -183,11 +186,19 @@ class WithdrawalController extends Controller
             ]);
 
             $msg = $request->method === 'guichet'
-                ? 'Retrait guichet de $' . number_format($request->amount, 2) .
-                  ' confirmé. Présentez-vous au comptoir : le caissier a été notifié et vous remettra l’argent + le reçu.'
-                : 'Demande de retrait de $' . number_format($request->amount, 2) . ' enregistrée.';
+                ? 'Présentez-vous au comptoir : le caissier a été notifié et vous remettra l’argent + le reçu.'
+                : 'Votre retrait a été traité avec succès !';
 
-            return redirect()->route('withdrawal.index')->with('success', $msg);
+            return redirect()->route('withdrawal.index')->with('withdrawal_result', [
+                'status' => 'success',
+                'title' => 'Paiement réussi !',
+                'message' => $msg,
+                'amount' => (float) $withdrawal->amount,
+                'date' => $withdrawal->created_at?->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+                'reference' => '#WD-'.str_pad((string) $withdrawal->id, 6, '0', STR_PAD_LEFT),
+                'url' => route('withdrawal.show', $withdrawal->id),
+                'button' => 'Terminé',
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -195,7 +206,7 @@ class WithdrawalController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
+            return $this->redirectWithdrawalFailed('Erreur: ' . $e->getMessage(), true);
         }
     }
 
@@ -254,8 +265,7 @@ class WithdrawalController extends Controller
                 'amount' => $withdrawal->amount,
             ]);
 
-            return redirect()->route('withdrawal.index')
-                ->with('success', 'Withdrawal cancelled successfully.');
+            return redirect()->route('withdrawal.show', $withdrawal->id);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -264,8 +274,24 @@ class WithdrawalController extends Controller
                 'withdrawal_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return $this->redirectWithdrawalFailed('Erreur: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Écran / flash d’échec (mockup paiement) — clé hors ConvertFlashToNotification.
+     */
+    private function redirectWithdrawalFailed(string $message, bool $withInput = false)
+    {
+        $redirect = redirect()->route('withdrawal.index')->with('withdrawal_result', [
+            'status' => 'failed',
+            'title' => 'Paiement échoué !',
+            'message' => $message,
+            'url' => route('withdrawal.index'),
+            'button' => 'Retour',
+        ]);
+
+        return $withInput ? $redirect->withInput() : $redirect;
     }
 
     public function apiStore(Request $request)

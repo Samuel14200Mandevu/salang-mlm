@@ -109,9 +109,13 @@
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
          class="member-notify-dropdown absolute right-0 mt-2 w-80 lg:w-96 py-2 max-h-[80vh] overflow-y-auto z-[80] bg-[var(--bg-card)] rounded-lg shadow-sm border border-[var(--border-color)]">
-        <div class="px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center">
+        <div class="px-4 py-2 border-b border-[var(--border-color)] flex justify-between items-center gap-2">
             <h4 class="font-semibold text-sm text-[var(--text-primary)]">Notifications</h4>
-            <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">Voir tout</a>
+            <button type="button"
+                    @click="window.markAllAsRead(() => { unreadCount = 0 })"
+                    class="text-xs text-primary-500 hover:text-primary-600 transition font-medium hover:underline cursor-pointer shrink-0">
+                Tout marquer comme lu
+            </button>
         </div>
         <div class="divide-y divide-[var(--border-color)]" id="notificationList">
             @forelse($topbarNotifications->take(8) as $notification)
@@ -131,11 +135,9 @@
             @endforelse
         </div>
         <div class="px-4 py-2 border-t border-[var(--border-color)] text-center">
-            <button type="button"
-                    @click="window.markAllAsRead(() => { unreadCount = 0 })"
-                    class="text-xs text-primary-500 hover:text-primary-600 transition font-medium hover:underline cursor-pointer">
-                Tout marquer comme lu
-            </button>
+            <a href="{{ route('notifications.index') }}" class="text-xs text-primary-500 hover:text-primary-600 transition font-medium">
+                Voir tout
+            </a>
         </div>
     </div>
 
@@ -162,11 +164,18 @@
                         </svg>
                         <h2 id="memberNotifySheetTitle">Notifications</h2>
                     </div>
-                    <button type="button" class="member-notify-sheet__close" @click="closeSheet()" aria-label="Fermer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="member-notify-sheet__head-actions">
+                        <button type="button"
+                                class="member-notify-sheet__mark-all"
+                                @click="window.markAllAsRead(() => { unreadCount = 0 })">
+                            Tout marquer comme lu
+                        </button>
+                        <button type="button" class="member-notify-sheet__close" @click="closeSheet()" aria-label="Fermer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="member-notify-sheet__filters">
@@ -239,13 +248,8 @@
                 </div>
 
                 <footer class="member-notify-sheet__foot">
-                    <button type="button"
-                            class="member-notify-sheet__mark-all"
-                            @click="window.markAllAsRead(() => { unreadCount = 0 })">
-                        Tout marquer comme lu
-                    </button>
                     <a href="{{ route('notifications.index') }}" class="member-notify-sheet__all-link" @click="closeSheet()">
-                        Centre de notifications
+                        Voir tout
                     </a>
                 </footer>
             </div>

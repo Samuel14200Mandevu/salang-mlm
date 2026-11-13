@@ -38,20 +38,22 @@
                         default => 'is-debit',
                     };
                 @endphp
-                <li class="member-fintech-tx">
-                    <span class="member-fintech-tx__icon member-withdraw-tx__icon">R</span>
-                    <div class="member-fintech-tx__body">
-                        <p class="member-fintech-tx__title">{{ $method }}</p>
-                        <p class="member-fintech-tx__meta">
-                            {{ $withdrawal->created_at->format('d/m/Y H:i') }} · {{ $status }}
-                            @if($withdrawal->net_amount)
-                                · Net {{ number_format($withdrawal->net_amount, 2) }} $
-                            @endif
-                        </p>
-                    </div>
-                    <span class="member-fintech-tx__amount is-debit">
-                        −${{ number_format($withdrawal->amount, 2) }}
-                    </span>
+                <li>
+                    <a href="{{ route('withdrawal.show', $withdrawal->id) }}" class="member-fintech-tx">
+                        <span class="member-fintech-tx__icon member-withdraw-tx__icon">R</span>
+                        <div class="member-fintech-tx__body">
+                            <p class="member-fintech-tx__title">{{ $method }}</p>
+                            <p class="member-fintech-tx__meta">
+                                {{ $withdrawal->created_at->format('d/m/Y H:i') }} · {{ $status }}
+                                @if($withdrawal->net_amount)
+                                    · Net {{ number_format($withdrawal->net_amount, 2) }} $
+                                @endif
+                            </p>
+                        </div>
+                        <span class="member-fintech-tx__amount is-debit">
+                            −${{ number_format($withdrawal->amount, 2) }}
+                        </span>
+                    </a>
                 </li>
             @endforeach
         </ul>

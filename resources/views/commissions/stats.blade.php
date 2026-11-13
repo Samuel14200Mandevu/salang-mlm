@@ -154,9 +154,7 @@
             Exporter en CSV
         </a>
         <a href="{{ route('commissions.pdf') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
-            </svg>
+            <x-pdf-icon class="w-4 h-4" />
             Exporter en PDF
         </a>
         <button onclick="window.print()" class="btn btn-outline btn-sm sm:btn-md">

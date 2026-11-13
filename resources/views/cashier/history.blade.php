@@ -352,10 +352,8 @@
                         </form>
                     </div>
                 </div>
-                <a href="{{ route('cashier.history.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="Rapport PDF" aria-label="Rapport PDF">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                <a href="{{ route('cashier.history.export-pdf', request()->query()) }}" class="btn btn-sm btn-round-icon btn-pdf-icon" title="Rapport PDF" aria-label="Rapport PDF">
+                    <x-pdf-icon size="lg" />
                 </a>
             </div>
         </div>
@@ -433,9 +431,7 @@
                 </div>
             </div>
             <a href="{{ route('cashier.history.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
+                <x-pdf-icon />
                 Rapport PDF
             </a>
         </div>

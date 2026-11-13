@@ -148,10 +148,19 @@
 
         <div class="flex flex-wrap gap-2 mt-4">
             @if($withdrawal->status === 'pending')
-                <form method="POST" action="{{ route('cashier.guichet.fulfill', $withdrawal->id) }}"
-                      onsubmit="return confirm('Confirmer : vous remettez ${{ number_format($withdrawal->amount, 2) }} en espèces à {{ $member->name ?? 'ce membre' }} ?');">
+                <form method="POST"
+                      action="{{ route('cashier.guichet.fulfill', $withdrawal->id) }}"
+                      id="guichetFulfillForm"
+                      class="guichet-fulfill-form">
                     @csrf
                     <button type="submit" class="btn btn-primary">Confirmer remise + préparer reçu</button>
+                </form>
+                <form method="POST"
+                      action="{{ route('cashier.guichet.cancel', $withdrawal->id) }}"
+                      id="guichetCancelForm"
+                      class="guichet-cancel-form">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">Annuler le retrait</button>
                 </form>
             @endif
             <button type="button" class="btn btn-outline md:hidden" onclick="printGuichetReceipt()">Imprimer reçu</button>
@@ -184,11 +193,49 @@
 function printGuichetReceipt() {
     window.print();
 }
-@if(session('print_receipt'))
+
 document.addEventListener('DOMContentLoaded', function () {
+    var memberName = @json($member->name ?? 'ce membre');
+    var amountLabel = @json('$' . number_format((float) $withdrawal->amount, 2));
+
+    var fulfillForm = document.getElementById('guichetFulfillForm');
+    if (fulfillForm && typeof window.showConfirmDialog === 'function') {
+        fulfillForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            window.showConfirmDialog({
+                type: 'primary',
+                title: 'Confirmer la remise',
+                message: 'Vous remettez ' + amountLabel + ' en espèces à ' + memberName + '. Continuer et préparer le reçu ?',
+                confirmText: 'Confirmer remise',
+                onConfirm: function () {
+                    fulfillForm.submit();
+                },
+                form: fulfillForm
+            });
+        });
+    }
+
+    var cancelForm = document.getElementById('guichetCancelForm');
+    if (cancelForm && typeof window.showConfirmDialog === 'function') {
+        cancelForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            window.showConfirmDialog({
+                type: 'danger',
+                title: 'Annuler le retrait',
+                message: 'Annuler ce retrait guichet ? ' + amountLabel + ' sera recrédité au portefeuille de ' + memberName + ' et le membre sera notifié.',
+                confirmText: 'Annuler le retrait',
+                onConfirm: function () {
+                    cancelForm.submit();
+                },
+                form: cancelForm
+            });
+        });
+    }
+
+@if(session('print_receipt'))
     setTimeout(printGuichetReceipt, 400);
-});
 @endif
+});
 </script>
 @endpush
 @endsection

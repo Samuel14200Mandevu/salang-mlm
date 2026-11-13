@@ -179,6 +179,8 @@ class NotificationHelper
             'contact_message_received' => 'Message contact',
             'withdrawal_approved' => 'Retrait approuvé',
             'withdrawal_rejected' => 'Retrait rejeté',
+            'guichet_withdrawal_completed' => 'Paiement réussi',
+            'guichet_withdrawal_cancelled' => 'Paiement échoué',
             'welcome' => 'Bienvenue',
             'new_downline' => 'Nouveau membre',
             'kyc_verified' => 'KYC vérifié',

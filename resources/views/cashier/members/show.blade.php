@@ -49,12 +49,8 @@
                 </svg>
                 Commandes
             </a>
-            <button type="button" id="btnPrintAdhesion" class="btn btn-success btn-sm">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9V3h12v6M6 21h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                    <path d="M18 9V3H6v6z"/>
-                    <path d="M8 12v4h8v-4"/>
-                </svg>
+            <button type="button" id="btnPrintAdhesion" class="btn btn-outline btn-sm">
+                <x-pdf-icon class="w-4 h-4" />
                 Adhésion PDF
             </button>
         </div>

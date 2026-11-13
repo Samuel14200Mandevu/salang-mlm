@@ -11,7 +11,6 @@
     }
     $firstName = explode(' ', trim($user->name))[0];
 
-    $todayPv = (float) ($stats['today_pv'] ?? 0);
     $points = $monthlyPvData ?? [];
     $amounts = array_column($points, 'amount');
     $sparkMax = max(1, (float) (count($amounts) ? max($amounts) : 0));
@@ -23,10 +22,17 @@
         $sparkCoords[] = round($x, 1) . ',' . round($y, 1);
     }
     $sparkLine = count($sparkCoords) > 1 ? implode(' ', $sparkCoords) : '';
-    $personalPct = min(100, max(0, (float) ($rankProgress['personal_progress'] ?? 0)));
-    $personalTarget = (float) ($rankProgress['personal_target_pv'] ?? 0);
     $rankLevel = (int) ($dashboardLevelNumber ?? $user->rank_level ?? 0);
     $rankImageUrl = \App\Support\MlmRank::imageUrl($rankLevel);
+
+    $bonusByType = $bonusByType ?? [];
+    $bonusTotal = (float) ($bonusTotal ?? collect($bonusByType)->sum('total'));
+    $bonusMonthLabel = $bonusMonthLabel ?? '';
+    $bonusRows = [
+        'direct' => $bonusByType['direct'] ?? ['label' => 'Direct', 'total' => 0],
+        'indirect' => $bonusByType['indirect'] ?? ['label' => 'Indirect', 'total' => 0],
+        'leadership' => $bonusByType['leadership'] ?? ['label' => 'Leadership', 'total' => 0],
+    ];
 @endphp
 <section class="member-fintech-hero member-dashboard-hero member-fintech-animate member-fintech-animate--hero{{ $rankImageUrl ? ' has-grade-stage' : '' }}">
     <div class="member-fintech-hero__mesh" aria-hidden="true"></div>
@@ -116,13 +122,16 @@
             <span class="sr-only">Grade {{ $currentRankName }}</span>
         @endif
         <div class="member-dashboard-hero__pv">
-            <p class="member-fintech-hero__label">PV personnel</p>
-            <p class="member-fintech-hero__balance">
-                <span
-                    data-count-up="{{ (float) ($pvPersonnel ?? 0) }}"
-                    data-count-decimals="0"
-                >{{ number_format($pvPersonnel ?? 0, 0) }}</span><span class="member-fintech-hero__currency"> PV</span>
+            <p class="member-fintech-hero__label">Total bonus</p>
+            <p class="member-fintech-hero__balance" data-bonus-amount>
+                <span class="member-fintech-hero__currency">$</span><span
+                    data-count-up="{{ $bonusTotal }}"
+                    data-count-decimals="2"
+                >{{ number_format($bonusTotal, 2) }}</span>
             </p>
+            @if($bonusMonthLabel)
+                <p class="member-fintech-hero__bonus-month">{{ $bonusMonthLabel }}</p>
+            @endif
         </div>
         @if(! $rankImageUrl && $sparkLine)
             <svg class="member-fintech-hero__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -138,55 +147,72 @@
         @endif
     </div>
 
-    <div class="member-fintech-hero__pnl-row">
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">24h</span>
-            <span class="member-fintech-hero__pnl-value {{ $todayPv >= 0 ? 'is-up' : 'is-down' }}">
-                <span
-                    data-count-up="{{ $todayPv }}"
-                    data-count-decimals="0"
-                    data-count-signed
-                    data-count-suffix=" PV"
-                >{{ $todayPv >= 0 ? '+' : '' }}{{ number_format($todayPv, 0) }} PV</span>
-            </span>
+    <div class="member-fintech-hero__bonus-block" data-bonus-privacy>
+        <div class="member-fintech-hero__bonus-block-head">
+            <button
+                type="button"
+                class="member-fintech-hero__privacy-toggle"
+                data-bonus-privacy-toggle
+                aria-pressed="false"
+                aria-label="Masquer les montants"
+                title="Masquer / afficher"
+            >
+                <svg class="member-fintech-hero__privacy-icon member-fintech-hero__privacy-icon--open" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <svg class="member-fintech-hero__privacy-icon member-fintech-hero__privacy-icon--closed" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true" hidden>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                </svg>
+            </button>
         </div>
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">PV mois</span>
-            <span class="member-fintech-hero__pnl-value">
-                <span
-                    data-count-up="{{ (float) ($rankProgress['monthly_pv'] ?? 0) }}"
-                    data-count-decimals="0"
-                    data-count-suffix=" PV"
-                >{{ number_format($rankProgress['monthly_pv'] ?? 0, 0) }} PV</span>
-            </span>
-        </div>
-        <div class="member-fintech-hero__pnl">
-            <span class="member-fintech-hero__pnl-label">PV équipe</span>
-            <span class="member-fintech-hero__pnl-value">
-                <span
-                    data-count-up="{{ (float) ($pvCumul ?? 0) }}"
-                    data-count-decimals="0"
-                    data-count-suffix=" PV"
-                >{{ number_format($pvCumul ?? 0, 0) }} PV</span>
-            </span>
-        </div>
-    </div>
 
-    <div class="member-fintech-hero__goal">
-        <div class="member-fintech-hero__goal-labels">
-            <span>PV personnel</span>
-            <span>
-                @if($personalTarget > 0)
-                    <span data-count-up="{{ (float) ($pvPersonnel ?? 0) }}" data-count-decimals="0">{{ number_format($pvPersonnel ?? 0) }}</span>
-                    /
-                    <span data-count-up="{{ $personalTarget }}" data-count-decimals="0">{{ number_format($personalTarget) }}</span>
-                @else
-                    <span data-count-up="{{ $personalPct }}" data-count-decimals="0" data-count-suffix="%">{{ number_format($personalPct, 0) }}%</span>
-                @endif
-            </span>
-        </div>
-        <div class="member-fintech-hero__goal-bar" role="progressbar" aria-valuenow="{{ $personalPct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progression PV personnel">
-            <span style="width: {{ $personalPct }}%;"></span>
+        <div class="member-fintech-hero__pnl-row member-fintech-hero__pnl-row--bonus" aria-label="Répartition des bonus">
+            @foreach($bonusRows as $key => $row)
+                <a
+                    href="{{ route('commissions.index', array_filter(['type' => $key, 'period' => ($bonusMonth ?? null) ?: null])) }}"
+                    class="member-fintech-hero__pnl"
+                >
+                    <span class="member-fintech-hero__pnl-label">{{ $row['label'] }}</span>
+                    <span class="member-fintech-hero__pnl-value is-up" data-bonus-amount>
+                        $<span
+                            data-count-up="{{ (float) ($row['total'] ?? 0) }}"
+                            data-count-decimals="2"
+                        >{{ number_format((float) ($row['total'] ?? 0), 2) }}</span>
+                    </span>
+                </a>
+            @endforeach
         </div>
     </div>
 </section>
+
+<script>
+(function () {
+    var root = document.querySelector('[data-bonus-privacy]');
+    if (!root) return;
+    var btn = root.querySelector('[data-bonus-privacy-toggle]');
+    if (!btn) return;
+    var key = 'salang_member_bonus_privacy_hidden';
+    var openIcon = btn.querySelector('.member-fintech-hero__privacy-icon--open');
+    var closedIcon = btn.querySelector('.member-fintech-hero__privacy-icon--closed');
+    var section = document.querySelector('.member-fintech-hero.member-dashboard-hero') || root;
+
+    function apply(hidden) {
+        root.classList.toggle('is-amounts-hidden', hidden);
+        section.classList.toggle('is-amounts-hidden', hidden);
+        btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+        btn.setAttribute('aria-label', hidden ? 'Afficher les montants' : 'Masquer les montants');
+        if (openIcon) openIcon.hidden = hidden;
+        if (closedIcon) closedIcon.hidden = !hidden;
+        try { localStorage.setItem(key, hidden ? '1' : '0'); } catch (e) {}
+    }
+
+    var initial = false;
+    try { initial = localStorage.getItem(key) === '1'; } catch (e) {}
+    apply(initial);
+
+    btn.addEventListener('click', function () {
+        apply(!root.classList.contains('is-amounts-hidden'));
+    });
+})();
+</script>

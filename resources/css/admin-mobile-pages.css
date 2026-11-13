@@ -25,6 +25,21 @@
     border: 0 !important;
   }
 
+  /*
+   * Anti-doublon : .header-with-search { display:flex } dans les pages
+   * écrase Tailwind .hidden → en-tête desktop + boutons visibles sur mobile.
+   */
+  .admin-app .admin-page-header.header-with-search,
+  .admin-app .admin-page-header.hidden.md\:flex,
+  .admin-app .admin-page-header.hidden {
+    display: none !important;
+  }
+
+  /* Filet de sécurité : actions desktop jamais visibles à côté du bandeau mobile */
+  .admin-app .admin-page-header:has(.is-mobile-banner) ~ .admin-page-header .admin-page-header-actions,
+  .admin-app .admin-page-header:has(.is-mobile-banner) ~ .admin-page-header.header-with-search {
+    display: none !important;
+  }
 }
 
 /* Bandeau titres mobile — même dégradé que shop-catalog-banner (membre) */
@@ -1006,6 +1021,11 @@
   .admin-app .admin-mobile-greeting,
   .admin-app .admin-user-list {
     display: none;
+  }
+
+  /* Anti-doublon : bandeau mobile ne doit pas coexister avec l’en-tête desktop */
+  .admin-app .admin-page-header:has(.is-mobile-banner) {
+    display: none !important;
   }
 
   /* Desktop : titres et actions comme avant (sans bandeau mobile) */

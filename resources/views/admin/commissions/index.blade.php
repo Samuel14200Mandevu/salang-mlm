@@ -38,7 +38,7 @@
     font-size: 0.875rem; 
 }
 .table thead th {
-    padding: 0.5rem 0.75rem;
+    padding: 0.65rem 1.1rem;
     text-align: left;
     font-size: 0.688rem;
     font-weight: 600;
@@ -49,10 +49,19 @@
     border-bottom: 2px solid var(--border-color);
 }
 .table tbody td {
-    padding: 0.5rem 0.75rem;
+    padding: 0.7rem 1.1rem;
     color: var(--text-primary);
     vertical-align: middle;
     border-bottom: 1px solid var(--border-light);
+}
+/* Montants : en-tête et valeur alignés à droite, même padding */
+.table thead th.col-amount,
+.table tbody td.col-amount {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    padding-left: 1.25rem;
+    padding-right: 1.1rem;
 }
 .table-striped tbody tr:nth-child(even) { 
     background: var(--bg-secondary); 
@@ -252,13 +261,15 @@
     color: var(--text-tertiary);
 }
 
-/* ===== HEADER AVEC RECHERCHE À DROITE ===== */
-.header-with-search {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+/* ===== HEADER AVEC RECHERCHE À DROITE (desktop only — évite doublon mobile) ===== */
+@media (min-width: 768px) {
+    .header-with-search {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
 }
 
 .header-left {
@@ -274,6 +285,23 @@
     gap: 0.75rem;
 }
 
+.bonus-total-wallet {
+    color: var(--primary-navy, var(--primary-blue, #0A2A6C)) !important;
+}
+.bonus-total-pending {
+    color: var(--ui-stat-warning) !important;
+}
+.bonus-total-neutral {
+    color: var(--text-secondary) !important;
+}
+.amount-paid {
+    color: var(--ui-stat-success, #1C7E4A) !important;
+    font-weight: 700;
+}
+.amount-reste {
+    color: var(--primary-navy, var(--primary-blue, #0A2A6C)) !important;
+    font-weight: 700;
+}
 .amount-positive {
     color: #1F7B4D;
     font-weight: 700;
@@ -344,11 +372,15 @@
 @php
     $typeFilter = request('type');
     $statusFilter = request('status');
-    $periodFilter = request('period');
-    $filterActive = filled($typeFilter) || filled($statusFilter) || filled($periodFilter);
+    $periodFilter = $selectedPeriod ?? request('period');
+    if ($periodFilter === 'all') {
+        $periodFilter = null;
+    }
+    $periodIsAll = request('period') === 'all';
+    $filterActive = filled($typeFilter) || filled($statusFilter) || (filled($periodFilter) && ! $periodIsAll);
     $statusLabels = [
         'pending' => 'En attente',
-        'paid' => 'Payé',
+        'paid' => 'En portefeuille',
         'cancelled' => 'Annulé',
     ];
     $filterButtonLabel = filled($typeFilter)
@@ -358,7 +390,7 @@
         'search' => request('search'),
         'type' => $typeFilter,
         'status' => $statusFilter,
-        'period' => $periodFilter,
+        'period' => $periodIsAll ? 'all' : $periodFilter,
     ], fn ($v) => filled($v));
     $filterUrl = function (array $overrides = []) use ($filterQueryBase) {
         return route('admin.commissions', array_filter(
@@ -367,7 +399,8 @@
         ));
     };
     $searchOpen = filled(request('search'));
-    $subtitleBits = [$commissions->total().' commissions'];
+    $memberRows = $members ?? $commissions;
+    $subtitleBits = [$memberRows->total().' membres'];
     if ($typeFilter) {
         $subtitleBits[] = ucfirst(str_replace('_', ' ', $typeFilter));
     }
@@ -435,7 +468,7 @@
                             <span>En attente</span>
                         </a>
                         <a href="{{ $filterUrl(['status' => 'paid']) }}" class="{{ $statusFilter === 'paid' ? 'is-active' : '' }}">
-                            <span>Payé</span>
+                            <span>En portefeuille</span>
                         </a>
                         <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
                             <span>Annulé</span>
@@ -443,7 +476,7 @@
 
                         @if($periods->isNotEmpty())
                             <div class="products-filter-sep">Période</div>
-                            <a href="{{ $filterUrl(['period' => null]) }}" class="{{ ! $periodFilter ? 'is-active' : '' }}">
+                            <a href="{{ $filterUrl(['period' => 'all']) }}" class="{{ $periodIsAll ? 'is-active' : '' }}">
                                 <span>Toutes périodes</span>
                             </a>
                             @foreach($periods as $period)
@@ -455,16 +488,8 @@
                     </div>
                 </div>
 
-                <a href="{{ route('admin.commissions.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </a>
-
-                <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-sm btn-round-icon btn-pdf-icon" title="PDF global" aria-label="PDF global">
+                    <x-pdf-icon size="lg" />
                 </a>
             </div>
         </div>
@@ -552,7 +577,7 @@
                         <span>En attente</span>
                     </a>
                     <a href="{{ $filterUrl(['status' => 'paid']) }}" class="{{ $statusFilter === 'paid' ? 'is-active' : '' }}">
-                        <span>Payé</span>
+                        <span>En portefeuille</span>
                     </a>
                     <a href="{{ $filterUrl(['status' => 'cancelled']) }}" class="{{ $statusFilter === 'cancelled' ? 'is-active' : '' }}">
                         <span>Annulé</span>
@@ -560,7 +585,7 @@
 
                     @if($periods->isNotEmpty())
                         <div class="products-filter-sep">Période</div>
-                        <a href="{{ $filterUrl(['period' => null]) }}" class="{{ ! $periodFilter ? 'is-active' : '' }}">
+                        <a href="{{ $filterUrl(['period' => 'all']) }}" class="{{ $periodIsAll ? 'is-active' : '' }}">
                             <span>Toutes périodes</span>
                         </a>
                         @foreach($periods as $period)
@@ -572,18 +597,9 @@
                 </div>
             </div>
 
-            {{-- Rapport Individuel --}}
-            <a href="{{ route('admin.commissions.export-pdf', request()->query()) }}" class="btn btn-outline btn-sm btn-round-icon" title="PDF détaillé" aria-label="PDF détaillé">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-            </a>
-
             {{-- Rapport Global --}}
-            <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-primary btn-sm btn-round-icon" title="PDF global" aria-label="PDF global">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
+            <a href="{{ route('admin.commissions.export-global-pdf', request()->query()) }}" class="btn btn-sm btn-round-icon btn-pdf-icon" title="PDF global" aria-label="PDF global">
+                <x-pdf-icon size="lg" />
             </a>
         </div>
     </div>
@@ -607,12 +623,24 @@
         </div>
     @endif
 
+    @if(session('info'))
+        <div class="p-3 sm:p-4 border rounded-lg text-sm flex items-center gap-2 animate-fadeInUp" style="background: rgba(6, 95, 156, 0.08); color: var(--text-primary); border-color: rgba(6, 95, 156, 0.2);">
+            {{ session('info') }}
+        </div>
+    @endif
+
     <!-- Statistiques -->
     <div class="admin-kpi-rail stats-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-fadeInUp" style="animation-delay: 0.05s;">
         <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total payé</p>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En portefeuille</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">
+                {{ number_format($stats['total_wallet'] ?? $stats['total_paid'] ?? 0, 2) }} $
+            </p>
+        </div>
+        <div class="card-stats">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payé</p>
             <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-success)]">
-                {{ number_format($stats['total_paid'] ?? 0, 2) }} $
+                {{ number_format($stats['total_paid_out'] ?? 0, 2) }} $
             </p>
         </div>
         <div class="card-stats">
@@ -622,99 +650,81 @@
             </p>
         </div>
         <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Annulé</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--ui-stat-danger)]">
-                {{ number_format($stats['total_cancelled'] ?? 0, 2) }} $
-            </p>
-        </div>
-        <div class="card-stats">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total commissions</p>
-            <p class="text-xl sm:text-2xl font-bold text-[var(--primary-navy)]">
-                {{ $stats['total_count'] ?? 0 }}
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Membres</p>
+            <p class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+                {{ $stats['member_count'] ?? 0 }}
             </p>
         </div>
     </div>
 
-    @include('admin.commissions._mobile_list', ['commissions' => $commissions])
+    @include('admin.commissions._mobile_list', ['members' => $memberRows])
 
-    <x-salang-pagination :paginator="$commissions" id="paginationContainerMobile" class="md:hidden" />
+    <x-salang-pagination :paginator="$memberRows" id="paginationContainerMobile" class="md:hidden" />
 
-    <!-- Liste des commissions desktop -->
+    <!-- Liste des commissions desktop (agrégées par membre) -->
     <div class="card p-3 sm:p-4 animate-fadeInUp hidden md:block" style="animation-delay: 0.1s;">
         <div class="table-wrap">
-            <table class="table table-striped admin-table-desktop-only">
+            <table class="table table-striped admin-table-desktop-only text-xs sm:text-sm">
                 <thead>
                     <tr>
-                        <th>Utilisateur</th>
-                        <th class="hidden md:table-cell">De</th>
-                        <th class="hidden sm:table-cell">Type</th>
-                        <th>Montant</th>
-                        <th class="hidden lg:table-cell">Statut</th>
-                        <th class="hidden xl:table-cell">Période</th>
-                        <th class="text-right">Action</th>
+                        <th>N°</th>
+                        <th>Code membre</th>
+                        <th>Nom &amp; Post-Nom</th>
+                        <th>Grade</th>
+                        <th>Code parrain</th>
+                        <th>Nom &amp; Post-Nom</th>
+                        <th class="col-amount" title="PV du mois sélectionné">PV</th>
+                        <th class="col-amount">Bonus Total</th>
+                        <th class="col-amount" title="Retraits complétés">Payé</th>
+                        <th class="col-amount" title="Bonus Total − Payé">Reste</th>
                     </tr>
                 </thead>
                 <tbody id="commissionsTable">
-                    @forelse($commissions as $commission)
+                    @forelse($memberRows as $row)
                         @php
-                            $typeLabels = [
-                                'direct' => 'Direct',
-                                'indirect' => 'Indirect',
-                                'leadership' => 'Leadership',
-                                'retail' => 'Retail',
-                                'global' => 'Global',
-                                'binary' => 'Binaire',
-                            ];
-                            $typeClass = 'type-badge-' . $commission->type;
-                            $typeLabel = $typeLabels[$commission->type] ?? ucfirst(str_replace('_', ' ', $commission->type));
-
-                            $statusLabels = [
-                                'paid' => 'Payé',
-                                'pending' => 'En attente',
-                                'cancelled' => 'Annulé',
-                            ];
-                            $statusClasses = [
-                                'paid' => 'badge-success',
-                                'pending' => 'badge-warning',
-                                'cancelled' => 'badge-danger',
-                            ];
+                            $detailUrl = route('admin.commissions.member', array_filter(
+                                array_merge(
+                                    ['user' => $row->user_id],
+                                    request()->only(['search', 'type', 'status', 'period', 'band'])
+                                ),
+                                fn ($v) => $v !== null && $v !== ''
+                            ));
+                            $n = $memberRows->firstItem() ? ($memberRows->firstItem() + $loop->index) : $loop->iteration;
                         @endphp
-                        <tr class="commission-row">
-                            <td class="font-medium text-sm">
-                                {{ $commission->user?->name ?? 'N/A' }}
+                        <tr class="commission-row cursor-pointer"
+                            role="link"
+                            tabindex="0"
+                            onclick="window.location='{{ $detailUrl }}'"
+                            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location='{{ $detailUrl }}';}">
+                            <td>{{ $n }}</td>
+                            <td class="font-mono text-xs">{{ $row->code }}</td>
+                            <td class="font-medium">{{ $row->name }}</td>
+                            <td>{{ $row->grade }}</td>
+                            <td class="font-mono text-xs text-[var(--text-secondary)]">{{ $row->parrain_code }}</td>
+                            <td>{{ $row->parrain_name ?? '—' }}</td>
+                            <td class="col-amount">{{ $row->pv === null ? '—' : number_format($row->pv, 0) }}</td>
+                            @php
+                                $bonusTone = $row->bonus_tone ?? 'neutral';
+                                $bonusClass = match ($bonusTone) {
+                                    'wallet' => 'bonus-total-wallet',
+                                    'pending' => 'bonus-total-pending',
+                                    default => 'bonus-total-neutral',
+                                };
+                                $bonusTitle = match ($bonusTone) {
+                                    'wallet' => 'En portefeuille',
+                                    'pending' => 'En attente',
+                                    default => 'Bonus total',
+                                };
+                            @endphp
+                            <td class="col-amount font-semibold {{ $bonusClass }}" title="{{ $bonusTitle }}">
+                                {{ number_format($row->total, 2) }} $
                             </td>
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
-                                {{ $commission->fromUser?->name ?? 'Système' }}
-                            </td>
-                            <td class="hidden sm:table-cell">
-                                <span class="badge {{ $typeClass }} text-[10px] sm:text-xs">
-                                    {{ $typeLabel }}
-                                </span>
-                            </td>
-                            <td class="amount-positive text-sm">
-                                +{{ number_format($commission->amount, 2) }} $
-                            </td>
-                            <td class="hidden lg:table-cell">
-                                <span class="badge {{ $statusClasses[$commission->status] ?? 'badge-warning' }} text-[10px] sm:text-xs">
-                                    {{ $statusLabels[$commission->status] ?? ucfirst($commission->status) }}
-                                </span>
-                            </td>
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden xl:table-cell">
-                                {{ $commission->period ?? 'N/A' }}
-                            </td>
-                            <td class="text-right">
-                                <a href="{{ route('admin.commissions.show', $commission->id) }}"
-                                   class="btn btn-outline btn-sm btn-icon" title="Voir">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                            </td>
+                            <td class="col-amount amount-paid">{{ number_format($row->paid ?? 0, 2) }} $</td>
+                            <td class="col-amount amount-reste">{{ number_format($row->reste ?? 0, 2) }} $</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="10" class="text-center py-8 text-[var(--text-secondary)]">
                                 <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -733,7 +743,7 @@
             </table>
         </div>
 
-        <x-salang-pagination :paginator="$commissions" id="paginationContainer" class="mt-3 sm:mt-4" />
+        <x-salang-pagination :paginator="$memberRows" id="paginationContainer" class="mt-3 sm:mt-4" />
     </div>
 
 @push('scripts')
@@ -834,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                <td colspan="8" class="text-center py-8 text-[var(--text-secondary)]">
                     <div class="flex items-center justify-center gap-3">
                         <svg class="animate-spin h-5 w-5 text-[var(--primary-navy)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -903,7 +913,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur de recherche:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-8 text-[var(--ui-stat-danger)]">
+                    <td colspan="8" class="text-center py-8 text-[var(--ui-stat-danger)]">
                         Une erreur est survenue lors de la recherche
                     </td>
                 </tr>

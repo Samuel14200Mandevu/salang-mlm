@@ -117,6 +117,13 @@ class Transaction extends Model
     
     public function getTypeLabelAttribute()
     {
+        $description = (string) ($this->description ?? '');
+
+        // Retour portefeuille après annulation guichet (type = refund, jamais deposit).
+        if ($this->isGuichetFundReturn()) {
+            return 'Retour de fonds';
+        }
+
         $labels = [
             'commission' => 'Commission',
             'withdrawal' => 'Retrait',
@@ -126,6 +133,20 @@ class Transaction extends Model
             'adjustment' => 'Ajustement',
         ];
         return $labels[$this->type] ?? ucfirst($this->type);
+    }
+
+    public function isGuichetFundReturn(): bool
+    {
+        if (! in_array($this->type, ['refund', 'deposit'], true)) {
+            return false;
+        }
+
+        $description = (string) ($this->description ?? '');
+
+        return str_contains($description, 'Retour de fonds')
+            || str_contains($description, 'Recréditation retrait guichet')
+            || (str_contains($description, 'retrait guichet annulé') && $this->type === 'refund')
+            || str_contains($description, 'Cancellation of withdrawal');
     }
 
     public function getStatusLabelAttribute()
@@ -166,14 +187,21 @@ class Transaction extends Model
 
     public function getFormattedAmountAttribute()
     {
-        $sign = in_array($this->type, ['withdrawal', 'purchase', 'refund']) ? '-' : '+';
-        return $sign . '$' . number_format($this->amount, 2);
+        // refund = crédit portefeuille (retour / remboursement commande), pas un débit.
+        $sign = in_array($this->type, ['withdrawal', 'purchase'], true) || (float) $this->amount < 0
+            ? '-'
+            : '+';
+
+        return $sign.'$'.number_format(abs((float) $this->amount), 2);
     }
 
     public function getAmountWithSignAttribute()
     {
-        $sign = in_array($this->type, ['withdrawal', 'purchase', 'refund']) ? '-' : '+';
-        return $sign . number_format($this->amount, 2);
+        $sign = in_array($this->type, ['withdrawal', 'purchase'], true) || (float) $this->amount < 0
+            ? '-'
+            : '+';
+
+        return $sign.number_format(abs((float) $this->amount), 2);
     }
 
     public function getTypeIconAttribute()

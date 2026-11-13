@@ -211,6 +211,13 @@
 
   function mountAdminSearchToggles(page, panelId, expanded) {
     page.querySelectorAll('.admin-mobile-greeting, .admin-mobile-page-head').forEach((banner) => {
+      // Ne pas injecter dans le titre desktop (.header-left) — boutons déjà côté actions.
+      if (
+        banner.classList.contains('header-left')
+        || (banner.closest('.header-with-search') && !banner.classList.contains('is-mobile-banner'))
+      ) {
+        return;
+      }
       wrapAdminTitleText(banner);
       const tools = ensureAdminTitleTools(banner);
       if (tools.querySelector('[data-admin-search-toggle]')) {
@@ -323,21 +330,29 @@
   }
 
   function restoreDesktopAdminTitleActions(page) {
-    page.querySelectorAll('.admin-page-header, .header-with-search').forEach((header) => {
-      const actions = header.querySelector('.admin-page-header-actions, .header-right');
-      if (!actions) {
-        return;
-      }
+    // Pages dual-header : outils déjà déclarés en Blade dans .is-mobile-banner
+    // + dans .admin-page-header-actions. Ne pas déplacer (sinon boutons doublés).
+    const hasBladeMobileTools = Boolean(
+      page.querySelector('.admin-mobile-page-head.is-mobile-banner > .admin-title-banner__tools')
+    );
 
-      page.querySelectorAll('.admin-title-banner__tools').forEach((tools) => {
-        collectHeaderActionNodes(tools).forEach((node) => {
-          if (!actions.contains(node)) {
-            actions.appendChild(node);
-          }
+    if (!hasBladeMobileTools) {
+      page.querySelectorAll('.admin-page-header, .header-with-search').forEach((header) => {
+        const actions = header.querySelector('.admin-page-header-actions, .header-right');
+        if (!actions) {
+          return;
+        }
+
+        page.querySelectorAll('.admin-title-banner__tools').forEach((tools) => {
+          collectHeaderActionNodes(tools).forEach((node) => {
+            if (!actions.contains(node)) {
+              actions.appendChild(node);
+            }
+          });
+          tools.querySelectorAll('[data-admin-search-toggle]').forEach((btn) => btn.remove());
         });
-        tools.querySelectorAll('[data-admin-search-toggle]').forEach((btn) => btn.remove());
       });
-    });
+    }
 
     page.querySelectorAll('.admin-action-rail.hidden').forEach((rail) => {
       rail.classList.remove('hidden');

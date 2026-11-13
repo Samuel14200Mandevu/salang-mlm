@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Cashier;
 
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Http\Controllers\Controller;
 use App\Models\Commission;
 use App\Models\CommissionPeriod;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 
 class OfflineBonusController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function __construct()
     {
         $this->middleware(['auth', 'active']);
@@ -131,6 +134,107 @@ class OfflineBonusController extends Controller
                 '$'.number_format($result['total_amount'], 2).' · '.
                 "{$result['members']} membre(s). Vous pouvez maintenant les envoyer aux portefeuilles."
             );
+    }
+
+    /**
+     * Rapport global imprimable (même modèle que admin PV) — ouvre l’interface d’impression.
+     */
+    public function exportGlobalPdf(Request $request)
+    {
+        $request->validate([
+            'period' => ['required', 'date_format:Y-m'],
+        ]);
+
+        $period = (string) $request->input('period');
+
+        try {
+            $commissions = Commission::query()
+                ->with([
+                    'user:id,name,sponsor_id,parrain_id,rank_level,pv_balance',
+                    'user.parrain:id,sponsor_id',
+                ])
+                ->where('period', $period)
+                ->whereIn('type', ['direct', 'indirect', 'leadership', 'cash_pos'])
+                ->select(['id', 'user_id', 'type', 'amount', 'period'])
+                ->orderBy('user_id')
+                ->orderBy('type')
+                ->get();
+
+            if ($commissions->isEmpty()) {
+                return back()->with('error', 'Aucune commission trouvée pour la période '.$period.'.');
+            }
+
+            $totals = [
+                'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
+                'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
+                'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
+                'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
+                'total' => (float) $commissions->sum('amount'),
+            ];
+
+            $commissionsCount = $commissions->count();
+
+            $typeStats = [];
+            foreach (['direct', 'indirect', 'leadership', 'cash_pos'] as $type) {
+                $typeItems = $commissions->where('type', $type);
+                $count = $typeItems->count();
+                $total = (float) $typeItems->sum('amount');
+                $typeStats[$type] = [
+                    'count' => $count,
+                    'total' => $total,
+                    'percentage' => $totals['total'] > 0 ? ($total / $totals['total']) * 100 : 0,
+                    'average' => $count > 0 ? $total / $count : 0,
+                ];
+            }
+
+            $userIds = $commissions->pluck('user_id')->unique()->values()->all();
+            $pvByUser = PVHistory::whereIn('user_id', $userIds)
+                ->where('period', $period)
+                ->select('user_id', DB::raw('SUM(amount) as total_pv'))
+                ->groupBy('user_id')
+                ->pluck('total_pv', 'user_id')
+                ->toArray();
+
+            $beneficiaires = $commissions->groupBy('user_id')->map(function ($items, $userId) use ($pvByUser) {
+                $user = $items->first()->user;
+                $parrain = $user?->parrain;
+
+                return [
+                    'name' => $user?->name ?? 'N/A',
+                    'id' => $userId,
+                    'code' => $user?->sponsor_id ?? 'N/A',
+                    'parrain_code' => $parrain?->sponsor_id ?? 'N/A',
+                    'rank_level' => $user?->rank_level ?? 'N/A',
+                    'pv' => (float) ($pvByUser[$userId] ?? 0),
+                    'direct' => (float) $items->where('type', 'direct')->sum('amount'),
+                    'indirect' => (float) $items->where('type', 'indirect')->sum('amount'),
+                    'leadership' => (float) $items->where('type', 'leadership')->sum('amount'),
+                    'cash_pos' => (float) $items->where('type', 'cash_pos')->sum('amount'),
+                    'total' => (float) $items->sum('amount'),
+                ];
+            })->sortByDesc('total');
+
+            unset($commissions);
+
+            return response()->view('admin.pv.commission-global-pdf', [
+                'period' => $period,
+                'commissionsCount' => $commissionsCount,
+                'totals' => $totals,
+                'typeStats' => $typeStats,
+                'beneficiaires' => $beneficiaires,
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'date_generated' => now()->format('d/m/Y H:i'),
+                'autoPrint' => true,
+                'printBackUrl' => route('cashier.offline-bonus.pay', ['period' => $period]),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('cashier.offline-bonus.exportGlobalPdf', [
+                'period' => $period,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Erreur lors de la génération du rapport. Réessayez.');
+        }
     }
 
     /**

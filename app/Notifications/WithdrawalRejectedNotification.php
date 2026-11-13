@@ -50,10 +50,13 @@ class WithdrawalRejectedNotification extends Notification implements ShouldQueue
     {
         return [
             'type' => 'withdrawal_rejected',
+            'ui' => 'danger',
+            'title' => 'Retrait annulé',
             'amount' => $this->amount,
             'reason' => $this->reason,
             'withdrawal_id' => $this->withdrawalId,
-            'message' => "Votre retrait de \${$this->amount} a été rejeté",
+            'message' => "Votre retrait de \${$this->amount} a été annulé. Le montant a été recrédité sur votre portefeuille.",
+            'action_url' => url('/wallet'),
         ];
     }
 }

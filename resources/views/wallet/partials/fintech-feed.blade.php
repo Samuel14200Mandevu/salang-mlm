@@ -22,21 +22,41 @@
                 @php
                     $meta = $typeIcons[$transaction->type] ?? ['bg' => 'var(--color-primary-600)', 'letter' => strtoupper(substr($transaction->type, 0, 1))];
                     $isCredit = (float) $transaction->amount > 0;
+                    $isGuichetRefund = $transaction->isGuichetFundReturn();
+                    if ($isGuichetRefund) {
+                        $meta = ['bg' => '#0891b2', 'letter' => '↩'];
+                    }
+                    $subtitle = $isGuichetRefund
+                        ? 'Retrait guichet annulé — remis au solde'
+                        : ($transaction->description ? \Illuminate\Support\Str::limit($transaction->description, 42) : null);
+                    $statusHint = match ($transaction->status) {
+                        'failed' => 'Échec',
+                        'cancelled' => 'Annulé',
+                        'pending', 'processing' => 'En attente',
+                        default => null,
+                    };
                 @endphp
-                <li class="member-fintech-tx">
-                    <span class="member-fintech-tx__icon" style="background: {{ $meta['bg'] }};">{{ $meta['letter'] }}</span>
-                    <div class="member-fintech-tx__body">
-                        <p class="member-fintech-tx__title">{{ $transaction->type_label }}</p>
-                        <p class="member-fintech-tx__meta">
-                            {{ $transaction->created_at->format('d/m/Y H:i') }}
-                            @if($transaction->description)
-                                · {{ \Illuminate\Support\Str::limit($transaction->description, 28) }}
-                            @endif
-                        </p>
-                    </div>
-                    <span class="member-fintech-tx__amount {{ $isCredit ? 'is-credit' : 'is-debit' }}">
-                        {{ $isCredit ? '+' : '' }}${{ number_format($transaction->amount, 2) }}
-                    </span>
+                <li>
+                    <a href="{{ route('wallet.transactions.show', $transaction->id) }}" class="member-fintech-tx">
+                        <span class="member-fintech-tx__icon" style="background: {{ $meta['bg'] }};">{{ $meta['letter'] }}</span>
+                        <div class="member-fintech-tx__body">
+                            <p class="member-fintech-tx__title">
+                                {{ $transaction->type_label }}
+                                @if($statusHint)
+                                    <span class="member-fintech-tx__status">· {{ $statusHint }}</span>
+                                @endif
+                            </p>
+                            <p class="member-fintech-tx__meta">
+                                {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                @if($subtitle)
+                                    · {{ $subtitle }}
+                                @endif
+                            </p>
+                        </div>
+                        <span class="member-fintech-tx__amount {{ $isCredit ? 'is-credit' : 'is-debit' }}">
+                            {{ $isCredit ? '+' : '' }}${{ number_format($transaction->amount, 2) }}
+                        </span>
+                    </a>
                 </li>
             @endforeach
         </ul>

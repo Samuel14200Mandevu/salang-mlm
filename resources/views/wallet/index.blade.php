@@ -75,7 +75,16 @@
                                     {{ $transaction->created_at->format('d/m/Y H:i') }}
                                 </td>
                                 <td class="hidden sm:table-cell">
-                                    <span class="badge {{ $transaction->type == 'commission' ? 'badge-success' : ($transaction->type == 'deposit' ? 'badge-info' : 'badge-warning') }} text-[10px] sm:text-xs">
+                                    @php
+                                        $typeBadge = match ($transaction->type) {
+                                            'deposit' => 'badge-info',
+                                            'withdrawal' => 'badge-warning',
+                                            'refund' => 'badge-info',
+                                            'commission' => 'badge-success',
+                                            default => 'badge-neutral',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $typeBadge }} text-[10px] sm:text-xs">
                                         {{ $transaction->type_label }}
                                     </span>
                                 </td>
@@ -84,8 +93,16 @@
                                     {{ $transaction->amount > 0 ? '+' : '' }}${{ number_format($transaction->amount, 2) }}
                                 </td>
                                 <td>
-                                    <span class="badge {{ $transaction->status == 'completed' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
-                                        {{ $transaction->status == 'completed' ? 'Terminé' : 'En attente' }}
+                                    @php
+                                        $statusUi = match ($transaction->status) {
+                                            'completed' => ['badge-success', 'Terminé'],
+                                            'failed' => ['badge-danger', 'Échec'],
+                                            'cancelled' => ['badge-secondary', 'Annulé'],
+                                            default => ['badge-warning', 'En attente'],
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $statusUi[0] }} text-[10px] sm:text-xs">
+                                        {{ $statusUi[1] }}
                                     </span>
                                 </td>
                             </tr>

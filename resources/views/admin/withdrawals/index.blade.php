@@ -210,12 +210,14 @@
     color: var(--text-tertiary);
 }
 
-.header-with-search {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+@media (min-width: 768px) {
+    .header-with-search {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
 }
 
 .header-left {

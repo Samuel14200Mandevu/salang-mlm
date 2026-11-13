@@ -168,15 +168,25 @@
             margin: 3px 0 4px 0;
             font-size: 12px;
         }
-        
+
         .global-table thead {
             display: table-header-group;
         }
-        
+
+        /* Empêche la répétition du total sur chaque page imprimée */
+        .global-table tfoot {
+            display: table-row-group;
+        }
+
         .global-table tr {
             page-break-inside: avoid;
         }
-        
+
+        .global-table tr.total-row {
+            page-break-before: avoid;
+            page-break-inside: avoid;
+        }
+
         .global-table th {
             background-color: #f2f2f2;
             color: #000;
@@ -241,10 +251,54 @@
             body {
                 padding: 0;
             }
+            .no-print {
+                display: none !important;
+            }
         }
+
+        @if(!empty($autoPrint))
+        .no-print {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 50;
+            display: flex;
+            gap: 8px;
+        }
+        .no-print .btn-print-action {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #0E2F76;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .no-print .btn-print-back {
+            padding: 10px 18px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        @endif
     </style>
 </head>
 <body>
+    @if(!empty($autoPrint))
+        <div class="no-print">
+            <button type="button" class="btn-print-action" onclick="window.print()">Imprimer</button>
+            @if(!empty($printBackUrl))
+                <a href="{{ $printBackUrl }}" class="btn-print-back">Retour</a>
+            @endif
+        </div>
+    @endif
 
     <!-- CONTENU PRINCIPAL -->
     <div class="page-content">
@@ -310,7 +364,7 @@
 
         <!-- 1. TABLEAU GLOBAL DES COMMISSIONS -->
         <div class="section-header">1. Détail Global par Membre</div>
-        
+
         <table class="global-table">
             <thead>
                 <tr>
@@ -351,8 +405,6 @@
                         <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ number_format($beneficiaire['total'], 2) }}</td>
                     </tr>
                 @endforeach
-            </tbody>
-            <tfoot>
                 <tr class="total-row">
                     <td colspan="5" style="text-align:right;">TOTAL GÉNÉRAL :</td>
                     <td class="text-right" style="color:#0E2F76;">{{ number_format($totalPV, 1, ',', ' ') }}</td>
@@ -362,12 +414,12 @@
                     <td class="text-right td-cash">${{ number_format($totals['cash_pos'] ?? 0, 2) }}</td>
                     <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['total'] ?? 0, 2) }}</td>
                 </tr>
-            </tfoot>
+            </tbody>
         </table>
 
         <!-- 2. RÉCAPITULATIF PAR TYPE DE BONUS -->
         <div class="section-header">2. Récapitulatif par Type de Bonus</div>
-        
+
         <table class="global-table">
             <thead>
                 <tr>
@@ -395,8 +447,6 @@
                         <td class="text-right">${{ number_format($stat['average'], 2) }}</td>
                     </tr>
                 @endforeach
-            </tbody>
-            <tfoot>
                 <tr class="total-row">
                     <td class="text-left"><strong>TOTAL GÉNÉRAL</strong></td>
                     <td><strong>{{ $commissionsCount }}</strong></td>
@@ -404,10 +454,18 @@
                     <td><strong>100%</strong></td>
                     <td class="text-right"><strong>${{ number_format($commissionsCount > 0 ? $totals['total'] / $commissionsCount : 0, 2) }}</strong></td>
                 </tr>
-            </tfoot>
+            </tbody>
         </table>
 
     </div>
+
+    @if(!empty($autoPrint))
+        <script>
+            window.addEventListener('load', function () {
+                setTimeout(function () { window.print(); }, 400);
+            });
+        </script>
+    @endif
 
 </body>
 </html>

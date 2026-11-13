@@ -901,6 +901,64 @@
   text-decoration: underline;
 }
 
+/* Icône PDF téléchargement (pdf 2.webp) */
+.pdf-pic-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+.pdf-pic-icon--sm { width: 1rem; height: 1rem; }
+.pdf-pic-icon--md { width: 1.25rem; height: 1.25rem; }
+.pdf-pic-icon--lg { width: 1.75rem; height: 1.75rem; }
+
+.btn-pdf-icon,
+a.btn-pdf-icon,
+button.btn-pdf-icon {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  padding: 0.2rem !important;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: var(--radius, 8px) !important;
+  overflow: hidden;
+}
+.btn-pdf-icon.btn-round-icon,
+a.btn-pdf-icon.btn-round-icon,
+button.btn-pdf-icon.btn-round-icon,
+.admin-banner-icon-btn.btn-pdf-icon {
+  border-radius: 999px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.btn-pdf-icon:hover,
+a.btn-pdf-icon:hover,
+button.btn-pdf-icon:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+.btn-pdf-icon .pdf-pic-icon {
+  border-radius: calc(var(--radius, 8px) - 2px);
+}
+.btn-pdf-icon.btn-round-icon .pdf-pic-icon,
+.admin-banner-icon-btn.btn-pdf-icon .pdf-pic-icon,
+.admin-title-banner__tools .btn-pdf-icon .pdf-pic-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.35rem;
+}
+.admin-title-banner__tools .btn.btn-pdf-icon,
+.admin-banner-icon-btn.btn-pdf-icon {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+.admin-title-banner__tools .btn.btn-pdf-icon:hover,
+.admin-banner-icon-btn.btn-pdf-icon:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
 html.salang-reduce-motion .animate-fadeInUp,
 html.salang-reduce-motion .animate-fadeIn {
   animation: none !important;

@@ -16,11 +16,7 @@
             <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
         </svg>
     </a>
-    <button type="button" id="btnPrintAdhesionMobile" class="btn btn-success btn-sm btn-round-icon" title="Adhésion PDF" aria-label="Adhésion PDF">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V3h12v6M6 21h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9V3H6v6z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12v4h8v-4"/>
-        </svg>
+    <button type="button" id="btnPrintAdhesionMobile" class="btn btn-pdf-icon btn-sm btn-round-icon" title="Adhésion PDF" aria-label="Adhésion PDF">
+        <x-pdf-icon />
     </button>
 </div>

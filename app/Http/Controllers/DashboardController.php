@@ -18,12 +18,14 @@ use App\Models\Withdrawal;
 use App\Models\PVHistory;
 use App\Services\MLM\AdvancedRankCalculator;
 use App\Services\MLM\UserCommissionDisplayService;
+use App\Services\WalletCommissionBreakdown;
 use App\Support\MlmRank;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        protected UserCommissionDisplayService $commissionDisplay
+        protected UserCommissionDisplayService $commissionDisplay,
+        protected WalletCommissionBreakdown $commissionBreakdown,
     ) {}
 
     /**
@@ -406,6 +408,23 @@ class DashboardController extends Controller
         $data['dashboardLevel'] = $dashboardLevel;
         $data['dashboardLevelNumber'] = $dashboardLevelNumber;
         $data['currentRankBadgeClass'] = MlmRank::badgeClass($currentRankLevel);
+
+        // Bonus du mois sélectionné dans Portefeuille → Détail des bonus (sans POS)
+        $bonusMonths = $this->commissionBreakdown->bonusMonthOptions();
+        $defaultBonusMonth = array_key_last($bonusMonths) ?: '';
+        $sessionBonusMonth = (string) session('wallet_bonus_month', '');
+        $bonusMonth = array_key_exists($sessionBonusMonth, $bonusMonths)
+            ? $sessionBonusMonth
+            : $defaultBonusMonth;
+        $bonusByType = collect($this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null))
+            ->except('cash_pos')
+            ->all();
+        $bonusTotal = (float) collect($bonusByType)->sum('total');
+
+        $data['bonusByType'] = $bonusByType;
+        $data['bonusMonth'] = $bonusMonth;
+        $data['bonusMonthLabel'] = $bonusMonths[$bonusMonth] ?? $bonusMonth;
+        $data['bonusTotal'] = $bonusTotal;
 
         return view('dashboard.index', $data);
     }
