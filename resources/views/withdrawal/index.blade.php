@@ -38,6 +38,8 @@
         @include('withdrawal.partials.fintech-history')
     </div>
 
+    @include('withdrawal.partials.result-modal')
+
     {{-- Desktop --}}
     <div class="member-withdraw-classic space-y-4 sm:space-y-6">
         <div class="member-page-intro animate-fadeInUp">
@@ -92,17 +94,21 @@
                         <tbody>
                             @forelse($withdrawals ?? [] as $withdrawal)
                                 <tr>
-                                    <td class="text-[var(--text-secondary)] text-sm whitespace-nowrap">
-                                        {{ $withdrawal->created_at->format('d/m/Y H:i') }}
-                                    </td>
-                                    <td class="text-sm">{{ $methodLabels[$withdrawal->method] ?? $withdrawal->method }}</td>
-                                    <td class="text-right font-semibold text-sm text-red-500">
-                                        −${{ number_format($withdrawal->amount, 2) }}
-                                    </td>
-                                    <td>
-                                        <span class="badge {{ $withdrawal->status === 'completed' ? 'badge-success' : ($withdrawal->status === 'pending' ? 'badge-warning' : 'badge-danger') }} text-xs">
-                                            {{ $statusLabels[$withdrawal->status] ?? $withdrawal->status }}
-                                        </span>
+                                    <td colspan="4" class="p-0">
+                                        <a href="{{ route('withdrawal.show', $withdrawal->id) }}" class="member-withdraw-history-row">
+                                            <span class="member-withdraw-history-row__date text-[var(--text-secondary)] text-sm whitespace-nowrap">
+                                                {{ $withdrawal->created_at->format('d/m/Y H:i') }}
+                                            </span>
+                                            <span class="text-sm">{{ $methodLabels[$withdrawal->method] ?? $withdrawal->method }}</span>
+                                            <span class="text-right font-semibold text-sm text-red-500">
+                                                −${{ number_format($withdrawal->amount, 2) }}
+                                            </span>
+                                            <span>
+                                                <span class="badge {{ $withdrawal->status === 'completed' ? 'badge-success' : ($withdrawal->status === 'pending' ? 'badge-warning' : 'badge-danger') }} text-xs">
+                                                    {{ $statusLabels[$withdrawal->status] ?? $withdrawal->status }}
+                                                </span>
+                                            </span>
+                                        </a>
                                     </td>
                                 </tr>
                             @empty

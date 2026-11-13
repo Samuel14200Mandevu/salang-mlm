@@ -25,10 +25,8 @@
                   method="GET" 
                   style="display: inline-block;">
                 <input type="hidden" name="period" value="{{ $period }}">
-                <button type="submit" class="btn-pdf" style="border: none; cursor: pointer;">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
+                <button type="submit" class="btn-pdf" style="border: none; cursor: pointer; display:inline-flex; align-items:center; gap:0.4rem;">
+                    <x-pdf-icon class="w-4 h-4" />
                     Télécharger PDF
                 </button>
             </form>

@@ -527,7 +527,8 @@ BOUTONS D'ACTION - OPTIMISES POUR MOBILE
     <button onclick="window.print()" class="btn btn-print">
         Imprimer
     </button>
-    <a href="{{ route('orders.invoice.download', $order) }}" class="btn btn-download">
+    <a href="{{ route('orders.invoice.download', $order) }}" class="btn btn-download" style="display:inline-flex;align-items:center;gap:0.4rem;">
+        <x-pdf-icon class="w-4 h-4" />
         PDF
     </a>
     <a href="{{ route('orders.index') }}" class="btn btn-back">

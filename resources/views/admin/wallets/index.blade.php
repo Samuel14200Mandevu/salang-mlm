@@ -188,12 +188,14 @@
 .users-filter-menu a.is-active .filter-count { color: var(--primary); }
 
 /* ===== HEADER AVEC RECHERCHE À DROITE ===== */
-.header-with-search {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+@media (min-width: 768px) {
+    .header-with-search {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
 }
 
 .header-left {

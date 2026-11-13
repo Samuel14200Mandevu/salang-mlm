@@ -247,7 +247,7 @@
 
     <div class="mrd-viewer__actions">
         <a href="{{ route('report.downline') }}" class="mrd-viewer__btn mrd-viewer__btn--ghost">← Retour</a>
-        <a href="{{ $pdfDownloadUrl }}" class="mrd-viewer__btn mrd-viewer__btn--primary">Télécharger</a>
+        <a href="{{ $pdfDownloadUrl }}" class="mrd-viewer__btn mrd-viewer__btn--primary" style="display:inline-flex;align-items:center;gap:0.4rem;"><x-pdf-icon class="w-4 h-4" /> Télécharger</a>
     </div>
 </div>
 @endsection

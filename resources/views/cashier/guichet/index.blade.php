@@ -87,12 +87,10 @@
                     </svg>
                 </a>
                 <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
-                   class="btn btn-primary btn-sm btn-round-icon"
+                   class="btn btn-sm btn-round-icon btn-pdf-icon"
                    title="Rapport journalier PDF"
                    aria-label="Rapport journalier PDF">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
+                    <x-pdf-icon size="lg" />
                 </a>
             </div>
         </div>
@@ -173,10 +171,8 @@
                 <span>Paiement des bonus</span>
             </a>
             <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
-               class="btn btn-primary btn-sm sm:btn-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
+               class="btn btn-outline btn-sm sm:btn-md">
+                <x-pdf-icon />
                 <span>Rapport journalier</span>
             </a>
         </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Models\Withdrawal;
 use App\Models\Commission;
 use App\Services\BinancePayService;
 use App\Services\FlexPayService;
@@ -62,15 +63,20 @@ class WalletController extends Controller
 
         $bonusMonths = $this->commissionBreakdown->bonusMonthOptions();
         $defaultBonusMonth = array_key_last($bonusMonths) ?: '';
-        $bonusMonth = (string) $request->query('bonus_month', $defaultBonusMonth);
+        $sessionBonusMonth = (string) $request->session()->get('wallet_bonus_month', '');
+        $bonusMonth = (string) $request->query(
+            'bonus_month',
+            array_key_exists($sessionBonusMonth, $bonusMonths) ? $sessionBonusMonth : $defaultBonusMonth
+        );
         if (! array_key_exists($bonusMonth, $bonusMonths)) {
             $bonusMonth = $defaultBonusMonth;
         }
+        $request->session()->put('wallet_bonus_month', $bonusMonth);
         $bonusMonthLabel = $bonusMonths[$bonusMonth] ?? $bonusMonth;
 
-        // 🔥 EXCLURE LES TRANSACTIONS DE TYPE 'pv_credit' ET 'bv_credit'
+        // Historique portefeuille : dépôts, retraits, retours de fonds — pas les commissions.
         $transactions = Transaction::where('user_id', $user->id)
-            ->whereNotIn('type', ['pv_credit', 'bv_credit'])
+            ->whereIn('type', ['deposit', 'withdrawal', 'refund'])
             ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->appends([
@@ -94,7 +100,10 @@ class WalletController extends Controller
             ->reverse()
             ->values();
 
-        $bonusByType = $this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null);
+        // Direct / Indirect / Leadership uniquement (POS toujours masqué côté membre)
+        $bonusByType = collect($this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null))
+            ->except('cash_pos')
+            ->all();
 
         $pendingDepositCount = Transaction::query()
             ->where('user_id', $user->id)
@@ -143,11 +152,6 @@ class WalletController extends Controller
         };
 
         return [
-            'total_commission' => $applySince(
-                Transaction::where('user_id', $userId)
-                    ->where('type', 'commission')
-                    ->where('status', 'completed')
-            )->sum('amount'),
             'total_deposit' => $applySince(
                 Transaction::where('user_id', $userId)
                     ->where('type', 'deposit')
@@ -158,11 +162,11 @@ class WalletController extends Controller
                     ->where('type', 'withdrawal')
                     ->where('status', 'completed')
             )->sum('amount'),
-            'count_commission' => $applySince(
+            'total_refund' => $applySince(
                 Transaction::where('user_id', $userId)
-                    ->where('type', 'commission')
+                    ->where('type', 'refund')
                     ->where('status', 'completed')
-            )->count(),
+            )->sum('amount'),
             'count_deposit' => $applySince(
                 Transaction::where('user_id', $userId)
                     ->where('type', 'deposit')
@@ -171,6 +175,11 @@ class WalletController extends Controller
             'count_withdrawal' => $applySince(
                 Transaction::where('user_id', $userId)
                     ->where('type', 'withdrawal')
+                    ->where('status', 'completed')
+            )->count(),
+            'count_refund' => $applySince(
+                Transaction::where('user_id', $userId)
+                    ->where('type', 'refund')
                     ->where('status', 'completed')
             )->count(),
         ];
@@ -182,25 +191,19 @@ class WalletController extends Controller
     private function buildActivityOverview(int $userId, ?Carbon $since): array
     {
         $stats = $this->transactionStatsForUser($userId, $since);
-        $operations = ($stats['count_commission'] ?? 0)
-            + ($stats['count_deposit'] ?? 0)
-            + ($stats['count_withdrawal'] ?? 0);
+        $operations = ($stats['count_deposit'] ?? 0)
+            + ($stats['count_withdrawal'] ?? 0)
+            + ($stats['count_refund'] ?? 0);
 
         $raw = [
-            'commission' => abs((float) ($stats['total_commission'] ?? 0)),
             'deposit' => abs((float) ($stats['total_deposit'] ?? 0)),
             'withdrawal' => abs((float) ($stats['total_withdrawal'] ?? 0)),
+            'refund' => abs((float) ($stats['total_refund'] ?? 0)),
             'operations' => (float) $operations,
         ];
         $max = max($raw) ?: 0.0;
 
         $cards = [
-            [
-                'key' => 'commission',
-                'label' => 'Commissions',
-                'value' => '$'.number_format($raw['commission'], 2),
-                'icon' => 'coins',
-            ],
             [
                 'key' => 'deposit',
                 'label' => 'Dépôts',
@@ -212,6 +215,12 @@ class WalletController extends Controller
                 'label' => 'Retraits',
                 'value' => '$'.number_format($raw['withdrawal'], 2),
                 'icon' => 'withdraw',
+            ],
+            [
+                'key' => 'refund',
+                'label' => 'Retours',
+                'value' => '$'.number_format($raw['refund'], 2),
+                'icon' => 'wallet',
             ],
             [
                 'key' => 'operations',
@@ -395,6 +404,36 @@ class WalletController extends Controller
 
             return back()->with('error', 'Error depositing: '.$e->getMessage());
         }
+    }
+
+    public function showTransaction(int $id)
+    {
+        $user = Auth::user();
+
+        $transaction = Transaction::query()
+            ->where('user_id', $user->id)
+            ->whereNotIn('type', ['pv_credit', 'bv_credit'])
+            ->findOrFail($id);
+
+        // Retrait : renvoyer vers l’écran dédié si on retrouve la demande liée
+        if ($transaction->type === 'withdrawal') {
+            $amount = abs((float) $transaction->amount);
+            $relatedWithdrawal = Withdrawal::query()
+                ->where('user_id', $user->id)
+                ->where('amount', $amount)
+                ->whereBetween('created_at', [
+                    $transaction->created_at->copy()->subMinutes(5),
+                    $transaction->created_at->copy()->addMinutes(5),
+                ])
+                ->orderByDesc('id')
+                ->first();
+
+            if ($relatedWithdrawal) {
+                return redirect()->route('withdrawal.show', $relatedWithdrawal->id);
+            }
+        }
+
+        return view('wallet.transaction-show', compact('transaction'));
     }
 
     public function transactions(Request $request)

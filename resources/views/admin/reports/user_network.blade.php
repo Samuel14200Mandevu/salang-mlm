@@ -183,10 +183,8 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.reports.user-network.pdf', $user->id) }}"
-               class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
+               class="btn btn-outline btn-sm">
+                <x-pdf-icon class="w-4 h-4" />
                 PDF
             </a>
             <a href="{{ route('admin.reports.user-network') }}"

@@ -175,10 +175,8 @@
                 Réseau membre
             </a>
             <a href="{{ route('admin.reports.pdf', ['type' => 'users']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"
-               class="btn btn-primary btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2h8v8H8V8z"/>
-                </svg>
+               class="btn btn-outline btn-sm">
+                <x-pdf-icon class="w-4 h-4" />
                 PDF
             </a>
             <a href="{{ route('admin.reports.export', ['type' => 'users']) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"

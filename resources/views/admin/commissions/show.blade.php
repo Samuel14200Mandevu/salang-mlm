@@ -400,16 +400,8 @@
 @section('content')
 <div class="space-y-4 sm:space-y-6">
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-                Commission #{{ $commission->id }}
-            </h1>
-            <p class="text-sm text-[var(--text-secondary)] mt-0.5">
-                Détails de la commission
-            </p>
-        </div>
+    <!-- Header actions only -->
+    <div class="flex flex-wrap items-center justify-end gap-3 animate-fadeInUp">
         <div class="header-actions flex flex-wrap gap-2">
             <a href="{{ route('admin.commissions') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -463,14 +455,14 @@
             <p class="detail-label">Statut</p>
             <p class="detail-value">
                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : ($commission->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
-                    {{ $commission->status == 'paid' ? 'Payée' : ($commission->status == 'pending' ? 'En attente' : 'Annulée') }}
+                    {{ $commission->status == 'paid' ? 'En portefeuille' : ($commission->status == 'pending' ? 'En attente' : 'Annulée') }}
                 </span>
             </p>
             <p class="text-xs text-[var(--text-secondary)] mt-1">
                 @if($commission->paid_at)
-                    Payée le {{ $commission->paid_at->format('d/m/Y H:i') }}
+                    Depuis le {{ $commission->paid_at->format('d/m/Y H:i') }}
                 @else
-                    Non payée
+                    Pas encore crédité
                 @endif
             </p>
         </div>
@@ -482,7 +474,7 @@
         <!-- User -->
         <div class="detail-card">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3">
-                Utilisateur
+                Membre
             </h3>
 
             <div class="flex items-center gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
@@ -509,23 +501,42 @@
                 Source
             </h3>
 
+            @php
+                $isDirectBonus = $commission->type === 'direct';
+            @endphp
+
             <div class="flex items-center gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
-                <div class="avatar avatar-lg avatar-gradient">
-                    {{ $commission->fromUser?->name ? substr($commission->fromUser->name, 0, 2) : 'S' }}
-                </div>
-                <div class="min-w-0">
-                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
-                        {{ $commission->fromUser?->name ?? 'Système' }}
-                    </p>
-                    <p class="text-xs sm:text-sm text-[var(--text-secondary)] truncate">
-                        {{ $commission->fromUser?->email ?? 'Généré automatiquement' }}
-                    </p>
-                    @if($commission->fromUser)
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                            Parrain: {{ $commission->fromUser->parrain?->name ?? 'Aucun' }}
+                @if($isDirectBonus)
+                    <div class="avatar avatar-lg avatar-gradient">%</div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                            {{ number_format((float) $commission->percentage, 2) }}%
                         </p>
-                    @endif
-                </div>
+                        <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
+                            Bonus direct · PV personnel
+                            @if($commission->pv_used)
+                                ({{ number_format((float) $commission->pv_used, 0) }} PV)
+                            @endif
+                        </p>
+                    </div>
+                @else
+                    <div class="avatar avatar-lg avatar-gradient">
+                        {{ $commission->fromUser?->name ? substr($commission->fromUser->name, 0, 2) : '—' }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">
+                            {{ $commission->fromUser?->name ?? '—' }}
+                        </p>
+                        <p class="text-xs sm:text-sm text-[var(--text-secondary)] truncate">
+                            {{ $commission->fromUser?->sponsor_id ?? ($commission->fromUser?->email ?? '') }}
+                        </p>
+                        @if($commission->percentage)
+                            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
+                                Taux {{ number_format((float) $commission->percentage, 2) }}%
+                            </p>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             @if($commission->package)
@@ -573,7 +584,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-success"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission payée</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">En portefeuille</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     {{ $commission->paid_at?->format('d/m/Y H:i:s') ?? 'N/A' }}
                 </p>
@@ -583,7 +594,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-pending"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">En attente de paiement</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">En attente de crédit portefeuille</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">
                     Cette commission sera payée automatiquement lors du prochain cycle
                 </p>
@@ -613,7 +624,7 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Utilisateur</th>
+                        <th>Membre</th>
                         <th class="hidden sm:table-cell">Type</th>
                         <th>Montant</th>
                         <th class="hidden md:table-cell">Statut</th>
@@ -634,7 +645,7 @@
                             <td class="amount-positive">+${{ number_format($similar->amount, 2) }}</td>
                             <td class="hidden md:table-cell">
                                 <span class="badge {{ $similar->status == 'paid' ? 'badge-success' : ($similar->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
-                                    {{ $similar->status == 'paid' ? 'Payé' : ($similar->status == 'pending' ? 'En attente' : 'Annulé') }}
+                                    {{ $similar->status == 'paid' ? 'En portefeuille' : ($similar->status == 'pending' ? 'En attente' : 'Annulé') }}
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell text-[var(--text-secondary)] text-xs">

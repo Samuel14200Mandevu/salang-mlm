@@ -1051,6 +1051,23 @@
     letter-spacing: -0.02em;
   }
 
+  .member-notify-sheet__head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .member-notify-sheet__head-actions .member-notify-sheet__mark-all {
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.45rem;
+    white-space: nowrap;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   .member-notify-sheet__close {
     display: flex;
     align-items: center;

@@ -92,6 +92,11 @@
      */
     function showConfirmDialog(options) {
         const dialog = document.getElementById('confirmDialog');
+        if (!dialog) {
+            console.error('confirmDialog introuvable');
+            return;
+        }
+
         const icon = dialog.querySelector('.icon');
         const title = dialog.querySelector('h3');
         const message = dialog.querySelector('p');
@@ -145,10 +150,16 @@
      * Fermer le dialogue de confirmation
      */
     function closeConfirmDialog() {
-        document.getElementById('confirmDialog').classList.remove('active');
+        const dialog = document.getElementById('confirmDialog');
+        if (dialog) {
+            dialog.classList.remove('active');
+        }
         confirmCallback = null;
         confirmForm = null;
     }
+
+    window.showConfirmDialog = showConfirmDialog;
+    window.closeConfirmDialog = closeConfirmDialog;
 
     /**
      * Confirmer la déconnexion

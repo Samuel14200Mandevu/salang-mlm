@@ -719,6 +719,9 @@
         confirmForm = null;
     }
 
+    window.showConfirmDialog = showConfirmDialog;
+    window.closeConfirmDialog = closeConfirmDialog;
+
     function confirmLogout(event) {
         event.preventDefault();
         const form = event.target.closest('form');

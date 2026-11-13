@@ -15,6 +15,9 @@ use App\Models\Commission;
 use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\CommissionPeriod;
+use App\Models\PVHistory;
+use App\Models\Withdrawal;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Genealogy;
 use App\Models\Rank;
@@ -524,6 +527,137 @@ public function createOrder(Request $request)
             $pdf->output(),
             'rapport_commissions_'.$period.'.pdf'
         );
+    }
+
+    /**
+     * Rapport GLOBAL des commissions (même gabarit / impression que l’admin).
+     */
+    public function exportGlobalCommissionPdf(Request $request)
+    {
+        try {
+            $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
+            $period = $request->filled('period') ? (string) $request->period : 'all';
+            if ($period === '') {
+                $period = 'all';
+            }
+
+            $query = Commission::query()
+                ->with([
+                    'user:id,name,sponsor_id,parrain_id,rank_level,pv_balance',
+                    'user.parrain:id,sponsor_id',
+                ])
+                ->whereIn('type', $coreTypes);
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('sponsor_id', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('type') && $request->type !== 'all') {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->filled('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            if ($period !== 'all') {
+                $query->where('period', $period);
+            }
+
+            $commissions = $query
+                ->select(['id', 'user_id', 'type', 'amount', 'period'])
+                ->orderBy('user_id')
+                ->orderBy('type')
+                ->get();
+
+            if ($commissions->isEmpty()) {
+                return back()->with('error', 'Aucune commission trouvée pour ce rapport.');
+            }
+
+            $totals = [
+                'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
+                'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
+                'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
+                'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
+                'total' => (float) $commissions->sum('amount'),
+            ];
+
+            $commissionsCount = $commissions->count();
+
+            $typeStats = [];
+            foreach ($coreTypes as $type) {
+                $typeItems = $commissions->where('type', $type);
+                $count = $typeItems->count();
+                $total = (float) $typeItems->sum('amount');
+                $typeStats[$type] = [
+                    'count' => $count,
+                    'total' => $total,
+                    'percentage' => $totals['total'] > 0 ? ($total / $totals['total']) * 100 : 0,
+                    'average' => $count > 0 ? $total / $count : 0,
+                ];
+            }
+
+            $userIds = $commissions->pluck('user_id')->unique()->values()->all();
+            $pvByUser = [];
+            if ($period !== 'all' && $userIds !== []) {
+                $pvByUser = PVHistory::query()
+                    ->whereIn('user_id', $userIds)
+                    ->where('period', $period)
+                    ->select('user_id', DB::raw('SUM(amount) as total_pv'))
+                    ->groupBy('user_id')
+                    ->pluck('total_pv', 'user_id')
+                    ->toArray();
+            }
+
+            $beneficiaires = $commissions->groupBy('user_id')->map(function ($items, $userId) use ($pvByUser, $period) {
+                $user = $items->first()->user;
+                $parrain = $user?->parrain;
+
+                return [
+                    'name' => $user?->name ?? 'N/A',
+                    'id' => $userId,
+                    'code' => $user?->sponsor_id ?? 'N/A',
+                    'parrain_code' => $parrain?->sponsor_id ?? 'N/A',
+                    'rank_level' => $user?->rank_level ?? 'N/A',
+                    'pv' => $period !== 'all'
+                        ? (float) ($pvByUser[$userId] ?? 0)
+                        : (float) ($user?->pv_balance ?? 0),
+                    'direct' => (float) $items->where('type', 'direct')->sum('amount'),
+                    'indirect' => (float) $items->where('type', 'indirect')->sum('amount'),
+                    'leadership' => (float) $items->where('type', 'leadership')->sum('amount'),
+                    'cash_pos' => (float) $items->where('type', 'cash_pos')->sum('amount'),
+                    'total' => (float) $items->sum('amount'),
+                ];
+            })->sortByDesc('total');
+
+            unset($commissions);
+
+            $backQuery = array_filter(
+                $request->only(['search', 'type', 'status', 'period']),
+                fn ($v) => $v !== null && $v !== ''
+            );
+
+            return response()->view('admin.pv.commission-global-pdf', [
+                'period' => $period,
+                'commissionsCount' => $commissionsCount,
+                'totals' => $totals,
+                'typeStats' => $typeStats,
+                'beneficiaires' => $beneficiaires,
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'date_generated' => now()->format('d/m/Y H:i'),
+                'autoPrint' => true,
+                'printBackUrl' => route('cashier.commissions', $backQuery),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('cashier.commissions.exportGlobalPDF', $e);
+
+            return back()->with('error', 'Erreur lors de la génération du rapport global.');
+        }
     }
 
 /**
@@ -3231,131 +3365,433 @@ public function history(Request $request)
     // ============================================================
 
     /**
-     * Liste toutes les commissions
+     * Liste des commissions agrégées par membre (même structure que l’admin).
      */
     public function commissions(Request $request)
     {
-        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
-        
-        $query = Commission::with(['user', 'fromUser', 'order'])
-            ->whereNotIn('type', $excludedTypes);
-        
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
+
+        $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+        if ($periods->isEmpty()) {
+            $periods = Commission::query()
+                ->whereIn('type', $coreTypes)
+                ->whereNotNull('period')
+                ->where('period', '!=', '')
+                ->distinct()
+                ->orderByDesc('period')
+                ->pluck('period');
         }
-        
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+
+        if (! $request->filled('period') && $periods->isNotEmpty()) {
+            return redirect()->route(
+                'cashier.commissions',
+                array_merge($request->query(), ['period' => $periods->first()])
+            );
         }
-        
-        if ($request->filled('source')) {
-            $query->where('source', $request->source);
-        }
-        
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-        
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+
+        $selectedPeriod = ($request->filled('period') && $request->period !== 'all')
+            ? (string) $request->period
+            : null;
+
+        $query = Commission::query()->whereIn('type', $coreTypes);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('type', 'LIKE', "%{$search}%")
-                    ->orWhere('source', 'LIKE', "%{$search}%")
-                    ->orWhere('id', $search)
-                    ->orWhereHas('user', function ($sub) use ($search) {
-                        $sub->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('sponsor_id', 'LIKE', "%{$search}%")
-                            ->orWhere('phone', 'LIKE', "%{$search}%");
-                    });
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('sponsor_id', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
-        
-        $commissions = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
-        
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($selectedPeriod) {
+            $query->where('period', $selectedPeriod);
+        }
+
+        $members = (clone $query)
+            ->select('user_id')
+            ->selectRaw("SUM(CASE WHEN type = 'direct' THEN amount ELSE 0 END) as direct")
+            ->selectRaw("SUM(CASE WHEN type = 'indirect' THEN amount ELSE 0 END) as indirect")
+            ->selectRaw("SUM(CASE WHEN type = 'leadership' THEN amount ELSE 0 END) as leadership")
+            ->selectRaw("SUM(CASE WHEN type = 'cash_pos' THEN amount ELSE 0 END) as cash_pos")
+            ->selectRaw("SUM(CASE WHEN status IN ('pending', 'approved') THEN amount ELSE 0 END) as pending_total")
+            ->selectRaw("SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) as wallet_total")
+            ->selectRaw('SUM(amount) as total')
+            ->groupBy('user_id')
+            ->orderByDesc(DB::raw('SUM(amount)'))
+            ->paginate(20)
+            ->withQueryString();
+
+        $userIds = $members->getCollection()->pluck('user_id')->filter()->values()->all();
+
+        $users = User::query()
+            ->with(['parrain:id,name,sponsor_id'])
+            ->whereIn('id', $userIds)
+            ->select(['id', 'name', 'sponsor_id', 'parrain_id', 'rank_level', 'rank'])
+            ->get()
+            ->keyBy('id');
+
+        $pvByUser = [];
+        if ($selectedPeriod && $userIds !== []) {
+            $pvByUser = PVHistory::query()
+                ->whereIn('user_id', $userIds)
+                ->where('period', $selectedPeriod)
+                ->select('user_id', DB::raw('SUM(amount) as total_pv'))
+                ->groupBy('user_id')
+                ->pluck('total_pv', 'user_id')
+                ->toArray();
+        }
+
+        $paidByUser = [];
+        if ($userIds !== []) {
+            $paidQuery = Withdrawal::query()
+                ->where('status', 'completed')
+                ->whereIn('user_id', $userIds);
+
+            if ($selectedPeriod) {
+                try {
+                    $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
+                    $periodEnd = $periodStart->copy()->endOfMonth();
+                    $paidQuery->where(function ($q) use ($periodStart, $periodEnd) {
+                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
+                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
+                                $q2->whereNull('completed_at')
+                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
+                            });
+                    });
+                } catch (\Throwable) {
+                    // période invalide
+                }
+            }
+
+            $paidByUser = $paidQuery
+                ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+                ->groupBy('user_id')
+                ->pluck('total_paid', 'user_id')
+                ->toArray();
+        }
+
+        $members->setCollection(
+            $members->getCollection()->map(function ($row) use ($users, $pvByUser, $paidByUser, $selectedPeriod) {
+                $user = $users->get($row->user_id);
+                $pendingTotal = (float) ($row->pending_total ?? 0);
+                $walletTotal = (float) ($row->wallet_total ?? 0);
+                $total = (float) $row->total;
+                $paid = (float) ($paidByUser[$row->user_id] ?? 0);
+                $reste = max(0, $total - $paid);
+                $bonusTone = $pendingTotal > 0 ? 'pending' : ($walletTotal > 0 ? 'wallet' : 'neutral');
+
+                return (object) [
+                    'user_id' => (int) $row->user_id,
+                    'user' => $user,
+                    'code' => $user?->sponsor_id ?: '—',
+                    'name' => $user?->name ?? 'N/A',
+                    'grade' => $user?->rank_level ?? '—',
+                    'parrain_code' => $user?->parrain?->sponsor_id
+                        ?: ($user?->parrainSponsorCode() ?: '—'),
+                    'parrain_name' => $user?->parrain?->name ?: '—',
+                    'pv' => $selectedPeriod ? (float) ($pvByUser[$row->user_id] ?? 0) : null,
+                    'direct' => (float) $row->direct,
+                    'indirect' => (float) $row->indirect,
+                    'leadership' => (float) $row->leadership,
+                    'cash_pos' => (float) $row->cash_pos,
+                    'pending_total' => $pendingTotal,
+                    'wallet_total' => $walletTotal,
+                    'bonus_tone' => $bonusTone,
+                    'total' => $total,
+                    'paid' => $paid,
+                    'reste' => $reste,
+                ];
+            })
+        );
+
+        $commissions = $members;
+
+        $statsBase = Commission::query()->whereIn('type', $coreTypes);
+        if ($selectedPeriod) {
+            $statsBase->where('period', $selectedPeriod);
+        }
+
+        $withdrawnQuery = Withdrawal::query()->where('status', 'completed');
+        if ($selectedPeriod) {
+            try {
+                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
+                $periodEnd = $periodStart->copy()->endOfMonth();
+                $withdrawnQuery->where(function ($q) use ($periodStart, $periodEnd) {
+                    $q->whereBetween('completed_at', [$periodStart, $periodEnd])
+                        ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
+                            $q2->whereNull('completed_at')
+                                ->whereBetween('processed_at', [$periodStart, $periodEnd]);
+                        });
+                });
+            } catch (\Throwable) {
+                // période invalide
+            }
+        }
+
         $stats = [
-            'total_commissions' => Commission::whereNotIn('type', $excludedTypes)->sum('amount'),
-            'paid_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'paid')->sum('amount'),
-            'pending_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'pending')->sum('amount'),
-            'approved_commissions' => Commission::whereNotIn('type', $excludedTypes)->where('status', 'approved')->sum('amount'),
-            'total_members' => Commission::whereNotIn('type', $excludedTypes)->distinct('user_id')->count('user_id'),
-            'pos_total' => Commission::where('source', 'pos')->whereNotIn('type', $excludedTypes)->sum('amount'),
-            'mlm_total' => Commission::where('source', 'mlm')->whereNotIn('type', $excludedTypes)->sum('amount'),
+            'total_wallet' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
+            'total_paid_out' => (float) $withdrawnQuery->sum('amount'),
+            'total_pending' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
+            'member_count' => $members->total(),
+            // compat anciennes clés
+            'total_commissions' => (clone $statsBase)->sum('amount'),
+            'paid_commissions' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
+            'pending_commissions' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
+            'total_members' => $members->total(),
         ];
-        
-        $members = User::whereHas('commissions', function($q) use ($excludedTypes) {
-            $q->whereNotIn('type', $excludedTypes);
-        })->get(['id', 'name', 'sponsor_id']);
-        
-        $types = Commission::whereNotIn('type', $excludedTypes)->distinct()->pluck('type');
-        $sources = ['pos' => 'POS', 'mlm' => 'MLM', 'membership' => 'Adhésion'];
-        $statuses = ['pending' => 'En attente', 'approved' => 'Approuvée', 'paid' => 'Payée', 'rejected' => 'Rejetée', 'cancelled' => 'Annulée'];
-        
+
+        $types = collect($coreTypes);
+        $statuses = [
+            'pending' => 'En attente',
+            'paid' => 'En portefeuille',
+            'cancelled' => 'Annulé',
+        ];
+
         return view('cashier.commission-fixed', compact(
-            'commissions', 
-            'stats', 
-            'members', 
-            'types', 
-            'sources', 
-            'statuses'
+            'commissions',
+            'members',
+            'stats',
+            'types',
+            'statuses',
+            'periods',
+            'selectedPeriod'
         ));
     }
 
     /**
-     * Détails d'une commission
+     * Détail des commissions d’un membre (même structure que l’admin).
+     */
+    public function commissionsMemberShow(Request $request, int $user)
+    {
+        $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
+        $member = User::query()
+            ->with(['parrain:id,name,sponsor_id'])
+            ->findOrFail($user);
+
+        $query = Commission::query()
+            ->with(['fromUser:id,name,sponsor_id,rank_level', 'period'])
+            ->where('user_id', $member->id)
+            ->whereIn('type', $coreTypes);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('period') && $request->period !== 'all') {
+            $query->where('period', $request->period);
+        }
+
+        $commissions = $query
+            ->orderByRaw("CASE type WHEN 'direct' THEN 1 WHEN 'indirect' THEN 2 WHEN 'leadership' THEN 3 WHEN 'cash_pos' THEN 4 ELSE 5 END")
+            ->orderByDesc('created_at')
+            ->orderBy('id')
+            ->get();
+
+        if ($commissions->isEmpty()) {
+            return redirect()
+                ->route('cashier.commissions', $request->only(['search', 'type', 'status', 'period']))
+                ->with('info', 'Aucune commission pour ce membre avec ces filtres.');
+        }
+
+        $selectedPeriod = $request->filled('period') && $request->period !== 'all'
+            ? (string) $request->period
+            : (
+                $commissions->pluck('period')->filter()->unique()->count() === 1
+                    ? (string) $commissions->pluck('period')->filter()->first()
+                    : null
+            );
+
+        $pv = $selectedPeriod
+            ? (float) PVHistory::query()
+                ->where('user_id', $member->id)
+                ->where('period', $selectedPeriod)
+                ->sum('amount')
+            : null;
+
+        $summary = [
+            'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
+            'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
+            'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
+            'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
+            'total' => (float) $commissions->sum('amount'),
+            'line_count' => $commissions->count(),
+            'pv' => $pv,
+            'pv_period' => $selectedPeriod,
+            'grade' => $member->rank_level ?? '—',
+            'pending_amount' => (float) $commissions->whereIn('status', ['pending', 'approved'])->sum('amount'),
+            'paid_amount' => (float) $commissions->where('status', 'paid')->sum('amount'),
+        ];
+
+        $backQuery = $request->only(['search', 'type', 'status', 'period', 'page']);
+
+        return view('cashier.commissions.member-show', compact(
+            'member',
+            'commissions',
+            'summary',
+            'backQuery'
+        ));
+    }
+
+    /**
+     * PDF détaillé des commissions d’un membre.
+     */
+    public function exportMemberCommissionPdf(Request $request, int $user)
+    {
+        try {
+            $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
+            $bonusOrder = $coreTypes;
+            $member = User::query()
+                ->with(['package', 'parrain:id,name'])
+                ->findOrFail($user);
+
+            $period = ($request->filled('period') && $request->period !== 'all')
+                ? (string) $request->period
+                : 'all';
+
+            $query = Commission::query()
+                ->with(['fromUser:id,name,sponsor_id'])
+                ->where('user_id', $member->id)
+                ->whereIn('type', $coreTypes);
+
+            if ($request->filled('type')) {
+                $query->where('type', $request->type);
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($period !== 'all') {
+                $query->where('period', $period);
+            }
+
+            $commissions = $query
+                ->orderByRaw("CASE type WHEN 'direct' THEN 1 WHEN 'indirect' THEN 2 WHEN 'leadership' THEN 3 WHEN 'cash_pos' THEN 4 ELSE 5 END")
+                ->orderBy('id')
+                ->get();
+
+            if ($commissions->isEmpty()) {
+                return back()->with('error', 'Aucune commission à exporter pour ce membre.');
+            }
+
+            if ($period === 'all') {
+                $uniquePeriods = $commissions->pluck('period')->filter()->unique();
+                if ($uniquePeriods->count() === 1) {
+                    $period = (string) $uniquePeriods->first();
+                }
+            }
+
+            $totals = [
+                'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
+                'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
+                'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
+                'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
+                'total' => (float) $commissions->sum('amount'),
+            ];
+
+            $periodPV = ($period !== 'all')
+                ? (float) PVHistory::query()
+                    ->where('user_id', $member->id)
+                    ->where('period', $period)
+                    ->sum('amount')
+                : 0;
+
+            $detailsByType = [];
+            $totalsByType = [];
+            foreach ($bonusOrder as $type) {
+                $detailsByType[$type] = [];
+                $totalsByType[$type] = 0.0;
+            }
+
+            foreach ($commissions as $item) {
+                $type = $item->type;
+                if (! isset($detailsByType[$type])) {
+                    continue;
+                }
+                $amount = (float) $item->amount;
+                $detailsByType[$type][] = [
+                    'type' => $type,
+                    'from_user_code' => $item->fromUser?->sponsor_id ?? '—',
+                    'from_user' => $item->fromUser?->name ?? 'N/A',
+                    'amount' => $amount,
+                    'percentage' => $item->percentage,
+                    'pv_used' => $item->pv_used,
+                    'generation' => $item->generation,
+                    'description' => Str::limit((string) ($item->description ?? ''), 45),
+                ];
+                $totalsByType[$type] += $amount;
+            }
+
+            $beneficiaires = [[
+                'name' => $member->name,
+                'id' => $member->id,
+                'total' => $totals['total'],
+                'details_by_type' => $detailsByType,
+                'totals_by_type' => $totalsByType,
+            ]];
+
+            $code = $member->sponsor_id ?: $member->id;
+            $periodSlug = $period === 'all' ? 'toutes' : $period;
+
+            return $this->downloadPdfView(
+                'admin.pv.commission-pdf',
+                [
+                    'period' => $period,
+                    'commissionsCount' => $commissions->count(),
+                    'totals' => $totals,
+                    'beneficiaires' => $beneficiaires,
+                    'user' => $member,
+                    'userId' => $member->id,
+                    'periodPV' => $periodPV,
+                    'logoBase64' => $this->loadPdfLogoBase64(),
+                    'date_generated' => now()->format('d/m/Y H:i'),
+                    'bonusOrder' => $bonusOrder,
+                    'bonusLabels' => [
+                        'direct' => 'Direct Bonus',
+                        'indirect' => 'Indirect Bonus',
+                        'leadership' => 'Leadership Bonus',
+                        'cash_pos' => 'Cash POS Bonus',
+                    ],
+                ],
+                "rapport_commissions_{$code}_{$periodSlug}.pdf",
+                'a4',
+                'portrait',
+                300,
+                '1024M'
+            );
+        } catch (\Throwable $e) {
+            $this->logPdfFailure('cashier.commissions.exportMemberPDF', $e, ['user' => $user]);
+
+            return back()->with('error', 'Erreur lors de la génération du PDF membre.');
+        }
+    }
+
+    /**
+     * Ancienne fiche unitaire → détail membre.
      */
     public function commissionShow($id)
     {
-        $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
+        $commission = Commission::query()
+            ->select(['id', 'user_id', 'period'])
+            ->findOrFail($id);
 
-        $commission = Commission::with([
-            'user:id,name,sponsor_id,email,phone,is_active,user_type',
-            'fromUser:id,name,sponsor_id',
-            'order:id,order_number,total,subtotal,source,status,created_at,user_id',
-            'order.user:id,name',
-        ])->findOrFail($id);
-
-        $member = $commission->user;
-        $order = $commission->order;
-        $saleTotal = (float) ($order?->total ?? $order?->subtotal ?? 0);
-        $commissionAmount = (float) ($commission->amount ?? 0);
-        $companyShare = $saleTotal > 0 ? max(0, $saleTotal - $commissionAmount) : null;
-
-        $typeLabel = $commission->type === 'cash_pos'
-            ? 'POS'
-            : ($commission->type_label ?? ucfirst(str_replace('_', ' ', (string) $commission->type)));
-
-        $similarCommissions = Commission::with(['order:id,order_number'])
-            ->where('user_id', $commission->user_id)
-            ->where('id', '!=', $id)
-            ->whereNotIn('type', $excludedTypes)
-            ->orderByDesc('created_at')
-            ->limit(8)
-            ->get();
-
-        $memberPaidTotal = Commission::where('user_id', $commission->user_id)
-            ->where('status', 'paid')
-            ->whereNotIn('type', $excludedTypes)
-            ->sum('amount');
-
-        return view('cashier.commissions-show', compact(
-            'commission',
-            'member',
-            'order',
-            'saleTotal',
-            'commissionAmount',
-            'companyShare',
-            'typeLabel',
-            'similarCommissions',
-            'memberPaidTotal'
-        ));
+        return redirect()->route(
+            'cashier.commissions.member',
+            array_filter([
+                'user' => $commission->user_id,
+                'period' => $commission->period,
+            ])
+        );
     }
 
     /**

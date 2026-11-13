@@ -709,21 +709,17 @@ body {
         <div class="admin-title-banner__tools admin-title-banner__tools--commission-history">
             @if($selectedPeriod)
                 <a href="{{ url('/admin/pv/commission-history/' . $selectedPeriod . '/pdf?user_id=' . $userId) }}"
-                   class="btn btn-primary btn-sm btn-round-icon"
+                   class="btn btn-sm btn-round-icon btn-pdf-icon"
                    title="Rapport détaillé"
                    aria-label="Rapport détaillé">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
+                    <x-pdf-icon size="lg" />
                 </a>
                 <a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}"
-                   class="btn btn-danger btn-sm btn-round-icon"
+                   class="btn btn-sm btn-round-icon btn-pdf-icon"
                    target="_blank"
                    title="Rapport global"
                    aria-label="Rapport global">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                    <x-pdf-icon size="lg" />
                 </a>
             @endif
             <a href="{{ route('admin.pv.import.index') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">

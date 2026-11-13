@@ -22,6 +22,7 @@
         color: var(--text-primary);
         font-size: 0.8125rem;
     }
+
 </style>
 @endpush
 
@@ -128,6 +129,14 @@
                         </a>
                     </div>
                 </div>
+                @if($selectedPeriod && ($stats['all'] ?? 0) > 0)
+                    <a href="{{ route('cashier.offline-bonus.pay.global-pdf', ['period' => $selectedPeriod]) }}"
+                       class="admin-banner-icon-btn btn-pdf-icon"
+                       title="Rapport global"
+                       aria-label="Rapport global">
+                        <x-pdf-icon size="lg" />
+                    </a>
+                @endif
                 <a href="{{ route('cashier.guichet.index') }}"
                    class="btn btn-primary btn-sm btn-round-icon" title="Retraits guichet" aria-label="Retraits guichet">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -223,6 +232,14 @@
                     </a>
                 </div>
             </div>
+            @if($selectedPeriod && ($stats['all'] ?? 0) > 0)
+                <a href="{{ route('cashier.offline-bonus.pay.global-pdf', ['period' => $selectedPeriod]) }}"
+                   class="btn btn-outline btn-sm"
+                   title="Rapport global">
+                    <x-pdf-icon />
+                    Rapport Global
+                </a>
+            @endif
             <a href="{{ route('cashier.guichet.index') }}"
                class="btn btn-primary btn-sm btn-round-icon"
                title="Retraits guichet"

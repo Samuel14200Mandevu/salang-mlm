@@ -1098,6 +1098,59 @@
     opacity: 0.95;
   }
 
+  .member-app .member-fintech-hero__bonus-month {
+    margin: 0.2rem 0 0;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: rgba(248, 250, 252, 0.55);
+  }
+
+  .member-app .member-fintech-hero__bonus-block {
+    position: relative;
+    z-index: 1;
+    margin-top: 0.55rem;
+  }
+
+  .member-app .member-fintech-hero__bonus-block-head {
+    position: static;
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 0 0 0.45rem;
+    padding: 0 0.55rem 0 0;
+  }
+
+  .member-app .member-fintech-hero__privacy-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+    cursor: pointer;
+  }
+
+  .member-app .member-fintech-hero__privacy-toggle svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .member-app .member-fintech-hero__privacy-toggle:active {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .member-app .member-fintech-hero.is-amounts-hidden [data-bonus-amount] {
+    filter: blur(7px);
+    user-select: none;
+    pointer-events: none;
+  }
+
   .member-app .member-fintech-hero__pnl-row {
     position: relative;
     z-index: 1;
@@ -1111,12 +1164,27 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .member-app .member-fintech-hero__bonus-block .member-fintech-hero__pnl-row {
+    margin-top: 0;
+  }
+
   .member-app .member-fintech-hero__pnl {
     display: flex;
     flex-direction: column;
     gap: 0.12rem;
     min-width: 0;
     padding: 0 0.15rem;
+  }
+
+  .member-app .member-fintech-hero__pnl-row--bonus a.member-fintech-hero__pnl {
+    text-decoration: none;
+    color: inherit;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+
+  .member-app .member-fintech-hero__pnl-row--bonus a.member-fintech-hero__pnl:active {
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .member-app .member-fintech-hero__pnl-label {

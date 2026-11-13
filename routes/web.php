@@ -243,6 +243,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::prefix('wallet')->name('wallet.')->group(function () {
         Route::get('/', [WalletController::class, 'index'])->name('index');
         Route::get('/transactions', [WalletController::class, 'transactions'])->name('transactions');
+        Route::get('/transactions/{id}', [WalletController::class, 'showTransaction'])->name('transactions.show');
         Route::get('/export', [WalletController::class, 'export'])->name('export');
         Route::get('/deposit', [WalletController::class, 'deposit'])->name('deposit');
         Route::post('/deposit', [WalletController::class, 'storeDeposit'])->name('deposit.store');
@@ -480,7 +481,10 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::get('/commissions', [CashierController::class, 'commissions'])->name('commissions');
     Route::get('/commissions/export', [CashierController::class, 'exportCommissions'])->name('commissions.export');
     Route::get('/commissions/export-pdf', [CashierController::class, 'exportPdf'])->name('commissions.export-pdf');
+    Route::get('/commissions/export-global-pdf', [CashierController::class, 'exportGlobalCommissionPdf'])->name('commissions.export-global-pdf');
     Route::get('/commissions/stats', [CashierController::class, 'commissionsStats'])->name('commissions.stats');
+    Route::get('/commissions/member/{user}', [CashierController::class, 'commissionsMemberShow'])->name('commissions.member');
+    Route::get('/commissions/member/{user}/pdf', [CashierController::class, 'exportMemberCommissionPdf'])->name('commissions.member.pdf');
     Route::get('/commissions/{id}', [CashierController::class, 'commissionShow'])->name('commissions.show');
     Route::post('/commissions/{id}/approve', [CashierController::class, 'approveCommission'])->name('commissions.approve');
     Route::post('/commissions/{id}/reject', [CashierController::class, 'rejectCommission'])->name('commissions.reject');
@@ -493,6 +497,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::get('/calculate', [OfflineBonusController::class, 'calculateIndex'])->name('calculate');
         Route::post('/calculate', [OfflineBonusController::class, 'calculate'])->name('calculate.run');
         Route::get('/pay', [OfflineBonusController::class, 'payIndex'])->name('pay');
+        Route::get('/pay/global-pdf', [OfflineBonusController::class, 'exportGlobalPdf'])->name('pay.global-pdf');
         Route::get('/pay/{userId}', [OfflineBonusController::class, 'payShow'])->name('pay.show');
         Route::post('/pay-period', [OfflineBonusController::class, 'payPeriod'])->name('pay.period');
         Route::post('/pay-member/{userId}', [OfflineBonusController::class, 'payMember'])->name('pay.member');
@@ -504,6 +509,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::get('/export-daily-pdf', [GuichetWithdrawalController::class, 'exportDailyPdf'])->name('export-daily-pdf');
         Route::get('/{id}', [GuichetWithdrawalController::class, 'show'])->name('show');
         Route::post('/{id}/fulfill', [GuichetWithdrawalController::class, 'fulfill'])->name('fulfill');
+        Route::post('/{id}/cancel', [GuichetWithdrawalController::class, 'cancel'])->name('cancel');
     });
     
     // Ventes du jour
@@ -819,6 +825,8 @@ Route::prefix('pv')->name('pv.')->group(function () {
             });
 
             // ROUTES DYNAMIQUES 
+            Route::get('/member/{user}', [AdminCommissionController::class, 'memberShow'])->name('member');
+            Route::get('/member/{user}/pdf', [AdminCommissionController::class, 'exportMemberPDF'])->name('member.pdf');
             Route::get('/{id}', [AdminCommissionController::class, 'show'])->name('show');
             Route::post('/{id}/approve', [AdminCommissionController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [AdminCommissionController::class, 'reject'])->name('reject');

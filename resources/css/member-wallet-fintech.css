@@ -446,6 +446,13 @@
     color: #ef4444;
   }
 
+  .member-app .member-wallet--fintech a.member-fintech-tx,
+  .member-app .member-deposit--fintech a.member-fintech-tx {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
   .member-app .member-wallet-feed-pagination {
     margin-top: 0.65rem;
     padding-top: 0.5rem;

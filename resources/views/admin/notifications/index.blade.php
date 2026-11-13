@@ -28,6 +28,14 @@
     text-decoration: none;
 }
 .users-filter-menu a:hover { background: var(--bg-secondary); }
+
+/* Un seul bouton « Tout supprimer » visible selon l’écran */
+.notif-destroy-desktop-only { display: none !important; }
+.notif-destroy-mobile-only { display: inline-flex !important; }
+@media (min-width: 768px) {
+    .notif-destroy-mobile-only { display: none !important; }
+    .notif-destroy-desktop-only { display: inline-flex !important; }
+}
 .users-filter-menu a.is-active {
     background: color-mix(in srgb, var(--primary) 12%, transparent);
     color: var(--primary);
@@ -108,11 +116,15 @@
                 </div>
 
                 @if(($totalCount ?? 0) > 0)
-                    <form action="{{ route('admin.notifications.destroy-all') }}" method="POST" class="inline-flex"
-                          onsubmit="return confirm('Supprimer toutes les alertes ?');">
+                    <form action="{{ route('admin.notifications.destroy-all') }}"
+                          method="POST"
+                          class="inline-flex notifications-destroy-all-form notif-destroy-mobile-only">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-outline btn-sm btn-round-icon" title="Tout supprimer" aria-label="Tout supprimer">
+                        <button type="button"
+                                class="btn btn-outline btn-sm btn-round-icon notifications-destroy-all-btn"
+                                title="Tout supprimer"
+                                aria-label="Tout supprimer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
@@ -196,11 +208,15 @@
             </div>
 
             @if(($totalCount ?? 0) > 0)
-                <form action="{{ route('admin.notifications.destroy-all') }}" method="POST" class="inline-flex"
-                      onsubmit="return confirm('Supprimer toutes les alertes ?');">
+                <form action="{{ route('admin.notifications.destroy-all') }}"
+                      method="POST"
+                      class="inline-flex notifications-destroy-all-form notif-destroy-desktop-only">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-outline btn-sm btn-round-icon" title="Tout supprimer" aria-label="Tout supprimer">
+                    <button type="button"
+                            class="btn btn-outline btn-sm btn-round-icon notifications-destroy-all-btn"
+                            title="Tout supprimer"
+                            aria-label="Tout supprimer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
@@ -307,4 +323,41 @@
         @endif
     </section>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function openDestroyAllDialog(form) {
+        if (!form || typeof window.showConfirmDialog !== 'function') return;
+
+        window.showConfirmDialog({
+            type: 'danger',
+            title: 'Supprimer toutes les alertes',
+            message: 'Cette action est définitive. Toutes les notifications seront effacées.',
+            confirmText: 'Tout supprimer',
+            onConfirm: function () {
+                if (typeof window.closeConfirmDialog === 'function') {
+                    window.closeConfirmDialog();
+                }
+                form.submit();
+            },
+            form: form
+        });
+    }
+
+    document.querySelectorAll('.notifications-destroy-all-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openDestroyAllDialog(btn.closest('form'));
+        });
+    });
+
+    document.querySelectorAll('.notifications-destroy-all-form').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            openDestroyAllDialog(form);
+        });
+    });
+});
+</script>
+@endpush
 @endsection

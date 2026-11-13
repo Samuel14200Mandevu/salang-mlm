@@ -42,7 +42,7 @@
         </div>
         <div class="commissions-search-meta">
             <span id="resultCountMobile">{{ $commissions->total() ?? 0 }} commissions</span>
-            <a href="{{ route('commissions.export-pdf', request()->all()) }}" class="commissions-search-pdf" target="_blank" rel="noopener">Exporter PDF</a>
+            <a href="{{ route('commissions.export-pdf', request()->all()) }}" class="commissions-search-pdf inline-flex items-center gap-1.5" target="_blank" rel="noopener"><x-pdf-icon class="w-4 h-4" /> Exporter PDF</a>
         </div>
     </div>
 </div>

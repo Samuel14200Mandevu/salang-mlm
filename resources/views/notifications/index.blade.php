@@ -102,18 +102,18 @@
                 </div>
             </div>
 
-            @if(($unreadCount ?? 0) > 0)
-                <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="btn btn-primary btn-sm">Tout marquer lu</button>
-                </form>
-            @endif
             @if(($totalCount ?? 0) > 0)
-                <form action="{{ route('notifications.destroy-all') }}" method="POST" class="inline"
-                      onsubmit="return confirm('Supprimer toutes les notifications ?');">
+                <form action="{{ route('notifications.destroy-all') }}"
+                      method="POST"
+                      class="inline"
+                      id="notificationsDestroyAllForm">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-outline btn-sm">Tout supprimer</button>
+                    <button type="button"
+                            id="notificationsDestroyAllBtn"
+                            class="btn btn-outline btn-sm">
+                        Tout supprimer
+                    </button>
                 </form>
             @endif
         </div>
@@ -207,6 +207,46 @@ document.addEventListener('DOMContentLoaded', function () {
             setPanel(filterPanel, filterToggle, open);
             if (open) setPanel(searchPanel, searchToggle, false);
             if (head) head.classList.toggle('is-filters-open', open || (searchPanel && searchPanel.classList.contains('is-open')));
+        });
+    }
+
+    var destroyAllForm = document.getElementById('notificationsDestroyAllForm');
+    var destroyAllBtn = document.getElementById('notificationsDestroyAllBtn');
+
+    function openDestroyAllDialog() {
+        if (!destroyAllForm) return;
+
+        if (typeof window.showConfirmDialog !== 'function') {
+            console.error('showConfirmDialog indisponible');
+            return;
+        }
+
+        window.showConfirmDialog({
+            type: 'danger',
+            title: 'Supprimer toutes les notifications',
+            message: 'Cette action est définitive. Toutes vos notifications seront effacées.',
+            confirmText: 'Tout supprimer',
+            onConfirm: function () {
+                if (typeof window.closeConfirmDialog === 'function') {
+                    window.closeConfirmDialog();
+                }
+                destroyAllForm.submit();
+            },
+            form: destroyAllForm
+        });
+    }
+
+    if (destroyAllBtn) {
+        destroyAllBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openDestroyAllDialog();
+        });
+    }
+
+    if (destroyAllForm) {
+        destroyAllForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            openDestroyAllDialog();
         });
     }
 });
