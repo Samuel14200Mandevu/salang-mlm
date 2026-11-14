@@ -439,9 +439,9 @@
                     </div>
 
                     <span class="offline-calc-help">
-                        Disponible après le calcul du mois. Utile après rattachement d’un parrain :
-                        recalcule Direct / Indirect / Leadership pour le membre et sa chaîne.
-                        Les membres sans PV sur la période sont ignorés.
+                        Disponible après le calcul du mois. Utile après rattachement d’un parrain
+                        ou suppression de PV : recalcule Direct / Indirect / Leadership pour le membre
+                        et sa chaîne. Sans PV, les anciennes lignes D/I/L du membre sont retirées.
                     </span>
 
                     <div class="offline-calc-footer">

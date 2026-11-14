@@ -68,8 +68,29 @@ class PeriodCommissionCalculator
             ->pluck('total_pv', 'user_id')
             ->toArray();
 
+        // Sans PV : supprimer les D/I/L orphelins (ex. PV effacés puis recalcul).
         if (empty($pvByUser)) {
+            $orphanQuery = Commission::query()
+                ->where('commission_period_id', $period->id)
+                ->whereIn('type', ['direct', 'indirect', 'leadership']);
+
+            if ($userId) {
+                $orphanQuery->where('user_id', $userId);
+            }
+
+            $orphanQuery->delete();
+
             return ['created' => 0, 'total_amount' => 0];
+        }
+
+        // Calcul mois entier : retirer aussi les D/I/L des membres qui n’ont plus de PV.
+        if ($userId === null) {
+            $userIdsWithPv = array_map('intval', array_keys($pvByUser));
+            Commission::query()
+                ->where('commission_period_id', $period->id)
+                ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->whereNotIn('user_id', $userIdsWithPv)
+                ->delete();
         }
 
         $totalCreated = 0;
