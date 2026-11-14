@@ -64,7 +64,7 @@ return [
         'show_leaders' => true,
         'show_max_banner' => false,
         'stats_set' => 'growth',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
         'welcome_ctas' => ['network', 'commissions'],
     ],
     5 => [
@@ -76,7 +76,7 @@ return [
         'show_leaders' => true,
         'show_max_banner' => false,
         'stats_set' => 'leader',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
         'welcome_ctas' => ['commissions', 'network'],
     ],
     6 => [
@@ -88,8 +88,8 @@ return [
         'show_leaders' => true,
         'show_max_banner' => false,
         'stats_set' => 'leader',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
-        'welcome_ctas' => ['network', 'wallet'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
+        'welcome_ctas' => ['network', 'packages'],
     ],
     7 => [
         'gradient' => '#1e3485', // saphire manager.png — saphir
@@ -100,7 +100,7 @@ return [
         'show_leaders' => true,
         'show_max_banner' => false,
         'stats_set' => 'leader',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
         'welcome_ctas' => ['grades', 'commissions'],
     ],
     8 => [
@@ -112,7 +112,7 @@ return [
         'show_leaders' => true,
         'show_max_banner' => false,
         'stats_set' => 'leader',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
         'welcome_ctas' => ['network', 'grades'],
     ],
     9 => [
@@ -124,7 +124,7 @@ return [
         'show_leaders' => true,
         'show_max_banner' => true,
         'stats_set' => 'leader',
-        'quick_actions' => ['network', 'commissions', 'wallet', 'grades'],
+        'quick_actions' => ['network', 'orders', 'packages', 'grades'],
         'welcome_ctas' => ['commissions', 'network'],
     ],
 ];

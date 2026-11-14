@@ -49,7 +49,7 @@ class DashboardController extends Controller
     /**
      * Afficher le tableau de bord selon le niveau
      */
-    public function index()
+    public function index(Request $request)
     {
         // RÉCUPÉRER L'UTILISATEUR AVEC SES RELATIONS
         $user = Auth::user();
@@ -409,19 +409,30 @@ class DashboardController extends Controller
         $data['dashboardLevelNumber'] = $dashboardLevelNumber;
         $data['currentRankBadgeClass'] = MlmRank::badgeClass($currentRankLevel);
 
-        // Bonus du mois sélectionné dans Portefeuille → Détail des bonus (sans POS)
-        $bonusMonths = $this->commissionBreakdown->bonusMonthOptions();
+        // Bonus : mois en cours + 3 précédents (4 derniers), sans POS
+        $bonusMonths = array_slice(
+            $this->commissionBreakdown->bonusMonthOptions(),
+            -4,
+            4,
+            true
+        );
         $defaultBonusMonth = array_key_last($bonusMonths) ?: '';
-        $sessionBonusMonth = (string) session('wallet_bonus_month', '');
-        $bonusMonth = array_key_exists($sessionBonusMonth, $bonusMonths)
-            ? $sessionBonusMonth
-            : $defaultBonusMonth;
+        $sessionBonusMonth = (string) $request->session()->get('wallet_bonus_month', '');
+        $bonusMonth = (string) $request->query(
+            'bonus_month',
+            array_key_exists($sessionBonusMonth, $bonusMonths) ? $sessionBonusMonth : $defaultBonusMonth
+        );
+        if (! array_key_exists($bonusMonth, $bonusMonths)) {
+            $bonusMonth = $defaultBonusMonth;
+        }
+        $request->session()->put('wallet_bonus_month', $bonusMonth);
         $bonusByType = collect($this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null))
             ->except('cash_pos')
             ->all();
         $bonusTotal = (float) collect($bonusByType)->sum('total');
 
         $data['bonusByType'] = $bonusByType;
+        $data['bonusMonths'] = $bonusMonths;
         $data['bonusMonth'] = $bonusMonth;
         $data['bonusMonthLabel'] = $bonusMonths[$bonusMonth] ?? $bonusMonth;
         $data['bonusTotal'] = $bonusTotal;

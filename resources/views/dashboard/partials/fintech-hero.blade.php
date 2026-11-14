@@ -27,7 +27,9 @@
 
     $bonusByType = $bonusByType ?? [];
     $bonusTotal = (float) ($bonusTotal ?? collect($bonusByType)->sum('total'));
+    $bonusMonth = $bonusMonth ?? '';
     $bonusMonthLabel = $bonusMonthLabel ?? '';
+    $bonusMonths = $bonusMonths ?? [];
     $bonusRows = [
         'direct' => $bonusByType['direct'] ?? ['label' => 'Direct', 'total' => 0],
         'indirect' => $bonusByType['indirect'] ?? ['label' => 'Indirect', 'total' => 0],
@@ -43,6 +45,9 @@
     <div class="member-fintech-hero__top">
         <div class="member-fintech-hero__user">
             <p class="member-fintech-hero__hello">{{ $greeting }}, {{ $firstName }}</p>
+            @if(!empty($currentRankName))
+                <p class="member-fintech-hero__grade">Grade {{ $currentRankName }}</p>
+            @endif
         </div>
         <div class="member-fintech-hero__tools">
             <a href="{{ route('commissions.index') }}" class="member-fintech-hero__tool" aria-label="Commissions">
@@ -119,20 +124,7 @@
                     <span class="member-dashboard-hero__badge-sheen"></span>
                 </div>
             </div>
-            <span class="sr-only">Grade {{ $currentRankName }}</span>
         @endif
-        <div class="member-dashboard-hero__pv">
-            <p class="member-fintech-hero__label">Total bonus</p>
-            <p class="member-fintech-hero__balance" data-bonus-amount>
-                <span class="member-fintech-hero__currency">$</span><span
-                    data-count-up="{{ $bonusTotal }}"
-                    data-count-decimals="2"
-                >{{ number_format($bonusTotal, 2) }}</span>
-            </p>
-            @if($bonusMonthLabel)
-                <p class="member-fintech-hero__bonus-month">{{ $bonusMonthLabel }}</p>
-            @endif
-        </div>
         @if(! $rankImageUrl && $sparkLine)
             <svg class="member-fintech-hero__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
@@ -149,6 +141,37 @@
 
     <div class="member-fintech-hero__bonus-block" data-bonus-privacy>
         <div class="member-fintech-hero__bonus-block-head">
+            <div class="member-fintech-hero__bonus-total">
+                <p class="member-fintech-hero__label">Total bonus</p>
+                <p class="member-fintech-hero__balance member-fintech-hero__balance--compact" data-bonus-amount>
+                    <span class="member-fintech-hero__currency">$</span><span
+                        data-count-up="{{ $bonusTotal }}"
+                        data-count-decimals="2"
+                    >{{ number_format($bonusTotal, 2) }}</span>
+                </p>
+                @if($bonusMonthLabel)
+                    @if(!empty($bonusMonths))
+                        <div class="member-fintech-hero__month-picker" data-bonus-month-picker>
+                            <button
+                                type="button"
+                                class="member-fintech-hero__bonus-month member-fintech-hero__month-trigger"
+                                data-bonus-month-trigger
+                                aria-expanded="false"
+                                aria-haspopup="dialog"
+                                aria-controls="bonus-month-sheet"
+                                id="bonus-month-trigger"
+                            >
+                                <span>{{ $bonusMonthLabel }}</span>
+                                <svg class="member-fintech-hero__month-chevron" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @else
+                        <p class="member-fintech-hero__bonus-month">{{ $bonusMonthLabel }}</p>
+                    @endif
+                @endif
+            </div>
             <button
                 type="button"
                 class="member-fintech-hero__privacy-toggle"
@@ -186,6 +209,48 @@
     </div>
 </section>
 
+@if(!empty($bonusMonths))
+    <div
+        id="bonus-month-sheet"
+        class="member-fintech-hero__month-sheet"
+        data-bonus-month-sheet
+        hidden
+    >
+        <button
+            type="button"
+            class="member-fintech-hero__month-sheet-backdrop"
+            data-bonus-month-backdrop
+            aria-label="Fermer"
+        ></button>
+        <div
+            class="member-fintech-hero__month-sheet-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bonus-month-sheet-title"
+        >
+            <div class="member-fintech-hero__month-sheet-handle" aria-hidden="true"></div>
+            <p id="bonus-month-sheet-title" class="member-fintech-hero__month-sheet-title">Choisir le mois</p>
+            <ul class="member-fintech-hero__month-sheet-list" role="listbox" aria-labelledby="bonus-month-sheet-title">
+                @foreach(array_reverse($bonusMonths, true) as $value => $label)
+                    <li role="option" aria-selected="{{ $bonusMonth === $value ? 'true' : 'false' }}">
+                        <a
+                            href="{{ route('dashboard', ['bonus_month' => $value]) }}"
+                            class="member-fintech-hero__month-option{{ $bonusMonth === $value ? ' is-selected' : '' }}"
+                        >
+                            <span>{{ $label }}</span>
+                            @if($bonusMonth === $value)
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+@endif
+
 <script>
 (function () {
     var root = document.querySelector('[data-bonus-privacy]');
@@ -213,6 +278,74 @@
 
     btn.addEventListener('click', function () {
         apply(!root.classList.contains('is-amounts-hidden'));
+    });
+})();
+
+(function () {
+    var picker = document.querySelector('[data-bonus-month-picker]');
+    var sheet = document.querySelector('[data-bonus-month-sheet]');
+    if (!picker || !sheet) return;
+    var trigger = picker.querySelector('[data-bonus-month-trigger]');
+    var backdrop = sheet.querySelector('[data-bonus-month-backdrop]');
+    if (!trigger) return;
+    var closing = false;
+
+    /* Au-dessus du menu bas (évite le clipping / stacking du shell) */
+    if (sheet.parentElement !== document.body) {
+        document.body.appendChild(sheet);
+    }
+
+    function setOpen(open) {
+        if (open) {
+            closing = false;
+            sheet.hidden = false;
+            picker.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('member-bonus-month-sheet-open');
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    sheet.classList.add('is-open');
+                });
+            });
+            return;
+        }
+
+        if (sheet.hidden || closing) return;
+        closing = true;
+        picker.classList.remove('is-open');
+        sheet.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('member-bonus-month-sheet-open');
+
+        var done = false;
+        function finish() {
+            if (done) return;
+            done = true;
+            closing = false;
+            sheet.hidden = true;
+        }
+
+        sheet.addEventListener('transitionend', function onEnd(e) {
+            if (e.target !== sheet.querySelector('.member-fintech-hero__month-sheet-panel')) return;
+            sheet.removeEventListener('transitionend', onEnd);
+            finish();
+        });
+        setTimeout(finish, 320);
+    }
+
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        setOpen(true);
+    });
+
+    if (backdrop) {
+        backdrop.addEventListener('click', function () {
+            setOpen(false);
+        });
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setOpen(false);
     });
 })();
 </script>

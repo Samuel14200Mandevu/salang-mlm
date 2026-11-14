@@ -4,7 +4,7 @@
             <p class="shop-catalog-banner__eyebrow">Salang MLM · Gains</p>
             <p class="shop-catalog-banner__title">Mes commissions</p>
             <p class="shop-catalog-banner__sub">
-                ${{ number_format($stats['total'] ?? 0, 2) }} gagné · ${{ number_format($stats['pending'] ?? 0, 2) }} en attente · {{ $stats['total_count'] ?? 0 }} ligne(s)
+                ${{ number_format($stats['paid'] ?? 0, 2) }} déjà retiré · ${{ number_format($stats['wallet_balance'] ?? 0, 2) }} portefeuille · {{ $stats['total_count'] ?? 0 }} ligne(s)
             </p>
         </div>
         <div class="shop-catalog-banner__tools">

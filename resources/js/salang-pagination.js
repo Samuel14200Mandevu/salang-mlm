@@ -113,7 +113,13 @@
         if (!MQ.matches) {
           return;
         }
-        if (e.target.closest('input, textarea, select, button, [data-no-page-swipe]')) {
+        // Boutons « ligne de liste » (ex. commissions) restent balayables ;
+        // seuls les vrais contrôles UI bloquent le swipe.
+        if (
+          e.target.closest(
+            'input, textarea, select, [data-no-page-swipe], button:not(.member-fintech-tx):not(.commission-row)'
+          )
+        ) {
           tracking = false;
           return;
         }
@@ -177,6 +183,10 @@
       bindHorizontalPageSwipe(barZone, (target) =>
         target.closest('[data-salang-pagination]') || resolveNav(barZone)
       );
+    });
+
+    root.querySelectorAll('[data-salang-page-swipe]').forEach((listZone) => {
+      bindHorizontalPageSwipe(listZone, (target) => resolveNav(target));
     });
 
     const zone =

@@ -6,10 +6,11 @@
         'team' => ['route' => 'network.index', 'label' => 'Équipe', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
         'network' => ['route' => 'network.index', 'label' => 'Réseau', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
         'commissions' => ['route' => 'commissions.index', 'label' => 'Gains', 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+        'orders' => ['route' => 'orders.index', 'label' => 'Mes commandes', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
         'wallet' => ['route' => 'wallet.index', 'label' => 'Wallet', 'icon' => 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
         'grades' => ['route' => 'rank.index', 'label' => 'Grade', 'icon' => 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z'],
     ];
-    $actions = $dashboardLevel['quick_actions'] ?? ['wallet', 'commissions', 'team', 'products'];
+    $actions = $dashboardLevel['quick_actions'] ?? ['packages', 'orders', 'team', 'products'];
     $actions = array_slice(array_unique($actions), 0, 5);
 @endphp
 <nav class="member-fintech-actions member-fintech-animate member-fintech-animate--d2" aria-label="Actions rapides">

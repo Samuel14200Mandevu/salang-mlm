@@ -15,8 +15,30 @@
         data-last-page="{{ $last }}"
     >
         <div class="salang-pagination salang-pagination--mobile md:hidden">
-            <div class="salang-pagination__home-bar" aria-hidden="true">
-                <span class="salang-pagination__home-thumb" data-salang-pagination-thumb></span>
+            <div class="salang-pagination__mobile-row">
+                @if ($paginator->onFirstPage())
+                    <span class="salang-pagination__mobile-btn is-disabled" aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    </span>
+                @else
+                    <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="salang-pagination__mobile-btn" aria-label="{{ __('pagination.previous') }}">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    </a>
+                @endif
+
+                <div class="salang-pagination__home-bar" aria-hidden="true">
+                    <span class="salang-pagination__home-thumb" data-salang-pagination-thumb></span>
+                </div>
+
+                @if ($paginator->hasMorePages())
+                    <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="salang-pagination__mobile-btn" aria-label="{{ __('pagination.next') }}">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                @else
+                    <span class="salang-pagination__mobile-btn is-disabled" aria-disabled="true" aria-label="{{ __('pagination.next') }}">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                @endif
             </div>
         </div>
 

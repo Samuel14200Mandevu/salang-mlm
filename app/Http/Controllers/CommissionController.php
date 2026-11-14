@@ -7,8 +7,11 @@ use App\Models\Commission;
 use App\Models\User;
 use App\Models\Package;
 use App\Models\CommissionPeriod;
+use App\Models\Withdrawal;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\UserCommissionDisplayService;
+use App\Services\WalletCommissionBreakdown;
+use App\Support\CareerQualificationPrizes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +27,8 @@ class CommissionController extends Controller
 
     public function __construct(
         MonthlyCommissionService $commissionService,
-        protected UserCommissionDisplayService $commissionDisplay
+        protected UserCommissionDisplayService $commissionDisplay,
+        protected WalletCommissionBreakdown $commissionBreakdown,
     ) {
         $this->commissionService = $commissionService;
     }
@@ -36,21 +40,52 @@ class CommissionController extends Controller
     {
         $user = Auth::user();
 
+        $bonusMonths = array_slice(
+            $this->commissionBreakdown->bonusMonthOptions(),
+            -4,
+            4,
+            true
+        );
+        $defaultBonusMonth = array_key_last($bonusMonths) ?: '';
+        $sessionBonusMonth = (string) $request->session()->get('wallet_bonus_month', '');
+        $bonusMonth = (string) $request->query(
+            'period',
+            array_key_exists($sessionBonusMonth, $bonusMonths) ? $sessionBonusMonth : $defaultBonusMonth
+        );
+        if ($bonusMonth !== '' && ! array_key_exists($bonusMonth, $bonusMonths)) {
+            $bonusMonth = $defaultBonusMonth;
+        }
+        if ($bonusMonth !== '') {
+            $request->session()->put('wallet_bonus_month', $bonusMonth);
+        }
+        $bonusMonthLabel = $bonusMonths[$bonusMonth] ?? $bonusMonth;
+
+        // Hub : Direct / Indirect / Leadership / POS (même payé cash)
+        $allowedTypes = array_keys(CareerQualificationPrizes::walletBonusTypes());
+        $selectedType = (string) $request->query('type', '');
+        if ($selectedType !== '' && ! in_array($selectedType, $allowedTypes, true)) {
+            $selectedType = '';
+        }
+
+        $bonusByType = $this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null);
+
         $query = Commission::where('user_id', $user->id)
             ->visibleToMember()
             ->with(['fromUser', 'package', 'product', 'period', 'order']);
 
         // Filtres
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        if ($selectedType !== '') {
+            $query->where('type', $selectedType);
+        } else {
+            $query->whereIn('type', $allowedTypes);
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('period')) {
-            $query->where('period', $request->period);
+        if ($bonusMonth !== '') {
+            $query->where('period', $bonusMonth);
         }
 
         if ($request->filled('date_from')) {
@@ -61,10 +96,17 @@ class CommissionController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $commissions = $query->orderBy('created_at', 'desc')->paginate(20);
+        $commissions = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         // Statistiques
         $stats = $this->getUserStats($user->id);
+        $user->loadMissing('wallet');
+        $stats['wallet_balance'] = (float) ($user->wallet?->balance ?? 0);
+        // « Payé » = déjà retiré (retraits complétés)
+        $stats['paid'] = (float) Withdrawal::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->sum('amount');
 
         // Distribution par type
         $byType = Commission::where('user_id', $user->id)
@@ -117,7 +159,7 @@ class CommissionController extends Controller
 
         // Périodes disponibles pour les filtres
         $periods = CommissionPeriod::visibleToMember()->orderBy('period', 'desc')->pluck('period');
-        $types = Commission::where('user_id', $user->id)->distinct()->pluck('type');
+        $types = collect($allowedTypes);
 
         return view('commissions.index', compact(
             'commissions',
@@ -125,7 +167,12 @@ class CommissionController extends Controller
             'byType',
             'monthly',
             'periods',
-            'types'
+            'types',
+            'bonusByType',
+            'bonusMonths',
+            'bonusMonth',
+            'bonusMonthLabel',
+            'selectedType',
         ));
     }
 
@@ -326,8 +373,8 @@ class CommissionController extends Controller
             ->where('status', 'paid')
             ->sum('amount');
         $levels[2] = [
-            'label' => 'Commission Directe',
-            'description' => 'Commission sur les achats des filleuls directs',
+            'label' => 'Bonus Direct',
+            'description' => 'Bonus sur vos achats personnels (PV du mois × taux MLM de votre grade)',
             'amount' => (float) $level2,
             'percentage' => $this->getUserCommissionRate($user, 2),
             'count' => Commission::where('user_id', $user->id)
@@ -482,14 +529,18 @@ class CommissionController extends Controller
             ->where('user_id', $user->id)
             ->findOrFail($id);
         
-        // Récupérer le PV et le prix depuis le package ou le produit
+        // PV / prix : bonus direct = PV perso de la période (pv_used) × taux grade
         $pv = 0;
         $price = 0;
         $itemName = 'N/A';
         $itemType = 'unknown';
         $quantity = 1;
-        
-        if ($commission->package) {
+
+        if ($commission->type === 'direct' && (float) ($commission->pv_used ?? 0) > 0) {
+            $pv = (float) $commission->pv_used;
+            $itemType = 'personal_pv';
+            $itemName = 'PV personnels du mois';
+        } elseif ($commission->package) {
             $pv = $commission->package->pv_value ?? 0;
             $price = $commission->package->price ?? 0;
             $itemName = $commission->package->name ?? 'N/A';
@@ -517,6 +568,8 @@ class CommissionController extends Controller
                     $quantity = $orderItem->quantity ?? 1;
                 }
             }
+        } elseif ((float) ($commission->pv_used ?? 0) > 0) {
+            $pv = (float) $commission->pv_used;
         }
         
         // Si le prix n'est pas trouvé, essayer de l'extraire de la description
@@ -532,12 +585,21 @@ class CommissionController extends Controller
             $price = ($commission->amount / $commission->percentage) * 100;
         }
         
+        $isPersonalDirect = $commission->type === 'direct'
+            && (
+                (int) ($commission->from_user_id ?? 0) === (int) $user->id
+                || $itemType === 'personal_pv'
+            );
+
         return response()->json([
             'id' => $commission->id,
             'type' => $commission->type,
             'amount' => number_format($commission->amount, 2),
             'percentage' => $commission->percentage ?? 0,
-            'from_user' => $commission->fromUser?->name ?? 'Systeme',
+            'from_user' => $isPersonalDirect
+                ? 'Achats personnels'
+                : ($commission->fromUser?->name ?? 'Systeme'),
+            'from_user_is_self' => $isPersonalDirect,
             'package_id' => $commission->package_id,
             'product_id' => $commission->product_id,
             'package_name' => $commission->package?->name ?? null,
@@ -545,6 +607,7 @@ class CommissionController extends Controller
             'item_name' => $itemName,
             'item_type' => $itemType,
             'pv' => $pv,
+            'pv_used' => (float) ($commission->pv_used ?? 0),
             'price' => $price,
             'quantity' => $quantity,
             'period' => $commission->period ?? 'N/A',
@@ -568,9 +631,9 @@ class CommissionController extends Controller
                 return 'Montant fixe : ' . $commission->amount . '$';
             case 'direct':
                 if ($pv > 0 && $commission->percentage) {
-                    return 'PV (' . $pv . ' PV) × Taux (' . ($commission->percentage ?? 'N/A') . '%)';
+                    return 'PV personnels du mois ('.$pv.' PV) × taux MLM du grade ('.($commission->percentage ?? 'N/A').'%)';
                 }
-                return 'Montant : ' . $commission->amount . '$';
+                return 'PV personnels × taux MLM du grade = '.$commission->amount.'$';
             case 'indirect':
                 if ($pv > 0 && $commission->percentage) {
                     return 'PV (' . $pv . ' PV) × Différence (' . ($commission->percentage ?? 'N/A') . '%)';
