@@ -58,7 +58,8 @@ class UserCommissionDisplayServiceTest extends TestCase
         $this->assertSame(100.0, $summary['paid_offline_historical']);
         $this->assertSame(0.0, $summary['paid_system']);
         $this->assertSame(100.0, $summary['paid_total_visible']);
-        $this->assertSame(40.0, $summary['pending_payable']);
-        $this->assertSame(140.0, $summary['total_visible']);
+        // Pending jamais exposé au membre avant crédit portefeuille
+        $this->assertSame(0.0, $summary['pending_payable']);
+        $this->assertSame(100.0, $summary['total_visible']);
     }
 }
