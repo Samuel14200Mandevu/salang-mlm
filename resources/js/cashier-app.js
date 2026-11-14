@@ -299,10 +299,10 @@ export function registerCashierGlobals() {
         title.textContent = options.title || 'Confirmation';
         message.textContent = options.message || 'Êtes-vous sûr de vouloir continuer ?';
         confirmBtn.textContent = options.confirmText || 'Confirmer';
-        confirmBtn.className = 'btn';
-        confirmBtn.classList.add(
-            options.type === 'success' ? 'btn-success' : options.type === 'danger' ? 'btn-danger' : 'btn-primary'
-        );
+        confirmBtn.className = 'btn btn-confirm';
+        if (options.type === 'success') {
+            confirmBtn.classList.add('success');
+        }
 
         confirmCallback = options.onConfirm || null;
         confirmForm = options.form || null;

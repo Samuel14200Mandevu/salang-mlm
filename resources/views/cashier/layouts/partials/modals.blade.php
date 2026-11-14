@@ -51,11 +51,11 @@
         </div>
     </div>
 
-    <!-- ===== CONFIRMATION DIALOG ===== -->
+    <!-- ===== CONFIRMATION DIALOG (même modèle que la déconnexion) ===== -->
     <div id="confirmDialog" class="confirm-overlay">
         <div class="confirm-dialog">
             <div class="icon danger">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 9v4"/>
                     <path d="M12 17h.01"/>
                     <path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
@@ -64,8 +64,8 @@
             <h3 id="confirmTitle">Confirmation</h3>
             <p id="confirmMessage">Êtes-vous sûr de vouloir continuer ?</p>
             <div class="actions">
-                <button type="button" id="confirmCancelBtn" class="btn btn-outline">Annuler</button>
-                <button type="button" id="confirmDialogBtn" class="btn btn-primary">Confirmer</button>
+                <button type="button" id="confirmCancelBtn" class="btn btn-cancel">Annuler</button>
+                <button type="button" id="confirmDialogBtn" class="btn btn-confirm">Confirmer</button>
             </div>
         </div>
     </div>

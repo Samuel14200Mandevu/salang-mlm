@@ -989,6 +989,30 @@ html.shell-is-desktop.shell-sidebar-rail .member-app #sidebar .sidebar-link .lab
     gap: 0.75rem;
     justify-content: center;
 }
+.cashier-app .confirm-dialog .actions .btn {
+    min-width: 90px;
+}
+.cashier-app .confirm-dialog .actions .btn-cancel {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.cashier-app .confirm-dialog .actions .btn-cancel:hover {
+    background: var(--bg-hover);
+}
+.cashier-app .confirm-dialog .actions .btn-confirm {
+    background: var(--danger);
+    color: #fff;
+    border: 1px solid var(--danger);
+}
+.cashier-app .confirm-dialog .actions .btn-confirm:hover {
+    background: #991b1b;
+    border-color: #991b1b;
+}
+.cashier-app .confirm-dialog .actions .btn-confirm.success {
+    background: var(--success);
+    border-color: var(--success);
+}
 
 /* ============================================================
    TOAST

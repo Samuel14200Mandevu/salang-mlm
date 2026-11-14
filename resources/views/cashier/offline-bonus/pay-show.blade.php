@@ -195,11 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         window.showConfirmDialog({
-            type: 'primary',
-            title: 'Envoyer au portefeuille',
-            message: 'Créditer ${{ number_format($summary['pending_amount'], 2) }} à {{ $member->name }} pour {{ $periodLabel }} ?',
-            confirmText: 'Envoyer',
-            onConfirm: function () { el.submit(); },
+            type: 'danger',
+            title: 'Confirmation d’envoi des bonus',
+            message: 'Êtes-vous sûr de vouloir envoyer les bonus (${{ number_format($summary['pending_amount'], 2) }}) ? Vous ne pourrez pas annuler cet envoi.',
+            confirmText: 'Envoyer les bonus',
+            onConfirm: function () {
+                el.submit();
+                if (typeof window.closeConfirmDialog === 'function') {
+                    window.closeConfirmDialog();
+                }
+            },
             form: el
         });
     });

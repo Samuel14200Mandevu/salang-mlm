@@ -294,8 +294,9 @@
     </div>
 
     @if($selectedPeriod && ($totals['pending'] ?? 0) > 0)
-        <form method="POST" action="{{ route('cashier.offline-bonus.pay.period') }}"
-              onsubmit="return confirm('Créditer TOUS les bonus en attente de {{ $selectedPeriod }} ?');">
+        <form method="POST"
+              action="{{ route('cashier.offline-bonus.pay.period') }}"
+              id="offlinePayAllForm">
             @csrf
             <input type="hidden" name="period" value="{{ $selectedPeriod }}">
             <button type="submit" class="btn btn-primary w-full md:w-auto">
@@ -378,6 +379,31 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const payAllForm = document.getElementById('offlinePayAllForm');
+    if (payAllForm) {
+        payAllForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            if (typeof window.showConfirmDialog !== 'function') {
+                form.submit();
+                return;
+            }
+            window.showConfirmDialog({
+                type: 'danger',
+                title: 'Confirmation d’envoi des bonus',
+                message: 'Êtes-vous sûr de vouloir envoyer tous les bonus (${{ number_format($totals['pending'] ?? 0, 2) }}) ? Vous ne pourrez pas annuler cet envoi.',
+                confirmText: 'Envoyer tous les bonus',
+                onConfirm: function () {
+                    form.submit();
+                    if (typeof window.closeConfirmDialog === 'function') {
+                        window.closeConfirmDialog();
+                    }
+                },
+                form: form
+            });
+        });
+    }
+
     const searchInputs = [
         document.getElementById('searchInput'),
         document.getElementById('searchInputMobile'),
