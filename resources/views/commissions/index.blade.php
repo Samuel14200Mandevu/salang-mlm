@@ -4,6 +4,12 @@
 @section('title', 'Mes commissions')
 
 @section('content')
+@php
+    $selectedType = $selectedType ?? '';
+    $bonusByType = $bonusByType ?? [];
+    $bonusMonth = $bonusMonth ?? '';
+    $bonusMonthLabel = $bonusMonthLabel ?? '';
+@endphp
 <div class="commissions-page space-y-4 sm:space-y-6">
 
     <div class="commissions-page-header-desktop member-list-header animate-fadeInUp">
@@ -56,7 +62,7 @@
                             <span>En attente</span>
                         </button>
                         <button type="button" class="users-filter-menu__item" data-commission-filter="paid">
-                            <span>Payées</span>
+                            <span>En portefeuille</span>
                         </button>
                     </div>
                 </div>
@@ -96,117 +102,186 @@
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total gagne</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-primary-500">${{ number_format($stats['total'] ?? 0, 2) }}</p>
         </div>
-        <div class="card-stats border-l-4 border-yellow-500 animate-fadeInUp delay-2">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">En attente</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-500">${{ number_format($stats['pending'] ?? 0, 2) }}</p>
-        </div>
-        <div class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-3">
-            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Paye</p>
-            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format(($stats['total'] ?? 0) - ($stats['pending'] ?? 0), 2) }}</p>
-        </div>
+        <a href="{{ route('withdrawal.index') }}" class="card-stats border-l-4 border-green-500 animate-fadeInUp delay-2 block no-underline hover:opacity-95">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Payé</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-green-500">${{ number_format($stats['paid'] ?? 0, 2) }}</p>
+            <p class="text-[10px] text-[var(--text-tertiary)] mt-0.5">Déjà retiré</p>
+        </a>
+        <a href="{{ route('wallet.index') }}" class="card-stats border-l-4 border-sky-500 animate-fadeInUp delay-3 block no-underline hover:opacity-95">
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Portefeuille</p>
+            <p class="text-lg sm:text-xl md:text-2xl font-bold text-sky-500">${{ number_format($stats['wallet_balance'] ?? 0, 2) }}</p>
+        </a>
         <div class="card-stats border-l-4 border-purple-500 animate-fadeInUp delay-4">
             <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total</p>
             <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">{{ $stats['total_count'] ?? 0 }}</p>
         </div>
     </div>
 
-    <p class="commissions-history-label">Historique</p>
-
-    <div class="commissions-mobile-feed animate-fadeInUp delay-6">
-        @include('commissions.partials.mobile-list', ['commissions' => $commissions])
-    </div>
-
-    <div class="commissions-table-card card animate-fadeInUp delay-6">
-        <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Historique des commissions</h3>
-            <span class="badge badge-neutral text-[10px] sm:text-xs" id="totalBadge">{{ $commissions->total() ?? 0 }} commissions</span>
+    @if($selectedType === '')
+        @include('commissions.partials.type-hub')
+        <p class="commissions-hub-hint">Touchez un bonus (y compris POS cash) pour voir le détail</p>
+    @else
+        @php
+            $selectedLabel = $bonusByType[$selectedType]['label'] ?? ucfirst($selectedType);
+        @endphp
+        <div class="commissions-detail-panel">
+            <a href="{{ route('commissions.index', array_filter(['period' => ($bonusMonth ?? null) ?: null])) }}" class="commissions-detail-back">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span>Mes bonus</span>
+            </a>
         </div>
 
-        <div class="table-wrap">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="text-xs sm:text-sm">Date</th>
-                        <th class="text-xs sm:text-sm hidden sm:table-cell">Type</th>
-                        <th class="text-xs sm:text-sm hidden md:table-cell">Item</th>
-                        <th class="text-xs sm:text-sm hidden lg:table-cell">Description</th>
-                        <th class="text-xs sm:text-sm text-right">Montant</th>
-                        <th class="text-xs sm:text-sm">Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="commissionsTable">
-                    @forelse($commissions ?? [] as $commission)
-                        <tr class="commission-row clickable-row" 
-                            data-type="{{ $commission->type }}"
-                            data-status="{{ $commission->status }}"
-                            data-date="{{ $commission->created_at->format('Y-m-d') }}"
-                            onclick="openCommissionDetails({{ $commission->id }})">
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm">
-                                {{ $commission->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="hidden sm:table-cell">
-                                <span class="type-badge type-badge-{{ $commission->type }}">
-                                    {{ ucfirst($commission->type) }}
-                                </span>
-                            </td>
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
-                                @if($commission->package_id)
-                                    <span class="item-badge item-badge-package">Package</span>
-                                    <span class="text-xs">{{ $commission->package->name ?? 'N/A' }}</span>
-                                @elseif($commission->product_id)
-                                    <span class="item-badge item-badge-product">Produit</span>
-                                    <span class="text-xs">{{ $commission->product->name ?? 'N/A' }}</span>
-                                @else
-                                    <span class="text-[var(--text-tertiary)] text-xs">-</span>
-                                @endif
-                            </td>
-                            <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden lg:table-cell">
-                                {{ Str::limit($commission->description ?? '-', 30) }}
-                            </td>
-                            <td class="text-right font-bold text-green-500 text-sm sm:text-base">
-                                +${{ number_format($commission->amount, 2) }}
-                            </td>
-                            <td>
-                                <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
-                                    {{ $commission->status == 'paid' ? 'Paye' : 'En attente' }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
+        <p class="commissions-history-label">{{ $selectedLabel }}</p>
+
+        <div class="commissions-mobile-feed commissions-mobile-feed--detail animate-fadeInUp delay-6" data-salang-page-swipe>
+            @include('commissions.partials.mobile-list', ['commissions' => $commissions])
+        </div>
+
+        @if($commissions instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissions->hasPages())
+            <div class="commissions-pagination commissions-pagination--mobile mt-2" id="paginationContainerMobile">
+                <p class="commissions-pagination__meta" aria-live="polite">
+                    Page {{ $commissions->currentPage() }} / {{ $commissions->lastPage() }}
+                    · {{ number_format($commissions->total(), 0, ',', ' ') }} lignes
+                </p>
+                <x-salang-pagination :paginator="$commissions" />
+            </div>
+        @endif
+
+        <div class="commissions-table-card card animate-fadeInUp delay-6">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Détail {{ $selectedLabel }}</h3>
+                <span class="badge badge-neutral text-[10px] sm:text-xs" id="totalBadge">{{ $commissions->total() ?? 0 }} commissions</span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
-                                <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <p class="text-base sm:text-lg font-medium">Aucune commission</p>
-                                <p class="text-sm text-[var(--text-tertiary)]">Les commissions apparaîtront lorsque vous developperez votre reseau</p>
-                            </td>
+                            <th class="text-xs sm:text-sm">Date</th>
+                            <th class="text-xs sm:text-sm hidden sm:table-cell">Type</th>
+                        <th class="text-xs sm:text-sm hidden md:table-cell">Source</th>
+                        <th class="text-xs sm:text-sm hidden lg:table-cell">Détail</th>
+                            <th class="text-xs sm:text-sm text-right">Montant</th>
+                            <th class="text-xs sm:text-sm">Statut</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="commissionsTable">
+                        @forelse($commissions ?? [] as $commission)
+                            <tr class="commission-row clickable-row"
+                                data-type="{{ $commission->type }}"
+                                data-status="{{ $commission->status }}"
+                                data-date="{{ $commission->created_at->format('Y-m-d') }}"
+                                onclick="openCommissionDetails({{ $commission->id }})">
+                                <td class="text-[var(--text-secondary)] text-xs sm:text-sm">
+                                    {{ $commission->created_at->format('d/m/Y H:i') }}
+                                </td>
+                                <td class="hidden sm:table-cell">
+                                    <span class="type-badge type-badge-{{ $commission->type }}">
+                                        {{ ucfirst($commission->type) }}
+                                    </span>
+                                </td>
+                                <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden md:table-cell">
+                                    @if(in_array($commission->type, ['indirect', 'leadership', 'sponsor'], true) && $commission->fromUser)
+                                        <span class="text-xs font-medium text-[var(--text-primary)]">{{ $commission->fromUser->name }}</span>
+                                    @elseif($commission->package_id)
+                                        <span class="item-badge item-badge-package">Package</span>
+                                        <span class="text-xs">{{ $commission->package->name ?? 'N/A' }}</span>
+                                    @elseif($commission->product_id)
+                                        <span class="item-badge item-badge-product">Produit</span>
+                                        <span class="text-xs">{{ $commission->product->name ?? 'N/A' }}</span>
+                                    @else
+                                        <span class="text-[var(--text-tertiary)] text-xs">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-[var(--text-secondary)] text-xs sm:text-sm hidden lg:table-cell">
+                                    @if(in_array($commission->type, ['indirect', 'leadership'], true) && $commission->fromUser)
+                                        Source : {{ Str::limit($commission->fromUser->name, 28) }}
+                                    @else
+                                        {{ Str::limit($commission->description ?? '-', 30) }}
+                                    @endif
+                                </td>
+                                <td class="text-right font-bold text-green-500 text-sm sm:text-base">
+                                    +${{ number_format($commission->amount, 2) }}
+                                </td>
+                                <td>
+                                    <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
+                                        {{ $commission->status == 'paid' ? 'En portefeuille' : 'En attente' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-6 sm:py-8 text-[var(--text-secondary)] text-sm sm:text-base">
+                                    <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-[var(--text-tertiary)] mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <p class="text-base sm:text-lg font-medium">Aucune commission</p>
+                                    <p class="text-sm text-[var(--text-tertiary)]">Les commissions apparaîtront lorsque vous developperez votre reseau</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-    </div>
-
-    @if($commissions instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissions->hasPages())
-        <div class="commissions-pagination mt-3 sm:mt-4">
-            <x-salang-pagination :paginator="$commissions" />
-        </div>
+        @if($commissions instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissions->hasPages())
+            <div class="commissions-pagination commissions-pagination--desktop mt-3 sm:mt-4" id="paginationContainer">
+                <x-salang-pagination :paginator="$commissions" />
+            </div>
+        @endif
     @endif
 
-    @if(!empty($stats['by_type']))
-    <div class="commissions-type-stats grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-7">
-        @foreach($stats['by_type'] as $type => $data)
-            <div class="card-stats border-l-4 border-{{ $data['color'] ?? 'primary' }}-500">
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $data['label'] }}</p>
-                <p class="text-lg sm:text-xl md:text-2xl font-bold text-{{ $data['color'] ?? 'primary' }}-500">
-                    ${{ number_format($data['total'], 2) }}
+    @if($selectedType === '')
+        @php
+            $typeStatOrder = [
+                'direct' => 'primary',
+                'indirect' => 'warning',
+                'leadership' => 'success',
+                'cash_pos' => 'sky',
+            ];
+            $typeStatTotal = 0.0;
+            $typeStatCount = 0;
+            foreach ($typeStatOrder as $typeKey => $_color) {
+                $typeStatTotal += (float) ($bonusByType[$typeKey]['total'] ?? 0);
+                $typeStatCount += (int) ($bonusByType[$typeKey]['count'] ?? 0);
+            }
+        @endphp
+        <div class="commissions-type-stats grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp delay-7">
+            @foreach($typeStatOrder as $typeKey => $color)
+                @php
+                    $row = $bonusByType[$typeKey] ?? [
+                        'label' => $typeKey === 'cash_pos' ? 'Profit POS' : ucfirst((string) $typeKey),
+                        'total' => 0,
+                        'count' => 0,
+                    ];
+                    $rowCount = (int) ($row['count'] ?? 0);
+                    $rowMeta = $rowCount.' commission(s)';
+                    if ($typeKey === 'cash_pos') {
+                        $rowMeta .= ' · cash inclus';
+                    }
+                @endphp
+                <a
+                    href="{{ route('commissions.index', array_filter(['type' => $typeKey, 'period' => ($bonusMonth ?? null) ?: null])) }}"
+                    class="card-stats border-l-4 border-{{ $color }}-500 block no-underline hover:opacity-95"
+                >
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $row['label'] }}</p>
+                    <p class="text-lg sm:text-xl md:text-2xl font-bold text-{{ $color }}-500">
+                        ${{ number_format((float) ($row['total'] ?? 0), 2) }}
+                    </p>
+                    <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $rowMeta }}</p>
+                </a>
+            @endforeach
+            <div class="card-stats card-stats--total border-l-4 border-purple-500">
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">Total</p>
+                <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-500">
+                    ${{ number_format($typeStatTotal, 2) }}
                 </p>
-                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $data['count'] }} commission(s)</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">{{ $typeStatCount }} commission(s)</p>
             </div>
-        @endforeach
-    </div>
+        </div>
     @endif
 
 </div>
@@ -236,10 +311,16 @@ const commissionTypes = {
         icon: 'S'
     },
     direct: {
-        label: 'Commission Directe',
-        description: 'Commission sur les achats des filleuls directs',
-        formula: 'PV de l\'item × Taux du sponsor',
+        label: 'Bonus Direct',
+        description: 'Bonus sur vos achats personnels : PV du mois × taux MLM de votre grade',
+        formula: 'PV personnels du mois × taux MLM du grade',
         icon: 'D'
+    },
+    cash_pos: {
+        label: 'Profit POS',
+        description: 'Profit sur les ventes caisse (y compris payé cash)',
+        formula: 'Montant POS × taux applicable',
+        icon: 'P'
     },
     indirect: {
         label: 'Commission Indirecte',
@@ -285,7 +366,7 @@ function displayCommissionDetails(commission) {
     const typeInfo = commissionTypes[commission.type] || commissionTypes.direct;
     
     const statusClass = commission.status === 'paid' ? 'success' : 'warning';
-    const statusLabel = commission.status === 'paid' ? 'Paye' : 'En attente';
+    const statusLabel = commission.status === 'paid' ? 'En portefeuille' : 'En attente';
     
     // Récupérer les informations de l'item (package ou produit)
     const itemType = commission.item_type || 'unknown';
@@ -332,11 +413,15 @@ function displayCommissionDetails(commission) {
     }
     
     let pvDisplay = '';
-    if (itemPV > 0) {
+    const displayPv = (commission.type === 'direct' && commission.pv_used > 0)
+        ? commission.pv_used
+        : itemPV;
+    if (displayPv > 0) {
+        const pvLabel = commission.type === 'direct' ? 'PV personnels du mois' : 'PV de l\'item';
         pvDisplay = `
             <div class="detail-item">
-                <div class="label">PV de l'item</div>
-                <div class="value primary">${itemPV} PV</div>
+                <div class="label">${pvLabel}</div>
+                <div class="value primary">${displayPv} PV</div>
             </div>
         `;
     }
@@ -354,14 +439,15 @@ function displayCommissionDetails(commission) {
             </div>
         `;
     } else if (commission.type === 'direct') {
-        const pvValue = itemPV > 0 ? itemPV : 'PV';
+        const personalPv = (commission.pv_used > 0 ? commission.pv_used : itemPV) || 0;
+        const pvValue = personalPv > 0 ? personalPv : 'PV perso';
         const pct = commission.percentage || 'N/A';
         calculationHtml = `
             <div class="calculation-box">
-                <div class="calc-label">Calcul de la Commission Directe</div>
-                <div class="calc-formula">${pvValue} PV × ${pct}%</div>
+                <div class="calc-label">Calcul du Bonus Direct</div>
+                <div class="calc-formula">${pvValue} PV personnels × ${pct}% (taux grade)</div>
                 <div class="calc-result">= $${commission.amount}</div>
-                ${itemPV > 0 ? `<div style="font-size:0.65rem;color:var(--text-tertiary);margin-top:0.25rem;">Basé sur le PV de l'item</div>` : ''}
+                <div style="font-size:0.65rem;color:var(--text-tertiary);margin-top:0.25rem;">Sur vos achats personnels, selon le taux MLM de votre grade</div>
             </div>
         `;
     } else if (commission.type === 'indirect') {
@@ -419,7 +505,7 @@ function displayCommissionDetails(commission) {
                     <div class="value primary">${commission.percentage || 'N/A'}%</div>
                 </div>
                 <div class="detail-item">
-                    <div class="label">De</div>
+                    <div class="label">Source</div>
                     <div class="value">${commission.from_user || 'Systeme'}</div>
                 </div>
                 ${pvDisplay}

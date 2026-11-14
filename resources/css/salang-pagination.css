@@ -24,14 +24,43 @@
   cursor: grabbing;
 }
 
+.salang-pagination__mobile-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.salang-pagination__mobile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-card) 88%, var(--text-primary) 6%);
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  text-decoration: none;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.salang-pagination__mobile-btn.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .salang-pagination__home-bar {
   position: relative;
-  width: min(52vw, 11rem);
+  width: min(42vw, 9.5rem);
   height: 0.3125rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-tertiary) 28%, transparent);
   overflow: hidden;
   pointer-events: none;
+  flex: 0 1 auto;
 }
 
 .salang-pagination__home-thumb {

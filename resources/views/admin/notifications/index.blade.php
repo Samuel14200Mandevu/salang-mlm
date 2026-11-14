@@ -115,6 +115,22 @@
                     </div>
                 </div>
 
+                @if(($unreadCount ?? 0) > 0)
+                    <form action="{{ route('admin.notifications.mark-all-read') }}"
+                          method="POST"
+                          class="inline-flex notif-mark-all-mobile-only">
+                        @csrf
+                        <button type="submit"
+                                class="btn btn-outline btn-sm btn-round-icon"
+                                title="Tout marquer comme lu"
+                                aria-label="Tout marquer comme lu">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
+                    </form>
+                @endif
+
                 @if(($totalCount ?? 0) > 0)
                     <form action="{{ route('admin.notifications.destroy-all') }}"
                           method="POST"
@@ -206,6 +222,23 @@
                     </a>
                 </div>
             </div>
+
+            @if(($unreadCount ?? 0) > 0)
+                <form action="{{ route('admin.notifications.mark-all-read') }}"
+                      method="POST"
+                      class="inline-flex notif-mark-all-desktop-only">
+                    @csrf
+                    <button type="submit"
+                            class="btn btn-outline btn-sm"
+                            title="Tout marquer comme lu"
+                            aria-label="Tout marquer comme lu">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Tout marquer comme lu</span>
+                    </button>
+                </form>
+            @endif
 
             @if(($totalCount ?? 0) > 0)
                 <form action="{{ route('admin.notifications.destroy-all') }}"

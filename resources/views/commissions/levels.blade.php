@@ -81,8 +81,8 @@
                         2
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Commission Directe</p>
-                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">Taux sponsor × PV (Niveaux 3-9)</p>
+                        <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Bonus Direct</p>
+                        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">PV perso × taux grade (Niveaux 3-9)</p>
                     </div>
                     <svg class="card-arrow w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -208,23 +208,23 @@ const levelData = {
     2: {
         icon: '2',
         iconClass: 'modal-icon-level-2',
-        title: 'Commission Directe',
-        subtitle: 'Taux du sponsor × PV du package (Niveaux 3 à 9)',
-        description: 'La commission directe est calculée sur les achats de vos filleuls directs. Vous gagnez un pourcentage du PV du package acheté par votre filleul direct.',
+        title: 'Bonus Direct',
+        subtitle: 'PV personnels du mois × taux MLM de votre grade (Niveaux 3 à 9)',
+        description: 'Le bonus direct est calculé sur vos achats personnels du mois : PV personnels × le taux MLM correspondant à votre grade.',
         details: [
-            'Calculée sur le PV du package acheté',
-            'Taux = votre pourcentage de grade',
+            'Calculé sur vos PV personnels du mois',
+            'Taux = barème MLM de votre grade',
             'Niveaux 3 à 9 uniquement',
-            'Le sponsor doit être Niveau 3 minimum'
+            'Conditions de PV mensuel selon le grade'
         ],
         conditions: [
-            { label: 'Grade du sponsor', value: 'Niveau 3 à 9' },
-            { label: 'Grade du filleul', value: 'Niveau 3 à 9' },
-            { label: 'PV mensuel sponsor', value: '20 à 300 PV' }
+            { label: 'Votre grade', value: 'Niveau 3 à 9' },
+            { label: 'Base de calcul', value: 'PV personnels du mois' },
+            { label: 'PV mensuel requis', value: '20 à 300 PV (selon grade)' }
         ],
-        pvPayment: 'PV mensuel ≥ 20 à 300 PV (selon grade)',
+        pvPayment: 'PV mensuel personnel ≥ 20 à 300 PV (selon grade)',
         table: {
-            headers: ['Grade du sponsor', 'Taux', 'Exemple avec 200 PV'],
+            headers: ['Votre grade', 'Taux', 'Exemple avec 200 PV perso'],
             rows: [
                 ['Niveau 3', '22%', '200 × 22% = 44$'],
                 ['Niveau 4', '26%', '200 × 26% = 52$'],
@@ -240,13 +240,13 @@ const levelData = {
             { label: 'Taux max', value: '45%' },
             { label: 'Niveaux', value: '3 à 9' }
         ],
-        formula: 'Commission = PV du package × Votre taux (%)',
+        formula: 'Bonus = PV personnels du mois × taux MLM de votre grade (%)',
         example: {
-            scenario: 'Vous êtes Niveau 7 (40%). Votre filleul direct achète un package Bronze (200 PV).',
-            calculation: '200 PV × 40% = 80$',
-            result: 'Vous gagnez 80$ de commission directe.'
+            scenario: 'Vous êtes Niveau 7 (40%). Vous avez généré 100 PV personnels ce mois.',
+            calculation: '100 PV × 40% = 40$',
+            result: 'Vous gagnez 40$ de bonus direct.'
         },
-        summary: 'Plus votre grade est élevé, plus vous gagnez sur les achats de vos filleuls directs.'
+        summary: 'Plus votre grade est élevé, plus le taux sur vos achats personnels est avantageux.'
     },
     3: {
     icon: '3',

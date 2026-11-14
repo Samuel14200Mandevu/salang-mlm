@@ -26,7 +26,7 @@
             <div class="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Informations</h3>
                 <span class="badge {{ $commission->status == 'paid' ? 'badge-success' : 'badge-warning' }} text-[10px] sm:text-xs">
-                    {{ $commission->status == 'paid' ? 'Payé' : 'En attente' }}
+                    {{ $commission->status == 'paid' ? 'En portefeuille' : 'En attente' }}
                 </span>
             </div>
 
@@ -57,7 +57,17 @@
         <div class="detail-card">
             <h3 class="font-semibold text-[var(--text-primary)] text-sm sm:text-base mb-3 sm:mb-4">Source</h3>
 
-            @if($commission->fromUser)
+            @if($commission->type === 'direct' && (int) ($commission->from_user_id ?? 0) === (int) auth()->id())
+                <div class="p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
+                    <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">Achats personnels</p>
+                    <p class="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5">
+                        PV du mois × taux MLM de votre grade
+                        @if((float) ($commission->pv_used ?? 0) > 0)
+                            · {{ number_format((float) $commission->pv_used, 0) }} PV
+                        @endif
+                    </p>
+                </div>
+            @elseif($commission->fromUser)
                 <div class="flex items-center gap-3 p-2 sm:p-3 bg-[var(--bg-secondary)] rounded-lg">
                     <div class="avatar avatar-lg avatar-gradient">
                         {{ substr($commission->fromUser->name, 0, 2) }}
@@ -66,7 +76,7 @@
                         <p class="font-semibold text-[var(--text-primary)] text-sm sm:text-base">{{ $commission->fromUser->name }}</p>
                         <p class="text-xs sm:text-sm text-[var(--text-secondary)] truncate">{{ $commission->fromUser->email }}</p>
                         <p class="text-[10px] sm:text-xs text-[var(--text-secondary)]">
-                            Parrain: 
+                            Parrain:
                             @php
                                 $parrain = App\Models\User::find($commission->fromUser->parrain_id);
                             @endphp
@@ -120,7 +130,7 @@
         <div class="timeline-item">
             <div class="timeline-dot timeline-dot-success"></div>
             <div>
-                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Commission payée</p>
+                <p class="font-medium text-[var(--text-primary)] text-sm sm:text-base">Créditée en portefeuille</p>
                 <p class="text-xs sm:text-sm text-[var(--text-secondary)]">{{ $commission->paid_at?->format('d/m/Y H:i') ?? 'N/A' }}</p>
             </div>
         </div>
