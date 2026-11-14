@@ -60,8 +60,9 @@ class WalletCommissionBreakdown
     }
 
     /**
-     * Montants par type pour le portefeuille.
-     * Priorité : commissions payées visibles ; sinon historique MLM (commission_history) du mois.
+     * Montants par type pour le portefeuille / hub commissions membre.
+     * Uniquement les bonus déjà crédités au portefeuille (status paid).
+     * Pas de repli sur commission_history « pending » (calcul caisse non encore envoyé).
      *
      * @return array<string, array{label: string, short: string, total: float, count: int}>
      */
@@ -71,11 +72,17 @@ class WalletCommissionBreakdown
         $typeKeys = array_keys($types);
 
         $fromCommissions = $this->aggregateCommissions($userId, $typeKeys, $period);
-        $hasCommissionRows = $fromCommissions->sum(fn ($row) => (int) $row->count) > 0;
+        $hasPaidCommissionRows = $fromCommissions->sum(fn ($row) => (int) $row->count) > 0;
 
-        $aggregates = $hasCommissionRows
+        // Si des lignes commissions existent (même pending), ne pas révéler l’historique
+        // tant qu’elles ne sont pas payées — sinon le hub affiche les bonus avant portefeuille.
+        $hasAnyCommissionRows = $this->hasAnyCommissionRows($userId, $typeKeys, $period);
+
+        $aggregates = $hasPaidCommissionRows
             ? $fromCommissions
-            : $this->aggregateHistory($userId, $typeKeys, $period);
+            : ($hasAnyCommissionRows
+                ? collect()
+                : $this->aggregatePaidHistory($userId, $typeKeys, $period));
 
         $result = [];
         foreach ($types as $key => $meta) {
@@ -93,6 +100,23 @@ class WalletCommissionBreakdown
 
     /**
      * @param  list<string>  $typeKeys
+     */
+    private function hasAnyCommissionRows(int $userId, array $typeKeys, ?string $period): bool
+    {
+        $query = Commission::query()
+            ->where('user_id', $userId)
+            ->whereIn('type', $typeKeys)
+            ->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+
+        if ($period !== null && $period !== '') {
+            $query->where('period', $period);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * @param  list<string>  $typeKeys
      * @return \Illuminate\Support\Collection<string, object{type: string, total: mixed, count: mixed}>
      */
     private function aggregateCommissions(int $userId, array $typeKeys, ?string $period)
@@ -100,7 +124,6 @@ class WalletCommissionBreakdown
         $query = Commission::query()
             ->where('user_id', $userId)
             ->visibleToMember()
-            ->where('status', 'paid')
             ->whereIn('type', $typeKeys);
 
         if ($period !== null && $period !== '') {
@@ -115,15 +138,16 @@ class WalletCommissionBreakdown
     }
 
     /**
-     * Historique importé quand la table commissions n’a pas encore de lignes payées.
+     * Historique legacy déjà payé (pas les lignes pending du calcul caisse).
      *
      * @param  list<string>  $typeKeys
      * @return \Illuminate\Support\Collection<string, object{type: string, total: mixed, count: mixed}>
      */
-    private function aggregateHistory(int $userId, array $typeKeys, ?string $period)
+    private function aggregatePaidHistory(int $userId, array $typeKeys, ?string $period)
     {
         $query = CommissionHistory::query()
             ->where('user_id', $userId)
+            ->where('status', 'paid')
             ->whereIn('type', $typeKeys);
 
         if ($period !== null && $period !== '') {

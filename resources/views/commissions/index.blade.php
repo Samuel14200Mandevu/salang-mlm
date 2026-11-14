@@ -58,9 +58,6 @@
                         <button type="button" class="users-filter-menu__item is-active" data-commission-filter="">
                             <span>Toutes</span>
                         </button>
-                        <button type="button" class="users-filter-menu__item" data-commission-filter="pending">
-                            <span>En attente</span>
-                        </button>
                         <button type="button" class="users-filter-menu__item" data-commission-filter="paid">
                             <span>En portefeuille</span>
                         </button>

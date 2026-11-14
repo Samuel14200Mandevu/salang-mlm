@@ -244,16 +244,17 @@ class DashboardController extends Controller
         // ACTIVITÉS RÉCENTES
         $recentActivities = Commission::where('user_id', $user->id)
             ->visibleToMember()
-            ->where(function($query) {
-            $query->where('type', 'direct')      // Bonus direct
-              ->orWhere('type', 'indirect')   // Bonus indirect
-              ->orWhere('type', 'leadership') // Bonus leadership
-              ->orWhere('type', 'pos_sale');   // Vente POS (PV reçus)
+            ->where(function ($query) {
+                $query->where('type', 'direct')
+                    ->orWhere('type', 'indirect')
+                    ->orWhere('type', 'leadership')
+                    ->orWhere('type', 'cash_pos')
+                    ->orWhere('type', 'pos_sale');
             })
-                ->with(['fromUser', 'package', 'period'])
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
+            ->with(['fromUser', 'package', 'period'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
         // STATISTIQUES DU JOUR
         $stats = [

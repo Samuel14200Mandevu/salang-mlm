@@ -31,7 +31,8 @@ class ApiCommissionBandsTest extends TestCase
             'source' => 'mlm',
             'amount' => 10,
             'percentage' => 0,
-            'status' => 'pending',
+            'status' => 'paid',
+            'paid_at' => now(),
             'calculation_type' => 'manual',
         ]);
 
@@ -42,6 +43,19 @@ class ApiCommissionBandsTest extends TestCase
             'type' => 'direct',
             'source' => 'mlm',
             'amount' => 500,
+            'percentage' => 0,
+            'status' => 'paid',
+            'paid_at' => now(),
+            'calculation_type' => 'manual',
+        ]);
+
+        Commission::query()->create([
+            'user_id' => $user->id,
+            'commission_period_id' => $visible->id,
+            'period' => $visible->period,
+            'type' => 'indirect',
+            'source' => 'mlm',
+            'amount' => 99,
             'percentage' => 0,
             'status' => 'pending',
             'calculation_type' => 'manual',
@@ -54,7 +68,7 @@ class ApiCommissionBandsTest extends TestCase
         $response->assertJsonPath('data.0.amount', 10);
     }
 
-    public function test_commission_stats_pending_is_payable_band_only(): void
+    public function test_commission_stats_hide_pending_until_wallet_credit(): void
     {
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
@@ -92,7 +106,8 @@ class ApiCommissionBandsTest extends TestCase
         $response = $this->withToken($token)->getJson('/api/commissions/stats');
 
         $response->assertOk();
-        $this->assertEquals(25.0, (float) $response->json('stats.pending'));
-        $this->assertEquals(25.0, (float) $response->json('stats.bands.payable_pending'));
+        $this->assertEquals(0.0, (float) $response->json('stats.pending'));
+        $this->assertEquals(0.0, (float) $response->json('stats.bands.payable_pending'));
+        $this->assertEquals(0.0, (float) $response->json('stats.total'));
     }
 }

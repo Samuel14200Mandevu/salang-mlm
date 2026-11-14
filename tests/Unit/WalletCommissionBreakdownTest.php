@@ -76,7 +76,7 @@ class WalletCommissionBreakdownTest extends TestCase
         $this->assertSame(0.0, $septemberBreakdown['leadership']['total']);
     }
 
-    public function test_falls_back_to_commission_history_when_commissions_empty(): void
+    public function test_falls_back_to_paid_commission_history_when_commissions_empty(): void
     {
         $user = User::factory()->create();
 
@@ -86,7 +86,7 @@ class WalletCommissionBreakdownTest extends TestCase
             'type' => 'direct',
             'amount' => 12.5,
             'percentage' => 0,
-            'status' => 'pending',
+            'status' => 'paid',
         ]);
         CommissionHistory::query()->create([
             'user_id' => $user->id,
@@ -94,7 +94,7 @@ class WalletCommissionBreakdownTest extends TestCase
             'type' => 'indirect',
             'amount' => 7.5,
             'percentage' => 0,
-            'status' => 'pending',
+            'status' => 'paid',
         ]);
         CommissionHistory::query()->create([
             'user_id' => $user->id,
@@ -113,5 +113,42 @@ class WalletCommissionBreakdownTest extends TestCase
         $this->assertSame(0.0, $august['leadership']['total']);
         $this->assertSame(0.0, $august['cash_pos']['total']);
         $this->assertArrayHasKey('cash_pos', $august);
+
+        $september = $service->paidByType($user->id, '2026-09');
+        $this->assertSame(0.0, $september['leadership']['total']);
+    }
+
+    public function test_pending_commissions_are_hidden_until_paid_to_wallet(): void
+    {
+        $user = User::factory()->create();
+        $period = CommissionPeriod::findOrCreateForValue('2026-10');
+        $period->update(['status' => 'calculated', 'is_historical' => true, 'is_hidden' => false]);
+
+        Commission::query()->create([
+            'user_id' => $user->id,
+            'commission_period_id' => $period->id,
+            'period' => '2026-10',
+            'type' => 'direct',
+            'source' => 'mlm',
+            'amount' => 100,
+            'percentage' => 0,
+            'status' => 'pending',
+            'calculation_type' => 'manual',
+        ]);
+
+        CommissionHistory::query()->create([
+            'user_id' => $user->id,
+            'period' => '2026-10',
+            'type' => 'direct',
+            'amount' => 100,
+            'percentage' => 0,
+            'status' => 'pending',
+        ]);
+
+        $service = new WalletCommissionBreakdown;
+        $october = $service->paidByType($user->id, '2026-10');
+
+        $this->assertSame(0.0, $october['direct']['total']);
+        $this->assertSame(0, $october['direct']['count']);
     }
 }

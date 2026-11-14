@@ -95,9 +95,15 @@ class Commission extends Model
         return $query->where('status', 'paid');
     }
 
+    /**
+     * Bonus visibles côté membre : période non masquée + déjà crédités au portefeuille.
+     * Les lignes pending (calculées mais pas encore envoyées) restent réservées à la caisse.
+     */
     public function scopeVisibleToMember($query)
     {
-        return $query->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+        return $query
+            ->where('status', 'paid')
+            ->whereHas('period', fn ($q) => $q->where('is_hidden', false));
     }
 
     public function scopePendingPayableViaSystem($query)
