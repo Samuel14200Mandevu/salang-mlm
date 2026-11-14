@@ -80,9 +80,7 @@ class CommissionController extends Controller
             $query->whereIn('type', $allowedTypes);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        // Les pending ne sont jamais exposés aux membres (uniquement après envoi portefeuille).
 
         if ($bonusMonth !== '') {
             $query->where('period', $bonusMonth);
@@ -270,10 +268,8 @@ class CommissionController extends Controller
         $user = Auth::user();
 
         $commissions = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->with(['fromUser', 'package', 'product', 'period'])
-            ->when($request->filled('status'), function ($query) use ($request) {
-                return $query->where('status', $request->status);
-            })
             ->when($request->filled('type'), function ($query) use ($request) {
                 return $query->where('type', $request->type);
             })
@@ -289,12 +285,12 @@ class CommissionController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Statistiques pour le PDF
+        // Statistiques pour le PDF (uniquement bonus déjà en portefeuille)
         $stats = [
             'total' => $commissions->sum('amount'),
             'count' => $commissions->count(),
-            'pending' => $commissions->where('status', 'pending')->sum('amount'),
-            'paid' => $commissions->where('status', 'paid')->sum('amount'),
+            'pending' => 0,
+            'paid' => $commissions->sum('amount'),
         ];
 
         // Regrouper par type
@@ -506,9 +502,11 @@ class CommissionController extends Controller
         $commission = Commission::with(['user', 'fromUser', 'package', 'product', 'period', 'order'])
             ->where('id', $id)
             ->where('user_id', $user->id)
+            ->visibleToMember()
             ->firstOrFail();
 
         $similar = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->where('type', $commission->type)
             ->where('id', '!=', $id)
             ->orderBy('created_at', 'desc')
@@ -527,6 +525,7 @@ class CommissionController extends Controller
         
         $commission = Commission::with(['fromUser', 'package', 'product', 'period', 'order'])
             ->where('user_id', $user->id)
+            ->visibleToMember()
             ->findOrFail($id);
         
         // PV / prix : bonus direct = PV perso de la période (pv_used) × taux grade
@@ -745,10 +744,8 @@ class CommissionController extends Controller
         $user = Auth::user();
 
         $commissions = Commission::where('user_id', $user->id)
+            ->visibleToMember()
             ->with(['fromUser', 'package', 'product', 'period'])
-            ->when($request->filled('status'), function ($query) use ($request) {
-                return $query->where('status', $request->status);
-            })
             ->when($request->filled('type'), function ($query) use ($request) {
                 return $query->where('type', $request->type);
             })

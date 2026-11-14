@@ -35,29 +35,19 @@ class UserCommissionDisplayService
 
         $paidTotalVisible = $paidOfflineHistorical + $paidSystem;
 
-        $pendingPayable = (float) Commission::query()
-            ->where('user_id', $userId)
-            ->pendingPayableViaSystem()
-            ->sum('amount');
-
-        $pendingPayableCount = (int) Commission::query()
-            ->where('user_id', $userId)
-            ->pendingPayableViaSystem()
-            ->count();
-
         $visibleBase = $this->visibleQuery($userId);
 
         $totalVisible = (float) (clone $visibleBase)->sum('amount');
         $totalVisibleCount = (int) (clone $visibleBase)->count();
+        $paidVisibleCount = $totalVisibleCount;
 
-        $paidVisibleCount = (int) (clone $visibleBase)->paid()->count();
-
+        // Côté membre : jamais exposer les montants pending (avant envoi portefeuille).
         return [
             'paid_offline_historical' => $paidOfflineHistorical,
             'paid_system' => $paidSystem,
             'paid_total_visible' => $paidTotalVisible,
-            'pending_payable' => $pendingPayable,
-            'pending_payable_count' => $pendingPayableCount,
+            'pending_payable' => 0.0,
+            'pending_payable_count' => 0,
             'total_visible' => $totalVisible,
             'total_visible_count' => $totalVisibleCount,
             'paid_visible_count' => $paidVisibleCount,
