@@ -101,6 +101,35 @@
         font-size: 0.8125rem;
         color: var(--text-tertiary);
     }
+    .offline-calc-panels {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    .offline-calc-panels[hidden] {
+        display: none !important;
+    }
+    .offline-calc-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        margin-top: 0.85rem;
+    }
+    .offline-calc-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        user-select: none;
+    }
+    .offline-calc-check input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--primary);
+    }
     @media (max-width: 900px) {
         .offline-calc-grid {
             grid-template-columns: 1fr;
@@ -138,6 +167,9 @@
     $periodStatusLabel = $periodRecord?->status_label;
     $searchValue = $search ?? request('search');
     $searchOpen = filled($searchValue);
+    $offlineCalcOpen = (bool) (session('offline_calc_open') || (isset($errors) && $errors->any()) || old('member_code'));
+    $periodBonusesCalculated = ((int) ($summary['commission_count'] ?? 0) > 0)
+        || in_array((string) ($periodRecord?->status ?? ''), ['calculated', 'paying', 'paid', 'closed'], true);
 @endphp
 <div class="space-y-4 sm:space-y-6">
 
@@ -160,12 +192,12 @@
                     </svg>
                 </button>
                 <button type="button"
-                        class="admin-banner-icon-btn"
+                        class="admin-banner-icon-btn{{ $offlineCalcOpen ?? false ? ' is-active' : '' }}"
                         data-offline-calc-toggle="1"
-                        aria-controls="offlineCalcMonthCard"
-                        aria-expanded="false"
-                        aria-label="Calculer les bonus du mois"
-                        title="Calculer les bonus du mois">
+                        aria-controls="offlineCalcPanels"
+                        aria-expanded="{{ ($offlineCalcOpen ?? false) ? 'true' : 'false' }}"
+                        aria-label="Calculer les bonus"
+                        title="Calculer les bonus">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
@@ -219,12 +251,12 @@
                 </div>
             </div>
             <button type="button"
-                    class="btn btn-outline btn-sm btn-round-icon"
+                    class="btn btn-outline btn-sm btn-round-icon{{ ($offlineCalcOpen ?? false) ? ' border-[var(--primary)] text-[var(--primary)]' : '' }}"
                     data-offline-calc-toggle="1"
-                    aria-controls="offlineCalcMonthCard"
-                    aria-expanded="false"
-                    aria-label="Calculer les bonus du mois"
-                    title="Calculer les bonus du mois">
+                    aria-controls="offlineCalcPanels"
+                    aria-expanded="{{ ($offlineCalcOpen ?? false) ? 'true' : 'false' }}"
+                    aria-label="Calculer les bonus"
+                    title="Calculer les bonus">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
@@ -282,78 +314,146 @@
     </div>
     @endif
 
-    {{-- FORMULAIRE (affiché via bouton calendrier) --}}
-    <div class="card offline-calc-card" id="offlineCalcMonthCard" hidden aria-hidden="true">
-        <div class="card-title">Calculer les bonus du mois</div>
+    {{-- FORMULAIRES (affichés via bouton calendrier) --}}
+    <div class="offline-calc-panels"
+         id="offlineCalcPanels"
+         @unless($offlineCalcOpen) hidden aria-hidden="true" @else aria-hidden="false" @endunless>
+        <div class="card offline-calc-card" id="offlineCalcMonthCard">
+            <div class="card-title">Calculer les bonus du mois</div>
 
-        @if($periodsWithPv->isEmpty())
-            <div class="offline-calc-empty">
-                <p class="title">Aucun PV historique</p>
-                <p class="hint">Importez d’abord le fichier Excel (admin → Import PV).</p>
-            </div>
-        @else
-            <div class="offline-calc-grid">
-                <form method="GET" action="{{ route('cashier.offline-bonus.calculate') }}" class="form-group">
-                    @if(filled($searchValue))
-                        <input type="hidden" name="search" value="{{ $searchValue }}">
-                    @endif
-                    <label class="form-label" for="offlineCalcPeriod">Période <span class="required">*</span></label>
-                    <input type="month"
-                           id="offlineCalcPeriod"
-                           name="period"
-                           class="form-control"
-                           value="{{ $selectedPeriod ?: date('Y-m') }}"
-                           onchange="this.form.submit()"
-                           required>
-                </form>
-
-                <div class="form-group">
-                    <label class="form-label">Membres</label>
-                    <div class="form-control" style="display:flex;align-items:center;background:var(--bg-secondary);">
-                        <strong>{{ number_format($summary['members'] ?? 0) }}</strong>
-                    </div>
+            @if($periodsWithPv->isEmpty())
+                <div class="offline-calc-empty">
+                    <p class="title">Aucun PV historique</p>
+                    <p class="hint">Importez d’abord le fichier Excel (admin → Import PV).</p>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">Lignes PV</label>
-                    <div class="form-control" style="display:flex;align-items:center;background:var(--bg-secondary);">
-                        <strong>{{ number_format($summary['pv_rows'] ?? 0) }}</strong>
-                    </div>
-                </div>
-            </div>
-
-            @if($periodStatusLabel)
-                <span class="offline-calc-help">
-                    Statut de la période : <strong>{{ $periodStatusLabel }}</strong>
-                </span>
-            @endif
-
-            @if($selectedPeriod && $summary && ($summary['pv_rows'] ?? 0) > 0)
-                <span class="offline-calc-help">
-                    Calcule Direct, Indirect et Leadership pour <strong>{{ $periodLabel }}</strong>
-                    à partir des PV importés. Les résultats apparaissent dans commissions et historique.
-                </span>
-
-                <div class="offline-calc-footer">
-                    <form method="POST"
-                          action="{{ route('cashier.offline-bonus.calculate.run') }}"
-                          id="offlineCalcBonusForm">
-                        @csrf
-                        <input type="hidden" name="period" value="{{ $selectedPeriod }}">
-                        <button type="submit" class="btn btn-primary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                            </svg>
-                            Calculer les bonus
-                        </button>
+            @else
+                <div class="offline-calc-grid">
+                    <form method="GET" action="{{ route('cashier.offline-bonus.calculate') }}" class="form-group">
+                        @if(filled($searchValue))
+                            <input type="hidden" name="search" value="{{ $searchValue }}">
+                        @endif
+                        <label class="form-label" for="offlineCalcPeriod">Période <span class="required">*</span></label>
+                        <input type="month"
+                               id="offlineCalcPeriod"
+                               name="period"
+                               class="form-control"
+                               value="{{ $selectedPeriod ?: date('Y-m') }}"
+                               onchange="this.form.submit()"
+                               required>
                     </form>
+
+                    <div class="form-group">
+                        <label class="form-label">Membres</label>
+                        <div class="form-control" style="display:flex;align-items:center;background:var(--bg-secondary);">
+                            <strong>{{ number_format($summary['members'] ?? 0) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Lignes PV</label>
+                        <div class="form-control" style="display:flex;align-items:center;background:var(--bg-secondary);">
+                            <strong>{{ number_format($summary['pv_rows'] ?? 0) }}</strong>
+                        </div>
+                    </div>
                 </div>
-            @elseif($selectedPeriod)
-                <div class="offline-calc-empty" style="padding-top:1rem;">
-                    <p class="title">Aucune ligne PV pour {{ $periodLabel }}</p>
-                    <p class="hint">Choisissez un autre mois ou réimportez les PV.</p>
-                </div>
+
+                @if($periodStatusLabel)
+                    <span class="offline-calc-help">
+                        Statut de la période : <strong>{{ $periodStatusLabel }}</strong>
+                    </span>
+                @endif
+
+                @if($selectedPeriod && $summary && ($summary['pv_rows'] ?? 0) > 0)
+                    <span class="offline-calc-help">
+                        Calcule Direct, Indirect et Leadership pour <strong>{{ $periodLabel }}</strong>
+                        à partir des PV importés. Les résultats apparaissent dans commissions et historique.
+                    </span>
+
+                    <div class="offline-calc-footer">
+                        <form method="POST"
+                              action="{{ route('cashier.offline-bonus.calculate.run') }}"
+                              id="offlineCalcBonusForm">
+                            @csrf
+                            <input type="hidden" name="period" value="{{ $selectedPeriod }}">
+                            <button type="submit" class="btn btn-primary">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                Calculer les bonus
+                            </button>
+                        </form>
+                    </div>
+                @elseif($selectedPeriod)
+                    <div class="offline-calc-empty" style="padding-top:1rem;">
+                        <p class="title">Aucune ligne PV pour {{ $periodLabel }}</p>
+                        <p class="hint">Choisissez un autre mois ou réimportez les PV.</p>
+                    </div>
+                @endif
             @endif
+        </div>
+
+        @if($periodBonusesCalculated)
+            <div class="card offline-calc-card" id="offlineCalcBranchCard">
+                <div class="card-title">Recalculer une branche</div>
+
+                <form method="POST"
+                      action="{{ route('cashier.offline-bonus.calculate.branch') }}"
+                      id="offlineCalcBranchForm">
+                    @csrf
+                    <div class="offline-calc-grid" style="grid-template-columns: 1fr;">
+                        <div class="form-group">
+                            <label class="form-label" for="offlineCalcBranchPeriod">Période <span class="required">*</span></label>
+                            <input type="month"
+                                   id="offlineCalcBranchPeriod"
+                                   name="period"
+                                   class="form-control"
+                                   value="{{ old('period', $selectedPeriod ?: date('Y-m')) }}"
+                                   required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="offlineCalcMemberCode">Code membre <span class="required">*</span></label>
+                            <input type="text"
+                                   id="offlineCalcMemberCode"
+                                   name="member_code"
+                                   class="form-control"
+                                   value="{{ old('member_code') }}"
+                                   placeholder="Ex. code sponsor du membre"
+                                   autocomplete="off"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="offline-calc-checkboxes">
+                        <label class="offline-calc-check">
+                            <input type="hidden" name="with_ancestors" value="0">
+                            <input type="checkbox" name="with_ancestors" value="1"
+                                   @checked(old('with_ancestors', '1') == '1')>
+                            Inclure les ascendants
+                        </label>
+                        <label class="offline-calc-check">
+                            <input type="hidden" name="with_descendants" value="0">
+                            <input type="checkbox" name="with_descendants" value="1"
+                                   @checked(old('with_descendants', '1') == '1')>
+                            Inclure les descendants
+                        </label>
+                    </div>
+
+                    <span class="offline-calc-help">
+                        Disponible après le calcul du mois. Utile après rattachement d’un parrain :
+                        recalcule Direct / Indirect / Leadership pour le membre et sa chaîne.
+                        Les membres sans PV sur la période sont ignorés.
+                    </span>
+
+                    <div class="offline-calc-footer">
+                        <button type="submit" class="btn btn-outline">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Recalculer la branche
+                        </button>
+                    </div>
+                </form>
+            </div>
         @endif
     </div>
 
@@ -419,13 +519,13 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const calcCard = document.getElementById('offlineCalcMonthCard');
+    const calcPanels = document.getElementById('offlineCalcPanels');
     const calcToggles = document.querySelectorAll('[data-offline-calc-toggle]');
 
     function setCalcCardOpen(open) {
-        if (!calcCard) return;
-        calcCard.hidden = !open;
-        calcCard.setAttribute('aria-hidden', open ? 'false' : 'true');
+        if (!calcPanels) return;
+        calcPanels.hidden = !open;
+        calcPanels.setAttribute('aria-hidden', open ? 'false' : 'true');
         calcToggles.forEach(function (btn) {
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
             btn.classList.toggle('is-active', open);
@@ -435,16 +535,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
         if (open) {
-            calcCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            calcPanels.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
 
     calcToggles.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            const open = calcCard ? calcCard.hidden : true;
+            const open = calcPanels ? calcPanels.hidden : true;
             setCalcCardOpen(open);
         });
     });
+
+    @if($offlineCalcOpen)
+    setCalcCardOpen(true);
+    @endif
 
     const calcForm = document.getElementById('offlineCalcBonusForm');
     if (calcForm) {
@@ -460,6 +564,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 title: 'Calculer les bonus',
                 message: 'Calculer les bonus Direct, Indirect et Leadership pour {{ $periodLabel }} à partir des PV importés ?',
                 confirmText: 'Calculer',
+                onConfirm: function () {
+                    form.submit();
+                },
+                form: form
+            });
+        });
+    }
+
+    const branchForm = document.getElementById('offlineCalcBranchForm');
+    if (branchForm) {
+        branchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            const code = (form.querySelector('[name="member_code"]')?.value || '').trim();
+            if (typeof window.showConfirmDialog !== 'function') {
+                form.submit();
+                return;
+            }
+            window.showConfirmDialog({
+                type: 'primary',
+                title: 'Recalculer une branche',
+                message: 'Recalculer Direct / Indirect / Leadership pour le membre « ' + code + ' » (ascendants / descendants selon options) sur la période choisie ?',
+                confirmText: 'Recalculer',
                 onConfirm: function () {
                     form.submit();
                 },

@@ -496,6 +496,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::prefix('offline-bonus')->name('offline-bonus.')->group(function () {
         Route::get('/calculate', [OfflineBonusController::class, 'calculateIndex'])->name('calculate');
         Route::post('/calculate', [OfflineBonusController::class, 'calculate'])->name('calculate.run');
+        Route::post('/calculate-branch', [OfflineBonusController::class, 'calculateBranch'])->name('calculate.branch');
         Route::get('/pay', [OfflineBonusController::class, 'payIndex'])->name('pay');
         Route::get('/pay/global-pdf', [OfflineBonusController::class, 'exportGlobalPdf'])->name('pay.global-pdf');
         Route::get('/pay/{userId}', [OfflineBonusController::class, 'payShow'])->name('pay.show');

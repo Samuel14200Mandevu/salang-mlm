@@ -137,6 +137,63 @@ class OfflineBonusController extends Controller
     }
 
     /**
+     * Recalcul ciblé : membre + ascendants + descendants (après rattachement de parrain, etc.).
+     */
+    public function calculateBranch(Request $request, OfflinePeriodBonusService $service)
+    {
+        $request->validate([
+            'period' => ['required', 'date_format:Y-m'],
+            'member_code' => ['required', 'string', 'max:64'],
+            'with_ancestors' => ['sometimes', 'boolean'],
+            'with_descendants' => ['sometimes', 'boolean'],
+        ]);
+
+        $periodValue = (string) $request->input('period');
+        $periodRecord = CommissionPeriod::query()->where('period', $periodValue)->first();
+        $hasCommissions = Commission::query()
+            ->where('period', $periodValue)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->exists();
+        $periodReady = $hasCommissions
+            || ($periodRecord && in_array((string) $periodRecord->status, ['calculated', 'paying', 'paid', 'closed'], true));
+
+        if (! $periodReady) {
+            return back()
+                ->with('error', 'Recalcul de branche disponible uniquement après avoir calculé les bonus du mois.')
+                ->withInput()
+                ->with('offline_calc_open', true);
+        }
+
+        try {
+            $result = $service->calculateBranch(
+                (string) $request->input('period'),
+                (string) $request->input('member_code'),
+                $request->boolean('with_ancestors', true),
+                $request->boolean('with_descendants', true),
+            );
+        } catch (\Throwable $e) {
+            return back()
+                ->with('error', $e->getMessage())
+                ->withInput()
+                ->with('offline_calc_open', true);
+        }
+
+        return redirect()
+            ->route('cashier.offline-bonus.calculate', ['period' => $result['period']])
+            ->with(
+                'success',
+                "Branche {$result['member']} · {$result['period']} : ".
+                "{$result['processed']}/{$result['branch_size']} membre(s) recalculés, ".
+                "{$result['created']} lignes, $".number_format($result['total_amount'], 2).
+                ($result['skipped_no_pv'] > 0
+                    ? " · {$result['skipped_no_pv']} sans PV ignoré(s)"
+                    : '').
+                '. Vous pouvez ensuite payer depuis « Envoyer aux portefeuilles ».'
+            )
+            ->with('offline_calc_open', true);
+    }
+
+    /**
      * Rapport global imprimable (même modèle que admin PV) — ouvre l’interface d’impression.
      */
     public function exportGlobalPdf(Request $request)
