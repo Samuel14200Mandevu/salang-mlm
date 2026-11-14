@@ -161,15 +161,15 @@ class OfflinePeriodBonusService
                     ->where('user_id', $uid)
                     ->exists();
 
-                if (! $hasPv) {
-                    $skippedNoPv++;
-                    continue;
-                }
-
+                // Toujours passer par le calculateur : sans PV, ça purge les D/I/L orphelins.
                 $result = $this->calculator->calculateForPeriod($period, $uid);
                 $created += (int) $result['created'];
                 $totalAmount += (float) $result['total_amount'];
                 $processedIds[] = $uid;
+
+                if (! $hasPv) {
+                    $skippedNoPv++;
+                }
             }
 
             $historyRows = $this->mirrorToCommissionHistory($period, $processedIds);
