@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Notifications\ActionFeedbackNotification;
+use App\Notifications\PublicationPublishedNotification;
 use App\Support\NotificationPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,8 @@ class NotificationController extends Controller
         if ($user?->hasRole('admin')) {
             return redirect()->route('admin.notifications.index');
         }
+
+        $this->pruneExpiredPublicationNotifications($user);
 
         $status = $request->query('status', 'all');
         $category = $request->query('category', 'all');
@@ -76,6 +79,12 @@ class NotificationController extends Controller
         }
 
         $notification = $user->notifications()->findOrFail($id);
+
+        if (PublicationPublishedNotification::isExpired($notification)) {
+            $notification->delete();
+            abort(404);
+        }
+
         if ($notification->read_at === null) {
             $notification->markAsRead();
             $notification->refresh();
@@ -88,6 +97,18 @@ class NotificationController extends Controller
             'presenter' => $presenter,
             'unreadCount' => $user->unreadNotifications()->count(),
         ]);
+    }
+
+    protected function pruneExpiredPublicationNotifications($user): void
+    {
+        $user->notifications()
+            ->where('type', PublicationPublishedNotification::class)
+            ->orderBy('id')
+            ->each(function ($notification) {
+                if (PublicationPublishedNotification::isExpired($notification)) {
+                    $notification->delete();
+                }
+            });
     }
 
     public function markAsRead(Request $request, $id)

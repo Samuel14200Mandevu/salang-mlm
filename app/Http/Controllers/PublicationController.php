@@ -8,6 +8,7 @@ use App\Models\Publication;
 use App\Models\PublicationMedia;
 use App\Services\CareerQualificationPublicationsSync;
 use App\Services\PublicationMediaStorage;
+use App\Services\PublicationMemberNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -16,7 +17,8 @@ class PublicationController extends Controller
 {
     public function __construct(
         protected PublicationMediaStorage $mediaStorage,
-        protected CareerQualificationPublicationsSync $careerPublicationsSync
+        protected CareerQualificationPublicationsSync $careerPublicationsSync,
+        protected PublicationMemberNotifier $publicationNotifier
     ) {
         $this->middleware('role:admin|it_manager')->only([
             'create', 'store', 'edit', 'update', 'destroy', 'deleteMedia',
@@ -103,6 +105,10 @@ class PublicationController extends Controller
             $this->mediaStorage->storeMany($publication, $request->file('medias'));
         }
 
+        if ($publication->is_published) {
+            $this->publicationNotifier->notifyAllMembers($publication);
+        }
+
         return redirect()
             ->route('publications.show', $publication)
             ->with('success', 'Publication créée.');
@@ -134,6 +140,8 @@ class PublicationController extends Controller
         $data = $request->validated();
         unset($data['medias']);
 
+        $wasPublished = (bool) $publication->is_published;
+
         $publication->update([
             ...$data,
             'is_published' => $request->boolean('is_published', $publication->is_published),
@@ -141,6 +149,10 @@ class PublicationController extends Controller
 
         if ($request->hasFile('medias')) {
             $this->mediaStorage->storeMany($publication, $request->file('medias'));
+        }
+
+        if (! $wasPublished && $publication->is_published) {
+            $this->publicationNotifier->notifyAllMembers($publication);
         }
 
         return redirect()

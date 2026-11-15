@@ -1,15 +1,15 @@
 {{-- resources/views/commissions/dashboard.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Tableau des commissions')
+@section('title', 'Gains')
 
 @section('content')
 <div class="commissions-dashboard-page space-y-4 sm:space-y-6">
 
     <div class="commissions-dashboard-header-desktop flex flex-wrap items-center justify-between gap-3 animate-fadeInUp">
         <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Tableau de bord des commissions</h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vue d'ensemble de vos gains</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Gains</h1>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Vue d'ensemble de vos commissions</p>
         </div>
         <div class="flex flex-wrap gap-1.5 sm:gap-2">
             <a href="{{ route('commissions.index') }}" class="btn btn-outline btn-sm">
@@ -17,12 +17,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
                 Toutes les commissions
-            </a>
-            <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                </svg>
-                Par niveau
             </a>
         </div>
     </div>
@@ -369,12 +363,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
             Voir toutes les commissions
-        </a>
-        <a href="{{ route('commissions.levels') }}" class="btn btn-outline btn-sm sm:btn-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-            </svg>
-            Commissions par niveau
         </a>
     </div>
 </div>

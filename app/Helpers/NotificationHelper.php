@@ -185,6 +185,8 @@ class NotificationHelper
             'new_downline' => 'Nouveau membre',
             'kyc_verified' => 'KYC vérifié',
             'kyc_rejected' => 'KYC rejeté',
+            'publication_published' => 'Nouvelle publication',
+            'staff_announcement' => 'Annonce',
         ];
 
         return $prefixes[$type] ?? 'Notification';

@@ -151,4 +151,44 @@ class WalletCommissionBreakdownTest extends TestCase
         $this->assertSame(0.0, $october['direct']['total']);
         $this->assertSame(0, $october['direct']['count']);
     }
+
+    public function test_cash_pos_paid_at_checkout_appears_for_selected_month(): void
+    {
+        $user = User::factory()->create();
+
+        // Ancien flux POS : payé cash sans FK période
+        Commission::query()->create([
+            'user_id' => $user->id,
+            'commission_period_id' => null,
+            'period' => '2026-11',
+            'type' => 'cash_pos',
+            'source' => 'pos',
+            'amount' => 8.5,
+            'percentage' => 0,
+            'status' => 'paid',
+            'paid_at' => now(),
+            'calculation_type' => 'manual',
+        ]);
+
+        Commission::query()->create([
+            'user_id' => $user->id,
+            'commission_period_id' => null,
+            'period' => '2026-10',
+            'type' => 'cash_pos',
+            'source' => 'pos',
+            'amount' => 4.0,
+            'percentage' => 0,
+            'status' => 'paid',
+            'paid_at' => now(),
+            'calculation_type' => 'manual',
+        ]);
+
+        $service = new WalletCommissionBreakdown;
+        $november = $service->paidByType($user->id, '2026-11');
+
+        $this->assertSame(8.5, $november['cash_pos']['total']);
+        $this->assertSame(1, $november['cash_pos']['count']);
+        $this->assertSame(0.0, $november['direct']['total']);
+    }
 }
+

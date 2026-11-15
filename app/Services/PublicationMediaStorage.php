@@ -27,10 +27,13 @@ class PublicationMediaStorage
 
     public function storeOne(Publication $publication, UploadedFile $file, int $order): PublicationMedia
     {
-        $mime = $file->getMimeType() ?: $file->getClientMimeType();
-        $type = str_starts_with((string) $mime, 'video/')
-            ? PublicationMedia::TYPE_VIDEO
-            : PublicationMedia::TYPE_PHOTO;
+        $mime = (string) ($file->getMimeType() ?: $file->getClientMimeType());
+        $extension = strtolower((string) ($file->getClientOriginalExtension() ?: $file->guessExtension()));
+        $type = match (true) {
+            str_starts_with($mime, 'video/') => PublicationMedia::TYPE_VIDEO,
+            $mime === 'application/pdf' || $extension === 'pdf' => PublicationMedia::TYPE_DOCUMENT,
+            default => PublicationMedia::TYPE_PHOTO,
+        };
 
         $extension = $file->guessExtension() ?: $file->getClientOriginalExtension() ?: 'bin';
         $filename = Str::uuid()->toString().'.'.$extension;

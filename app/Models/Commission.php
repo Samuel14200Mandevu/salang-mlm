@@ -98,12 +98,19 @@ class Commission extends Model
     /**
      * Bonus visibles côté membre : période non masquée + déjà crédités au portefeuille.
      * Les lignes pending (calculées mais pas encore envoyées) restent réservées à la caisse.
+     * Profit POS cash (payé au guichet) : visible même sans FK commission_period_id.
      */
     public function scopeVisibleToMember($query)
     {
         return $query
             ->where('status', 'paid')
-            ->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+            ->where(function ($q) {
+                $q->whereHas('period', fn ($p) => $p->where('is_hidden', false))
+                    ->orWhere(function ($pos) {
+                        $pos->where('type', 'cash_pos')
+                            ->whereNull('commission_period_id');
+                    });
+            });
     }
 
     public function scopePendingPayableViaSystem($query)

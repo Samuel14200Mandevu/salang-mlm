@@ -4,15 +4,28 @@
 
 @section('content')
 @php
-    $publicationSub = ($publication->type === 'event' ? 'Événement' : 'Promotion');
+    $isEvent = $publication->type === 'event';
+    $typeLabel = $isEvent ? 'Événement' : 'Promotion';
+    $photos = $publication->medias->where('type', 'photo')->values();
+    $videos = $publication->medias->where('type', 'video')->values();
+    $documents = $publication->medias->where('type', 'document')->values();
+    $cover = $photos->first() ?? $videos->first();
+    $galleryPhotos = $photos->slice($cover && ($cover->type ?? null) === 'photo' ? 1 : 0)->values();
+
+    $dateLabel = null;
     if ($publication->start_date) {
-        $publicationSub .= ' · '.$publication->start_date->format('d/m/Y');
-        if ($publication->end_date) {
-            $publicationSub .= ' — '.$publication->end_date->format('d/m/Y');
+        $dateLabel = $publication->start_date->format('d/m/Y');
+        if ($publication->end_date && ! $publication->start_date->equalTo($publication->end_date)) {
+            $dateLabel .= ' — '.$publication->end_date->format('d/m/Y');
         }
     }
+
+    $publicationSub = $typeLabel;
+    if ($dateLabel) {
+        $publicationSub .= ' · '.$dateLabel;
+    }
 @endphp
-<div class="supervision-page space-y-4 sm:space-y-6 max-w-4xl mx-auto">
+<div class="supervision-page publication-show-page space-y-4 sm:space-y-5 max-w-4xl mx-auto">
     <x-member.catalog-banner
         :eyebrow="$isSupervision ? 'Supervision · Salang' : 'Services · Salang'"
         :title="$publication->title"
@@ -36,60 +49,204 @@
 
     <div class="supervision-page-header-desktop flex flex-wrap items-start justify-between gap-3 animate-fadeInUp">
         <div class="min-w-0">
-            <a href="{{ route('publications.index') }}" class="text-sm text-primary-500 hover:underline">← Galerie</a>
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mt-1">{{ $publication->title }}</h1>
-            <div class="flex flex-wrap items-center gap-2 mt-2">
-                <span class="badge {{ $publication->type === 'event' ? 'badge-info' : 'badge-purple' }}">
-                    {{ $publication->type === 'event' ? 'Événement' : 'Promotion' }}
-                </span>
-                @if($publication->start_date)
-                    <span class="text-xs text-[var(--text-secondary)]">
-                        {{ $publication->start_date->format('d/m/Y') }}
-                        @if($publication->end_date) — {{ $publication->end_date->format('d/m/Y') }} @endif
-                    </span>
-                @endif
-                @if($isSupervision && ! $publication->is_published)
-                    <span class="badge badge-neutral text-[10px]">Non publié</span>
-                @endif
-            </div>
+            <a href="{{ route('publications.index') }}" class="publication-show-back">← Galerie</a>
+            <h1 class="publication-show-title">{{ $publication->title }}</h1>
         </div>
         @if($isSupervision)
             <a href="{{ route('publications.edit', $publication) }}" class="btn btn-outline btn-sm shrink-0">Modifier</a>
         @endif
     </div>
 
-    <div class="supervision-detail-stack">
-
-    @if($publication->description)
-        <div class="card p-4 text-sm sm:text-base text-[var(--text-primary)] whitespace-pre-wrap animate-fadeInUp delay-1">
-            {{ $publication->description }}
-        </div>
-    @endif
-
-    @if($publication->medias->isNotEmpty())
-        <div class="animate-fadeInUp delay-2">
-            <h2 class="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-3">Galerie</h2>
-            <div class="publication-show-photos grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mb-4">
-                @foreach($publication->medias->where('type', 'photo') as $photo)
-                    <a href="{{ $photo->url }}" target="_blank" rel="noopener" class="block rounded-lg overflow-hidden border border-[var(--border-color)]">
-                        <img src="{{ $photo->url }}" alt="" class="w-full aspect-square object-cover hover:opacity-95 transition-opacity" loading="lazy">
-                    </a>
-                @endforeach
+    <div class="supervision-detail-stack publication-show-stack">
+        @if($cover)
+            <figure class="publication-show-cover animate-fadeInUp delay-1">
+                @if(($cover->type ?? '') === 'video')
+                    <video
+                        class="publication-show-cover__media"
+                        controls
+                        poster="{{ $cover->thumbnail_url }}"
+                        preload="metadata"
+                    >
+                        <source src="{{ $cover->url }}" type="{{ $cover->mime_type }}">
+                    </video>
+                @else
+                    <button
+                        type="button"
+                        class="publication-show-cover__btn"
+                        data-lightbox-src="{{ $cover->url }}"
+                        data-lightbox-alt="{{ $publication->title }}"
+                        aria-label="Agrandir la photo"
+                    >
+                        <img
+                            src="{{ $cover->url }}"
+                            alt="{{ $publication->title }}"
+                            class="publication-show-cover__media"
+                            loading="eager"
+                            decoding="async"
+                        >
+                    </button>
+                @endif
+                <figcaption class="publication-show-cover__meta">
+                    <span class="publication-show-badge {{ $isEvent ? 'is-event' : 'is-promo' }}">{{ $typeLabel }}</span>
+                    @if($dateLabel)
+                        <span class="publication-show-cover__date">{{ $dateLabel }}</span>
+                    @endif
+                    @if($isSupervision && ! $publication->is_published)
+                        <span class="publication-show-badge is-draft">Non publié</span>
+                    @endif
+                </figcaption>
+            </figure>
+        @else
+            <div class="publication-show-meta-bar animate-fadeInUp delay-1">
+                <span class="publication-show-badge {{ $isEvent ? 'is-event' : 'is-promo' }}">{{ $typeLabel }}</span>
+                @if($dateLabel)
+                    <span class="publication-show-meta-bar__date">{{ $dateLabel }}</span>
+                @endif
+                @if($isSupervision && ! $publication->is_published)
+                    <span class="publication-show-badge is-draft">Non publié</span>
+                @endif
             </div>
-            <div class="space-y-4">
-                @foreach($publication->medias->where('type', 'video') as $video)
-                    <div class="card p-2 sm:p-3 overflow-hidden">
-                        <video controls class="w-full max-h-[480px] rounded-md bg-black" poster="{{ $video->thumbnail_url }}" preload="metadata">
-                            <source src="{{ $video->url }}" type="{{ $video->mime_type }}">
-                        </video>
-                        <p class="text-xs text-[var(--text-tertiary)] mt-2 truncate">{{ $video->original_name }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @else
-        <div class="card p-8 text-center text-[var(--text-secondary)]">Aucun média attaché.</div>
-    @endif
+        @endif
+
+        @if($publication->description)
+            <article class="publication-show-body card animate-fadeInUp delay-2">
+                <h2 class="publication-show-section-label">À propos</h2>
+                <div class="publication-show-body__text text-pretty">{{ $publication->description }}</div>
+            </article>
+        @endif
+
+        @if($galleryPhotos->isNotEmpty())
+            <section class="publication-show-gallery animate-fadeInUp delay-2" aria-labelledby="pubGalleryHeading">
+                <div class="publication-show-section-head">
+                    <h2 id="pubGalleryHeading" class="publication-show-section-label">Galerie</h2>
+                    <span class="publication-show-section-count">{{ $galleryPhotos->count() }}</span>
+                </div>
+                <div class="publication-show-photos">
+                    @foreach($galleryPhotos as $photo)
+                        <button
+                            type="button"
+                            class="publication-show-photo"
+                            data-lightbox-src="{{ $photo->url }}"
+                            data-lightbox-alt="{{ $publication->title }}"
+                            aria-label="Voir la photo {{ $loop->iteration }}"
+                        >
+                            <img
+                                src="{{ $photo->url }}"
+                                alt=""
+                                class="publication-show-photo__img"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                        </button>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if($videos->isNotEmpty() && ! (($cover->type ?? null) === 'video' && $videos->count() === 1 && $videos->first()->is($cover)))
+            <section class="publication-show-videos animate-fadeInUp delay-3" aria-labelledby="pubVideosHeading">
+                <div class="publication-show-section-head">
+                    <h2 id="pubVideosHeading" class="publication-show-section-label">Vidéos</h2>
+                    <span class="publication-show-section-count">{{ $videos->count() }}</span>
+                </div>
+                <div class="publication-show-videos__list">
+                    @foreach($videos as $video)
+                        @if($cover && ($cover->type ?? null) === 'video' && $video->is($cover))
+                            @continue
+                        @endif
+                        <div class="publication-show-video card">
+                            <video
+                                controls
+                                class="publication-show-video__player"
+                                poster="{{ $video->thumbnail_url }}"
+                                preload="metadata"
+                            >
+                                <source src="{{ $video->url }}" type="{{ $video->mime_type }}">
+                            </video>
+                            @if($video->original_name)
+                                <p class="publication-show-video__name">{{ $video->original_name }}</p>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if($documents->isNotEmpty())
+            <section class="publication-show-docs animate-fadeInUp delay-3" aria-labelledby="pubDocsHeading">
+                <div class="publication-show-section-head">
+                    <h2 id="pubDocsHeading" class="publication-show-section-label">Documents</h2>
+                    <span class="publication-show-section-count">{{ $documents->count() }}</span>
+                </div>
+                <ul class="publication-show-docs__list">
+                    @foreach($documents as $doc)
+                        <li>
+                            <a href="{{ $doc->url }}" target="_blank" rel="noopener" class="publication-show-doc">
+                                <span class="publication-show-doc__badge" aria-hidden="true">PDF</span>
+                                <span class="publication-show-doc__meta">
+                                    <span class="publication-show-doc__name">{{ $doc->original_name ?: 'Document PDF' }}</span>
+                                    <span class="publication-show-doc__hint">Ouvrir / télécharger</span>
+                                </span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        @if($photos->isEmpty() && $videos->isEmpty() && $documents->isEmpty() && ! $cover)
+            <div class="publication-show-empty card">Aucun média attaché.</div>
+        @endif
     </div>
 </div>
+
+<div class="publication-lightbox" id="publicationLightbox" hidden>
+    <button type="button" class="publication-lightbox__backdrop" data-lightbox-close aria-label="Fermer"></button>
+    <div class="publication-lightbox__dialog" role="dialog" aria-modal="true" aria-label="Photo en grand">
+        <button type="button" class="publication-lightbox__close" data-lightbox-close aria-label="Fermer">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <img src="" alt="" class="publication-lightbox__img" id="publicationLightboxImg">
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var box = document.getElementById('publicationLightbox');
+    var img = document.getElementById('publicationLightboxImg');
+    if (!box || !img) return;
+
+    function openLightbox(src, alt) {
+        img.src = src;
+        img.alt = alt || '';
+        box.hidden = false;
+        document.documentElement.classList.add('publication-lightbox-open');
+    }
+
+    function closeLightbox() {
+        box.hidden = true;
+        img.removeAttribute('src');
+        img.alt = '';
+        document.documentElement.classList.remove('publication-lightbox-open');
+    }
+
+    document.querySelectorAll('[data-lightbox-src]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            openLightbox(btn.getAttribute('data-lightbox-src'), btn.getAttribute('data-lightbox-alt'));
+        });
+    });
+
+    box.querySelectorAll('[data-lightbox-close]').forEach(function (el) {
+        el.addEventListener('click', closeLightbox);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !box.hidden) closeLightbox();
+    });
+});
+</script>
+@endpush
 @endsection

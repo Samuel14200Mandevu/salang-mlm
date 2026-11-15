@@ -12,7 +12,7 @@
         :sub="($isSupervision ? 'Conversation membre' : 'Votre fil avec l’équipe').' · '.($conversation->is_resolved ? 'Résolue' : 'Ouverte')"
         banner-class="supervision-catalog-banner">
         <x-slot:tools>
-            <a href="{{ route('questions.index') }}" class="shop-banner-icon-btn" aria-label="Retour">
+            <a href="{{ $isSupervision ? route('questions.index') : route('services.index') }}" class="shop-banner-icon-btn" aria-label="{{ $isSupervision ? 'Retour' : 'Retour aux services' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -35,7 +35,7 @@
         <div class="min-w-0 flex items-start gap-3">
             @include('questions.partials.user-avatar', ['user' => $isSupervision ? $conversation->member : auth()->user(), 'size' => 'lg'])
             <div class="min-w-0">
-                <a href="{{ route('questions.index') }}" class="text-sm text-primary-500 hover:underline">← Retour</a>
+                <a href="{{ $isSupervision ? route('questions.index') : route('services.index') }}" class="text-sm text-primary-500 hover:underline">← {{ $isSupervision ? 'Retour' : 'Services' }}</a>
                 <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mt-1 truncate">
                     {{ $isSupervision ? ($conversation->member?->name ?? 'Membre') : 'Support Salang' }}
                 </h1>

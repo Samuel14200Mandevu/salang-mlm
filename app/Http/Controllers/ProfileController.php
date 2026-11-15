@@ -70,18 +70,19 @@ class ProfileController extends Controller
         }
     }
 
-    public function referral()
+    public function referral(\Illuminate\Http\Request $request)
     {
         $user = Auth::user();
         $referralUrl = url('/register?ref=' . ($user->sponsor_id ?? ''));
+        $qrOnly = $request->query('view') === 'qr';
         $qrSvg = QrCode::format('svg')
-            ->size(220)
-            ->margin(2)
+            ->size($qrOnly ? 280 : 240)
+            ->margin(1)
             ->color(30, 93, 173)
             ->backgroundColor(255, 255, 255)
             ->generate($referralUrl);
 
-        return view('profile.referral', compact('user', 'referralUrl', 'qrSvg'));
+        return view('profile.referral', compact('user', 'referralUrl', 'qrSvg', 'qrOnly'));
     }
 
     public function about()

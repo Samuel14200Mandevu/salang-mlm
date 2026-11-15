@@ -64,22 +64,6 @@
                     </div>
                 </div>
 
-                <a href="{{ route('commissions.dashboard') }}"
-                   class="btn btn-outline btn-sm btn-icon commissions-header-icon-btn"
-                   title="Tableau de bord"
-                   aria-label="Tableau de bord">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                    </svg>
-                </a>
-                <a href="{{ route('commissions.levels') }}"
-                   class="btn btn-outline btn-sm btn-icon commissions-header-icon-btn"
-                   title="Par niveau"
-                   aria-label="Par niveau">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                    </svg>
-                </a>
                 <a href="{{ route('commissions.export-pdf', request()->all()) }}"
                    class="btn btn-sm btn-icon commissions-header-icon-btn btn-pdf-icon"
                    title="Exporter PDF"
@@ -565,6 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchToggle && searchPanel) {
         searchToggle.addEventListener('click', function() {
             var open = searchPanel.classList.toggle('is-open');
+            searchToggle.classList.toggle('is-active', open);
             searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
             searchPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
             if (open) {

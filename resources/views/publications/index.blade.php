@@ -120,7 +120,9 @@
     <div class="publication-grid animate-fadeInUp delay-1">
         @forelse($publications as $publication)
             @php
-                $cover = $publication->medias->firstWhere('type', 'photo') ?? $publication->medias->first();
+                $cover = $publication->medias->firstWhere('type', 'photo')
+                    ?? $publication->medias->firstWhere('type', 'video')
+                    ?? $publication->medias->firstWhere('type', 'document');
             @endphp
             <a href="{{ route('publications.show', $publication) }}" class="publication-card card overflow-hidden hover:border-primary-500 transition-colors">
                 <div class="publication-card__media aspect-[4/3] bg-[var(--bg-secondary)] relative">
@@ -131,6 +133,11 @@
                             <source src="{{ $cover->url }}" type="{{ $cover->mime_type }}">
                         </video>
                         <span class="publication-card__play" aria-hidden="true">▶</span>
+                    @elseif($cover && $cover->type === 'document')
+                        <div class="flex flex-col items-center justify-center h-full gap-2 text-[var(--text-secondary)] text-sm">
+                            <span class="inline-flex px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-extrabold tracking-wide">PDF</span>
+                            <span class="px-3 text-center text-xs line-clamp-2">{{ $cover->original_name }}</span>
+                        </div>
                     @else
                         <div class="flex items-center justify-center h-full text-[var(--text-tertiary)] text-sm">Sans média</div>
                     @endif

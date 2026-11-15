@@ -24,7 +24,9 @@
                  :aria-hidden="false">
                 @foreach($items as $publication)
                     @php
-                        $cover = $publication->medias->firstWhere('type', 'photo') ?? $publication->medias->first();
+                        $cover = $publication->medias->firstWhere('type', 'photo')
+                            ?? $publication->medias->firstWhere('type', 'video')
+                            ?? $publication->medias->firstWhere('type', 'document');
                         $dateLabel = $publication->start_date
                             ? $publication->start_date->locale(app()->getLocale())->isoFormat('D MMM YYYY')
                             : $publication->created_at->locale(app()->getLocale())->diffForHumans();

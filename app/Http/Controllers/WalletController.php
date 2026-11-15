@@ -100,10 +100,8 @@ class WalletController extends Controller
             ->reverse()
             ->values();
 
-        // Direct / Indirect / Leadership uniquement (POS toujours masqué côté membre)
-        $bonusByType = collect($this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null))
-            ->except('cash_pos')
-            ->all();
+        // Direct / Indirect / Leadership / Profit POS (y compris cash payé au guichet)
+        $bonusByType = $this->commissionBreakdown->paidByType($user->id, $bonusMonth ?: null);
 
         $pendingDepositCount = Transaction::query()
             ->where('user_id', $user->id)

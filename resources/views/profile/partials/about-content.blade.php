@@ -57,7 +57,7 @@
         <ul class="profile-about-list text-sm text-[var(--text-secondary)] mt-2 space-y-1.5">
             <li>Accueil et suivi de votre activité (PV, rang, réseau)</li>
             <li>Boutique et packages pour développer votre volume</li>
-            <li>Commissions détaillées par type et par niveau</li>
+            <li>Commissions détaillées par type</li>
             <li>Portefeuille, retraits et vérification KYC</li>
         </ul>
         <p class="text-[10px] text-[var(--text-tertiary)] mt-3">{{ config('app.name') }} · espace membre sécurisé</p>

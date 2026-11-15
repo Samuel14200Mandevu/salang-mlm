@@ -2811,10 +2811,14 @@ public function destroyProfile(Request $request)
         float $commissionAmount,
         string $notes
     ): Commission {
+        $periodValue = MlmPeriod::current();
+        $period = CommissionPeriod::findOrCreateForValue($periodValue);
+
         $commission = Commission::create([
             'user_id' => $sponsor->id,
             'from_user_id' => $client->id,
-            'period' => MlmPeriod::current(),
+            'commission_period_id' => $period->id,
+            'period' => $periodValue,
             'type' => 'cash_pos',
             'source' => 'pos',
             'amount' => $commissionAmount,

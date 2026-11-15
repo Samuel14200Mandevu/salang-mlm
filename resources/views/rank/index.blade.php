@@ -161,10 +161,10 @@
                     1 => [
                         'name' => 'Distributeur',
                         'pv' => 0,
-                        'bonus' => '0%',
+                        'bonus' => null,
                         'class' => 'level-1',
                         'description' => 'Grade de base, point de depart dans le systeme Salang',
-                        'commission_types' => ['Bonus Consommateur (6%)'],
+                        'commission_types' => [],
                         'conditions' => [
                             ['label' => 'Inscription', 'value' => 'Validée']
                         ],
@@ -173,10 +173,10 @@
                     2 => [
                         'name' => 'Qualification',
                         'pv' => 100,
-                        'bonus' => '6%',
+                        'bonus' => null,
                         'class' => 'level-2',
-                        'description' => 'Premier grade actif, débutez vos commissions',
-                        'commission_types' => ['Bonus Direct (6%)', 'Bonus Consommateur (6%)'],
+                        'description' => 'Premier grade actif dans le systeme Salang',
+                        'commission_types' => [],
                         'conditions' => [
                             ['label' => 'PV Personnel', 'value' => '≥ 100 PV'],
                             ['label' => 'PV Mensuel', 'value' => '≥ 20 PV']
@@ -291,7 +291,13 @@
                     foreach ($allRanksFromDB as $rank) {
                         if (isset($allRanksData[$rank->level])) {
                             $allRanksData[$rank->level]['name'] = $rank->name;
-                            $allRanksData[$rank->level]['bonus'] = $rank->bonus_percentage ?? $allRanksData[$rank->level]['bonus'];
+                            // Grades 1 et 2 : pas de bonus affiché
+                            if ((int) $rank->level >= 3) {
+                                $allRanksData[$rank->level]['bonus'] = $rank->bonus_percentage ?? $allRanksData[$rank->level]['bonus'];
+                            } else {
+                                $allRanksData[$rank->level]['bonus'] = null;
+                                $allRanksData[$rank->level]['commission_types'] = [];
+                            }
                             $allRanksData[$rank->level]['pv'] = $rank->min_pv ?? $allRanksData[$rank->level]['pv'];
                         }
                     }
@@ -335,7 +341,9 @@
                     <span class="rank-level-badge {{ $rank['class'] }}">{{ $rank['level'] }}</span>
                     <span class="rank-name">{{ $rank['name'] }}</span>
                     <span class="rank-pv">{{ number_format($rank['pv']) }} PV</span>
-                    <span class="rank-bonus">Bonus: {{ $rank['bonus'] }}</span>
+                    @if(! empty($rank['bonus']))
+                        <span class="rank-bonus">Bonus: {{ $rank['bonus'] }}</span>
+                    @endif
                     <span class="rank-check {{ $isCurrent ? 'current' : ($isUnlocked ? 'unlocked' : 'locked') }}">
                         {{ $isCurrent ? '●' : ($isUnlocked ? '✓' : '') }}
                     </span>
@@ -523,19 +531,47 @@ function showRankDetail(level) {
         `;
     }
     
+    const hasBonus = data.level >= 3 && data.bonus !== null && data.bonus !== undefined && String(data.bonus).trim() !== '';
     let commissionsHtml = '';
-    if (data.commission_types && data.commission_types.length > 0) {
+    if (hasBonus && data.commission_types && data.commission_types.length > 0) {
         data.commission_types.forEach(type => {
             commissionsHtml += `<li>${type}</li>`;
         });
-    } else {
-        commissionsHtml = `<li>Aucune commission specifique</li>`;
     }
-    
-    let bonusDisplay = data.bonus || '0%';
-    if (!bonusDisplay.includes('%')) {
-        bonusDisplay = bonusDisplay + '%';
+
+    let bonusDisplay = '';
+    if (hasBonus) {
+        bonusDisplay = String(data.bonus);
+        if (!bonusDisplay.includes('%')) {
+            bonusDisplay = bonusDisplay + '%';
+        }
     }
+
+    const commissionsSection = hasBonus ? `
+            <div class="detail-section">
+                <div class="section-title">Commissions disponibles</div>
+                <ul>
+                    ${commissionsHtml}
+                </ul>
+            </div>` : '';
+
+    const bonusSection = hasBonus ? `
+            <div class="detail-section">
+                <div class="section-title">Taux de commission</div>
+                <div class="detail-bonus-display">
+                    <span class="bonus-value">${bonusDisplay}</span>
+                    <span class="bonus-label">sur le BV personnel</span>
+                </div>
+            </div>` : '';
+
+    const pvPaymentSection = hasBonus ? `
+            <div class="detail-pv-required">
+                <span class="pv-label">PV mensuel requis pour toucher les commissions</span>
+                <span class="pv-value ${isCurrent ? 'met' : 'unmet'}">
+                    ${data.pv_payment || 'PV mensuel requis'}
+                    ${isCurrent ? ' ✓' : ' ✗'}
+                </span>
+            </div>` : '';
     
     content.innerHTML = `
         <div class="detail-header">
@@ -558,12 +594,7 @@ function showRankDetail(level) {
                 <div class="section-description">${data.description || 'Grade du systeme Salang'}</div>
             </div>
             
-            <div class="detail-section">
-                <div class="section-title">Commissions disponibles</div>
-                <ul>
-                    ${commissionsHtml}
-                </ul>
-            </div>
+            ${commissionsSection}
             
             <div class="detail-section">
                 <div class="section-title">Conditions d'accès</div>
@@ -579,21 +610,9 @@ function showRankDetail(level) {
                 </div>
             </div>
             
-            <div class="detail-section">
-                <div class="section-title">Taux de commission</div>
-                <div class="detail-bonus-display">
-                    <span class="bonus-value">${bonusDisplay}</span>
-                    <span class="bonus-label">sur le BV personnel</span>
-                </div>
-            </div>
+            ${bonusSection}
             
-            <div class="detail-pv-required">
-                <span class="pv-label">PV mensuel requis pour toucher les commissions</span>
-                <span class="pv-value ${isCurrent ? 'met' : 'unmet'}">
-                    ${data.pv_payment || 'PV mensuel requis'}
-                    ${isCurrent ? ' ✓' : ' ✗'}
-                </span>
-            </div>
+            ${pvPaymentSection}
         </div>
         
         <div class="detail-status ${statusClass}">

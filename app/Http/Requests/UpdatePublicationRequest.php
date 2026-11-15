@@ -26,9 +26,17 @@ class UpdatePublicationRequest extends FormRequest
             'medias' => ['nullable', 'array', 'max:10'],
             'medias.*' => [
                 'file',
-                'mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/quicktime',
+                'mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/quicktime,application/pdf',
                 'max:51200',
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'medias.*.mimetypes' => 'Fichiers acceptés : JPG, PNG, WebP, MP4, MOV ou PDF.',
+            'medias.*.max' => 'Chaque fichier ne doit pas dépasser 50 Mo.',
         ];
     }
 

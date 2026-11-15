@@ -106,7 +106,13 @@ class WalletCommissionBreakdown
         $query = Commission::query()
             ->where('user_id', $userId)
             ->whereIn('type', $typeKeys)
-            ->whereHas('period', fn ($q) => $q->where('is_hidden', false));
+            ->where(function ($q) {
+                $q->whereHas('period', fn ($p) => $p->where('is_hidden', false))
+                    ->orWhere(function ($pos) {
+                        $pos->where('type', 'cash_pos')
+                            ->whereNull('commission_period_id');
+                    });
+            });
 
         if ($period !== null && $period !== '') {
             $query->where('period', $period);

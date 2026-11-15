@@ -221,3 +221,11 @@ Schedule::call(function () {
     ->dailyAt('00:30')
     ->name('mlm-ensure-current-period')
     ->onOneServer();
+
+// ─── 7. Notifications publication (TTL 24 h) ───────────────────────
+Schedule::command('notifications:prune-expired-publications')
+    ->hourly()
+    ->name('prune-expired-publication-notifications')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/prune-publication-notifications.log'));

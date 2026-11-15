@@ -15,6 +15,8 @@ class PublicationMedia extends Model
 
     public const TYPE_VIDEO = 'video';
 
+    public const TYPE_DOCUMENT = 'document';
+
     protected $fillable = [
         'publication_id',
         'type',
@@ -46,6 +48,17 @@ class PublicationMedia extends Model
     public function scopeVideos(Builder $query): Builder
     {
         return $query->where('type', self::TYPE_VIDEO);
+    }
+
+    public function scopeDocuments(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_DOCUMENT);
+    }
+
+    public function isDocument(): bool
+    {
+        return $this->type === self::TYPE_DOCUMENT
+            || str_contains((string) $this->mime_type, 'pdf');
     }
 
     public function getUrlAttribute(): string

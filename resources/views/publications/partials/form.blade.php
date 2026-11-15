@@ -3,150 +3,139 @@
     $selectedType = old('type', $publication?->type ?? 'event');
 @endphp
 
-<div class="publication-form space-y-5">
-    <section class="publication-form-section" aria-labelledby="publication-section-info">
-        <h2 id="publication-section-info" class="publication-form-section__title">Informations</h2>
-        <div class="publication-form-section__body space-y-4">
-            <div>
-                <label for="title" class="publication-form-label">Titre <span class="text-red-500">*</span></label>
-                <input type="text"
-                       name="title"
-                       id="title"
-                       value="{{ old('title', $publication?->title) }}"
-                       class="input w-full"
-                       required
-                       maxlength="255"
-                       placeholder="Ex. Convention annuelle, Promo rentrée…">
-                @error('title')
-                    <p class="publication-form-error">{{ $message }}</p>
-                @enderror
-            </div>
+<div class="publication-social-card">
+    <div class="publication-social-author">
+        <div class="publication-composer__type" role="radiogroup" aria-label="Type de publication">
+            <label class="publication-composer__type-opt {{ $selectedType === 'event' ? 'is-selected' : '' }}">
+                <input type="radio" name="type" value="event" class="sr-only publication-type-input" @checked($selectedType === 'event')>
+                <span>Événement</span>
+            </label>
+            <label class="publication-composer__type-opt {{ $selectedType === 'promotion' ? 'is-selected' : '' }}">
+                <input type="radio" name="type" value="promotion" class="sr-only publication-type-input" @checked($selectedType === 'promotion')>
+                <span>Promotion</span>
+            </label>
+        </div>
+    </div>
+    @error('type')
+        <p class="publication-form-error">{{ $message }}</p>
+    @enderror
 
-            <div>
-                <span class="publication-form-label">Type <span class="text-red-500">*</span></span>
-                <div class="publication-type-picker" role="radiogroup" aria-label="Type de publication">
-                    <label class="publication-type-picker__option {{ $selectedType === 'event' ? 'is-selected' : '' }}">
-                        <input type="radio" name="type" value="event" class="sr-only publication-type-input" @checked($selectedType === 'event')>
-                        <span class="publication-type-picker__icon publication-type-picker__icon--event" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        </span>
-                        <span class="publication-type-picker__label">Événement</span>
-                        <span class="publication-type-picker__hint">Rencontre, convention, annonce</span>
-                    </label>
-                    <label class="publication-type-picker__option {{ $selectedType === 'promotion' ? 'is-selected' : '' }}">
-                        <input type="radio" name="type" value="promotion" class="sr-only publication-type-input" @checked($selectedType === 'promotion')>
-                        <span class="publication-type-picker__icon publication-type-picker__icon--promo" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                        </span>
-                        <span class="publication-type-picker__label">Promotion</span>
-                        <span class="publication-type-picker__hint">Offre limitée dans le temps</span>
-                    </label>
+    <div class="publication-social-fields">
+        <label for="title" class="sr-only">Titre</label>
+        <input type="text"
+               name="title"
+               id="title"
+               value="{{ old('title', $publication?->title) }}"
+               class="publication-composer__title-input"
+               required
+               maxlength="255"
+               placeholder="Ajouter un titre…">
+        @error('title')
+            <p class="publication-form-error">{{ $message }}</p>
+        @enderror
+
+        <label for="description" class="sr-only">Description</label>
+        <textarea name="description"
+                  id="description"
+                  rows="4"
+                  class="publication-composer__body-input"
+                  placeholder="À quoi pensez-vous ?">{{ old('description', $publication?->description) }}</textarea>
+        @error('description')
+            <p class="publication-form-error">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div id="media-preview-wrap" class="publication-social-preview hidden">
+        <div id="media-preview-meta" class="publication-media-preview-meta"></div>
+        <div id="media-preview" class="publication-media-preview"></div>
+    </div>
+
+    <div class="publication-social-toolbar" role="toolbar" aria-label="Joindre un fichier">
+        <button type="button" class="publication-social-attach" data-attach="image" aria-label="Photo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>Photo</span>
+        </button>
+        <button type="button" class="publication-social-attach" data-attach="video" aria-label="Vidéo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span>Vidéo</span>
+        </button>
+        <button type="button" class="publication-social-attach" data-attach="pdf" aria-label="PDF">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+            <span>PDF</span>
+        </button>
+        <input type="file"
+               name="medias[]"
+               id="medias"
+               class="sr-only"
+               accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,application/pdf,.pdf"
+               multiple>
+    </div>
+    @error('medias')
+        <p class="publication-form-error px-1">{{ $message }}</p>
+    @enderror
+    @error('medias.*')
+        <p class="publication-form-error px-1">{{ $message }}</p>
+    @enderror
+
+    <details class="publication-social-more">
+        <summary>Options · dates &amp; visibilité</summary>
+        <div class="publication-social-more__body">
+            <div class="publication-composer__dates publication-dates">
+                <div>
+                    <label for="start_date" class="publication-composer-label">Début</label>
+                    <input type="date"
+                           name="start_date"
+                           id="start_date"
+                           value="{{ old('start_date', $publication?->start_date?->format('Y-m-d')) }}"
+                           class="input w-full publication-form-input">
                 </div>
-                @error('type')
-                    <p class="publication-form-error">{{ $message }}</p>
-                @enderror
+                <div class="publication-end-date">
+                    <label for="end_date" class="publication-composer-label">Fin</label>
+                    <input type="date"
+                           name="end_date"
+                           id="end_date"
+                           value="{{ old('end_date', $publication?->end_date?->format('Y-m-d')) }}"
+                           class="input w-full publication-form-input">
+                    <p class="publication-form-hint publication-end-date-hint">Optionnel</p>
+                </div>
             </div>
 
-            <div>
-                <label for="description" class="publication-form-label">Description</label>
-                <textarea name="description"
-                          id="description"
-                          rows="4"
-                          class="input w-full"
-                          placeholder="Détails visibles sur la fiche publication…">{{ old('description', $publication?->description) }}</textarea>
-                @error('description')
-                    <p class="publication-form-error">{{ $message }}</p>
-                @enderror
-            </div>
+            <label class="publication-composer__publish">
+                <input type="hidden" name="is_published" value="0">
+                <input type="checkbox"
+                       name="is_published"
+                       value="1"
+                       id="is_published"
+                       class="publication-publish-toggle__checkbox"
+                       @checked(old('is_published', $publication?->is_published ?? true))>
+                <span class="publication-publish-toggle__switch" aria-hidden="true"></span>
+                <span class="publication-composer__publish-text">
+                    <span class="publication-composer__publish-title">Visible aux membres</span>
+                    <span class="publication-composer__publish-hint">Comme un post public du réseau</span>
+                </span>
+            </label>
         </div>
-    </section>
-
-    <section class="publication-form-section" aria-labelledby="publication-section-dates">
-        <h2 id="publication-section-dates" class="publication-form-section__title">Dates</h2>
-        <div class="publication-form-section__body grid grid-cols-1 sm:grid-cols-2 gap-3 publication-dates">
-            <div>
-                <label for="start_date" class="publication-form-label">Date de début</label>
-                <input type="date"
-                       name="start_date"
-                       id="start_date"
-                       value="{{ old('start_date', $publication?->start_date?->format('Y-m-d')) }}"
-                       class="input w-full">
-            </div>
-            <div class="publication-end-date">
-                <label for="end_date" class="publication-form-label">Date de fin</label>
-                <input type="date"
-                       name="end_date"
-                       id="end_date"
-                       value="{{ old('end_date', $publication?->end_date?->format('Y-m-d')) }}"
-                       class="input w-full">
-                <p class="publication-form-hint publication-end-date-hint">Recommandée pour les promotions.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="publication-form-section" aria-labelledby="publication-section-visibility">
-        <h2 id="publication-section-visibility" class="publication-form-section__title">Visibilité</h2>
-        <label class="publication-publish-toggle card p-3 flex items-start gap-3 cursor-pointer">
-            <input type="hidden" name="is_published" value="0">
-            <input type="checkbox"
-                   name="is_published"
-                   value="1"
-                   class="mt-1 rounded border-[var(--border-color)]"
-                   @checked(old('is_published', $publication?->is_published ?? true))>
-            <span class="min-w-0">
-                <span class="block text-sm font-semibold text-[var(--text-primary)]">Publier pour les membres</span>
-                <span class="block text-xs text-[var(--text-secondary)] mt-0.5">Sinon, la publication reste un brouillon dans la galerie supervision.</span>
-            </span>
-        </label>
-    </section>
-
-    <section class="publication-form-section" aria-labelledby="publication-section-media">
-        <h2 id="publication-section-media" class="publication-form-section__title">Médias</h2>
-        <div class="publication-form-section__body space-y-3">
-            <p class="publication-form-hint">Jusqu’à 10 fichiers · 50 Mo max · JPG, PNG, WebP, MP4, MOV</p>
-
-            <div class="publication-upload-zone drop-zone"
-                 id="publicationDropZone"
-                 role="button"
-                 tabindex="0"
-                 aria-controls="medias"
-                 aria-label="Ajouter des photos ou vidéos">
-                <input type="file"
-                       name="medias[]"
-                       id="medias"
-                       class="sr-only"
-                       accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
-                       multiple>
-                <svg class="publication-upload-zone__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <p class="publication-upload-zone__title">Glissez vos fichiers ici</p>
-                <p class="publication-upload-zone__sub">ou <span class="text-primary-500 font-semibold">parcourir</span></p>
-            </div>
-
-            <div id="media-preview-meta" class="publication-media-preview-meta hidden text-xs font-medium text-[var(--text-secondary)]"></div>
-            <div id="media-preview" class="publication-media-preview grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
-            @error('medias')
-                <p class="publication-form-error">{{ $message }}</p>
-            @enderror
-            @error('medias.*')
-                <p class="publication-form-error">{{ $message }}</p>
-            @enderror
-        </div>
-    </section>
+    </details>
 </div>
 
 @push('scripts')
 <script>
 (function () {
     const typeInputs = document.querySelectorAll('.publication-type-input');
-    const typeOptions = document.querySelectorAll('.publication-type-picker__option');
-    const endWrap = document.querySelector('.publication-end-date');
+    const typeOptions = document.querySelectorAll('.publication-composer__type-opt');
     const endHint = document.querySelector('.publication-end-date-hint');
     const input = document.getElementById('medias');
     const preview = document.getElementById('media-preview');
     const previewMeta = document.getElementById('media-preview-meta');
-    const dropZone = document.getElementById('publicationDropZone');
+    const previewWrap = document.getElementById('media-preview-wrap');
+    const attachBtns = document.querySelectorAll('.publication-social-attach');
+    let dataTransfer = new DataTransfer();
 
     function selectedType() {
         const checked = document.querySelector('.publication-type-input:checked');
@@ -159,85 +148,103 @@
             const radio = option.querySelector('.publication-type-input');
             option.classList.toggle('is-selected', radio && radio.value === value);
         });
-    }
-
-    function toggleEndDate() {
-        if (!endWrap) return;
-        const isPromo = selectedType() === 'promotion';
-        endWrap.style.display = isPromo ? '' : '';
         if (endHint) {
-            endHint.textContent = isPromo
-                ? 'Indiquez la fin de validité de la promotion.'
-                : 'Optionnel pour un événement ponctuel.';
+            endHint.textContent = value === 'promotion'
+                ? 'Fin de validité recommandée'
+                : 'Optionnel';
         }
     }
 
     typeInputs.forEach(function (radio) {
-        radio.addEventListener('change', function () {
-            syncTypePickerVisual();
-            toggleEndDate();
-        });
+        radio.addEventListener('change', syncTypePickerVisual);
     });
     syncTypePickerVisual();
-    toggleEndDate();
+
+    function syncInputFiles() {
+        if (!input) return;
+        input.files = dataTransfer.files;
+    }
 
     function renderPreview() {
-        if (!preview) return;
+        if (!preview || !previewWrap) return;
         preview.innerHTML = '';
-        const files = Array.from(input?.files || []);
-        if (previewMeta) {
-            if (files.length === 0) {
-                previewMeta.classList.add('hidden');
-                previewMeta.textContent = '';
-            } else {
-                previewMeta.classList.remove('hidden');
-                previewMeta.textContent = files.length + ' fichier(s) sélectionné(s)';
-            }
+        const files = Array.from(dataTransfer.files);
+        if (files.length === 0) {
+            previewWrap.classList.add('hidden');
+            if (previewMeta) previewMeta.textContent = '';
+            return;
         }
-        files.forEach(function (file) {
+        previewWrap.classList.remove('hidden');
+        if (previewMeta) {
+            previewMeta.textContent = files.length + ' fichier(s)';
+        }
+        files.forEach(function (file, index) {
             const box = document.createElement('div');
-            box.className = 'publication-preview-item rounded-lg overflow-hidden border border-[var(--border-color)] aspect-square bg-[var(--bg-secondary)] relative';
+            box.className = 'publication-preview-item';
             if (file.type.startsWith('image/')) {
                 const img = document.createElement('img');
-                img.className = 'w-full h-full object-cover';
+                img.className = 'publication-preview-item__media';
                 img.alt = '';
                 img.src = URL.createObjectURL(file);
                 box.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                box.innerHTML = '<div class="publication-preview-item__video"><span aria-hidden="true">▶</span><span class="publication-preview-item__name">' + file.name + '</span></div>';
             } else {
-                box.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-[10px] sm:text-xs p-2 text-center text-[var(--text-secondary)]"><span class="text-lg mb-1" aria-hidden="true">▶</span><span class="line-clamp-3">' + file.name + '</span></div>';
+                box.innerHTML = '<div class="publication-preview-item__doc"><span class="publication-preview-item__doc-badge">PDF</span><span class="publication-preview-item__name">' + file.name + '</span></div>';
             }
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'publication-preview-item__remove';
+            remove.setAttribute('aria-label', 'Retirer');
+            remove.innerHTML = '&times;';
+            remove.addEventListener('click', function () {
+                const next = new DataTransfer();
+                Array.from(dataTransfer.files).forEach(function (f, i) {
+                    if (i !== index) next.items.add(f);
+                });
+                dataTransfer = next;
+                syncInputFiles();
+                renderPreview();
+            });
+            box.appendChild(remove);
             preview.appendChild(box);
         });
     }
 
-    input?.addEventListener('change', renderPreview);
-
-    if (dropZone && input) {
-        dropZone.addEventListener('click', function () { input.click(); });
-        dropZone.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                input.click();
-            }
+    function addFiles(fileList, acceptKind) {
+        const incoming = Array.from(fileList || []);
+        incoming.forEach(function (file) {
+            if (dataTransfer.files.length >= 10) return;
+            if (acceptKind === 'image' && !file.type.startsWith('image/')) return;
+            if (acceptKind === 'video' && !file.type.startsWith('video/')) return;
+            if (acceptKind === 'pdf' && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) return;
+            dataTransfer.items.add(file);
         });
-        ['dragenter', 'dragover'].forEach(function (name) {
-            dropZone.addEventListener(name, function (e) {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-        });
-        ['dragleave', 'drop'].forEach(function (name) {
-            dropZone.addEventListener(name, function (e) {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-            });
-        });
-        dropZone.addEventListener('drop', function (e) {
-            if (!e.dataTransfer?.files?.length) return;
-            input.files = e.dataTransfer.files;
-            renderPreview();
-        });
+        syncInputFiles();
+        renderPreview();
     }
+
+    attachBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!input) return;
+            const kind = btn.getAttribute('data-attach');
+            if (kind === 'image') {
+                input.accept = 'image/jpeg,image/png,image/webp';
+            } else if (kind === 'video') {
+                input.accept = 'video/mp4,video/quicktime';
+            } else {
+                input.accept = 'application/pdf,.pdf';
+            }
+            input.dataset.attachKind = kind;
+            input.click();
+        });
+    });
+
+    input?.addEventListener('change', function () {
+        addFiles(input.files, input.dataset.attachKind || 'all');
+        input.value = '';
+        input.accept = 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,application/pdf,.pdf';
+    });
 })();
 </script>
 @endpush
