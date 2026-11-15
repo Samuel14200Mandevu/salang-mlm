@@ -267,7 +267,8 @@
         section.classList.toggle('is-amounts-hidden', hidden);
         btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
         btn.setAttribute('aria-label', hidden ? 'Afficher les montants' : 'Masquer les montants');
-        if (openIcon) openIcon.hidden = hidden;
+        // Montants visibles → œil ouvert ; masqués → œil barré
+        if (openIcon) openIcon.hidden = !!hidden;
         if (closedIcon) closedIcon.hidden = !hidden;
         try { localStorage.setItem(key, hidden ? '1' : '0'); } catch (e) {}
     }

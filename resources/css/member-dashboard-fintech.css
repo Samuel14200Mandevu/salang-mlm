@@ -1440,6 +1440,11 @@
     height: 1.4rem;
   }
 
+  /* [hidden] seul est souvent écrasé par display:block sur svg */
+  .member-app .member-fintech-hero__privacy-toggle .member-fintech-hero__privacy-icon[hidden] {
+    display: none !important;
+  }
+
   .member-app .member-fintech-hero__privacy-toggle:active {
     background: rgba(255, 255, 255, 0.14);
   }
