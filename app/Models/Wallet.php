@@ -76,6 +76,25 @@ class Wallet extends Model
             return null;
         }
 
+        // Idempotence : une commission_id déjà créditée ne doit jamais l’être une 2ᵉ fois.
+        $commissionId = (int) ($metadata['commission_id'] ?? 0);
+        if ($commissionId > 0) {
+            $alreadyCredited = Transaction::query()
+                ->where('user_id', $userId)
+                ->where('type', 'commission')
+                ->where('status', 'completed')
+                ->where(function ($q) use ($commissionId) {
+                    $q->where('metadata->commission_id', $commissionId)
+                        ->orWhere('metadata', 'like', '%"commission_id":'.$commissionId.'%')
+                        ->orWhere('metadata', 'like', '%"commission_id":'.$commissionId.',%');
+                })
+                ->exists();
+
+            if ($alreadyCredited) {
+                return static::query()->where('user_id', $userId)->first();
+            }
+        }
+
         $wallet = static::query()->firstOrCreate(
             ['user_id' => $userId],
             [
@@ -105,7 +124,8 @@ class Wallet extends Model
             'balance_after' => $wallet->balance,
             'status' => 'completed',
             'description' => $description,
-            'metadata' => $metadata ? json_encode($metadata) : null,
+            // Cast array → JSON (ne pas re-encoder, sinon double escape).
+            'metadata' => $metadata ?: null,
             'completed_at' => now(),
         ]);
 
