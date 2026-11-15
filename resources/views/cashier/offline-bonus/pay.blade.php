@@ -278,18 +278,18 @@
             <div class="label">À créditer</div>
         </div>
         <div class="commission-stat-card">
-            <div class="icon icon-green">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div class="number">${{ number_format($totals['paid'] ?? 0, 2) }}</div>
-            <div class="label">Déjà payé</div>
-        </div>
-        <div class="commission-stat-card">
             <div class="icon icon-purple">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             </div>
             <div class="number">${{ number_format($totals['in_wallet'] ?? 0, 2) }}</div>
-            <div class="label">Dans portefeuille</div>
+            <div class="label">En portefeuille</div>
+        </div>
+        <div class="commission-stat-card">
+            <div class="icon icon-green">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="number">${{ number_format($totals['paid'] ?? 0, 2) }}</div>
+            <div class="label">Retiré</div>
         </div>
     </div>
 

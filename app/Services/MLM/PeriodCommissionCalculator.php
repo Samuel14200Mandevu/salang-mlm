@@ -68,11 +68,12 @@ class PeriodCommissionCalculator
             ->pluck('total_pv', 'user_id')
             ->toArray();
 
-        // Sans PV : supprimer les D/I/L orphelins (ex. PV effacés puis recalcul).
+        // Sans PV : supprimer les D/I/L orphelins non payés (ex. PV effacés puis recalcul).
         if (empty($pvByUser)) {
             $orphanQuery = Commission::query()
                 ->where('commission_period_id', $period->id)
-                ->whereIn('type', ['direct', 'indirect', 'leadership']);
+                ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->whereIn('status', ['pending', 'approved', 'cancelled']);
 
             if ($userId) {
                 $orphanQuery->where('user_id', $userId);
@@ -83,12 +84,13 @@ class PeriodCommissionCalculator
             return ['created' => 0, 'total_amount' => 0];
         }
 
-        // Calcul mois entier : retirer aussi les D/I/L des membres qui n’ont plus de PV.
+        // Calcul mois entier : retirer aussi les D/I/L non payés des membres qui n’ont plus de PV.
         if ($userId === null) {
             $userIdsWithPv = array_map('intval', array_keys($pvByUser));
             Commission::query()
                 ->where('commission_period_id', $period->id)
                 ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->whereIn('status', ['pending', 'approved', 'cancelled'])
                 ->whereNotIn('user_id', $userIdsWithPv)
                 ->delete();
         }
@@ -102,20 +104,36 @@ class PeriodCommissionCalculator
                 continue;
             }
 
-            // ─── 0. Nettoyage : supprime les anciennes commissions calculées ───
+            // ─── 0. Nettoyage : ne touche PAS aux commissions déjà payées (évite double crédit) ───
             Commission::where('user_id', $uid)
                 ->where('commission_period_id', $period->id)
                 ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->whereIn('status', ['pending', 'approved', 'cancelled'])
                 ->delete();
+
+            $paidRemaining = Commission::query()
+                ->where('user_id', $uid)
+                ->where('commission_period_id', $period->id)
+                ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->where('status', 'paid')
+                ->selectRaw('type, SUM(amount) as total_paid')
+                ->groupBy('type')
+                ->pluck('total_paid', 'type')
+                ->map(fn ($v) => (float) $v)
+                ->all();
 
             // ─── 1. BONUS DIRECT (sur monthly_pv total) ───
             $directBonus = $this->calculateDirectBonus($user, (int)$userMonthlyPV, $period);
             if ($directBonus) {
-                Commission::create(array_merge($directBonus, [
-                    'commission_period_id' => $period->id,
-                ]));
-                $totalCreated++;
-                $totalAmount += $directBonus['amount'];
+                $netDirect = $this->netPendingAfterPaid($directBonus['amount'], 'direct', $paidRemaining);
+                if ($netDirect > 0.00001) {
+                    $directBonus['amount'] = $netDirect;
+                    Commission::create(array_merge($directBonus, [
+                        'commission_period_id' => $period->id,
+                    ]));
+                    $totalCreated++;
+                    $totalAmount += $netDirect;
+                }
             }
 
             // ─── 2. INDIRECT + LEADERSHIP ───
@@ -124,11 +142,17 @@ class PeriodCommissionCalculator
             );
 
             foreach ($commissions as $data) {
+                $type = (string) ($data['type'] ?? '');
+                $net = $this->netPendingAfterPaid($data['amount'], $type, $paidRemaining);
+                if ($net <= 0.00001) {
+                    continue;
+                }
+                $data['amount'] = $net;
                 Commission::create(array_merge($data, [
                     'commission_period_id' => $period->id,
                 ]));
                 $totalCreated++;
-                $totalAmount += $data['amount'];
+                $totalAmount += $net;
             }
         }
 
@@ -379,6 +403,30 @@ class PeriodCommissionCalculator
         }
 
         return $descendants;
+    }
+
+    /**
+     * Déduit du montant calculé ce qui est déjà payé pour ce type (évite de recréer
+     * un pending déjà crédité au portefeuille).
+     *
+     * @param  array<string, float>  $paidRemaining
+     */
+    private function netPendingAfterPaid(float|int|string $amount, string $type, array &$paidRemaining): float
+    {
+        $amount = (float) $amount;
+        if ($amount <= 0 || $type === '') {
+            return 0.0;
+        }
+
+        $alreadyPaid = (float) ($paidRemaining[$type] ?? 0);
+        if ($alreadyPaid <= 0) {
+            return $amount;
+        }
+
+        $deduct = min($amount, $alreadyPaid);
+        $paidRemaining[$type] = $alreadyPaid - $deduct;
+
+        return max(0.0, $amount - $deduct);
     }
 
     // ═══════════════════════════════════════════════════════════════

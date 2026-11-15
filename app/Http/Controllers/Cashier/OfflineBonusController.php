@@ -338,39 +338,6 @@ class OfflineBonusController extends Controller
                 ];
             })->sortByDesc('pending_amount')->values();
 
-            $memberIds = $byMember->pluck('user.id')->filter()->values();
-
-            $inWallet = 0.0;
-            $alreadyWithdrawn = 0.0;
-            if ($memberIds->isNotEmpty()) {
-                // Solde encore disponible dans les portefeuilles de ces membres.
-                $inWallet = (float) Wallet::query()
-                    ->whereIn('user_id', $memberIds)
-                    ->sum('balance');
-
-                // Déjà payé = retraits déjà effectués (complétés) par ces membres sur le mois.
-                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
-                $periodEnd = $periodStart->copy()->endOfMonth();
-                $alreadyWithdrawn = (float) Withdrawal::query()
-                    ->whereIn('user_id', $memberIds)
-                    ->where('status', 'completed')
-                    ->where(function ($q) use ($periodStart, $periodEnd) {
-                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
-                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
-                                $q2->whereNull('completed_at')
-                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
-                            });
-                    })
-                    ->sum('amount');
-            }
-
-            $totals = [
-                'pending' => (float) $byMember->sum('pending_amount'),
-                'paid' => $alreadyWithdrawn,
-                'in_wallet' => $inWallet,
-                'count' => $byMember->count(),
-            ];
-
             $stats = [
                 'all' => $byMember->count(),
                 'pending' => $byMember->where('pending_amount', '>', 0)->count(),
@@ -397,6 +364,32 @@ class OfflineBonusController extends Controller
                         || str_contains(mb_strtolower((string) ($user->parrain?->sponsor_id ?? '')), $needle);
                 })->values();
             }
+
+            // Totaux alignés sur « Toutes les commissions » (pas la somme des soldes wallet).
+            $memberIds = $byMember->pluck('user.id')->filter()->values();
+            $alreadyWithdrawn = 0.0;
+            if ($memberIds->isNotEmpty()) {
+                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
+                $periodEnd = $periodStart->copy()->endOfMonth();
+                $alreadyWithdrawn = (float) Withdrawal::query()
+                    ->whereIn('user_id', $memberIds)
+                    ->where('status', 'completed')
+                    ->where(function ($q) use ($periodStart, $periodEnd) {
+                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
+                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
+                                $q2->whereNull('completed_at')
+                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
+                            });
+                    })
+                    ->sum('amount');
+            }
+
+            $totals = [
+                'pending' => (float) $byMember->sum('pending_amount'),
+                'paid' => $alreadyWithdrawn,
+                'in_wallet' => (float) $byMember->sum('paid_amount'),
+                'count' => $byMember->count(),
+            ];
         }
 
         return view('cashier.offline-bonus.pay', compact(
