@@ -11,6 +11,12 @@
                     <p class="member-fintech-tx__meta">
                         {{ $order->created_at->format('d/m/Y H:i') }}
                         · {{ $order->items->count() }} article(s)
+                        @if($order->isSponsoredPosFor(auth()->user()))
+                            · POS {{ $order->user?->name ?? 'client' }}
+                            @if(($order->total_pv ?? 0) > 0)
+                                · +{{ number_format($order->total_pv, 0) }} PV
+                            @endif
+                        @endif
                     </p>
                 </div>
                 <div class="orders-mobile-row__aside">

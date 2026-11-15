@@ -14,7 +14,16 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
                 Commande #{{ $order->order_number }}
             </h1>
-            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">Détails de la commande</p>
+            <p class="text-sm sm:text-base text-[var(--text-secondary)] mt-0.5 sm:mt-1">
+                @if($order->isSponsoredPosFor(auth()->user()))
+                    Vente POS via votre code · {{ $order->user?->name ?? 'Client' }}
+                    @if(($order->total_pv ?? 0) > 0)
+                        · +{{ number_format($order->total_pv, 0) }} PV
+                    @endif
+                @else
+                    Détails de la commande
+                @endif
+            </p>
         </div>
         <div class="flex gap-1.5 sm:gap-2">
             <a href="{{ route('orders.invoice', $order) }}" class="btn btn-primary btn-sm sm:btn-md" target="_blank">

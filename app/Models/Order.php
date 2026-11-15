@@ -106,6 +106,47 @@ class Order extends Model
         return $query->where('source', 'mlm');
     }
 
+    /**
+     * Commandes du membre : ses achats + ventes POS où son code a été utilisé (parrain).
+     */
+    public function scopeForMember($query, User|int $user)
+    {
+        $userId = $user instanceof User ? (int) $user->id : (int) $user;
+
+        return $query->where(function ($q) use ($userId) {
+            $q->where('user_id', $userId)
+                ->orWhere(function ($pos) use ($userId) {
+                    $pos->where('source', 'pos')
+                        ->where(function ($meta) use ($userId) {
+                            $meta->where('metadata->sponsor_id', $userId)
+                                ->orWhere('metadata->sponsor_id', (string) $userId);
+                        });
+                });
+        });
+    }
+
+    public function isSponsoredPosFor(User|int $user): bool
+    {
+        $userId = $user instanceof User ? (int) $user->id : (int) $user;
+
+        return $this->source === 'pos'
+            && (int) data_get($this->metadata, 'sponsor_id') === $userId
+            && (int) $this->user_id !== $userId;
+    }
+
+    public function isAccessibleBy(User $user): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ((int) $this->user_id === (int) $user->id) {
+            return true;
+        }
+
+        return $this->isSponsoredPosFor($user);
+    }
+
     // ============================================================
     // ACCESSEURS
     // ============================================================

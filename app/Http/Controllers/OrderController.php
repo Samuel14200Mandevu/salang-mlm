@@ -29,12 +29,15 @@ class OrderController extends Controller
 
     /**
      * Liste des commandes de l'utilisateur
+     * (achats perso + ventes POS où son code parrain a été utilisé)
      */
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        $query = Order::where('user_id', $user->id);
+        $query = Order::query()
+            ->forMember($user)
+            ->with(['items', 'user']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -52,10 +55,14 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Statistiques
-        $pendingCount = Order::where('user_id', $user->id)->where('status', 'pending')->count();
-        $completedCount = Order::where('user_id', $user->id)->where('status', 'completed')->count();
-        $totalSpent = Order::where('user_id', $user->id)->where('payment_status', 'completed')->sum('total');
+        $memberOrders = Order::query()->forMember($user);
+        $pendingCount = (clone $memberOrders)->where('status', 'pending')->count();
+        $completedCount = (clone $memberOrders)->where('status', 'completed')->count();
+        // « Total dépensé » = uniquement les achats du membre (pas les ventes clients POS)
+        $totalSpent = Order::query()
+            ->where('user_id', $user->id)
+            ->where('payment_status', 'completed')
+            ->sum('total');
 
         $orders = $query->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -68,9 +75,7 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403);
-        }
+        $this->authorizeMemberOrder($order);
 
         $order->load(['items', 'items.product', 'items.package', 'user']);
 
@@ -82,7 +87,8 @@ class OrderController extends Controller
      */
     public function cancel(Order $order)
     {
-        if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
+        // Annulation réservée au propriétaire (pas au parrain POS)
+        if ($order->user_id != Auth::id() && ! Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
@@ -111,7 +117,7 @@ class OrderController extends Controller
                         'balance_before' => $balanceBefore,
                         'balance_after' => $wallet->balance,
                         'status' => 'completed',
-                        'description' => 'Remboursement pour la commande #' . $order->order_number,
+                        'description' => 'Remboursement pour la commande #'.$order->order_number,
                         'completed_at' => now(),
                     ]);
                 }
@@ -142,14 +148,14 @@ class OrderController extends Controller
 
             return redirect()->route('orders.index')
                 ->with('success', 'Commande annulée avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur lors de l\'annulation de la commande', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            return back()->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur lors de l\'annulation: '.$e->getMessage());
         }
     }
 
@@ -158,18 +164,11 @@ class OrderController extends Controller
      */
     public function invoice(Order $order)
     {
-        // Vérifier que l'utilisateur est propriétaire de la commande
-        if ($order->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeMemberOrder($order);
 
         $order->load(['items', 'items.product', 'items.package', 'user']);
 
-        // Récupérer le parrain si existe
-        $sponsor = null;
-        if ($order->user->parrain_id) {
-            $sponsor = User::find($order->user->parrain_id);
-        }
+        $sponsor = $this->resolveOrderSponsor($order);
 
         return view('orders.invoice', compact('order', 'sponsor'));
     }
@@ -179,18 +178,11 @@ class OrderController extends Controller
      */
     public function downloadInvoice(Order $order)
     {
-        // Vérifier que l'utilisateur est propriétaire de la commande
-        if ($order->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeMemberOrder($order);
 
         $order->load(['items', 'items.product', 'items.package', 'user']);
 
-        // Récupérer le parrain si existe
-        $sponsor = null;
-        if ($order->user->parrain_id) {
-            $sponsor = User::find($order->user->parrain_id);
-        }
+        $sponsor = $this->resolveOrderSponsor($order);
 
         try {
             return $this->downloadPdfView(
@@ -216,8 +208,9 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $orders = Order::where('user_id', $user->id)
-            ->with(['items', 'items.product', 'items.package'])
+        $orders = Order::query()
+            ->forMember($user)
+            ->with(['items', 'items.product', 'items.package', 'user'])
             ->orderBy('created_at', 'desc')
             ->limit($request->input('limit', 20))
             ->get();
@@ -233,10 +226,10 @@ class OrderController extends Controller
      */
     public function apiShow(Order $order)
     {
-        if ($order->user_id != Auth::id() && !Auth::user()->hasRole('admin')) {
+        if (! $order->isAccessibleBy(Auth::user())) {
             return response()->json([
                 'success' => false,
-                'message' => 'Non autorisé'
+                'message' => 'Non autorisé',
             ], 403);
         }
 
@@ -246,5 +239,27 @@ class OrderController extends Controller
             'success' => true,
             'data' => $order,
         ]);
+    }
+
+    private function authorizeMemberOrder(Order $order): void
+    {
+        $user = Auth::user();
+        if (! $user || ! $order->isAccessibleBy($user)) {
+            abort(403);
+        }
+    }
+
+    private function resolveOrderSponsor(Order $order): ?User
+    {
+        $sponsorId = data_get($order->metadata, 'sponsor_id');
+        if ($sponsorId) {
+            return User::find($sponsorId);
+        }
+
+        if ($order->user?->parrain_id) {
+            return User::find($order->user->parrain_id);
+        }
+
+        return null;
     }
 }

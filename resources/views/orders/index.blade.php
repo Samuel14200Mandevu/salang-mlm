@@ -124,6 +124,14 @@
                                 <span class="font-mono font-semibold text-[var(--text-primary)] text-xs sm:text-sm">
                                     #{{ $order->order_number }}
                                 </span>
+                                @if($order->isSponsoredPosFor(auth()->user()))
+                                    <span class="block text-[10px] text-[var(--text-tertiary)] mt-0.5">
+                                        POS · {{ $order->user?->name ?? 'Client' }}
+                                        @if(($order->total_pv ?? 0) > 0)
+                                            · +{{ number_format($order->total_pv, 0) }} PV
+                                        @endif
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-[var(--text-secondary)] text-xs sm:text-sm">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
