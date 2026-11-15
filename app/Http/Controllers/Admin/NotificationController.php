@@ -72,7 +72,8 @@ class NotificationController extends Controller
     {
         Auth::user()->unreadNotifications->markAsRead();
 
-        return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
+        // Pas de flash success : ConvertFlashToNotification créerait une nouvelle notif non lue.
+        return back();
     }
 
     public function destroy(string $id): RedirectResponse

@@ -231,6 +231,7 @@ class AdvancedRankCalculator
         $currentRank = $this->getUserRankObject($user);
         $nextRank = $currentRank ? $this->getNextRank($currentRank) : Rank::where('level', 1)->first();
 
+        $personalPV = (float) ($user->pv_balance ?? 0);
         $cumulPV = (float) ($user->team_pv ?? 0);
 
         if (!$nextRank) {
@@ -243,33 +244,51 @@ class AdvancedRankCalculator
                 'progress_percentage' => 100,
                 'pv_needed' => 0,
                 'total_pv_needed' => 0,
-                'current_pv' => (float) ($user->pv_balance ?? 0),
-                'current_team_pv' => (float) ($user->team_pv ?? 0),
+                'current_pv' => $personalPV,
+                'current_team_pv' => $cumulPV,
                 'cumul_pv' => $cumulPV,
+                'uses_personal_pv' => false,
                 'current_min_pv' => $currentRank?->min_pv ?? 0,
                 'next_min_pv' => 0,
             ];
         }
 
-        $currentMinPV = $currentRank ? (float) $currentRank->min_pv : 0;
-        $nextMinPV = (float) $nextRank->min_pv;
+        $nextLevel = (int) $nextRank->level;
+        $usesPersonal = in_array($nextLevel, [2, 3], true);
+        if ($nextLevel === 4) {
+            $usesPersonal = User::query()
+                ->where('parrain_id', $user->id)
+                ->where('is_active', true)
+                ->count() === 0;
+        }
 
-        $pvNeeded = max(0, $nextMinPV - $cumulPV);
+        $progressBase = $usesPersonal ? $personalPV : $cumulPV;
+        $currentMinPV = $usesPersonal ? 0.0 : ($currentRank ? (float) $currentRank->min_pv : 0.0);
+        $nextMinPV = (float) $nextRank->min_pv;
+        if ($usesPersonal && $nextLevel === 4) {
+            $nextMinPV = (float) (config('ranks.level_4_qualification.personal_pv_solo')
+                ?? config('ranks.level_4_qualification.personal_monthly_pv_solo')
+                ?? $nextMinPV
+                ?: 1000);
+        }
+
+        $pvNeeded = max(0, $nextMinPV - $progressBase);
         $totalPVNeeded = max(1, $nextMinPV - $currentMinPV);
-        $progressPercentage = min(100, max(0, (($cumulPV - $currentMinPV) / $totalPVNeeded) * 100));
+        $progressPercentage = min(100, max(0, (($progressBase - $currentMinPV) / $totalPVNeeded) * 100));
 
         return [
             'current_rank' => $currentRank?->name ?? 'Distributeur',
             'current_level' => $currentRank?->level ?? 1,
             'next_rank' => $nextRank->name,
             'next_level' => $nextRank->level,
-            'progress_pv' => max(0, $cumulPV - $currentMinPV),
+            'progress_pv' => max(0, $progressBase - $currentMinPV),
             'progress_percentage' => round($progressPercentage, 2),
             'pv_needed' => $pvNeeded,
             'total_pv_needed' => $totalPVNeeded,
-            'current_pv' => (float) ($user->pv_balance ?? 0),
-            'current_team_pv' => (float) ($user->team_pv ?? 0),
+            'current_pv' => $personalPV,
+            'current_team_pv' => $cumulPV,
             'cumul_pv' => $cumulPV,
+            'uses_personal_pv' => $usesPersonal,
             'current_min_pv' => $currentMinPV,
             'next_min_pv' => $nextMinPV,
         ];

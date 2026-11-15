@@ -1,23 +1,21 @@
 @php
     $series = $performanceChart ?? [];
     $hasActivity = collect($series)->contains(
-        fn ($row) => ((float) ($row['pv'] ?? 0)) > 0 || ((float) ($row['commission'] ?? 0)) > 0
+        fn ($row) => ((float) ($row['pv'] ?? 0)) > 0
     );
     $periodPv = collect($series)->sum(fn ($row) => (float) ($row['pv'] ?? 0));
-    $periodCommission = collect($series)->sum(fn ($row) => (float) ($row['commission'] ?? 0));
 @endphp
 <section class="member-fintech-panel member-fintech-performance member-fintech-animate member-fintech-animate--d5">
     <div class="member-fintech-panel__head">
         <div class="member-fintech-performance__titles">
             <h2 class="member-fintech-panel__title">Performance</h2>
-            <p class="member-fintech-performance__sub">PV crédités et commissions payées</p>
+            <p class="member-fintech-performance__sub">PV crédités</p>
         </div>
         <span class="member-fintech-panel__badge">6 mois</span>
     </div>
 
     <div class="member-fintech-performance__legend" aria-hidden="true">
         <span class="member-fintech-performance__key is-pv">PV crédités</span>
-        <span class="member-fintech-performance__key is-comm">Commissions</span>
     </div>
 
     @if($hasActivity)
@@ -27,18 +25,14 @@
                 <span class="member-fintech-performance__totals-label">Total PV</span>
                 <span class="member-fintech-performance__totals-value">{{ number_format($periodPv, 0) }} PV</span>
             </div>
-            <div>
-                <span class="member-fintech-performance__totals-label">Total gains</span>
-                <span class="member-fintech-performance__totals-value is-comm">${{ number_format($periodCommission, 2) }}</span>
-            </div>
         </div>
     @else
         <p class="member-fintech-performance__empty">
-            Vos PV et commissions apparaîtront ici après vos premières ventes ou bonus réseau.
+            Vos PV apparaîtront ici après vos premières ventes ou bonus réseau.
         </p>
         <div class="member-fintech-performance__empty-actions">
             <a href="{{ route('products.index') }}" class="member-fintech-performance__empty-link">Boutique</a>
-            <a href="{{ route('commissions.index') }}" class="member-fintech-performance__empty-link">Commissions</a>
+            <a href="{{ route('my-pv.index') }}" class="member-fintech-performance__empty-link">Mes PV</a>
         </div>
     @endif
 </section>

@@ -1,10 +1,6 @@
-@php
-    $todayPv = (float) ($stats['today_pv'] ?? 0);
-    $personalNeeded = (float) ($rankProgress['personal_pv_needed'] ?? 0);
-@endphp
 <div class="member-fintech-grid-wrap member-fintech-animate member-fintech-animate--d3">
     <p class="member-fintech-section-label">Aperçu réseau</p>
-    <div class="member-fintech-grid member-fintech-grid--2x3">
+    <div class="member-fintech-grid member-fintech-grid--2x2">
         <article class="member-fintech-tile is-highlight">
             <span class="member-fintech-tile__label">PV perso</span>
             <span class="member-fintech-tile__value" data-count-up="{{ (float) ($pvPersonnel ?? 0) }}" data-count-decimals="0">{{ number_format($pvPersonnel ?? 0) }}</span>
@@ -16,14 +12,6 @@
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">Filleuls</span>
             <span class="member-fintech-tile__value" data-count-up="{{ (float) ($totalDownlines ?? 0) }}" data-count-decimals="0">{{ $totalDownlines ?? 0 }}</span>
-        </article>
-        <article class="member-fintech-tile">
-            <span class="member-fintech-tile__label">PV 24h</span>
-            <span class="member-fintech-tile__value member-fintech-tile__value--sm" data-count-up="{{ $todayPv }}" data-count-decimals="0">{{ number_format($todayPv, 0) }}</span>
-        </article>
-        <article class="member-fintech-tile">
-            <span class="member-fintech-tile__label">Reste grade</span>
-            <span class="member-fintech-tile__value member-fintech-tile__value--sm" data-count-up="{{ $personalNeeded }}" data-count-decimals="0">{{ number_format($personalNeeded, 0) }}</span>
         </article>
         <article class="member-fintech-tile">
             <span class="member-fintech-tile__label">PV mois</span>

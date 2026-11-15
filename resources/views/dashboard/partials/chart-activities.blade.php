@@ -6,7 +6,6 @@
     $performanceChartPayload = $series->map(fn ($row) => [
         'month' => (string) ($row['month_short'] ?? $row['month'] ?? ''),
         'pv' => (float) ($row['pv'] ?? 0),
-        'commission' => (float) ($row['commission'] ?? 0),
     ])->values();
 @endphp
 

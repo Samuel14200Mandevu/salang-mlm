@@ -2,7 +2,6 @@
     $performanceChartPayload = collect($performanceChart ?? [])->map(fn ($row) => [
         'month' => (string) ($row['month_short'] ?? $row['month'] ?? ''),
         'pv' => (float) ($row['pv'] ?? 0),
-        'commission' => (float) ($row['commission'] ?? 0),
     ])->values();
     $performanceAccent = (string) ($dashboardLevel['gradient'] ?? '#1E5DAD');
 @endphp
@@ -67,8 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const monthlyData = @json($performanceChartPayload);
         const labels = monthlyData.map(function (item) { return item.month; });
         const pvValues = monthlyData.map(function (item) { return Number(item.pv || 0); });
-        const commValues = monthlyData.map(function (item) { return Number(item.commission || 0); });
-        const hasComm = commValues.some(function (n) { return n > 0; });
 
         const shell = canvas.parentElement;
         const height = (shell && shell.clientHeight) ? shell.clientHeight : 220;
@@ -144,25 +141,6 @@ document.addEventListener('DOMContentLoaded', function () {
             yAxisID: 'y',
         }];
 
-        if (hasComm) {
-            datasets.push({
-                label: 'Commissions',
-                data: commValues,
-                borderColor: 'rgba(34, 197, 94, 0.85)',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderDash: [5, 4],
-                fill: false,
-                tension: 0.45,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointBackgroundColor: '#FFFFFF',
-                pointBorderColor: 'rgba(34, 197, 94, 0.95)',
-                pointBorderWidth: 2,
-                yAxisID: 'y1',
-            });
-        }
-
         new Chart(canvas, {
             type: 'line',
             data: { labels: labels, datasets: datasets },
@@ -195,19 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: {
-                        display: hasComm,
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 10,
-                            boxHeight: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            color: 'rgba(100, 116, 139, 0.95)',
-                            font: { size: 11, weight: '500' },
-                            padding: 16,
-                        },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(10, 42, 108, 0.95)',
                         titleColor: '#FFFFFF',
@@ -218,12 +184,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         callbacks: {
                             label: function (context) {
                                 const n = context.parsed.y || 0;
-                                if (context.dataset.label === 'Commissions') {
-                                    return 'Commissions : $' + Number(n).toLocaleString('fr-FR', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    });
-                                }
                                 return 'PV : ' + Number(n).toLocaleString('fr-FR');
                             },
                         },
@@ -254,21 +214,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             padding: 8,
                         },
                     },
-                    y1: hasComm ? {
-                        beginAtZero: true,
-                        position: 'right',
-                        grace: '12%',
-                        border: { display: false },
-                        grid: { drawOnChartArea: false },
-                        ticks: {
-                            color: 'rgba(34, 197, 94, 0.85)',
-                            font: { size: 10 },
-                            padding: 8,
-                            callback: function (value) {
-                                return '$' + value;
-                            },
-                        },
-                    } : undefined,
                 },
             },
             plugins: [{

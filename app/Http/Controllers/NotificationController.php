@@ -112,7 +112,8 @@ class NotificationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
+        // Pas de flash success : ConvertFlashToNotification créerait une nouvelle notif non lue.
+        return back();
     }
 
     /**

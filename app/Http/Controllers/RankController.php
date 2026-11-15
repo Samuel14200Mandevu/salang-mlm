@@ -43,18 +43,27 @@ class RankController extends Controller
             ->orderBy('level', 'asc')
             ->first();
 
-        $progress = $nextRank ?
-            min(100, (($user->pv_balance ?? 0) / max($nextRank->min_pv, 1)) * 100) :
-            100;
+        $personalPv = (float) ($user->pv_balance ?? 0);
+        $teamPv = (float) ($user->team_pv ?? 0);
+        $monthlyPv = (float) ($user->monthly_pv ?? 0);
 
-        $pvNeeded = $nextRank ?
-            max(0, $nextRank->min_pv - ($user->pv_balance ?? 0)) :
-            0;
+        // Barre : PV cumulé (équipe) par défaut.
+        // PV personnel seulement pour les grades 2, 3 et la voie solo du grade 4.
+        $progressUsesPersonalPv = $this->progressUsesPersonalPv($user, $nextRank);
+        $currentPv = $progressUsesPersonalPv ? $personalPv : $teamPv;
+        $nextPv = $nextRank ? (float) $nextRank->min_pv : $currentPv;
+        if ($nextRank && (int) $nextRank->level === 4 && $progressUsesPersonalPv) {
+            $soloTarget = (float) (config('ranks.level_4_qualification.personal_pv_solo')
+                ?? config('ranks.level_4_qualification.personal_monthly_pv_solo')
+                ?? $nextRank->min_pv
+                ?? 1000);
+            $nextPv = $soloTarget > 0 ? $soloTarget : $nextPv;
+        }
 
-        $currentPv = $user->pv_balance ?? 0;
-        $monthlyPv = $user->monthly_pv ?? 0;
-        $teamPv = $user->team_pv ?? 0;
-        $nextPv = $nextRank ? $nextRank->min_pv : $currentPv;
+        $progress = $nextRank
+            ? min(100, ($currentPv / max($nextPv, 1)) * 100)
+            : 100;
+        $pvNeeded = $nextRank ? max(0, $nextPv - $currentPv) : 0;
 
         $conditions = $this->getRankConditions($nextRank, $user);
 
@@ -96,11 +105,41 @@ class RankController extends Controller
             'monthlyPv',
             'teamPv',
             'nextPv',
+            'progressUsesPersonalPv',
+            'personalPv',
             'conditions',
             'lastMonthRank',
             'rankStats',
             'rankDistribution'
         ));
+    }
+
+    /**
+     * La barre de progression utilise le PV personnel uniquement pour
+     * les niveaux 2 et 3, et la voie solo du niveau 4 (sans filleul actif).
+     * Sinon : PV cumulé (team_pv).
+     */
+    private function progressUsesPersonalPv(User $user, ?Rank $nextRank): bool
+    {
+        if (! $nextRank) {
+            return false;
+        }
+
+        $level = (int) $nextRank->level;
+        if (in_array($level, [2, 3], true)) {
+            return true;
+        }
+
+        if ($level === 4) {
+            $directReferrals = User::query()
+                ->where('parrain_id', $user->id)
+                ->where('is_active', true)
+                ->count();
+
+            return $directReferrals === 0;
+        }
+
+        return false;
     }
 
     private function getRankConditions($rank, $user)

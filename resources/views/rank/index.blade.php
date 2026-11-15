@@ -48,11 +48,13 @@
         }
     }
     
-    $nextRank = Rank::where('level', '>', $userRankLevel)->orderBy('level')->first();
-    $currentPv = Auth::user()?->pv_balance ?? 0;
-    $nextPv = $nextRank ? $nextRank->min_pv : 0;
-    $pvNeeded = $nextRank ? max(0, $nextPv - $currentPv) : 0;
-    $progress = ($nextRank && $nextPv > 0) ? min(100, ($currentPv / $nextPv) * 100) : 0;
+    $nextRank = $nextRank ?? Rank::where('level', '>', $userRankLevel)->orderBy('level')->first();
+    $progressUsesPersonalPv = $progressUsesPersonalPv ?? false;
+    $currentPv = $currentPv ?? (Auth::user()?->team_pv ?? 0);
+    $nextPv = $nextPv ?? ($nextRank ? $nextRank->min_pv : 0);
+    $pvNeeded = $pvNeeded ?? ($nextRank ? max(0, $nextPv - $currentPv) : 0);
+    $progress = $progress ?? (($nextRank && $nextPv > 0) ? min(100, ($currentPv / $nextPv) * 100) : 0);
+    $progressMetricLabel = $progressUsesPersonalPv ? 'PV personnel' : 'PV cumulés';
 @endphp
 
 <div class="rank-page space-y-4 sm:space-y-6">
@@ -105,16 +107,16 @@
         @if($nextRank)
             <div class="mt-3 sm:mt-4">
                 <div class="flex justify-between text-xs sm:text-sm">
-                    <span class="text-[var(--text-secondary)]">{{ number_format($currentPv) }} PV</span>
+                    <span class="text-[var(--text-secondary)]">{{ number_format($currentPv) }} {{ $progressMetricLabel }}</span>
                     <span class="text-[var(--text-secondary)]">{{ number_format($progress, 1) }}%</span>
-                    <span class="text-[var(--text-secondary)]">{{ number_format($nextPv) }} PV</span>
+                    <span class="text-[var(--text-secondary)]">{{ number_format($nextPv) }} PV cible</span>
                 </div>
                 <div class="progress-container">
                     <div class="progress-fill" style="width: {{ $progress }}%;"></div>
                 </div>
                 <p class="text-xs text-[var(--text-secondary)] mt-1">
-                    <span class="text-yellow-500 font-semibold">{{ number_format($pvNeeded) }} PV</span> 
-                    necessaires pour atteindre le grade suivant
+                    <span class="text-yellow-500 font-semibold">{{ number_format($pvNeeded) }} {{ $progressMetricLabel }}</span>
+                    nécessaires pour atteindre le grade suivant
                 </p>
             </div>
         @endif

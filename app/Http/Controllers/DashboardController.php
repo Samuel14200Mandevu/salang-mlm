@@ -125,20 +125,31 @@ class DashboardController extends Controller
             ->first();
 
         // CALCUL DE LA PROGRESSION VERS LE PROCHAIN GRADE
+        // Barre : PV cumulé par défaut ; PV personnel pour grades 2, 3 et voie solo du 4.
         if ($nextRank) {
-            $nextPvRequired = $nextRank->min_pv ?? 0;
-            $currentMinPv = $userRank ? $userRank->min_pv : 0;
-            
+            $nextPvRequired = (float) ($nextRank->min_pv ?? 0);
+            $currentMinPv = $userRank ? (float) $userRank->min_pv : 0;
+            $progressUsesPersonalPv = $this->progressUsesPersonalPv($user, $nextRank);
+            $progressPv = $progressUsesPersonalPv ? (float) $pvPersonnel : (float) $pvCumul;
+
+            if ($progressUsesPersonalPv && (int) $nextRank->level === 4) {
+                $nextPvRequired = (float) (config('ranks.level_4_qualification.personal_pv_solo')
+                    ?? config('ranks.level_4_qualification.personal_monthly_pv_solo')
+                    ?? $nextPvRequired
+                    ?: 1000);
+                $currentMinPv = 0;
+            }
+
             $progress = 0;
             if ($nextPvRequired > $currentMinPv) {
-                $progress = (($pvCumul - $currentMinPv) / ($nextPvRequired - $currentMinPv)) * 100;
+                $progress = (($progressPv - $currentMinPv) / ($nextPvRequired - $currentMinPv)) * 100;
                 $progress = max(0, min(100, $progress));
             } else {
-                $progress = ($pvCumul / max($nextPvRequired, 1)) * 100;
+                $progress = ($progressPv / max($nextPvRequired, 1)) * 100;
                 $progress = min(100, $progress);
             }
-            
-            $pvNeeded = max(0, $nextPvRequired - $pvCumul);
+
+            $pvNeeded = max(0, $nextPvRequired - $progressPv);
 
             $personalTarget = $this->resolveNextRankPersonalPvTarget($nextRank);
             if ($personalTarget > 0) {
@@ -148,7 +159,7 @@ class DashboardController extends Controller
                 $personalProgress = 100;
                 $personalPvNeeded = 0;
             }
-            
+
             // Conditions du prochain grade
             $conditions = $this->getRankConditions($nextRank, $user);
         } else {
@@ -159,6 +170,8 @@ class DashboardController extends Controller
             $personalProgress = 100;
             $personalTarget = 0;
             $personalPvNeeded = 0;
+            $progressUsesPersonalPv = false;
+            $progressPv = (float) $pvCumul;
             $conditions = [];
         }
 
@@ -345,9 +358,10 @@ class DashboardController extends Controller
             'next_level' => $nextRank ? $nextRank->level : $currentRankLevel,
             'progress' => $progress,
             'team_progress' => $progress,
+            'uses_personal_pv' => $progressUsesPersonalPv ?? false,
             'pv_needed' => $pvNeeded,
             'team_pv_needed' => $pvNeeded,
-            'current_pv' => $pvCumul,
+            'current_pv' => $progressPv ?? $pvCumul,
             'next_pv' => $nextPvRequired,
             'team_target_pv' => $nextPvRequired,
             'personal_progress' => $personalProgress ?? 100,
@@ -432,6 +446,19 @@ class DashboardController extends Controller
             ->all();
         $bonusTotal = (float) collect($bonusByType)->sum('total');
 
+        // PV mois = PV personnel du mois sélectionné (même période que les bonus)
+        $selectedMonthPv = $bonusMonth !== ''
+            ? (float) (\App\Models\PVHistory::query()
+                ->where('user_id', $user->id)
+                ->where('period', $bonusMonth)
+                ->where('amount', '>', 0)
+                ->sum('amount') ?? 0)
+            : 0.0;
+        if ($bonusMonth === $currentMlmPeriod && $selectedMonthPv <= 0) {
+            $selectedMonthPv = (float) ($user->monthly_pv ?? 0);
+        }
+        $data['rankProgress']['monthly_pv'] = $selectedMonthPv;
+
         $data['bonusByType'] = $bonusByType;
         $data['bonusMonths'] = $bonusMonths;
         $data['bonusMonth'] = $bonusMonth;
@@ -439,6 +466,30 @@ class DashboardController extends Controller
         $data['bonusTotal'] = $bonusTotal;
 
         return view('dashboard.index', $data);
+    }
+
+    /**
+     * Barre de progression : PV personnel seulement pour 2, 3 et voie solo du 4.
+     */
+    private function progressUsesPersonalPv(User $user, ?Rank $nextRank): bool
+    {
+        if (! $nextRank) {
+            return false;
+        }
+
+        $level = (int) $nextRank->level;
+        if (in_array($level, [2, 3], true)) {
+            return true;
+        }
+
+        if ($level === 4) {
+            return User::query()
+                ->where('parrain_id', $user->id)
+                ->where('is_active', true)
+                ->count() === 0;
+        }
+
+        return false;
     }
 
     /**
