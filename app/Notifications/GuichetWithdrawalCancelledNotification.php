@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Withdrawal;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class GuichetWithdrawalCancelledNotification extends Notification
@@ -17,7 +18,37 @@ class GuichetWithdrawalCancelledNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (filled($notifiable->email ?? null)) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        $amount = number_format((float) $this->withdrawal->amount, 2);
+        $url = url('/withdrawal/'.$this->withdrawal->id);
+
+        $mail = (new MailMessage)
+            ->subject('Retrait guichet annulé — Salang')
+            ->greeting('Bonjour '.($notifiable->name ?? '').',')
+            ->line('Votre retrait guichet a été **annulé**.')
+            ->line('')
+            ->line("**Montant :** \${$amount}")
+            ->line('Le montant a été recrédité sur votre portefeuille.');
+
+        if (filled($this->reason)) {
+            $mail->line('')
+                ->line('**Motif :** '.$this->reason);
+        }
+
+        return $mail
+            ->line('')
+            ->action('Voir le retrait', $url)
+            ->salutation("L'équipe Salang");
     }
 
     public function toArray($notifiable): array
