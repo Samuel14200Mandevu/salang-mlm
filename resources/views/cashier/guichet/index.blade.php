@@ -3,135 +3,111 @@
 @push('styles')
 @include('cashier.partials.commission-ui-styles')
 <style>
-    .guichet-create {
-        padding: 0;
-        overflow: hidden;
-    }
-    .guichet-create__head {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.85rem 1.1rem;
-        border-bottom: 1px solid transparent;
-        background: color-mix(in srgb, var(--primary) 5%, var(--bg-card));
-    }
-    .guichet-create.is-open .guichet-create__head {
-        align-items: flex-start;
-        padding: 1rem 1.1rem 0.85rem;
-        border-bottom-color: var(--border-color);
-    }
-    .guichet-create__toggle {
-        flex-shrink: 0;
-        margin-left: auto;
-        align-self: center;
-    }
-    .guichet-create__icon {
-        flex-shrink: 0;
-        width: 2.25rem;
-        height: 2.25rem;
-        border-radius: 0.55rem;
+    /* Même langage visuel que admin/users (Créer un compte) */
+    .guichet-form-layout {
         display: grid;
-        place-items: center;
-        background: color-mix(in srgb, var(--primary) 14%, transparent);
-        color: var(--primary);
+        gap: 1rem;
     }
-    .guichet-create__title {
-        font-size: 0.98rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        line-height: 1.25;
-    }
-    .guichet-create__sub {
-        margin-top: 0.15rem;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        line-height: 1.35;
-    }
-    .guichet-create__steps {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-top: 0.55rem;
-    }
-    .guichet-step {
-        font-size: 0.68rem;
-        font-weight: 650;
-        letter-spacing: 0.02em;
-        padding: 0.18rem 0.5rem;
-        border-radius: 999px;
-        background: var(--bg-secondary);
-        color: var(--text-tertiary);
-        border: 1px solid transparent;
-    }
-    .guichet-step.is-active {
-        background: color-mix(in srgb, var(--primary) 12%, transparent);
-        color: var(--primary);
-        border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-    }
-    .guichet-step.is-done {
-        background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
-    }
-    .guichet-create__body {
-        padding: 1rem 1.1rem 1.15rem;
-        display: grid;
-        gap: 0.9rem;
-    }
-    @media (min-width: 900px) {
-        .guichet-create__body {
-            grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.85fr);
+    @media (min-width: 1024px) {
+        .guichet-form-layout {
+            grid-template-columns: minmax(0, 1fr) 20rem;
             align-items: start;
-            gap: 1.15rem;
+            gap: 1.25rem;
         }
     }
-    .guichet-create .form-label {
+    @media (min-width: 1280px) {
+        .guichet-form-layout {
+            grid-template-columns: minmax(0, 1fr) 22rem;
+        }
+    }
+    .guichet-form-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.85rem;
+        padding: 1rem 1.1rem 1.15rem;
+    }
+    .guichet-form-section__head {
+        margin-bottom: 0.9rem;
+        padding-bottom: 0.7rem;
+        border-bottom: 1px solid var(--border-light, var(--border-color));
+    }
+    .guichet-form-section__head h3 {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .guichet-form-section__head p {
+        margin: 0.2rem 0 0;
+        font-size: 0.72rem;
+        color: var(--text-tertiary);
+    }
+    .guichet-form-section .form-group { margin: 0; }
+    .guichet-form-section .form-group + .form-group { margin-top: 0.85rem; }
+    .guichet-form-section .form-group label {
         display: block;
         font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--text-tertiary);
+        color: var(--text-secondary);
         margin-bottom: 0.35rem;
     }
-    .guichet-create .form-control {
+    .guichet-form-section .help-text {
+        display: block;
+        font-size: 0.68rem;
+        color: var(--text-tertiary);
+        margin-top: 0.3rem;
+    }
+    .guichet-form-section .form-control {
         width: 100%;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md, 6px);
-        background: var(--bg-primary);
         padding: 0.55rem 0.75rem;
-        font-size: 0.875rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.55rem;
+        background: var(--bg-input, var(--bg-primary));
         color: var(--text-primary);
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .guichet-create .form-control:focus {
+        font-size: 0.875rem;
         outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(30, 93, 173, 0.12);
+        transition: border-color 0.15s ease;
     }
-    .guichet-create .form-control:disabled {
+    .guichet-form-section .form-control:focus { border-color: var(--primary); }
+    .guichet-form-section .form-control:disabled {
         opacity: 0.55;
         cursor: not-allowed;
     }
-    .guichet-search-wrap {
-        position: relative;
-    }
+    .guichet-search-wrap { position: relative; }
     .guichet-search-wrap .search-ico {
         position: absolute;
-        left: 0.75rem;
+        left: 0.9rem;
         top: 50%;
         transform: translateY(-50%);
-        width: 1rem;
-        height: 1rem;
+        width: 1.05rem;
+        height: 1.05rem;
         color: var(--text-tertiary);
         pointer-events: none;
+        z-index: 1;
     }
-    .guichet-search-wrap .form-control {
-        padding-left: 2.25rem;
-        padding-right: 2.25rem;
+    /* Spécificité > .guichet-form-section .form-control (padding shorthand) */
+    .guichet-form-section .guichet-search-wrap > .form-control {
+        padding: 0.65rem 2.4rem 0.65rem 2.95rem !important;
+        min-height: 2.6rem;
     }
+    .guichet-search-wrap.is-loading .search-ico { opacity: 0; }
+    .guichet-search-spinner {
+        position: absolute;
+        left: 0.95rem;
+        top: 50%;
+        width: 0.95rem;
+        height: 0.95rem;
+        margin-top: -0.475rem;
+        z-index: 1;
+        border: 2px solid color-mix(in srgb, var(--primary) 25%, transparent);
+        border-top-color: var(--primary);
+        border-radius: 999px;
+        animation: guichetSpin 0.7s linear infinite;
+    }
+    @keyframes guichetSpin { to { transform: rotate(360deg); } }
     .guichet-search-clear {
         position: absolute;
-        right: 0.45rem;
+        right: 0.4rem;
         top: 50%;
         transform: translateY(-50%);
         width: 1.6rem;
@@ -149,128 +125,106 @@
         color: var(--text-primary);
     }
     .guichet-hint {
-        margin-top: 0.35rem;
+        margin-top: 0.3rem;
         font-size: 0.72rem;
         color: var(--text-tertiary);
         min-height: 1rem;
     }
-    .guichet-hint.is-error { color: #b32a2a; }
+    .guichet-hint.is-error { color: #B91C1C; }
+    .guichet-hint.is-ok { color: #1C7E4A; }
     .guichet-member-results {
         margin-top: 0.55rem;
-        max-height: 13.5rem;
+        max-height: 12.5rem;
         overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-        padding-right: 0.15rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.55rem;
+        background: var(--bg-secondary);
     }
     .guichet-member-result {
-        text-align: left;
-        width: 100%;
-        padding: 0.65rem 0.75rem;
-        border-radius: var(--radius-md, 8px);
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-        color: var(--text-primary);
-        cursor: pointer;
-        transition: border-color 0.15s ease, background 0.15s ease;
-    }
-    .guichet-member-result:hover:not(:disabled),
-    .guichet-member-result.is-active {
-        border-color: var(--primary);
-        background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
-    }
-    .guichet-member-result:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-    .guichet-member-result .row-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.75rem;
-        align-items: baseline;
-    }
-    .guichet-member-result .name {
-        font-weight: 650;
-        font-size: 0.875rem;
-    }
-    .guichet-member-result .bal {
-        font-variant-numeric: tabular-nums;
-        font-weight: 700;
-        font-size: 0.8125rem;
-        color: var(--ui-stat-success, #16a34a);
-        white-space: nowrap;
-    }
-    .guichet-member-result .meta {
-        margin-top: 0.15rem;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-    }
-    .guichet-selected {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        margin-top: 0.65rem;
-        padding: 0.7rem 0.8rem;
-        border-radius: var(--radius-md, 8px);
-        border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color));
-        background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
-    }
-    .guichet-selected__main {
-        min-width: 0;
-    }
-    .guichet-selected__name {
-        font-weight: 700;
-        font-size: 0.9rem;
+        text-align: left;
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        background: transparent;
         color: var(--text-primary);
+        cursor: pointer;
+    }
+    .guichet-member-result:last-child { border-bottom: none; }
+    .guichet-member-result:hover:not(:disabled),
+    .guichet-member-result.is-focus {
+        background: color-mix(in srgb, var(--primary) 8%, transparent);
+    }
+    .guichet-member-result:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .guichet-member-result__body { min-width: 0; flex: 1; }
+    .guichet-member-result .name {
+        display: block;
+        font-weight: 700;
+        font-size: 0.84rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .guichet-selected__pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-top: 0.35rem;
-    }
-    .guichet-pill {
+    .guichet-member-result .meta {
+        margin-top: 0.1rem;
         font-size: 0.7rem;
-        font-weight: 650;
-        padding: 0.15rem 0.45rem;
-        border-radius: 999px;
+        color: var(--text-secondary);
+    }
+    .guichet-member-result .bal {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        font-size: 0.84rem;
+        color: #1C7E4A;
+        white-space: nowrap;
+    }
+    .guichet-selected-box {
+        margin-top: 0.7rem;
         background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.55rem;
+        padding: 0.7rem 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .guichet-selected-box__main { min-width: 0; flex: 1; }
+    .guichet-selected-box__name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+    .guichet-selected-box__meta {
+        margin-top: 0.2rem;
+        font-size: 0.72rem;
         color: var(--text-secondary);
         font-variant-numeric: tabular-nums;
     }
-    .guichet-pill.is-ok {
-        background: rgba(34, 197, 94, 0.12);
-        color: #16a34a;
-    }
-    .guichet-amount-panel {
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md, 8px);
-        padding: 0.85rem;
-        background: var(--bg-primary);
-    }
-    .guichet-amount-panel.is-locked {
-        opacity: 0.72;
-    }
-    .guichet-amount-input {
-        position: relative;
-    }
+    .guichet-selected-box__meta strong { color: #1C7E4A; font-weight: 700; }
+    .guichet-amount-input { position: relative; }
     .guichet-amount-input .currency {
         position: absolute;
-        left: 0.75rem;
+        left: 0.9rem;
         top: 50%;
         transform: translateY(-50%);
         font-weight: 700;
+        font-size: 1rem;
         color: var(--text-secondary);
         pointer-events: none;
+        z-index: 1;
     }
-    .guichet-amount-input .form-control {
-        padding-left: 1.65rem;
-        font-size: 1.05rem;
+    /* Même logique que la recherche : ne pas laisser le padding global coller le $ */
+    .guichet-form-section .guichet-amount-input > .form-control {
+        padding: 0.7rem 0.9rem 0.7rem 2.35rem !important;
+        min-height: 2.85rem;
+        font-size: 1.15rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
@@ -284,39 +238,152 @@
         border: 1px solid var(--border-color);
         background: var(--bg-card);
         color: var(--text-secondary);
-        border-radius: 999px;
-        padding: 0.2rem 0.55rem;
-        font-size: 0.72rem;
-        font-weight: 650;
+        border-radius: 0.45rem;
+        padding: 0.32rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 700;
         cursor: pointer;
     }
-    .guichet-quick button:hover:not(:disabled) {
+    .guichet-quick button:hover:not(:disabled),
+    .guichet-quick button.is-active {
         border-color: var(--primary);
         color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 8%, transparent);
     }
     .guichet-quick button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    .guichet-summary {
+        margin-top: 0.55rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 0.5rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    .guichet-summary strong {
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+    }
+    .guichet-summary.is-warn {
+        background: rgba(217, 119, 6, 0.08);
+        border-color: rgba(217, 119, 6, 0.25);
+        color: #92400E;
+        font-weight: 600;
+    }
+    .guichet-info-box {
+        border-radius: 0.65rem;
+        padding: 0.75rem 0.85rem;
+        font-size: 0.8rem;
+        background: color-mix(in srgb, var(--primary) 8%, transparent);
+        border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+        color: var(--text-secondary);
+    }
+    .guichet-recap {
+        display: grid;
+        gap: 0.55rem;
+        font-size: 0.78rem;
+    }
+    .guichet-recap__row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .guichet-recap__row strong {
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+    .guichet-recap__row.is-muted strong { color: var(--text-tertiary); font-weight: 600; }
+    .guichet-steps {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.45rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .guichet-steps li {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .guichet-steps__dot {
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--border-color);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: var(--text-tertiary);
+        background: var(--bg-card);
+    }
+    .guichet-steps li.is-done { color: #1C7E4A; font-weight: 600; }
+    .guichet-steps li.is-done .guichet-steps__dot {
+        border-color: #1C7E4A;
+        background: rgba(28, 126, 74, 0.1);
+        color: #1C7E4A;
+    }
+    .guichet-steps li.is-active { color: var(--primary); font-weight: 600; }
+    .guichet-steps li.is-active .guichet-steps__dot {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        color: var(--primary);
+    }
+    .guichet-form-actions {
+        display: grid;
+        gap: 0.5rem;
+    }
+    .guichet-form-actions .btn {
+        min-height: 2.65rem;
+        font-weight: 700;
+    }
+    .guichet-form-actions .btn:disabled {
         opacity: 0.45;
         cursor: not-allowed;
     }
-    .guichet-create__actions {
+    .guichet-form-side { position: relative; }
+    @media (min-width: 1024px) {
+        .guichet-form-side {
+            position: sticky;
+            top: 1rem;
+        }
+    }
+    .guichet-side-member {
         display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
-        margin-top: 0.85rem;
+        align-items: center;
+        gap: 0.75rem;
     }
-    .guichet-create__actions .btn {
-        width: 100%;
-        min-height: 2.55rem;
+    .guichet-side-avatar {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 700;
     }
-    .guichet-create__actions .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    .guichet-create__foot {
-        font-size: 0.7rem;
+    .guichet-empty-hint {
+        margin: 0;
+        padding: 0.85rem 0.9rem;
+        border-radius: 0.55rem;
+        border: 1px dashed var(--border-color);
+        background: var(--bg-secondary);
         color: var(--text-tertiary);
+        font-size: 0.78rem;
+        line-height: 1.45;
         text-align: center;
-        line-height: 1.35;
     }
 </style>
 @endpush
@@ -325,7 +392,7 @@
 
 @section('content')
 @php
-    $currentStatus = $status ?? request('status', 'pending');
+    $currentStatus = $status ?? request('status', 'all');
     $filterActive = in_array($currentStatus, ['pending', 'completed'], true);
     $filterLabels = [
         'pending' => 'En attente',
@@ -411,14 +478,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-                <a href="{{ route('cashier.offline-bonus.pay') }}"
-                   class="btn btn-outline btn-sm btn-round-icon"
-                   title="Paiement des bonus"
-                   aria-label="Paiement des bonus">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                </a>
                 <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
                    class="btn btn-sm btn-round-icon btn-pdf-icon"
                    title="Rapport journalier PDF"
@@ -511,14 +570,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
-            <a href="{{ route('cashier.offline-bonus.pay') }}"
-               class="btn btn-outline btn-sm btn-round-icon"
-               title="Paiement des bonus"
-               aria-label="Paiement des bonus">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-            </a>
             <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
                class="btn btn-sm btn-round-icon btn-pdf-icon"
                title="Rapport journalier PDF"
@@ -544,146 +595,229 @@
         </div>
     @endif
 
-    {{-- FORMULAIRE CAISSIER (sans smartphone) — ouvert via le bouton barre d’outils --}}
-    <div class="card guichet-create is-open"
-         id="guichetCreateBody"
+    {{-- FORMULAIRE CAISSIER — même structure que admin Créer un compte --}}
+    <div id="guichetCreateBody"
          x-show="open"
+         x-transition.opacity.duration.150ms
          x-cloak>
-        <div class="guichet-create__head">
-            <div class="guichet-create__icon" aria-hidden="true">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <div class="guichet-create__title">Nouveau retrait au comptoir</div>
-                <p class="guichet-create__sub">Membre sans smartphone — recherchez le compte, saisissez le montant, puis confirmez la remise espèces.</p>
-                <div class="guichet-create__steps" aria-hidden="true">
-                    <span class="guichet-step" :class="stepClass(1)">1 · Membre</span>
-                    <span class="guichet-step" :class="stepClass(2)">2 · Montant</span>
-                    <span class="guichet-step" :class="stepClass(3)">3 · Remise</span>
-                </div>
-            </div>
-        </div>
+        <form method="POST"
+              action="{{ route('cashier.guichet.store') }}"
+              id="guichetCreateForm"
+              class="guichet-form-layout"
+              @submit="return canSubmit()">
+            @csrf
+            <input type="hidden" name="user_id" :value="selected ? selected.id : ''">
 
-        <div class="guichet-create__body">
-            <div>
-                <label class="form-label" for="guichetMemberSearch">Membre</label>
-                <div class="guichet-search-wrap">
-                    <svg class="search-ico" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text"
-                           id="guichetMemberSearch"
-                           class="form-control"
-                           placeholder="Code membre, téléphone ou nom"
-                           autocomplete="off"
-                           x-model="query"
-                           @input.debounce.350ms="search()"
-                           @keydown.enter.prevent="search()"
-                           @keydown.escape.prevent="clearSearch()">
-                    <button type="button"
-                            class="guichet-search-clear"
-                            x-show="query.length > 0 || selected"
-                            @click="clearSearch()"
-                            title="Effacer"
-                            aria-label="Effacer la recherche">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                <p class="guichet-hint" :class="{ 'is-error': hintError }" x-text="statusMessage"></p>
+            <div class="guichet-form-main space-y-4">
+                <section class="guichet-form-section">
+                    <div class="guichet-form-section__head">
+                        <h3>1 · Membre</h3>
+                        <p>Compte présent au comptoir (sans smartphone).</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="guichetMemberSearch">Rechercher</label>
+                        <div class="guichet-search-wrap" :class="{ 'is-loading': searching }">
+                            <svg class="search-ico" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <span class="guichet-search-spinner" x-show="searching" x-cloak></span>
+                            <input type="text"
+                                   id="guichetMemberSearch"
+                                   class="form-control"
+                                   placeholder="Code membre, téléphone ou nom"
+                                   autocomplete="off"
+                                   x-model="query"
+                                   :disabled="!!selected"
+                                   @input.debounce.300ms="search()"
+                                   @keydown.enter.prevent="onSearchEnter()"
+                                   @keydown.arrow-down.prevent="focusNext()"
+                                   @keydown.arrow-up.prevent="focusPrev()"
+                                   @keydown.escape.prevent="clearSearch()">
+                            <button type="button"
+                                    class="guichet-search-clear"
+                                    x-show="query.length > 0 || selected"
+                                    @click="clearSearch()"
+                                    title="Effacer"
+                                    aria-label="Effacer la recherche">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="guichet-hint"
+                           :class="{ 'is-error': hintError, 'is-ok': !hintError && selected }"
+                           x-text="statusMessage"></p>
+                    </div>
 
-                <div class="guichet-member-results"
-                     x-show="results.length > 0 && !selected"
-                     x-transition>
-                    <template x-for="m in results" :key="m.id">
-                        <button type="button"
-                                class="guichet-member-result"
-                                :class="{ 'is-active': selected && selected.id === m.id }"
-                                @click="selectMember(m)"
-                                :disabled="!m.eligible">
-                            <div class="row-top">
-                                <span class="name" x-text="m.label"></span>
+                    <div class="guichet-member-results"
+                         x-show="results.length > 0 && !selected"
+                         x-transition>
+                        <template x-for="(m, idx) in results" :key="m.id">
+                            <button type="button"
+                                    class="guichet-member-result"
+                                    :class="{ 'is-focus': focusIndex === idx }"
+                                    @click="selectMember(m)"
+                                    :disabled="!m.eligible">
+                                <div class="guichet-member-result__body">
+                                    <span class="name" x-text="m.label"></span>
+                                    <div class="meta">
+                                        <span x-text="m.phone || 'Sans téléphone'"></span>
+                                        <span x-show="Number(m.pending_balance) > 0"
+                                              x-text="' · En attente $' + Number(m.pending_balance).toFixed(2)"></span>
+                                        <span x-show="m.message" x-text="' — ' + m.message"></span>
+                                    </div>
+                                </div>
                                 <span class="bal" x-text="'$' + Number(m.balance).toFixed(2)"></span>
-                            </div>
-                            <div class="meta">
-                                <span x-text="m.phone || 'Sans téléphone'"></span>
-                                <span x-show="m.message" x-text="' — ' + m.message"></span>
-                            </div>
-                        </button>
-                    </template>
-                </div>
+                            </button>
+                        </template>
+                    </div>
 
-                <div class="guichet-selected" x-show="selected" x-transition>
-                    <div class="guichet-selected__main">
-                        <div class="guichet-selected__name" x-text="selected ? selected.label : ''"></div>
-                        <div class="guichet-selected__pills">
-                            <span class="guichet-pill is-ok"
-                                  x-text="selected ? 'Disponible $' + Number(selected.balance).toFixed(2) : ''"></span>
-                            <span class="guichet-pill"
-                                  x-text="selected ? 'En attente $' + Number(selected.pending_balance).toFixed(2) : ''"></span>
-                            <span class="guichet-pill" x-show="selected && selected.phone" x-text="selected ? selected.phone : ''"></span>
+                    <div class="guichet-selected-box" x-show="selected" x-cloak>
+                        <div class="guichet-side-avatar" x-text="selected ? initials(selected.name || selected.label) : '?'"></div>
+                        <div class="guichet-selected-box__main">
+                            <div class="guichet-selected-box__name" x-text="selected ? selected.name : ''"></div>
+                            <div class="guichet-selected-box__meta">
+                                <span x-text="selected ? (selected.sponsor_id || 'Sans code') : ''"></span>
+                                <span x-show="selected && selected.phone" x-text="selected ? ' · ' + selected.phone : ''"></span>
+                                <span> · Disponible </span>
+                                <strong x-text="selected ? '$' + Number(selected.balance).toFixed(2) : ''"></strong>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" @click="clearSelection()">Changer</button>
+                    </div>
+                </section>
+
+                <section class="guichet-form-section">
+                    <div class="guichet-form-section__head">
+                        <h3>2 · Montant</h3>
+                        <p>Somme à remettre en espèces au membre.</p>
+                    </div>
+
+                    <template x-if="!selected">
+                        <p class="guichet-empty-hint">Sélectionnez d’abord un membre pour saisir le montant.</p>
+                    </template>
+
+                    <div x-show="selected" x-cloak>
+                        <div class="form-group">
+                            <label for="guichetAmount">Montant à remettre <span class="text-[var(--danger)]">*</span></label>
+                            <div class="guichet-amount-input">
+                                <span class="currency">$</span>
+                                <input type="number"
+                                       id="guichetAmount"
+                                       name="amount"
+                                       class="form-control"
+                                       step="0.01"
+                                       min="2"
+                                       max="10000"
+                                       :required="!!selected"
+                                       :disabled="!selected"
+                                       x-model="amount"
+                                       x-ref="amountInput"
+                                       placeholder=""
+                                       inputmode="decimal">
+                            </div>
+                            <span class="help-text">Min $2 · plafond jour $5 000 · frais $0</span>
+                        </div>
+
+                        <div class="guichet-quick">
+                            <template x-for="chip in quickAmounts" :key="chip">
+                                <button type="button"
+                                        :class="{ 'is-active': Number(amount) === chip }"
+                                        @click="setAmount(chip)"
+                                        :disabled="!selected || chip > Number(selected.balance)"
+                                        x-text="'$' + chip"></button>
+                            </template>
+                            <button type="button"
+                                    :class="{ 'is-active': selected && Number(amount) === Number(Number(selected.balance).toFixed(2)) }"
+                                    @click="setAmount(selected.balance)"
+                                    :disabled="!selected || Number(selected.balance) < 2">
+                                Tout
+                            </button>
+                        </div>
+
+                        <div class="guichet-summary"
+                             x-show="Number(amount) > 0"
+                             :class="{ 'is-warn': amountOverBalance }"
+                             x-cloak>
+                            <template x-if="!amountOverBalance">
+                                <span>
+                                    Remise <strong x-text="'$' + Number(amount || 0).toFixed(2)"></strong>
+                                    · reste sur le compte <strong x-text="'$' + remainingBalance.toFixed(2)"></strong>
+                                </span>
+                            </template>
+                            <template x-if="amountOverBalance">
+                                <span>Montant supérieur au solde (<strong x-text="selected ? '$' + Number(selected.balance).toFixed(2) : ''"></strong>).</span>
+                            </template>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline btn-sm" @click="clearSelection()">Changer</button>
-                </div>
+                </section>
             </div>
 
-            <form method="POST"
-                  action="{{ route('cashier.guichet.store') }}"
-                  class="guichet-amount-panel"
-                  :class="{ 'is-locked': !selected }"
-                  @submit="return canSubmit()">
-                @csrf
-                <input type="hidden" name="user_id" :value="selected ? selected.id : ''">
+            <aside class="guichet-form-side space-y-4">
+                <section class="guichet-form-section">
+                    <div class="guichet-form-section__head">
+                        <h3>Progression</h3>
+                        <p>3 étapes au comptoir.</p>
+                    </div>
+                    <ul class="guichet-steps">
+                        <li :class="selected ? 'is-done' : 'is-active'">
+                            <span class="guichet-steps__dot" x-text="selected ? '✓' : '1'"></span>
+                            <span>Identifier le membre</span>
+                        </li>
+                        <li :class="canCreate ? 'is-done' : (selected ? 'is-active' : '')">
+                            <span class="guichet-steps__dot" x-text="canCreate ? '✓' : '2'"></span>
+                            <span>Saisir le montant</span>
+                        </li>
+                        <li :class="canCreate ? 'is-active' : ''">
+                            <span class="guichet-steps__dot">3</span>
+                            <span>Créer puis remettre + reçu</span>
+                        </li>
+                    </ul>
+                </section>
 
-                <label class="form-label" for="guichetAmount">Montant à remettre</label>
-                <div class="guichet-amount-input">
-                    <span class="currency">$</span>
-                    <input type="number"
-                           id="guichetAmount"
-                           name="amount"
-                           class="form-control"
-                           step="0.01"
-                           min="2"
-                           max="10000"
-                           required
-                           :disabled="!selected"
-                           x-model="amount"
-                           x-ref="amountInput"
-                           placeholder="0.00">
-                </div>
+                <section class="guichet-form-section">
+                    <div class="guichet-form-section__head">
+                        <h3>Récapitulatif</h3>
+                        <p>Contrôle avant création.</p>
+                    </div>
+                    <div class="guichet-recap">
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !selected }">
+                            <span>Membre</span>
+                            <strong x-text="selected ? selected.name : '—'"></strong>
+                        </div>
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !selected }">
+                            <span>Code</span>
+                            <strong class="font-mono" x-text="selected ? (selected.sponsor_id || '—') : '—'"></strong>
+                        </div>
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !selected }">
+                            <span>Disponible</span>
+                            <strong x-text="selected ? ('$' + Number(selected.balance).toFixed(2)) : '—'"></strong>
+                        </div>
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !(selected && Number(amount) > 0) }">
+                            <span>À remettre</span>
+                            <strong x-text="selected && Number(amount) > 0 ? ('$' + Number(amount).toFixed(2)) : '—'"></strong>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="guichet-quick" x-show="selected">
-                    <template x-for="chip in quickAmounts" :key="chip">
-                        <button type="button"
-                                @click="setAmount(chip)"
-                                :disabled="!selected || chip > Number(selected.balance)"
-                                x-text="'$' + chip"></button>
-                    </template>
-                    <button type="button"
-                            @click="setAmount(selected.balance)"
-                            :disabled="!selected || Number(selected.balance) < 2"
-                            x-show="selected">
-                        Tout
-                    </button>
-                </div>
-
-                <div class="guichet-create__actions">
+                <div class="guichet-form-actions">
                     <button type="submit"
-                            class="btn btn-primary"
+                            class="btn btn-primary w-full"
                             :disabled="!canCreate">
                         Créer le retrait
                     </button>
-                    <p class="guichet-create__foot">Min $2 · plafond jour $5 000 · frais guichet $0<br>Ensuite : confirmer la remise + imprimer le reçu</p>
+                    <button type="button"
+                            class="btn btn-outline w-full"
+                            @click="open = false">
+                        Fermer
+                    </button>
                 </div>
-            </form>
-        </div>
+            </aside>
+        </form>
     </div>
 
-    {{-- STATS --}}
+    {{-- STATS + LISTE : masqués pendant la saisie du formulaire --}}
+    <div x-show="!open" x-cloak class="space-y-4 sm:space-y-6">
     <div class="commission-stats">
         <div class="commission-stat-card">
             <div class="icon icon-orange">
@@ -706,6 +840,13 @@
             <div class="number">{{ $stats['completed_today'] }}</div>
             <div class="label">Remis aujourd’hui</div>
         </div>
+        <div class="commission-stat-card">
+            <div class="icon icon-green">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="number">${{ number_format($stats['paid_today_amount'] ?? 0, 2) }}</div>
+            <div class="label">Montant payé</div>
+        </div>
     </div>
 
     {{-- TABLEAU --}}
@@ -714,12 +855,13 @@
             <table class="commission-table">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th>N°</th>
                         <th>Membre</th>
-                        <th class="col-amount">Montant</th>
+                        <th class="col-amount">Total</th>
+                        <th class="col-amount">Retiré</th>
+                        <th class="col-amount">Reste</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -729,6 +871,12 @@
                                 ? trim(($w->user->sponsor_id ? $w->user->sponsor_id.' : ' : '').$w->user->name)
                                 : '—';
                             $detailUrl = route('cashier.guichet.show', $w->id);
+                            $retire = (float) $w->amount;
+                            $reste = (float) ($w->wallet?->balance ?? 0);
+                            // Pending / completed : le débit est déjà sorti du solde → total = reste + retiré
+                            $total = in_array($w->status, ['pending', 'completed'], true)
+                                ? $reste + $retire
+                                : $reste;
                         @endphp
                         <tr class="commission-row"
                             role="link"
@@ -736,12 +884,18 @@
                             data-href="{{ $detailUrl }}"
                             onclick="window.location.href=this.dataset.href"
                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href}">
-                            <td class="font-mono text-xs text-[var(--text-secondary)]">#{{ $w->id }}</td>
+                            <td class="font-mono text-xs text-[var(--text-secondary)]">{{ $w->id }}</td>
                             <td>
                                 <span class="commission-member">{{ $memberLabel }}</span>
                             </td>
+                            <td class="col-amount text-[var(--text-primary)]">
+                                ${{ number_format($total, 2) }}
+                            </td>
                             <td class="col-amount text-[var(--ui-stat-success)]">
-                                ${{ number_format($w->amount, 2) }}
+                                ${{ number_format($retire, 2) }}
+                            </td>
+                            <td class="col-amount text-[var(--text-secondary)]">
+                                ${{ number_format($reste, 2) }}
                             </td>
                             <td>
                                 @if($w->status === 'pending')
@@ -755,21 +909,28 @@
                             <td class="hidden sm:table-cell text-xs text-[var(--text-tertiary)]">
                                 {{ $w->created_at?->format('d/m/Y H:i') }}
                             </td>
-                            <td>
-                                <a href="{{ $detailUrl }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">
-                                    {{ $w->status === 'pending' ? 'Traiter' : 'Reçu' }}
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
-                                <p class="text-base font-medium text-[var(--text-primary)]">Aucun retrait guichet</p>
+                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                                <p class="text-base font-medium text-[var(--text-primary)]">
+                                    @if($currentStatus === 'pending')
+                                        Aucun retrait en attente
+                                    @elseif($currentStatus === 'completed')
+                                        Aucun retrait remis
+                                    @else
+                                        Aucun retrait guichet
+                                    @endif
+                                </p>
                                 <p class="text-sm text-[var(--text-tertiary)] mt-1">
                                     @if(request('search'))
                                         Aucun résultat pour cette recherche.
+                                    @elseif($currentStatus === 'pending' && ($stats['completed'] ?? 0) > 0)
+                                        Les retraits remis sont dans « Terminés » ou « Tous ».
+                                    @elseif(($stats['all'] ?? 0) === 0)
+                                        Les retraits créés au comptoir apparaîtront ici.
                                     @else
-                                        Les demandes membres apparaîtront ici.
+                                        Essayez un autre filtre.
                                     @endif
                                 </p>
                             </td>
@@ -785,6 +946,7 @@
             </div>
         @endif
     </div>
+    </div>
 </div>
 @endsection
 
@@ -798,8 +960,9 @@ function guichetCreateForm(startOpen = false) {
         results: [],
         selected: null,
         searching: false,
+        focusIndex: -1,
         hintError: false,
-        statusMessage: 'Saisissez le code membre, le téléphone ou le nom.',
+        statusMessage: 'Code membre, téléphone ou nom (min. 2 caractères).',
         findUrl: @json(route('cashier.guichet.find-member')),
         quickAmounts: [20, 50, 100, 200, 500],
         toggleOpen() {
@@ -813,25 +976,52 @@ function guichetCreateForm(startOpen = false) {
                 });
             }
         },
+        initials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        },
         get canCreate() {
             if (!this.selected) return false;
             const n = Number(this.amount);
             return Number.isFinite(n) && n >= 2 && n <= Number(this.selected.balance);
         },
-        stepClass(step) {
-            if (step === 1) {
-                return this.selected ? 'is-done' : 'is-active';
+        get amountOverBalance() {
+            if (!this.selected) return false;
+            const n = Number(this.amount);
+            return Number.isFinite(n) && n > 0 && n > Number(this.selected.balance);
+        },
+        get remainingBalance() {
+            if (!this.selected) return 0;
+            const n = Number(this.amount) || 0;
+            return Math.max(0, Number(this.selected.balance) - n);
+        },
+        focusNext() {
+            if (!this.results.length || this.selected) return;
+            this.focusIndex = Math.min(this.results.length - 1, this.focusIndex + 1);
+        },
+        focusPrev() {
+            if (!this.results.length || this.selected) return;
+            this.focusIndex = Math.max(0, this.focusIndex - 1);
+        },
+        onSearchEnter() {
+            if (this.selected) return;
+            if (this.focusIndex >= 0 && this.results[this.focusIndex]) {
+                this.selectMember(this.results[this.focusIndex]);
+                return;
             }
-            if (step === 2) {
-                if (!this.selected) return '';
-                return this.canCreate ? 'is-done' : 'is-active';
+            if (this.results.length === 1) {
+                this.selectMember(this.results[0]);
+                return;
             }
-            return this.canCreate ? 'is-active' : '';
+            this.search();
         },
         async search() {
             const q = (this.query || '').trim();
             this.hintError = false;
             this.results = [];
+            this.focusIndex = -1;
             if (this.selected) return;
             if (q.length < 2) {
                 this.statusMessage = 'Saisissez au moins 2 caractères.';
@@ -850,7 +1040,17 @@ function guichetCreateForm(startOpen = false) {
                     return;
                 }
                 this.results = data.members || [];
-                this.statusMessage = this.results.length + ' membre(s) trouvé(s) — choisissez-en un.';
+                const exact = this.results.find((m) =>
+                    String(m.sponsor_id || '').toLowerCase() === q.toLowerCase() && m.eligible
+                );
+                if (exact && this.results.filter((m) => m.eligible).length === 1) {
+                    this.selectMember(exact);
+                    return;
+                }
+                this.focusIndex = this.results.findIndex((m) => m.eligible);
+                this.statusMessage = this.results.length === 1
+                    ? '1 membre trouvé — Entrée pour sélectionner.'
+                    : this.results.length + ' membre(s) — choisissez-en un.';
             } catch (e) {
                 this.hintError = true;
                 this.statusMessage = 'Erreur de recherche. Réessayez.';
@@ -859,17 +1059,21 @@ function guichetCreateForm(startOpen = false) {
             }
         },
         selectMember(m) {
-            if (!m.eligible) {
+            if (!m || !m.eligible) {
                 this.hintError = true;
-                this.statusMessage = m.message || 'Ce membre ne peut pas retirer.';
+                this.statusMessage = (m && m.message) || 'Ce membre ne peut pas retirer.';
                 return;
             }
             this.selected = m;
             this.results = [];
+            this.focusIndex = -1;
             this.hintError = false;
-            this.statusMessage = 'Membre prêt — indiquez le montant à remettre.';
+            this.statusMessage = 'Membre sélectionné — saisissez le montant.';
             this.$nextTick(() => {
-                if (this.$refs.amountInput) this.$refs.amountInput.focus();
+                if (this.$refs.amountInput) {
+                    this.$refs.amountInput.focus();
+                    this.$refs.amountInput.select();
+                }
             });
         },
         setAmount(value) {
@@ -884,7 +1088,11 @@ function guichetCreateForm(startOpen = false) {
             this.statusMessage = 'Recherchez un autre membre.';
             this.$nextTick(() => {
                 const el = document.getElementById('guichetMemberSearch');
-                if (el) el.focus();
+                if (el) {
+                    el.disabled = false;
+                    el.focus();
+                    el.select();
+                }
             });
             if ((this.query || '').trim().length >= 2) this.search();
         },
@@ -893,8 +1101,16 @@ function guichetCreateForm(startOpen = false) {
             this.results = [];
             this.selected = null;
             this.amount = '';
+            this.focusIndex = -1;
             this.hintError = false;
-            this.statusMessage = 'Saisissez le code membre, le téléphone ou le nom.';
+            this.statusMessage = 'Code membre, téléphone ou nom (min. 2 caractères).';
+            this.$nextTick(() => {
+                const el = document.getElementById('guichetMemberSearch');
+                if (el) {
+                    el.disabled = false;
+                    el.focus();
+                }
+            });
         },
         canSubmit() {
             if (!this.selected) {

@@ -259,7 +259,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </div>
-            <div class="number">{{ $stats['member_count'] ?? $stats['total_members'] ?? 0 }}</div>
+            <div class="number" id="statMemberCount">{{ $stats['member_count'] ?? $stats['total_members'] ?? 0 }}</div>
             <div class="label">Membres</div>
         </div>
     </div>
@@ -303,7 +303,9 @@
             <div class="admin-empty-state"><p>Aucune commission</p></div>
         @endforelse
     </div>
-    <x-salang-pagination :paginator="$memberRows" id="paginationContainerMobile" class="md:hidden" />
+    <div id="paginationContainerMobile" class="md:hidden">
+        <x-salang-pagination :paginator="$memberRows" />
+    </div>
 
     {{-- TABLEAU DESKTOP (même structure que admin) --}}
     <div class="card hidden md:block">
@@ -375,28 +377,17 @@
 </div>
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const inputs = [document.getElementById('searchInput'), document.getElementById('searchInputDesktop')].filter(Boolean);
-    let t;
-    function go(q) {
-        const url = new URL(window.location.href);
-        if (q) url.searchParams.set('search', q); else url.searchParams.delete('search');
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    }
-    inputs.forEach(function (input) {
-        input.addEventListener('input', function () {
-            clearTimeout(t);
-            const q = this.value.trim();
-            inputs.forEach(function (other) { if (other !== input) other.value = q; });
-            t = setTimeout(function () { go(q); }, 400);
-        });
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); go(this.value.trim()); }
-        });
-    });
-});
-</script>
+@include('cashier.partials.live-list-search', [
+    'inputs' => ['searchInput', 'searchInputDesktop'],
+    'replaceIds' => [
+        'tableBody',
+        'cashierCommissionsMobileList',
+        'paginationContainer',
+        'paginationContainerMobile',
+        'listSubtitle',
+        'listSubtitleMobile',
+        'statMemberCount',
+    ],
+])
 @endpush
 @endsection

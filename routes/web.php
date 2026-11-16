@@ -513,6 +513,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
         Route::get('/find-member', [GuichetWithdrawalController::class, 'findMember'])->name('find-member');
         Route::post('/', [GuichetWithdrawalController::class, 'store'])->name('store');
         Route::get('/{id}', [GuichetWithdrawalController::class, 'show'])->name('show')->whereNumber('id');
+        Route::get('/{id}/receipt', [GuichetWithdrawalController::class, 'receipt'])->name('receipt')->whereNumber('id');
         Route::post('/{id}/fulfill', [GuichetWithdrawalController::class, 'fulfill'])->name('fulfill')->whereNumber('id');
         Route::post('/{id}/cancel', [GuichetWithdrawalController::class, 'cancel'])->name('cancel')->whereNumber('id');
     });

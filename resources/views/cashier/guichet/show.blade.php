@@ -3,23 +3,222 @@
 @push('styles')
 @include('cashier.partials.commission-ui-styles')
 <style>
-    .guichet-thermal {
+    /* Ticket reçu : masqué à l’écran, visible uniquement à l’impression */
+    .guichet-print-root {
         display: none;
-        width: 280px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 12px;
-        color: #000;
-        background: #fff;
-        padding: 12px;
     }
+    .guichet-ticket {
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+        background: #fff;
+        color: #1a1a1a;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        padding: 12px 14px 16px;
+    }
+    .guichet-ticket .header {
+        text-align: center;
+        border-bottom: 2px dashed #ccc;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+    .guichet-ticket .store-logo {
+        margin: 0 auto 4px;
+        max-width: 70px;
+    }
+    .guichet-ticket .store-logo img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    .guichet-ticket .store-name {
+        color: #0E2F76;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+    }
+    .guichet-ticket .store-sub {
+        font-size: 7px;
+        color: #666;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+    .guichet-ticket .store-contact {
+        font-size: 7px;
+        color: #555;
+        line-height: 1.5;
+        margin-top: 4px;
+    }
+    .guichet-ticket .store-address {
+        font-size: 6.5px;
+        color: #666;
+        line-height: 1.4;
+        margin-top: 3px;
+        background: #f8fafc;
+        padding: 4px 6px;
+        border-radius: 3px;
+    }
+    .guichet-ticket .store-reg {
+        font-size: 6px;
+        color: #888;
+        line-height: 1.4;
+        margin-top: 3px;
+        border-top: 1px dotted #e5e7eb;
+        padding-top: 4px;
+    }
+    .guichet-ticket .separator-dashed { border-top: 1px dashed #ddd; margin: 5px 0; }
+    .guichet-ticket .doc-title {
+        font-size: 8px;
+        font-weight: 700;
+        color: #0E2F76;
+        letter-spacing: 1px;
+    }
+    .guichet-ticket .doc-place {
+        font-size: 7px;
+        color: #888;
+        margin-top: 2px;
+    }
+    .guichet-ticket .ticket-number {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0E2F76;
+        margin-top: 5px;
+        letter-spacing: 1px;
+    }
+    .guichet-ticket .ticket-date {
+        font-size: 8px;
+        color: #888;
+        margin-top: 2px;
+    }
+    .guichet-ticket .source-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 7px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-top: 3px;
+        background: #dbeafe;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+    }
+    .guichet-ticket .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+    .guichet-ticket .status-badge.is-paid { background: #dcfce7; color: #16a34a; }
+    .guichet-ticket .status-badge.is-pending { background: #fef3c7; color: #d97706; }
+    .guichet-ticket .info {
+        margin-bottom: 8px;
+        border-bottom: 1px dashed #ddd;
+        padding-bottom: 6px;
+    }
+    .guichet-ticket .info .row,
+    .guichet-ticket .total .row,
+    .guichet-ticket .payment-info .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 2px 0;
+        font-size: 9px;
+    }
+    .guichet-ticket .label { color: #888; flex-shrink: 0; }
+    .guichet-ticket .value { font-weight: 600; color: #1a1a1a; text-align: right; }
+    .guichet-ticket .amount-box {
+        background: #f0f7ff;
+        border: 1px solid #bfdbfe;
+        border-left: 3px solid #0E2F76;
+        border-radius: 4px;
+        padding: 8px 10px;
+        margin: 8px 0;
+        text-align: center;
+    }
+    .guichet-ticket .amount-box .label {
+        font-size: 8px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .guichet-ticket .amount-box .value {
+        font-size: 18px;
+        font-weight: 900;
+        color: #0E2F76;
+        margin-top: 2px;
+        text-align: center;
+    }
+    .guichet-ticket .total {
+        border-top: 2px dashed #ccc;
+        padding-top: 6px;
+        margin-top: 6px;
+    }
+    .guichet-ticket .total .row .label { color: #666; }
+    .guichet-ticket .total-row {
+        font-size: 14px !important;
+        font-weight: 900;
+        border-top: 2px double #1a1a1a;
+        padding-top: 4px !important;
+        margin-top: 3px;
+    }
+    .guichet-ticket .total-row .label { color: #1a1a1a; }
+    .guichet-ticket .total-row .value { color: #0E2F76; }
+    .guichet-ticket .payment-info {
+        font-size: 8px;
+        padding: 6px 8px;
+        background: #f8fafc;
+        border-radius: 4px;
+        margin: 6px 0;
+        border: 1px solid #e5e7eb;
+    }
+    .guichet-ticket .payment-info .value.paid { color: #22c55e; }
+    .guichet-ticket .footer {
+        text-align: center;
+        font-size: 7px;
+        color: #999;
+        margin-top: 8px;
+        border-top: 1px dashed #ddd;
+        padding-top: 6px;
+        line-height: 1.5;
+    }
+    .guichet-ticket .thank-you {
+        font-size: 10px;
+        font-weight: 700;
+        color: #0E2F76;
+        letter-spacing: 1px;
+    }
+    .guichet-ticket .barcode {
+        font-size: 14px;
+        letter-spacing: 2px;
+        color: #333;
+        font-weight: 700;
+        margin: 3px 0;
+    }
+
     @media print {
         body * { visibility: hidden !important; }
-        .guichet-thermal, .guichet-thermal * { visibility: visible !important; }
-        .guichet-thermal {
+        .guichet-print-root,
+        .guichet-print-root * { visibility: visible !important; }
+        .guichet-print-root {
             display: block !important;
             position: absolute;
             left: 0;
             top: 0;
+            width: 100%;
+            background: #fff;
+            padding: 0;
+            margin: 0;
+        }
+        .guichet-ticket {
+            max-width: 100%;
+            box-shadow: none;
+            border: none;
+            padding: 8px 10px 12px;
         }
     }
 </style>
@@ -74,7 +273,7 @@
         <div class="flex gap-2 flex-wrap header-actions">
             <a href="{{ route('cashier.guichet.index') }}" class="btn btn-outline btn-sm">Retour</a>
             <button type="button" onclick="printGuichetReceipt()" class="btn btn-primary btn-sm">
-                Imprimer reçu thermique
+                Imprimer le reçu
             </button>
         </div>
     </div>
@@ -99,7 +298,7 @@
             <div class="icon icon-blue">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="number">$0.00</div>
+            <div class="number">${{ number_format((float) ($withdrawal->fee ?? 0), 2) }}</div>
             <div class="label">Frais</div>
         </div>
         <div class="commission-stat-card">
@@ -163,29 +362,14 @@
                     <button type="submit" class="btn btn-danger">Annuler le retrait</button>
                 </form>
             @endif
-            <button type="button" class="btn btn-outline md:hidden" onclick="printGuichetReceipt()">Imprimer reçu</button>
+            <button type="button" class="btn btn-outline md:hidden" onclick="printGuichetReceipt()">Imprimer le reçu</button>
         </div>
     </div>
 </div>
 
-<div class="guichet-thermal" id="guichetThermalTicket">
-    <div style="text-align:center;font-weight:700;margin-bottom:8px;">SALANG GROUP</div>
-    <div style="text-align:center;margin-bottom:8px;">REÇU RETRAIT GUICHET</div>
-    <div>--------------------------------</div>
-    <div>N° {{ $withdrawal->receipt_number ?: ('GUICH-'.$withdrawal->id) }}</div>
-    <div>Date : {{ ($withdrawal->completed_at ?? now())->format('d/m/Y H:i') }}</div>
-    <div>--------------------------------</div>
-    <div>Membre : {{ $member->name ?? '—' }}</div>
-    <div>ID : {{ $member->sponsor_id ?? '—' }}</div>
-    <div>--------------------------------</div>
-    <div style="font-size:16px;font-weight:700;margin:8px 0;">
-        Montant : ${{ number_format($withdrawal->amount, 2) }}
-    </div>
-    <div>Frais : $0.00</div>
-    <div>Mode : Espèces (guichet)</div>
-    <div>--------------------------------</div>
-    <div>Caissier : {{ $withdrawal->cashier->name ?? auth()->user()->name }}</div>
-    <div style="text-align:center;margin-top:12px;">Merci — Salang Health Care</div>
+{{-- Reçu stylé (même page, impression uniquement) --}}
+<div class="guichet-print-root" id="guichetPrintRoot" aria-hidden="true">
+    @include('cashier.guichet.partials.receipt-ticket', ['withdrawal' => $withdrawal])
 </div>
 
 @push('scripts')
@@ -232,9 +416,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-@if(session('print_receipt'))
-    setTimeout(printGuichetReceipt, 400);
-@endif
 });
 </script>
 @endpush

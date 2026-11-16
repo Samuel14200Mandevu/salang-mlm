@@ -36,7 +36,7 @@ class GuichetWithdrawalController extends Controller
 
     public function index(Request $request)
     {
-        $status = $request->input('status', 'pending');
+        $status = $request->input('status', 'all');
         $search = trim((string) $request->input('search', ''));
 
         $query = Withdrawal::query()
@@ -60,13 +60,15 @@ class GuichetWithdrawalController extends Controller
 
         $withdrawals = $query->paginate(30)->withQueryString();
 
+        $completedTodayQuery = Withdrawal::where('method', 'guichet')
+            ->where('status', 'completed')
+            ->whereDate('completed_at', today());
+
         $stats = [
             'pending' => Withdrawal::where('method', 'guichet')->where('status', 'pending')->count(),
             'completed' => Withdrawal::where('method', 'guichet')->where('status', 'completed')->count(),
-            'completed_today' => Withdrawal::where('method', 'guichet')
-                ->where('status', 'completed')
-                ->whereDate('completed_at', today())
-                ->count(),
+            'completed_today' => (clone $completedTodayQuery)->count(),
+            'paid_today_amount' => (float) (clone $completedTodayQuery)->sum('amount'),
             'pending_amount' => (float) Withdrawal::where('method', 'guichet')
                 ->where('status', 'pending')
                 ->sum('amount'),
@@ -274,7 +276,7 @@ class GuichetWithdrawalController extends Controller
     public function show(int $id)
     {
         $withdrawal = Withdrawal::query()
-            ->with(['user', 'wallet'])
+            ->with(['user', 'wallet', 'cashier'])
             ->where('method', 'guichet')
             ->findOrFail($id);
 
@@ -285,6 +287,22 @@ class GuichetWithdrawalController extends Controller
             ->each->markAsRead();
 
         return view('cashier.guichet.show', compact('withdrawal'));
+    }
+
+    /**
+     * Reçu thermique stylé (même langage que la facture commande).
+     */
+    public function receipt(Request $request, int $id)
+    {
+        $withdrawal = Withdrawal::query()
+            ->with(['user', 'cashier'])
+            ->where('method', 'guichet')
+            ->findOrFail($id);
+
+        return view('cashier.guichet.receipt', [
+            'withdrawal' => $withdrawal,
+            'autoPrint' => $request->boolean('print'),
+        ]);
     }
 
     /**
@@ -389,8 +407,7 @@ class GuichetWithdrawalController extends Controller
 
         return redirect()
             ->route('cashier.guichet.show', $withdrawal->id)
-            ->with('success', $success)
-            ->with('print_receipt', true);
+            ->with('success', $success);
     }
 
     /**
@@ -490,7 +507,7 @@ class GuichetWithdrawalController extends Controller
         }
 
         return redirect()
-            ->route('cashier.guichet.index', ['status' => 'pending'])
+            ->route('cashier.guichet.index', ['status' => 'all'])
             ->with('success', 'Retrait annulé. $'.number_format($amount, 2).' recrédité au portefeuille du membre (notification envoyée).');
     }
 

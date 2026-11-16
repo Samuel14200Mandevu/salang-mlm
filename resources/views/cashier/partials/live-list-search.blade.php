@@ -52,6 +52,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 </tr>`;
         }
 
+        replaceIds.forEach((id) => {
+            if (id === 'tableBody') return;
+            const el = document.getElementById(id);
+            if (el && el.classList.contains('admin-user-list')) {
+                el.innerHTML = '<div class="admin-empty-state"><p>Recherche en cours…</p></div>';
+            }
+        });
+
         fetch(url.toString(), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         })
