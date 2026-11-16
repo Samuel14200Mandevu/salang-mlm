@@ -111,21 +111,19 @@ class PeriodCommissionCalculator
                 ->whereIn('status', ['pending', 'approved', 'cancelled'])
                 ->delete();
 
-            $paidRemaining = Commission::query()
-                ->where('user_id', $uid)
-                ->where('commission_period_id', $period->id)
-                ->whereIn('type', ['direct', 'indirect', 'leadership'])
-                ->where('status', 'paid')
-                ->selectRaw('type, SUM(amount) as total_paid')
-                ->groupBy('type')
-                ->pluck('total_paid', 'type')
-                ->map(fn ($v) => (float) $v)
-                ->all();
+            // Compensation anti-double-paiement : par (type + from_user_id),
+            // jamais par type seul — sinon un résidu est crédité sur un autre downline.
+            $paidRemaining = $this->paidRemainingByTypeAndSource((int) $uid, (int) $period->id);
 
             // ─── 1. BONUS DIRECT (sur monthly_pv total) ───
             $directBonus = $this->calculateDirectBonus($user, (int)$userMonthlyPV, $period);
             if ($directBonus) {
-                $netDirect = $this->netPendingAfterPaid($directBonus['amount'], 'direct', $paidRemaining);
+                $netDirect = $this->netPendingAfterPaid(
+                    $directBonus['amount'],
+                    'direct',
+                    (int) ($directBonus['from_user_id'] ?? $uid),
+                    $paidRemaining
+                );
                 if ($netDirect > 0.00001) {
                     $directBonus['amount'] = $netDirect;
                     Commission::create(array_merge($directBonus, [
@@ -143,7 +141,8 @@ class PeriodCommissionCalculator
 
             foreach ($commissions as $data) {
                 $type = (string) ($data['type'] ?? '');
-                $net = $this->netPendingAfterPaid($data['amount'], $type, $paidRemaining);
+                $fromUserId = (int) ($data['from_user_id'] ?? 0);
+                $net = $this->netPendingAfterPaid($data['amount'], $type, $fromUserId, $paidRemaining);
                 if ($net <= 0.00001) {
                     continue;
                 }
@@ -406,25 +405,61 @@ class PeriodCommissionCalculator
     }
 
     /**
-     * Déduit du montant calculé ce qui est déjà payé pour ce type (évite de recréer
-     * un pending déjà crédité au portefeuille).
+     * Montants déjà payés indexés par "type|from_user_id".
+     *
+     * @return array<string, float>
+     */
+    private function paidRemainingByTypeAndSource(int $userId, int $periodId): array
+    {
+        $rows = Commission::query()
+            ->where('user_id', $userId)
+            ->where('commission_period_id', $periodId)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->where('status', 'paid')
+            ->selectRaw('type, COALESCE(from_user_id, 0) as from_user_id, SUM(amount) as total_paid')
+            ->groupBy('type', 'from_user_id')
+            ->get();
+
+        $paid = [];
+        foreach ($rows as $row) {
+            $key = $this->paidRemainingKey((string) $row->type, (int) $row->from_user_id);
+            $paid[$key] = (float) $row->total_paid;
+        }
+
+        return $paid;
+    }
+
+    private function paidRemainingKey(string $type, int $fromUserId): string
+    {
+        return $type.'|'.$fromUserId;
+    }
+
+    /**
+     * Déduit du montant calculé ce qui est déjà payé pour le même type ET la même source
+     * (from_user_id). Évite de recréer un pending déjà crédité, sans reporter le résidu
+     * sur un autre downline.
      *
      * @param  array<string, float>  $paidRemaining
      */
-    private function netPendingAfterPaid(float|int|string $amount, string $type, array &$paidRemaining): float
-    {
+    private function netPendingAfterPaid(
+        float|int|string $amount,
+        string $type,
+        int $fromUserId,
+        array &$paidRemaining
+    ): float {
         $amount = (float) $amount;
         if ($amount <= 0 || $type === '') {
             return 0.0;
         }
 
-        $alreadyPaid = (float) ($paidRemaining[$type] ?? 0);
+        $key = $this->paidRemainingKey($type, $fromUserId);
+        $alreadyPaid = (float) ($paidRemaining[$key] ?? 0);
         if ($alreadyPaid <= 0) {
             return $amount;
         }
 
         $deduct = min($amount, $alreadyPaid);
-        $paidRemaining[$type] = $alreadyPaid - $deduct;
+        $paidRemaining[$key] = $alreadyPaid - $deduct;
 
         return max(0.0, $amount - $deduct);
     }
