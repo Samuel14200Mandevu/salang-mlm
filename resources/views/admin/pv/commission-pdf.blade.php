@@ -9,117 +9,80 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            padding: 28px 32px 32px 32px;
+            padding: 0;
+            margin: 0;
+            background: #fff;
         }
+
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
 
         .page-content {
-            width: 100%;
-        }
-
-        /* EN-TÊTE */
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 5px;
-            margin-bottom: 6px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 70px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 50px;
+            /* pas de width:100% : sinon les marges latérales débordent sous DomPDF */
             width: auto;
         }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 19px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1px;
-        }
-        .header-text {
-            font-size: 10px;
-            line-height: 1.2;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 9.5px;
-            color: #000;
-            margin-top: 1px;
-            line-height: 1.2;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
-        }
 
-        /* TITRE ET META */
+        /* TITRE ET META — même structure que rapport global */
         .main-title {
             text-align: center;
-            font-size: 20px;
+            font-size: 15px;
             font-weight: bold;
-            color: #0E2F76;
+            color: #0A254E;
             text-transform: uppercase;
-            text-decoration: underline;
-            margin-bottom: 2px;
+            letter-spacing: 0.3px;
+            margin: 0;
+            line-height: 1.2;
+            text-decoration: none;
+        }
+        .main-title-rule {
+            width: 36%;
+            margin: 2px auto 3px auto;
+            border-bottom: 1.5px solid #C5A04D;
+        }
+        .main-subtitle {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #C5A04D;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin: 0 0 6px 0;
+            line-height: 1.2;
         }
         .form-meta {
             width: 100%;
-            margin: 2px 0 6px 0;
-            font-size: 13.5px;
+            margin: 0 0 6px 0;
+            font-size: 11px;
             font-weight: bold;
             border-collapse: collapse;
             table-layout: fixed;
         }
         .form-meta td {
-            padding: 2px 0;
-            white-space: nowrap;
+            padding: 1px 0;
+            white-space: normal;
             vertical-align: middle;
+            overflow: hidden;
         }
         .form-meta td.meta-left {
             text-align: left;
-            width: 33%;
+            width: 50%;
         }
         .form-meta td.meta-right {
             text-align: right;
-            width: 33%;
-        }
-        .form-meta td.meta-period-highlight {
-            text-align: center;
-            width: 34%;
-            font-size: 20px;
-            font-weight: bold;
-            color: #8b0000;
-            text-transform: uppercase;
-            text-decoration: underline;
-            letter-spacing: 0.5px;
-            padding: 0 8px;
+            width: 50%;
         }
 
         /* SECTIONS NUMÉROTÉES */
         .section-header {
-            font-size: 15px;
+            font-size: 11.5px;
             font-weight: bold;
-            color: #558b2f;
-            border-bottom: 2px solid #8b0000;
-            padding-bottom: 2px;
-            margin: 6px 0 4px 0;
+            color: #0A254E;
+            border-bottom: 1.5px solid #C5A04D;
+            padding-bottom: 1px;
+            margin: 8px 0 4px 0;
             text-transform: uppercase;
             clear: both;
+            line-height: 1.2;
         }
 
         /* SECTION MEMBRE */
@@ -180,6 +143,16 @@
         }
         .data-table thead {
             display: table-header-group;
+        }
+        /* Marge haut pages 2+ (DomPDF ignore @page top sur tableaux) */
+        .data-table thead tr.page-top-gap td {
+            height: 12mm;
+            border: none !important;
+            background: #fff !important;
+            padding: 0 !important;
+            font-size: 1px;
+            line-height: 0;
+            color: transparent;
         }
         .data-table tr {
             page-break-inside: avoid;
@@ -268,47 +241,20 @@
 
         @page {
             size: A4 portrait;
-            margin: 1.8cm 1.8cm 2cm 1.8cm;
+            margin: 0 0 12mm 0;
         }
 
         @media print {
-            body { padding: 0; }
+            body { padding: 0; margin: 0; }
+            @page { margin: 0 0 12mm 0; }
         }
     </style>
 </head>
 <body>
 
-    <div class="page-content">
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
 
-        <!-- EN-TÊTE -->
-        <div class="report-header">
-            <table class="header-table">
-                <tr>
-                    <td class="logo-cell">
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                        @endif
-                    </td>
-                    <td class="header-center">
-                        <div class="company-title">SALANG GROUP SARL</div>
-                        <div class="header-text">
-                            N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116<br>
-                            Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                        </div>
-                        <div class="address">
-                            <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                            <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                            <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                        </div>
-                    </td>
-                    <td class="logo-cell">
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                        @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
+    <div class="page-content page-content-padded">
 
         <!-- TITRE + META (aligné rapport global) -->
         @php
@@ -327,12 +273,13 @@
         @endphp
 
         <div class="main-title">Rapport des Commissions</div>
+        <div class="main-title-rule"></div>
+        <div class="main-subtitle">{{ $periodLabel }}</div>
 
         <table class="form-meta">
             <tr>
                 <td class="meta-left">Période : <strong>{{ $periodLabel }}</strong></td>
-                <td class="meta-period-highlight" rowspan="2">{{ $periodLabel }}</td>
-                <td class="meta-right">Date : <strong>{{ $date_generated }}</strong></td>
+                <td class="meta-right">Date : <strong>{{ \Illuminate\Support\Str::of($date_generated ?? now()->format('d/m/Y'))->before(' ') }}</strong></td>
             </tr>
             <tr>
                 <td class="meta-left">Nombre de bénéficiaires : <strong>{{ is_countable($beneficiaires) ? count($beneficiaires) : 0 }}</strong></td>
@@ -416,6 +363,9 @@
 
                 <table class="data-table">
                     <thead>
+                        <tr class="page-top-gap">
+                            <td colspan="7">&nbsp;</td>
+                        </tr>
                         <tr>
                             <th style="width:11%;">Code</th>
                             <th style="width:14%;">De</th>
@@ -481,6 +431,8 @@
                 </table>
             </div>
         @endforeach
+
+        @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 
     </div>
 

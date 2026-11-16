@@ -4,23 +4,26 @@
     <meta charset="utf-8">
     <title>Rapport des Commissions</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'DejaVu Sans', 'Helvetica', Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
             color: #333;
+            background: #fff;
         }
-        .header {
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
+        .report-title {
             text-align: center;
-            border-bottom: 2px solid #5ab638;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
-        .header h1 {
-            color: #5ab638;
+        .report-title h1 {
+            color: #0E2F76;
             margin: 0;
             font-size: 24px;
         }
-        .header p {
+        .report-title p {
             color: #666;
             font-size: 14px;
             margin: 5px 0 0;
@@ -78,14 +81,6 @@
             color: #f59e0b;
             font-weight: bold;
         }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
-        }
         .total-row {
             font-weight: bold;
             background: #f8fafc;
@@ -93,11 +88,17 @@
         .total-row td {
             border-top: 2px solid #5ab638;
         }
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>💰 Rapport des Commissions</h1>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
+    <div class="page-content-padded">
+    <div class="report-title">
+        <h1>Rapport des Commissions</h1>
         <p>{{ $user->name }} • Généré le {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 
@@ -152,9 +153,7 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        <p>Salang MLM • Rapport généré automatiquement • {{ now()->format('d/m/Y H:i') }}</p>
-        <p style="font-size: 10px;">Ce document est confidentiel et réservé à l'usage personnel de {{ $user->name }}</p>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
     </div>
 </body>
 </html>

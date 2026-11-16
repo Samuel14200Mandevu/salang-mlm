@@ -7,112 +7,102 @@
     <title>Fiche de Consultation #{{ $consultation->id ?? '' }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 14px; 
-            color: #000; 
-            padding: 25px 35px;
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 15.5px;
+            color: #000;
+            padding: 0;
+            margin: 0;
             background: #fff;
         }
 
-        /* EN-TÊTE AGRANDI */
-        .report-header {
+        @include('partials.pdf._styles')
+
+        /* En-tête pleine largeur — un peu plus haute */
+        .salang-letterhead {
             width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 8px;
-            margin-bottom: 20px;
+            margin: 0 0 4px 0;
+            padding: 0;
         }
-        .header-table {
+        .salang-letterhead__img {
             width: 100%;
-            border-collapse: collapse;
+            max-width: 100%;
+            height: 145px;
+            min-height: 145px;
+            display: block;
         }
-        .header-table td {
-            vertical-align: middle;
+        .page-body {
+            padding: 6px 26px 130px 26px;
         }
-        .logo-cell {
-            width: 110px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 85px;
+        .page-bottom-fixed {
+            position: fixed;
+            left: 26px;
+            right: 26px;
+            bottom: 6mm;
             width: auto;
         }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 3px;
-        }
-        .header-text {
-            font-size: 11px;
-            line-height: 1.4;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 10.5px;
-            color: #000;
-            margin-top: 4px;
-            line-height: 1.4;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
+        .salang-pdf-footer {
+            margin-top: 8px;
         }
 
-        /* SECTION TITRES & PATIENT INFO */
         .title-row {
             width: 100%;
-            margin-bottom: 15px;
-            font-size: 15px;
+            margin: 4px 0 6px 0;
+            font-size: 16px;
+            border-collapse: collapse;
+        }
+        .title-row td {
+            vertical-align: middle;
+            font-weight: bold;
+            color: #000;
         }
         .main-title {
             text-align: center;
             font-size: 24px;
-            font-weight: normal;
+            font-weight: bold;
+            color: #000;
             text-decoration: underline;
+            text-transform: uppercase;
         }
-        
+
+        /* Infos patient */
         .patient-block {
-            width: 80%;
+            width: 82%;
             margin: 0 auto;
-            line-height: 2;
-            font-size: 15px;
+            line-height: 1.55;
+            font-size: 16.5px;
         }
 
-        /* BARRE DE SÉPARATION */
         .divider-line {
-            width: 80%;
-            margin: 10px auto 20px auto;
-            border-bottom: 3.5px solid #000;
+            width: 82%;
+            margin: 6px auto 6px auto;
+            border-bottom: 2px solid #000;
         }
 
-        /* TABLEAU */
         .section-header {
             text-align: center;
             font-size: 22px;
             font-weight: bold;
+            color: #000;
             text-decoration: underline;
-            margin-bottom: 15px;
+            text-transform: none;
+            margin: 4px 0 6px 0;
+            font-style: normal;
         }
 
         .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 18px;
+            margin-bottom: 6px;
         }
         .products-table th {
-            border: 2px solid #000;
-            padding: 6px 10px;
+            border: 1.5px solid #000;
+            padding: 4px 7px;
             font-size: 15px;
             font-weight: bold;
             text-align: left;
             background-color: #fcfcfc;
+            color: #000;
         }
         .products-table th:nth-child(2),
         .products-table th:nth-child(3),
@@ -121,8 +111,8 @@
             text-align: center;
         }
         .products-table td {
-            border: 2px solid #000;
-            padding: 6px 10px;
+            border: 1.5px solid #000;
+            padding: 3px 7px;
             font-size: 14.5px;
             height: 38px;
             vertical-align: middle;
@@ -130,120 +120,115 @@
         .products-table td.total-cell {
             font-weight: bold;
             font-size: 15.5px;
+            text-align: center;
+        }
+        .products-table td.total-cell-span {
+            font-weight: bold;
+            font-size: 15.5px;
+            text-align: center;
         }
 
         .disclaimer {
             text-align: center;
             font-style: italic;
             font-weight: bold;
-            font-size: 12.5px;
-            margin: 18px 0 12px 0;
+            font-size: 14px;
+            margin: 14px 0 6px 0;
         }
 
-        /* CONSEILS */
         .advice-title {
             text-align: center;
-            font-size: 18px;
+            font-size: 17.5px;
             font-weight: bold;
-            color: #558b2f;
-            border-bottom: 2px solid #8b0000;
-            width: 55%;
-            margin: 15px auto 12px auto;
+            font-style: italic;
+            color: #C5A04D;
+            text-transform: none;
+            text-decoration: underline;
+            width: 72%;
+            margin: 6px auto 6px auto;
         }
-
         .advice-list {
-            margin-left: 40px;
-            font-size: 13.5px;
-            line-height: 1.7;
+            width: 82%;
+            margin: 0 auto;
+            padding-left: 18px;
+            font-size: 15px;
+            line-height: 1.45;
         }
         .advice-list li {
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             list-style-type: square;
         }
 
-        /* BAS DE PAGE & TAMPON */
         .footer-container {
-            margin-top: 30px;
+            margin-top: 0;
             position: relative;
             width: 100%;
+            min-height: 56px;
         }
-        
+        .footer-left {
+            width: 60%;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+        .footer-left .company-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
         .stamp-box {
             position: absolute;
-            right: 15px;
-            top: -20px;
-            border: 2px solid #2b6cb0;
+            right: 10px;
+            top: -8px;
+            border: 1.5px solid #2b6cb0;
             color: #2b6cb0;
-            padding: 10px 18px;
-            transform: rotate(-5deg);
+            padding: 6px 12px;
             text-align: center;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14.5px;
             border-radius: 4px;
             background: #fff;
         }
 
-        .footer-left {
-            width: 60%;
-            font-size: 11px;
-            line-height: 1.4;
-        }
-        .footer-left .company-name {
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .footer-line {
-            border-bottom: 1px solid #cbd5e0;
-            margin-top: 15px;
-        }
-
-        /* NO PRINT & MEDIA */
         .no-print { display: block; }
-        @media print {
-            .no-print { display: none !important; }
-            body { padding: 0; }
-            @page { margin: 1cm; }
+        .no-print .btn-print-action {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #0A254E;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .no-print .btn-print-back {
+            padding: 10px 18px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
         }
 
         @page {
-            margin-top: 0.5cm;
-            margin-bottom: 0.5cm;
+            size: A4 portrait;
+            margin: 0 0 8mm 0;
         }
-        @page :header { display: none; }
-        @page :footer { display: none; }
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; }
+            @page {
+                margin: 0 0 8mm 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-<!-- EN-TÊTE -->
-<div class="report-header">
-    <table class="header-table">
-        <tr>
-            <td class="logo-cell">
-                <img src="{{ asset('images/salang_logo.png') }}" alt="Salang Logo">
-            </td>
-            <td class="header-center">
-                <div class="company-title">SALANG GROUP SARL</div>
-                <div class="header-text">
-                    N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116<br>
-                    NUMERO IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
-                    Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                </div>
-                <div class="address">
-                    <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Residentielle, petit Boulevard &nbsp;|&nbsp;<br>
-                    <span class="city">Bukavu :</span> N°4 Avenue FIZI, Quartier Nyawera, Commune d'Ibanda Bukavu, RD Congo<br>
-                    <span class="city">Goma :</span> Rondpoint Chikudu, Batiment KBS (Kitumaini Serge Balezi) au 3eme Niveau, C/Goma
-                </div>
-            </td>
-            <td class="logo-cell">
-                <img src="{{ asset('images/salang_logo.png') }}" alt="Salang Logo">
-            </td>
-        </tr>
-    </table>
-</div>
+@include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
 
-<!-- CODE ID, TITRE, NUMÉRO -->
+<div class="page-body">
 <table class="title-row">
     <tr>
         <td style="width: 25%;">Code ID: {{ $consultation->code_id ?? '..........' }}</td>
@@ -252,20 +237,17 @@
     </tr>
 </table>
 
-<!-- INFOS PATIENT -->
 <div class="patient-block">
-    Noms : {{ $consultation->nom_complet ?? 'Sam Martin' }}<br>
-    Genre : {{ $consultation->genre_label ?? 'Masculin' }} &nbsp;&nbsp;&nbsp; 
-    Age : {{ $consultation->age ?? '28' }} &nbsp;&nbsp;&nbsp; 
-    Poids : {{ $consultation->poids ?? '72.00' }} &nbsp;&nbsp;&nbsp; 
-    Tail : {{ $consultation->taille ?? '78.00' }} cm<br>
-    Date de l'examen : {{ isset($consultation->date_examen) ? $consultation->date_examen->format('d/m/Y') : '19/08/2026' }}
+    Noms : {{ $consultation->nom_complet ?? '' }}<br>
+    Genre : {{ $consultation->genre_label ?? '' }} &nbsp;&nbsp;&nbsp;
+    Age : {{ $consultation->age ?? '' }} &nbsp;&nbsp;&nbsp;
+    Poids : {{ $consultation->poids ?? '' }} &nbsp;&nbsp;&nbsp;
+    Tail : {{ $consultation->taille ?? '' }} cm<br>
+    Date de l'examen : {{ isset($consultation->date_examen) ? $consultation->date_examen->format('d/m/Y') : '' }}
 </div>
 
-<!-- BARRE NOIRE -->
 <div class="divider-line"></div>
 
-<!-- TABLEAU PRODUITS & SERVICES -->
 <div class="section-header">Produits recommandés</div>
 
 @php
@@ -274,6 +256,9 @@
     $prixDetoxTotal = ($consultation->seances_detox ?? 0) * ($consultation->prix_detox ?? 0);
     $totalServices = $prixCeragemTotal + $prixDetoxTotal;
     $productsTotal = \App\Services\ConsultationSaleService::productsTotalRange(is_array($products) ? $products : []);
+    $totalProductsLabel = abs($productsTotal['min'] - $productsTotal['max']) < 0.001
+        ? '$'.number_format($productsTotal['max'], 2)
+        : '$'.number_format($productsTotal['min'], 2).' - $'.number_format($productsTotal['max'], 2);
     $totalMin = $productsTotal['min'] + $totalServices;
     $totalMax = $productsTotal['max'] + $totalServices;
     $totalGeneralLabel = abs($totalMin - $totalMax) < 0.001
@@ -291,68 +276,31 @@
         </tr>
     </thead>
     <tbody>
-        {{-- Ligne 1 --}}
+        @php $productRowCount = max(9, count(is_array($products) ? $products : [])); @endphp
+        @for ($i = 0; $i < $productRowCount; $i++)
         <tr>
-            <td>{{ !empty($products[0]) ? \App\Services\ConsultationSaleService::productDisplayName($products[0]) : '' }}</td>
-            <td>{{ $products[0]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[0]) ? \App\Services\ConsultationSaleService::priceLabel($products[0]) : '' }}</td>
-            <td>{{ $products[0]['observation'] ?? '' }}</td>
+            <td>{{ !empty($products[$i]) ? \App\Services\ConsultationSaleService::productDisplayName($products[$i]) : '' }}</td>
+            <td>{{ $products[$i]['posologie'] ?? '' }}</td>
+            <td>{{ !empty($products[$i]) ? \App\Services\ConsultationSaleService::priceLabel($products[$i]) : '' }}</td>
+            <td>
+                @if ($i === 1)
+                    <strong>Séances ceragem</strong> : {{ $consultation->seances_ceragem ?? '0' }}
+                @elseif ($i === 2)
+                    <strong>Prix /s:</strong> ${{ number_format($consultation->prix_ceragem ?? 0, 2) }}
+                @elseif ($i === 5)
+                    <strong>Séances detox</strong> : {{ $consultation->seances_detox ?? '0' }}
+                @elseif ($i === 6)
+                    <strong>Prix /s:</strong> ${{ number_format($consultation->prix_detox ?? 0, 2) }}
+                @else
+                    {{ $products[$i]['observation'] ?? '' }}
+                @endif
+            </td>
         </tr>
-        {{-- Ligne 2 : Séances ceragem --}}
+        @endfor
         <tr>
-            <td>{{ !empty($products[1]) ? \App\Services\ConsultationSaleService::productDisplayName($products[1]) : '' }}</td>
-            <td>{{ $products[1]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[1]) ? \App\Services\ConsultationSaleService::priceLabel($products[1]) : '' }}</td>
-            <td><strong>Séances ceragem</strong> : {{ $consultation->seances_ceragem ?? '0' }}</td>
-        </tr>
-        {{-- Ligne 3 : Prix /s ceragem --}}
-        <tr>
-            <td>{{ !empty($products[2]) ? \App\Services\ConsultationSaleService::productDisplayName($products[2]) : '' }}</td>
-            <td>{{ $products[2]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[2]) ? \App\Services\ConsultationSaleService::priceLabel($products[2]) : '' }}</td>
-            <td><strong>Prix /s:</strong> ${{ number_format($consultation->prix_ceragem ?? 0, 2) }}</td>
-        </tr>
-        {{-- Ligne 4 --}}
-        <tr>
-            <td>{{ !empty($products[3]) ? \App\Services\ConsultationSaleService::productDisplayName($products[3]) : '' }}</td>
-            <td>{{ $products[3]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[3]) ? \App\Services\ConsultationSaleService::priceLabel($products[3]) : '' }}</td>
-            <td>{{ $products[3]['observation'] ?? '' }}</td>
-        </tr>
-        {{-- Ligne 5 --}}
-        <tr>
-            <td>{{ !empty($products[4]) ? \App\Services\ConsultationSaleService::productDisplayName($products[4]) : '' }}</td>
-            <td>{{ $products[4]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[4]) ? \App\Services\ConsultationSaleService::priceLabel($products[4]) : '' }}</td>
-            <td>{{ $products[4]['observation'] ?? '' }}</td>
-        </tr>
-        {{-- Ligne 6 : Séances detox --}}
-        <tr>
-            <td>{{ !empty($products[5]) ? \App\Services\ConsultationSaleService::productDisplayName($products[5]) : '' }}</td>
-            <td>{{ $products[5]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[5]) ? \App\Services\ConsultationSaleService::priceLabel($products[5]) : '' }}</td>
-            <td><strong>Séances detox</strong> : {{ $consultation->seances_detox ?? '0' }}</td>
-        </tr>
-        {{-- Ligne 7 : Prix /s detox --}}
-        <tr>
-            <td>{{ !empty($products[6]) ? \App\Services\ConsultationSaleService::productDisplayName($products[6]) : '' }}</td>
-            <td>{{ $products[6]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[6]) ? \App\Services\ConsultationSaleService::priceLabel($products[6]) : '' }}</td>
-            <td><strong>Prix /s:</strong> ${{ number_format($consultation->prix_detox ?? 0, 2) }}</td>
-        </tr>
-        {{-- Ligne 8 --}}
-        <tr>
-            <td>{{ !empty($products[7]) ? \App\Services\ConsultationSaleService::productDisplayName($products[7]) : '' }}</td>
-            <td>{{ $products[7]['posologie'] ?? '' }}</td>
-            <td>{{ !empty($products[7]) ? \App\Services\ConsultationSaleService::priceLabel($products[7]) : '' }}</td>
-            <td>{{ $products[7]['observation'] ?? '' }}</td>
-        </tr>
-        {{-- Ligne Totaux séparés --}}
-        <tr>
-            <td class="total-cell">Total</td>
-            <td></td>
-            <td style="font-size: 13px;"><strong>{{ $productsTotal['label'] }}</strong></td>
-            <td style="font-size: 13px;"><strong>{{ $totalGeneralLabel }}</strong></td>
+            <td colspan="2" class="total-cell-span">Total</td>
+            <td class="total-cell">{{ $totalProductsLabel }}</td>
+            <td class="total-cell">{{ $totalGeneralLabel }}</td>
         </tr>
     </tbody>
 </table>
@@ -361,7 +309,6 @@
     Résultats de test à prendre comme référence et non comme conclusion de diagnostic.
 </div>
 
-<!-- CONSEILS -->
 <div class="advice-title">Conseils Hygiéno-diététiques</div>
 <ul class="advice-list">
     <li>Buvez plus au moins 1litres d'eau par jour.</li>
@@ -370,27 +317,31 @@
     <li>Evitez les stress et reposez vous de fois .</li>
 </ul>
 
-<!-- PIED DE PAGE ET TAMPON -->
-<div class="footer-container">
-    <div class="footer-left">
-        <div class="company-name">Salang Group International sarl</div>
-        Confirmé par le SALANG Company<br>
-        Ixoras 382, 7eme Rue Residentielle, petit Boulevard
-    </div>
-
-    <div class="stamp-box">
-        Demande approuvée<br><br>
-        SALANGGROUP SARL
-    </div>
 </div>
 
-<div class="footer-line"></div>
+<div class="page-bottom-fixed">
+    <div class="footer-container">
+        <div class="footer-left">
+            <div class="company-name">Salang Group International sarl</div>
+            Confirmé par le SALANG Company<br>
+            Ixoras 382, 7eme Rue Residentielle, petit Boulevard
+        </div>
 
-<!-- BOUTONS D'ACTION (ÉCRAN SEULEMENT) -->
-<div style="text-align:center; margin-top:20px;" class="no-print">
-    <button onclick="window.print()" style="padding:10px 24px; background:#0E2F76; color:#fff; border:none; border-radius:4px; font-size:14px; cursor:pointer;">Imprimer</button>
-    <button onclick="window.close()" style="padding:10px 24px; background:#ccc; border:none; border-radius:4px; font-size:14px; cursor:pointer; margin-left:10px;">Fermer</button>
+        <div class="stamp-box">
+            Demande approuvée<br><br>
+            SALANGGROUP SARL
+        </div>
+    </div>
+
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'FICHE DE CONSULTATION OFFICIELLE – SALANG GROUP SARL'])
 </div>
+
+@if(empty($isPdf))
+<div class="no-print" style="text-align:center; margin-top:18px;">
+    <button type="button" class="btn-print-action" onclick="window.print()">Imprimer</button>
+    <button type="button" class="btn-print-back" onclick="window.close()">Fermer</button>
+</div>
+@endif
 
 </body>
 </html>

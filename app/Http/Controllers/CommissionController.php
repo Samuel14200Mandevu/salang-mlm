@@ -187,6 +187,14 @@ class CommissionController extends Controller
      */
     public function exportPdf(Request $request)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('commissions.index', $request->except('pdf')),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         $user = Auth::user();
 
         $commissions = Commission::where('user_id', $user->id)

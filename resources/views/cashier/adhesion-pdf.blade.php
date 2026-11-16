@@ -7,226 +7,163 @@
     <title>Formulaire d'Adhésion - Salang Group</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Times New Roman', Times, serif, Arial; 
-            font-size: 14px; 
-            color: #000; 
-            padding: 16px 25px;
+        body {
+            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: #111;
+            line-height: 1.45;
+            padding: 8px 18px 10px 18px;
             background: #fff;
         }
 
-        /* EN-TÊTE */
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
+        @include('partials.pdf._styles')
+
+        .salang-letterhead--compact {
+            margin-bottom: 4px;
         }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 80px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 55px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header-text {
-            font-size: 9px;
-            line-height: 1.3;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 8.5px;
-            color: #000;
-            margin-top: 2px;
-            line-height: 1.3;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
+        .salang-pdf-footer {
+            margin-top: 10px;
         }
 
         /* TITRE */
         .main-title {
             text-align: center;
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
-            color: #0E2F76;
+            color: #0A254E;
             text-transform: uppercase;
-            text-decoration: underline;
-            margin-bottom: 6px;
+            letter-spacing: 0.4px;
+            margin: 4px 0 0 0;
+            line-height: 1.3;
         }
-        .form-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
+        .main-title-rule {
+            width: 36%;
+            margin: 3px auto 4px auto;
+            border-bottom: 1.5px solid #C5A04D;
+        }
+        .adhesion-date {
+            text-align: center;
+            font-size: 11.5px;
+            color: #0A254E;
             font-weight: bold;
-            margin-bottom: 8px;
-            padding: 0 3px;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+        }
+        .adhesion-date span {
+            color: #111;
+            font-weight: bold;
         }
 
-        /* SECTIONS */
+        /* SECTIONS — navy / or */
         .section-header {
-            font-size: 14.5px;
+            font-size: 12px;
             font-weight: bold;
-            color: #558b2f;
-            border-bottom: 2px solid #8b0000;
+            color: #0A254E;
+            border-bottom: 1.5px solid #C5A04D;
             padding-bottom: 2px;
-            margin: 10px 0 6px 0;
+            margin: 10px 0 5px 0;
             text-transform: uppercase;
+            letter-spacing: 0.25px;
+            line-height: 1.3;
         }
 
         /* CHAMPS */
         .form-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         .form-grid td {
-            padding: 3.5px 5px;
+            padding: 5px 5px 5px 3px;
             vertical-align: middle;
-            font-size: 13.5px;
+            font-size: 12px;
+            line-height: 1.4;
         }
         .field-label {
             font-weight: bold;
             white-space: nowrap;
-            width: 16%;
+            width: 15%;
+            color: #0A254E;
+            padding-right: 6px;
         }
         .field-line {
-            border-bottom: 1.5px dotted #000;
-            height: 26px;
+            border-bottom: 1px dotted #555;
+            height: 22px;
             padding-left: 5px;
+            padding-bottom: 2px;
         }
 
         /* ENGAGEMENTS */
         .engagements-list {
-            margin-left: 20px;
-            font-size: 12.5px;
-            line-height: 1.6;
-            margin-bottom: 8px;
+            margin: 0 0 4px 18px;
+            padding: 0;
+            font-size: 11.5px;
+            line-height: 1.5;
         }
         .engagements-list li {
-            margin-bottom: 2px;
+            margin-bottom: 4px;
             list-style-type: square;
         }
         .engagements-intro {
             font-weight: bold;
-            margin: 4px 0 5px 0;
-            font-size: 13px;
+            margin: 3px 0 5px 0;
+            font-size: 11.5px;
+            color: #0A254E;
         }
 
-        /* SIGNATURES */
+        /* SIGNATURES — taille raisonnable */
         .signatures-table {
             width: 100%;
-            margin-top: 8px;
+            margin-top: 4px;
             border-collapse: collapse;
         }
         .signatures-table td {
             width: 50%;
             vertical-align: top;
-            padding: 5px 8px;
-            font-size: 13px;
+            padding: 4px 8px;
+            font-size: 11.5px;
         }
         .signature-box {
-            border: 1.5px solid #000;
-            height: 85px;
-            margin-top: 4px;
-            padding: 8px 10px;
-            font-size: 12.5px;
-            color: #333;
-        }
-
-        /* PIED DE PAGE */
-        .footer-container {
-            margin-top: 16px;
             width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
         }
-        .footer-left {
+        .signature-box td {
+            border: 1.2px solid #0A254E;
+            height: 68px;
+            padding: 6px 8px;
             font-size: 11px;
-            line-height: 1.5;
-            text-align: center;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 6px;
+            color: #555;
+            vertical-align: top;
         }
 
-        .page-content {
-            max-height: 100vh;
-            overflow: hidden;
+        @page {
+            size: A4 portrait;
+            margin: 8mm 10mm 9mm 10mm;
         }
 
         @media print {
-            body { padding: 10px 20px; }
+            body { padding: 0; }
             .no-print { display: none !important; }
-            @page { 
-                size: A4 portrait;
-                margin: 0.6cm 0.8cm; 
-            }
         }
     </style>
 </head>
 <body>
-
-<!-- PAGE CONTENT -->
 <div class="page-content">
 
-    <!-- EN-TÊTE -->
-    <div class="report-header">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-                <td class="header-center">
-                    <div class="company-title">SALANG GROUP SARL</div>
-                    <div class="header-text">
-                        N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116 &nbsp; N° IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
-                        Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                    </div>
-                    <div class="address">
-                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                        <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                        <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                    </div>
-                </td>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => true])
 
-    <!-- TITRE + META -->
     <div class="main-title">Formulaire d'Adhésion</div>
-    <div class="form-meta">
-        <div>Code Membre : <strong>{{ $member->sponsor_id ?? $member->code ?? '........................' }}</strong></div>
-        <div>Date : <strong>{{ isset($member->created_at) ? \Carbon\Carbon::parse($member->created_at)->format('d/m/Y') : date('d/m/Y') }}</strong></div>
-    </div>
+    <div class="main-title-rule"></div>
+    @php
+        $adhesionDate = $member->created_at
+            ?? $metadata['adhesion_date']
+            ?? $metadata['created_at']
+            ?? ($date ?? null)
+            ?? now();
+        $adhesionDateLabel = \Carbon\Carbon::parse($adhesionDate)->format('d/m/Y');
+    @endphp
+    <div class="adhesion-date">Date d'adhésion : <span>{{ $adhesionDateLabel }}</span></div>
 
     <!-- SECTION 1 : INFORMATIONS PERSONNELLES -->
     <div class="section-header">1. Informations Personnelles</div>
@@ -257,11 +194,14 @@
         <tr>
             <td class="field-label">Adresse :</td>
             <td class="field-line" colspan="5">
-                <strong>
-                    {{ $member->address ?? '' }}
-                    @if(!empty($member->city ?? $metadata['city'])) , {{ $member->city ?? $metadata['city'] }} @endif
-                    @if(!empty($member->country ?? $metadata['country'])) , {{ $member->country ?? $metadata['country'] }} @endif
-                </strong>
+                @php
+                    $addrParts = array_values(array_filter([
+                        trim((string) ($member->address ?? '')),
+                        trim((string) ($member->city ?? $metadata['city'] ?? '')),
+                        trim((string) ($member->country ?? $metadata['country'] ?? '')),
+                    ], fn ($v) => $v !== ''));
+                @endphp
+                <strong>{{ implode(', ', $addrParts) }}</strong>
             </td>
         </tr>
         <tr>
@@ -350,41 +290,41 @@
 
     <!-- SECTION 6 : SIGNATURES -->
     <div class="section-header">6. Signatures</div>
+    @php
+        $sigName = $member->signature_name ?? $metadata['signature_name'] ?? null;
+        $sigDate = $member->signature_date ?? $metadata['signature_date'] ?? null;
+        $sigLoc  = $member->signature_location ?? $metadata['signature_location'] ?? null;
+    @endphp
     <table class="signatures-table">
         <tr>
             <td>
                 <strong>Signature du Demandeur (Membre) :</strong>
-                <div class="signature-box">
-                    @php
-                        $sigName = $member->signature_name ?? $metadata['signature_name'] ?? null;
-                        $sigDate = $member->signature_date ?? $metadata['signature_date'] ?? null;
-                        $sigLoc  = $member->signature_location ?? $metadata['signature_location'] ?? null;
-                    @endphp
-                    @if($sigName)
-                        <strong>Nom :</strong> {{ $sigName }}<br>
-                        <strong>Date :</strong> {{ $sigDate ? \Carbon\Carbon::parse($sigDate)->format('d/m/Y') : '' }} &nbsp;|&nbsp; <strong>Lieu :</strong> {{ $sigLoc }}
-                    @else
-                        <span style="color:#999;">Lu et approuvé</span>
-                    @endif
-                </div>
+                <table class="signature-box">
+                    <tr>
+                        <td>
+                            @if($sigName)
+                                <strong>Nom :</strong> {{ $sigName }}<br>
+                                <strong>Date :</strong> {{ $sigDate ? \Carbon\Carbon::parse($sigDate)->format('d/m/Y') : '' }}
+                                &nbsp;|&nbsp; <strong>Lieu :</strong> {{ $sigLoc }}
+                            @else
+                                <span style="color:#999;">Lu et approuvé</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             </td>
             <td>
                 <strong>Signature &amp; Cachet du Parrain :</strong>
-                <div class="signature-box" style="display:flex; align-items:center; justify-content:center; color:#999; font-size:13px;">
-                    Validé par le parrain
-                </div>
+                <table class="signature-box">
+                    <tr>
+                        <td style="color:#999;">Validé par le parrain</td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
 
-    <!-- BAS DE PAGE -->
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-    </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'FORMULAIRE OFFICIEL – SALANG GROUP SARL'])
 
 </div>
 </body>

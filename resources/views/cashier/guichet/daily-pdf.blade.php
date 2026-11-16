@@ -11,86 +11,65 @@
             font-family: 'Times New Roman', Times, serif, Arial;
             font-size: 14px;
             color: #000;
-            padding: 16px 25px;
+            padding: 0;
+            margin: 0;
             background: #fff;
         }
 
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 80px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 55px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header-text {
-            font-size: 9px;
-            line-height: 1.3;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 8.5px;
-            color: #000;
-            margin-top: 2px;
-            line-height: 1.3;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
-        }
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
 
         .main-title {
             text-align: center;
-            font-size: 22px;
+            font-size: 15px;
             font-weight: bold;
-            color: #0E2F76;
+            color: #0A254E;
             text-transform: uppercase;
-            text-decoration: underline;
-            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .main-title-rule {
+            width: 36%;
+            margin: 2px auto 3px auto;
+            border-bottom: 1.5px solid #C5A04D;
+        }
+        .main-subtitle {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #C5A04D;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin: 0 0 3px 0;
+            line-height: 1.2;
         }
         .form-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
+            width: 100%;
+            margin: 0 0 4px 0;
+            font-size: 11px;
             font-weight: bold;
-            margin-bottom: 8px;
-            padding: 0 3px;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
+        .form-meta td {
+            padding: 1px 0;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .form-meta td.meta-left { text-align: left; width: 50%; }
+        .form-meta td.meta-right { text-align: right; width: 50%; }
 
         .section-header {
-            font-size: 14.5px;
+            font-size: 11.5px;
             font-weight: bold;
-            color: #558b2f;
-            border-bottom: 2px solid #8b0000;
-            padding-bottom: 2px;
-            margin: 10px 0 6px 0;
+            color: #0A254E;
+            border-bottom: 1.5px solid #C5A04D;
+            padding-bottom: 1px;
+            margin: 4px 0 2px 0;
             text-transform: uppercase;
+            clear: both;
+            line-height: 1.2;
         }
 
         .data-table {
@@ -119,6 +98,15 @@
         }
         .data-table td.text-left { text-align: left; }
 
+        /* Marge haut pages 2+ (DomPDF) */
+        .data-table thead tr.page-top-gap td {
+            border: none !important;
+            padding: 0 !important;
+            height: 18px;
+            font-size: 0;
+            line-height: 0;
+        }
+
         .total-row td {
             font-weight: bold;
             border-top: 2px solid #000 !important;
@@ -142,95 +130,65 @@
             font-size: 13.5px;
         }
 
-        .footer-container {
-            margin-top: 16px;
-            width: 100%;
-        }
-        .footer-left {
-            font-size: 11px;
-            line-height: 1.5;
-            text-align: center;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 6px;
-        }
-
         .page-content {
-            max-height: 100vh;
-            overflow: hidden;
             background: #fff;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
+        }
         @media print {
-            body { padding: 10px 20px; }
+            body { padding: 0; margin: 0; }
             .no-print { display: none !important; }
             @page {
                 size: A4 portrait;
-                margin: 0.6cm 0.8cm;
+                margin: 0 0 12mm 0;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="page-content">
+@include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
 
-    <div class="report-header">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-                <td class="header-center">
-                    <div class="company-title">SALANG GROUP SARL</div>
-                    <div class="header-text">
-                        N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116 &nbsp; N° IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
-                        Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                    </div>
-                    <div class="address">
-                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                        <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                        <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                    </div>
-                </td>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
+<div class="page-content page-content-padded">
 
     <div class="main-title">Rapport des Retraits Guichet</div>
-    <div class="form-meta">
-        <div>Journée : <strong>{{ $reportDate->format('d/m/Y') }}</strong></div>
-        <div>Généré le : <strong>{{ $generatedAt->format('d/m/Y H:i') }}</strong></div>
-    </div>
+    <div class="main-title-rule"></div>
+    <div class="main-subtitle">Journée du {{ $reportDate->format('d/m/Y') }}</div>
 
-    <div class="section-header">Retraits remis en espèces — détail journalier</div>
+    <table class="form-meta">
+        <tr>
+            <td class="meta-left">Journée : <strong>{{ $reportDate->format('d/m/Y') }}</strong></td>
+            <td class="meta-right">Généré le : <strong>{{ $generatedAt->format('d/m/Y H:i') }}</strong></td>
+        </tr>
+        <tr>
+            <td class="meta-left">Nombre de retraits : <strong>{{ count($withdrawals) }}</strong></td>
+            <td class="meta-right">Total remis : <strong>${{ number_format($totalAmount, 2) }}</strong></td>
+        </tr>
+    </table>
+
+    <div class="section-header">1. Détail des retraits remis en espèces</div>
 
     @if(count($withdrawals) > 0)
     <table class="data-table">
         <thead>
+            <tr class="page-top-gap"><td colspan="7">&nbsp;</td></tr>
             <tr>
-                <th style="width:6%;">#</th>
+                <th style="width:7%;">#</th>
                 <th style="width:10%;">Heure</th>
-                <th style="width:12%;">Code ID</th>
-                <th style="width:24%;">Nom Complet</th>
-                <th style="width:12%;">Montant</th>
+                <th style="width:13%;">Code ID</th>
+                <th style="width:28%;">Nom Complet</th>
+                <th style="width:14%;">Montant</th>
                 <th style="width:16%;">N° Reçu</th>
                 <th style="width:12%;">Caissier</th>
-                <th style="width:8%;">Statut</th>
             </tr>
         </thead>
         <tbody>
             @foreach($withdrawals as $w)
             <tr>
-                <td>{{ $w->id }}</td>
+                <td>{{ $loop->iteration }}</td>
                 <td>{{ ($w->completed_at ?? $w->created_at)?->format('H:i') ?? '—' }}</td>
                 <td><strong>{{ $w->user?->sponsor_id ?? 'N/A' }}</strong></td>
                 <td class="text-left"><strong>{{ $w->user?->name ?? 'N/A' }}</strong></td>
@@ -243,19 +201,18 @@
                 </td>
                 <td>{{ $w->receipt_number ?: '—' }}</td>
                 <td>{{ $w->cashier?->name ?? '—' }}</td>
-                <td>{{ $w->status === 'completed' ? 'Remis' : ucfirst((string) $w->status) }}</td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr class="total-row">
                 <td colspan="4" style="text-align:right; font-weight:bold;">NOMBRE : {{ count($withdrawals) }}</td>
-                <td colspan="4" style="text-align:left; font-weight:bold;">&nbsp;</td>
+                <td colspan="3" style="text-align:left;">&nbsp;</td>
             </tr>
             <tr class="total-row">
-                <td colspan="4" style="text-align:right; font-weight:bold; color:#0E2F76;">TOTAL GÉNÉRAL :</td>
-                <td style="color:#0E2F76; font-size:14px;"><strong>${{ number_format($totalAmount, 2) }}</strong></td>
-                <td colspan="3"></td>
+                <td colspan="4" style="text-align:right; font-weight:bold; color:#0A254E;">TOTAL GÉNÉRAL :</td>
+                <td style="color:#0A254E; font-size:14px;"><strong>${{ number_format($totalAmount, 2) }}</strong></td>
+                <td colspan="2"></td>
             </tr>
         </tfoot>
     </table>
@@ -265,13 +222,7 @@
     </div>
     @endif
 
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-    </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 
 </div>
 </body>

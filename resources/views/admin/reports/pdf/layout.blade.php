@@ -1,12 +1,4 @@
 {{-- resources/views/admin/reports/pdf/layout.blade.php --}}
-@php
-    $logoPath = public_path('images/salang_logo.png');
-    $logoBase64 = '';
-    if (file_exists($logoPath)) {
-        $logoData = base64_encode(file_get_contents($logoPath));
-        $logoBase64 = 'data:image/png;base64,' . $logoData;
-    }
-@endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -19,55 +11,17 @@
             padding: 0;
             box-sizing: border-box;
         }
-/* ===== EN-TÊTE CORPORATE ===== */
-        .company-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+        body {
+            padding: 0;
+            margin: 0;
+            background: #fff;
         }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-        }
-        .logo-cell {
-            width: 75px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 60px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-            padding: 0 8px;
-        }
-        .company-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header-text {
-            font-size: 8.5px;
-            font-weight: bold;
-            color: #2d3748;
-            line-height: 1.2;
-        }
-        .address {
-            font-size: 8px;
-            color: #4a5568;
-            margin-top: 2px;
-            line-height: 1.2;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
+
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
         }
 
         /* ===== TITRE ET META DU RAPPORT ===== */
@@ -156,68 +110,14 @@
             border-bottom: 1px dashed #e2e8f0;
         }
 
-        /* ===== PIED DE PAGE ET TAMPON ===== */
-        .footer-container {
-            margin-top: 20px;
-            width: 100%;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 8px;
-        }
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .footer-left {
-            font-size: 8px;
-            color: #718096;
-        }
-        .stamp-box {
-            border: 1.5px dashed #0E2F76;
-            color: #0E2F76;
-            padding: 4px 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 8.5px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            background: #ffffff;
-            display: inline-block;
-        }
     </style>
+    @stack('styles')
 </head>
 <body>
-    
-    <!-- EN-TÊTE D'ENTREPRISE -->
-    <div class="company-header">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    @if($logoBase64)
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                    @endif
-                </td>
-                <td class="header-center">
-                    <div class="company-title">SALANG GROUP SARL</div>
-                    <div class="header-text">
-                        N° IDN : 22-M7300-N63464Q &nbsp;|&nbsp; N° RCCM : CD/BKV/RCCM/20-B-00116<br>
-                        N° IMPORT-EXPORT : 0024/CBX-21/I000439SK/Z<br>
-                        Contact : +243 975 220 079 &nbsp;|&nbsp; Web : www.salanggroup.com &nbsp;|&nbsp; Email : support@salanggroup.com
-                    </div>
-                    <div class="address">
-                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7ème Rue Résidentielle, Petit Boulevard &nbsp;|&nbsp;
-                        <span class="city">Bukavu :</span> N°4 Avenue FIZI, Nyawera, Ibanda<br>
-                        <span class="city">Goma :</span> Rond-point Chikudu, Bâtiment KBS, 3ème Niveau
-                    </div>
-                </td>
-                <td class="logo-cell">
-                    @if($logoBase64)
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
-    
+
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
+
+    <div class="page-content-padded">
     <!-- TITRE & INFOS GÉNÉRATION -->
     <table class="report-meta-table">
         <tr>
@@ -234,23 +134,8 @@
     <!-- CONTENU DU RAPPORT -->
     @yield('content')
     
-    <!-- PIED DE PAGE -->
-    <div class="footer-container">
-        <table class="footer-table">
-            <tr>
-                <td class="footer-left">
-                    <strong>Salang Group International SARL</strong> - Santé & Bien-être - Marketing de réseau relationnel<br>
-                    Document officiel généré automatiquement. Règlement d'ordre intérieur appliqué.
-                </td>
-                <td style="text-align: right;">
-                    <div class="stamp-box">
-                        Document Validé<br>
-                        <span style="font-size: 7px; font-weight: normal;">SALANG GROUP SARL</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
     </div>
-    
+
 </body>
 </html>

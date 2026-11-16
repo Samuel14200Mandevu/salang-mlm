@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Cashier;
 
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
 use App\Notifications\ConsultationReviewedNotification;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ConsultationController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function __construct()
     {
         $this->middleware(['auth', 'active']);
@@ -250,22 +253,52 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Imprimer une consultation (Caissier)
+     * Aperçu impression (même onglet) avec bouton Retour.
      */
     public function print(Consultation $consultation)
     {
-        // Vérifier que le caissier est propriétaire
         if ($consultation->cashier_id !== Auth::id()) {
             abort(403, 'Vous n\'êtes pas autorisé à imprimer cette fiche.');
         }
-        
-        // Vérifier que la consultation est complète (statut completed)
+
         if ($consultation->status !== 'completed') {
             return redirect()
                 ->route('cashier.consultations.show', $consultation)
                 ->with('warning', 'Cette consultation n\'a pas encore été traitée par l\'administrateur.');
         }
-        
-        return view('cashier.consultations.print', compact('consultation'));
+
+        return view('cashier.consultations.print-preview', [
+            'consultation' => $consultation,
+        ]);
+    }
+
+    /**
+     * PDF DomPDF de la fiche (sans URL navigateur).
+     */
+    public function printPdf(Consultation $consultation)
+    {
+        if ($consultation->cashier_id !== Auth::id()) {
+            abort(403, 'Vous n\'êtes pas autorisé à imprimer cette fiche.');
+        }
+
+        if ($consultation->status !== 'completed') {
+            return redirect()
+                ->route('cashier.consultations.show', $consultation)
+                ->with('warning', 'Cette consultation n\'a pas encore été traitée par l\'administrateur.');
+        }
+
+        return $this->streamPdfView(
+            'cashier.consultations.print',
+            [
+                'consultation' => $consultation,
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+                'isPdf' => true,
+            ],
+            'fiche_consultation_'.($consultation->id ?? 'doc').'.pdf',
+            'a4',
+            'portrait',
+            180,
+            '512M'
+        );
     }
 }

@@ -7,20 +7,24 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * Notifie le membre après remise espèces au guichet (synchrone : pas de worker requis).
+ */
 class GuichetWithdrawalCompletedNotification extends Notification
 {
     use Queueable;
 
     public function __construct(
-        public Withdrawal $withdrawal
+        public Withdrawal $withdrawal,
+        public bool $withMail = true
     ) {}
 
     public function via($notifiable): array
     {
         $channels = ['database'];
 
-        if (filled($notifiable->email ?? null)) {
-            $channels[] = 'mail';
+        if ($this->withMail && filled($notifiable->email ?? null)) {
+            array_unshift($channels, 'mail');
         }
 
         return $channels;
@@ -31,21 +35,27 @@ class GuichetWithdrawalCompletedNotification extends Notification
         $amount = number_format((float) $this->withdrawal->amount, 2);
         $url = url('/withdrawal/'.$this->withdrawal->id);
         $receipt = $this->withdrawal->receipt_number;
+        $cashier = $this->withdrawal->cashier?->name;
 
         $mail = (new MailMessage)
             ->subject('Paiement réussi — retrait guichet Salang')
             ->greeting('Bonjour '.($notifiable->name ?? '').',')
-            ->line('Votre retrait guichet a été **remis avec succès**.')
+            ->line('Votre retrait guichet a été remis avec succès au comptoir.')
             ->line('')
-            ->line("**Montant :** \${$amount}");
+            ->line('Montant remis : $'.$amount);
 
         if (filled($receipt)) {
-            $mail->line("**Reçu :** {$receipt}");
+            $mail->line('N° reçu : '.$receipt);
+        }
+
+        if (filled($cashier)) {
+            $mail->line('Caissier : '.$cashier);
         }
 
         return $mail
             ->line('')
             ->action('Voir le retrait', $url)
+            ->line('Merci de votre confiance.')
             ->salutation("L'équipe Salang");
     }
 

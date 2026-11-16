@@ -15,115 +15,28 @@
             font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
             font-size: 9px;
             color: #1a202c;
-            padding: 20px 25px;
+            padding: 0;
+            margin: 0;
             background: #ffffff;
             line-height: 1.3;
         }
-        
-        /* ===== EN-TÊTE OFFICIEL ===== */
-        .header {
-            border-bottom: 2px solid #0E2F76;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .header-logo {
-            width: 55px;
-            height: 55px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .header-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .header-company {
-            line-height: 1.3;
-        }
-        .header-company .name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #0E2F76;
-            letter-spacing: 1px;
-        }
-        .header-company .infos {
-            font-size: 7px;
-            color: #4a5568;
-        }
-        .header-company .infos span {
-            color: #0E2F76;
-            font-weight: 600;
-        }
-        
-        .header-right {
-            text-align: right;
-            font-size: 7px;
-            color: #4a5568;
-            line-height: 1.5;
-            flex-shrink: 0;
-        }
-        .header-right .contact {
-            font-weight: 700;
-            color: #0E2F76;
-            font-size: 8px;
-        }
-        .header-right .web {
-            color: #0E2F76;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .header-right .email {
-            color: #0E2F76;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .header-right .address {
-            font-size: 6px;
-            color: #718096;
-            font-style: italic;
-        }
-        
-        .header-divider {
-            border-top: 1px dashed #dce3ed;
-            margin: 5px 0 8px 0;
-        }
-        
-        .header-title {
+
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
+
+        .report-title {
+            margin-bottom: 12px;
             text-align: center;
         }
-        .header-title h1 {
+        .report-title h1 {
             font-size: 16px;
-            font-weight: 700;
             color: #0E2F76;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             text-transform: uppercase;
         }
-        .header-title .subtitle {
+        .report-title p {
             font-size: 8px;
             color: #718096;
-        }
-        .header-title .user-info {
-            font-size: 7.5px;
-            color: #4a5568;
-            margin-top: 2px;
-            font-weight: 600;
         }
         
         /* ===== STATISTIQUES EN COLONNES ===== */
@@ -299,46 +212,9 @@
         .text-warning { color: #f59e0b; }
         .text-muted { color: #a0aec0; }
         
-        /* ===== PIED DE PAGE ===== */
-        .footer {
-            margin-top: 18px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            color: #a0aec0;
-            font-size: 6.5px;
-        }
-        .footer .company-name {
-            font-weight: 700;
-            color: #0E2F76;
-            font-size: 8px;
-        }
-        .footer .info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 6px;
-            color: #718096;
-            margin-top: 3px;
-            flex-wrap: wrap;
-            gap: 3px;
-        }
-        .footer .watermark {
-            font-size: 5px;
-            color: #cbd5e0;
-            margin-top: 2px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             body { padding: 12px 15px; }
-            .header-top { flex-direction: column; align-items: stretch; }
-            .header-left { justify-content: center; }
-            .header-right { text-align: center; }
-            .header-company .name { font-size: 15px; }
-            .header-logo { width: 45px; height: 45px; }
-            .header-title h1 { font-size: 14px; }
             .stats-grid { grid-template-columns: repeat(3, 1fr); }
             .type-grid { grid-template-columns: repeat(2, 1fr); }
             .table { font-size: 6.5px; min-width: 350px; }
@@ -346,10 +222,6 @@
         
         @media (max-width: 480px) {
             body { padding: 8px 10px; }
-            .header-company .name { font-size: 12px; }
-            .header-company .infos { font-size: 5.5px; }
-            .header-right { font-size: 5.5px; }
-            .header-title h1 { font-size: 11px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .type-grid { grid-template-columns: 1fr 1fr; }
             .table { font-size: 5.5px; min-width: 280px; }
@@ -359,69 +231,34 @@
             .badge-type { font-size: 4.5px; padding: 1px 3px; }
         }
         
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
+        }
         @media print {
-            body { background: white; padding: 15px 20px; }
-            .header { border-bottom-color: #0E2F76; }
+            body { background: white; padding: 0; margin: 0; }
             .table thead th { background: #0E2F76 !important; color: white !important; }
             .table tbody tr:nth-child(even) { background: #f7fafc !important; }
             .stats-grid .stat-box { background: #f7fafc !important; }
             .type-grid .type-box { background: #f7fafc !important; }
-            .footer { border-top-color: #e2e8f0 !important; }
+            @page { margin: 0 0 12mm 0; }
         }
     </style>
 </head>
 <body>
-    <!-- ============================================================ -->
-    <!-- EN-TÊTE SALANG GROUP - OFFICIEL                              -->
-    <!-- ============================================================ -->
-    <div class="header">
-        <div class="header-top">
-            <div class="header-left">
-                <div class="header-logo">
-                    @php
-                        $logoPath = public_path('images/salang_logo.png');
-                        if(file_exists($logoPath)):
-                    @endphp
-                        <img src="{{ $logoPath }}" alt="SALANG GROUP" loading="lazy">
-                    @else
-                        <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="#0E2F76" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                            <path d="M2 17l10 5 10-5"/>
-                            <path d="M2 12l10 5 10-5"/>
-                            <text x="5" y="22" font-size="6" fill="#0E2F76" font-weight="700">SG</text>
-                        </svg>
-                    @endif
-                </div>
-                <div class="header-company">
-                    <div class="name">SALANG GROUP</div>
-                    <div class="infos">
-                        N° IDN: <span>22-M7</span><br>
-                        <span>300-N63464 Q</span> N° RCCM: <span>CD/BKV/RCCM/20-B-00116</span> NUMERO IMPORT-EXPORT: <span>0024/CBX-21/I000439SK/Z</span>
-                    </div>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="contact">📞 +243 999 086 990 - 975 220 079</div>
-                <div>🌐 <span class="web">www.salang-group.com</span></div>
-                <div>✉️ <span class="email">support@salanggroup.com</span></div>
-                <div class="address">« 382 AV ixoras Limeté Résidentielle, Kinshasa RD Congo</div>
-            </div>
-        </div>
-        
-        <div class="header-divider"></div>
-        
-        <div class="header-title">
-            <h1>RAPPORT DES COMMISSIONS</h1>
-            <p class="subtitle">
-                Généré le {{ $generated_at->format('d/m/Y à H:i') }}
-                @if(isset($filters))
-                    | Statut: {{ $filters['status'] ?? 'Tous' }} | 
-                    Type: {{ $filters['type'] ?? 'Tous' }} | 
-                    Période: {{ $filters['period'] ?? 'Tous' }}
-                @endif
-            </p>
-            <p class="user-info">{{ $user->name }} • {{ $user->email }}</p>
-        </div>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
+    <div class="page-content-padded">
+    <div class="report-title">
+        <h1>Rapport des commissions</h1>
+        <p>
+            Généré le {{ $generated_at->format('d/m/Y à H:i') }}
+            @if(isset($filters))
+                | Statut: {{ $filters['status'] ?? 'Tous' }}
+                | Type: {{ $filters['type'] ?? 'Tous' }}
+                | Période: {{ $filters['period'] ?? 'Tous' }}
+            @endif
+            <br>{{ $user->name }} • {{ $user->email }}
+        </p>
     </div>
 
     <!-- ============================================================ -->
@@ -541,22 +378,7 @@
         </div>
     @endif
 
-    <!-- ============================================================ -->
-    <!-- PIED DE PAGE                                                  -->
-    <!-- ============================================================ -->
-    <div class="footer">
-        <div>
-            <span class="company-name">SALANG GROUP</span>
-            <span style="color:#718096;"> - Rapport généré automatiquement</span>
-        </div>
-        <div class="info">
-            <span class="left">© {{ date('Y') }} SALANG GROUP. Tous droits réservés.</span>
-            <span class="center">Document confidentiel</span>
-            <span class="right">Page 1/1</span>
-        </div>
-        <div class="watermark">
-            Ce document est la propriété de SALANG GROUP - Toute reproduction interdite
-        </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
     </div>
 </body>
 </html>

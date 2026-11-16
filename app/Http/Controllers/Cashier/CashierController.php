@@ -458,6 +458,14 @@ public function createOrder(Request $request)
      */
     public function exportPdf(Request $request)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('cashier.commissions', $request->except('pdf')),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         $period = $request->input('period', MlmPeriod::current());
         
         $excludedTypes = ['pos_transaction', 'purchase', 'new_client'];
@@ -534,6 +542,14 @@ public function createOrder(Request $request)
      */
     public function exportGlobalCommissionPdf(Request $request)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport Global des Commissions',
+                'backUrl' => route('cashier.commissions', $request->except('pdf')),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
             $period = $request->filled('period') ? (string) $request->period : 'all';
@@ -637,22 +653,26 @@ public function createOrder(Request $request)
 
             unset($commissions);
 
-            $backQuery = array_filter(
-                $request->only(['search', 'type', 'status', 'period']),
-                fn ($v) => $v !== null && $v !== ''
-            );
+            $periodSlug = preg_replace('/[^0-9A-Za-z_-]+/', '_', $period) ?: 'all';
 
-            return response()->view('admin.pv.commission-global-pdf', [
-                'period' => $period,
-                'commissionsCount' => $commissionsCount,
-                'totals' => $totals,
-                'typeStats' => $typeStats,
-                'beneficiaires' => $beneficiaires,
-                'logoBase64' => $this->loadPdfLogoBase64(),
-                'date_generated' => now()->format('d/m/Y H:i'),
-                'autoPrint' => true,
-                'printBackUrl' => route('cashier.commissions', $backQuery),
-            ]);
+            return $this->streamPdfView(
+                'admin.pv.commission-global-pdf',
+                [
+                    'period' => $period,
+                    'commissionsCount' => $commissionsCount,
+                    'totals' => $totals,
+                    'typeStats' => $typeStats,
+                    'beneficiaires' => $beneficiaires,
+                    'logoBase64' => $this->loadPdfLogoBase64(),
+                    'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+                    'date_generated' => now()->format('d/m/Y H:i'),
+                ],
+                "rapport_global_commissions_{$periodSlug}.pdf",
+                'a4',
+                'landscape',
+                300,
+                '512M'
+            );
         } catch (\Throwable $e) {
             $this->logPdfFailure('cashier.commissions.exportGlobalPDF', $e);
 
@@ -2966,6 +2986,14 @@ public function history(Request $request)
     public function historyExportPdf(Request $request)
     {
         try {
+            if (! $request->boolean('pdf')) {
+                return view('partials.pdf.preview-shell', [
+                    'title' => 'Rapport Historique des Ventes POS',
+                    'backUrl' => route('cashier.history', $request->except('pdf')),
+                    'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+                ]);
+            }
+
             $this->preparePdfExport(300, '512M');
 
             $query = Order::with([
@@ -3094,7 +3122,7 @@ public function history(Request $request)
                 $periodLabel = 'Jusqu\'au '.\Carbon\Carbon::parse($request->date_to)->format('d/m/Y');
             }
 
-            return $this->downloadPdfView(
+            return $this->streamPdfView(
                 'cashier.history-pdf',
                 [
                     'rows' => $rows,
@@ -3102,6 +3130,7 @@ public function history(Request $request)
                     'periodLabel' => $periodLabel,
                     'search' => $request->input('search'),
                     'logoBase64' => $this->loadPdfLogoBase64(),
+                    'letterheadBase64' => $this->loadPdfLetterheadBase64(),
                     'date_generated' => now()->format('d/m/Y H:i'),
                 ],
                 'rapport_historique_ventes_pos_'.now()->format('Y-m-d').'.pdf',
@@ -3653,6 +3682,17 @@ public function history(Request $request)
      */
     public function exportMemberCommissionPdf(Request $request, int $user)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('cashier.commissions.member', array_merge(
+                    ['user' => $user],
+                    $request->except('pdf')
+                )),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
             $bonusOrder = $coreTypes;

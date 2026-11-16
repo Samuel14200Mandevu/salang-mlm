@@ -417,21 +417,4 @@
     </div>
 @endif
 
-<!-- ============================================================
-     PIED DE PAGE
-     ============================================================ -->
-<div class="footer-report">
-    <div class="company">SALANG GROUP HEALTH CARE</div>
-    <div style="margin-top: 3px;">
-        382 AV Ixoras Limeté Résidentielle, Kinshasa RD Congo<br>
-        +243 999 086 990 - 975 220 079 - support@salanggroup.com - www.salang-group.com
-    </div>
-    <div style="margin-top: 5px;">
-        Rapport généré le {{ now()->format('d/m/Y à H:i:s') }} - Réf: RPT-{{ date('Ymd') }}-{{ strtoupper(substr(md5(time()), 0, 8)) }}
-    </div>
-    <div style="margin-top: 3px; font-size: 6px; color: #d1d5db;">
-        Document confidentiel - Réservé à l'usage interne
-    </div>
-</div>
-
 @endsection

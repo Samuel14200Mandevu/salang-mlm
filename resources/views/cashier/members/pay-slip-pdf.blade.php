@@ -16,78 +16,7 @@
             background: #fff;
         }
 
-        /* PIED DE PAGE PERMANENT */
-        .footer-container {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            width: 100%;
-            text-align: center;
-            background-color: #fff;
-            padding-top: 4px;
-        }
-        .footer-left {
-            font-size: 10.5px;
-            line-height: 1.3;
-            text-align: center;
-            color: #000;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 4px;
-        }
-
-        /* EN-TÊTE */
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 6px;
-            margin-bottom: 10px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 75px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 52px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 19px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header-text {
-            font-size: 9px;
-            line-height: 1.25;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 8.5px;
-            color: #000;
-            margin-top: 2px;
-            line-height: 1.25;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
-        }
+        @include('partials.pdf._styles')
 
         /* TITRE ET META */
         .main-title {
@@ -214,47 +143,10 @@
 </head>
 <body>
 
-    <!-- PIED DE PAGE FIXE EN BAS DE LA PAJE (Positioned fixed) -->
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-    </div>
-
     <!-- CONTENU PRINCIPAL -->
     <div class="page-content">
 
-        <!-- EN-TÊTE -->
-        <div class="report-header">
-            <table class="header-table">
-                <tr>
-                    <td class="logo-cell">
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                        @endif
-                    </td>
-                    <td class="header-center">
-                        <div class="company-title">SALANG GROUP SARL</div>
-                        <div class="header-text">
-                            N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116 &nbsp; N° IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
-                            Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                        </div>
-                        <div class="address">
-                            <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                            <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                            <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                        </div>
-                    </td>
-                    <td class="logo-cell">
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                        @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
+        @include('partials.pdf.letterhead', ['letterheadCompact' => true])
 
         <!-- TITRE ET META -->
         <div class="main-title">Fiche de Paie des Commissions</div>
@@ -398,6 +290,8 @@
                 </tr>
             </table>
         </div>
+
+        @include('partials.pdf.footer', ['pdfFooterLabel' => 'FICHE DE PAIE OFFICIELLE – SALANG GROUP SARL'])
 
     </div>
 

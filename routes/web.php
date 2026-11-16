@@ -458,6 +458,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::post('/consultations/{consultation}/checkout-selection', [ConsultationController::class, 'checkoutSelection'])->name('consultations.checkout-selection');
     Route::post('/consultations/{consultation}/cancel-checkout', [ConsultationController::class, 'cancelCheckout'])->name('consultations.cancel-checkout');
     Route::get('/consultations/{consultation}/print', [ConsultationController::class, 'print'])->name('consultations.print');
+    Route::get('/consultations/{consultation}/print/pdf', [ConsultationController::class, 'printPdf'])->name('consultations.print.pdf');
     
     // Membres
     Route::get('/members', [CashierController::class, 'members'])->name('members');
@@ -508,9 +509,12 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::prefix('guichet')->name('guichet.')->group(function () {
         Route::get('/', [GuichetWithdrawalController::class, 'index'])->name('index');
         Route::get('/export-daily-pdf', [GuichetWithdrawalController::class, 'exportDailyPdf'])->name('export-daily-pdf');
-        Route::get('/{id}', [GuichetWithdrawalController::class, 'show'])->name('show');
-        Route::post('/{id}/fulfill', [GuichetWithdrawalController::class, 'fulfill'])->name('fulfill');
-        Route::post('/{id}/cancel', [GuichetWithdrawalController::class, 'cancel'])->name('cancel');
+        Route::get('/create', [GuichetWithdrawalController::class, 'create'])->name('create');
+        Route::get('/find-member', [GuichetWithdrawalController::class, 'findMember'])->name('find-member');
+        Route::post('/', [GuichetWithdrawalController::class, 'store'])->name('store');
+        Route::get('/{id}', [GuichetWithdrawalController::class, 'show'])->name('show')->whereNumber('id');
+        Route::post('/{id}/fulfill', [GuichetWithdrawalController::class, 'fulfill'])->name('fulfill')->whereNumber('id');
+        Route::post('/{id}/cancel', [GuichetWithdrawalController::class, 'cancel'])->name('cancel')->whereNumber('id');
     });
     
     // Ventes du jour
@@ -632,6 +636,7 @@ Route::prefix('admin')
             Route::get('/count-pending', [App\Http\Controllers\Admin\ConsultationController::class, 'countPending'])->name('count');
             Route::get('/', [App\Http\Controllers\Admin\ConsultationController::class, 'index'])->name('index');
             Route::get('/{consultation}/print', [App\Http\Controllers\Admin\ConsultationController::class, 'print'])->name('print');
+            Route::get('/{consultation}/print/pdf', [App\Http\Controllers\Admin\ConsultationController::class, 'printPdf'])->name('print.pdf');
             Route::get('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'show'])->name('show');
             Route::put('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'update'])->name('update');
             Route::delete('/{consultation}', [App\Http\Controllers\Admin\ConsultationController::class, 'destroy'])->name('destroy');

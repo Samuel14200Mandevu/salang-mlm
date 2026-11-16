@@ -6,79 +6,30 @@
     <title>Rapport Global des Commissions</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-.footer-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            text-align: center;
-            background-color: #fff;
-            padding: 4px 20px 6px 20px;
+        body {
+            padding: 0;
+            margin: 0;
+            background: #fff;
         }
-        .footer-left {
-            font-size: 9px;
-            line-height: 1.3;
-            color: #000;
+        .page-content {
+            display: block;
+            margin: 22px 56px 12px 56px;
+            padding: 0;
         }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 3px;
-        }
-        .footer-right {
-            font-size: 8px;
-            color: #666;
-            text-align: right;
-            margin-top: 1px;
-        }
+        @include('partials.pdf._styles')
 
-        .report-header {
+        /* En-tête = même structure que fiche de consultation */
+        .salang-letterhead {
             width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 5px;
-            margin-bottom: 6px;
+            margin: 0 0 4px 0;
+            padding: 0;
         }
-        .header-table {
+        .salang-letterhead__img {
             width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 65px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 45px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1px;
-        }
-        .header-text {
-            font-size: 7.5px;
-            line-height: 1.2;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 7px;
-            color: #000;
-            margin-top: 1px;
-            line-height: 1.2;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
+            max-width: 100%;
+            height: 145px;
+            min-height: 145px;
+            display: block;
         }
 
         .main-title {
@@ -160,63 +111,24 @@
         .sponsor-color { color: #B54708; }
         .retail-color { color: #1C7E4A; }
 
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
+        }
         @media print {
-            body { padding: 8px 15px 40px 15px; }
-            @page { 
+            body { padding: 0; margin: 0; }
+            @page {
                 size: A4 portrait;
-                margin: 0.4cm 0.5cm; 
+                margin: 0 0 12mm 0;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-        <div class="footer-right">Généré le {{ $date_generated }}</div>
-    </div>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
 
     <div class="page-content">
-
-        <div class="report-header">
-            <table class="header-table">
-                <tr>
-                    <td class="logo-cell">
-                        @php
-                            $logoPath = public_path('images/salang_logo.png');
-                            $logoBase64 = '';
-                            if(file_exists($logoPath)) {
-                                $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-                            }
-                        @endphp
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                        @endif
-                    </td>
-                    <td class="header-center">
-                        <div class="company-title">SALANG GROUP SARL</div>
-                        <div class="header-text">
-                            N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116<br>
-                            Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                        </div>
-                        <div class="address">
-                            <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                            <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                            <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                        </div>
-                    </td>
-                    <td class="logo-cell">
-                        @if(!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Salang Logo" loading="lazy">
-                        @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
 
         <div class="main-title">Rapport Global des Commissions</div>
         
@@ -294,6 +206,8 @@
                 </tr>
             </tfoot>
         </table>
+
+        @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 
     </div>
 

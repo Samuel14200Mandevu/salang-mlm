@@ -14,55 +14,9 @@
             padding: 22px 26px 28px;
         }
 
-        .page-content { width: 100%; }
+        @include('partials.pdf._styles')
 
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 5px;
-            margin-bottom: 6px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 70px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 50px;
-            width: auto;
-        }
-        .header-center { text-align: center; }
-        .company-title {
-            font-size: 17px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1px;
-        }
-        .header-text {
-            font-size: 9px;
-            line-height: 1.25;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 8.5px;
-            color: #000;
-            margin-top: 1px;
-            line-height: 1.25;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
-        }
+        .page-content { width: 100%; }
 
         .main-title {
             text-align: center;
@@ -196,14 +150,6 @@
             font-size: 11px;
         }
 
-        .footer {
-            margin-top: 12px;
-            padding-top: 6px;
-            border-top: 1px solid #8b0000;
-            font-size: 8px;
-            color: #444;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -226,34 +172,7 @@
 @endphp
 
 <div class="page-content">
-    <div class="report-header">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    @if (! empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-                <td class="header-center">
-                    <div class="company-title">SALANG GROUP SARL</div>
-                    <div class="header-text">
-                        N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116<br>
-                        Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                    </div>
-                    <div class="address">
-                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                        <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                        <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                    </div>
-                </td>
-                <td class="logo-cell">
-                    @if (! empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => true])
 
     <div class="main-title">{{ $reportTitle }}</div>
 
@@ -384,9 +303,7 @@
         @endforeach
     @endif
 
-    <div class="footer">
-        Salang Group SARL — Rapport confidentiel · {{ $user->sponsor_id }} · {{ $periodLabel }} · Généré le {{ $date_generated }}
-    </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 </div>
 </body>
 </html>

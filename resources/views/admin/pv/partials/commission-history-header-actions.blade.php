@@ -1,9 +1,9 @@
 @if($selectedPeriod)
 <a href="{{ url('/admin/pv/commission-history/' . $selectedPeriod . '/pdf?user_id=' . $userId) }}" class="btn btn-outline btn-sm">
     <x-pdf-icon />
-    Rapport Détaillé
+    Rapport détaillé
 </a>
-<a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}" class="btn btn-outline btn-sm" target="_blank">
+<a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}" class="btn btn-outline btn-sm">
     <x-pdf-icon />
     Rapport Global
 </a>
