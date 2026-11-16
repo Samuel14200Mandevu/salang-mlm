@@ -11,60 +11,13 @@
             font-family: 'Times New Roman', Times, serif, Arial; 
             font-size: 14px; 
             color: #000; 
-            padding: 16px 25px;
+            padding: 0;
+            margin: 0;
             background: #fff;
         }
 
-        /* EN-TÊTE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) */
-        .report-header {
-            width: 100%;
-            border-bottom: 2.5px solid #8b0000;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-        }
-        .logo-cell {
-            width: 80px;
-            text-align: center;
-        }
-        .logo-cell img {
-            max-height: 55px;
-            width: auto;
-        }
-        .header-center {
-            text-align: center;
-        }
-        .company-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #558b2f;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header-text {
-            font-size: 9px;
-            line-height: 1.3;
-            font-weight: bold;
-        }
-        .address {
-            font-size: 8.5px;
-            color: #000;
-            margin-top: 2px;
-            line-height: 1.3;
-            font-weight: normal;
-        }
-        .address .city {
-            font-weight: bold;
-            color: #0E2F76;
-        }
+        @include('partials.pdf._styles')
+        @include('partials.pdf._letterhead_full_bleed')
 
         /* TITRE */
         .main-title {
@@ -146,71 +99,30 @@
             font-size: 13.5px;
         }
 
-        /* PIED DE PAGE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) */
-        .footer-container {
-            margin-top: 16px;
-            width: 100%;
-        }
-        .footer-left {
-            font-size: 11px;
-            line-height: 1.5;
-            text-align: center;
-        }
-        .footer-line {
-            border-bottom: 1.5px solid #cbd5e0;
-            margin-top: 6px;
-        }
-
         .page-content {
-            max-height: 100vh;
-            overflow: hidden;
             background: #fff;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 0 0 12mm 0;
+        }
         @media print {
-            body { padding: 10px 20px; }
+            body { padding: 0; margin: 0; }
             .no-print { display: none !important; }
             @page { 
                 size: A4 portrait;
-                margin: 0.6cm 0.8cm; 
+                margin: 0 0 12mm 0;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- PAGE CONTENT -->
-<div class="page-content">
+@include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
 
-    <!-- EN-TÊTE -->
-    <div class="report-header">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-                <td class="header-center">
-                    <div class="company-title">SALANG GROUP SARL</div>
-                    <div class="header-text">
-                        N° IDN:22-M7300-N63464Q &nbsp; N° RCCM:CD/BKV/RCCM/20-B-00116 &nbsp; N° IMPORT-EXPORT:0024/CBX-21/I000439SK/Z<br>
-                        Contact : +243 975 220 079 &nbsp; Web:www.salanggroup.com &nbsp; Email:support@salanggroup.com
-                    </div>
-                    <div class="address">
-                        <span class="city">Kinshasa :</span> 4 AV, Ixoras 382, 7eme Rue Resid. &nbsp;|&nbsp;
-                        <span class="city">Bukavu :</span> N°4 Av. FIZI, Q. Nyawera, C/Ibanda &nbsp;|&nbsp;
-                        <span class="city">Goma :</span> Rondpoint Chikudu, Bat. KBS 3e N.
-                    </div>
-                </td>
-                <td class="logo-cell">
-                    @if(!empty($logoBase64))
-                        <img src="{{ $logoBase64 }}" alt="Salang Logo">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
+<!-- PAGE CONTENT -->
+<div class="page-content page-content-padded">
 
     <!-- TITRE + META -->
     <div class="main-title">Rapport des Commissions</div>
@@ -308,14 +220,7 @@
     </div>
     @endif
 
-    <!-- BAS DE PAGE (IDENTIQUE AU FORMULAIRE D'ADHÉSION) -->
-    <div class="footer-container">
-        <div class="footer-left">
-            <strong>Salang Group International SARL</strong> — Service Administratif &amp; Réseau<br>
-            Site web : www.salanggroup.com &nbsp;|&nbsp; E-mail : support@salanggroup.com
-        </div>
-        <div class="footer-line"></div>
-    </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 
 </div>
 </body>

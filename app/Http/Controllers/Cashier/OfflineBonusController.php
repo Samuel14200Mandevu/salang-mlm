@@ -194,7 +194,7 @@ class OfflineBonusController extends Controller
     }
 
     /**
-     * Rapport global imprimable (même modèle que admin PV) — ouvre l’interface d’impression.
+     * Rapport global PDF (même modèle que admin PV) — flux DomPDF sans en-tête navigateur.
      */
     public function exportGlobalPdf(Request $request)
     {
@@ -203,6 +203,14 @@ class OfflineBonusController extends Controller
         ]);
 
         $period = (string) $request->input('period');
+
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport Global des Commissions',
+                'backUrl' => route('cashier.offline-bonus.pay', ['period' => $period]),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
 
         try {
             $commissions = Commission::query()
@@ -273,17 +281,26 @@ class OfflineBonusController extends Controller
 
             unset($commissions);
 
-            return response()->view('admin.pv.commission-global-pdf', [
-                'period' => $period,
-                'commissionsCount' => $commissionsCount,
-                'totals' => $totals,
-                'typeStats' => $typeStats,
-                'beneficiaires' => $beneficiaires,
-                'logoBase64' => $this->loadPdfLogoBase64(),
-                'date_generated' => now()->format('d/m/Y H:i'),
-                'autoPrint' => true,
-                'printBackUrl' => route('cashier.offline-bonus.pay', ['period' => $period]),
-            ]);
+            $periodSlug = preg_replace('/[^0-9A-Za-z_-]+/', '_', $period) ?: 'period';
+
+            return $this->streamPdfView(
+                'admin.pv.commission-global-pdf',
+                [
+                    'period' => $period,
+                    'commissionsCount' => $commissionsCount,
+                    'totals' => $totals,
+                    'typeStats' => $typeStats,
+                    'beneficiaires' => $beneficiaires,
+                    'logoBase64' => $this->loadPdfLogoBase64(),
+                    'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+                    'date_generated' => now()->format('d/m/Y H:i'),
+                ],
+                "rapport_global_commissions_{$periodSlug}.pdf",
+                'a4',
+                'landscape',
+                300,
+                '512M'
+            );
         } catch (\Throwable $e) {
             Log::error('cashier.offline-bonus.exportGlobalPdf', [
                 'period' => $period,

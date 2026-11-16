@@ -11,7 +11,7 @@
     data-withdraw-form
     data-balance="{{ $maxBalance }}"
     data-fee-rate="0"
-    data-min="10"
+    data-min="2"
     data-require-dest="0"
 >
     @csrf
@@ -83,7 +83,7 @@
                     name="amount"
                     id="{{ $formId }}_amount"
                     step="0.01"
-                    min="10"
+                    min="2"
                     max="{{ $maxBalance }}"
                     class="member-withdraw-amount__input @error('amount') input-error @enderror"
                     placeholder="0.00"

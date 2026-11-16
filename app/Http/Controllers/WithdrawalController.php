@@ -79,7 +79,7 @@ class WithdrawalController extends Controller
         $wallet = $user->wallet;
 
         $request->validate([
-            'amount' => 'required|numeric|min:10|max:10000',
+            'amount' => 'required|numeric|min:2|max:10000',
             'method' => 'required|in:guichet,crypto,mobile_money,bank',
             'address' => 'required_if:method,crypto|nullable|string|max:255',
             'phone' => 'required_if:method,mobile_money|nullable|string|max:20',

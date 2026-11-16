@@ -82,6 +82,19 @@ trait GeneratesPdfSafely
     }
 
     /**
+     * En-tête officiel (bleu / or) en base64 pour DomPDF / impression.
+     */
+    protected function loadPdfLetterheadBase64(int $maxBytes = 200000): string
+    {
+        $path = public_path('images/salang-letterhead.jpg');
+        if (! is_file($path) || filesize($path) <= 0 || filesize($path) >= $maxBytes) {
+            return '';
+        }
+
+        return 'data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path));
+    }
+
+    /**
      * Génère un PDF depuis une vue et le renvoie en téléchargement fichier temporaire
      * (évite de garder tout le binaire en mémoire dans la réponse HTTP).
      */

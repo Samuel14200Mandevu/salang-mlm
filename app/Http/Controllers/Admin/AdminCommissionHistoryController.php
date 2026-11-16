@@ -552,6 +552,17 @@ class AdminCommissionHistoryController extends Controller
      */
     public function exportPDF(Request $request, $period)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('admin.pv.commission-history.index', array_filter([
+                    'period' => $period,
+                    'user_id' => $request->input('user_id'),
+                ])),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $this->preparePdfExport(300, '1024M');
 
@@ -657,6 +668,7 @@ class AdminCommissionHistoryController extends Controller
                 'userId' => $userId,
                 'periodPV' => $periodPV,
                 'logoBase64' => $this->loadPdfLogoBase64(),
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
                 'date_generated' => now()->format('d/m/Y H:i'),
                 'bonusOrder' => $bonusOrder,
                 'bonusLabels' => [
@@ -667,7 +679,7 @@ class AdminCommissionHistoryController extends Controller
                 ],
             ];
 
-            return $this->downloadPdfView(
+            return $this->streamPdfView(
                 'admin.pv.commission-pdf',
                 $data,
                 "rapport_commissions_{$period}.pdf",
@@ -688,6 +700,14 @@ class AdminCommissionHistoryController extends Controller
      */
     public function exportGlobalPDF(Request $request, $period = 'all')
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport Global des Commissions',
+                'backUrl' => route('admin.pv.commission-history.index', ['period' => $period]),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $this->preparePdfExport(300, '512M');
 
@@ -782,10 +802,11 @@ class AdminCommissionHistoryController extends Controller
                 'typeStats' => $typeStats,
                 'beneficiaires' => $beneficiaires,
                 'logoBase64' => $this->loadPdfLogoBase64(),
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
                 'date_generated' => now()->format('d/m/Y H:i'),
             ];
 
-            return $this->downloadPdfView(
+            return $this->streamPdfView(
                 'admin.pv.commission-global-pdf',
                 $data,
                 "rapport_global_commissions_{$period}.pdf",

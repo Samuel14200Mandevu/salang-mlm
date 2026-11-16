@@ -362,6 +362,17 @@ class CommissionController extends Controller
      */
     public function exportMemberPDF(Request $request, int $user)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('admin.commissions.member', array_merge(
+                    ['user' => $user],
+                    $request->except('pdf')
+                )),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $coreTypes = $this->coreCommissionTypes();
             $bonusOrder = $coreTypes;
@@ -685,6 +696,14 @@ class CommissionController extends Controller
      */
     public function exportPDF(Request $request)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport des Commissions',
+                'backUrl' => route('admin.commissions', $request->except('pdf')),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $this->preparePdfExport(300, '1024M');
 
@@ -807,6 +826,14 @@ class CommissionController extends Controller
      */
     public function exportGlobalPDF(Request $request)
     {
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport Global des Commissions',
+                'backUrl' => route('admin.commissions', $request->except('pdf')),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
         try {
             $coreTypes = $this->coreCommissionTypes();
             $period = $request->filled('period') ? (string) $request->period : 'all';
@@ -918,22 +945,26 @@ class CommissionController extends Controller
 
             unset($commissions);
 
-            $backQuery = array_filter(
-                $request->only(['search', 'type', 'status', 'period', 'band']),
-                fn ($v) => $v !== null && $v !== ''
-            );
+            $periodSlug = preg_replace('/[^0-9A-Za-z_-]+/', '_', $period) ?: 'all';
 
-            return response()->view('admin.pv.commission-global-pdf', [
-                'period' => $period,
-                'commissionsCount' => $commissionsCount,
-                'totals' => $totals,
-                'typeStats' => $typeStats,
-                'beneficiaires' => $beneficiaires,
-                'logoBase64' => $this->loadPdfLogoBase64(),
-                'date_generated' => now()->format('d/m/Y H:i'),
-                'autoPrint' => true,
-                'printBackUrl' => route('admin.commissions', $backQuery),
-            ]);
+            return $this->streamPdfView(
+                'admin.pv.commission-global-pdf',
+                [
+                    'period' => $period,
+                    'commissionsCount' => $commissionsCount,
+                    'totals' => $totals,
+                    'typeStats' => $typeStats,
+                    'beneficiaires' => $beneficiaires,
+                    'logoBase64' => $this->loadPdfLogoBase64(),
+                    'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+                    'date_generated' => now()->format('d/m/Y H:i'),
+                ],
+                "rapport_global_commissions_{$periodSlug}.pdf",
+                'a4',
+                'landscape',
+                300,
+                '512M'
+            );
         } catch (\Throwable $e) {
             $this->logPdfFailure('admin.commissions.exportGlobalPDF', $e);
 

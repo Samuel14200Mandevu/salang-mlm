@@ -6,19 +6,14 @@
     <title>Rapport POS - {{ date('d/m/Y') }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-.header { 
-            text-align: center; 
-            border-bottom: 2px solid #0E2F76; 
-            padding-bottom: 10px; 
+        @include('partials.pdf._styles')
+        .report-title {
+            text-align: center;
             margin-bottom: 15px;
         }
-        .header h1 { 
-            color: #0E2F76; 
-            font-size: 20px;
-            letter-spacing: 2px;
-        }
-        .header p { color: #666; font-size: 11px; margin: 2px 0; }
-        .header .date { font-size: 12px; font-weight: bold; }
+        .report-title h1 { color: #0E2F76; font-size: 20px; letter-spacing: 2px; }
+        .report-title p { color: #666; font-size: 11px; margin: 2px 0; }
+        .report-title .date { font-size: 12px; font-weight: bold; }
         
         .stats { 
             display: flex; 
@@ -60,15 +55,6 @@
         .text-green { color: #22c55e; }
         .text-primary { color: #0E2F76; }
         
-        .footer { 
-            text-align: center; 
-            font-size: 9px; 
-            color: #999; 
-            margin-top: 20px; 
-            border-top: 1px solid #e5e7eb; 
-            padding-top: 10px;
-        }
-        
         .badge { 
             display: inline-block; 
             padding: 1px 6px; 
@@ -81,8 +67,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>SALANG GROUP</h1>
+    @include('partials.pdf.letterhead', ['letterheadCompact' => true])
+    <div class="report-title">
+        <h1>Rapport des ventes POS</h1>
         <p>Rapport des ventes POS</p>
         <p class="date">Date: {{ date('d/m/Y H:i') }}</p>
     </div>
@@ -145,9 +132,6 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        <p>Rapport généré automatiquement - Salang MLM v1.0</p>
-        <p>{{ now()->format('d/m/Y H:i:s') }}</p>
-    </div>
+    @include('partials.pdf.footer', ['pdfFooterLabel' => 'RAPPORT OFFICIEL – SALANG GROUP SARL'])
 </body>
 </html>

@@ -716,7 +716,6 @@ body {
                 </a>
                 <a href="{{ route('admin.pv.commission-history.global-pdf', $selectedPeriod) }}"
                    class="btn btn-sm btn-round-icon btn-pdf-icon"
-                   target="_blank"
                    title="Rapport global"
                    aria-label="Rapport global">
                     <x-pdf-icon size="lg" />

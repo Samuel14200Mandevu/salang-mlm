@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
 use App\Models\Product;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ConsultationController extends Controller
 {
+    use GeneratesPdfSafely;
+
     /**
      * Liste des consultations (Admin) avec recherche
      */
@@ -198,13 +201,37 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Imprimer la fiche de consultation (Admin)
+     * Aperçu impression (même onglet) avec bouton Retour.
      */
     public function print(Consultation $consultation)
     {
         $consultation->load(['cashier', 'admin']);
 
-        return view('admin.consultations.print', compact('consultation'));
+        return view('admin.consultations.print-preview', [
+            'consultation' => $consultation,
+        ]);
+    }
+
+    /**
+     * PDF DomPDF de la fiche (sans URL navigateur).
+     */
+    public function printPdf(Consultation $consultation)
+    {
+        $consultation->load(['cashier', 'admin']);
+
+        return $this->streamPdfView(
+            'admin.consultations.print',
+            [
+                'consultation' => $consultation,
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+                'isPdf' => true,
+            ],
+            'fiche_consultation_'.($consultation->id ?? 'doc').'.pdf',
+            'a4',
+            'portrait',
+            180,
+            '512M'
+        );
     }
 
     /**
