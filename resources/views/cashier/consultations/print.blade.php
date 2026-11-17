@@ -259,11 +259,8 @@
     $totalProductsLabel = abs($productsTotal['min'] - $productsTotal['max']) < 0.001
         ? '$'.number_format($productsTotal['max'], 2)
         : '$'.number_format($productsTotal['min'], 2).' - $'.number_format($productsTotal['max'], 2);
-    $totalMin = $productsTotal['min'] + $totalServices;
-    $totalMax = $productsTotal['max'] + $totalServices;
-    $totalGeneralLabel = abs($totalMin - $totalMax) < 0.001
-        ? '$'.number_format($totalMax, 2)
-        : '$'.number_format($totalMin, 2).' - $'.number_format($totalMax, 2);
+    // Services à part : colonne Observation = total services uniquement (pas produits + services).
+    $totalServicesLabel = '$'.number_format($totalServices, 2);
 @endphp
 
 <table class="products-table">
@@ -300,7 +297,7 @@
         <tr>
             <td colspan="2" class="total-cell-span">Total</td>
             <td class="total-cell">{{ $totalProductsLabel }}</td>
-            <td class="total-cell">{{ $totalGeneralLabel }}</td>
+            <td class="total-cell">{{ $totalServicesLabel }}</td>
         </tr>
     </tbody>
 </table>

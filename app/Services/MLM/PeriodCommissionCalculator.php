@@ -272,10 +272,13 @@ class PeriodCommissionCalculator
 
             $descendantRate = $this->getDirectRate($descendantRank);
             $descendant = $allUsers->get($descendantId);
+            $branchBlocked = ! empty($data['is_branch_blocked']);
 
             // ─────────────── INDIRECT (gén. 1-8) ───────────────
+            // Jambe entière exclue si un filleul (direct ou indirect) a un grade ≥ upline.
             if (
-                $generation <= self::MAX_GENERATIONS_INDIRECT
+                ! $branchBlocked
+                && $generation <= self::MAX_GENERATIONS_INDIRECT
                 && $userRank >= 3
                 && $descendantRank >= 3
                 && $userRank > $descendantRank
@@ -343,26 +346,31 @@ class PeriodCommissionCalculator
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * Récupère tous les descendants avec leurs ancêtres pour l'exclusion.
+     * Récupère tous les descendants avec flags d'exclusion.
      *
-     * Règle d'exclusion : si un descendant a un rank >= buyer → sa branche est exclue.
+     * - is_excluded : le nœud (ou un ancêtre sur le chemin) a un rank ≥ buyer
+     *   → sous-arbre coupé (leadership + historique).
+     * - is_branch_blocked : un filleul direct OU indirect de la jambe a un rank ≥ buyer
+     *   → toute la jambe hors bonus indirect ; les autres jambes restent éligibles.
      *
-     * @return array<int, array{generation:int, descendant_id:int, descendant_rank:int, is_excluded:bool}>
+     * @return array<int, array{generation:int, descendant_id:int, descendant_rank:int, is_excluded:bool, is_branch_blocked:bool}>
      */
     private function getAllDescendantsWithAncestors(User $user, int $maxGenerations = 12): array
     {
-        $descendants = [];
+        $raw = [];
         $currentGeneration = 1;
-        $userRank = $user->rank_level ?? 1;
+        $userRank = (int) ($user->rank_level ?? 1);
 
         $currentLevel = [[
             'id' => $user->id,
             'rank' => $userRank,
             'is_excluded' => false,
+            'branch_id' => null,
         ]];
         $processedIds = [$user->id];
+        $blockedBranches = [];
 
-        while ($currentGeneration <= $maxGenerations && !empty($currentLevel)) {
+        while ($currentGeneration <= $maxGenerations && ! empty($currentLevel)) {
             $nextLevel = [];
             $currentIds = array_column($currentLevel, 'id');
 
@@ -371,9 +379,10 @@ class PeriodCommissionCalculator
                 ->get();
 
             foreach ($children as $child) {
-                if (in_array($child->id, $processedIds)) continue;
+                if (in_array($child->id, $processedIds, true)) {
+                    continue;
+                }
 
-                // Retrouve le parent dans le niveau courant
                 $parent = null;
                 foreach ($currentLevel as $p) {
                     if ($p['id'] == $child->parrain_id) {
@@ -382,33 +391,55 @@ class PeriodCommissionCalculator
                     }
                 }
 
-                if (!$parent) continue;
+                if (! $parent) {
+                    continue;
+                }
 
-                $childRank = $child->rank_level ?? 1;
-                $isExcluded = $parent['is_excluded'];
-
-                // Exclusion : si le descendant a un rank >= buyer
-                if (!$isExcluded && $childRank >= $userRank) {
+                $childRank = (int) ($child->rank_level ?? 1);
+                $isExcluded = (bool) $parent['is_excluded'];
+                if (! $isExcluded && $childRank >= $userRank) {
                     $isExcluded = true;
                 }
 
-                $descendants[] = [
-                    'generation'      => $currentGeneration,
-                    'descendant_id'   => $child->id,
+                // Jambe = filleul direct (gén. 1) + toute sa descendance (indirects)
+                $branchId = $currentGeneration === 1
+                    ? (int) $child->id
+                    : (int) $parent['branch_id'];
+
+                if ($childRank >= $userRank) {
+                    $blockedBranches[$branchId] = true;
+                }
+
+                $raw[] = [
+                    'generation' => $currentGeneration,
+                    'descendant_id' => (int) $child->id,
                     'descendant_rank' => $childRank,
-                    'is_excluded'     => $isExcluded,
+                    'is_excluded' => $isExcluded,
+                    'branch_id' => $branchId,
                 ];
 
                 $nextLevel[] = [
                     'id' => $child->id,
                     'rank' => $childRank,
                     'is_excluded' => $isExcluded,
+                    'branch_id' => $branchId,
                 ];
                 $processedIds[] = $child->id;
             }
 
             $currentLevel = $nextLevel;
             $currentGeneration++;
+        }
+
+        $descendants = [];
+        foreach ($raw as $row) {
+            $descendants[] = [
+                'generation' => $row['generation'],
+                'descendant_id' => $row['descendant_id'],
+                'descendant_rank' => $row['descendant_rank'],
+                'is_excluded' => $row['is_excluded'],
+                'is_branch_blocked' => isset($blockedBranches[$row['branch_id']]),
+            ];
         }
 
         return $descendants;

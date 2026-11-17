@@ -647,17 +647,20 @@
     </div>
     @endif
 
-    {{-- SYNTHÈSE FINANCIÈRE --}}
+    {{-- SYNTHÈSE FINANCIÈRE (produits et services séparés) --}}
     <div class="total-box">
         <div class="flex flex-wrap justify-between items-center gap-4">
             <div>
-                <div class="label">Estimation globale (fiche)</div>
-                <div class="text-sm text-[var(--text-secondary)]">
-                    Produits recommandés + services (Ceragem / Detox). Ce montant n’est pas le total encaissé.
-                </div>
+                <div class="label">Total produits</div>
             </div>
-            <div class="value">${{ number_format($consultation->total_general, 2) }}</div>
+            <div class="value">${{ number_format($consultation->total_produits, 2) }}</div>
         </div>
+        @if(($consultation->total_services ?? 0) > 0)
+        <div class="mt-3 pt-3 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
+            <div class="label">Total services supplémentaires</div>
+            <div class="text-lg font-bold text-[var(--text-primary)]">${{ number_format($consultation->total_services, 2) }}</div>
+        </div>
+        @endif
         @if(!empty($productStats))
         <div class="mt-3 pt-3 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex flex-wrap gap-x-6 gap-y-1">
             <span>Produits payés : <strong class="text-[var(--text-primary)]">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</strong></span>

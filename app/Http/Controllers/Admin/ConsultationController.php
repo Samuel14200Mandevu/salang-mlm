@@ -137,7 +137,8 @@ class ConsultationController extends Controller
 
         $totalServices = ((float) ($request->seances_ceragem ?? 0) * (float) ($request->prix_ceragem ?? 0))
             + ((float) ($request->seances_detox ?? 0) * (float) ($request->prix_detox ?? 0));
-        $totalGeneral = $totalProduits + $totalServices;
+        // Services supplémentaires à part — ne pas additionner au total produits.
+        $totalGeneral = $totalProduits;
 
         $previousStatus = $consultation->status;
 
