@@ -39,6 +39,14 @@ class GuichetWithdrawalController extends Controller
     {
         $status = $request->input('status', 'all');
         $search = trim((string) $request->input('search', ''));
+        $dateFilter = null;
+        if ($request->filled('date')) {
+            try {
+                $dateFilter = Carbon::createFromFormat('Y-m-d', (string) $request->date)->toDateString();
+            } catch (\Throwable) {
+                $dateFilter = null;
+            }
+        }
 
         $query = Withdrawal::query()
             ->with(['user:id,name,sponsor_id,phone', 'wallet'])
@@ -47,6 +55,23 @@ class GuichetWithdrawalController extends Controller
 
         if ($status !== 'all') {
             $query->where('status', $status);
+        }
+
+        if ($dateFilter) {
+            $query->where(function ($q) use ($dateFilter) {
+                $q->whereDate('completed_at', $dateFilter)
+                    ->orWhere(function ($q2) use ($dateFilter) {
+                        $q2->whereNull('completed_at')
+                            ->whereDate('created_at', $dateFilter);
+                    });
+            });
+        }
+
+        $phaseFilter = in_array($request->input('phase'), ['direct', 'il'], true)
+            ? (string) $request->input('phase')
+            : null;
+        if ($phaseFilter) {
+            $query->where('notes', 'like', '%[bonus_phase='.$phaseFilter.']%');
         }
 
         if ($search !== '') {
@@ -61,9 +86,12 @@ class GuichetWithdrawalController extends Controller
 
         $withdrawals = $query->paginate(30)->withQueryString();
 
-        $completedTodayQuery = Withdrawal::where('method', 'guichet')
-            ->where('status', 'completed')
-            ->whereDate('completed_at', today());
+        $completedRemittedQuery = Withdrawal::query()
+            ->where('method', 'guichet')
+            ->where('status', 'completed');
+        if ($dateFilter) {
+            $completedRemittedQuery->whereDate('completed_at', $dateFilter);
+        }
 
         // En attente = bonus D/I/L pas encore crédités au portefeuille.
         $pendingCommissionsAmount = (float) Commission::query()
@@ -86,14 +114,15 @@ class GuichetWithdrawalController extends Controller
             'pending_commissions_amount' => $pendingCommissionsAmount,
             'wallet_due_amount' => $walletDueAmount,
             'completed' => Withdrawal::where('method', 'guichet')->where('status', 'completed')->count(),
-            'completed_today' => (clone $completedTodayQuery)->count(),
-            'paid_today_amount' => (float) (clone $completedTodayQuery)->sum('amount'),
+            'completed_today' => (clone $completedRemittedQuery)->count(),
+            // Montant payé = déjà remis en espèces (journée filtrée ou tout).
+            'paid_today_amount' => (float) (clone $completedRemittedQuery)->sum('amount'),
             // compat sous-titre / anciennes clés
             'pending_amount' => $walletDueAmount,
             'all' => Withdrawal::where('method', 'guichet')->count(),
         ];
 
-        return view('cashier.guichet.index', compact('withdrawals', 'stats', 'status'));
+        return view('cashier.guichet.index', compact('withdrawals', 'stats', 'status', 'dateFilter', 'phaseFilter'));
     }
 
     /**
@@ -144,6 +173,7 @@ class GuichetWithdrawalController extends Controller
             'members' => $members->map(function (User $m) {
                 $wallet = $m->wallet;
                 $eligible = $m->isWalletEligible();
+                $phases = $this->memberPhaseAmounts((int) $m->id);
 
                 return [
                     'id' => $m->id,
@@ -153,6 +183,11 @@ class GuichetWithdrawalController extends Controller
                     'label' => trim(($m->sponsor_id ? $m->sponsor_id.' : ' : '').$m->name),
                     'balance' => $wallet ? (float) $wallet->balance : 0.0,
                     'pending_balance' => $wallet ? (float) $wallet->pending_balance : 0.0,
+                    'direct_reste' => $phases['direct_reste'],
+                    'il_reste' => $phases['il_reste'],
+                    'direct_total' => $phases['direct_total'],
+                    'il_total' => $phases['il_total'],
+                    'period' => $phases['period'],
                     'eligible' => $eligible && (bool) $wallet,
                     'message' => ! $eligible
                         ? 'Ce compte n’a pas de portefeuille retrait.'
@@ -160,6 +195,66 @@ class GuichetWithdrawalController extends Controller
                 ];
             })->values(),
         ]);
+    }
+
+    /**
+     * Montants Direct / I&L (période la plus récente) et reste après retraits.
+     * Inclut pending/approved/paid pour afficher le montant dès le calcul caisse.
+     *
+     * @return array{period:?string,direct_total:float,il_total:float,direct_reste:float,il_reste:float}
+     */
+    protected function memberPhaseAmounts(int $userId): array
+    {
+        $period = Commission::query()
+            ->where('user_id', $userId)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->whereIn('status', ['pending', 'approved', 'paid'])
+            ->where('amount', '>', 0)
+            ->orderByDesc('period')
+            ->value('period');
+
+        if (! is_string($period) || $period === '') {
+            return [
+                'period' => null,
+                'direct_total' => 0.0,
+                'il_total' => 0.0,
+                'direct_reste' => 0.0,
+                'il_reste' => 0.0,
+            ];
+        }
+
+        $byType = Commission::query()
+            ->where('user_id', $userId)
+            ->where('period', $period)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->whereIn('status', ['pending', 'approved', 'paid'])
+            ->where('amount', '>', 0)
+            ->selectRaw('type, SUM(amount) as total')
+            ->groupBy('type')
+            ->pluck('total', 'type');
+
+        $direct = round((float) ($byType['direct'] ?? 0), 2);
+        $il = round(
+            (float) ($byType['indirect'] ?? 0) + (float) ($byType['leadership'] ?? 0),
+            2
+        );
+
+        $withdrawn = round((float) Withdrawal::query()
+            ->where('user_id', $userId)
+            ->where('method', 'guichet')
+            ->whereIn('status', ['pending', 'completed'])
+            ->sum('amount'), 2);
+
+        $retireDirect = round(min($withdrawn, $direct), 2);
+        $retireIl = round(min(max(0, $withdrawn - $direct), $il), 2);
+
+        return [
+            'period' => $period,
+            'direct_total' => $direct,
+            'il_total' => $il,
+            'direct_reste' => round(max(0, $direct - $retireDirect), 2),
+            'il_reste' => round(max(0, $il - $retireIl), 2),
+        ];
     }
 
     /**
@@ -171,9 +266,12 @@ class GuichetWithdrawalController extends Controller
         $data = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'amount' => ['required', 'numeric', 'min:2', 'max:10000'],
+            'bonus_phase' => ['required', 'in:direct,il'],
         ]);
 
         $amount = round((float) $data['amount'], 2);
+        $bonusPhase = $data['bonus_phase'] === 'il' ? 'il' : 'direct';
+        $bonusPhaseLabel = $bonusPhase === 'il' ? 'Indirect & Leadership' : 'Direct';
         $member = User::query()
             ->whereKey($data['user_id'])
             ->where('user_type', 'member')
@@ -247,8 +345,10 @@ class GuichetWithdrawalController extends Controller
                 'method' => 'guichet',
                 'status' => 'pending',
                 'cashier_id' => auth()->id(),
-                'notes' => 'Retrait guichet initié au comptoir par '.auth()->user()->name
-                    .' (sans demande smartphone)',
+                'notes' => 'Retrait guichet · paiement '.$bonusPhaseLabel
+                    .' · initié au comptoir par '.auth()->user()->name
+                    .' (sans demande smartphone)'
+                    ."\n[bonus_phase={$bonusPhase}]",
             ]);
 
             Transaction::create([
@@ -261,7 +361,11 @@ class GuichetWithdrawalController extends Controller
                 'balance_before' => $balanceBefore,
                 'balance_after' => (float) $wallet->balance,
                 'status' => 'pending',
-                'description' => 'Retrait guichet initié au comptoir #'.$withdrawal->id,
+                'description' => 'Retrait guichet ('.$bonusPhaseLabel.') #'.$withdrawal->id,
+                'metadata' => [
+                    'bonus_phase' => $bonusPhase,
+                    'source' => 'guichet_cashier',
+                ],
                 'completed_at' => null,
             ]);
 
@@ -530,51 +634,375 @@ class GuichetWithdrawalController extends Controller
     }
 
     /**
-     * Rapport PDF journalier des retraits guichet remis (letterhead + aperçu comme commissions).
+     * Rapport PDF de fin de paiement des bonus (période) :
+     * 1ʳᵉ date = Direct, 2ᵉ date = Indirect + Leadership.
+     * Les retraits sont imputés Direct d’abord, puis I&L.
      */
     public function exportDailyPdf(Request $request)
     {
         $request->validate([
+            'period' => ['nullable', 'date_format:Y-m'],
             'date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $period = $request->input('period');
+        if (! is_string($period) || $period === '') {
+            $period = Commission::query()
+                ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->where('status', 'paid')
+                ->where('amount', '>', 0)
+                ->orderByDesc('period')
+                ->value('period');
+        }
+        if (! is_string($period) || $period === '') {
+            $period = $request->filled('date')
+                ? Carbon::createFromFormat('Y-m-d', $request->date)->format('Y-m')
+                : now()->format('Y-m');
+        }
+
+        $indexQuery = array_filter([
+            'date' => $request->input('date'),
+            'status' => $request->input('status'),
+            'search' => $request->input('search'),
+            'period' => $period,
+        ], fn ($v) => filled($v));
+
+        if (! $request->boolean('pdf')) {
+            return view('partials.pdf.preview-shell', [
+                'title' => 'Rapport fin de paiement — '.$period,
+                'backUrl' => route('cashier.guichet.index', $indexQuery),
+                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+            ]);
+        }
+
+        $payload = $this->buildFinalPaymentReport($period);
+        $generatedAt = now();
+        $filename = 'rapport_fin_paiement_bonus_'.$period.'.pdf';
+
+        return $this->streamPdfView(
+            'cashier.guichet.daily-pdf',
+            array_merge($payload, [
+                'period' => $period,
+                'generatedAt' => $generatedAt,
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+            ]),
+            $filename,
+            'a4',
+            'portrait',
+            300,
+            '512M'
+        );
+    }
+
+    /**
+     * Construit le détail fin de paiement Direct + I&L pour une période.
+     *
+     * @return array{
+     *   memberRows:\Illuminate\Support\Collection,
+     *   directLines:\Illuminate\Support\Collection,
+     *   ilLines:\Illuminate\Support\Collection,
+     *   directDate:?string,
+     *   ilDate:?string,
+     *   totals:array<string,float|int>
+     * }
+     */
+    protected function buildFinalPaymentReport(string $period): array
+    {
+        $paidByUserType = Commission::query()
+            ->where('period', $period)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->where('status', 'paid')
+            ->where('amount', '>', 0)
+            ->selectRaw('user_id, type, SUM(amount) as total')
+            ->groupBy('user_id', 'type')
+            ->get()
+            ->groupBy('user_id');
+
+        $userIds = $paidByUserType->keys()->map(fn ($id) => (int) $id)->values()->all();
+        if ($userIds === []) {
+            return [
+                'memberRows' => collect(),
+                'directLines' => collect(),
+                'ilLines' => collect(),
+                'directDate' => null,
+                'ilDate' => null,
+                'totals' => [
+                    'direct_total' => 0.0,
+                    'direct_retire' => 0.0,
+                    'direct_reste' => 0.0,
+                    'il_total' => 0.0,
+                    'il_retire' => 0.0,
+                    'il_reste' => 0.0,
+                    'grand_total' => 0.0,
+                    'grand_retire' => 0.0,
+                    'grand_reste' => 0.0,
+                    'members' => 0,
+                ],
+            ];
+        }
+
+        $users = User::query()
+            ->whereIn('id', $userIds)
+            ->get(['id', 'name', 'sponsor_id'])
+            ->keyBy('id');
+
+        $withdrawalsByUser = Withdrawal::query()
+            ->with(['cashier:id,name'])
+            ->where('method', 'guichet')
+            ->where('status', 'completed')
+            ->whereIn('user_id', $userIds)
+            ->orderBy('completed_at')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('user_id');
+
+        $directLines = collect();
+        $ilLines = collect();
+        $memberRows = collect();
+
+        foreach ($userIds as $userId) {
+            $byType = $paidByUserType->get($userId, collect());
+            $direct = round((float) $byType->where('type', 'direct')->sum('total'), 2);
+            $il = round((float) $byType->whereIn('type', ['indirect', 'leadership'])->sum('total'), 2);
+            if ($direct <= 0 && $il <= 0) {
+                continue;
+            }
+
+            $remainingDirect = $direct;
+            $remainingIl = $il;
+            $retireDirect = 0.0;
+            $retireIl = 0.0;
+
+            foreach ($withdrawalsByUser->get($userId, collect()) as $w) {
+                $amount = round((float) $w->amount, 2);
+                if ($amount <= 0) {
+                    continue;
+                }
+
+                $toDirect = round(min($amount, $remainingDirect), 2);
+                if ($toDirect > 0) {
+                    $remainingDirect = round($remainingDirect - $toDirect, 2);
+                    $retireDirect = round($retireDirect + $toDirect, 2);
+                    $directLines->push((object) [
+                        'date' => optional($w->completed_at)->format('Y-m-d'),
+                        'date_label' => optional($w->completed_at)->format('d/m/Y') ?? '—',
+                        'time' => optional($w->completed_at)->format('H:i') ?? '—',
+                        'user' => $users->get($userId),
+                        'amount' => $toDirect,
+                        'receipt' => $w->receipt_number ?: '—',
+                        'cashier' => $w->cashier?->name ?? '—',
+                    ]);
+                }
+
+                $rest = round($amount - $toDirect, 2);
+                $toIl = round(min($rest, $remainingIl), 2);
+                if ($toIl > 0) {
+                    $remainingIl = round($remainingIl - $toIl, 2);
+                    $retireIl = round($retireIl + $toIl, 2);
+                    $ilLines->push((object) [
+                        'date' => optional($w->completed_at)->format('Y-m-d'),
+                        'date_label' => optional($w->completed_at)->format('d/m/Y') ?? '—',
+                        'time' => optional($w->completed_at)->format('H:i') ?? '—',
+                        'user' => $users->get($userId),
+                        'amount' => $toIl,
+                        'receipt' => $w->receipt_number ?: '—',
+                        'cashier' => $w->cashier?->name ?? '—',
+                    ]);
+                }
+            }
+
+            $memberRows->push((object) [
+                'user' => $users->get($userId),
+                'direct_total' => $direct,
+                'direct_retire' => $retireDirect,
+                'direct_reste' => round(max(0, $direct - $retireDirect), 2),
+                'il_total' => $il,
+                'il_retire' => $retireIl,
+                'il_reste' => round(max(0, $il - $retireIl), 2),
+                'total' => round($direct + $il, 2),
+                'retire' => round($retireDirect + $retireIl, 2),
+                'reste' => round(max(0, $direct - $retireDirect) + max(0, $il - $retireIl), 2),
+            ]);
+        }
+
+        $memberRows = $memberRows
+            ->sortBy(fn ($row) => mb_strtolower((string) ($row->user?->name ?? '')))
+            ->values();
+
+        $directLines = $directLines->sortBy([
+            ['date', 'asc'],
+            ['time', 'asc'],
+        ])->values();
+        $ilLines = $ilLines->sortBy([
+            ['date', 'asc'],
+            ['time', 'asc'],
+        ])->values();
+
+        return [
+            'memberRows' => $memberRows,
+            'directLines' => $directLines,
+            'ilLines' => $ilLines,
+            'directDate' => $directLines->pluck('date')->filter()->unique()->sort()->first(),
+            'ilDate' => $ilLines->pluck('date')->filter()->unique()->sort()->first(),
+            'totals' => [
+                'direct_total' => round((float) $memberRows->sum('direct_total'), 2),
+                'direct_retire' => round((float) $memberRows->sum('direct_retire'), 2),
+                'direct_reste' => round((float) $memberRows->sum('direct_reste'), 2),
+                'il_total' => round((float) $memberRows->sum('il_total'), 2),
+                'il_retire' => round((float) $memberRows->sum('il_retire'), 2),
+                'il_reste' => round((float) $memberRows->sum('il_reste'), 2),
+                'grand_total' => round((float) $memberRows->sum('total'), 2),
+                'grand_retire' => round((float) $memberRows->sum('retire'), 2),
+                'grand_reste' => round((float) $memberRows->sum('reste'), 2),
+                'members' => $memberRows->count(),
+            ],
+        ];
+    }
+
+    /**
+     * Feuille à imprimer avant les retraits : Total / Retiré / Reste / Signature.
+     *
+     * Deux dates de remise :
+     *  - phase=direct → bonus Direct uniquement
+     *  - phase=il     → Indirect + Leadership (tout ou partie)
+     *
+     * Les retraits déjà remis (ex. le 16) réduisent le Reste : un membre soldé
+     * n’apparaît plus sur la feuille du jour suivant (ex. le 17).
+     * Ordre d’imputation des retraits : Direct d’abord, puis I&L.
+     */
+    public function exportSignoffPdf(Request $request)
+    {
+        $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'period' => ['nullable', 'date_format:Y-m'],
+            'phase' => ['nullable', 'in:direct,il'],
         ]);
 
         $reportDate = $request->filled('date')
             ? Carbon::createFromFormat('Y-m-d', $request->date)->startOfDay()
             : now()->startOfDay();
 
+        $phase = $request->input('phase', 'direct') === 'il' ? 'il' : 'direct';
+        $phaseLabel = $phase === 'il' ? 'Indirect & Leadership' : 'Direct';
+        $docTitle = $phase === 'il' ? 'Paiement de bonus Indirect & Leadership' : 'Paiement de bonus Direct';
+        $phaseTypes = $phase === 'il' ? ['indirect', 'leadership'] : ['direct'];
+
+        $period = $request->input('period');
+        if (! is_string($period) || $period === '') {
+            $period = Commission::query()
+                ->whereIn('type', ['direct', 'indirect', 'leadership'])
+                ->where('status', 'paid')
+                ->where('amount', '>', 0)
+                ->orderByDesc('period')
+                ->value('period');
+        }
+        if (! is_string($period) || $period === '') {
+            $period = $reportDate->format('Y-m');
+        }
+
+        $indexQuery = array_filter([
+            'date' => $reportDate->toDateString(),
+            'status' => $request->input('status'),
+            'search' => $request->input('search'),
+            'phase' => $phase,
+            'period' => $period,
+        ], fn ($v) => filled($v));
+
         if (! $request->boolean('pdf')) {
             return view('partials.pdf.preview-shell', [
-                'title' => 'Rapport Retraits Guichet',
-                'backUrl' => route('cashier.guichet.index', $request->except('pdf')),
+                'title' => $docTitle,
+                'backUrl' => route('cashier.guichet.index', $indexQuery),
                 'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
             ]);
         }
 
-        $withdrawals = Withdrawal::query()
-            ->with(['user:id,name,sponsor_id', 'cashier:id,name'])
-            ->where('method', 'guichet')
-            ->where('status', 'completed')
-            ->whereDate('completed_at', $reportDate->toDateString())
-            ->orderBy('completed_at')
-            ->get();
+        $paidByUserType = Commission::query()
+            ->where('period', $period)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->where('status', 'paid')
+            ->where('amount', '>', 0)
+            ->selectRaw('user_id, type, SUM(amount) as total')
+            ->groupBy('user_id', 'type')
+            ->get()
+            ->groupBy('user_id');
 
-        $totalAmount = (float) $withdrawals->sum('amount');
+        $userIds = $paidByUserType->keys()->map(fn ($id) => (int) $id)->all();
+        if ($userIds === []) {
+            $rows = collect();
+        } else {
+            $users = User::query()
+                ->whereIn('id', $userIds)
+                ->get(['id', 'name', 'sponsor_id'])
+                ->keyBy('id');
+
+            // Retraits remis jusqu’à la fin de la journée (pas les jours suivants).
+            $withdrawnByUser = Withdrawal::query()
+                ->where('method', 'guichet')
+                ->where('status', 'completed')
+                ->whereIn('user_id', $userIds)
+                ->where('completed_at', '<=', $reportDate->copy()->endOfDay())
+                ->selectRaw('user_id, SUM(amount) as total')
+                ->groupBy('user_id')
+                ->pluck('total', 'user_id')
+                ->map(fn ($v) => round((float) $v, 2));
+
+            $rows = collect($userIds)->map(function (int $userId) use ($paidByUserType, $withdrawnByUser, $users, $phase) {
+                $byType = $paidByUserType->get($userId, collect());
+                $direct = round((float) $byType->where('type', 'direct')->sum('total'), 2);
+                $il = round(
+                    (float) $byType->whereIn('type', ['indirect', 'leadership'])->sum('total'),
+                    2
+                );
+
+                $withdrawn = (float) ($withdrawnByUser[$userId] ?? 0);
+                // Imputation : Direct d’abord, puis I&L.
+                $retireDirect = round(min($withdrawn, $direct), 2);
+                $retireIl = round(min(max(0, $withdrawn - $direct), $il), 2);
+
+                if ($phase === 'direct') {
+                    $total = $direct;
+                    $retire = $retireDirect;
+                } else {
+                    $total = $il;
+                    $retire = $retireIl;
+                }
+                $reste = round(max(0, $total - $retire), 2);
+
+                return (object) [
+                    'user' => $users->get($userId),
+                    'total' => $total,
+                    'retire' => $retire,
+                    'reste' => $reste,
+                ];
+            })
+                ->filter(fn ($row) => $row->reste > 0.004)
+                ->sortBy(fn ($row) => mb_strtolower((string) ($row->user?->name ?? '')))
+                ->values();
+        }
+
         $generatedAt = now();
-        $filename = 'rapport_retraits_guichet_'.$reportDate->format('Y-m-d').'.pdf';
+        $filename = 'feuille_signatures_'.$phase.'_'.$period.'_'.$reportDate->format('Y-m-d').'.pdf';
 
         return $this->streamPdfView(
-            'cashier.guichet.daily-pdf',
+            'cashier.guichet.signoff-pdf',
             [
-                'withdrawals' => $withdrawals,
-                'totalAmount' => $totalAmount,
+                'rows' => $rows,
+                'totalReste' => round((float) $rows->sum('reste'), 2),
+                'totalRetire' => round((float) $rows->sum('retire'), 2),
+                'totalAll' => round((float) $rows->sum('total'), 2),
                 'reportDate' => $reportDate,
+                'period' => $period,
+                'phase' => $phase,
+                'phaseLabel' => $phaseLabel,
+                'phaseTypes' => $phaseTypes,
                 'generatedAt' => $generatedAt,
                 'logoBase64' => $this->loadPdfLogoBase64(),
                 'letterheadBase64' => $this->loadPdfLetterheadBase64(),
             ],
             $filename,
             'a4',
-            'portrait',
+            'landscape',
             300,
             '512M'
         );

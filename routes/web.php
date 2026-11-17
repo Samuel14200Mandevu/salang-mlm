@@ -509,6 +509,7 @@ Route::middleware(['auth', 'active'])->prefix('cashier')->name('cashier.')->grou
     Route::prefix('guichet')->name('guichet.')->group(function () {
         Route::get('/', [GuichetWithdrawalController::class, 'index'])->name('index');
         Route::get('/export-daily-pdf', [GuichetWithdrawalController::class, 'exportDailyPdf'])->name('export-daily-pdf');
+        Route::get('/export-signoff-pdf', [GuichetWithdrawalController::class, 'exportSignoffPdf'])->name('export-signoff-pdf');
         Route::get('/create', [GuichetWithdrawalController::class, 'create'])->name('create');
         Route::get('/find-member', [GuichetWithdrawalController::class, 'findMember'])->name('find-member');
         Route::post('/', [GuichetWithdrawalController::class, 'store'])->name('store');

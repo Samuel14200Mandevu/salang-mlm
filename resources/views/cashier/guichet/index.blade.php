@@ -385,6 +385,30 @@
         line-height: 1.45;
         text-align: center;
     }
+    .users-filter-menu .products-filter-sep {
+        padding: 0.4rem 0.65rem 0.2rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-tertiary);
+    }
+    .users-filter-menu .guichet-date-filter {
+        padding: 0.35rem 0.65rem 0.65rem;
+    }
+    .users-filter-menu .guichet-date-filter input[type="date"] {
+        width: 100%;
+        padding: 0.45rem 0.55rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.45rem;
+        background: var(--bg-input, var(--bg-primary));
+        color: var(--text-primary);
+        font-size: 0.8rem;
+    }
+    .users-filter-menu .guichet-date-filter .btn {
+        margin-top: 0.4rem;
+        width: 100%;
+    }
 </style>
 @endpush
 
@@ -393,21 +417,60 @@
 @section('content')
 @php
     $currentStatus = $status ?? request('status', 'all');
-    $filterActive = in_array($currentStatus, ['pending', 'completed'], true);
+    $dateFilter = $dateFilter ?? request('date');
+    $phaseFilter = in_array(request('phase'), ['direct', 'il'], true) ? request('phase') : null;
+    $filterActive = in_array($currentStatus, ['pending', 'completed'], true)
+        || filled($dateFilter)
+        || filled($phaseFilter);
     $filterLabels = [
         'pending' => 'En attente',
         'completed' => 'Terminés',
         'all' => 'Tous',
     ];
-    $filterButtonLabel = $filterLabels[$currentStatus] ?? 'Filtrer';
+    $phaseLabels = [
+        'direct' => 'Direct',
+        'il' => 'Indirect & Leadership',
+    ];
+    $filterButtonLabel = filled($phaseFilter)
+        ? ($phaseLabels[$phaseFilter] ?? 'Paiement')
+        : (filled($dateFilter)
+            ? \Carbon\Carbon::createFromFormat('Y-m-d', $dateFilter)->format('d/m/Y')
+            : ($filterLabels[$currentStatus] ?? 'Filtrer'));
     $filterQueryBase = array_filter([
         'search' => request('search'),
+        'date' => $dateFilter,
+        'phase' => $phaseFilter,
     ], fn ($v) => filled($v));
+    $statusFilterBase = array_filter([
+        'search' => request('search'),
+        'date' => $dateFilter,
+        'phase' => $phaseFilter,
+    ], fn ($v) => filled($v));
+    $pdfDate = filled($dateFilter) ? $dateFilter : now()->toDateString();
+    $pdfPeriod = request('period') ?: (\App\Models\Commission::query()
+        ->whereIn('type', ['direct', 'indirect', 'leadership'])
+        ->where('status', 'paid')
+        ->where('amount', '>', 0)
+        ->orderByDesc('period')
+        ->value('period') ?: now()->format('Y-m'));
+    $signoffDirectUrl = route('cashier.guichet.export-signoff-pdf', [
+        'date' => $pdfDate,
+        'period' => $pdfPeriod,
+        'phase' => 'direct',
+    ]);
+    $signoffIlUrl = route('cashier.guichet.export-signoff-pdf', [
+        'date' => $pdfDate,
+        'period' => $pdfPeriod,
+        'phase' => 'il',
+    ]);
     $searchOpen = filled(request('search'));
+    $remisLabel = filled($dateFilter) ? 'Remis ce jour' : 'Remis';
+    $paidLabel = 'Montant payé';
     $subtitleHtml = 'En attente $'.number_format($stats['pending_commissions_amount'] ?? 0, 2)
         .' · Dû $'.number_format($stats['wallet_due_amount'] ?? $stats['pending_amount'] ?? 0, 2)
+        .' · Payé $'.number_format($stats['paid_today_amount'] ?? 0, 2)
+        .(filled($dateFilter) ? ' · '.e(\Carbon\Carbon::createFromFormat('Y-m-d', $dateFilter)->format('d/m/Y')) : '')
         .(($stats['pending'] ?? 0) > 0 ? ' · '.($stats['pending']).' retrait(s)' : '')
-        .($filterActive ? ' · '.e($filterButtonLabel) : '')
         .(request('search')
             ? ' <span class="text-xs opacity-90">· Résultats pour "'.e(request('search')).'"</span>'
             : '');
@@ -448,21 +511,55 @@
                          x-transition
                          @click.outside="filterOpen = false"
                          class="users-filter-menu">
-                        <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'all'])) }}"
+                        <div class="products-filter-sep">Statut</div>
+                        <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'all'])) }}"
                            class="filter-link {{ $currentStatus === 'all' ? 'is-active' : '' }}">
                             <span>Tous</span>
                             <span class="filter-count">{{ $stats['all'] ?? 0 }}</span>
                         </a>
-                        <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'pending'])) }}"
+                        <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'pending'])) }}"
                            class="filter-link {{ $currentStatus === 'pending' ? 'is-active' : '' }}">
                             <span>En attente</span>
                             <span class="filter-count">{{ $stats['pending'] ?? 0 }}</span>
                         </a>
-                        <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'completed'])) }}"
+                        <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'completed'])) }}"
                            class="filter-link {{ $currentStatus === 'completed' ? 'is-active' : '' }}">
                             <span>Terminés</span>
                             <span class="filter-count">{{ $stats['completed'] ?? 0 }}</span>
                         </a>
+                        <div class="products-filter-sep">Paiement</div>
+                        <a href="{{ route('cashier.guichet.index', array_merge(array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v)), ['phase' => 'direct'])) }}"
+                           class="filter-link {{ $phaseFilter === 'direct' ? 'is-active' : '' }}">
+                            <span>Direct</span>
+                        </a>
+                        <a href="{{ route('cashier.guichet.index', array_merge(array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v)), ['phase' => 'il'])) }}"
+                           class="filter-link {{ $phaseFilter === 'il' ? 'is-active' : '' }}">
+                            <span>Indirect &amp; Leadership</span>
+                        </a>
+                        @if(filled($phaseFilter))
+                            <a href="{{ route('cashier.guichet.index', array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v))) }}"
+                               class="filter-link">
+                                <span>Tous paiements</span>
+                            </a>
+                        @endif
+                        <div class="products-filter-sep">Jour</div>
+                        <form method="GET" action="{{ route('cashier.guichet.index') }}" class="guichet-date-filter" @click.stop>
+                            <input type="hidden" name="status" value="{{ $currentStatus }}">
+                            @if(filled(request('search')))
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                            @endif
+                            @if(filled($phaseFilter))
+                                <input type="hidden" name="phase" value="{{ $phaseFilter }}">
+                            @endif
+                            <input type="date" name="date" value="{{ $dateFilter }}" aria-label="Choisir le jour">
+                            <button type="submit" class="btn btn-primary btn-sm">Voir ce jour</button>
+                            @if(filled($dateFilter))
+                                <a href="{{ route('cashier.guichet.index', array_filter(['status' => $currentStatus, 'search' => request('search'), 'phase' => $phaseFilter], fn ($v) => filled($v))) }}"
+                                   class="filter-link" style="margin-top:0.25rem;justify-content:center;">
+                                    <span>Effacer le jour</span>
+                                </a>
+                            @endif
+                        </form>
                     </div>
                 </div>
                 <button type="button"
@@ -480,10 +577,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-                <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
+                <a href="{{ $signoffDirectUrl }}"
                    class="btn btn-sm btn-round-icon btn-pdf-icon"
-                   title="Rapport journalier PDF"
-                   aria-label="Rapport journalier PDF">
+                   title="Paiement de bonus Direct"
+                   aria-label="Paiement de bonus Direct">
+                    <span class="text-[0.65rem] font-bold leading-none">D</span>
+                </a>
+                <a href="{{ $signoffIlUrl }}"
+                   class="btn btn-sm btn-round-icon btn-pdf-icon"
+                   title="Paiement de bonus Indirect &amp; Leadership"
+                   aria-label="Paiement de bonus Indirect et Leadership">
+                    <span class="text-[0.65rem] font-bold leading-none">I+L</span>
+                </a>
+                <a href="{{ route('cashier.guichet.export-daily-pdf', ['period' => $pdfPeriod]) }}"
+                   class="btn btn-sm btn-round-icon btn-pdf-icon"
+                   title="Rapport fin de paiement (Direct + I&amp;L)"
+                   aria-label="Rapport fin de paiement">
                     <x-pdf-icon size="lg" />
                 </a>
             </div>
@@ -494,6 +603,12 @@
              aria-hidden="{{ $searchOpen ? 'false' : 'true' }}">
             <form method="GET" action="{{ route('cashier.guichet.index') }}" class="search-wrapper admin-shop-search">
                 <input type="hidden" name="status" value="{{ $currentStatus }}">
+                @if(filled($dateFilter))
+                    <input type="hidden" name="date" value="{{ $dateFilter }}">
+                @endif
+                @if(filled($phaseFilter))
+                    <input type="hidden" name="phase" value="{{ $phaseFilter }}">
+                @endif
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
@@ -514,6 +629,12 @@
         <div class="flex items-center gap-2">
             <form method="GET" action="{{ route('cashier.guichet.index') }}" class="header-search">
                 <input type="hidden" name="status" value="{{ $currentStatus }}">
+                @if(filled($dateFilter))
+                    <input type="hidden" name="date" value="{{ $dateFilter }}">
+                @endif
+                @if(filled($phaseFilter))
+                    <input type="hidden" name="phase" value="{{ $phaseFilter }}">
+                @endif
                 <div class="search-wrapper">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -541,21 +662,55 @@
                      x-transition
                      @click.outside="filterOpen = false"
                      class="users-filter-menu">
-                    <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'all'])) }}"
+                    <div class="products-filter-sep">Statut</div>
+                    <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'all'])) }}"
                        class="filter-link {{ $currentStatus === 'all' ? 'is-active' : '' }}">
                         <span>Tous</span>
                         <span class="filter-count">{{ $stats['all'] ?? 0 }}</span>
                     </a>
-                    <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'pending'])) }}"
+                    <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'pending'])) }}"
                        class="filter-link {{ $currentStatus === 'pending' ? 'is-active' : '' }}">
                         <span>En attente</span>
                         <span class="filter-count">{{ $stats['pending'] ?? 0 }}</span>
                     </a>
-                    <a href="{{ route('cashier.guichet.index', array_merge($filterQueryBase, ['status' => 'completed'])) }}"
+                    <a href="{{ route('cashier.guichet.index', array_merge($statusFilterBase, ['status' => 'completed'])) }}"
                        class="filter-link {{ $currentStatus === 'completed' ? 'is-active' : '' }}">
                         <span>Terminés</span>
                         <span class="filter-count">{{ $stats['completed'] ?? 0 }}</span>
                     </a>
+                    <div class="products-filter-sep">Paiement</div>
+                    <a href="{{ route('cashier.guichet.index', array_merge(array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v)), ['phase' => 'direct'])) }}"
+                       class="filter-link {{ $phaseFilter === 'direct' ? 'is-active' : '' }}">
+                        <span>Direct</span>
+                    </a>
+                    <a href="{{ route('cashier.guichet.index', array_merge(array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v)), ['phase' => 'il'])) }}"
+                       class="filter-link {{ $phaseFilter === 'il' ? 'is-active' : '' }}">
+                        <span>Indirect &amp; Leadership</span>
+                    </a>
+                    @if(filled($phaseFilter))
+                        <a href="{{ route('cashier.guichet.index', array_filter(['status' => $currentStatus, 'search' => request('search'), 'date' => $dateFilter], fn ($v) => filled($v))) }}"
+                           class="filter-link">
+                            <span>Tous paiements</span>
+                        </a>
+                    @endif
+                    <div class="products-filter-sep">Jour</div>
+                    <form method="GET" action="{{ route('cashier.guichet.index') }}" class="guichet-date-filter" @click.stop>
+                        <input type="hidden" name="status" value="{{ $currentStatus }}">
+                        @if(filled(request('search')))
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
+                        @if(filled($phaseFilter))
+                            <input type="hidden" name="phase" value="{{ $phaseFilter }}">
+                        @endif
+                        <input type="date" name="date" value="{{ $dateFilter }}" aria-label="Choisir le jour">
+                        <button type="submit" class="btn btn-primary btn-sm">Voir ce jour</button>
+                        @if(filled($dateFilter))
+                            <a href="{{ route('cashier.guichet.index', array_filter(['status' => $currentStatus, 'search' => request('search'), 'phase' => $phaseFilter], fn ($v) => filled($v))) }}"
+                               class="filter-link" style="margin-top:0.25rem;justify-content:center;">
+                                <span>Effacer le jour</span>
+                            </a>
+                        @endif
+                    </form>
                 </div>
             </div>
             <button type="button"
@@ -572,10 +727,22 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
-            <a href="{{ route('cashier.guichet.export-daily-pdf', ['date' => now()->toDateString()]) }}"
+            <a href="{{ $signoffDirectUrl }}"
                class="btn btn-sm btn-round-icon btn-pdf-icon"
-               title="Rapport journalier PDF"
-               aria-label="Rapport journalier PDF">
+               title="Paiement de bonus Direct"
+               aria-label="Paiement de bonus Direct">
+                <span class="text-[0.65rem] font-bold leading-none">D</span>
+            </a>
+            <a href="{{ $signoffIlUrl }}"
+               class="btn btn-sm btn-round-icon btn-pdf-icon"
+               title="Paiement de bonus Indirect &amp; Leadership"
+               aria-label="Paiement de bonus Indirect et Leadership">
+                <span class="text-[0.65rem] font-bold leading-none">I+L</span>
+            </a>
+            <a href="{{ route('cashier.guichet.export-daily-pdf', ['period' => $pdfPeriod]) }}"
+               class="btn btn-sm btn-round-icon btn-pdf-icon"
+               title="Rapport fin de paiement (Direct + I&amp;L)"
+               aria-label="Rapport fin de paiement">
                 <x-pdf-icon size="lg" />
             </a>
         </div>
@@ -691,8 +858,34 @@
 
                 <section class="guichet-form-section">
                     <div class="guichet-form-section__head">
-                        <h3>2 · Montant</h3>
-                        <p>Somme à remettre en espèces au membre.</p>
+                        <h3>2 · Type de paiement</h3>
+                    </div>
+
+                    <template x-if="!selected">
+                        <p class="guichet-empty-hint">Sélectionnez d’abord un membre.</p>
+                    </template>
+
+                    <div x-show="selected" x-cloak class="form-group">
+                        <label>Paiement <span class="text-[var(--danger)]">*</span></label>
+                        <input type="hidden" name="bonus_phase" :value="bonusPhase">
+                        <div class="guichet-quick">
+                            <button type="button"
+                                    :class="{ 'is-active': bonusPhase === 'direct' }"
+                                    @click="setBonusPhase('direct')">
+                                Direct
+                            </button>
+                            <button type="button"
+                                    :class="{ 'is-active': bonusPhase === 'il' }"
+                                    @click="setBonusPhase('il')">
+                                Indirect &amp; Leadership
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="guichet-form-section">
+                    <div class="guichet-form-section__head">
+                        <h3>3 · Montant</h3>
                     </div>
 
                     <template x-if="!selected">
@@ -759,19 +952,23 @@
                 <section class="guichet-form-section">
                     <div class="guichet-form-section__head">
                         <h3>Progression</h3>
-                        <p>3 étapes au comptoir.</p>
+                        <p>4 étapes au comptoir.</p>
                     </div>
                     <ul class="guichet-steps">
                         <li :class="selected ? 'is-done' : 'is-active'">
                             <span class="guichet-steps__dot" x-text="selected ? '✓' : '1'"></span>
                             <span>Identifier le membre</span>
                         </li>
-                        <li :class="canCreate ? 'is-done' : (selected ? 'is-active' : '')">
-                            <span class="guichet-steps__dot" x-text="canCreate ? '✓' : '2'"></span>
+                        <li :class="selected && bonusPhase ? 'is-done' : (selected ? 'is-active' : '')">
+                            <span class="guichet-steps__dot" x-text="selected && bonusPhase ? '✓' : '2'"></span>
+                            <span>Choisir Direct ou I&amp;L</span>
+                        </li>
+                        <li :class="canCreate ? 'is-done' : (selected && bonusPhase ? 'is-active' : '')">
+                            <span class="guichet-steps__dot" x-text="canCreate ? '✓' : '3'"></span>
                             <span>Saisir le montant</span>
                         </li>
                         <li :class="canCreate ? 'is-active' : ''">
-                            <span class="guichet-steps__dot">3</span>
+                            <span class="guichet-steps__dot">4</span>
                             <span>Créer puis remettre + reçu</span>
                         </li>
                     </ul>
@@ -791,13 +988,17 @@
                             <span>Code</span>
                             <strong class="font-mono" x-text="selected ? (selected.sponsor_id || '—') : '—'"></strong>
                         </div>
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !bonusPhase }">
+                            <span>Paiement</span>
+                            <strong x-text="bonusPhase === 'il' ? 'Indirect & Leadership' : (bonusPhase === 'direct' ? 'Direct' : '—')"></strong>
+                        </div>
                         <div class="guichet-recap__row" :class="{ 'is-muted': !selected }">
                             <span>Disponible</span>
                             <strong x-text="selected ? ('$' + Number(selected.balance).toFixed(2)) : '—'"></strong>
                         </div>
-                        <div class="guichet-recap__row" :class="{ 'is-muted': !(selected && Number(amount) > 0) }">
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !(selected && bonusPhase && Number(amount) > 0) }">
                             <span>À remettre</span>
-                            <strong x-text="selected && Number(amount) > 0 ? ('$' + Number(amount).toFixed(2)) : '—'"></strong>
+                            <strong x-text="selected && bonusPhase && Number(amount) > 0 ? ('$' + Number(amount).toFixed(2)) : '—'"></strong>
                         </div>
                     </div>
                 </section>
@@ -840,14 +1041,14 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div class="number">{{ $stats['completed_today'] }}</div>
-            <div class="label">Remis aujourd’hui</div>
+            <div class="label">{{ $remisLabel }}</div>
         </div>
         <div class="commission-stat-card">
             <div class="icon icon-green">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div class="number">${{ number_format($stats['paid_today_amount'] ?? 0, 2) }}</div>
-            <div class="label">Montant payé</div>
+            <div class="label">{{ $paidLabel }}</div>
         </div>
     </div>
 
@@ -859,9 +1060,8 @@
                     <tr>
                         <th>N°</th>
                         <th>Membre</th>
-                        <th class="col-amount">Total</th>
-                        <th class="col-amount">Retiré</th>
-                        <th class="col-amount">Reste</th>
+                        <th>Paiement</th>
+                        <th class="col-amount">Montant</th>
                         <th>Statut</th>
                         <th class="hidden sm:table-cell">Date</th>
                     </tr>
@@ -873,12 +1073,13 @@
                                 ? trim(($w->user->sponsor_id ? $w->user->sponsor_id.' : ' : '').$w->user->name)
                                 : '—';
                             $detailUrl = route('cashier.guichet.show', $w->id);
-                            $retire = (float) $w->amount;
-                            $reste = (float) ($w->wallet?->balance ?? 0);
-                            // Pending / completed : le débit est déjà sorti du solde → total = reste + retiré
-                            $total = in_array($w->status, ['pending', 'completed'], true)
-                                ? $reste + $retire
-                                : $reste;
+                            $phaseTag = null;
+                            if (is_string($w->notes) && preg_match('/\[bonus_phase=(direct|il)\]/', $w->notes, $m)) {
+                                $phaseTag = $m[1];
+                            }
+                            $phaseLabel = $phaseTag === 'il'
+                                ? 'Indirect & Leadership'
+                                : ($phaseTag === 'direct' ? 'Direct' : '—');
                         @endphp
                         <tr class="commission-row"
                             role="link"
@@ -890,14 +1091,9 @@
                             <td>
                                 <span class="commission-member">{{ $memberLabel }}</span>
                             </td>
+                            <td class="text-xs">{{ $phaseLabel }}</td>
                             <td class="col-amount text-[var(--text-primary)]">
-                                ${{ number_format($total, 2) }}
-                            </td>
-                            <td class="col-amount text-[var(--ui-stat-success)]">
-                                ${{ number_format($retire, 2) }}
-                            </td>
-                            <td class="col-amount text-[var(--text-secondary)]">
-                                ${{ number_format($reste, 2) }}
+                                ${{ number_format((float) $w->amount, 2) }}
                             </td>
                             <td>
                                 @if($w->status === 'pending')
@@ -914,7 +1110,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-[var(--text-secondary)]">
+                            <td colspan="6" class="text-center py-8 text-[var(--text-secondary)]">
                                 <p class="text-base font-medium text-[var(--text-primary)]">
                                     @if($currentStatus === 'pending')
                                         Aucun retrait en attente
@@ -959,6 +1155,7 @@ function guichetCreateForm(startOpen = false) {
         open: !!startOpen,
         query: @json(old('q', '')),
         amount: @json(old('amount', '')),
+        bonusPhase: @json(old('bonus_phase', 'direct')),
         results: [],
         selected: null,
         searching: false,
@@ -985,7 +1182,7 @@ function guichetCreateForm(startOpen = false) {
             return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         },
         get canCreate() {
-            if (!this.selected) return false;
+            if (!this.selected || !this.bonusPhase) return false;
             const n = Number(this.amount);
             return Number.isFinite(n) && n >= 2 && n <= Number(this.selected.balance);
         },
@@ -1070,13 +1267,41 @@ function guichetCreateForm(startOpen = false) {
             this.results = [];
             this.focusIndex = -1;
             this.hintError = false;
-            this.statusMessage = 'Membre sélectionné — saisissez le montant.';
+            this.statusMessage = 'Membre sélectionné — choisissez Direct ou I&L.';
+            this.applyPhaseAmount();
             this.$nextTick(() => {
                 if (this.$refs.amountInput) {
                     this.$refs.amountInput.focus();
                     this.$refs.amountInput.select();
                 }
             });
+        },
+        setBonusPhase(phase) {
+            this.bonusPhase = phase;
+            this.applyPhaseAmount();
+            this.$nextTick(() => {
+                if (this.$refs.amountInput) {
+                    this.$refs.amountInput.focus();
+                    this.$refs.amountInput.select();
+                }
+            });
+        },
+        phaseSuggestedAmount() {
+            if (!this.selected || !this.bonusPhase) return 0;
+            // Montant de la phase (Direct ou I&L), pas plafonné au portefeuille
+            // pour l’affichage Récap — le contrôle solde reste sur canCreate.
+            const phaseReste = this.bonusPhase === 'il'
+                ? Number(this.selected.il_reste ?? this.selected.il_total) || 0
+                : Number(this.selected.direct_reste ?? this.selected.direct_total) || 0;
+            return Math.max(0, phaseReste);
+        },
+        applyPhaseAmount() {
+            if (!this.selected || !this.bonusPhase) {
+                this.amount = '';
+                return;
+            }
+            const suggested = this.phaseSuggestedAmount();
+            this.amount = suggested > 0 ? Number(suggested).toFixed(2) : '';
         },
         setAmount(value) {
             const n = Math.floor(Number(value) * 100) / 100;
@@ -1118,6 +1343,11 @@ function guichetCreateForm(startOpen = false) {
             if (!this.selected) {
                 this.hintError = true;
                 this.statusMessage = 'Sélectionnez un membre d’abord.';
+                return false;
+            }
+            if (!this.bonusPhase || !['direct', 'il'].includes(this.bonusPhase)) {
+                this.hintError = true;
+                this.statusMessage = 'Choisissez Direct ou Indirect & Leadership.';
                 return false;
             }
             const n = Number(this.amount);
