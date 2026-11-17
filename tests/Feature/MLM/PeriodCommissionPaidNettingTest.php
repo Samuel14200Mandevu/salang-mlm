@@ -169,4 +169,64 @@ class PeriodCommissionPaidNettingTest extends TestCase
         $this->assertEqualsWithDelta($expectedMissing, (float) $pendingMissing, 0.001);
         $this->assertEqualsWithDelta(0.0, (float) $pendingOther, 0.001);
     }
+
+    public function test_recalc_does_not_create_direct_rate_catchup_after_paid(): void
+    {
+        $period = CommissionPeriod::firstOrCreate(
+            ['period' => MlmPeriod::current()],
+            [
+                'start_date' => now()->startOfMonth(),
+                'end_date' => now()->endOfMonth(),
+                'status' => 'pending',
+            ]
+        );
+
+        // Comme 513067 : payé à 26% (grade 4), puis promu grade 5 (30%)
+        $member = User::factory()->create([
+            'is_active' => true,
+            'user_type' => 'member',
+            'rank_level' => 5,
+            'rank' => 'Manager Senior',
+            'team_pv' => 5000,
+            'sponsor_id' => '513067',
+        ]);
+
+        PVHistory::create([
+            'user_id' => $member->id,
+            'amount' => 75,
+            'date' => now()->toDateString(),
+            'period' => $period->period,
+            'type' => 'personal',
+            'status' => 'posted',
+            'notes' => 'test direct rate lock',
+            'created_by' => $member->id,
+        ]);
+
+        Commission::create([
+            'user_id' => $member->id,
+            'from_user_id' => $member->id,
+            'commission_period_id' => $period->id,
+            'period' => $period->period,
+            'type' => 'direct',
+            'source' => 'mlm',
+            'amount' => 19.50,
+            'percentage' => 26,
+            'pv_used' => 75,
+            'generation' => 0,
+            'calculation_type' => 'automatic',
+            'status' => 'paid',
+            'paid_at' => now(),
+            'description' => 'Payé grade 4',
+        ]);
+
+        app(PeriodCommissionCalculator::class)->calculateForPeriod($period, $member->id);
+
+        $pendingDirect = Commission::query()
+            ->where('user_id', $member->id)
+            ->where('type', 'direct')
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $this->assertEqualsWithDelta(0.0, (float) $pendingDirect, 0.001);
+    }
 }

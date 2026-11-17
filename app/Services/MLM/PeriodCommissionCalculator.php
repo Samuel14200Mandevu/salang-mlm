@@ -114,14 +114,24 @@ class PeriodCommissionCalculator
             // Compensation anti-double-paiement : par (type + from_user_id),
             // jamais par type seul — sinon un résidu est crédité sur un autre downline.
             $paidRemaining = $this->paidRemainingByTypeAndSource((int) $uid, (int) $period->id);
+            $paidMeta = $this->paidMetaByTypeAndSource((int) $uid, (int) $period->id);
 
             // ─── 1. BONUS DIRECT (sur monthly_pv total) ───
-            $directBonus = $this->calculateDirectBonus($user, (int)$userMonthlyPV, $period);
+            $directBonus = $this->calculateDirectBonus($user, (int) $userMonthlyPV, $period);
             if ($directBonus) {
+                $fromUserId = (int) ($directBonus['from_user_id'] ?? $uid);
+                $directBonus['amount'] = $this->amountAfterPaidSettlement(
+                    (float) $directBonus['amount'],
+                    (float) ($directBonus['percentage'] ?? 0),
+                    (float) ($directBonus['pv_used'] ?? $userMonthlyPV),
+                    'direct',
+                    $fromUserId,
+                    $paidMeta
+                );
                 $netDirect = $this->netPendingAfterPaid(
                     $directBonus['amount'],
                     'direct',
-                    (int) ($directBonus['from_user_id'] ?? $uid),
+                    $fromUserId,
                     $paidRemaining
                 );
                 if ($netDirect > 0.00001) {
@@ -411,27 +421,87 @@ class PeriodCommissionCalculator
      */
     private function paidRemainingByTypeAndSource(int $userId, int $periodId): array
     {
-        $rows = Commission::query()
-            ->where('user_id', $userId)
-            ->where('commission_period_id', $periodId)
-            ->whereIn('type', ['direct', 'indirect', 'leadership'])
-            ->where('status', 'paid')
-            ->selectRaw('type, COALESCE(from_user_id, 0) as from_user_id, SUM(amount) as total_paid')
-            ->groupBy('type', 'from_user_id')
-            ->get();
-
+        $meta = $this->paidMetaByTypeAndSource($userId, $periodId);
         $paid = [];
-        foreach ($rows as $row) {
-            $key = $this->paidRemainingKey((string) $row->type, (int) $row->from_user_id);
-            $paid[$key] = (float) $row->total_paid;
+        foreach ($meta as $key => $row) {
+            $paid[$key] = (float) ($row['amount'] ?? 0);
         }
 
         return $paid;
     }
 
+    /**
+     * Métadonnées des lignes déjà payées : montant, PV max, taux max.
+     *
+     * @return array<string, array{amount: float, pv_used: float, percentage: float}>
+     */
+    private function paidMetaByTypeAndSource(int $userId, int $periodId): array
+    {
+        $rows = Commission::query()
+            ->where('user_id', $userId)
+            ->where('commission_period_id', $periodId)
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->where('status', 'paid')
+            ->selectRaw('type, COALESCE(from_user_id, 0) as from_user_id, SUM(amount) as total_paid, MAX(pv_used) as max_pv, MAX(percentage) as max_pct')
+            ->groupBy('type', 'from_user_id')
+            ->get();
+
+        $meta = [];
+        foreach ($rows as $row) {
+            $key = $this->paidRemainingKey((string) $row->type, (int) $row->from_user_id);
+            $meta[$key] = [
+                'amount' => (float) $row->total_paid,
+                'pv_used' => (float) $row->max_pv,
+                'percentage' => (float) $row->max_pct,
+            ];
+        }
+
+        return $meta;
+    }
+
     private function paidRemainingKey(string $type, int $fromUserId): string
     {
         return $type.'|'.$fromUserId;
+    }
+
+    /**
+     * Si une ligne est déjà payée pour le même volume de PV, on ne crée pas de
+     * « rattrapage » uniquement dû à une hausse de taux (ex. passage 26% → 30%).
+     * Les PV supplémentaires restent dus au taux courant.
+     *
+     * @param  array<string, array{amount: float, pv_used: float, percentage: float}>  $paidMeta
+     */
+    private function amountAfterPaidSettlement(
+        float $calculatedAmount,
+        float $currentPercentage,
+        float $currentPvUsed,
+        string $type,
+        int $fromUserId,
+        array $paidMeta
+    ): float {
+        if ($calculatedAmount <= 0) {
+            return 0.0;
+        }
+
+        $key = $this->paidRemainingKey($type, $fromUserId);
+        $paid = $paidMeta[$key] ?? null;
+        if ($paid === null || ($paid['amount'] ?? 0) <= 0) {
+            return $calculatedAmount;
+        }
+
+        $paidPv = (float) ($paid['pv_used'] ?? 0);
+        $paidPct = (float) ($paid['percentage'] ?? 0);
+
+        // Même volume (ou moins) déjà soldé → geler le taux au max déjà payé
+        // pour éviter un pending de rattrapage après promotion de grade.
+        if ($paidPv > 0 && $currentPvUsed <= ($paidPv + 0.00001) && $paidPct > 0) {
+            $lockedPct = min($currentPercentage, $paidPct);
+            if ($lockedPct < $currentPercentage) {
+                return max(0.0, $currentPvUsed * ($lockedPct / 100));
+            }
+        }
+
+        return $calculatedAmount;
     }
 
     /**
