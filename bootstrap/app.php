@@ -54,6 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Flash success/error → notification cloche (admin / caissier / membre)
         $middleware->appendToGroup('web', \App\Http\Middleware\ConvertFlashToNotification::class);
+
+        // Headers sécurité (X-Frame-Options SAMEORIGIN pour aperçu PDF same-origin)
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         
         $middleware->validateCsrfTokens(except: [
             'webhook/*',
