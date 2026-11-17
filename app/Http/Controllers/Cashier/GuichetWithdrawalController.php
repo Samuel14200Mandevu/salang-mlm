@@ -522,9 +522,9 @@ class GuichetWithdrawalController extends Controller
 
         $success = 'Retrait confirmé. Imprimez le reçu et remettez l’argent au membre.';
         if ($mailSent) {
-            $success .= ' Un e-mail a été envoyé à '.$user->email.'.';
+            $success .= ' Reçu PDF envoyé par e-mail à '.$user->email.'.';
         } elseif ($user && ! filled($user->email)) {
-            $success .= ' (Aucun e-mail sur le compte membre.)';
+            $success .= ' (Aucun e-mail sur le compte membre — reçu non envoyé.)';
         }
 
         return redirect()
