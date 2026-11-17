@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Http\Controllers\Controller;
+use App\Models\Commission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
@@ -64,14 +65,31 @@ class GuichetWithdrawalController extends Controller
             ->where('status', 'completed')
             ->whereDate('completed_at', today());
 
+        // En attente = bonus D/I/L pas encore crédités au portefeuille.
+        $pendingCommissionsAmount = (float) Commission::query()
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->where('amount', '>', 0)
+            ->sum('amount');
+
+        // Montant dû = argent déjà en portefeuille (pas encore remis en cash au guichet).
+        $memberWallets = Wallet::query()
+            ->whereHas('user', fn ($q) => $q->where('user_type', 'member'));
+        $walletDueAmount = round(
+            (float) (clone $memberWallets)->sum('balance')
+            + (float) (clone $memberWallets)->sum('pending_balance'),
+            2
+        );
+
         $stats = [
             'pending' => Withdrawal::where('method', 'guichet')->where('status', 'pending')->count(),
+            'pending_commissions_amount' => $pendingCommissionsAmount,
+            'wallet_due_amount' => $walletDueAmount,
             'completed' => Withdrawal::where('method', 'guichet')->where('status', 'completed')->count(),
             'completed_today' => (clone $completedTodayQuery)->count(),
             'paid_today_amount' => (float) (clone $completedTodayQuery)->sum('amount'),
-            'pending_amount' => (float) Withdrawal::where('method', 'guichet')
-                ->where('status', 'pending')
-                ->sum('amount'),
+            // compat sous-titre / anciennes clés
+            'pending_amount' => $walletDueAmount,
             'all' => Withdrawal::where('method', 'guichet')->count(),
         ];
 
