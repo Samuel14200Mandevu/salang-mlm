@@ -605,19 +605,15 @@
                         </div>
 
                         <div class="total-box">
-                            <div class="flex justify-between text-sm">
+                            <div class="flex justify-between text-sm font-semibold">
                                 <span>Total Produits</span>
                                 <span id="total_produits_display">${{ number_format($consultation->total_produits, 2) }}</span>
                             </div>
-                            <div class="flex justify-between text-sm">
+                            <div class="flex justify-between text-sm font-semibold mt-2 pt-2 border-t border-[var(--primary-blue-border)]">
                                 <span>Total Services</span>
                                 <span id="total_services_display">${{ number_format($consultation->total_services, 2) }}</span>
                             </div>
-                            <div class="flex justify-between text-lg font-bold border-t border-[var(--primary-blue-border)] pt-2 mt-2">
-                                <span>Total Général</span>
-                                <span id="total_general_display">${{ number_format($consultation->total_general, 2) }}</span>
-                            </div>
-                            <input type="hidden" name="total_general" id="total_general_input" value="{{ $consultation->total_general }}">
+                            <input type="hidden" name="total_general" id="total_general_input" value="{{ $consultation->total_produits }}">
                         </div>
                     </div>
                 </div>
@@ -809,12 +805,9 @@ function calculateServiceTotal() {
 
 function calculateGrandTotal() {
     const totalProduits = parseFloat(document.getElementById('productTotalInput').value) || 0;
-    const totalServices = parseFloat(document.getElementById('total_services_input').value) || 0;
-    const totalGeneral = totalProduits + totalServices;
-
+    // Services à part : total_general = produits uniquement.
     document.getElementById('total_produits_display').textContent = '$' + totalProduits.toFixed(2);
-    document.getElementById('total_general_display').textContent = '$' + totalGeneral.toFixed(2);
-    document.getElementById('total_general_input').value = totalGeneral;
+    document.getElementById('total_general_input').value = totalProduits;
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -156,7 +156,8 @@ class Consultation extends Model
         
         $this->total_produits = $totalProduits;
         $this->total_services = $totalServices;
-        $this->total_general = $totalProduits + $totalServices;
+        // Services supplémentaires restent à part (non additionnés aux produits).
+        $this->total_general = $totalProduits;
         
         return $this;
     }
