@@ -10,8 +10,25 @@
 <div class="space-y-4 sm:space-y-6 network-page">
 
     <div class="member-page-intro network-page-intro-desktop animate-fadeInUp">
-        <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mon réseau</h1>
-        <p class="text-sm text-[var(--text-secondary)] mt-0.5">Votre généalogie, vos filleuls et votre lien de parrainage</p>
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Mon réseau</h1>
+            <p class="text-sm text-[var(--text-secondary)] mt-0.5">Votre généalogie, vos filleuls et votre lien de parrainage</p>
+        </div>
+        <div class="header-search network-desktop-search">
+            <div class="search-wrapper relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="search"
+                       id="networkSearchInputDesktop"
+                       class="search-input"
+                       placeholder="Rechercher un filleul…"
+                       autocomplete="off"
+                       aria-label="Rechercher un filleul"
+                       aria-controls="networkSearchResultsDesktop">
+                <div id="networkSearchResultsDesktop" class="network-search-results" hidden></div>
+            </div>
+        </div>
     </div>
 
     <div class="network-mobile-banner animate-fadeInUp">
@@ -22,11 +39,40 @@
                 <p class="shop-catalog-banner__sub">Généalogie · filleuls · parrainage</p>
             </div>
             <div class="shop-catalog-banner__tools">
+                <button type="button"
+                        class="shop-banner-icon-btn"
+                        id="networkSearchToggle"
+                        aria-expanded="false"
+                        aria-controls="networkSearchPanel"
+                        aria-label="Rechercher un filleul">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
                 <button type="button" class="shop-banner-icon-btn" onclick="copyReferralLink()" aria-label="Copier le lien de parrainage">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                     </svg>
                 </button>
+            </div>
+        </div>
+        <div id="networkSearchPanel"
+             class="shop-catalog-search-panel network-search-panel"
+             aria-hidden="true">
+            <div class="member-shop-search search-wrapper relative">
+                <span class="member-shop-search__icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input type="search"
+                       id="networkSearchInput"
+                       class="input search-input text-sm"
+                       placeholder="Rechercher un filleul…"
+                       autocomplete="off"
+                       aria-label="Rechercher un filleul"
+                       aria-controls="networkSearchResults">
+                <div id="networkSearchResults" class="network-search-results" hidden></div>
             </div>
         </div>
     </div>
@@ -411,7 +457,111 @@
             drawNetworkTreeLines();
             centerNetworkTree();
         });
+
+        initNetworkSearch();
     });
+
+    function initNetworkSearch() {
+        var searchUrl = @json(route('network.search'));
+        var toggle = document.getElementById('networkSearchToggle');
+        var panel = document.getElementById('networkSearchPanel');
+        var inputMobile = document.getElementById('networkSearchInput');
+        var inputDesktop = document.getElementById('networkSearchInputDesktop');
+        var resultsMobile = document.getElementById('networkSearchResults');
+        var resultsDesktop = document.getElementById('networkSearchResultsDesktop');
+        var searchTimeout;
+        var inputs = [inputMobile, inputDesktop].filter(Boolean);
+
+        if (toggle && panel) {
+            toggle.addEventListener('click', function () {
+                var open = panel.classList.toggle('is-open');
+                toggle.classList.toggle('is-active', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+                if (open && inputMobile) {
+                    inputMobile.focus();
+                }
+            });
+        }
+
+        function syncInputs(value, except) {
+            inputs.forEach(function (el) {
+                if (el !== except) el.value = value;
+            });
+        }
+
+        function renderResults(box, items) {
+            if (!box) return;
+            if (!items.length) {
+                box.innerHTML = '<p class="network-search-empty">Aucun filleul trouvé</p>';
+                box.hidden = false;
+                return;
+            }
+            box.innerHTML = items.map(function (item) {
+                var code = escapeHtml(item.sponsor_id || '—');
+                var name = escapeHtml(item.name || '');
+                var meta = 'Niv. ' + (item.level || '—') + ' · ' + escapeHtml(item.rank || '') + ' · ' + code;
+                var status = item.is_active ? 'Actif' : 'Inactif';
+                return '<a class="network-search-result" href="' + escapeHtml(item.url) + '">' +
+                    '<span class="network-search-result__name">' + name + '</span>' +
+                    '<span class="network-search-result__meta">' + meta + ' · ' + status + '</span>' +
+                    '</a>';
+            }).join('');
+            box.hidden = false;
+        }
+
+        function clearResults() {
+            [resultsMobile, resultsDesktop].forEach(function (box) {
+                if (!box) return;
+                box.innerHTML = '';
+                box.hidden = true;
+            });
+        }
+
+        function fetchResults(query) {
+            if (query.length < 2) {
+                clearResults();
+                return;
+            }
+            fetch(searchUrl + '?q=' + encodeURIComponent(query), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (items) {
+                    var list = Array.isArray(items) ? items : [];
+                    renderResults(resultsMobile, list);
+                    renderResults(resultsDesktop, list);
+                })
+                .catch(function () {
+                    clearResults();
+                });
+        }
+
+        inputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                var q = this.value.trim();
+                syncInputs(this.value, this);
+                searchTimeout = setTimeout(function () { fetchResults(q); }, 280);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    syncInputs('', this);
+                    clearResults();
+                    this.blur();
+                }
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.network-search-results') || e.target.closest('.search-wrapper') || e.target.closest('#networkSearchToggle')) {
+                return;
+            }
+            clearResults();
+        });
+    }
 })();
 </script>
 @endpush

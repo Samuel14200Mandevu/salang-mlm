@@ -494,20 +494,62 @@ public function treeData()
 
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $term = trim((string) $request->get('q', ''));
         $user = Auth::user();
-        
-        $results = User::where('parrain_id', $user->id)
-            ->where(function($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%")
-                  ->orWhere('sponsor_id', 'LIKE', "%{$query}%");
-            })
-            ->with(['package', 'rank', 'genealogy'])
-            ->limit(20)
-            ->get();
-            
-        return response()->json($results);
+
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $like = '%'.$term.'%';
+
+        // Tous les filleuls du réseau (pas seulement le niveau 1), filtrés en SQL
+        $rows = DB::select(
+            'WITH RECURSIVE downline AS (
+                SELECT id FROM users WHERE parrain_id = ?
+                UNION ALL
+                SELECT u.id
+                FROM users u
+                INNER JOIN downline d ON u.parrain_id = d.id
+            )
+            SELECT u.id, u.name, u.email, u.sponsor_id, u.phone, u.is_active, u.rank_id, u.rank_level
+            FROM users u
+            INNER JOIN downline d ON d.id = u.id
+            WHERE u.name LIKE ?
+               OR u.email LIKE ?
+               OR u.sponsor_id LIKE ?
+               OR u.phone LIKE ?
+            ORDER BY u.name
+            LIMIT 20',
+            [(int) $user->id, $like, $like, $like, $like]
+        );
+
+        if ($rows === []) {
+            return response()->json([]);
+        }
+
+        $results = User::query()
+            ->with(['rank'])
+            ->whereIn('id', collect($rows)->pluck('id'))
+            ->get()
+            ->keyBy('id');
+
+        return response()->json(collect($rows)->map(function ($row) use ($user, $results) {
+            $member = $results->get($row->id);
+            $rankInfo = $member ? $this->getUserRankInfo($member) : ['name' => 'Distributeur'];
+
+            return [
+                'id' => (int) $row->id,
+                'name' => $row->name,
+                'email' => $row->email,
+                'sponsor_id' => $row->sponsor_id,
+                'phone' => $row->phone,
+                'is_active' => (bool) $row->is_active,
+                'level' => $this->getUserLevel($user->id, (int) $row->id),
+                'rank' => $rankInfo['name'] ?? 'Distributeur',
+                'url' => route('network.show', (int) $row->id),
+            ];
+        })->values());
     }
 
     public function apiStats()
