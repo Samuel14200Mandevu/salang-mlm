@@ -3572,10 +3572,19 @@ public function history(Request $request)
             }
         }
 
+        $pendingPayableBase = Commission::query()
+            ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->where('amount', '>', 0);
+        if ($selectedPeriod) {
+            $pendingPayableBase->where('period', $selectedPeriod);
+        }
+
         $stats = [
             'total_wallet' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
             'total_paid_out' => (float) $withdrawnQuery->sum('amount'),
             'total_pending' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
+            'total_pending_payable' => (float) $pendingPayableBase->sum('amount'),
             'member_count' => $members->total(),
             // compat anciennes clés
             'total_commissions' => (clone $statsBase)->sum('amount'),

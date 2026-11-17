@@ -264,6 +264,18 @@
         </div>
     </div>
 
+    @if($periodFilter && ($stats['total_pending_payable'] ?? 0) > 0)
+        <form method="POST"
+              action="{{ route('cashier.offline-bonus.pay.period') }}"
+              id="commissionsPayAllForm">
+            @csrf
+            <input type="hidden" name="period" value="{{ $periodFilter }}">
+            <button type="submit" class="btn btn-primary w-full md:w-auto">
+                Envoyer tous — ${{ number_format($stats['total_pending_payable'], 2) }}
+            </button>
+        </form>
+    @endif
+
     {{-- Liste mobile --}}
     <div class="admin-user-list md:hidden" id="cashierCommissionsMobileList">
         @forelse($memberRows as $row)
@@ -389,5 +401,33 @@
         'statMemberCount',
     ],
 ])
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const payAllForm = document.getElementById('commissionsPayAllForm');
+    if (!payAllForm) {
+        return;
+    }
+    payAllForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const form = this;
+        if (typeof window.showConfirmDialog !== 'function') {
+            form.submit();
+            return;
+        }
+        window.showConfirmDialog({
+            type: 'danger',
+            title: 'Confirmation d’envoi',
+            message: 'Êtes-vous sûr de vouloir envoyer toutes les commissions en attente (${{ number_format($stats['total_pending_payable'] ?? 0, 2) }}) pour {{ $periodFilter }} ? Vous ne pourrez pas annuler cet envoi.',
+            confirmText: 'Envoyer tous',
+            onConfirm: function () {
+                form.submit();
+                if (typeof window.closeConfirmDialog === 'function') {
+                    window.closeConfirmDialog();
+                }
+            },
+        });
+    });
+});
+</script>
 @endpush
 @endsection
