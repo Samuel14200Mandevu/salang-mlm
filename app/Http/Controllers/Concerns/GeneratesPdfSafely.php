@@ -181,6 +181,8 @@ trait GeneratesPdfSafely
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'Cache-Control' => 'private, max-age=0, must-revalidate',
+            // Garantit l’aperçu iframe même si un proxy impose DENY ailleurs
+            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 
