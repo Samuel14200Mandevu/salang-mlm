@@ -321,12 +321,15 @@ class AdminCommissionHistoryController extends Controller
             }
 
             $descendantRate = $this->getDirectRate($descendantRank);
+            $branchBlocked = ! empty($data['is_branch_blocked']);
 
             // ─────────────────────────────────────────────
             // INDIRECT — uniquement jusqu'à 8 générations
+            // Jambe entière exclue si un filleul (direct ou indirect) a un grade ≥ upline.
             // ─────────────────────────────────────────────
             if (
-                $generation <= self::MAX_GENERATIONS_INDIRECT
+                ! $branchBlocked
+                && $generation <= self::MAX_GENERATIONS_INDIRECT
                 && $pvOkForIndirect
                 && $userRank >= 3
                 && $descendantRank >= 3
@@ -395,27 +398,34 @@ class AdminCommissionHistoryController extends Controller
     }
 
     /**
-     * Récupérer tous les descendants avec leurs ancêtres pour l'exclusion.
+     * Descendants jusqu'à N générations + exclusion de jambe.
      *
-     * @param User $user
-     * @param int $maxGenerations Nombre maximum de générations (12 par défaut)
+     * - is_excluded : nœud/ancêtre avec rank ≥ buyer (sous-arbre).
+     * - is_branch_blocked : un filleul direct OU indirect de la jambe a rank ≥ buyer
+     *   → toute la jambe hors indirect.
+     *
+     * @param  User  $user
+     * @param  int  $maxGenerations
+     * @return array<int, array{generation:int, descendant_id:int, descendant_rank:int, is_excluded:bool, is_branch_blocked:bool}>
      */
     private function getAllDescendantsWithAncestors($user, $maxGenerations = 12)
     {
-        $descendants = [];
+        $raw = [];
         $currentGeneration = 1;
-        $userRank = $user->rank_level ?? 1;
+        $userRank = (int) ($user->rank_level ?? 1);
 
         $currentLevel = [
             [
                 'id' => $user->id,
                 'rank' => $userRank,
-                'is_excluded' => false
-            ]
+                'is_excluded' => false,
+                'branch_id' => null,
+            ],
         ];
         $processedIds = [$user->id];
+        $blockedBranches = [];
 
-        while ($currentGeneration <= $maxGenerations && !empty($currentLevel)) {
+        while ($currentGeneration <= $maxGenerations && ! empty($currentLevel)) {
             $nextLevel = [];
 
             $currentIds = array_column($currentLevel, 'id');
@@ -425,7 +435,7 @@ class AdminCommissionHistoryController extends Controller
                 ->get();
 
             foreach ($children as $child) {
-                if (in_array($child->id, $processedIds)) {
+                if (in_array($child->id, $processedIds, true)) {
                     continue;
                 }
 
@@ -437,29 +447,38 @@ class AdminCommissionHistoryController extends Controller
                     }
                 }
 
-                if (!$parent) {
+                if (! $parent) {
                     continue;
                 }
 
-                $childRank = $child->rank_level ?? 1;
+                $childRank = (int) ($child->rank_level ?? 1);
 
-                $isExcluded = $parent['is_excluded'];
-
-                if (!$isExcluded && $childRank >= $userRank) {
+                $isExcluded = (bool) $parent['is_excluded'];
+                if (! $isExcluded && $childRank >= $userRank) {
                     $isExcluded = true;
                 }
 
-                $descendants[] = [
+                $branchId = $currentGeneration === 1
+                    ? (int) $child->id
+                    : (int) $parent['branch_id'];
+
+                if ($childRank >= $userRank) {
+                    $blockedBranches[$branchId] = true;
+                }
+
+                $raw[] = [
                     'generation' => $currentGeneration,
-                    'descendant_id' => $child->id,
+                    'descendant_id' => (int) $child->id,
                     'descendant_rank' => $childRank,
                     'is_excluded' => $isExcluded,
+                    'branch_id' => $branchId,
                 ];
 
                 $nextLevel[] = [
                     'id' => $child->id,
                     'rank' => $childRank,
                     'is_excluded' => $isExcluded,
+                    'branch_id' => $branchId,
                 ];
 
                 $processedIds[] = $child->id;
@@ -467,6 +486,17 @@ class AdminCommissionHistoryController extends Controller
 
             $currentLevel = $nextLevel;
             $currentGeneration++;
+        }
+
+        $descendants = [];
+        foreach ($raw as $row) {
+            $descendants[] = [
+                'generation' => $row['generation'],
+                'descendant_id' => $row['descendant_id'],
+                'descendant_rank' => $row['descendant_rank'],
+                'is_excluded' => $row['is_excluded'],
+                'is_branch_blocked' => isset($blockedBranches[$row['branch_id']]),
+            ];
         }
 
         return $descendants;
