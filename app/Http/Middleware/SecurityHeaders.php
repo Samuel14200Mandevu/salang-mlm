@@ -14,7 +14,9 @@ class SecurityHeaders
 
         // Security Headers
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'DENY');
+        // SAMEORIGIN : autorise l’aperçu PDF (iframe) sur le même site,
+        // tout en bloquant le clickjacking depuis un autre domaine.
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         
