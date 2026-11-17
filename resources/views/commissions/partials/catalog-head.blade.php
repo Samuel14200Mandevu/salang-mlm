@@ -18,12 +18,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </button>
-            <a href="{{ route('commissions.export-pdf', request()->all()) }}"
+            <a href="{{ route('commissions.export-pdf', $exportPdfQuery ?? request()->all()) }}"
                class="shop-banner-icon-btn"
                title="Exporter PDF"
-               aria-label="Exporter PDF"
-               target="_blank"
-               rel="noopener">
+               aria-label="Exporter PDF">
                 <x-pdf-icon class="w-5 h-5" />
             </a>
         </div>

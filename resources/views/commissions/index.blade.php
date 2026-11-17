@@ -9,6 +9,12 @@
     $bonusByType = $bonusByType ?? [];
     $bonusMonth = $bonusMonth ?? '';
     $bonusMonthLabel = $bonusMonthLabel ?? '';
+    $exportPdfQuery = array_filter([
+        'period' => $bonusMonth !== '' ? $bonusMonth : null,
+        'type' => $selectedType !== '' ? $selectedType : null,
+        'date_from' => request('date_from'),
+        'date_to' => request('date_to'),
+    ], fn ($v) => filled($v));
 @endphp
 <div class="commissions-page space-y-4 sm:space-y-6">
 
@@ -64,19 +70,17 @@
                     </div>
                 </div>
 
-                <a href="{{ route('commissions.export-pdf', request()->all()) }}"
+                <a href="{{ route('commissions.export-pdf', $exportPdfQuery) }}"
                    class="btn btn-sm btn-icon commissions-header-icon-btn btn-pdf-icon"
                    title="Exporter PDF"
-                   aria-label="Exporter PDF"
-                   target="_blank"
-                   rel="noopener">
+                   aria-label="Exporter PDF">
                     <x-pdf-icon size="lg" />
                 </a>
             </div>
         </div>
     </div>
 
-    @include('commissions.partials.catalog-head', compact('stats', 'commissions'))
+    @include('commissions.partials.catalog-head', compact('stats', 'commissions', 'exportPdfQuery'))
 
     <div class="commissions-stats stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp delay-1">
         <div class="card-stats border-l-4 border-primary-500">

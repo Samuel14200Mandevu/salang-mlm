@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Package;
 use App\Models\CommissionPeriod;
 use App\Models\Withdrawal;
+use App\Services\MLM\MemberCommissionDetailedPdfService;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Services\MLM\UserCommissionDisplayService;
 use App\Services\WalletCommissionBreakdown;
@@ -29,6 +30,7 @@ class CommissionController extends Controller
         MonthlyCommissionService $commissionService,
         protected UserCommissionDisplayService $commissionDisplay,
         protected WalletCommissionBreakdown $commissionBreakdown,
+        protected MemberCommissionDetailedPdfService $memberCommissionPdf,
     ) {
         $this->commissionService = $commissionService;
     }
@@ -182,81 +184,82 @@ class CommissionController extends Controller
         return redirect()->route('commissions.index');
     }
 
-        /**
-     * Exporter les commissions en PDF
+    /**
+     * Exporter les commissions en PDF (même rapport détaillé que la caisse).
+     * Sans ?pdf=1 → page d’aperçu (desktop + mobile) ; avec ?pdf=1 → fichier PDF.
      */
     public function exportPdf(Request $request)
     {
         if (! $request->boolean('pdf')) {
+            $query = collect($request->except(['pdf', 'download']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
             return view('partials.pdf.preview-shell', [
                 'title' => 'Rapport des Commissions',
-                'backUrl' => route('commissions.index', $request->except('pdf')),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+                'backUrl' => route('commissions.index', $query),
+                'pdfUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1])),
+                'downloadUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1, 'download' => 1])),
             ]);
         }
 
         $user = Auth::user();
+        $coreTypes = $this->memberCommissionPdf->coreTypes();
+        $allowedTypes = array_keys(CareerQualificationPrizes::walletBonusTypes());
+        $types = array_values(array_intersect($allowedTypes, $coreTypes));
+        if ($types === []) {
+            $types = $coreTypes;
+        }
 
-        $commissions = Commission::where('user_id', $user->id)
+        $selectedType = (string) $request->query('type', '');
+        if ($selectedType !== '' && ! in_array($selectedType, $types, true)) {
+            $selectedType = '';
+        }
+
+        $period = $request->filled('period') ? (string) $request->period : null;
+        if ($period === 'all') {
+            $period = null;
+        }
+
+        $query = Commission::query()
+            ->where('user_id', $user->id)
             ->visibleToMember()
-            ->with(['fromUser', 'package', 'product', 'period'])
-            ->when($request->filled('type'), function ($query) use ($request) {
-                return $query->where('type', $request->type);
-            })
-            ->when($request->filled('period'), function ($query) use ($request) {
-                return $query->where('period', $request->period);
-            })
-            ->when($request->filled('date_from'), function ($query) use ($request) {
-                return $query->whereDate('created_at', '>=', $request->date_from);
-            })
-            ->when($request->filled('date_to'), function ($query) use ($request) {
-                return $query->whereDate('created_at', '<=', $request->date_to);
-            })
-            ->orderBy('created_at', 'desc')
+            ->with(['fromUser:id,name,sponsor_id'])
+            ->whereIn('type', $selectedType !== '' ? [$selectedType] : $types);
+
+        if ($period) {
+            $query->where('period', $period);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $commissions = $query
+            ->orderByRaw("CASE type WHEN 'direct' THEN 1 WHEN 'indirect' THEN 2 WHEN 'leadership' THEN 3 WHEN 'cash_pos' THEN 4 ELSE 5 END")
+            ->orderBy('id')
             ->get();
 
-        // Statistiques pour le PDF (uniquement bonus déjà en portefeuille)
-        $stats = [
-            'total' => $commissions->sum('amount'),
-            'count' => $commissions->count(),
-            'pending' => 0,
-            'paid' => $commissions->sum('amount'),
-        ];
-
-        // Regrouper par type
-        $byType = $commissions->groupBy('type')->map(function($group) {
-            return [
-                'total' => $group->sum('amount'),
-                'count' => $group->count(),
-                'label' => ucfirst($group->first()->type ?? 'N/A'),
-            ];
-        });
-
-        $data = [
-            'user' => $user,
-            'commissions' => $commissions,
-            'stats' => $stats,
-            'byType' => $byType,
-            'generated_at' => now(),
-            'filters' => [
-                'status' => $request->status ?? 'Tous',
-                'type' => $request->type ?? 'Tous',
-                'period' => $request->period ?? 'Tous',
-                'date_from' => $request->date_from ?? 'Début',
-                'date_to' => $request->date_to ?? 'Fin',
-            ],
-        ];
+        if ($commissions->isEmpty()) {
+            return back()->with('error', 'Aucune commission à exporter.');
+        }
 
         try {
-            return $this->downloadPdfView(
-                'commissions.export-pdf',
-                $data,
-                'rapport_commissions_'.date('Y-m-d').'.pdf',
+            $built = $this->memberCommissionPdf->build($user, $commissions, $period);
+            $args = [
+                'admin.pv.commission-pdf',
+                $built['data'],
+                $built['filename'],
                 'a4',
                 'portrait',
                 300,
-                '512M'
-            );
+                '1024M',
+            ];
+
+            // Aperçu iframe (desktop + mobile) = inline ; bouton Télécharger = attachment
+            return $request->boolean('download')
+                ? $this->downloadPdfView(...$args)
+                : $this->streamPdfView(...$args);
         } catch (\Throwable $e) {
             $this->logPdfFailure('member.commissions.exportPDF', $e);
 

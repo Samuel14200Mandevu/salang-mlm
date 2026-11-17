@@ -12,6 +12,7 @@ use App\Models\Wallet;
 use App\Models\Withdrawal;
 use App\Models\Transaction;
 use App\Models\CommissionPeriod;
+use App\Services\MLM\MemberCommissionDetailedPdfService;
 use App\Services\MLM\MonthlyCommissionService;
 use App\Notifications\CommissionPaidNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -358,31 +359,32 @@ class CommissionController extends Controller
     }
 
     /**
-     * PDF détaillé des commissions d’un membre (même gabarit que PV commission-pdf).
+     * PDF détaillé des commissions d’un membre (même gabarit que Mes commissions / caisse).
+     * Sans ?pdf=1 → page d’aperçu (desktop + mobile) ; avec ?pdf=1 → fichier PDF.
      */
-    public function exportMemberPDF(Request $request, int $user)
-    {
+    public function exportMemberPDF(
+        Request $request,
+        int $user,
+        MemberCommissionDetailedPdfService $memberCommissionPdf,
+    ) {
         if (! $request->boolean('pdf')) {
+            $query = collect($request->except(['pdf', 'download']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
             return view('partials.pdf.preview-shell', [
                 'title' => 'Rapport des Commissions',
-                'backUrl' => route('admin.commissions.member', array_merge(
-                    ['user' => $user],
-                    $request->except('pdf')
-                )),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+                'backUrl' => route('admin.commissions.member', array_merge(['user' => $user], $query)),
+                'pdfUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1])),
+                'downloadUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1, 'download' => 1])),
             ]);
         }
 
         try {
             $coreTypes = $this->coreCommissionTypes();
-            $bonusOrder = $coreTypes;
-            $member = User::query()
-                ->with(['package', 'parrain:id,name'])
-                ->findOrFail($user);
+            $member = User::query()->findOrFail($user);
 
             $period = ($request->filled('period') && $request->period !== 'all')
                 ? (string) $request->period
-                : 'all';
+                : null;
 
             $query = Commission::query()
                 ->with(['fromUser:id,name,sponsor_id'])
@@ -400,91 +402,20 @@ class CommissionController extends Controller
                 return back()->with('error', 'Aucune commission à exporter pour ce membre.');
             }
 
-            if ($period === 'all') {
-                $uniquePeriods = $commissions->pluck('period')->filter()->unique();
-                if ($uniquePeriods->count() === 1) {
-                    $period = (string) $uniquePeriods->first();
-                }
-            }
-
-            $totals = [
-                'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
-                'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
-                'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
-                'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
-                'total' => (float) $commissions->sum('amount'),
-            ];
-
-            $periodPV = ($period !== 'all')
-                ? (float) PVHistory::query()
-                    ->where('user_id', $member->id)
-                    ->where('period', $period)
-                    ->sum('amount')
-                : 0;
-
-            $detailsByType = [];
-            $totalsByType = [];
-            foreach ($bonusOrder as $type) {
-                $detailsByType[$type] = [];
-                $totalsByType[$type] = 0.0;
-            }
-
-            foreach ($commissions as $item) {
-                $type = $item->type;
-                if (! isset($detailsByType[$type])) {
-                    continue;
-                }
-                $amount = (float) $item->amount;
-                $detailsByType[$type][] = [
-                    'type' => $type,
-                    'from_user_code' => $item->fromUser?->sponsor_id ?? '—',
-                    'from_user' => $item->fromUser?->name ?? 'N/A',
-                    'amount' => $amount,
-                    'percentage' => $item->percentage,
-                    'pv_used' => $item->pv_used,
-                    'generation' => $item->generation,
-                    'description' => Str::limit((string) ($item->description ?? ''), 45),
-                ];
-                $totalsByType[$type] += $amount;
-            }
-
-            $beneficiaires = [[
-                'name' => $member->name,
-                'id' => $member->id,
-                'total' => $totals['total'],
-                'details_by_type' => $detailsByType,
-                'totals_by_type' => $totalsByType,
-            ]];
-
-            $code = $member->sponsor_id ?: $member->id;
-            $periodSlug = $period === 'all' ? 'toutes' : $period;
-
-            return $this->downloadPdfView(
+            $built = $memberCommissionPdf->build($member, $commissions, $period);
+            $args = [
                 'admin.pv.commission-pdf',
-                [
-                    'period' => $period,
-                    'commissionsCount' => $commissions->count(),
-                    'totals' => $totals,
-                    'beneficiaires' => $beneficiaires,
-                    'user' => $member,
-                    'userId' => $member->id,
-                    'periodPV' => $periodPV,
-                    'logoBase64' => $this->loadPdfLogoBase64(),
-                    'date_generated' => now()->format('d/m/Y H:i'),
-                    'bonusOrder' => $bonusOrder,
-                    'bonusLabels' => [
-                        'direct' => 'Direct Bonus',
-                        'indirect' => 'Indirect Bonus',
-                        'leadership' => 'Leadership Bonus',
-                        'cash_pos' => 'Cash POS Bonus',
-                    ],
-                ],
-                "rapport_commissions_{$code}_{$periodSlug}.pdf",
+                $built['data'],
+                $built['filename'],
                 'a4',
                 'portrait',
                 300,
-                '1024M'
-            );
+                '1024M',
+            ];
+
+            return $request->boolean('download')
+                ? $this->downloadPdfView(...$args)
+                : $this->streamPdfView(...$args);
         } catch (\Throwable $e) {
             $this->logPdfFailure('admin.commissions.exportMemberPDF', $e, ['user' => $user]);
 
