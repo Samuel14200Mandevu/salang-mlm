@@ -163,18 +163,22 @@ class ConsultationController extends Controller
         ]);
         $productLines = ConsultationSaleService::normalizedLines($consultation);
         $productStats = ConsultationSaleService::productStats($consultation);
+        $serviceLines = ConsultationSaleService::serviceLines($consultation);
+        $serviceStats = ConsultationSaleService::serviceStats($consultation);
         $canSell = ConsultationSaleService::canCashierSell($consultation);
 
         return view('cashier.consultations.show', compact(
             'consultation',
             'productLines',
             'productStats',
+            'serviceLines',
+            'serviceStats',
             'canSell'
         ));
     }
 
     /**
-     * Encaisser une sélection de produits recommandés (vente partielle).
+     * Encaisser une sélection de produits et/ou services (vente partielle).
      */
     public function checkoutSelection(Request $request, Consultation $consultation)
     {
@@ -189,23 +193,56 @@ class ConsultationController extends Controller
         }
 
         $validated = $request->validate([
-            'line_keys' => 'required|array|min:1',
+            'line_keys' => 'nullable|array',
             'line_keys.*' => 'required|string|max:64',
             'portions' => 'nullable|array',
             'portions.*' => 'nullable|in:full,half',
+            'service_qty' => 'nullable|array',
+            'service_qty.ceragem' => 'nullable|integer|min:0|max:999',
+            'service_qty.detox' => 'nullable|integer|min:0|max:999',
         ]);
 
+        $lineKeys = array_values(array_unique(array_filter($validated['line_keys'] ?? [])));
+        $serviceQuantities = [];
+        foreach (['ceragem', 'detox'] as $svcKey) {
+            $qty = (int) ($validated['service_qty'][$svcKey] ?? 0);
+            if ($qty > 0) {
+                $serviceQuantities[$svcKey] = $qty;
+            }
+        }
+
+        if ($lineKeys === [] && $serviceQuantities === []) {
+            return redirect()
+                ->route('cashier.consultations.show', $consultation)
+                ->with('error', 'Sélectionnez au moins un produit ou un nombre de séances à encaisser.');
+        }
+
         try {
-            $lines = ConsultationSaleService::resolvePendingLines(
-                $consultation,
-                $validated['line_keys'],
-                $validated['portions'] ?? []
+            $lines = $lineKeys === []
+                ? []
+                : ConsultationSaleService::resolvePendingLines(
+                    $consultation,
+                    $lineKeys,
+                    $validated['portions'] ?? []
+                );
+            $serviceLines = $serviceQuantities === []
+                ? []
+                : ConsultationSaleService::resolvePendingServices($consultation, $serviceQuantities);
+
+            $cart = array_merge(
+                ConsultationSaleService::buildCartItems($consultation, $lines),
+                ConsultationSaleService::buildServiceCartItems($consultation, $serviceLines)
             );
-            $cart = ConsultationSaleService::buildCartItems($consultation, $lines);
         } catch (\InvalidArgumentException $e) {
             return redirect()
                 ->route('cashier.consultations.show', $consultation)
                 ->with('error', $e->getMessage());
+        }
+
+        if ($cart === []) {
+            return redirect()
+                ->route('cashier.consultations.show', $consultation)
+                ->with('error', 'Aucun montant à encaisser pour cette sélection.');
         }
 
         $purchaseDetails = [];
@@ -216,10 +253,23 @@ class ConsultationController extends Controller
             ];
         }
 
+        $serviceKeys = [];
+        $servicePayments = [];
+        foreach ($serviceLines as $svc) {
+            $key = (string) $svc['key'];
+            $serviceKeys[] = $key;
+            $servicePayments[$key] = [
+                'seances' => (int) ($svc['pay_seances'] ?? 0),
+                'amount' => (float) ($svc['pay_amount'] ?? 0),
+            ];
+        }
+
         session()->put('pos_cart', $cart);
         session()->put('consultation_checkout', [
             'consultation_id' => $consultation->id,
             'line_keys' => array_column($lines, 'line_key'),
+            'service_keys' => $serviceKeys,
+            'service_payments' => $servicePayments,
             'purchase_details' => $purchaseDetails,
             'patient_name' => $consultation->nom_complet,
             'pv_member_code' => $consultation->code_id,
@@ -227,9 +277,18 @@ class ConsultationController extends Controller
                 ?? User::where('sponsor_id', $consultation->code_id)->value('name'),
         ]);
 
+        $parts = [];
+        if (count($lines) > 0) {
+            $parts[] = count($lines).' produit(s)';
+        }
+        $svcSeances = array_sum(array_column($servicePayments, 'seances'));
+        if ($svcSeances > 0) {
+            $parts[] = $svcSeances.' séance(s)';
+        }
+
         return redirect()
             ->route('cashier.checkout')
-            ->with('success', count($cart) . ' produit(s) ajoutés au panier pour encaissement.');
+            ->with('success', implode(' + ', $parts).' ajoutés au panier pour encaissement.');
     }
 
     /**

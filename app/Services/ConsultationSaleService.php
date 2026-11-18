@@ -9,11 +9,18 @@ use Illuminate\Support\Str;
 class ConsultationSaleService
 {
     public const STATUS_PENDING = 'pending';
+    public const STATUS_PARTIAL = 'partial';
     public const STATUS_PURCHASED = 'purchased';
     public const STATUS_DECLINED = 'declined';
 
     public const PORTION_FULL = 'full';
     public const PORTION_HALF = 'half';
+
+    public const SERVICE_CERAGEM = 'ceragem';
+    public const SERVICE_DETOX = 'detox';
+
+    /** @var list<string> */
+    public const SERVICE_KEYS = [self::SERVICE_CERAGEM, self::SERVICE_DETOX];
 
     public static function resolvePortion(?string $portion): string
     {
@@ -412,6 +419,7 @@ class ConsultationSaleService
     {
         return match ($status) {
             self::STATUS_PURCHASED => 'Payé',
+            self::STATUS_PARTIAL => 'Partiel',
             self::STATUS_DECLINED => 'Refusé',
             default => 'À payer',
         };
@@ -421,8 +429,297 @@ class ConsultationSaleService
     {
         return match ($status) {
             self::STATUS_PURCHASED => 'badge-success',
+            self::STATUS_PARTIAL => 'badge-info',
             self::STATUS_DECLINED => 'badge-secondary',
             default => 'badge-warning',
         };
+    }
+
+    public static function serviceLabel(string $key): string
+    {
+        return match ($key) {
+            self::SERVICE_CERAGEM => 'Séances Ceragem',
+            self::SERVICE_DETOX => 'Séances Detox',
+            default => $key,
+        };
+    }
+
+    /**
+     * @return array{ceragem: array<string, mixed>, detox: array<string, mixed>}
+     */
+    public static function serviceLines(Consultation $consultation): array
+    {
+        $stored = is_array($consultation->services_payment) ? $consultation->services_payment : [];
+
+        return [
+            self::SERVICE_CERAGEM => self::normalizeServiceLine(
+                self::SERVICE_CERAGEM,
+                (int) ($consultation->seances_ceragem ?? 0),
+                (float) ($consultation->prix_ceragem ?? 0),
+                $stored[self::SERVICE_CERAGEM] ?? []
+            ),
+            self::SERVICE_DETOX => self::normalizeServiceLine(
+                self::SERVICE_DETOX,
+                (int) ($consultation->seances_detox ?? 0),
+                (float) ($consultation->prix_detox ?? 0),
+                $stored[self::SERVICE_DETOX] ?? []
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $stored
+     * @return array<string, mixed>
+     */
+    private static function normalizeServiceLine(string $key, int $seancesPrescribed, float $prix, array $stored): array
+    {
+        $seancesPrescribed = max(0, $seancesPrescribed);
+        $prix = round(max(0, $prix), 2);
+        $seancesPaid = max(0, (int) ($stored['seances_paid'] ?? 0));
+
+        // Ancien format (tout payé d’un coup) → migrer en mémoire.
+        if ($seancesPaid === 0 && ($stored['status'] ?? null) === self::STATUS_PURCHASED) {
+            $seancesPaid = max(0, (int) ($stored['seances'] ?? $seancesPrescribed));
+        }
+
+        // Ne pas dépasser la prescription actuelle.
+        if ($seancesPrescribed > 0) {
+            $seancesPaid = min($seancesPaid, $seancesPrescribed);
+        }
+
+        $seancesRemaining = max(0, $seancesPrescribed - $seancesPaid);
+        $amountRecommended = round($seancesPrescribed * $prix, 2);
+        $amountPaid = round((float) ($stored['amount_paid'] ?? ($seancesPaid * $prix)), 2);
+        if ($seancesPaid > 0 && ! isset($stored['amount_paid']) && ($stored['status'] ?? null) === self::STATUS_PURCHASED && isset($stored['amount'])) {
+            $amountPaid = round((float) $stored['amount'], 2);
+        }
+        $amountRemaining = round($seancesRemaining * $prix, 2);
+
+        if ($seancesPrescribed <= 0 || $prix <= 0) {
+            $status = self::STATUS_PENDING;
+            $available = false;
+        } elseif ($seancesRemaining <= 0 && $seancesPaid > 0) {
+            $status = self::STATUS_PURCHASED;
+            $available = false;
+        } elseif ($seancesPaid > 0 && $seancesRemaining > 0) {
+            $status = self::STATUS_PARTIAL;
+            $available = $amountRemaining > 0.00001;
+        } else {
+            $status = self::STATUS_PENDING;
+            $available = $amountRemaining > 0.00001;
+        }
+
+        return [
+            'key' => $key,
+            'label' => self::serviceLabel($key),
+            'seances' => $seancesPrescribed,
+            'seances_prescribed' => $seancesPrescribed,
+            'seances_paid' => $seancesPaid,
+            'seances_remaining' => $seancesRemaining,
+            'prix' => $prix,
+            'amount' => $amountRecommended,
+            'amount_paid' => $amountPaid,
+            'amount_remaining' => $amountRemaining,
+            'status' => $status,
+            'order_id' => isset($stored['order_id']) ? (int) $stored['order_id'] : null,
+            'purchased_at' => $stored['purchased_at'] ?? null,
+            'payments' => is_array($stored['payments'] ?? null) ? $stored['payments'] : [],
+            'available' => $available,
+        ];
+    }
+
+    /**
+     * @return array{total: int, pending: int, purchased: int, partial: int, paid_amount: float, recommended_amount: float, remaining_amount: float}
+     */
+    public static function serviceStats(Consultation $consultation): array
+    {
+        $pending = 0;
+        $purchased = 0;
+        $partial = 0;
+        $paidAmount = 0.0;
+        $recommendedAmount = 0.0;
+        $remainingAmount = 0.0;
+        $total = 0;
+
+        foreach (self::serviceLines($consultation) as $line) {
+            if (($line['seances_prescribed'] ?? 0) <= 0) {
+                continue;
+            }
+            $total++;
+            $recommendedAmount += (float) $line['amount'];
+            $paidAmount += (float) $line['amount_paid'];
+            $remainingAmount += (float) $line['amount_remaining'];
+
+            if ($line['status'] === self::STATUS_PURCHASED) {
+                $purchased++;
+            } elseif ($line['status'] === self::STATUS_PARTIAL) {
+                $partial++;
+                $pending++;
+            } elseif ($line['available']) {
+                $pending++;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'pending' => $pending,
+            'purchased' => $purchased,
+            'partial' => $partial,
+            'paid_amount' => $paidAmount,
+            'recommended_amount' => $recommendedAmount,
+            'remaining_amount' => $remainingAmount,
+        ];
+    }
+
+    /**
+     * @param  array<string, int|string>  $serviceQuantities  key => nb séances à encaisser maintenant
+     * @return array<int, array<string, mixed>>
+     */
+    public static function resolvePendingServices(Consultation $consultation, array $serviceQuantities): array
+    {
+        $lines = self::serviceLines($consultation);
+        $selected = [];
+
+        foreach ($serviceQuantities as $key => $qty) {
+            $key = (string) $key;
+            $qty = (int) $qty;
+            if ($qty <= 0) {
+                continue;
+            }
+            if (! in_array($key, self::SERVICE_KEYS, true)) {
+                throw new \InvalidArgumentException('Service de consultation invalide.');
+            }
+            $line = $lines[$key] ?? null;
+            if (! $line || ! ($line['available'] ?? false)) {
+                throw new \InvalidArgumentException('Service indisponible : '.self::serviceLabel($key));
+            }
+            $remaining = (int) ($line['seances_remaining'] ?? 0);
+            if ($qty > $remaining) {
+                throw new \InvalidArgumentException(
+                    self::serviceLabel($key).' : maximum '.$remaining.' séance(s) restante(s).'
+                );
+            }
+
+            $prix = (float) $line['prix'];
+            $line['pay_seances'] = $qty;
+            $line['pay_amount'] = round($qty * $prix, 2);
+            $selected[] = $line;
+        }
+
+        if ($selected === []) {
+            throw new \InvalidArgumentException('Indiquez le nombre de séances à encaisser.');
+        }
+
+        return $selected;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $serviceLines
+     * @return array<int, array<string, mixed>>
+     */
+    public static function buildServiceCartItems(Consultation $consultation, array $serviceLines): array
+    {
+        $cart = [];
+
+        foreach ($serviceLines as $line) {
+            $key = (string) ($line['key'] ?? '');
+            $paySeances = (int) ($line['pay_seances'] ?? 0);
+            $amount = round((float) ($line['pay_amount'] ?? 0), 2);
+            if ($paySeances <= 0 || $amount <= 0) {
+                continue;
+            }
+
+            $cart[] = [
+                'id' => 'svc_'.$key,
+                'type' => 'consultation_service',
+                'name' => sprintf(
+                    '%s (x%d)',
+                    self::serviceLabel($key),
+                    $paySeances
+                ),
+                'price' => $amount,
+                'image' => null,
+                'source' => 'pos',
+                'sourceLabel' => 'Consultation',
+                'pv_value' => 0,
+                'bv_value' => 0,
+                'quantity' => 1,
+                'consultation_id' => $consultation->id,
+                'consultation_service_key' => $key,
+                'consultation_service_seances' => $paySeances,
+            ];
+        }
+
+        return $cart;
+    }
+
+    /**
+     * @param  array<string, array{seances: int, amount?: float}>  $servicePayments
+     */
+    public static function markServicesPurchased(
+        Consultation $consultation,
+        array $servicePayments,
+        int $orderId
+    ): void {
+        if ($servicePayments === []) {
+            return;
+        }
+
+        $lines = self::serviceLines($consultation);
+        $payment = is_array($consultation->services_payment) ? $consultation->services_payment : [];
+
+        foreach ($servicePayments as $key => $payload) {
+            $key = (string) $key;
+            if (! in_array($key, self::SERVICE_KEYS, true)) {
+                continue;
+            }
+            $line = $lines[$key] ?? null;
+            if (! $line) {
+                continue;
+            }
+
+            $paySeances = max(0, (int) ($payload['seances'] ?? 0));
+            if ($paySeances <= 0) {
+                continue;
+            }
+            $paySeances = min($paySeances, (int) $line['seances_remaining']);
+            if ($paySeances <= 0) {
+                continue;
+            }
+
+            $prix = (float) $line['prix'];
+            $payAmount = isset($payload['amount'])
+                ? round((float) $payload['amount'], 2)
+                : round($paySeances * $prix, 2);
+
+            $existing = is_array($payment[$key] ?? null) ? $payment[$key] : [];
+            $seancesPaid = (int) ($line['seances_paid'] ?? 0) + $paySeances;
+            $amountPaid = round((float) ($line['amount_paid'] ?? 0) + $payAmount, 2);
+            $payments = is_array($existing['payments'] ?? null) ? $existing['payments'] : [];
+            $payments[] = [
+                'order_id' => $orderId,
+                'seances' => $paySeances,
+                'amount' => $payAmount,
+                'at' => now()->toIso8601String(),
+            ];
+
+            $prescribed = (int) $line['seances_prescribed'];
+            $status = $seancesPaid >= $prescribed && $prescribed > 0
+                ? self::STATUS_PURCHASED
+                : self::STATUS_PARTIAL;
+
+            $payment[$key] = [
+                'status' => $status,
+                'order_id' => $orderId,
+                'seances_paid' => $seancesPaid,
+                'amount_paid' => $amountPaid,
+                'prix' => $prix,
+                'seances' => $prescribed,
+                'purchased_at' => now()->toIso8601String(),
+                'payments' => $payments,
+            ];
+        }
+
+        $consultation->update(['services_payment' => $payment]);
     }
 }
