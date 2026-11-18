@@ -1332,7 +1332,7 @@ public function createCheckoutOrder(Request $request)
                 return redirect()->back()->with('error', 'Cette consultation n\'accepte plus d\'encaissement.');
             }
 
-            $expectedKeys = $consultationCheckout['line_keys'] ?? [];
+            $expectedKeys = array_values($consultationCheckout['line_keys'] ?? []);
             $cartKeys = collect($cart)
                 ->pluck('consultation_line_key')
                 ->filter()
@@ -1342,12 +1342,53 @@ public function createCheckoutOrder(Request $request)
             sort($expectedKeys);
             sort($cartKeys);
 
-            if ($expectedKeys !== $cartKeys) {
+            $expectedServices = array_values($consultationCheckout['service_keys'] ?? []);
+            $cartServices = collect($cart)
+                ->pluck('consultation_service_key')
+                ->filter()
+                ->values()
+                ->all();
+
+            sort($expectedServices);
+            sort($cartServices);
+
+            $expectedServicePayments = is_array($consultationCheckout['service_payments'] ?? null)
+                ? $consultationCheckout['service_payments']
+                : [];
+            $cartServiceQty = [];
+            foreach ($cart as $cartItem) {
+                if (($cartItem['type'] ?? null) !== 'consultation_service') {
+                    continue;
+                }
+                $svcKey = (string) ($cartItem['consultation_service_key'] ?? '');
+                if ($svcKey === '') {
+                    continue;
+                }
+                $cartServiceQty[$svcKey] = (int) ($cartItem['consultation_service_seances'] ?? 0);
+            }
+            ksort($expectedServicePayments);
+            ksort($cartServiceQty);
+            $expectedQtyMap = [];
+            foreach ($expectedServicePayments as $svcKey => $payload) {
+                $expectedQtyMap[(string) $svcKey] = (int) (is_array($payload) ? ($payload['seances'] ?? 0) : 0);
+            }
+            ksort($expectedQtyMap);
+
+            if ($expectedKeys !== $cartKeys || $expectedServices !== $cartServices || $expectedQtyMap !== $cartServiceQty) {
                 return redirect()->back()->with('error', 'Le panier ne correspond pas à la sélection de la consultation.');
             }
 
+            if ($expectedKeys === [] && $expectedServices === []) {
+                return redirect()->back()->with('error', 'Sélection consultation vide.');
+            }
+
             try {
-                ConsultationSaleService::resolvePendingLines($consultationForSale, $expectedKeys);
+                if ($expectedKeys !== []) {
+                    ConsultationSaleService::resolvePendingLines($consultationForSale, $expectedKeys);
+                }
+                if ($expectedQtyMap !== []) {
+                    ConsultationSaleService::resolvePendingServices($consultationForSale, $expectedQtyMap);
+                }
             } catch (\InvalidArgumentException $e) {
                 return redirect()->back()->with('error', $e->getMessage());
             }
@@ -1528,11 +1569,41 @@ public function createCheckoutOrder(Request $request)
                     $consultationCheckout['purchase_details'] ?? []
                 );
             }
+
+            if ($consultationId && $consultationForSale && ! empty($consultationCheckout['service_payments'])) {
+                ConsultationSaleService::markServicesPurchased(
+                    $consultationForSale,
+                    $consultationCheckout['service_payments'],
+                    $order->id
+                );
+            }
             
             foreach ($cart as $item) {
                 $type = $item['type'] ?? null;
                 $product = null;
                 $package = null;
+
+                if ($type === 'consultation_service') {
+                    $serviceKey = (string) ($item['consultation_service_key'] ?? 'service');
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => null,
+                        'package_id' => null,
+                        'name' => $item['name'],
+                        'sku' => 'SVC-'.strtoupper($serviceKey),
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'total' => $item['price'] * $item['quantity'],
+                        'pv_value' => $item['pv_value'] ?? 0,
+                        'bv_value' => $item['bv_value'] ?? 0,
+                        'options' => [
+                            'consultation_service' => true,
+                            'service_key' => $serviceKey,
+                            'consultation_id' => $item['consultation_id'] ?? $consultationId,
+                        ],
+                    ]);
+                    continue;
+                }
 
                 if ($type === 'package') {
                     $package = Package::find($item['id']);

@@ -68,6 +68,139 @@
         color: var(--primary);
     }
 
+    .checkout-card {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .checkout-card__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, rgba(19, 65, 120, 0.06), rgba(19, 65, 120, 0.01));
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .checkout-card__title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: -0.01em;
+    }
+
+    .checkout-card__hint {
+        margin: 0.25rem 0 0;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        max-width: 36rem;
+        line-height: 1.4;
+    }
+
+    .checkout-card__badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+    }
+
+    .checkout-card__body {
+        padding: 1rem 1.25rem 1.25rem;
+    }
+
+    .checkout-stats {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .checkout-stat {
+        flex: 1 1 0;
+        min-width: 7.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md, 8px);
+        background: var(--bg-secondary);
+        padding: 0.65rem 0.85rem;
+    }
+
+    .checkout-stat .label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-tertiary);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .checkout-stat .value {
+        margin-top: 0.15rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .checkout-stat .value-muted {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .checkout-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .checkout-section-title::before {
+        content: '';
+        width: 3px;
+        height: 0.9rem;
+        border-radius: 2px;
+        background: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .checkout-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding: 0.875rem 1rem;
+        border-radius: var(--radius-md, 8px);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .checkout-bar__meta {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+    }
+
+    .checkout-bar__meta strong {
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .checkout-bar__total {
+        color: var(--primary);
+        font-weight: 700;
+    }
+
     .table-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -90,10 +223,32 @@
         border-bottom: 1px solid var(--border-color);
     }
 
+    .table thead th.text-right,
+    .table tbody td.text-right {
+        text-align: right;
+    }
+
     .table tbody td {
         padding: 0.5rem 0.75rem;
         color: var(--text-secondary);
         border-bottom: 1px solid var(--border-color);
+    }
+
+    .table thead th.col-price,
+    .table tbody td.line-price-cell {
+        text-align: right;
+        width: 7.5rem;
+        white-space: nowrap;
+        padding-right: 1.5rem;
+    }
+
+    .table thead th.col-status,
+    .table tbody td.col-status {
+        padding-left: 1.25rem;
+    }
+
+    .table tbody td.line-price-cell > div {
+        text-align: right;
     }
 
     .table tbody tr:last-child td {
@@ -182,25 +337,6 @@
         background: var(--primary);
         color: #fff;
     }
-    .line-price-cell {
-        white-space: nowrap;
-    }
-
-    .service-box {
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md, 8px);
-        border: 1px solid var(--border-color);
-    }
-
-    .service-box-ceragem {
-        background: rgba(245, 158, 11, 0.04);
-        border-color: rgba(245, 158, 11, 0.15);
-    }
-
-    .service-box-detox {
-        background: rgba(34, 197, 94, 0.04);
-        border-color: rgba(34, 197, 94, 0.15);
-    }
 
     @media (max-width: 640px) {
         .info-grid {
@@ -220,7 +356,6 @@
             padding: 0.375rem 0.5rem;
             font-size: 0.7rem;
         }
-        .service-box { padding: 0.5rem 0.75rem; }
         .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
     }
 
@@ -377,41 +512,68 @@
     </div>
     @endif
 
-    {{-- PRODUITS RECOMMANDÉS (vente partielle) --}}
-    @if(!empty($productLines))
-    <div class="card">
-        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+    @php
+        $serviceLines = $serviceLines ?? \App\Services\ConsultationSaleService::serviceLines($consultation);
+        $serviceStats = $serviceStats ?? \App\Services\ConsultationSaleService::serviceStats($consultation);
+        $hasProductLines = ! empty($productLines);
+        $hasServiceLines = collect($serviceLines)->contains(fn ($l) => ((int) ($l['seances_prescribed'] ?? 0)) > 0);
+        $canCheckout = $canSell && ((($productStats['pending'] ?? 0) > 0) || (($serviceStats['pending'] ?? 0) > 0));
+    @endphp
+
+    {{-- PRODUITS + SERVICES : un seul encaissement --}}
+    @if($hasProductLines || $hasServiceLines)
+    <div class="card checkout-card">
+        <div class="checkout-card__head">
             <div>
-                <h3 class="text-base font-semibold text-[var(--primary)]">Produits recommandés</h3>
-                <p class="text-xs text-[var(--text-secondary)] mt-0.5">
-                    Le patient peut n’en acheter qu’une partie lors d’une ou plusieurs ventes.
+                <h3 class="checkout-card__title">Produits & services</h3>
+                <p class="checkout-card__hint">
+                    Sélectionnez produits et/ou séances, puis encaisser en une fois (paiement partiel possible).
                 </p>
             </div>
-            <div class="flex flex-wrap gap-2 text-xs">
-                <span class="badge badge-info">{{ $productStats['total'] ?? 0 }} recommandé(s)</span>
-                <span class="badge badge-success">{{ $productStats['purchased'] ?? 0 }} payé(s)</span>
-                <span class="badge badge-warning">{{ $productStats['pending'] ?? 0 }} à payer</span>
-                @if(($productStats['declined'] ?? 0) > 0)
-                    <span class="badge badge-secondary">{{ $productStats['declined'] }} refusé(s)</span>
+            <div class="checkout-card__badges">
+                @if($hasProductLines)
+                    <span class="badge badge-info">{{ $productStats['pending'] ?? 0 }} produit(s) à payer</span>
+                @endif
+                @if($hasServiceLines)
+                    <span class="badge badge-warning">{{ $serviceStats['pending'] ?? 0 }} service(s) ouvert(s)</span>
                 @endif
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <div class="total-box py-3 px-4">
-                <div class="label">Total recommandé (produits)</div>
-                <div class="value text-xl">${{ number_format($productStats['recommended_amount'] ?? 0, 2) }}</div>
+        <div class="checkout-card__body">
+        <div class="checkout-stats">
+            @if($hasProductLines)
+            <div class="checkout-stat">
+                <div class="label">Produits prescrits</div>
+                <div class="value">${{ number_format($productStats['recommended_amount'] ?? 0, 2) }}</div>
             </div>
-            <div class="total-box py-3 px-4">
-                <div class="label">Total payé (produits)</div>
-                <div class="value text-xl">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</div>
+            <div class="checkout-stat">
+                <div class="label">Produits payés</div>
+                <div class="value">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</div>
             </div>
+            @endif
+            @if($hasServiceLines)
+            <div class="checkout-stat">
+                <div class="label">Services prescrits</div>
+                <div class="value">${{ number_format($serviceStats['recommended_amount'] ?? 0, 2) }}</div>
+            </div>
+            <div class="checkout-stat">
+                <div class="label">Services payés / reste</div>
+                <div class="value">
+                    ${{ number_format($serviceStats['paid_amount'] ?? 0, 2) }}
+                    <span class="value-muted">/ ${{ number_format($serviceStats['remaining_amount'] ?? 0, 2) }}</span>
+                </div>
+            </div>
+            @endif
         </div>
 
-        @if($canSell && ($productStats['pending'] ?? 0) > 0)
+        @if($canCheckout)
         <form action="{{ route('cashier.consultations.checkout-selection', $consultation) }}" method="POST" id="consultationCheckoutForm">
             @csrf
-            <div class="table-wrap">
+
+            @if($hasProductLines)
+            <h4 class="checkout-section-title">Produits recommandés</h4>
+            <div class="table-wrap mb-5">
                 <table class="table" id="consultationProductsTable">
                     <thead>
                         <tr>
@@ -421,8 +583,8 @@
                             <th>Produit</th>
                             <th>Portion</th>
                             <th>Posologie</th>
-                            <th class="text-right">Prix ($)</th>
-                            <th>Statut</th>
+                            <th class="text-right col-price">Prix ($)</th>
+                            <th class="col-status">Statut</th>
                             <th>Observation</th>
                         </tr>
                     </thead>
@@ -455,18 +617,11 @@
                                     @if($isPending && $hasHalf)
                                         <div class="portion-toggle" role="group" aria-label="Portion">
                                             <label>
-                                                <input type="radio"
-                                                       class="line-portion"
-                                                       name="portions[{{ $line['line_key'] }}]"
-                                                       value="full"
-                                                       checked>
+                                                <input type="radio" class="line-portion" name="portions[{{ $line['line_key'] }}]" value="full" checked>
                                                 <span>Flacon</span>
                                             </label>
                                             <label>
-                                                <input type="radio"
-                                                       class="line-portion"
-                                                       name="portions[{{ $line['line_key'] }}]"
-                                                       value="half">
+                                                <input type="radio" class="line-portion" name="portions[{{ $line['line_key'] }}]" value="half">
                                                 <span>1/2</span>
                                             </label>
                                         </div>
@@ -486,7 +641,7 @@
                                         <div class="text-[10px] font-normal text-[var(--text-tertiary)]">{{ \App\Services\ConsultationSaleService::priceLabel($enriched) }}</div>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="col-status">
                                     <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
                                         {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
                                     </span>
@@ -500,57 +655,167 @@
                     </tbody>
                 </table>
             </div>
-            <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-[var(--border-color)]">
-                <p class="text-sm text-[var(--text-secondary)]">
-                    Sélection : <span class="font-semibold text-[var(--text-primary)]" id="selectionCount">0</span> produit(s) —
-                    <span class="font-semibold text-[var(--primary)]" id="selectionTotal">$0.00</span>
+            @endif
+
+            @if($hasServiceLines)
+            <h4 class="checkout-section-title mt-4">Services supplémentaires</h4>
+            <div class="table-wrap mb-2">
+                <table class="table" id="consultationServicesTable">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Prescrit</th>
+                            <th>Payé</th>
+                            <th>Reste</th>
+                            <th class="text-right col-price">Prix ($)</th>
+                            <th class="col-status">Statut</th>
+                            <th>Séances maintenant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($serviceLines as $svc)
+                            @if(((int) ($svc['seances_prescribed'] ?? 0)) <= 0)
+                                @continue
+                            @endif
+                            @php $remaining = (int) ($svc['seances_remaining'] ?? 0); @endphp
+                            <tr>
+                                <td>{{ $svc['label'] }}</td>
+                                <td>x {{ (int) $svc['seances_prescribed'] }}</td>
+                                <td>x {{ (int) $svc['seances_paid'] }}</td>
+                                <td>x {{ $remaining }}</td>
+                                <td class="text-right font-semibold line-price-cell">
+                                    <div>${{ number_format($svc['prix'], 2) }}</div>
+                                    <div class="text-[10px] font-normal text-[var(--text-tertiary)] leading-tight">
+                                        payé ${{ number_format($svc['amount_paid'], 2) }}<br>
+                                        reste ${{ number_format($svc['amount_remaining'], 2) }}
+                                    </div>
+                                </td>
+                                <td class="col-status">
+                                    <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($svc['status']) }}">
+                                        {{ \App\Services\ConsultationSaleService::statusLabel($svc['status']) }}
+                                    </span>
+                                    @if(!empty($svc['order_id']))
+                                        <a href="{{ route('cashier.orders.show', $svc['order_id']) }}" class="text-[10px] text-[var(--primary)] ml-1">Cmd #{{ $svc['order_id'] }}</a>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($remaining > 0)
+                                        <div class="inline-flex items-center gap-1">
+                                            <input type="number"
+                                                   id="service_qty_{{ $svc['key'] }}"
+                                                   name="service_qty[{{ $svc['key'] }}]"
+                                                   min="0"
+                                                   max="{{ $remaining }}"
+                                                   value="0"
+                                                   class="service-qty w-16 form-control form-control-sm text-center"
+                                                   data-unit-price="{{ $svc['prix'] }}"
+                                                   data-max="{{ $remaining }}"
+                                                   aria-label="Séances {{ $svc['label'] }}">
+                                            <span class="text-xs text-[var(--text-tertiary)]">/ {{ $remaining }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-[var(--text-tertiary)]">—</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+
+            <div class="checkout-bar">
+                <p class="checkout-bar__meta">
+                    Sélection :
+                    <strong id="selectionCount">0</strong> produit(s),
+                    <strong id="serviceSelectionCount">0</strong> séance(s) —
+                    <span class="checkout-bar__total" id="selectionTotal">$0.00</span>
                 </p>
                 <button type="submit" class="btn btn-primary btn-sm" id="checkoutSelectionBtn" disabled>
-                    Encaisser la sélection
+                    Encaisser
                 </button>
             </div>
         </form>
         @else
-        <div class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Produit</th>
-                        <th>Posologie</th>
-                        <th class="text-right">Prix ($)</th>
-                        <th>Statut</th>
-                        <th>Observation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($productLines as $line)
-                        @php $lineStatus = $line['status'] ?? 'pending'; @endphp
+            @if($hasProductLines)
+            <h4 class="checkout-section-title">Produits recommandés</h4>
+            <div class="table-wrap mb-5">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ \App\Services\ConsultationSaleService::productDisplayName($line) }}</td>
-                            <td>{{ $line['posologie'] ?? '' }}</td>
-                            <td class="text-right font-semibold">{{ \App\Services\ConsultationSaleService::priceLabel($line) }}</td>
-                            <td>
-                                <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
-                                    {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
-                                </span>
-                                @if(!empty($line['order_id']))
-                                    <a href="{{ route('cashier.orders.show', $line['order_id']) }}" class="text-[10px] text-[var(--primary)] ml-1">Cmd #{{ $line['order_id'] }}</a>
-                                @endif
-                            </td>
-                            <td>{{ $line['observation'] ?? '' }}</td>
+                            <th>Produit</th>
+                            <th>Posologie</th>
+                            <th class="text-right col-price">Prix ($)</th>
+                            <th class="col-status">Statut</th>
+                            <th>Observation</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($productLines as $line)
+                            @php $lineStatus = $line['status'] ?? 'pending'; @endphp
+                            <tr>
+                                <td>{{ \App\Services\ConsultationSaleService::productDisplayName($line) }}</td>
+                                <td>{{ $line['posologie'] ?? '' }}</td>
+                                <td class="text-right font-semibold">{{ \App\Services\ConsultationSaleService::priceLabel($line) }}</td>
+                                <td>
+                                    <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($lineStatus) }}">
+                                        {{ \App\Services\ConsultationSaleService::statusLabel($lineStatus) }}
+                                    </span>
+                                </td>
+                                <td>{{ $line['observation'] ?? '' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+
+            @if($hasServiceLines)
+            <h4 class="checkout-section-title mt-4">Services supplémentaires</h4>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Prescrit</th>
+                            <th>Payé</th>
+                            <th>Reste</th>
+                            <th class="text-right col-price">Prix ($)</th>
+                            <th class="col-status">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($serviceLines as $svc)
+                            @if(((int) ($svc['seances_prescribed'] ?? 0)) <= 0)
+                                @continue
+                            @endif
+                            <tr>
+                                <td>{{ $svc['label'] }}</td>
+                                <td>x {{ (int) $svc['seances_prescribed'] }}</td>
+                                <td>x {{ (int) $svc['seances_paid'] }}</td>
+                                <td>x {{ (int) $svc['seances_remaining'] }}</td>
+                                <td class="text-right font-semibold line-price-cell">${{ number_format($svc['prix'], 2) }}</td>
+                                <td class="col-status">
+                                    <span class="badge {{ \App\Services\ConsultationSaleService::statusBadgeClass($svc['status']) }}">
+                                        {{ \App\Services\ConsultationSaleService::statusLabel($svc['status']) }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+
+            @if(!$canSell)
+                <p class="text-xs text-[var(--text-secondary)] mt-3">
+                    L’encaissement est disponible lorsque la fiche est <strong>en traitement</strong> ou <strong>terminée</strong>.
+                </p>
+            @else
+                <p class="text-xs text-[var(--text-secondary)] mt-3">Rien à encaisser pour le moment.</p>
+            @endif
+        @endif
         </div>
-        @if(!$canSell)
-            <p class="text-xs text-[var(--text-secondary)] mt-3">
-                L’encaissement des produits est disponible lorsque la fiche est <strong>en traitement</strong> ou <strong>terminée</strong>.
-            </p>
-        @elseif(($productStats['pending'] ?? 0) === 0)
-            <p class="text-xs text-[var(--text-secondary)] mt-3">Tous les produits recommandés ont été traités (payés ou refusés).</p>
-        @endif
-        @endif
     </div>
     @elseif($consultation->recommended_products && count($consultation->recommended_products) > 0)
     <div class="card">
@@ -615,60 +880,6 @@
     </div>
     @endif
 
-    {{-- SERVICES SUPPLÉMENTAIRES --}}
-    @if($consultation->seances_ceragem > 0 || $consultation->seances_detox > 0)
-    <div class="card">
-        <h3 class="text-base font-semibold text-[var(--primary)] mb-3">Services Supplementaires</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            @if($consultation->seances_ceragem > 0)
-            <div class="service-box service-box-ceragem">
-                <div class="font-semibold text-[var(--ui-stat-warning)]">Ceragem</div>
-                <p class="text-sm">
-                    {{ $consultation->seances_ceragem }} seances × ${{ number_format($consultation->prix_ceragem, 2) }}
-                    <br>
-                    <span class="font-bold">= ${{ number_format($consultation->seances_ceragem * $consultation->prix_ceragem, 2) }}</span>
-                </p>
-            </div>
-            @endif
-            @if($consultation->seances_detox > 0)
-            <div class="service-box service-box-detox">
-                <div class="font-semibold text-[var(--ui-stat-success)]">Detox</div>
-                <p class="text-sm">
-                    {{ $consultation->seances_detox }} seances × ${{ number_format($consultation->prix_detox, 2) }}
-                    <br>
-                    <span class="font-bold">= ${{ number_format($consultation->seances_detox * $consultation->prix_detox, 2) }}</span>
-                </p>
-            </div>
-            @endif
-        </div>
-        <div class="text-right font-semibold mt-3 text-sm">
-            Total Services: <span class="text-[var(--primary)]">${{ number_format($consultation->total_services, 2) }}</span>
-        </div>
-    </div>
-    @endif
-
-    {{-- SYNTHÈSE FINANCIÈRE (produits et services séparés) --}}
-    <div class="total-box">
-        <div class="flex flex-wrap justify-between items-center gap-4">
-            <div>
-                <div class="label">Total produits</div>
-            </div>
-            <div class="value">${{ number_format($consultation->total_produits, 2) }}</div>
-        </div>
-        @if(($consultation->total_services ?? 0) > 0)
-        <div class="mt-3 pt-3 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
-            <div class="label">Total services supplémentaires</div>
-            <div class="text-lg font-bold text-[var(--text-primary)]">${{ number_format($consultation->total_services, 2) }}</div>
-        </div>
-        @endif
-        @if(!empty($productStats))
-        <div class="mt-3 pt-3 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex flex-wrap gap-x-6 gap-y-1">
-            <span>Produits payés : <strong class="text-[var(--text-primary)]">${{ number_format($productStats['paid_amount'] ?? 0, 2) }}</strong></span>
-            <span>Produits restants à payer : <strong class="text-[var(--text-primary)]">${{ number_format(max(0, ($productStats['recommended_amount'] ?? 0) - ($productStats['paid_amount'] ?? 0)), 2) }}</strong></span>
-        </div>
-        @endif
-    </div>
-
     {{-- NOTES ADMIN --}}
     @if($consultation->admin_notes)
     <div class="card">
@@ -682,18 +893,20 @@
 @push('scripts')
 <script>
 (function () {
+    function formatMoney(n) {
+        return '$' + n.toFixed(2);
+    }
+
     const form = document.getElementById('consultationCheckoutForm');
     if (!form) return;
 
     const selectAll = document.getElementById('selectAllPending');
     const boxes = form.querySelectorAll('.line-select');
-    const countEl = document.getElementById('selectionCount');
+    const qtyInputs = form.querySelectorAll('.service-qty');
+    const productCountEl = document.getElementById('selectionCount');
+    const serviceCountEl = document.getElementById('serviceSelectionCount');
     const totalEl = document.getElementById('selectionTotal');
     const submitBtn = document.getElementById('checkoutSelectionBtn');
-
-    function formatMoney(n) {
-        return '$' + n.toFixed(2);
-    }
 
     function syncRowPrice(row) {
         if (!row) return 0;
@@ -712,23 +925,39 @@
     }
 
     function refresh() {
-        let count = 0;
-        let total = 0;
+        let productCount = 0;
+        let productTotal = 0;
         boxes.forEach(function (cb) {
             const row = cb.closest('.product-line-row');
             syncRowPrice(row);
             if (cb.checked) {
-                count++;
-                total += parseFloat(cb.dataset.price || '0') || 0;
+                productCount++;
+                productTotal += parseFloat(cb.dataset.price || '0') || 0;
             }
         });
-        if (countEl) countEl.textContent = String(count);
-        if (totalEl) totalEl.textContent = formatMoney(total);
-        if (submitBtn) submitBtn.disabled = count === 0;
+
+        let serviceCount = 0;
+        let serviceTotal = 0;
+        qtyInputs.forEach(function (input) {
+            const max = parseInt(input.dataset.max || '0', 10) || 0;
+            let qty = parseInt(input.value || '0', 10) || 0;
+            if (qty < 0) qty = 0;
+            if (qty > max) qty = max;
+            input.value = String(qty);
+            const unit = parseFloat(input.dataset.unitPrice || '0') || 0;
+            serviceCount += qty;
+            serviceTotal += qty * unit;
+        });
+
+        if (productCountEl) productCountEl.textContent = String(productCount);
+        if (serviceCountEl) serviceCountEl.textContent = String(serviceCount);
+        if (totalEl) totalEl.textContent = formatMoney(productTotal + serviceTotal);
+        if (submitBtn) submitBtn.disabled = (productCount + serviceCount) === 0;
+
         if (selectAll) {
             const pending = boxes.length;
-            selectAll.checked = pending > 0 && count === pending;
-            selectAll.indeterminate = count > 0 && count < pending;
+            selectAll.checked = pending > 0 && productCount === pending;
+            selectAll.indeterminate = productCount > 0 && productCount < pending;
         }
     }
 
@@ -755,6 +984,11 @@
             refresh();
         });
     }
+
+    qtyInputs.forEach(function (input) {
+        input.addEventListener('input', refresh);
+        input.addEventListener('change', refresh);
+    });
 
     refresh();
 })();

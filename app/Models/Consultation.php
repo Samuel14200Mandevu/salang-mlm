@@ -33,6 +33,7 @@ class Consultation extends Model
         'prix_detox',
         'total_produits',
         'total_services',
+        'services_payment',
         'total_general',
         'admin_notes',
         'status',
@@ -41,6 +42,7 @@ class Consultation extends Model
 
     protected $casts = [
         'recommended_products' => 'array',
+        'services_payment' => 'array',
         'date_examen' => 'date',
         'poids' => 'decimal:2',
         'taille' => 'decimal:2',

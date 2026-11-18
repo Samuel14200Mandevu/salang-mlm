@@ -281,13 +281,13 @@
             <td>{{ !empty($products[$i]) ? \App\Services\ConsultationSaleService::priceLabel($products[$i]) : '' }}</td>
             <td>
                 @if ($i === 1)
-                    <strong>Séances ceragem</strong> : {{ $consultation->seances_ceragem ?? '0' }}
+                    <strong>Séances ceragem</strong> : x {{ (int) ($consultation->seances_ceragem ?? 0) }}
                 @elseif ($i === 2)
-                    <strong>Prix /s:</strong> ${{ number_format($consultation->prix_ceragem ?? 0, 2) }}
+                    <strong>Total :</strong> ${{ number_format($prixCeragemTotal, 2) }}
                 @elseif ($i === 5)
-                    <strong>Séances detox</strong> : {{ $consultation->seances_detox ?? '0' }}
+                    <strong>Séances detox</strong> : x {{ (int) ($consultation->seances_detox ?? 0) }}
                 @elseif ($i === 6)
-                    <strong>Prix /s:</strong> ${{ number_format($consultation->prix_detox ?? 0, 2) }}
+                    <strong>Total :</strong> ${{ number_format($prixDetoxTotal, 2) }}
                 @else
                     {{ $products[$i]['observation'] ?? '' }}
                 @endif
