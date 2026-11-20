@@ -1636,6 +1636,8 @@
   /* —— Rail métriques (rapports, etc.) —— */
   .member-app .member-fintech-rail-wrap {
     margin-top: 0.1rem;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .member-app .member-fintech-rail {
@@ -1644,6 +1646,8 @@
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     padding: 0.1rem 0.05rem 0.35rem;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .member-app .member-fintech-rail::-webkit-scrollbar {

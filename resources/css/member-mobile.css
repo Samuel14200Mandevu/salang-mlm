@@ -65,16 +65,45 @@
     background: var(--bg-page, #0b1220);
   }
 
+  /* Empêche le pan horizontal de toute la page (canvas / drawer / tableaux) */
+  html:has(body.member-app),
+  body.member-app {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
   .member-app {
     background: var(--bg-secondary, var(--bg-page));
     min-height: 100dvh;
     min-height: 100vh;
     overscroll-behavior-y: none;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .member-app .main-wrapper,
+  .member-app .main-content {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .member-app .main-wrapper {
     min-height: 100dvh;
     min-height: 100vh;
+  }
+
+  .member-app canvas,
+  .member-app .member-performance-chart-shell,
+  .member-app .member-performance-chart-shell canvas {
+    max-width: 100% !important;
+  }
+
+  /* Drawer fermé : ne doit pas élargir le scrollWidth */
+  .member-app #sidebar:not(.admin-sidebar-drawer-open):not(.translate-x-0),
+  .member-app .member-sidebar-drawer:not(.translate-x-0):not(.admin-sidebar-drawer-open) {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .member-app .cashier-topbar {
@@ -761,8 +790,8 @@
   }
 
   .member-app .table-wrap {
-    margin-left: -0.25rem;
-    margin-right: -0.25rem;
+    max-width: 100%;
+    min-width: 0;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-light);
   }

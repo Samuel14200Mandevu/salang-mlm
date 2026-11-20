@@ -211,11 +211,17 @@
 .registrations-chart-shell {
     position: relative;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: 220px;
     margin-top: 0.5rem;
     opacity: 0;
     transform: translateY(10px);
     animation: registrationsChartIn 0.7s ease-out 0.15s forwards;
+    overflow: hidden;
+}
+.registrations-chart-shell canvas {
+    max-width: 100% !important;
 }
 @keyframes registrationsChartIn {
     to {

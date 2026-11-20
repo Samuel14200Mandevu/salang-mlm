@@ -33,16 +33,44 @@
     background: var(--bg-navbar, #0f172a);
   }
 
+  /* Empêche le pan horizontal de toute la page (canvas / drawer / tableaux) */
+  html:has(body.admin-app),
+  body.admin-app {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
   .admin-app {
     background: var(--bg-page);
     min-height: 100dvh;
     min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .admin-app .main-wrapper,
+  .admin-app .main-content {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .admin-app .main-wrapper {
     min-height: 100dvh;
     min-height: 100vh;
     background: var(--bg-page);
+  }
+
+  .admin-app canvas,
+  .admin-app .registrations-chart-shell,
+  .admin-app .registrations-chart-shell canvas {
+    max-width: 100% !important;
+  }
+
+  /* Drawer fermé : ne doit pas élargir le scrollWidth */
+  .admin-app #sidebar:not(.admin-sidebar-drawer-open):not(.translate-x-0) {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .admin-app .cashier-topbar {
@@ -524,13 +552,15 @@
     border-radius: 14px;
   }
 
-  /* Tableaux → cartes scrollables */
+  /* Tableaux → cartes scrollables (scroll interne, pas la page) */
   .admin-app .table-wrap,
   .admin-app .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
     border-radius: 12px;
     border: 1px solid var(--border-light);
     background: var(--bg-card);
+    max-width: 100%;
+    min-width: 0;
   }
 
   .admin-app .table {

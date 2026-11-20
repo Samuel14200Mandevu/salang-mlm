@@ -397,11 +397,17 @@
     .member-performance-chart-shell {
         position: relative;
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
         height: 220px;
         margin-top: 0.5rem;
         opacity: 0;
         transform: translateY(10px);
         animation: memberPerformanceChartIn 0.7s ease-out 0.15s forwards;
+        overflow: hidden;
+    }
+    .member-performance-chart-shell canvas {
+        max-width: 100% !important;
     }
     @keyframes memberPerformanceChartIn {
         to {

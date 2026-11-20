@@ -10,6 +10,42 @@ body {
   background-color: var(--bg-page, #f4f5f7);
 }
 
+/* Filet global anti pan horizontal (admin / caisse / membre) */
+@media (max-width: 767px) {
+  html:has(body.admin-app),
+  html:has(body.cashier-app),
+  html:has(body.member-app),
+  body.admin-app,
+  body.cashier-app,
+  body.member-app {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  .admin-app,
+  .cashier-app,
+  .member-app {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .admin-app .main-wrapper,
+  .admin-app .main-content,
+  .cashier-app .main-wrapper,
+  .cashier-app .main-content,
+  .member-app .main-wrapper,
+  .member-app .main-content {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-app canvas,
+  .cashier-app canvas,
+  .member-app canvas {
+    max-width: 100% !important;
+  }
+}
+
 html.dark,
 html.dark body {
   background-color: var(--bg-page, #0c1017);
