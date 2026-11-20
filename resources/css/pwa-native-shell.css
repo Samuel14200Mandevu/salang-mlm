@@ -1,5 +1,4 @@
-/* PWA native shell — no accidental zoom / bounce / text selection
-   Loaded via app.css (member / admin / cashier). Does not edit frozen auth/splash CSS. */
+/* PWA native shell — edge-to-edge light chrome, no accidental zoom / bounce */
 
 html,
 body {
@@ -7,6 +6,13 @@ body {
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Fond page jusqu’aux bords (pas de bande système bleue) */
+  background-color: var(--bg-page, #f4f5f7);
+}
+
+html.dark,
+html.dark body {
+  background-color: var(--bg-page, #0c1017);
 }
 
 html {
@@ -34,4 +40,18 @@ select,
   select {
     font-size: 16px;
   }
+
+  /* Header / topbar : safe-area haut (heure, encoche) */
+  .member-app .cashier-topbar,
+  .admin-app .cashier-topbar,
+  .cashier-app .cashier-topbar,
+  .member-app .member-mobile-topbar {
+    padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
+  }
+
+  /*
+   * Bottom nav : le dock est déjà positionné avec
+   * bottom: inset + env(safe-area-inset-bottom) dans member/admin/cashier-mobile.css.
+   * Ne pas doubler le padding ici.
+   */
 }

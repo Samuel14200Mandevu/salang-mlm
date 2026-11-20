@@ -4,9 +4,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Salang MLM')</title>
 
-    <meta name="theme-color" content="#1E5DAD">
+    <meta name="theme-color" content="#F4F5F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0c1017" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F4F5F7" id="salang-theme-color">
+    <meta name="color-scheme" content="light dark">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
 
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
