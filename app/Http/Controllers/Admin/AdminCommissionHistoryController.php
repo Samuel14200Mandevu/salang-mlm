@@ -308,11 +308,7 @@ class AdminCommissionHistoryController extends Controller
             $generation = $data['generation'];
             $descendantId = $data['descendant_id'];
             $descendantRank = $data['descendant_rank'];
-            $isExcluded = $data['is_excluded'];
-
-            if ($isExcluded) {
-                continue;
-            }
+            $branchBlocked = ! empty($data['is_branch_blocked']);
 
             $descendantPV = $descendantPVs[$descendantId] ?? 0;
 
@@ -321,11 +317,11 @@ class AdminCommissionHistoryController extends Controller
             }
 
             $descendantRate = $this->getDirectRate($descendantRank);
-            $branchBlocked = ! empty($data['is_branch_blocked']);
 
             // ─────────────────────────────────────────────
             // INDIRECT — uniquement jusqu'à 8 générations
-            // Jambe entière exclue si un filleul (direct ou indirect) a un grade ≥ upline.
+            // Jambe entière exclue si un filleul (direct ou indirect) a un
+            // grade ≥ upline (is_branch_blocked). Ne s'applique PAS au Leadership.
             // ─────────────────────────────────────────────
             if (
                 ! $branchBlocked
@@ -362,11 +358,12 @@ class AdminCommissionHistoryController extends Controller
 
             // ─────────────────────────────────────────────
             // LEADERSHIP — jusqu'à 12 générations
+            // Pas de coupure par grade sur le chemin ni par branch block.
+            // Barème L (taux) indexé par le grade du bénéficiaire (0 % < grade 5).
             // ─────────────────────────────────────────────
             if (
                 $generation <= self::MAX_GENERATIONS_LEADERSHIP
                 && $pvOkForIndirect
-                && $userRank >= 5
             ) {
                 $leadershipRate = $this->getLeadershipRate($userRank);
 
@@ -398,11 +395,13 @@ class AdminCommissionHistoryController extends Controller
     }
 
     /**
-     * Descendants jusqu'à N générations + exclusion de jambe.
+     * Descendants jusqu'à N générations + flags d'exclusion.
      *
-     * - is_excluded : nœud/ancêtre avec rank ≥ buyer (sous-arbre).
+     * - is_excluded : nœud/ancêtre avec rank ≥ buyer (sous-arbre / compression chemin).
      * - is_branch_blocked : un filleul direct OU indirect de la jambe a rank ≥ buyer
-     *   → toute la jambe hors indirect.
+     *   → toute la jambe hors Indirect ; les autres jambes restent éligibles.
+     *
+     * Leadership ignore les deux flags : seule la profondeur (max 12 gén.) compte.
      *
      * @param  User  $user
      * @param  int  $maxGenerations
