@@ -261,11 +261,11 @@
                     <tr>
                         <th>ID</th>
                         <th>Membre</th>
+                        <th>Statut</th>
                         <th>Code Membre</th>
                         <th>Grade</th>
                         <th>Code Parrain</th>
                         <th>PV</th>
-                        <th>Statut</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>

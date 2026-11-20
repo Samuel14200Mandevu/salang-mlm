@@ -50,7 +50,7 @@
 
             $drawerRankName = $drawerRankModel?->name ?? \App\Support\MlmRank::label($drawerRankLevel);
             $drawerRankImageUrl = \App\Support\MlmRank::imageUrl($drawerRankLevel);
-            $drawerCode = $drawerUser->sponsor_id ?: ('#' . $drawerUser->id);
+            $drawerCode = $drawerUser->sponsor_id ?: (string) $drawerUser->id;
             $drawerSubtitle = $drawerUser->package?->name;
         } elseif ($drawerVariant === 'admin') {
             $drawerRankName = 'Administrateur';

@@ -24,6 +24,11 @@
                 </div>
             </div>
         </td>
+        <td>
+            <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
+                {{ $user->is_active ? 'Actif' : 'Inactif' }}
+            </span>
+        </td>
         <td class="font-mono text-xs sm:text-sm">
             @if($user->sponsor_id)
                 {{ $user->sponsor_id }}
@@ -45,11 +50,6 @@
         </td>
         <td class="font-mono text-sm tabular-nums">
             {{ number_format((float) ($user->pv_balance ?? 0), 0, ',', ' ') }}
-        </td>
-        <td>
-            <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px] sm:text-xs">
-                {{ $user->is_active ? 'Actif' : 'Inactif' }}
-            </span>
         </td>
         <td class="text-center">
             <div class="flex justify-center">

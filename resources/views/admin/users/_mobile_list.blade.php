@@ -28,13 +28,15 @@
         </div>
         <div class="admin-user-card__meta">
             @if($user->sponsor_id)
-                <span class="admin-user-card__code">#{{ $user->sponsor_id }}</span>
+                <span class="admin-user-card__code">{{ $user->sponsor_id }}</span>
             @endif
             <span class="{{ \App\Support\MlmRank::badgeClass($rankLevel) }}">{{ \App\Support\MlmRank::label($rankLevel) }}</span>
-            <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
+            @if($roleDisplay !== 'Membre')
+                <span class="text-[10px] font-semibold text-[var(--text-tertiary)]">{{ $roleDisplay }}</span>
+            @endif
+            <span class="admin-user-card__role badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }}">
                 {{ $user->is_active ? 'Actif' : 'Inactif' }}
             </span>
-            <span class="admin-user-card__role">{{ $roleDisplay }}</span>
         </div>
     </a>
 @empty

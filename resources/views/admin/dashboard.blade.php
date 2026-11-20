@@ -632,18 +632,16 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                         <tr>
                             <th>Nom</th>
                             <th class="hidden sm:table-cell">Email</th>
-                            <th class="text-right">Statut</th>
+                            <th class="text-right whitespace-nowrap">Code membre</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($recentUsers ?? [] as $user)
                             <tr>
-                                <td class="font-medium text-sm">{{ $user->name }}</td>
-                                <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs">{{ $user->email }}</td>
-                                <td class="text-right">
-                                    <span class="badge {{ $user->is_active ? 'badge-success' : 'badge-danger' }} text-[10px]">
-                                        {{ $user->is_active ? 'Actif' : 'Inactif' }}
-                                    </span>
+                                <td class="font-medium text-sm max-w-[8rem] sm:max-w-[10rem] truncate" title="{{ $user->name }}">{{ $user->name }}</td>
+                                <td class="hidden sm:table-cell text-[var(--text-secondary)] text-xs max-w-[12rem] truncate" title="{{ $user->email }}">{{ $user->email }}</td>
+                                <td class="text-right font-mono text-xs whitespace-nowrap tabular-nums">
+                                    {{ $user->sponsor_id ?: '—' }}
                                 </td>
                             </tr>
                         @empty

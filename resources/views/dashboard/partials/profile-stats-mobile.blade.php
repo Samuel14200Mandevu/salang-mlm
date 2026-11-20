@@ -8,7 +8,7 @@
     </div>
     <div class="min-w-0 flex-1">
         <p class="font-semibold text-sm text-[var(--text-primary)] truncate">{{ $user->name }}</p>
-        <p class="text-[10px] text-[var(--text-tertiary)] font-mono">#{{ $user->sponsor_id ?? $user->id }}</p>
+        <p class="text-[10px] text-[var(--text-tertiary)] font-mono">{{ $user->sponsor_id ?? $user->id }}</p>
     </div>
     <a href="{{ route('network.index') }}" class="btn btn-outline btn-sm shrink-0">Réseau</a>
 </div>
