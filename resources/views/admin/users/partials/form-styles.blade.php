@@ -155,19 +155,22 @@ textarea.form-control { resize: vertical; min-height: 4.5rem; }
     font-weight: 700;
 }
 
-@media (max-width: 640px) {
+/* Aligné sur le shell admin mobile (<768) : barre d’actions AU-DESSUS du menu bas */
+@media (max-width: 767px) {
     .admin-mobile-page--user-form {
-        padding-bottom: 5.5rem;
+        /* barre actions (~3.5rem) + dock nav + marge */
+        padding-bottom: calc(var(--mobile-nav-height, 4.75rem) + 4.25rem);
     }
     .user-form-actions--mobile-fixed {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 0;
-        z-index: 40;
+        /* Au-dessus du dock flottant (.mobile-bottom-nav), pas derrière */
+        bottom: calc(var(--mobile-nav-height, 4.75rem) + 0.25rem);
+        z-index: 90;
         display: flex;
         gap: 0.5rem;
-        padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+        padding: 0.65rem 0.75rem;
         background: color-mix(in srgb, var(--bg-page) 94%, transparent);
         backdrop-filter: blur(10px);
         border-top: 1px solid var(--border-color);
@@ -181,7 +184,7 @@ textarea.form-control { resize: vertical; min-height: 4.5rem; }
         display: none;
     }
 }
-@media (min-width: 641px) {
+@media (min-width: 768px) {
     .user-form-actions--mobile-fixed { display: none; }
 }
 </style>
