@@ -125,6 +125,11 @@ textarea.form-control { resize: vertical; min-height: 4.5rem; }
     display: grid;
     gap: 0.5rem;
 }
+.user-form-actions--in-role {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border-light);
+}
 .user-form-side {
     position: relative;
 }
@@ -155,36 +160,10 @@ textarea.form-control { resize: vertical; min-height: 4.5rem; }
     font-weight: 700;
 }
 
-/* Aligné sur le shell admin mobile (<768) : barre d’actions AU-DESSUS du menu bas */
 @media (max-width: 767px) {
     .admin-mobile-page--user-form {
-        /* barre actions (~3.5rem) + dock nav + marge */
-        padding-bottom: calc(var(--mobile-nav-height, 4.75rem) + 4.25rem);
+        /* espace pour le dock nav admin */
+        padding-bottom: calc(var(--mobile-nav-height, 4.75rem) + 1rem);
     }
-    .user-form-actions--mobile-fixed {
-        position: fixed;
-        left: 0;
-        right: 0;
-        /* Au-dessus du dock flottant (.mobile-bottom-nav), pas derrière */
-        bottom: calc(var(--mobile-nav-height, 4.75rem) + 0.25rem);
-        z-index: 90;
-        display: flex;
-        gap: 0.5rem;
-        padding: 0.65rem 0.75rem;
-        background: color-mix(in srgb, var(--bg-page) 94%, transparent);
-        backdrop-filter: blur(10px);
-        border-top: 1px solid var(--border-color);
-        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
-    }
-    .user-form-actions--mobile-fixed .btn {
-        flex: 1 1 auto;
-        min-height: 2.75rem;
-    }
-    .user-form-side .user-form-actions {
-        display: none;
-    }
-}
-@media (min-width: 768px) {
-    .user-form-actions--mobile-fixed { display: none; }
 }
 </style>

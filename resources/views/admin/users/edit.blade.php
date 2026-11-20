@@ -59,11 +59,6 @@
             'ranks' => $ranks ?? [],
         ])
     </form>
-
-    <div class="user-form-actions--mobile-fixed">
-        <button type="submit" form="userEditForm" class="btn btn-primary">Enregistrer</button>
-        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-outline">Annuler</a>
-    </div>
 </div>
 @endsection
 
