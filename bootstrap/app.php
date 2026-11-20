@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 // ============================================================
 // OPTIMISATIONS POUR LARAVEL CLOUD / PRODUCTION
@@ -83,6 +84,15 @@ return Application::configure(basePath: dirname(__DIR__))
                         'message' => 'Unauthenticated.',
                         'error' => 'AuthenticationException',
                     ], 401);
+                }
+
+                if ($e instanceof ValidationException) {
+                    return response()->json([
+                        'success' => false,
+                        'data' => null,
+                        'message' => $e->getMessage(),
+                        'errors' => $e->errors(),
+                    ], $e->status);
                 }
 
                 $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;

@@ -37,6 +37,7 @@
 @import './member-services.css';
 @import './member-mobile-drawer-neon.css';
 @import './salang-pagination.css';
+@import './pwa-native-shell.css';
 
 @tailwind base;
 @tailwind components;

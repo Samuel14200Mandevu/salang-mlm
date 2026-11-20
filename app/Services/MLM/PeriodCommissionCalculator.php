@@ -262,20 +262,19 @@ class PeriodCommissionCalculator
             $generation = $data['generation'];
             $descendantId = $data['descendant_id'];
             $descendantRank = $data['descendant_rank'];
-            $isExcluded = $data['is_excluded'];
-
-            // Branche exclue
-            if ($isExcluded) continue;
 
             $descendantPV = $descendantPVs[$descendantId] ?? 0;
-            if ($descendantPV <= 0) continue;
+            if ($descendantPV <= 0) {
+                continue;
+            }
 
             $descendantRate = $this->getDirectRate($descendantRank);
             $descendant = $allUsers->get($descendantId);
             $branchBlocked = ! empty($data['is_branch_blocked']);
 
             // ─────────────── INDIRECT (gén. 1-8) ───────────────
-            // Jambe entière exclue si un filleul (direct ou indirect) a un grade ≥ upline.
+            // Jambe entière exclue si un filleul (direct ou indirect) a un
+            // grade ≥ upline (is_branch_blocked). Ne s'applique PAS au Leadership.
             if (
                 ! $branchBlocked
                 && $generation <= self::MAX_GENERATIONS_INDIRECT
@@ -310,7 +309,10 @@ class PeriodCommissionCalculator
             }
 
             // ─────────────── LEADERSHIP (gén. 1-12) ───────────────
-            if ($generation <= self::MAX_GENERATIONS_LEADERSHIP && $userRank >= 5) {
+            // Pas de coupure par grade sur le chemin ni par branch block :
+            // uniquement max 12 gén. Le barème L (taux) reste indexé par le
+            // grade du bénéficiaire (0 % en dessous du grade 5).
+            if ($generation <= self::MAX_GENERATIONS_LEADERSHIP) {
                 $leadershipRate = $this->getLeadershipRate($userRank);
 
                 if ($leadershipRate > 0) {
@@ -349,9 +351,13 @@ class PeriodCommissionCalculator
      * Récupère tous les descendants avec flags d'exclusion.
      *
      * - is_excluded : le nœud (ou un ancêtre sur le chemin) a un rank ≥ buyer
-     *   → sous-arbre coupé (leadership + historique).
+     *   → sous-arbre (historique / compression chemin).
      * - is_branch_blocked : un filleul direct OU indirect de la jambe a un rank ≥ buyer
-     *   → toute la jambe hors bonus indirect ; les autres jambes restent éligibles.
+     *   → toute la jambe hors bonus Indirect ; les autres jambes restent éligibles.
+     *
+     * Leadership ignore les deux flags : seule la profondeur (max 12 gén.) compte.
+     * Les règles différentiel de taux / grade min bénéficiaire restent dans
+     * calculateIndirectAndLeadership.
      *
      * @return array<int, array{generation:int, descendant_id:int, descendant_rank:int, is_excluded:bool, is_branch_blocked:bool}>
      */
@@ -401,7 +407,7 @@ class PeriodCommissionCalculator
                     $isExcluded = true;
                 }
 
-                // Jambe = filleul direct (gén. 1) + toute sa descendance (indirects)
+                // Jambe = filleul direct (gén. 1) + toute sa descendance
                 $branchId = $currentGeneration === 1
                     ? (int) $child->id
                     : (int) $parent['branch_id'];

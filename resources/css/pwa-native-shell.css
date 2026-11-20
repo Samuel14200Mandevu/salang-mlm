@@ -1,0 +1,37 @@
+/* PWA native shell — no accidental zoom / bounce / text selection
+   Loaded via app.css (member / admin / cashier). Does not edit frozen auth/splash CSS. */
+
+html,
+body {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/* iOS Safari zooms focused fields under 16px — keep layout, raise mobile only */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

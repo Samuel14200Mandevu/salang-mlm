@@ -13,8 +13,11 @@ use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 /**
- * Si un filleul (direct ou indirect) d’une jambe a un grade ≥ l’upline,
- * toute la jambe est hors bonus indirect ; les autres jambes restent éligibles.
+ * Indirect : si un filleul (direct ou indirect) d’une jambe a un grade ≥ upline,
+ * toute la jambe est hors bonus Indirect (`is_branch_blocked`).
+ * Les autres jambes restent éligibles.
+ *
+ * Leadership ignore le branch block et l’exclusion chemin : max 12 gén. uniquement.
  */
 class IndirectFullBranchExclusionTest extends TestCase
 {
@@ -26,18 +29,15 @@ class IndirectFullBranchExclusionTest extends TestCase
         Queue::fake();
     }
 
+    /**
+     * Cas type 511642 ← … ← 513067 : peer g7 ailleurs dans la jambe
+     * → pas d’Indirect sur toute la jambe ; Leadership dû (gén. ≤ 12).
+     */
     public function test_same_grade_anywhere_in_leg_blocks_entire_branch_for_indirect(): void
     {
-        $period = CommissionPeriod::firstOrCreate(
-            ['period' => MlmPeriod::current()],
-            [
-                'start_date' => now()->startOfMonth(),
-                'end_date' => now()->endOfMonth(),
-                'status' => 'pending',
-            ]
-        );
+        $period = $this->makePeriod();
 
-        // Upline grade 7
+        // Upline grade 7 (taux direct 40 %, L 1.8 %)
         $leader = User::factory()->create([
             'is_active' => true,
             'user_type' => 'member',
@@ -47,7 +47,7 @@ class IndirectFullBranchExclusionTest extends TestCase
             'sponsor_id' => '900001',
         ]);
 
-        // Jambe A : mid plus bas + peer même grade + cousin plus bas
+        // Jambe A : mid + peer même grade + cousin chemin propre
         $midA = User::factory()->create([
             'is_active' => true,
             'user_type' => 'member',
@@ -76,7 +76,7 @@ class IndirectFullBranchExclusionTest extends TestCase
             'sponsor_id' => '900004',
         ]);
 
-        // Jambe B : pas de peer ≥ 7 → indirect OK
+        // Jambe B : pas de peer ≥ 7 → Indirect OK
         $midB = User::factory()->create([
             'is_active' => true,
             'user_type' => 'member',
@@ -104,35 +104,139 @@ class IndirectFullBranchExclusionTest extends TestCase
             [$midB, 100],
             [$deepB, 100],
         ] as [$user, $pv]) {
-            PVHistory::create([
-                'user_id' => $user->id,
-                'amount' => $pv,
-                'date' => now()->toDateString(),
-                'period' => $period->period,
-                'type' => 'personal',
-                'status' => 'posted',
-                'notes' => 'test full-branch exclusion',
-                'created_by' => $leader->id,
-            ]);
+            $this->postPv($user, $pv, $period, $leader->id);
         }
 
         app(PeriodCommissionCalculator::class)->calculateForPeriod($period, $leader->id);
 
-        $indirectFrom = Commission::query()
-            ->where('user_id', $leader->id)
-            ->where('period', $period->period)
-            ->where('type', 'indirect')
-            ->pluck('from_user_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+        $indirectFrom = $this->commissionFromIds($leader->id, $period->period, 'indirect');
+        $leadershipFrom = $this->commissionFromIds($leader->id, $period->period, 'leadership');
 
-        // Jambe A entièrement hors indirect (même le mid et le cousin)
+        // Jambe A entièrement hors Indirect (même mid et cousin « chemin propre »)
         $this->assertNotContains($midA->id, $indirectFrom);
         $this->assertNotContains($peerSameGrade->id, $indirectFrom);
         $this->assertNotContains($cousinLower->id, $indirectFrom);
 
-        // Jambe B toujours éligible
+        // Jambe B toujours éligible à l’Indirect
         $this->assertContains($midB->id, $indirectFrom);
         $this->assertContains($deepB->id, $indirectFrom);
+
+        // Leadership dû sur la jambe A malgré le peer g7 (gén. ≤ 12)
+        $this->assertContains($midA->id, $leadershipFrom);
+        $this->assertContains($peerSameGrade->id, $leadershipFrom);
+        $this->assertContains($cousinLower->id, $leadershipFrom);
+    }
+
+    /**
+     * Cas type 512427/514644 : g≥7 sur le chemin → Indirect coupé pour
+     * le nœud et tout son sous-arbre (et toute la jambe) ; Leadership OK.
+     */
+    public function test_same_grade_on_path_blocks_indirect_for_subtree(): void
+    {
+        $period = $this->makePeriod();
+
+        $leader = User::factory()->create([
+            'is_active' => true,
+            'user_type' => 'member',
+            'rank_level' => 7,
+            'rank' => 'Saphire Manager',
+            'team_pv' => 200000,
+            'sponsor_id' => '901001',
+        ]);
+
+        // Nœud intermédiaire même grade → chemin / jambe bloqués pour Indirect
+        $peerOnPath = User::factory()->create([
+            'is_active' => true,
+            'user_type' => 'member',
+            'parrain_id' => $leader->id,
+            'rank_level' => 7,
+            'rank' => 'Saphire Manager',
+            'team_pv' => 5000,
+            'sponsor_id' => '901002',
+        ]);
+
+        $deepUnderPeer = User::factory()->create([
+            'is_active' => true,
+            'user_type' => 'member',
+            'parrain_id' => $peerOnPath->id,
+            'rank_level' => 4,
+            'rank' => 'Directeur',
+            'team_pv' => 500,
+            'sponsor_id' => '901003',
+        ]);
+
+        // Autre jambe propre → Indirect OK
+        $cleanMid = User::factory()->create([
+            'is_active' => true,
+            'user_type' => 'member',
+            'parrain_id' => $leader->id,
+            'rank_level' => 5,
+            'rank' => 'Manager Senior',
+            'team_pv' => 8000,
+            'sponsor_id' => '901004',
+        ]);
+
+        foreach ([
+            [$leader, 100],
+            [$peerOnPath, 100],
+            [$deepUnderPeer, 100],
+            [$cleanMid, 100],
+        ] as [$user, $pv]) {
+            $this->postPv($user, $pv, $period, $leader->id);
+        }
+
+        app(PeriodCommissionCalculator::class)->calculateForPeriod($period, $leader->id);
+
+        $indirectFrom = $this->commissionFromIds($leader->id, $period->period, 'indirect');
+        $leadershipFrom = $this->commissionFromIds($leader->id, $period->period, 'leadership');
+
+        $this->assertNotContains($peerOnPath->id, $indirectFrom);
+        $this->assertNotContains($deepUnderPeer->id, $indirectFrom);
+        $this->assertContains($cleanMid->id, $indirectFrom);
+
+        // Leadership dû malgré g7 sur le chemin (gén. ≤ 12)
+        $this->assertContains($peerOnPath->id, $leadershipFrom);
+        $this->assertContains($deepUnderPeer->id, $leadershipFrom);
+        $this->assertContains($cleanMid->id, $leadershipFrom);
+    }
+
+    private function makePeriod(): CommissionPeriod
+    {
+        return CommissionPeriod::firstOrCreate(
+            ['period' => MlmPeriod::current()],
+            [
+                'start_date' => now()->startOfMonth(),
+                'end_date' => now()->endOfMonth(),
+                'status' => 'pending',
+            ]
+        );
+    }
+
+    private function postPv(User $user, int $amount, CommissionPeriod $period, int $createdBy): void
+    {
+        PVHistory::create([
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'date' => now()->toDateString(),
+            'period' => $period->period,
+            'type' => 'personal',
+            'status' => 'posted',
+            'notes' => 'test indirect full-branch exclusion',
+            'created_by' => $createdBy,
+        ]);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function commissionFromIds(int $userId, string $period, string $type): array
+    {
+        return Commission::query()
+            ->where('user_id', $userId)
+            ->where('period', $period)
+            ->where('type', $type)
+            ->pluck('from_user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

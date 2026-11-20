@@ -13,6 +13,7 @@ import './member-withdrawal';
 import './member-assistant';
 import './member-services-featured';
 import './member-count-up';
+import './pwa-native-shell';
 import Alpine from 'alpinejs';
 import api from './api';
 

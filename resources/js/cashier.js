@@ -4,6 +4,7 @@
 import './bootstrap';
 import './admin-mobile';
 import './salang-pagination';
+import './pwa-native-shell';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
