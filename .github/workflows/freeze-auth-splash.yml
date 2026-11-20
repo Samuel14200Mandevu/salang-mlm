@@ -16,7 +16,7 @@ jobs:
 
       - name: Ensure frozen paths match commit 1f60e51
         env:
-          FROZEN_SHA: 248cb2340725a5fbcf98d28ea9e6dbe8b3867dcc
+          FROZEN_SHA: e823f6661781de25c70d0e52f922c61f5a239a05
           ALLOW_LABEL: allow-auth-splash
         run: |
           set -euo pipefail

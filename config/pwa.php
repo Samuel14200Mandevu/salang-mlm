@@ -9,7 +9,7 @@ return [
         'name' => 'Salang MLM',  // ← Nom complet CORRECT
         'short_name' => 'Salang',  // ← Nom court CORRECT
         'description' => 'Salang Multi-Level Marketing Platform',
-        'theme_color' => '#1f33cf',
+        'theme_color' => '#F4F5F7',
         'background_color' => '#ffffff',
         'display' => 'standalone',
         'orientation' => 'portrait',
