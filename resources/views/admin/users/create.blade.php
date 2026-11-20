@@ -42,11 +42,6 @@
             'ranks' => $ranks ?? [],
         ])
     </form>
-
-    <div class="user-form-actions--mobile-fixed">
-        <button type="submit" form="adminUserCreateForm" class="btn btn-primary">Créer le compte</button>
-        <a href="{{ route('admin.users') }}" class="btn btn-outline">Annuler</a>
-    </div>
 </div>
 @endsection
 

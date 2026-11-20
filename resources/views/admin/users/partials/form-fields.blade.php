@@ -319,17 +319,17 @@
                         @endif
                     </p>
                 </div>
+
+                <div class="user-form-actions user-form-actions--in-role">
+                    <button type="submit" class="btn btn-primary w-full" form="{{ $formId }}">
+                        {{ $isEdit ? 'Enregistrer les modifications' : 'Créer le compte' }}
+                    </button>
+                    <a href="{{ $isEdit ? route('admin.users.show', $user->id) : route('admin.users') }}"
+                       class="btn btn-outline w-full">
+                        Annuler
+                    </a>
+                </div>
             </div>
         </section>
-
-        <div class="user-form-actions">
-            <button type="submit" class="btn btn-primary w-full" form="{{ $formId }}">
-                {{ $isEdit ? 'Enregistrer les modifications' : 'Créer le compte' }}
-            </button>
-            <a href="{{ $isEdit ? route('admin.users.show', $user->id) : route('admin.users') }}"
-               class="btn btn-outline w-full">
-                Annuler
-            </a>
-        </div>
     </aside>
 </div>
