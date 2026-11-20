@@ -1,31 +1,45 @@
 {{-- Liste mobile (cartes) — sync AJAX via #walletsMobileList --}}
-<div id="walletsMobileList" class="md:hidden space-y-3">
+<div id="walletsMobileList" class="admin-wallet-list md:hidden">
     @forelse($wallets as $wallet)
-        <x-ui.list-card
-            :title="$wallet->user?->name ?? ('Utilisateur #' . $wallet->user_id)"
-            :subtitle="($wallet->user?->email ?? '') . ' · ' . ($wallet->currency ?? 'USD')"
-            :amount="number_format($wallet->balance, 2) . ' $'"
-            :href="route('admin.wallets.show', $wallet->id)"
-        >
-            <x-slot:status>
-                @if(! $wallet->is_active)
-                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold text-[var(--danger)] bg-[var(--danger-light)]">Bloqué</span>
-                @else
-                    {{-- --bg-subtle inexistant : fallback --bg-secondary --}}
-                    <span class="inline-flex items-center rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)]">{{ $wallet->currency ?? 'USD' }}</span>
-                @endif
-            </x-slot:status>
-            <x-slot:actions>
-                <a href="{{ route('admin.wallets.show', $wallet->id) }}"
-                   class="btn btn-outline btn-sm btn-icon"
-                   title="Voir">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        @php
+            $owner = $wallet->user;
+            $ownerName = $owner?->name ?? ('Utilisateur #' . $wallet->user_id);
+            $ownerEmail = $owner?->email ?? '';
+            $sponsorCode = $owner?->sponsor_id;
+            $pending = (float) ($wallet->pending_balance ?? 0);
+            $isActive = (bool) $wallet->is_active;
+        @endphp
+        <a href="{{ route('admin.wallets.show', $wallet->id) }}" class="admin-wallet-card">
+            <div class="admin-wallet-card__main">
+                <div class="admin-wallet-card__avatar" aria-hidden="true">
+                    {{ strtoupper(substr($ownerName, 0, 1)) }}
+                </div>
+                <div class="admin-wallet-card__text">
+                    <span class="admin-wallet-card__name">{{ $ownerName }}</span>
+                    @if($ownerEmail !== '')
+                        <span class="admin-wallet-card__email" title="{{ $ownerEmail }}">{{ $ownerEmail }}</span>
+                    @endif
+                </div>
+                <div class="admin-wallet-card__balance-wrap">
+                    <span class="admin-wallet-card__balance">${{ number_format((float) $wallet->balance, 2) }}</span>
+                    <svg class="admin-wallet-card__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                     </svg>
-                </a>
-            </x-slot:actions>
-        </x-ui.list-card>
+                </div>
+            </div>
+            <div class="admin-wallet-card__meta">
+                @if($sponsorCode)
+                    <span class="admin-wallet-card__code">{{ $sponsorCode }}</span>
+                @endif
+                <span class="admin-wallet-card__chip">{{ $wallet->currency ?? 'USD' }}</span>
+                @if($pending > 0)
+                    <span class="admin-wallet-card__pending">En attente ${{ number_format($pending, 2) }}</span>
+                @endif
+                <span class="admin-wallet-card__status badge {{ $isActive ? 'badge-success' : 'badge-warning' }}">
+                    {{ $isActive ? 'Actif' : 'Bloqué' }}
+                </span>
+            </div>
+        </a>
     @empty
         <x-ui.empty-state
             title="Aucun portefeuille"

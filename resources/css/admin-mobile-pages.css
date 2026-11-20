@@ -712,6 +712,140 @@
     border: 1px dashed var(--border-color);
   }
 
+  /* Liste portefeuilles (cartes natives) */
+  .admin-app .admin-wallet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .admin-app .admin-wallet-card {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.8rem 0.85rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+
+  .admin-app .admin-wallet-card:active {
+    transform: scale(0.995);
+    background: var(--bg-hover);
+  }
+
+  .admin-app .admin-wallet-card__main {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .admin-app .admin-wallet-card__avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #0f766e, #0a2a6c);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .admin-app .admin-wallet-card__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .admin-app .admin-wallet-card__name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-app .admin-wallet-card__email {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-app .admin-wallet-card__balance-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .admin-app .admin-wallet-card__balance {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-stat-success, #1f7b4d);
+    white-space: nowrap;
+  }
+
+  .admin-app .admin-wallet-card__chevron {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--text-tertiary);
+  }
+
+  .admin-app .admin-wallet-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .admin-app .admin-wallet-card__code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    background: var(--bg-secondary);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+  }
+
+  .admin-app .admin-wallet-card__chip {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+  }
+
+  .admin-app .admin-wallet-card__pending {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--ui-stat-warning, #a65a0e);
+    background: color-mix(in srgb, var(--ui-stat-warning, #a65a0e) 12%, transparent);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+  }
+
+  .admin-app .admin-wallet-card__status {
+    margin-left: auto;
+  }
+
   /* Liste filleuls (cartes) */
   .admin-app .admin-entity-list {
     display: flex;
