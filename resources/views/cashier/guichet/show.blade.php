@@ -200,6 +200,100 @@
         margin: 3px 0;
     }
 
+    .guichet-detail-card {
+        padding: 0;
+        overflow: hidden;
+    }
+    .guichet-detail-card__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.9rem 1.1rem;
+        border-bottom: 1px solid var(--border-light);
+        background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+    }
+    .guichet-detail-card__head h2 {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .guichet-detail-card__body {
+        padding: 0.25rem 1.1rem 0.5rem;
+    }
+    .guichet-detail-card .detail-row {
+        padding: 0.7rem 0;
+    }
+    .guichet-detail-card .detail-row .value {
+        font-weight: 600;
+        text-align: right;
+        word-break: break-word;
+    }
+    .guichet-detail-actions {
+        margin: 0;
+        padding: 1rem 1.1rem 1.15rem;
+        border-top: 1px solid var(--border-light);
+        background: color-mix(in srgb, var(--bg-secondary) 45%, var(--bg-card));
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .guichet-detail-actions__title {
+        margin: 0;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .guichet-detail-actions__field label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
+    }
+    .guichet-detail-actions__field .form-control {
+        width: 100%;
+        max-width: 16rem;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    .guichet-detail-actions__field .help-text {
+        margin: 0.35rem 0 0;
+        font-size: 0.6875rem;
+        color: var(--text-tertiary);
+        line-height: 1.35;
+    }
+    .guichet-detail-actions__buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .guichet-detail-actions__buttons .btn {
+        min-height: 2.5rem;
+    }
+    .guichet-detail-actions__buttons .btn-primary {
+        flex: 1 1 14rem;
+    }
+    .guichet-detail-actions__buttons .btn-danger,
+    .guichet-detail-actions__buttons .btn-outline {
+        flex: 0 0 auto;
+    }
+    @media (max-width: 640px) {
+        .guichet-detail-actions__field .form-control {
+            max-width: none;
+        }
+        .guichet-detail-actions__buttons .btn {
+            flex: 1 1 100%;
+            justify-content: center;
+        }
+    }
+
     @media print {
         body * { visibility: hidden !important; }
         .guichet-print-root,
@@ -313,76 +407,109 @@
     </div>
 
     {{-- DÉTAIL --}}
-    <div class="card">
-        <div class="detail-row">
-            <span class="label">Membre</span>
-            <span class="value">{{ $memberLabel }}</span>
+    @php
+        $bonusPhaseLabel = null;
+        if (is_string($withdrawal->notes) && preg_match('/\[bonus_phase=(direct|il)\]/', $withdrawal->notes, $phaseMatch)) {
+            $bonusPhaseLabel = $phaseMatch[1] === 'il' ? 'Indirect & Leadership' : 'Direct';
+        }
+        $defaultPaidOn = old('paid_on');
+        if (! $defaultPaidOn && is_string($withdrawal->notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $paidOnMatch)) {
+            $defaultPaidOn = $paidOnMatch[1];
+        }
+        $defaultPaidOn = $defaultPaidOn ?: now()->toDateString();
+    @endphp
+    <div class="card guichet-detail-card">
+        <div class="guichet-detail-card__head">
+            <h2>Détails du retrait</h2>
+            <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
         </div>
-        <div class="detail-row">
-            <span class="label">Téléphone</span>
-            <span class="value">{{ $member->phone ?? '—' }}</span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Demandé le</span>
-            <span class="value">{{ $withdrawal->created_at?->format('d/m/Y H:i') }}</span>
-        </div>
-        @if($withdrawal->receipt_number)
-            <div class="detail-row">
-                <span class="label">N° reçu</span>
-                <span class="value">{{ $withdrawal->receipt_number }}</span>
-            </div>
-        @endif
-        @if($withdrawal->completed_at)
-            <div class="detail-row">
-                <span class="label">Remis le</span>
-                <span class="value">{{ $withdrawal->completed_at->format('d/m/Y H:i') }}</span>
-            </div>
-        @endif
-        @if($withdrawal->cashier)
-            <div class="detail-row">
-                <span class="label">Caissier</span>
-                <span class="value">{{ $withdrawal->cashier->name }}</span>
-            </div>
-        @endif
 
-        <div class="flex flex-wrap gap-2 mt-4">
-            @if($withdrawal->status === 'pending')
-                @php
-                    $defaultPaidOn = old('paid_on');
-                    if (! $defaultPaidOn && is_string($withdrawal->notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $paidOnMatch)) {
-                        $defaultPaidOn = $paidOnMatch[1];
-                    }
-                    $defaultPaidOn = $defaultPaidOn ?: now()->toDateString();
-                @endphp
+        <div class="guichet-detail-card__body">
+            <div class="detail-row">
+                <span class="label">Membre</span>
+                <span class="value">{{ $memberLabel }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Téléphone</span>
+                <span class="value">{{ $member->phone ?? '—' }}</span>
+            </div>
+            @if($bonusPhaseLabel)
+                <div class="detail-row">
+                    <span class="label">Type de paiement</span>
+                    <span class="value">{{ $bonusPhaseLabel }}</span>
+                </div>
+            @endif
+            <div class="detail-row">
+                <span class="label">Demandé le</span>
+                <span class="value">{{ $withdrawal->created_at?->format('d/m/Y H:i') }}</span>
+            </div>
+            @if($withdrawal->receipt_number)
+                <div class="detail-row">
+                    <span class="label">N° reçu</span>
+                    <span class="value font-mono">{{ $withdrawal->receipt_number }}</span>
+                </div>
+            @endif
+            @if($withdrawal->completed_at)
+                <div class="detail-row">
+                    <span class="label">Remis le</span>
+                    <span class="value">{{ $withdrawal->completed_at->format('d/m/Y H:i') }}</span>
+                </div>
+            @endif
+            @if($withdrawal->cashier)
+                <div class="detail-row">
+                    <span class="label">Caissier</span>
+                    <span class="value">{{ $withdrawal->cashier->name }}</span>
+                </div>
+            @endif
+        </div>
+
+        @if($withdrawal->status === 'pending')
+            <div class="guichet-detail-actions">
+                <p class="guichet-detail-actions__title">Valider la remise</p>
+
                 <form method="POST"
                       action="{{ route('cashier.guichet.fulfill', $withdrawal->id) }}"
                       id="guichetFulfillForm"
-                      class="guichet-fulfill-form space-y-3 w-full sm:w-auto">
+                      class="guichet-fulfill-form space-y-3">
                     @csrf
-                    <div class="form-group mb-0">
-                        <label for="guichetFulfillPaidOn" class="text-xs font-semibold text-[var(--text-secondary)]">Date du paiement</label>
+                    <div class="guichet-detail-actions__field">
+                        <label for="guichetFulfillPaidOn">Date du paiement</label>
                         <input type="date"
                                id="guichetFulfillPaidOn"
                                name="paid_on"
-                               class="form-control mt-1"
+                               class="form-control"
                                value="{{ $defaultPaidOn }}"
                                max="{{ now()->toDateString() }}"
                                min="{{ now()->subDays(90)->toDateString() }}"
                                required>
-                        <p class="help-text mt-1 text-[10px] text-[var(--text-tertiary)]">Saisie manuelle d’un paiement déjà remis au guichet.</p>
+                        <p class="help-text">Pour un paiement déjà remis au guichet (saisie manuelle). Par défaut : aujourd’hui.</p>
                     </div>
-                    <button type="submit" class="btn btn-primary">Confirmer remise + préparer reçu</button>
+
+                    <div class="guichet-detail-actions__buttons">
+                        <button type="submit" class="btn btn-primary">
+                            Confirmer remise + préparer reçu
+                        </button>
+                        <button type="submit"
+                                form="guichetCancelForm"
+                                class="btn btn-danger">
+                            Annuler le retrait
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline md:hidden"
+                                onclick="printGuichetReceipt()">
+                            Imprimer le reçu
+                        </button>
+                    </div>
                 </form>
+
                 <form method="POST"
                       action="{{ route('cashier.guichet.cancel', $withdrawal->id) }}"
                       id="guichetCancelForm"
-                      class="guichet-cancel-form">
+                      class="guichet-cancel-form hidden">
                     @csrf
-                    <button type="submit" class="btn btn-danger">Annuler le retrait</button>
                 </form>
-            @endif
-            <button type="button" class="btn btn-outline md:hidden" onclick="printGuichetReceipt()">Imprimer le reçu</button>
-        </div>
+            </div>
+        @endif
     </div>
 </div>
 
