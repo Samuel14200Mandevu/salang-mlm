@@ -3636,15 +3636,19 @@ public function history(Request $request)
             $totalPaidOut = (float) Withdrawal::query()->where('status', 'completed')->sum('amount');
         }
 
+        // En portefeuille = encore dans le wallet (crédité) après retraits confirmés.
+        $paidIntoWallet = (float) (clone $statsBase)->where('status', 'paid')->sum('amount');
+        $stillInWallet = round(max(0, $paidIntoWallet - (float) $totalPaidOut), 2);
+
         $stats = [
-            'total_wallet' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
+            'total_wallet' => $stillInWallet,
             'total_paid_out' => (float) $totalPaidOut,
             'total_pending' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
             'total_pending_payable' => (float) $pendingPayableBase->sum('amount'),
             'member_count' => $members->total(),
             // compat anciennes clés
             'total_commissions' => (clone $statsBase)->sum('amount'),
-            'paid_commissions' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
+            'paid_commissions' => $paidIntoWallet,
             'pending_commissions' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
             'total_members' => $members->total(),
         ];
@@ -3733,12 +3737,20 @@ public function history(Request $request)
             'paid_amount' => (float) $commissions->where('status', 'paid')->sum('amount'),
         ];
 
+        $phasePayouts = $this->memberPeriodPhasePayouts(
+            (int) $member->id,
+            $selectedPeriod,
+            $coreTypes,
+            $commissions
+        );
+
         $backQuery = $request->only(['search', 'type', 'status', 'period', 'page']);
 
         return view('cashier.commissions.member-show', compact(
             'member',
             'commissions',
             'summary',
+            'phasePayouts',
             'backQuery'
         ));
     }
@@ -4338,5 +4350,127 @@ public function generateAdhesionForm($id)
         }
 
         return $paidByUser;
+    }
+
+    /**
+     * Remises guichet par type (Direct / I&L) pour le détail membre.
+     *
+     * @param  list<string>  $coreTypes
+     * @param  \Illuminate\Support\Collection<int, \App\Models\Commission>  $commissions
+     * @return list<array{
+     *     key:string,
+     *     label:string,
+     *     total:float,
+     *     remitted:float,
+     *     reste:float,
+     *     wallet:float,
+     *     pending:float,
+     *     status:string,
+     *     status_label:string,
+     *     coverage:string
+     * }>
+     */
+    protected function memberPeriodPhasePayouts(
+        int $userId,
+        ?string $selectedPeriod,
+        array $coreTypes,
+        $commissions
+    ): array {
+        $directTotal = round((float) $commissions->where('type', 'direct')->sum('amount'), 2);
+        $ilTotal = round(
+            (float) $commissions->where('type', 'indirect')->sum('amount')
+            + (float) $commissions->where('type', 'leadership')->sum('amount'),
+            2
+        );
+        $directWallet = round((float) $commissions->where('type', 'direct')->where('status', 'paid')->sum('amount'), 2);
+        $ilWallet = round(
+            (float) $commissions->where('type', 'indirect')->where('status', 'paid')->sum('amount')
+            + (float) $commissions->where('type', 'leadership')->where('status', 'paid')->sum('amount'),
+            2
+        );
+        $directPending = round(
+            (float) $commissions->where('type', 'direct')->whereIn('status', ['pending', 'approved'])->sum('amount'),
+            2
+        );
+        $ilPending = round(
+            (float) $commissions->whereIn('type', ['indirect', 'leadership'])->whereIn('status', ['pending', 'approved'])->sum('amount'),
+            2
+        );
+
+        $remittedPeriod = 0.0;
+        if ($selectedPeriod) {
+            $remittedPeriod = (float) ($this->allocateCompletedWithdrawalsToPeriod(
+                [$userId],
+                $selectedPeriod,
+                $coreTypes
+            )[$userId] ?? 0);
+        } else {
+            $remittedPeriod = round((float) Withdrawal::query()
+                ->where('user_id', $userId)
+                ->where('status', 'completed')
+                ->sum('amount'), 2);
+        }
+
+        // Même ordre que le guichet : Direct d’abord, puis I&L.
+        $retireDirect = round(min($remittedPeriod, $directTotal), 2);
+        $retireIl = round(min(max(0, $remittedPeriod - $directTotal), $ilTotal), 2);
+
+        $build = function (
+            string $key,
+            string $label,
+            float $total,
+            float $remitted,
+            float $wallet,
+            float $pending
+        ): array {
+            $reste = round(max(0, $total - $remitted), 2);
+            $stillInWallet = round(max(0, $wallet - $remitted), 2);
+            if ($total <= 0) {
+                $status = 'empty';
+                $statusLabel = '—';
+                $coverage = 'Aucun bonus';
+            } elseif ($reste <= 0.004) {
+                $status = 'paye';
+                $statusLabel = 'Payé';
+                $coverage = 'Tout payé au guichet';
+            } elseif ($remitted > 0.004) {
+                $status = 'partiel';
+                $statusLabel = 'Partiel';
+                $pct = $total > 0 ? round(($remitted / $total) * 100) : 0;
+                $coverage = ($pct >= 45 && $pct <= 55)
+                    ? 'Moitié payée ('.$pct.' %)'
+                    : 'Partiellement payé ('.$pct.' %)';
+            } elseif ($wallet > 0.004) {
+                $status = 'portefeuille';
+                $statusLabel = 'En portefeuille';
+                $coverage = 'Créditée au portefeuille, pas encore remis';
+            } else {
+                $status = 'attente';
+                $statusLabel = 'En attente';
+                $coverage = 'Pas encore envoyée au portefeuille';
+            }
+
+            return [
+                'key' => $key,
+                'label' => $label,
+                'total' => $total,
+                'remitted' => $remitted,
+                'reste' => $reste,
+                'wallet' => $stillInWallet,
+                'pending' => $pending,
+                'status' => $status,
+                'status_label' => $statusLabel,
+                'coverage' => $coverage,
+            ];
+        };
+
+        return array_values(array_filter([
+            $directTotal > 0 || $retireDirect > 0
+                ? $build('direct', 'Direct', $directTotal, $retireDirect, $directWallet, $directPending)
+                : null,
+            $ilTotal > 0 || $retireIl > 0
+                ? $build('il', 'Indirect & Leadership', $ilTotal, $retireIl, $ilWallet, $ilPending)
+                : null,
+        ]));
     }
 }
