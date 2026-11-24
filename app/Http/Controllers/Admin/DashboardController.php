@@ -25,10 +25,18 @@ class DashboardController extends Controller
             $activeUsers = User::where('is_active', true)->count();
             $newUsers = User::whereDate('created_at', '>=', now()->subDays(30))->count();
 
-            $totalCommissions = Commission::where('status', 'paid')->sum('amount') ?? 0;
-            $pendingCommissions = Commission::where('status', 'pending')->sum('amount') ?? 0;
+            $coreCommissionTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
+            // Total = toutes les commissions ; En cours = encore en portefeuille ; Payées = remises guichet.
+            $totalCommissions = (float) (Commission::query()
+                ->whereIn('type', $coreCommissionTypes)
+                ->sum('amount') ?? 0);
+            $paidIntoWallet = (float) (Commission::query()
+                ->whereIn('type', $coreCommissionTypes)
+                ->where('status', 'paid')
+                ->sum('amount') ?? 0);
 
-            $totalWithdrawn = Withdrawal::where('status', 'completed')->sum('amount') ?? 0;
+            $totalWithdrawn = (float) (Withdrawal::where('status', 'completed')->sum('amount') ?? 0);
+            $pendingCommissions = round(max(0, $paidIntoWallet - $totalWithdrawn), 2);
             $totalWithdrawals = Withdrawal::count();
             $pendingWithdrawals = Withdrawal::where('status', 'pending')->count();
 
@@ -252,8 +260,13 @@ class DashboardController extends Controller
             'data' => [
                 'totalUsers' => User::count(),
                 'activeUsers' => User::where('is_active', true)->count(),
-                'totalCommissions' => Commission::where('status', 'paid')->sum('amount'),
-                'pendingCommissions' => Commission::where('status', 'pending')->sum('amount'),
+                'totalCommissions' => (float) Commission::query()
+                    ->whereIn('type', ['direct', 'indirect', 'leadership', 'cash_pos'])
+                    ->sum('amount'),
+                'pendingCommissions' => round(max(0, (float) Commission::query()
+                    ->whereIn('type', ['direct', 'indirect', 'leadership', 'cash_pos'])
+                    ->where('status', 'paid')
+                    ->sum('amount') - (float) Withdrawal::where('status', 'completed')->sum('amount')), 2),
                 'totalRevenue' => Order::where('status', 'completed')->sum('total'),
                 'totalOrders' => Order::count(),
             ]

@@ -487,8 +487,8 @@ admin-mobile-stack admin-mobile-no-auto-greeting
                 </div>
             </div>
             <div class="stat-detail">
-                <span>En attente <span class="value-warning" data-count-to="{{ (float) ($pendingCommissions ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
-                <span>Payées <span class="value-success" data-count-to="{{ (float) (($totalCommissions ?? 0) - ($pendingCommissions ?? 0)) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
+                <span>En cours <span class="value-warning" data-count-to="{{ (float) ($pendingCommissions ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
+                <span>Payées <span class="value-success" data-count-to="{{ (float) ($totalWithdrawn ?? 0) }}" data-count-prefix="$" data-count-decimals="2">$0.00</span></span>
             </div>
         </div>
 
