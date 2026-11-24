@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\AllocatesCommissionPeriodWithdrawals;
 use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Models\Commission;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Illuminate\Support\Str;
 
 class CommissionController extends Controller
 {
+    use AllocatesCommissionPeriodWithdrawals;
     use GeneratesPdfSafely;
 
     protected $monthlyCommissionService;
@@ -164,34 +166,19 @@ class CommissionController extends Controller
                 ->toArray();
         }
 
-        // Payé = retraits complétés (paiement réel), même logique que le KPI
+        // Payé / Reste suivent les retraits confirmés (FIFO sur les périodes), pas le mois calendaire.
         $paidByUser = [];
         if ($userIds !== []) {
-            $paidQuery = Withdrawal::query()
-                ->where('status', 'completed')
-                ->whereIn('user_id', $userIds);
-
-            if ($selectedPeriod) {
-                try {
-                    $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
-                    $periodEnd = $periodStart->copy()->endOfMonth();
-                    $paidQuery->where(function ($q) use ($periodStart, $periodEnd) {
-                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
-                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
-                                $q2->whereNull('completed_at')
-                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
-                            });
-                    });
-                } catch (\Throwable) {
-                    // période invalide → pas de filtre date
-                }
-            }
-
-            $paidByUser = $paidQuery
-                ->select('user_id', DB::raw('SUM(amount) as total_paid'))
-                ->groupBy('user_id')
-                ->pluck('total_paid', 'user_id')
-                ->toArray();
+            $paidByUser = $selectedPeriod
+                ? $this->allocateCompletedWithdrawalsToPeriod($userIds, $selectedPeriod, $coreTypes)
+                : Withdrawal::query()
+                    ->where('status', 'completed')
+                    ->whereIn('user_id', $userIds)
+                    ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+                    ->groupBy('user_id')
+                    ->pluck('total_paid', 'user_id')
+                    ->map(fn ($v) => (float) $v)
+                    ->all();
         }
 
         $members->setCollection(
@@ -201,7 +188,7 @@ class CommissionController extends Controller
                 $pendingTotal = (float) ($row->pending_total ?? 0);
                 $walletTotal = (float) ($row->wallet_total ?? 0);
                 $total = (float) $row->total;
-                $paid = (float) ($paidByUser[$row->user_id] ?? 0);
+                $paid = min($total, (float) ($paidByUser[$row->user_id] ?? 0));
                 $reste = max(0, $total - $paid);
                 // Couleur Bonus Total : en attente si reste du pending, sinon portefeuille
                 $bonusTone = $pendingTotal > 0 ? 'pending' : ($walletTotal > 0 ? 'wallet' : 'neutral');
@@ -240,34 +227,34 @@ class CommissionController extends Controller
             $statsBase->where('period', $selectedPeriod);
         }
 
-        $withdrawnQuery = Withdrawal::query()->where('status', 'completed');
         if ($selectedPeriod) {
-            try {
-                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
-                $periodEnd = $periodStart->copy()->endOfMonth();
-                $withdrawnQuery->where(function ($q) use ($periodStart, $periodEnd) {
-                    $q->whereBetween('completed_at', [$periodStart, $periodEnd])
-                        ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
-                            $q2->whereNull('completed_at')
-                                ->whereBetween('processed_at', [$periodStart, $periodEnd]);
-                        });
-                });
-            } catch (\Throwable) {
-                // période invalide → pas de filtre date
-            }
+            $periodUserIds = Commission::query()
+                ->whereIn('type', $coreTypes)
+                ->where('period', $selectedPeriod)
+                ->distinct()
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $totalPaidOut = array_sum(
+                $this->allocateCompletedWithdrawalsToPeriod($periodUserIds, $selectedPeriod, $coreTypes)
+            );
+        } else {
+            $totalPaidOut = (float) Withdrawal::query()->where('status', 'completed')->sum('amount');
         }
 
+        // En portefeuille = encore dans le wallet après retraits confirmés.
+        $paidIntoWallet = (float) (clone $statsBase)->where('status', 'paid')->sum('amount');
+        $stillInWallet = round(max(0, $paidIntoWallet - (float) $totalPaidOut), 2);
+
         $stats = [
-            // Crédité au wallet (status paid)
-            'total_wallet' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
-            // Retraits complétés (paiement réel)
-            'total_paid_out' => (float) $withdrawnQuery->sum('amount'),
+            'total_wallet' => $stillInWallet,
+            'total_paid_out' => (float) $totalPaidOut,
             'total_pending' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
             'total_cancelled' => (clone $statsBase)->where('status', 'cancelled')->sum('amount'),
             'total_count' => (clone $statsBase)->count(),
             'member_count' => $members->total(),
             // Compat anciennes clés
-            'total_paid' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
+            'total_paid' => $paidIntoWallet,
         ];
 
         $types = collect($coreTypes);
@@ -319,7 +306,7 @@ class CommissionController extends Controller
         }
 
         // PV du mois sélectionné ; si absent mais une seule période dans les lignes, l’utiliser
-        $selectedPeriod = $request->filled('period')
+        $selectedPeriod = $request->filled('period') && $request->period !== 'all'
             ? (string) $request->period
             : (
                 $commissions->pluck('period')->filter()->unique()->count() === 1
@@ -348,12 +335,20 @@ class CommissionController extends Controller
             'paid_amount' => (float) $commissions->where('status', 'paid')->sum('amount'),
         ];
 
+        $phasePayouts = $this->memberPeriodPhasePayouts(
+            (int) $member->id,
+            $selectedPeriod,
+            $coreTypes,
+            $commissions
+        );
+
         $backQuery = $request->only(['search', 'type', 'status', 'period', 'band', 'page']);
 
         return view('admin.commissions.member-show', compact(
             'member',
             'commissions',
             'summary',
+            'phasePayouts',
             'backQuery'
         ));
     }

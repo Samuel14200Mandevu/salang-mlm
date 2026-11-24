@@ -675,8 +675,8 @@
                         <th>Nom &amp; Post-Nom</th>
                         <th class="col-amount" title="PV du mois sélectionné">PV</th>
                         <th class="col-amount">Bonus Total</th>
-                        <th class="col-amount" title="Retraits complétés">Payé</th>
-                        <th class="col-amount" title="Bonus Total − Payé">Reste</th>
+                        <th class="col-amount" title="Retraits guichet confirmés alloués à cette période (FIFO)">Payé</th>
+                        <th class="col-amount" title="Bonus Total − Payé (suit le reste portefeuille)">Reste</th>
                     </tr>
                 </thead>
                 <tbody id="commissionsTable">

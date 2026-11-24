@@ -139,6 +139,110 @@
     gap: 0.75rem;
     margin-left: auto;
 }
+
+[x-cloak] { display: none !important; }
+
+.phase-payout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.75rem;
+}
+.phase-payout-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.12s ease, background 0.12s ease;
+}
+.phase-payout-card:hover,
+.phase-payout-card:focus-visible {
+    border-color: var(--primary, #0A2A6C);
+    background: var(--bg-hover, var(--bg-secondary));
+    outline: none;
+}
+.phase-payout-card:active { transform: scale(0.995); }
+.phase-payout-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+}
+.phase-payout-card__title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.phase-payout-card__rows {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+}
+.phase-payout-card__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+}
+.phase-payout-card__row strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.phase-payout-card__hint {
+    margin-top: 0.55rem;
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+}
+
+.phase-payout-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.phase-payout-dialog {
+    width: min(100%, 24rem);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem 1.2rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+.phase-payout-dialog h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.phase-payout-dialog__coverage {
+    margin: 0 0 0.85rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+.phase-payout-dialog__rows {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+}
+.phase-payout-dialog__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.phase-payout-dialog__row strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
 </style>
 @endpush
 
@@ -161,6 +265,15 @@
         'approved' => 'badge-info',
         'cancelled' => 'badge-danger',
     ];
+    $phaseStatusClasses = [
+        'paye' => 'badge-success',
+        'partiel' => 'badge-warning',
+        'portefeuille' => 'badge-info',
+        'attente' => 'badge-warning',
+        'empty' => 'badge-info',
+    ];
+    $phasePayouts = $phasePayouts ?? [];
+    $phaseByKey = collect($phasePayouts)->keyBy('key');
     $backUrl = route('admin.commissions', $backQuery ?? []);
     $pdfUrl = route('admin.commissions.member.pdf', array_filter(
         array_merge(
@@ -172,7 +285,7 @@
 @endphp
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
+<div class="space-y-4 sm:space-y-6" x-data="phasePayoutDialog()">
 
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
@@ -254,6 +367,42 @@
         </div>
     </div>
 
+    @if(! empty($phasePayouts))
+        <div class="space-y-2">
+            <h2 class="text-sm font-bold text-[var(--text-primary)]">Paiements par type de bonus</h2>
+            <p class="text-xs text-[var(--text-secondary)]">Cliquez une carte pour voir si le bonus est tout payé ou seulement une partie.</p>
+            <div class="phase-payout-grid">
+                @foreach($phasePayouts as $phase)
+                    <button type="button"
+                            class="phase-payout-card"
+                            @click="openPhase(@js($phase))">
+                        <div class="phase-payout-card__top">
+                            <span class="phase-payout-card__title">{{ $phase['label'] }}</span>
+                            <span class="badge {{ $phaseStatusClasses[$phase['status']] ?? 'badge-info' }}">
+                                {{ $phase['status_label'] }}
+                            </span>
+                        </div>
+                        <div class="phase-payout-card__rows">
+                            <div class="phase-payout-card__row">
+                                <span>Total</span>
+                                <strong>{{ number_format($phase['total'], 2) }} $</strong>
+                            </div>
+                            <div class="phase-payout-card__row">
+                                <span>Payé (guichet)</span>
+                                <strong>{{ number_format($phase['remitted'], 2) }} $</strong>
+                            </div>
+                            <div class="phase-payout-card__row">
+                                <span>Reste</span>
+                                <strong>{{ number_format($phase['reste'], 2) }} $</strong>
+                            </div>
+                        </div>
+                        <p class="phase-payout-card__hint">{{ $phase['coverage'] }}</p>
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Mobile lines --}}
     <div class="admin-user-list md:hidden">
         @foreach($commissions as $commission)
@@ -278,9 +427,24 @@
                     </div>
                     <span class="amount-positive text-sm font-bold shrink-0">{{ number_format($commission->amount, 2) }} $</span>
                 </div>
+                @php
+                    $phaseKey = $commission->type === 'direct' ? 'direct' : (in_array($commission->type, ['indirect', 'leadership'], true) ? 'il' : null);
+                    $phaseMeta = $phaseKey ? ($phaseByKey[$phaseKey] ?? null) : null;
+                    $lineStatus = $statusLabels[$commission->status] ?? ucfirst((string) $commission->status);
+                    $lineStatusClass = $statusClasses[$commission->status] ?? 'badge-warning';
+                    if ($commission->status === 'paid' && $phaseMeta) {
+                        if (($phaseMeta['status'] ?? '') === 'paye') {
+                            $lineStatus = 'Payé';
+                            $lineStatusClass = 'badge-success';
+                        } elseif (($phaseMeta['status'] ?? '') === 'partiel') {
+                            $lineStatus = 'Partiel';
+                            $lineStatusClass = 'badge-warning';
+                        }
+                    }
+                @endphp
                 <div class="admin-entity-card__meta">
-                    <span class="badge {{ $statusClasses[$commission->status] ?? 'badge-warning' }}">
-                        {{ $statusLabels[$commission->status] ?? ucfirst($commission->status) }}
+                    <span class="badge {{ $lineStatusClass }}">
+                        {{ $lineStatus }}
                     </span>
                     @php
                         $mobileGrade = $commission->type === 'direct'
@@ -347,10 +511,25 @@
                             <td class="col-amount col-gen">{{ $commission->generation ?? 0 }}</td>
                             <td class="col-amount col-pct">{{ number_format((float) $commission->percentage, 2) }}%</td>
                             <td class="col-amount col-pv">{{ number_format((float) ($commission->pv_used ?? 0), 1) }}</td>
+                            @php
+                                $phaseKey = $commission->type === 'direct' ? 'direct' : (in_array($commission->type, ['indirect', 'leadership'], true) ? 'il' : null);
+                                $phaseMeta = $phaseKey ? ($phaseByKey[$phaseKey] ?? null) : null;
+                                $lineStatus = $statusLabels[$commission->status] ?? ucfirst((string) $commission->status);
+                                $lineStatusClass = $statusClasses[$commission->status] ?? 'badge-warning';
+                                if ($commission->status === 'paid' && $phaseMeta) {
+                                    if (($phaseMeta['status'] ?? '') === 'paye') {
+                                        $lineStatus = 'Payé';
+                                        $lineStatusClass = 'badge-success';
+                                    } elseif (($phaseMeta['status'] ?? '') === 'partiel') {
+                                        $lineStatus = 'Partiel';
+                                        $lineStatusClass = 'badge-warning';
+                                    }
+                                }
+                            @endphp
                             <td class="col-amount col-amount-end font-semibold amount-positive">{{ number_format((float) $commission->amount, 2) }} $</td>
                             <td class="col-status">
-                                <span class="badge {{ $statusClasses[$commission->status] ?? 'badge-warning' }}">
-                                    {{ $statusLabels[$commission->status] ?? ucfirst($commission->status) }}
+                                <span class="badge {{ $lineStatusClass }}">
+                                    {{ $lineStatus }}
                                 </span>
                             </td>
                             <td class="col-period text-[var(--text-secondary)]">{{ $commission->period ?? '—' }}</td>
@@ -367,5 +546,62 @@
             </table>
         </div>
     </div>
+
+    <div class="phase-payout-dialog-backdrop"
+         x-show="open"
+         x-cloak
+         @keydown.escape.window="close()"
+         @click.self="close()">
+        <div class="phase-payout-dialog" role="dialog" aria-modal="true" :aria-label="phase?.label || 'Détail paiement'">
+            <h3 x-text="phase?.label || ''"></h3>
+            <p class="phase-payout-dialog__coverage" x-text="phase?.coverage || ''"></p>
+            <div class="phase-payout-dialog__rows">
+                <div class="phase-payout-dialog__row">
+                    <span>Statut</span>
+                    <strong x-text="phase?.status_label || '—'"></strong>
+                </div>
+                <div class="phase-payout-dialog__row">
+                    <span>Total bonus</span>
+                    <strong x-text="money(phase?.total)"></strong>
+                </div>
+                <div class="phase-payout-dialog__row">
+                    <span>Payé au guichet</span>
+                    <strong x-text="money(phase?.remitted)"></strong>
+                </div>
+                <div class="phase-payout-dialog__row">
+                    <span>Reste</span>
+                    <strong x-text="money(phase?.reste)"></strong>
+                </div>
+                <div class="phase-payout-dialog__row">
+                    <span>Encore en portefeuille</span>
+                    <strong x-text="money(phase?.wallet)"></strong>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary w-full" @click="close()">Fermer</button>
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function phasePayoutDialog() {
+    return {
+        open: false,
+        phase: null,
+        openPhase(phase) {
+            this.phase = phase || null;
+            this.open = !!phase;
+        },
+        close() {
+            this.open = false;
+            this.phase = null;
+        },
+        money(value) {
+            const n = Number(value || 0);
+            return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+        }
+    };
+}
+</script>
+@endpush
