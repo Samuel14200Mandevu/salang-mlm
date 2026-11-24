@@ -267,11 +267,13 @@ class GuichetWithdrawalController extends Controller
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'amount' => ['required', 'numeric', 'min:2', 'max:10000'],
             'bonus_phase' => ['required', 'in:direct,il'],
+            'paid_on' => ['required', 'date', 'before_or_equal:today', 'after_or_equal:'.now()->subDays(90)->toDateString()],
         ]);
 
         $amount = round((float) $data['amount'], 2);
         $bonusPhase = $data['bonus_phase'] === 'il' ? 'il' : 'direct';
         $bonusPhaseLabel = $bonusPhase === 'il' ? 'Indirect & Leadership' : 'Direct';
+        $paidOn = Carbon::createFromFormat('Y-m-d', (string) $data['paid_on'])->startOfDay();
         $member = User::query()
             ->whereKey($data['user_id'])
             ->where('user_type', 'member')
@@ -313,14 +315,14 @@ class GuichetWithdrawalController extends Controller
             ]);
         }
 
-        $todayPending = (float) Withdrawal::where('user_id', $member->id)
-            ->whereDate('created_at', today())
+        $dayPending = (float) Withdrawal::where('user_id', $member->id)
+            ->whereDate('created_at', $paidOn)
             ->where('status', 'pending')
             ->sum('amount');
 
-        if ($todayPending + $amount > 5000) {
+        if ($dayPending + $amount > 5000) {
             throw ValidationException::withMessages([
-                'amount' => 'Plafond journalier de retraits atteint (5 000 USD).',
+                'amount' => 'Plafond journalier de retraits atteint (5 000 USD) pour le '.$paidOn->format('d/m/Y').'.',
             ]);
         }
 
@@ -336,6 +338,7 @@ class GuichetWithdrawalController extends Controller
             $wallet->pending_balance = (float) $wallet->pending_balance + $amount;
             $wallet->save();
 
+            $paidOnTag = $paidOn->toDateString();
             $withdrawal = Withdrawal::create([
                 'user_id' => $member->id,
                 'wallet_id' => $wallet->id,
@@ -348,7 +351,11 @@ class GuichetWithdrawalController extends Controller
                 'notes' => 'Retrait guichet · paiement '.$bonusPhaseLabel
                     .' · initié au comptoir par '.auth()->user()->name
                     .' (sans demande smartphone)'
-                    ."\n[bonus_phase={$bonusPhase}]",
+                    .' · date paiement '.$paidOn->format('d/m/Y')
+                    ."\n[bonus_phase={$bonusPhase}]"
+                    ."\n[paid_on={$paidOnTag}]",
+                'created_at' => $paidOn->copy()->setTimeFrom(now()),
+                'updated_at' => now(),
             ]);
 
             Transaction::create([
@@ -365,8 +372,11 @@ class GuichetWithdrawalController extends Controller
                 'metadata' => [
                     'bonus_phase' => $bonusPhase,
                     'source' => 'guichet_cashier',
+                    'paid_on' => $paidOnTag,
                 ],
                 'completed_at' => null,
+                'created_at' => $paidOn->copy()->setTimeFrom(now()),
+                'updated_at' => now(),
             ]);
 
             DB::commit();
@@ -388,11 +398,12 @@ class GuichetWithdrawalController extends Controller
             'member_id' => $member->id,
             'cashier_id' => auth()->id(),
             'amount' => $amount,
+            'paid_on' => $paidOn->toDateString(),
         ]);
 
         return redirect()
             ->route('cashier.guichet.show', $withdrawal->id)
-            ->with('success', 'Retrait créé. Vérifiez le montant, remettez les espèces puis confirmez pour imprimer le reçu.');
+            ->with('success', 'Retrait créé pour le '.$paidOn->format('d/m/Y').'. Vérifiez le montant, remettez les espèces puis confirmez pour imprimer le reçu.');
     }
 
     public function show(int $id)
@@ -432,6 +443,10 @@ class GuichetWithdrawalController extends Controller
      */
     public function fulfill(Request $request, int $id)
     {
+        $data = $request->validate([
+            'paid_on' => ['nullable', 'date', 'before_or_equal:today', 'after_or_equal:'.now()->subDays(90)->toDateString()],
+        ]);
+
         $withdrawal = Withdrawal::query()
             ->where('method', 'guichet')
             ->findOrFail($id);
@@ -439,6 +454,11 @@ class GuichetWithdrawalController extends Controller
         if ($withdrawal->status !== 'pending') {
             return back()->with('error', 'Ce retrait n’est plus en attente.');
         }
+
+        $paidOnDate = $this->resolveGuichetPaidOnDate($withdrawal, $data['paid_on'] ?? null);
+        $paidAt = $paidOnDate->isToday()
+            ? now()
+            : $paidOnDate->copy()->setTimeFrom(now());
 
         DB::beginTransaction();
         try {
@@ -451,9 +471,8 @@ class GuichetWithdrawalController extends Controller
                 throw new \RuntimeException('Montant en attente insuffisant sur le portefeuille.');
             }
 
-            $receiptNumber = 'GUICH-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+            $receiptNumber = 'GUICH-'.$paidAt->format('Ymd').'-'.Str::upper(Str::random(6));
 
-            $balanceBefore = (float) $wallet->balance;
             $wallet->pending_balance = max(0, (float) $wallet->pending_balance - (float) $withdrawal->amount);
             $wallet->total_withdrawn = (float) $wallet->total_withdrawn + (float) $withdrawal->amount;
             $wallet->save();
@@ -467,17 +486,18 @@ class GuichetWithdrawalController extends Controller
                 ->limit(1)
                 ->update([
                     'status' => 'completed',
-                    'completed_at' => now(),
+                    'completed_at' => $paidAt,
                     'description' => 'Retrait guichet remis en espèces #'.$receiptNumber,
                 ]);
 
             $withdrawal->status = 'completed';
-            $withdrawal->processed_at = now();
-            $withdrawal->completed_at = now();
+            $withdrawal->processed_at = $paidAt;
+            $withdrawal->completed_at = $paidAt;
             $withdrawal->cashier_id = auth()->id();
             $withdrawal->receipt_number = $receiptNumber;
             $withdrawal->notes = trim(($withdrawal->notes ? $withdrawal->notes.' | ' : '').
-                'Remis au guichet par '.auth()->user()->name);
+                'Remis au guichet par '.auth()->user()->name.
+                ' le '.$paidAt->format('d/m/Y'));
             $withdrawal->save();
 
             DB::commit();
@@ -1006,5 +1026,31 @@ class GuichetWithdrawalController extends Controller
             300,
             '512M'
         );
+    }
+
+    /**
+     * Date de paiement guichet : champ formulaire, tag [paid_on=…] en notes, sinon aujourd’hui.
+     */
+    private function resolveGuichetPaidOnDate(Withdrawal $withdrawal, ?string $paidOnInput = null): Carbon
+    {
+        if (filled($paidOnInput)) {
+            try {
+                return Carbon::createFromFormat('Y-m-d', (string) $paidOnInput)->startOfDay();
+            } catch (\Throwable) {
+                // fallback below
+            }
+        }
+
+        if (is_string($withdrawal->notes)
+            && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $matches)
+        ) {
+            try {
+                return Carbon::createFromFormat('Y-m-d', $matches[1])->startOfDay();
+            } catch (\Throwable) {
+                // fallback below
+            }
+        }
+
+        return today();
     }
 }

@@ -347,11 +347,30 @@
 
         <div class="flex flex-wrap gap-2 mt-4">
             @if($withdrawal->status === 'pending')
+                @php
+                    $defaultPaidOn = old('paid_on');
+                    if (! $defaultPaidOn && is_string($withdrawal->notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $paidOnMatch)) {
+                        $defaultPaidOn = $paidOnMatch[1];
+                    }
+                    $defaultPaidOn = $defaultPaidOn ?: now()->toDateString();
+                @endphp
                 <form method="POST"
                       action="{{ route('cashier.guichet.fulfill', $withdrawal->id) }}"
                       id="guichetFulfillForm"
-                      class="guichet-fulfill-form">
+                      class="guichet-fulfill-form space-y-3 w-full sm:w-auto">
                     @csrf
+                    <div class="form-group mb-0">
+                        <label for="guichetFulfillPaidOn" class="text-xs font-semibold text-[var(--text-secondary)]">Date du paiement</label>
+                        <input type="date"
+                               id="guichetFulfillPaidOn"
+                               name="paid_on"
+                               class="form-control mt-1"
+                               value="{{ $defaultPaidOn }}"
+                               max="{{ now()->toDateString() }}"
+                               min="{{ now()->subDays(90)->toDateString() }}"
+                               required>
+                        <p class="help-text mt-1 text-[10px] text-[var(--text-tertiary)]">Saisie manuelle d’un paiement déjà remis au guichet.</p>
+                    </div>
                     <button type="submit" class="btn btn-primary">Confirmer remise + préparer reçu</button>
                 </form>
                 <form method="POST"

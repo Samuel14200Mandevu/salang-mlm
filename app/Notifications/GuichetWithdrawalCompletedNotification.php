@@ -42,13 +42,26 @@ class GuichetWithdrawalCompletedNotification extends Notification
         $receipt = $this->withdrawal->receipt_number;
         $cashier = $this->withdrawal->cashier?->name;
         $phaseLabel = $this->bonusPhaseLabel();
+        $paidOnLabel = $this->paidOnLabel();
+        $isBackdated = $this->isBackdatedPayment();
 
         $mail = (new MailMessage)
             ->subject('Votre reçu — retrait guichet Salang')
             ->greeting('Bonjour '.($notifiable->name ?? '').',')
-            ->line('Votre retrait guichet a été remis avec succès au comptoir.')
+            ->line(
+                $isBackdated
+                    ? 'Paiement reçu depuis le '.$paidOnLabel.' : votre retrait guichet a bien été remis au comptoir.'
+                    : 'Votre retrait guichet a été remis avec succès au comptoir.'
+            );
+
+        if ($isBackdated) {
+            $mail->line('Désolé pour le retard de cette notification.');
+        }
+
+        $mail = $mail
             ->line('')
-            ->line('Montant remis : $'.$amount);
+            ->line('Montant remis : $'.$amount)
+            ->line('Date du paiement : '.$paidOnLabel);
 
         if ($phaseLabel) {
             $mail->line('Type de paiement : '.$phaseLabel);
@@ -84,6 +97,12 @@ class GuichetWithdrawalCompletedNotification extends Notification
     {
         $amount = number_format((float) $this->withdrawal->amount, 2);
         $url = url('/withdrawal/'.$this->withdrawal->id);
+        $paidOnLabel = $this->paidOnLabel();
+        $isBackdated = $this->isBackdatedPayment();
+
+        $message = $isBackdated
+            ? "Paiement reçu depuis le {$paidOnLabel} : retrait guichet de \${$amount} remis au comptoir. Désolé pour le retard de cette notification."
+            : "Votre retrait guichet de \${$amount} a été remis avec succès le {$paidOnLabel}. Le reçu a été envoyé par e-mail.";
 
         return [
             'type' => 'guichet_withdrawal_completed',
@@ -93,7 +112,8 @@ class GuichetWithdrawalCompletedNotification extends Notification
             'withdrawal_id' => $this->withdrawal->id,
             'amount' => (float) $this->withdrawal->amount,
             'receipt_number' => $this->withdrawal->receipt_number,
-            'message' => "Votre retrait guichet de \${$amount} a été remis avec succès. Le reçu a été envoyé par e-mail.",
+            'paid_on' => $this->paidOnDate()?->toDateString(),
+            'message' => $message,
             'action_url' => $url,
             'url' => $url,
         ];
@@ -107,6 +127,40 @@ class GuichetWithdrawalCompletedNotification extends Notification
         }
 
         return $m[1] === 'il' ? 'Indirect & Leadership' : 'Direct';
+    }
+
+    protected function paidOnDate(): ?\Carbon\Carbon
+    {
+        if ($this->withdrawal->completed_at) {
+            return $this->withdrawal->completed_at->copy()->startOfDay();
+        }
+
+        if ($this->withdrawal->processed_at) {
+            return $this->withdrawal->processed_at->copy()->startOfDay();
+        }
+
+        $notes = $this->withdrawal->notes;
+        if (is_string($notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $notes, $m)) {
+            try {
+                return \Carbon\Carbon::createFromFormat('Y-m-d', $m[1])->startOfDay();
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return $this->withdrawal->created_at?->copy()->startOfDay();
+    }
+
+    protected function paidOnLabel(): string
+    {
+        return $this->paidOnDate()?->format('d/m/Y') ?? now()->format('d/m/Y');
+    }
+
+    protected function isBackdatedPayment(): bool
+    {
+        $paidOn = $this->paidOnDate();
+
+        return $paidOn !== null && $paidOn->lt(today());
     }
 
     protected function buildReceiptPdf(): ?string

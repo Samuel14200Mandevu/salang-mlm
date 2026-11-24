@@ -944,6 +944,20 @@
                                 <span>Montant supérieur au solde (<strong x-text="selected ? '$' + Number(selected.balance).toFixed(2) : ''"></strong>).</span>
                             </template>
                         </div>
+
+                        <div class="form-group" style="margin-top: 0.85rem;">
+                            <label for="guichetPaidOn">Date du paiement <span class="text-[var(--danger)]">*</span></label>
+                            <input type="date"
+                                   id="guichetPaidOn"
+                                   name="paid_on"
+                                   class="form-control"
+                                   :required="!!selected"
+                                   :disabled="!selected"
+                                   :max="todayIso"
+                                   :min="minPaidOnIso"
+                                   x-model="paidOn">
+                            <span class="help-text">Pour un paiement déjà remis au guichet (saisie manuelle). Par défaut : aujourd’hui.</span>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -999,6 +1013,10 @@
                         <div class="guichet-recap__row" :class="{ 'is-muted': !(selected && bonusPhase && Number(amount) > 0) }">
                             <span>À remettre</span>
                             <strong x-text="selected && bonusPhase && Number(amount) > 0 ? ('$' + Number(amount).toFixed(2)) : '—'"></strong>
+                        </div>
+                        <div class="guichet-recap__row" :class="{ 'is-muted': !paidOn }">
+                            <span>Date paiement</span>
+                            <strong x-text="paidOnLabel"></strong>
                         </div>
                     </div>
                 </section>
@@ -1151,11 +1169,16 @@
 @push('scripts')
 <script>
 function guichetCreateForm(startOpen = false) {
+    const todayIso = @json(now()->toDateString());
+    const minPaidOnIso = @json(now()->subDays(90)->toDateString());
     return {
         open: !!startOpen,
         query: @json(old('q', '')),
         amount: @json(old('amount', '')),
         bonusPhase: @json(old('bonus_phase', 'direct')),
+        paidOn: @json(old('paid_on', now()->toDateString())),
+        todayIso,
+        minPaidOnIso,
         results: [],
         selected: null,
         searching: false,
@@ -1181,8 +1204,14 @@ function guichetCreateForm(startOpen = false) {
             if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
             return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         },
+        get paidOnLabel() {
+            if (!this.paidOn) return '—';
+            const parts = String(this.paidOn).split('-');
+            if (parts.length !== 3) return this.paidOn;
+            return parts[2] + '/' + parts[1] + '/' + parts[0];
+        },
         get canCreate() {
-            if (!this.selected || !this.bonusPhase) return false;
+            if (!this.selected || !this.bonusPhase || !this.paidOn) return false;
             const n = Number(this.amount);
             return Number.isFinite(n) && n >= 2 && n <= Number(this.selected.balance);
         },
