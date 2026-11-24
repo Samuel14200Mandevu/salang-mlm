@@ -3556,33 +3556,20 @@ public function history(Request $request)
                 ->toArray();
         }
 
+        // Payé / Reste suivent les retraits confirmés (portefeuille), pas le mois calendaire
+        // de completed_at. Avec une période : attribution FIFO des remises sur les périodes.
         $paidByUser = [];
         if ($userIds !== []) {
-            $paidQuery = Withdrawal::query()
-                ->where('status', 'completed')
-                ->whereIn('user_id', $userIds);
-
-            if ($selectedPeriod) {
-                try {
-                    $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
-                    $periodEnd = $periodStart->copy()->endOfMonth();
-                    $paidQuery->where(function ($q) use ($periodStart, $periodEnd) {
-                        $q->whereBetween('completed_at', [$periodStart, $periodEnd])
-                            ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
-                                $q2->whereNull('completed_at')
-                                    ->whereBetween('processed_at', [$periodStart, $periodEnd]);
-                            });
-                    });
-                } catch (\Throwable) {
-                    // période invalide
-                }
-            }
-
-            $paidByUser = $paidQuery
-                ->select('user_id', DB::raw('SUM(amount) as total_paid'))
-                ->groupBy('user_id')
-                ->pluck('total_paid', 'user_id')
-                ->toArray();
+            $paidByUser = $selectedPeriod
+                ? $this->allocateCompletedWithdrawalsToPeriod($userIds, $selectedPeriod, $coreTypes)
+                : Withdrawal::query()
+                    ->where('status', 'completed')
+                    ->whereIn('user_id', $userIds)
+                    ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+                    ->groupBy('user_id')
+                    ->pluck('total_paid', 'user_id')
+                    ->map(fn ($v) => (float) $v)
+                    ->all();
         }
 
         $members->setCollection(
@@ -3591,7 +3578,7 @@ public function history(Request $request)
                 $pendingTotal = (float) ($row->pending_total ?? 0);
                 $walletTotal = (float) ($row->wallet_total ?? 0);
                 $total = (float) $row->total;
-                $paid = (float) ($paidByUser[$row->user_id] ?? 0);
+                $paid = min($total, (float) ($paidByUser[$row->user_id] ?? 0));
                 $reste = max(0, $total - $paid);
                 $bonusTone = $pendingTotal > 0 ? 'pending' : ($walletTotal > 0 ? 'wallet' : 'neutral');
 
@@ -3626,23 +3613,6 @@ public function history(Request $request)
             $statsBase->where('period', $selectedPeriod);
         }
 
-        $withdrawnQuery = Withdrawal::query()->where('status', 'completed');
-        if ($selectedPeriod) {
-            try {
-                $periodStart = Carbon::createFromFormat('Y-m', $selectedPeriod)->startOfMonth();
-                $periodEnd = $periodStart->copy()->endOfMonth();
-                $withdrawnQuery->where(function ($q) use ($periodStart, $periodEnd) {
-                    $q->whereBetween('completed_at', [$periodStart, $periodEnd])
-                        ->orWhere(function ($q2) use ($periodStart, $periodEnd) {
-                            $q2->whereNull('completed_at')
-                                ->whereBetween('processed_at', [$periodStart, $periodEnd]);
-                        });
-                });
-            } catch (\Throwable) {
-                // période invalide
-            }
-        }
-
         $pendingPayableBase = Commission::query()
             ->whereIn('type', ['direct', 'indirect', 'leadership'])
             ->whereIn('status', ['pending', 'approved'])
@@ -3651,9 +3621,24 @@ public function history(Request $request)
             $pendingPayableBase->where('period', $selectedPeriod);
         }
 
+        if ($selectedPeriod) {
+            $periodUserIds = Commission::query()
+                ->whereIn('type', $coreTypes)
+                ->where('period', $selectedPeriod)
+                ->distinct()
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $totalPaidOut = array_sum(
+                $this->allocateCompletedWithdrawalsToPeriod($periodUserIds, $selectedPeriod, $coreTypes)
+            );
+        } else {
+            $totalPaidOut = (float) Withdrawal::query()->where('status', 'completed')->sum('amount');
+        }
+
         $stats = [
             'total_wallet' => (clone $statsBase)->where('status', 'paid')->sum('amount'),
-            'total_paid_out' => (float) $withdrawnQuery->sum('amount'),
+            'total_paid_out' => (float) $totalPaidOut,
             'total_pending' => (clone $statsBase)->where('status', 'pending')->sum('amount'),
             'total_pending_payable' => (float) $pendingPayableBase->sum('amount'),
             'member_count' => $members->total(),
@@ -4291,5 +4276,67 @@ public function generateAdhesionForm($id)
         };
         
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Attribue les retraits completed au bonus d’une période (FIFO par période).
+     * Ainsi un paiement remis en novembre pour des bonus octobre réduit bien le Reste d’octobre.
+     *
+     * @param  list<int>  $userIds
+     * @param  list<string>  $coreTypes
+     * @return array<int, float> user_id => montant payé alloué à $selectedPeriod
+     */
+    protected function allocateCompletedWithdrawalsToPeriod(array $userIds, string $selectedPeriod, array $coreTypes): array
+    {
+        $userIds = array_values(array_unique(array_map('intval', $userIds)));
+        if ($userIds === [] || $selectedPeriod === '') {
+            return [];
+        }
+
+        $withdrawnByUser = Withdrawal::query()
+            ->where('status', 'completed')
+            ->whereIn('user_id', $userIds)
+            ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+            ->groupBy('user_id')
+            ->pluck('total_paid', 'user_id');
+
+        $commissionRows = Commission::query()
+            ->whereIn('user_id', $userIds)
+            ->whereIn('type', $coreTypes)
+            ->whereNotNull('period')
+            ->where('period', '!=', '')
+            ->select('user_id', 'period', DB::raw('SUM(amount) as total'))
+            ->groupBy('user_id', 'period')
+            ->get()
+            ->groupBy('user_id');
+
+        $paidByUser = [];
+        foreach ($userIds as $userId) {
+            $remaining = round((float) ($withdrawnByUser[$userId] ?? 0), 2);
+            $allocated = 0.0;
+
+            $periods = ($commissionRows->get($userId) ?? collect())
+                ->sortBy('period')
+                ->values();
+
+            foreach ($periods as $row) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $periodTotal = round((float) ($row->total ?? 0), 2);
+                $take = min($remaining, $periodTotal);
+                $remaining = round($remaining - $take, 2);
+
+                if ((string) $row->period === $selectedPeriod) {
+                    $allocated = $take;
+                    break;
+                }
+            }
+
+            $paidByUser[$userId] = $allocated;
+        }
+
+        return $paidByUser;
     }
 }
