@@ -219,6 +219,17 @@
         font-weight: 700;
         color: var(--text-primary);
     }
+    .guichet-detail-card__head-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+    .guichet-detail-card__head-actions .btn {
+        min-height: 2.25rem;
+        font-size: 0.8125rem;
+    }
     .guichet-detail-card__body {
         padding: 0.25rem 1.1rem 0.5rem;
     }
@@ -232,18 +243,25 @@
     }
     .guichet-detail-actions {
         margin: 0;
-        padding: 1rem 1.1rem 1.15rem;
+        padding: 1.1rem 1.1rem 1.25rem;
         border-top: 1px solid var(--border-light);
         background: color-mix(in srgb, var(--bg-secondary) 45%, var(--bg-card));
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
+        align-items: center;
+        gap: 0.95rem;
     }
     .guichet-detail-actions__title {
         margin: 0;
+        width: 100%;
+        text-align: center;
         font-size: 0.8125rem;
         font-weight: 700;
         color: var(--text-primary);
+    }
+    .guichet-detail-actions__field {
+        width: 100%;
+        max-width: 18rem;
     }
     .guichet-detail-actions__field label {
         display: block;
@@ -251,10 +269,10 @@
         font-weight: 600;
         color: var(--text-secondary);
         margin-bottom: 0.35rem;
+        text-align: center;
     }
     .guichet-detail-actions__field .form-control {
         width: 100%;
-        max-width: 16rem;
         padding: 0.55rem 0.75rem;
         border: 1px solid var(--border-color);
         border-radius: 8px;
@@ -267,30 +285,44 @@
         font-size: 0.6875rem;
         color: var(--text-tertiary);
         line-height: 1.35;
+        text-align: center;
     }
-    .guichet-detail-actions__buttons {
+    .guichet-detail-actions__confirm {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
-    .guichet-detail-actions__buttons .btn {
-        min-height: 2.5rem;
+    .guichet-detail-actions__confirm .btn-success {
+        min-height: 2.75rem;
+        min-width: min(100%, 18rem);
+        padding: 0.7rem 1.5rem;
+        border-radius: 10px;
+        background: #16a34a;
+        border-color: #16a34a;
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 8px 18px rgba(22, 163, 74, 0.22);
     }
-    .guichet-detail-actions__buttons .btn-primary {
-        flex: 1 1 14rem;
-    }
-    .guichet-detail-actions__buttons .btn-danger,
-    .guichet-detail-actions__buttons .btn-outline {
-        flex: 0 0 auto;
+    .guichet-detail-actions__confirm .btn-success:hover {
+        background: #15803d;
+        border-color: #15803d;
+        color: #fff;
     }
     @media (max-width: 640px) {
-        .guichet-detail-actions__field .form-control {
-            max-width: none;
+        .guichet-detail-card__head {
+            flex-direction: column;
+            align-items: stretch;
         }
-        .guichet-detail-actions__buttons .btn {
-            flex: 1 1 100%;
+        .guichet-detail-card__head-actions {
+            justify-content: stretch;
+        }
+        .guichet-detail-card__head-actions .btn {
+            flex: 1 1 auto;
             justify-content: center;
+        }
+        .guichet-detail-actions__confirm .btn-success {
+            width: 100%;
+            min-width: 0;
         }
     }
 
@@ -379,6 +411,18 @@
         <div class="alert alert-error">{{ session('error') }}</div>
     @endif
 
+    @php
+        $bonusPhase = $bonusPhase ?? 'direct';
+        $bonusPhaseLabel = $bonusPhase === 'il' ? 'Indirect & Leadership' : 'Direct';
+        $phaseReste = (float) ($phaseReste ?? 0);
+        $phaseTotal = (float) ($phaseTotal ?? 0);
+        $defaultPaidOn = old('paid_on');
+        if (! $defaultPaidOn && is_string($withdrawal->notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $paidOnMatch)) {
+            $defaultPaidOn = $paidOnMatch[1];
+        }
+        $defaultPaidOn = $defaultPaidOn ?: now()->toDateString();
+    @endphp
+
     {{-- STATS MONTANT --}}
     <div class="commission-stats">
         <div class="commission-stat-card">
@@ -389,6 +433,13 @@
             <div class="label">À remettre</div>
         </div>
         <div class="commission-stat-card">
+            <div class="icon icon-orange">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="number">${{ number_format($phaseReste, 2) }}</div>
+            <div class="label">Reste {{ $bonusPhase === 'il' ? 'I&L' : 'Direct' }}</div>
+        </div>
+        <div class="commission-stat-card">
             <div class="icon icon-blue">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
@@ -396,8 +447,8 @@
             <div class="label">Frais</div>
         </div>
         <div class="commission-stat-card">
-            <div class="icon icon-orange">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="icon icon-purple">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div class="number" style="font-size:1rem;padding-top:0.35rem;">
                 <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
@@ -407,21 +458,23 @@
     </div>
 
     {{-- DÉTAIL --}}
-    @php
-        $bonusPhaseLabel = null;
-        if (is_string($withdrawal->notes) && preg_match('/\[bonus_phase=(direct|il)\]/', $withdrawal->notes, $phaseMatch)) {
-            $bonusPhaseLabel = $phaseMatch[1] === 'il' ? 'Indirect & Leadership' : 'Direct';
-        }
-        $defaultPaidOn = old('paid_on');
-        if (! $defaultPaidOn && is_string($withdrawal->notes) && preg_match('/\[paid_on=(\d{4}-\d{2}-\d{2})\]/', $withdrawal->notes, $paidOnMatch)) {
-            $defaultPaidOn = $paidOnMatch[1];
-        }
-        $defaultPaidOn = $defaultPaidOn ?: now()->toDateString();
-    @endphp
     <div class="card guichet-detail-card">
         <div class="guichet-detail-card__head">
             <h2>Détails du retrait</h2>
-            <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
+            <div class="guichet-detail-card__head-actions">
+                @if($withdrawal->status === 'pending')
+                    <button type="submit"
+                            form="guichetCancelForm"
+                            class="btn btn-danger btn-sm">
+                        Annuler
+                    </button>
+                @endif
+                <button type="button"
+                        class="btn btn-outline btn-sm"
+                        onclick="printGuichetReceipt()">
+                    Imprimer
+                </button>
+            </div>
         </div>
 
         <div class="guichet-detail-card__body">
@@ -433,12 +486,18 @@
                 <span class="label">Téléphone</span>
                 <span class="value">{{ $member->phone ?? '—' }}</span>
             </div>
-            @if($bonusPhaseLabel)
-                <div class="detail-row">
-                    <span class="label">Type de paiement</span>
-                    <span class="value">{{ $bonusPhaseLabel }}</span>
-                </div>
-            @endif
+            <div class="detail-row">
+                <span class="label">Type de paiement</span>
+                <span class="value">{{ $bonusPhaseLabel }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Total phase</span>
+                <span class="value">${{ number_format($phaseTotal, 2) }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Reste après ce retrait</span>
+                <span class="value">${{ number_format($phaseReste, 2) }}</span>
+            </div>
             <div class="detail-row">
                 <span class="label">Demandé le</span>
                 <span class="value">{{ $withdrawal->created_at?->format('d/m/Y H:i') }}</span>
@@ -470,7 +529,8 @@
                 <form method="POST"
                       action="{{ route('cashier.guichet.fulfill', $withdrawal->id) }}"
                       id="guichetFulfillForm"
-                      class="guichet-fulfill-form space-y-3">
+                      class="guichet-fulfill-form"
+                      style="width:100%;display:flex;flex-direction:column;align-items:center;gap:0.95rem;">
                     @csrf
                     <div class="guichet-detail-actions__field">
                         <label for="guichetFulfillPaidOn">Date du paiement</label>
@@ -482,22 +542,12 @@
                                max="{{ now()->toDateString() }}"
                                min="{{ now()->subDays(90)->toDateString() }}"
                                required>
-                        <p class="help-text">Pour un paiement déjà remis au guichet (saisie manuelle). Par défaut : aujourd’hui.</p>
+                        <p class="help-text">Pour un paiement déjà remis au guichet (saisie manuelle).</p>
                     </div>
 
-                    <div class="guichet-detail-actions__buttons">
-                        <button type="submit" class="btn btn-primary">
-                            Confirmer remise + préparer reçu
-                        </button>
-                        <button type="submit"
-                                form="guichetCancelForm"
-                                class="btn btn-danger">
-                            Annuler le retrait
-                        </button>
-                        <button type="button"
-                                class="btn btn-outline md:hidden"
-                                onclick="printGuichetReceipt()">
-                            Imprimer le reçu
+                    <div class="guichet-detail-actions__confirm">
+                        <button type="submit" class="btn btn-success">
+                            Confirmer la remise
                         </button>
                     </div>
                 </form>
@@ -533,10 +583,10 @@ document.addEventListener('DOMContentLoaded', function () {
         fulfillForm.addEventListener('submit', function (e) {
             e.preventDefault();
             window.showConfirmDialog({
-                type: 'primary',
+                type: 'success',
                 title: 'Confirmer la remise',
                 message: 'Vous remettez ' + amountLabel + ' en espèces à ' + memberName + '. Continuer et préparer le reçu ?',
-                confirmText: 'Confirmer remise',
+                confirmText: 'Confirmer la remise',
                 onConfirm: function () {
                     fulfillForm.submit();
                 },

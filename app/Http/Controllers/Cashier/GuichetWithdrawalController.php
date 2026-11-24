@@ -419,7 +419,26 @@ class GuichetWithdrawalController extends Controller
             ->filter(fn ($n) => ($n->data['withdrawal_id'] ?? null) == $withdrawal->id)
             ->each->markAsRead();
 
-        return view('cashier.guichet.show', compact('withdrawal'));
+        $bonusPhase = 'direct';
+        if (is_string($withdrawal->notes) && preg_match('/\[bonus_phase=(direct|il)\]/', $withdrawal->notes, $phaseMatch)) {
+            $bonusPhase = $phaseMatch[1];
+        }
+
+        $phases = $this->memberPhaseAmounts((int) $withdrawal->user_id);
+        $phaseReste = $bonusPhase === 'il'
+            ? (float) ($phases['il_reste'] ?? 0)
+            : (float) ($phases['direct_reste'] ?? 0);
+        $phaseTotal = $bonusPhase === 'il'
+            ? (float) ($phases['il_total'] ?? 0)
+            : (float) ($phases['direct_total'] ?? 0);
+
+        return view('cashier.guichet.show', compact(
+            'withdrawal',
+            'bonusPhase',
+            'phases',
+            'phaseReste',
+            'phaseTotal'
+        ));
     }
 
     /**
