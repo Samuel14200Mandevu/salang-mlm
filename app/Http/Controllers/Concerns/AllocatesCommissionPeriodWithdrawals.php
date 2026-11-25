@@ -30,9 +30,12 @@ trait AllocatesCommissionPeriodWithdrawals
             ->groupBy('user_id')
             ->pluck('total_paid', 'user_id');
 
+        // FIFO sur les montants déjà crédités au portefeuille uniquement :
+        // une remise guichet ne peut pas « manger » des bonus encore pending.
         $commissionRows = Commission::query()
             ->whereIn('user_id', $userIds)
             ->whereIn('type', $coreTypes)
+            ->where('status', 'paid')
             ->whereNotNull('period')
             ->where('period', '!=', '')
             ->select('user_id', 'period', DB::raw('SUM(amount) as total'))
