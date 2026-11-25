@@ -30,6 +30,7 @@
     $bonusMonth = $bonusMonth ?? '';
     $bonusMonthLabel = $bonusMonthLabel ?? '';
     $bonusMonths = $bonusMonths ?? [];
+    $walletRemaining = round((float) ($walletBalance ?? 0), 2);
     $bonusRows = [
         'direct' => $bonusByType['direct'] ?? ['label' => 'Direct', 'total' => 0],
         'indirect' => $bonusByType['indirect'] ?? ['label' => 'Indirect', 'total' => 0],
@@ -142,35 +143,19 @@
     <div class="member-fintech-hero__bonus-block is-amounts-hidden" data-bonus-privacy>
         <div class="member-fintech-hero__bonus-block-head">
             <div class="member-fintech-hero__bonus-total">
-                <p class="member-fintech-hero__label">Total bonus</p>
-                <p class="member-fintech-hero__balance member-fintech-hero__balance--compact" data-bonus-amount>
+                <p class="member-fintech-hero__label">En portefeuille</p>
+                <a
+                    href="{{ route('wallet.index') }}"
+                    class="member-fintech-hero__balance member-fintech-hero__balance--compact member-fintech-hero__wallet-link"
+                    data-bonus-amount
+                    aria-label="Ouvrir le portefeuille, solde {{ number_format($walletRemaining, 2) }} dollars"
+                >
                     <span class="member-fintech-hero__currency">$</span><span
-                        data-count-up="{{ $bonusTotal }}"
+                        data-count-up="{{ $walletRemaining }}"
                         data-count-decimals="2"
-                    >{{ number_format($bonusTotal, 2) }}</span>
-                </p>
-                @if($bonusMonthLabel)
-                    @if(!empty($bonusMonths))
-                        <div class="member-fintech-hero__month-picker" data-bonus-month-picker>
-                            <button
-                                type="button"
-                                class="member-fintech-hero__bonus-month member-fintech-hero__month-trigger"
-                                data-bonus-month-trigger
-                                aria-expanded="false"
-                                aria-haspopup="dialog"
-                                aria-controls="bonus-month-sheet"
-                                id="bonus-month-trigger"
-                            >
-                                <span>{{ $bonusMonthLabel }}</span>
-                                <svg class="member-fintech-hero__month-chevron" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                        </div>
-                    @else
-                        <p class="member-fintech-hero__bonus-month">{{ $bonusMonthLabel }}</p>
-                    @endif
-                @endif
+                    >{{ number_format($walletRemaining, 2) }}</span>
+                </a>
+                <p class="member-fintech-hero__wallet-hint">Reste disponible · toucher pour détails</p>
             </div>
             <button
                 type="button"
@@ -188,6 +173,35 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
                 </svg>
             </button>
+        </div>
+
+        <div class="member-fintech-hero__bonus-month-bar">
+            <p class="member-fintech-hero__bonus-month-bar-label">
+                Bonus
+                <span data-bonus-amount>${{ number_format($bonusTotal, 2) }}</span>
+            </p>
+            @if($bonusMonthLabel)
+                @if(!empty($bonusMonths))
+                    <div class="member-fintech-hero__month-picker" data-bonus-month-picker>
+                        <button
+                            type="button"
+                            class="member-fintech-hero__bonus-month member-fintech-hero__month-trigger"
+                            data-bonus-month-trigger
+                            aria-expanded="false"
+                            aria-haspopup="dialog"
+                            aria-controls="bonus-month-sheet"
+                            id="bonus-month-trigger"
+                        >
+                            <span>{{ $bonusMonthLabel }}</span>
+                            <svg class="member-fintech-hero__month-chevron" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+                @else
+                    <p class="member-fintech-hero__bonus-month">{{ $bonusMonthLabel }}</p>
+                @endif
+            @endif
         </div>
 
         <div class="member-fintech-hero__pnl-row member-fintech-hero__pnl-row--bonus" aria-label="Répartition des bonus">

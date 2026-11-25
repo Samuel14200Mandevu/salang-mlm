@@ -59,22 +59,31 @@
         </div>
     </div>
 
-    <div class="lg:col-span-8 grid grid-cols-2 gap-2 sm:gap-3 lg:items-stretch member-dash-kpi-grid">
-        <div class="member-dash-kpi is-primary h-full flex flex-col justify-between min-h-[7.5rem]">
-            <p class="member-dash-kpi__label">PV Personnel</p>
-            <p class="member-dash-kpi__value">{{ number_format($pvPersonnel ?? 0) }}</p>
-        </div>
-        <div class="member-dash-kpi is-cumul h-full flex flex-col justify-between min-h-[7.5rem]">
-            <p class="member-dash-kpi__label">PV Cumulé</p>
-            <p class="member-dash-kpi__value">{{ number_format($pvCumul ?? 0) }}</p>
-        </div>
-        <div class="member-dash-kpi is-month h-full flex flex-col justify-between min-h-[7.5rem]">
-            <p class="member-dash-kpi__label">PV Mensuel</p>
-            <p class="member-dash-kpi__value">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</p>
-        </div>
-        <div class="member-dash-kpi is-team h-full flex flex-col justify-between min-h-[7.5rem]">
-            <p class="member-dash-kpi__label">PV Mensuel équipe</p>
-            <p class="member-dash-kpi__value">{{ number_format($pvMensuelEquipe ?? 0) }}</p>
+    <div class="lg:col-span-8 flex flex-col gap-2 sm:gap-3">
+        <a href="{{ route('wallet.index') }}" class="member-dash-kpi is-primary member-dash-kpi--wallet no-underline flex items-end justify-between gap-3 min-h-[4.5rem] px-4 py-3">
+            <div class="min-w-0">
+                <p class="member-dash-kpi__label">En portefeuille</p>
+                <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5">Reste disponible</p>
+            </div>
+            <p class="member-dash-kpi__value shrink-0">${{ number_format((float) ($walletBalance ?? 0), 2) }}</p>
+        </a>
+        <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:items-stretch member-dash-kpi-grid">
+            <div class="member-dash-kpi is-primary h-full flex flex-col justify-between min-h-[7.5rem]">
+                <p class="member-dash-kpi__label">PV Personnel</p>
+                <p class="member-dash-kpi__value">{{ number_format($pvPersonnel ?? 0) }}</p>
+            </div>
+            <div class="member-dash-kpi is-cumul h-full flex flex-col justify-between min-h-[7.5rem]">
+                <p class="member-dash-kpi__label">PV Cumulé</p>
+                <p class="member-dash-kpi__value">{{ number_format($pvCumul ?? 0) }}</p>
+            </div>
+            <div class="member-dash-kpi is-month h-full flex flex-col justify-between min-h-[7.5rem]">
+                <p class="member-dash-kpi__label">PV Mensuel</p>
+                <p class="member-dash-kpi__value">{{ number_format($rankProgress['monthly_pv'] ?? 0) }}</p>
+            </div>
+            <div class="member-dash-kpi is-team h-full flex flex-col justify-between min-h-[7.5rem]">
+                <p class="member-dash-kpi__label">PV Mensuel équipe</p>
+                <p class="member-dash-kpi__value">{{ number_format($pvMensuelEquipe ?? 0) }}</p>
+            </div>
         </div>
     </div>
 </div>

@@ -1382,6 +1382,48 @@
     line-height: 1.12;
   }
 
+  .member-app a.member-fintech-hero__wallet-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.05rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .member-app a.member-fintech-hero__wallet-link:active {
+    opacity: 0.85;
+  }
+
+  .member-app .member-fintech-hero__wallet-hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    color: rgba(248, 250, 252, 0.48);
+  }
+
+  .member-app .member-fintech-hero__bonus-month-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.35rem 0.15rem 0.45rem;
+    padding: 0 0.25rem;
+  }
+
+  .member-app .member-fintech-hero__bonus-month-bar-label {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.62);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .member-app .member-fintech-hero__bonus-month-bar .member-fintech-hero__bonus-month,
+  .member-app .member-fintech-hero__bonus-month-bar .member-fintech-hero__month-trigger {
+    margin-top: 0;
+    font-size: 0.78rem;
+  }
+
   .member-app .member-fintech-hero__bonus-total .member-fintech-hero__bonus-month,
   .member-app .member-fintech-hero__bonus-total .member-fintech-hero__month-trigger {
     margin-top: 0;
