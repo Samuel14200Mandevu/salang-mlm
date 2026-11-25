@@ -114,6 +114,16 @@ class CommissionPeriod extends Model
         return $query->where('is_hidden', false);
     }
 
+    /**
+     * Périodes proposées dans les listes admin / caisse (hors historique masqué).
+     */
+    public function scopeDisplayable($query)
+    {
+        return $query
+            ->where('is_hidden', false)
+            ->where('period', '>=', \App\Support\MlmPeriod::displayFrom());
+    }
+
     public function scopePayableViaSystem($query)
     {
         return $query

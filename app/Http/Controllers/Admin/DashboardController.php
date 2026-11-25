@@ -26,12 +26,14 @@ class DashboardController extends Controller
             $newUsers = User::whereDate('created_at', '>=', now()->subDays(30))->count();
 
             $coreCommissionTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
-            // Total = toutes les commissions ; En cours = encore en portefeuille ; Payées = remises guichet.
+            // Total = commissions affichables (≥ 2026) ; En cours = encore en portefeuille ; Payées = remises guichet.
             $totalCommissions = (float) (Commission::query()
                 ->whereIn('type', $coreCommissionTypes)
+                ->displayablePeriod()
                 ->sum('amount') ?? 0);
             $paidIntoWallet = (float) (Commission::query()
                 ->whereIn('type', $coreCommissionTypes)
+                ->displayablePeriod()
                 ->where('status', 'paid')
                 ->sum('amount') ?? 0);
 

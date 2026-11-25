@@ -39,11 +39,15 @@ class OfflineBonusController extends Controller
     {
         $periodsWithPv = PVHistory::query()
             ->select('period')
+            ->where('period', '>=', \App\Support\MlmPeriod::displayFrom())
             ->distinct()
             ->orderByDesc('period')
             ->pluck('period');
 
         $selectedPeriod = $request->input('period', $periodsWithPv->first());
+        if ($selectedPeriod && $selectedPeriod < \App\Support\MlmPeriod::displayFrom()) {
+            $selectedPeriod = $periodsWithPv->first();
+        }
         $search = trim((string) $request->input('search', ''));
 
         $periodRecord = $selectedPeriod
@@ -318,12 +322,18 @@ class OfflineBonusController extends Controller
     {
         $periods = Commission::query()
             ->whereIn('type', ['direct', 'indirect', 'leadership'])
+            ->displayablePeriod()
+            ->whereNotNull('period')
+            ->where('period', '!=', '')
             ->select('period')
             ->distinct()
             ->orderByDesc('period')
             ->pluck('period');
 
         $selectedPeriod = $request->input('period', $periods->first());
+        if ($selectedPeriod && $selectedPeriod < \App\Support\MlmPeriod::displayFrom()) {
+            $selectedPeriod = $periods->first();
+        }
         $status = $request->input('status', 'pending');
         $search = trim((string) $request->input('search', ''));
 

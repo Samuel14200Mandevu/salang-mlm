@@ -24,4 +24,22 @@ class MlmPeriod
     {
         return $periodValue === self::current();
     }
+
+    /**
+     * Première période affichable (YYYY-MM). Les mois antérieurs restent
+     * en base mais ne sont plus proposés / agrégés dans les écrans.
+     */
+    public static function displayFrom(): string
+    {
+        return (string) config('mlm.commissions_display_from', '2026-01');
+    }
+
+    public static function isDisplayable(?string $periodValue): bool
+    {
+        if ($periodValue === null || $periodValue === '') {
+            return true;
+        }
+
+        return $periodValue >= self::displayFrom();
+    }
 }

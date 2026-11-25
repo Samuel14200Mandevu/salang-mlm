@@ -113,6 +113,26 @@ class Commission extends Model
             });
     }
 
+    /**
+     * Commissions affichables admin / caisse KPIs (période ≥ cutoff, non masquée).
+     */
+    public function scopeDisplayablePeriod($query)
+    {
+        $from = \App\Support\MlmPeriod::displayFrom();
+
+        return $query->where(function ($q) use ($from) {
+            $q->whereNull('period')
+                ->orWhere('period', '')
+                ->orWhere(function ($visible) use ($from) {
+                    $visible->where('period', '>=', $from)
+                        ->where(function ($periodLink) {
+                            $periodLink->whereDoesntHave('period')
+                                ->orWhereHas('period', fn ($p) => $p->where('is_hidden', false));
+                        });
+                });
+        });
+    }
+
     public function scopePendingPayableViaSystem($query)
     {
         return $query

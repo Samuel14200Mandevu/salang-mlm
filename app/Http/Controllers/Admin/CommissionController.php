@@ -105,10 +105,14 @@ class CommissionController extends Controller
     {
         $coreTypes = $this->coreCommissionTypes();
 
-        $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+        $periods = CommissionPeriod::query()
+            ->displayable()
+            ->orderBy('period', 'desc')
+            ->pluck('period');
         if ($periods->isEmpty()) {
             $periods = Commission::query()
                 ->whereIn('type', $coreTypes)
+                ->displayablePeriod()
                 ->whereNotNull('period')
                 ->where('period', '!=', '')
                 ->distinct()
@@ -127,6 +131,17 @@ class CommissionController extends Controller
         $selectedPeriod = ($request->filled('period') && $request->period !== 'all')
             ? (string) $request->period
             : null;
+
+        if (
+            $selectedPeriod
+            && ! \App\Support\MlmPeriod::isDisplayable($selectedPeriod)
+            && ! $request->filled('band')
+        ) {
+            return redirect()->route(
+                'admin.commissions',
+                array_merge($request->query(), ['period' => $periods->first() ?? 'all'])
+            );
+        }
 
         $query = Commission::query()->whereIn('type', $coreTypes);
         $this->applyCommissionFilters($query, $request);

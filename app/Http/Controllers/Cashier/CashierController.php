@@ -3478,10 +3478,14 @@ public function history(Request $request)
     {
         $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
 
-        $periods = CommissionPeriod::orderBy('period', 'desc')->pluck('period');
+        $periods = CommissionPeriod::query()
+            ->displayable()
+            ->orderBy('period', 'desc')
+            ->pluck('period');
         if ($periods->isEmpty()) {
             $periods = Commission::query()
                 ->whereIn('type', $coreTypes)
+                ->displayablePeriod()
                 ->whereNotNull('period')
                 ->where('period', '!=', '')
                 ->distinct()
@@ -3499,6 +3503,13 @@ public function history(Request $request)
         $selectedPeriod = ($request->filled('period') && $request->period !== 'all')
             ? (string) $request->period
             : null;
+
+        if ($selectedPeriod && ! \App\Support\MlmPeriod::isDisplayable($selectedPeriod)) {
+            return redirect()->route(
+                'cashier.commissions',
+                array_merge($request->query(), ['period' => $periods->first() ?? 'all'])
+            );
+        }
 
         $query = Commission::query()->whereIn('type', $coreTypes);
 
