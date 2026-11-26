@@ -180,6 +180,11 @@ class ActivityRegisterController extends Controller
             'net_sales_amount' => ['nullable', 'numeric', 'min:0'],
             'validated_amount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'participant_nom' => ['sometimes', 'string', 'max:120'],
+            'participant_postnom' => ['sometimes', 'string', 'max:120'],
+            'participant_prenom' => ['nullable', 'string', 'max:120'],
+            'participant_phone' => ['nullable', 'string', 'max:40'],
+            'invite_type' => ['sometimes', 'in:formation,autre'],
         ]);
 
         $payload = [];
@@ -190,10 +195,33 @@ class ActivityRegisterController extends Controller
             }
         }
 
-        foreach (['purchases_amount', 'net_sales_amount', 'validated_amount', 'notes'] as $field) {
+        foreach (['purchases_amount', 'net_sales_amount', 'validated_amount', 'notes', 'participant_phone', 'invite_type'] as $field) {
             if (array_key_exists($field, $data)) {
                 $payload[$field] = $data[$field];
             }
+        }
+
+        $nameTouched = $request->has('participant_nom')
+            || $request->has('participant_postnom')
+            || $request->has('participant_prenom');
+
+        if ($nameTouched) {
+            $nom = trim((string) ($data['participant_nom'] ?? $entry->participant_nom ?? ''));
+            $postnom = trim((string) ($data['participant_postnom'] ?? $entry->participant_postnom ?? ''));
+            $prenom = trim((string) ($data['participant_prenom'] ?? $entry->participant_prenom ?? ''));
+
+            $payload['participant_nom'] = $nom !== '' ? $nom : $entry->participant_nom;
+            $payload['participant_postnom'] = $postnom !== '' ? $postnom : $entry->participant_postnom;
+            $payload['participant_prenom'] = $prenom !== '' ? $prenom : null;
+            $payload['participant_name'] = ActivityEntry::composeFullName(
+                $payload['participant_nom'],
+                $payload['participant_postnom'],
+                $payload['participant_prenom'],
+            );
+        }
+
+        if (($payload['invite_type'] ?? null) === ActivityEntry::INVITE_FORMATION && ! array_key_exists('formation_done', $payload)) {
+            $payload['formation_done'] = true;
         }
 
         if (($payload['adhesion_done'] ?? null) === true && ! $entry->adhesion_at) {

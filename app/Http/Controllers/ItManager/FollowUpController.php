@@ -23,7 +23,7 @@ class FollowUpController extends Controller
     public function index(Request $request): View
     {
         $filter = $request->string('filter')->toString() ?: 'formation';
-        if (! in_array($filter, ['formation', 'adhesion', 'consultation', 'purchase'], true)) {
+        if (! in_array($filter, ['formation', 'adhesion', 'consultation', 'purchase', 'sans_adhesion'], true)) {
             $filter = 'formation';
         }
 
@@ -48,9 +48,10 @@ class FollowUpController extends Controller
 
         match ($filter) {
             'formation' => $matchingEntryIds->where('formation_done', true),
-            'adhesion' => $matchingEntryIds->where('adhesion_done', false),
-            'consultation' => $matchingEntryIds->where('consultation_done', false),
-            'purchase' => $matchingEntryIds->where('purchase_done', false),
+            'adhesion' => $matchingEntryIds->where('adhesion_done', true),
+            'consultation' => $matchingEntryIds->where('consultation_done', true),
+            'purchase' => $matchingEntryIds->where('purchase_done', true),
+            'sans_adhesion' => $matchingEntryIds->where('adhesion_done', false),
         };
 
         $matchingPairs = (clone $matchingEntryIds)
@@ -69,10 +70,10 @@ class FollowUpController extends Controller
                 DB::raw('MAX(activity_entries.member_code) as member_code'),
                 DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
                 DB::raw('COUNT(*) as invites_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END) as formation_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END) as adhesion_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END) as consultation_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END) as purchase_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END), 0) as formation_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END), 0) as adhesion_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END), 0) as consultation_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END), 0) as purchase_count'),
             ])
             ->groupBy('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date)'))
             ->orderByDesc('activity_date')
@@ -93,17 +94,17 @@ class FollowUpController extends Controller
                 ->tap($byMemberCode)
                 ->count(),
             'adhesion' => ActivityEntry::query()
-                ->where('adhesion_done', false)
+                ->where('adhesion_done', true)
                 ->tap($inWindow)
                 ->tap($byMemberCode)
                 ->count(),
             'consultation' => ActivityEntry::query()
-                ->where('consultation_done', false)
+                ->where('consultation_done', true)
                 ->tap($inWindow)
                 ->tap($byMemberCode)
                 ->count(),
             'purchase' => ActivityEntry::query()
-                ->where('purchase_done', false)
+                ->where('purchase_done', true)
                 ->tap($inWindow)
                 ->tap($byMemberCode)
                 ->count(),
@@ -121,7 +122,7 @@ class FollowUpController extends Controller
     public function show(Request $request, User $member): View
     {
         $filter = $request->string('filter')->toString() ?: 'formation';
-        if (! in_array($filter, ['formation', 'adhesion', 'consultation', 'purchase'], true)) {
+        if (! in_array($filter, ['formation', 'adhesion', 'consultation', 'purchase', 'sans_adhesion'], true)) {
             $filter = 'formation';
         }
 
@@ -135,10 +136,10 @@ class FollowUpController extends Controller
             ->select([
                 DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
                 DB::raw('COUNT(*) as invites_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END) as formation_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END) as adhesion_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END) as consultation_count'),
-                DB::raw('SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END) as purchase_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END), 0) as formation_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END), 0) as adhesion_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END), 0) as consultation_count'),
+                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END), 0) as purchase_count'),
             ])
             ->groupBy(DB::raw('DATE(activity_sheets.activity_date)'))
             ->orderByDesc('activity_date')

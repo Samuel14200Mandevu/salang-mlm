@@ -269,7 +269,7 @@
             </div>
         </a>
 
-        <a href="{{ route('it-manager.follow-up.index', ['filter' => 'adhesion']) }}" class="stat-card animate-fadeInUp delay-3">
+        <a href="{{ route('it-manager.follow-up.index', ['filter' => 'sans_adhesion']) }}" class="stat-card animate-fadeInUp delay-3">
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="stat-label">Sans adhésion</p>
@@ -472,7 +472,7 @@
                 <p class="it-home-spot__value" data-count-to="{{ (int) $stats['questions_open'] }}">0</p>
                 <p class="it-home-spot__label">Questions</p>
             </a>
-            <a href="{{ route('it-manager.follow-up.index', ['filter' => 'adhesion']) }}" class="it-home-spot animate-fadeInUp delay-3">
+            <a href="{{ route('it-manager.follow-up.index', ['filter' => 'sans_adhesion']) }}" class="it-home-spot animate-fadeInUp delay-3">
                 <p class="it-home-spot__value" data-count-to="{{ (int) $stats['register_pending_adhesion'] }}">0</p>
                 <p class="it-home-spot__label">Sans adhésion</p>
             </a>

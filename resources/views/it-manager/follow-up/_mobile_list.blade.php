@@ -9,6 +9,10 @@
             'member_code' => ($memberCode ?? null) ?: null,
         ]));
         $rowNumber = $groups->firstItem() + $index;
+        $formationCount = (int) ($group->formation_count ?? 0);
+        $adhesionCount = (int) ($group->adhesion_count ?? 0);
+        $consultationCount = (int) ($group->consultation_count ?? 0);
+        $purchaseCount = (int) ($group->purchase_count ?? 0);
     @endphp
     <a href="{{ $detailUrl }}"
        class="follow-up-mobile-card block rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-3">
@@ -27,10 +31,10 @@
                     <span class="font-mono text-[var(--text-muted)]">({{ $group->member_code ?: ($member?->sponsor_id ?: '—') }})</span>
                 </p>
                 <p class="mt-1.5 text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)] tabular-nums">
-                    Form {{ (int) $group->formation_count }}/{{ (int) $group->invites_count }}
-                    · Adh {{ (int) $group->adhesion_count }}/{{ (int) $group->invites_count }}
-                    · Cons {{ (int) $group->consultation_count }}/{{ (int) $group->invites_count }}
-                    · Achat {{ (int) $group->purchase_count }}/{{ (int) $group->invites_count }}
+                    Form {{ $formationCount }}
+                    · Adh {{ $adhesionCount }}
+                    · Cons {{ $consultationCount }}
+                    · Achat {{ $purchaseCount }}
                 </p>
             </div>
             <svg class="w-4 h-4 mt-1 flex-shrink-0 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
