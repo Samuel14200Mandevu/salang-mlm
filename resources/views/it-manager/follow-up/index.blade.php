@@ -16,21 +16,21 @@
     </div>
     <div class="flex items-center gap-2 min-w-0 flex-1 justify-end ml-4">
         <a href="{{ route('it-manager.activity-register.show') }}"
-           class="shop-banner-icon-btn shrink-0"
+           class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center"
            title="Registre d’activité"
            aria-label="Ouvrir le registre d’activité">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
         </a>
         <button type="button"
-                class="shop-banner-icon-btn shrink-0 {{ $inviteFormOpen ? 'is-active' : '' }}"
+                class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
                 data-follow-up-toggle
                 aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
                 aria-controls="followUpInvitePanel"
                 title="Ajouter des invités"
                 aria-label="Ajouter des invités">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
         </button>
@@ -60,21 +60,21 @@
         </div>
         <div class="shop-catalog-banner__tools">
             <a href="{{ route('it-manager.activity-register.show') }}"
-               class="shop-banner-icon-btn"
+               class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center"
                aria-label="Ouvrir le registre d’activité"
                title="Registre">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
             </a>
             <button type="button"
-                    class="shop-banner-icon-btn {{ $inviteFormOpen ? 'is-active' : '' }}"
+                    class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-white/70' : '' }}"
                     data-follow-up-toggle
                     aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
                     aria-controls="followUpInvitePanel"
                     title="Ajouter des invités"
                     aria-label="Ajouter des invités">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
             </button>
@@ -282,25 +282,25 @@
     @endforeach
 </div>
 
-{{-- Mobile : Date / Invité / Parrain → détail au clic --}}
+{{-- Mobile : N° / Date / Invités / Membre → détail au clic --}}
 <div id="followUpMobileList" class="follow-up-mobile-list it-mobile-only space-y-2 mb-4">
     @include('it-manager.follow-up._mobile_list')
 </div>
 
-{{-- Desktop : tableau complet --}}
+{{-- Desktop : groupes date + membre --}}
 <div class="it-desktop-only rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[var(--bg-secondary)] text-left text-[0.6875rem] uppercase tracking-wide text-[var(--text-secondary)]">
+                    <th class="px-3 py-2.5">N°</th>
                     <th class="px-3 py-2.5">Date</th>
-                    <th class="px-3 py-2.5">Invité</th>
-                    <th class="px-3 py-2.5">Parrain</th>
+                    <th class="px-3 py-2.5">Invités</th>
+                    <th class="px-3 py-2.5">Membre</th>
                     <th class="px-3 py-2.5 text-center">Form.</th>
                     <th class="px-3 py-2.5 text-center">Adh.</th>
                     <th class="px-3 py-2.5 text-center">Cons.</th>
                     <th class="px-3 py-2.5 text-center">Achat</th>
-                    <th class="px-3 py-2.5"></th>
                 </tr>
             </thead>
             <tbody id="followUpTableBody">
@@ -310,7 +310,7 @@
     </div>
 </div>
 
-<div id="followUpPagination" class="mt-4">{{ $entries->links() }}</div>
+<div id="followUpPagination" class="mt-4">{{ $groups->links() }}</div>
 @endsection
 
 @push('scripts')
@@ -335,7 +335,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             toggleBtns.forEach(function (btn) {
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                btn.classList.toggle('is-active', open);
+                btn.classList.toggle('ring-2', open);
+                btn.classList.toggle('ring-offset-2', open);
+                if (btn.closest('.shop-catalog-banner')) {
+                    btn.classList.toggle('ring-white/70', open);
+                    btn.classList.remove('ring-[var(--primary)]');
+                } else {
+                    btn.classList.toggle('ring-[var(--primary)]', open);
+                    btn.classList.remove('ring-white/70');
+                }
             });
             if (open && memberInput) {
                 memberInput.focus();
