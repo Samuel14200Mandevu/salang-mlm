@@ -314,7 +314,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::get('/follow-up', [\App\Http\Controllers\ItManager\FollowUpController::class, 'index'])->name('follow-up.index');
         Route::post('/follow-up', [\App\Http\Controllers\ItManager\FollowUpController::class, 'store'])->name('follow-up.store');
+        Route::get('/follow-up/entries/{entry}/edit', [\App\Http\Controllers\ItManager\FollowUpController::class, 'editEntry'])->name('follow-up.entry.edit');
         Route::get('/follow-up/members/{member}', [\App\Http\Controllers\ItManager\FollowUpController::class, 'show'])->name('follow-up.show');
+        Route::patch('/follow-up/members/{member}/date', [\App\Http\Controllers\ItManager\FollowUpController::class, 'updateDate'])->name('follow-up.update-date');
         Route::get('/members', [\App\Http\Controllers\ItManager\MembersController::class, 'index'])->name('members.index');
 
         Route::get('/site-pages', [\App\Http\Controllers\ItManager\SitePagesController::class, 'edit'])->name('site-pages.edit');

@@ -184,7 +184,17 @@ class ActivityRegisterController extends Controller
             'participant_postnom' => ['sometimes', 'string', 'max:120'],
             'participant_prenom' => ['nullable', 'string', 'max:120'],
             'participant_phone' => ['nullable', 'string', 'max:40'],
+            'participant_birth_date' => ['nullable', 'date'],
+            'participant_gender' => ['nullable', 'in:male,female'],
+            'participant_address' => ['nullable', 'string', 'max:255'],
+            'participant_email' => ['nullable', 'email', 'max:255'],
+            'participant_profession' => ['nullable', 'string', 'max:120'],
+            'participant_identity_number' => ['nullable', 'string', 'max:80'],
             'invite_type' => ['sometimes', 'in:formation,autre'],
+            'return_member' => ['nullable', 'integer'],
+            'return_date' => ['nullable', 'date'],
+            'return_filter' => ['nullable', 'string', 'max:32'],
+            'return_member_code' => ['nullable', 'string', 'max:32'],
         ]);
 
         $payload = [];
@@ -195,9 +205,14 @@ class ActivityRegisterController extends Controller
             }
         }
 
-        foreach (['purchases_amount', 'net_sales_amount', 'validated_amount', 'notes', 'participant_phone', 'invite_type'] as $field) {
+        foreach ([
+            'purchases_amount', 'net_sales_amount', 'validated_amount', 'notes',
+            'participant_phone', 'participant_birth_date', 'participant_gender',
+            'participant_address', 'participant_email', 'participant_profession',
+            'participant_identity_number', 'invite_type',
+        ] as $field) {
             if (array_key_exists($field, $data)) {
-                $payload[$field] = $data[$field];
+                $payload[$field] = $data[$field] !== '' ? $data[$field] : null;
             }
         }
 
@@ -235,6 +250,17 @@ class ActivityRegisterController extends Controller
         }
 
         $entry->forceFill($payload)->save();
+
+        if (! empty($data['return_member'])) {
+            return redirect()
+                ->route('it-manager.follow-up.show', array_filter([
+                    'member' => (int) $data['return_member'],
+                    'date' => $data['return_date'] ?? $entry->sheet?->activity_date?->toDateString(),
+                    'filter' => $data['return_filter'] ?? null,
+                    'member_code' => ($data['return_member_code'] ?? null) ?: null,
+                ]))
+                ->with('success', 'Invité mis à jour.');
+        }
 
         return back()->with('success', 'Ligne mise à jour.');
     }

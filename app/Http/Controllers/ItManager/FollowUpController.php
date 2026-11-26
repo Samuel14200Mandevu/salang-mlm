@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ItManager;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityEntry;
+use App\Models\ActivitySheet;
 use App\Models\User;
 use App\Services\ActivityRegisterService;
 use Illuminate\Http\RedirectResponse;
@@ -165,6 +166,88 @@ class FollowUpController extends Controller
             'dateStats' => $dateStats,
             'dayEntries' => $dayEntries,
             'focusDay' => $focusDay,
+            'filter' => $filter,
+            'memberCode' => $memberCode,
+        ]);
+    }
+
+    /**
+     * Déplace tous les invités du membre d’une date vers une autre.
+     */
+    public function updateDate(Request $request, User $member): RedirectResponse
+    {
+        $data = $request->validate([
+            'from_date' => ['required', 'date'],
+            'to_date' => ['required', 'date'],
+            'filter' => ['nullable', 'string', 'max:32'],
+            'member_code' => ['nullable', 'string', 'max:32'],
+        ], [
+            'from_date.required' => 'La date actuelle est obligatoire.',
+            'to_date.required' => 'La nouvelle date est obligatoire.',
+        ]);
+
+        $fromDay = Carbon::parse($data['from_date'])->toDateString();
+        $toDay = Carbon::parse($data['to_date'])->toDateString();
+
+        if ($fromDay === $toDay) {
+            return redirect()
+                ->route('it-manager.follow-up.show', array_filter([
+                    'member' => $member,
+                    'date' => $fromDay,
+                    'filter' => $data['filter'] ?? null,
+                    'member_code' => ($data['member_code'] ?? null) ?: null,
+                ]))
+                ->with('success', 'Date inchangée.');
+        }
+
+        $entries = ActivityEntry::query()
+            ->where('member_id', $member->id)
+            ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', $fromDay))
+            ->get();
+
+        if ($entries->isEmpty()) {
+            return back()->withErrors(['to_date' => 'Aucun invité à déplacer pour cette date.']);
+        }
+
+        $targetSheet = ActivitySheet::forDate($toDay, $request->user());
+        $nextOrder = (int) $targetSheet->entries()
+            ->where('member_id', $member->id)
+            ->max('sort_order');
+
+        foreach ($entries as $entry) {
+            $nextOrder++;
+            $entry->forceFill([
+                'activity_sheet_id' => $targetSheet->id,
+                'sort_order' => $nextOrder,
+            ])->save();
+        }
+
+        return redirect()
+            ->route('it-manager.follow-up.show', array_filter([
+                'member' => $member,
+                'date' => $toDay,
+                'filter' => $data['filter'] ?? null,
+                'member_code' => ($data['member_code'] ?? null) ?: null,
+            ]))
+            ->with('success', $entries->count().' invité(s) déplacé(s) au '.Carbon::parse($toDay)->format('d/m/Y').'.');
+    }
+
+    public function editEntry(Request $request, ActivityEntry $entry): View|RedirectResponse
+    {
+        $entry->load(['member:id,name,sponsor_id', 'sheet:id,activity_date']);
+
+        if (! $entry->member_id) {
+            return redirect()
+                ->route('it-manager.follow-up.index')
+                ->withErrors(['entry' => 'Invité sans membre associé.']);
+        }
+
+        $filter = $request->string('filter')->toString() ?: 'formation';
+        $memberCode = trim((string) $request->query('member_code', ''));
+
+        return view('it-manager.follow-up.edit-entry', [
+            'entry' => $entry,
+            'member' => $entry->member,
             'filter' => $filter,
             'memberCode' => $memberCode,
         ]);

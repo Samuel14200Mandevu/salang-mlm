@@ -90,84 +90,75 @@
 </section>
 
 @if ($focusDay)
+    <section class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 mb-5">
+        <h2 class="text-sm font-semibold text-[var(--text-primary)] mb-3">Modifier la date</h2>
+        <form method="POST"
+              action="{{ route('it-manager.follow-up.update-date', $member) }}"
+              class="flex flex-wrap items-end gap-3">
+            @csrf
+            @method('PATCH')
+            <input type="hidden" name="from_date" value="{{ $focusDay }}">
+            <input type="hidden" name="filter" value="{{ $filter }}">
+            <input type="hidden" name="member_code" value="{{ $memberCode }}">
+            <div>
+                <label for="follow_up_to_date" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Date du groupe ({{ $focusLabel }})
+                </label>
+                <input type="date"
+                       id="follow_up_to_date"
+                       name="to_date"
+                       value="{{ $focusDay }}"
+                       required
+                       class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                Enregistrer la date
+            </button>
+            <a href="{{ route('it-manager.activity-register.show', ['date' => $focusDay]) }}"
+               class="btn btn-outline btn-sm">
+                Ouvrir le registre
+            </a>
+        </form>
+        <p class="mt-2 text-xs text-[var(--text-muted)]">
+            Déplace tous les invités de ce membre pour ce jour vers la nouvelle date.
+        </p>
+    </section>
+
     <section class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden mb-5">
-        <div class="flex items-center justify-between gap-3 px-3 py-2.5 bg-[var(--bg-secondary)]">
+        <div class="px-3 py-2.5 bg-[var(--bg-secondary)]">
             <p class="text-[0.6875rem] uppercase tracking-wide text-[var(--text-secondary)]">
                 Invités du {{ $focusLabel }}
             </p>
-            <a href="{{ route('it-manager.activity-register.show', ['date' => $focusDay]) }}"
-               class="text-xs font-semibold text-primary-600">Registre</a>
         </div>
         @if ($dayEntries->isEmpty())
             <p class="px-3 py-8 text-center text-sm text-[var(--text-muted)]">Aucun invité ce jour.</p>
         @else
             <ul class="divide-y divide-[var(--border-light)]">
                 @foreach ($dayEntries as $entry)
-                    <li class="px-3 py-3 space-y-3">
-                        <form method="POST"
-                              action="{{ route('it-manager.activity-register.entries.update', $entry) }}"
-                              class="space-y-3">
-                            @csrf
-                            @method('PATCH')
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nom</label>
-                                    <input type="text"
-                                           name="participant_nom"
-                                           value="{{ $entry->participant_nom }}"
-                                           required
-                                           class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Post-Nom</label>
-                                    <input type="text"
-                                           name="participant_postnom"
-                                           value="{{ $entry->participant_postnom }}"
-                                           required
-                                           class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Téléphone</label>
-                                    <input type="tel"
-                                           name="participant_phone"
-                                           value="{{ $entry->participant_phone }}"
-                                           class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">Type</label>
-                                    <select name="invite_type"
-                                            class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
-                                        <option value="formation" @selected($entry->invite_type === 'formation')>Formation</option>
-                                        <option value="autre" @selected($entry->invite_type === 'autre')>Autre</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    @foreach ([
-                                        'formation_done' => ['Form.', (bool) $entry->formation_done],
-                                        'adhesion_done' => ['Adh.', (bool) $entry->adhesion_done],
-                                        'consultation_done' => ['Cons.', (bool) $entry->consultation_done],
-                                        'purchase_done' => ['Achat', (bool) $entry->purchase_done],
-                                    ] as $flag => [$label, $done])
-                                        <label class="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
-                                            <input type="hidden" name="{{ $flag }}" value="0">
-                                            <input type="checkbox"
-                                                   name="{{ $flag }}"
-                                                   value="1"
-                                                   class="rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                                                   @checked($done)>
-                                            {{ $label }}
-                                        </label>
-                                    @endforeach
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    Enregistrer
-                                </button>
-                            </div>
-                        </form>
+                    @php
+                        $editUrl = route('it-manager.follow-up.entry.edit', array_filter([
+                            'entry' => $entry,
+                            'filter' => $filter,
+                            'member_code' => ($memberCode ?? null) ?: null,
+                        ]));
+                    @endphp
+                    <li class="px-3 py-3 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-[var(--text-primary)]">{{ $entry->displayName() }}</p>
+                            @if ($entry->participant_phone)
+                                <p class="text-xs text-[var(--text-muted)]">{{ $entry->participant_phone }}</p>
+                            @endif
+                            <p class="mt-1.5 text-xs tabular-nums text-[var(--text-secondary)]">
+                                {{ $entry->inviteLabel() }}
+                                · Form {{ $entry->formation_done ? '✓' : '·' }}
+                                · Adh {{ $entry->adhesion_done ? '✓' : '·' }}
+                                · Cons {{ $entry->consultation_done ? '✓' : '·' }}
+                                · Achat {{ $entry->purchase_done ? '✓' : '·' }}
+                            </p>
+                        </div>
+                        <a href="{{ $editUrl }}" class="btn btn-primary btn-sm shrink-0">
+                            Modifier
+                        </a>
                     </li>
                 @endforeach
             </ul>
