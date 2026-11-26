@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\ActivityRegisterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class FollowUpController extends Controller
@@ -96,17 +97,19 @@ class FollowUpController extends Controller
     }
 
     /**
-     * Ajoute un ou plusieurs invités (nom + post-nom) pour aujourd’hui.
+     * Ajoute un ou plusieurs invités (nom + post-nom) pour la date choisie.
      */
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
+            'activity_date' => ['required', 'date'],
             'member_code' => ['required', 'string', 'max:32'],
             'invite_type' => ['required', 'in:formation,autre'],
             'guests' => ['required', 'array', 'min:1'],
             'guests.*.nom' => ['required', 'string', 'max:120'],
             'guests.*.postnom' => ['required', 'string', 'max:120'],
         ], [
+            'activity_date.required' => 'La date est obligatoire.',
             'member_code.required' => 'Le code membre (parrain) est obligatoire.',
             'guests.required' => 'Ajoutez au moins un invité.',
             'guests.*.nom.required' => 'Le nom est obligatoire.',
@@ -126,7 +129,7 @@ class FollowUpController extends Controller
 
         $created = 0;
         $names = [];
-        $day = now()->startOfDay();
+        $day = Carbon::parse($data['activity_date'])->startOfDay();
 
         foreach ($data['guests'] as $guest) {
             $nom = trim((string) ($guest['nom'] ?? ''));
@@ -161,6 +164,6 @@ class FollowUpController extends Controller
 
         return redirect()
             ->route('it-manager.follow-up.index', ['filter' => 'formation'])
-            ->with('success', $label.' pour '.$member->name.'.');
+            ->with('success', $label.' pour '.$member->name.' · '.$day->format('d/m/Y').'.');
     }
 }
