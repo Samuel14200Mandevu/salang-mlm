@@ -1,19 +1,27 @@
-<a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm sm:btn-md">
+@php
+    $showRole = $user->roles->first()?->name ?? 'user';
+    $showIsStaff = in_array($showRole, ['admin', 'it_manager', 'cashier'], true);
+    $showListUrl = $showIsStaff ? route('admin.cashiers.index') : route('admin.users');
+    $showListLabel = $showIsStaff ? 'Employés' : 'Membres';
+@endphp
+<a href="{{ $showListUrl }}" class="btn btn-outline btn-sm sm:btn-md">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
     </svg>
-    <span class="hidden xs:inline">Retour</span>
+    <span class="hidden xs:inline">{{ $showListLabel }}</span>
 </a>
 
+@unless($showIsStaff)
 <a href="{{ route('admin.pv.show', $user->id) }}"
    class="btn btn-info btn-sm sm:btn-md"
-   title="Gérer les Points de Volume de cet utilisateur">
+   title="Gérer les Points de Volume de ce membre">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
     </svg>
     <span class="hidden sm:inline">Gérer les PV</span>
     <span class="sm:hidden">PV</span>
 </a>
+@endunless
 
 @if($user->is_active)
     <button type="button" onclick="openDeactivateModal()" class="btn btn-warning btn-sm sm:btn-md">

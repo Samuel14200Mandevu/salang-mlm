@@ -1,15 +1,23 @@
 {{-- Actions compactes dans le bandeau titre (mobile) --}}
+@php
+    $showRole = $user->roles->first()?->name ?? 'user';
+    $showIsStaff = in_array($showRole, ['admin', 'it_manager', 'cashier'], true);
+    $showListUrl = $showIsStaff ? route('admin.cashiers.index') : route('admin.users');
+    $showListLabel = $showIsStaff ? 'Employés' : 'Membres';
+@endphp
 <div class="admin-title-banner__tools admin-title-banner__tools--member-show">
-    <a href="{{ route('admin.users') }}" class="btn btn-outline btn-sm btn-round-icon" title="Retour" aria-label="Retour">
+    <a href="{{ $showListUrl }}" class="btn btn-outline btn-sm btn-round-icon" title="{{ $showListLabel }}" aria-label="Retour à {{ $showListLabel }}">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
     </a>
+    @unless($showIsStaff)
     <a href="{{ route('admin.pv.show', $user->id) }}" class="btn btn-success btn-sm btn-round-icon" title="Gérer les PV" aria-label="Gérer les PV">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
     </a>
+    @endunless
     <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm btn-round-icon" title="Modifier" aria-label="Modifier">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>

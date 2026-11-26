@@ -18,6 +18,29 @@ document.addEventListener('DOMContentLoaded', function () {
         it_manager: 'Responsable IT : assistance et publications. Compte staff (pas de réseau MLM).'
     };
 
+    function updateHeaderListLinks(role) {
+        const isStaff = role === 'cashier' || role === 'it_manager' || role === 'admin';
+        document.querySelectorAll('[data-edit-list-link]').forEach(function (link) {
+            const url = isStaff
+                ? link.getAttribute('data-staff-url')
+                : link.getAttribute('data-members-url');
+            const label = isStaff
+                ? link.getAttribute('data-staff-label')
+                : link.getAttribute('data-members-label');
+            if (url) {
+                link.setAttribute('href', url);
+            }
+            if (label) {
+                link.setAttribute('title', label);
+                link.setAttribute('aria-label', 'Retour à ' + label);
+                const labelEl = link.querySelector('[data-edit-list-label]');
+                if (labelEl) {
+                    labelEl.textContent = label;
+                }
+            }
+        });
+    }
+
     function updateRoleDisplay(role) {
         if (roleInfoText) {
             roleInfoText.textContent = infoMessages[role] || infoMessages.user;
@@ -30,6 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (mlmSection) {
             mlmSection.style.display = hideMlm ? 'none' : '';
         }
+
+        updateHeaderListLinks(role);
     }
 
     if (roleSelect) {
