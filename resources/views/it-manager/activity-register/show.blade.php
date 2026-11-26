@@ -27,6 +27,15 @@
     </div>
     <div class="flex items-center gap-2 shrink-0">
         <a href="{{ route('it-manager.activity-register.show', ['date' => $prev]) }}" class="btn btn-outline px-3" title="Jour précédent">‹</a>
+        <label class="sr-only" for="register-day-picker-desktop">Choisir une date</label>
+        <input
+            type="date"
+            id="register-day-picker-desktop"
+            class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)]"
+            value="{{ $day->toDateString() }}"
+            data-register-day-picker
+            aria-label="Choisir une date"
+        >
         <a href="{{ route('it-manager.activity-register.show') }}" class="btn btn-outline text-sm">Aujourd’hui</a>
         <a href="{{ route('it-manager.activity-register.show', ['date' => $next]) }}" class="btn btn-outline px-3" title="Jour suivant">›</a>
     </div>
@@ -48,9 +57,18 @@
                 {{ $entries->where('purchase_done', true)->count() }} achat(s)
             </p>
         </div>
-        <div class="shop-catalog-banner__tools">
+        <div class="shop-catalog-banner__tools flex items-center gap-1.5">
             <a href="{{ route('it-manager.activity-register.show', ['date' => $prev]) }}"
                class="shop-banner-icon-btn" aria-label="Jour précédent" title="Jour précédent">‹</a>
+            <label class="sr-only" for="register-day-picker-mobile">Choisir une date</label>
+            <input
+                type="date"
+                id="register-day-picker-mobile"
+                class="max-w-[9.5rem] rounded-lg border border-white/25 bg-white/15 px-1.5 py-1 text-xs text-white"
+                value="{{ $day->toDateString() }}"
+                data-register-day-picker
+                aria-label="Choisir une date"
+            >
             <a href="{{ route('it-manager.activity-register.show') }}"
                class="shop-banner-icon-btn" aria-label="Aujourd’hui" title="Aujourd’hui">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -423,6 +441,19 @@
     if (input.value.trim()) {
         lookup(input.value.trim());
     }
+})();
+
+(function () {
+    const baseUrl = @json(url('/it-manager/activity-register/day'));
+    document.querySelectorAll('[data-register-day-picker]').forEach((picker) => {
+        picker.addEventListener('change', function () {
+            const value = (picker.value || '').trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                return;
+            }
+            window.location.href = `${baseUrl}/${value}`;
+        });
+    });
 })();
 </script>
 @endpush

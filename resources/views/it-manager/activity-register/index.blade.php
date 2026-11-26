@@ -13,7 +13,18 @@
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Registre d’activité</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Jours avec participants enregistrés</p>
     </div>
-    <a href="{{ route('it-manager.activity-register.show') }}" class="btn btn-primary shrink-0">Ouvrir aujourd’hui</a>
+    <div class="flex items-center gap-2 shrink-0">
+        <label class="sr-only" for="register-index-day-picker-desktop">Choisir une date</label>
+        <input
+            type="date"
+            id="register-index-day-picker-desktop"
+            class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)]"
+            value="{{ $today->toDateString() }}"
+            data-register-index-day-picker
+            aria-label="Choisir une date"
+        >
+        <a href="{{ route('it-manager.activity-register.show') }}" class="btn btn-primary shrink-0">Ouvrir aujourd’hui</a>
+    </div>
 </div>
 
 {{-- Mobile --}}
@@ -24,7 +35,16 @@
             <p class="shop-catalog-banner__title">Registre d’activité</p>
             <p class="shop-catalog-banner__sub">Jours avec participants enregistrés</p>
         </div>
-        <div class="shop-catalog-banner__tools">
+        <div class="shop-catalog-banner__tools flex items-center gap-1.5">
+            <label class="sr-only" for="register-index-day-picker-mobile">Choisir une date</label>
+            <input
+                type="date"
+                id="register-index-day-picker-mobile"
+                class="max-w-[9.5rem] rounded-lg border border-white/25 bg-white/15 px-1.5 py-1 text-xs text-white"
+                value="{{ $today->toDateString() }}"
+                data-register-index-day-picker
+                aria-label="Choisir une date"
+            >
             <a href="{{ route('it-manager.activity-register.show') }}"
                class="shop-banner-icon-btn" aria-label="Ouvrir aujourd’hui" title="Aujourd’hui">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -88,4 +108,21 @@
 @else
     <p class="text-sm text-[var(--text-muted)]">Pas encore de jours enregistrés.</p>
 @endif
+
+@push('scripts')
+<script>
+(function () {
+    const baseUrl = @json(url('/it-manager/activity-register/day'));
+    document.querySelectorAll('[data-register-index-day-picker]').forEach((picker) => {
+        picker.addEventListener('change', function () {
+            const value = (picker.value || '').trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                return;
+            }
+            window.location.href = `${baseUrl}/${value}`;
+        });
+    });
+})();
+</script>
+@endpush
 @endsection
