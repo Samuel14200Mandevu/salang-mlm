@@ -21,7 +21,7 @@ class ActivityRegisterService
      *     nom?: string|null,
      *     postnom?: string|null,
      *     prenom?: string|null,
-     *     phone: string,
+     *     phone?: string|null,
      *     birth_date?: string|null,
      *     gender?: string|null,
      *     address?: string|null,

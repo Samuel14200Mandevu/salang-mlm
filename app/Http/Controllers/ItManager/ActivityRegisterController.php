@@ -108,11 +108,11 @@ class ActivityRegisterController extends Controller
             'invite_type' => ['required', 'in:formation,autre'],
             'participant_nom' => ['required', 'string', 'max:120'],
             'participant_postnom' => ['required', 'string', 'max:120'],
-            'participant_prenom' => ['required', 'string', 'max:120'],
+            'participant_prenom' => ['nullable', 'string', 'max:120'],
             'participant_birth_date' => ['nullable', 'date'],
             'participant_gender' => ['nullable', 'in:male,female'],
             'participant_address' => ['nullable', 'string', 'max:500'],
-            'participant_phone' => ['required', 'string', 'max:40'],
+            'participant_phone' => ['nullable', 'string', 'max:40'],
             'participant_email' => ['nullable', 'email', 'max:255'],
             'participant_profession' => ['nullable', 'string', 'max:255'],
             'participant_identity_number' => ['nullable', 'string', 'max:100'],
@@ -120,8 +120,6 @@ class ActivityRegisterController extends Controller
             'member_code.required' => 'Le code membre (parrain) est obligatoire.',
             'participant_nom.required' => 'Le nom est obligatoire.',
             'participant_postnom.required' => 'Le post-nom est obligatoire.',
-            'participant_prenom.required' => 'Le prénom est obligatoire.',
-            'participant_phone.required' => 'Le téléphone de l’invité est obligatoire.',
         ]);
 
         $member = User::query()
@@ -141,8 +139,8 @@ class ActivityRegisterController extends Controller
             data: [
                 'nom' => $data['participant_nom'],
                 'postnom' => $data['participant_postnom'],
-                'prenom' => $data['participant_prenom'],
-                'phone' => $data['participant_phone'],
+                'prenom' => $data['participant_prenom'] ?? null,
+                'phone' => $data['participant_phone'] ?? null,
                 'birth_date' => $data['participant_birth_date'] ?? null,
                 'gender' => $data['participant_gender'] ?? null,
                 'address' => $data['participant_address'] ?? null,

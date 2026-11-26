@@ -141,9 +141,9 @@
                     </div>
                     <div>
                         <label for="participant_prenom" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                            Prénom <span class="text-rose-600">*</span>
+                            Prénom
                         </label>
-                        <input type="text" id="participant_prenom" name="participant_prenom" value="{{ old('participant_prenom') }}" required
+                        <input type="text" id="participant_prenom" name="participant_prenom" value="{{ old('participant_prenom') }}"
                                class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm @error('participant_prenom') border-rose-400 @enderror">
                         @error('participant_prenom')
                             <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
@@ -180,9 +180,9 @@
 
                 <div>
                     <label for="participant_phone" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                        Téléphone <span class="text-rose-600">*</span>
+                        Téléphone
                     </label>
-                    <input type="tel" id="participant_phone" name="participant_phone" value="{{ old('participant_phone') }}" required
+                    <input type="tel" id="participant_phone" name="participant_phone" value="{{ old('participant_phone') }}"
                            class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm @error('participant_phone') border-rose-400 @enderror">
                     @error('participant_phone')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
