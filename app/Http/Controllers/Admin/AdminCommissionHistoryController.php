@@ -583,14 +583,19 @@ class AdminCommissionHistoryController extends Controller
     public function exportPDF(Request $request, $period)
     {
         if (! $request->boolean('pdf')) {
-            return view('partials.pdf.preview-shell', [
-                'title' => 'Rapport des Commissions',
-                'backUrl' => route('admin.pv.commission-history.index', array_filter([
+            $query = array_filter([
+                'user_id' => $request->input('user_id'),
+            ], fn ($v) => filled($v));
+
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                'Rapport des Commissions',
+                route('admin.pv.commission-history.index', array_filter([
                     'period' => $period,
                     'user_id' => $request->input('user_id'),
                 ])),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-            ]);
+                $request->url(),
+                $query
+            ));
         }
 
         try {
@@ -709,10 +714,11 @@ class AdminCommissionHistoryController extends Controller
                 ],
             ];
 
-            return $this->streamPdfView(
+            return $this->streamOrDownloadPdfView(
+                $request->boolean('download'),
                 'admin.pv.commission-pdf',
                 $data,
-                "rapport_commissions_{$period}.pdf",
+                'rapport_commissions_'.$period.'_'.now()->format('Ymd_His').'.pdf',
                 'a4',
                 'portrait',
                 300,

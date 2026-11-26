@@ -462,11 +462,14 @@ public function createOrder(Request $request)
     public function exportPdf(Request $request)
     {
         if (! $request->boolean('pdf')) {
-            return view('partials.pdf.preview-shell', [
-                'title' => 'Rapport des Commissions',
-                'backUrl' => route('cashier.commissions', $request->except('pdf')),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-            ]);
+            $query = collect($request->except(['pdf', 'download', 't']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                'Rapport des Commissions',
+                route('cashier.commissions', $query),
+                $request->url(),
+                $query
+            ));
         }
 
         $period = $request->input('period', MlmPeriod::current());
@@ -534,9 +537,10 @@ public function createOrder(Request $request)
             ->setPaper('A4', 'landscape')
             ->setOptions($this->safePdfOptions());
 
-        return $this->downloadPdfBinary(
+        return $this->streamOrDownloadPdfBinary(
+            $request->boolean('download'),
             $pdf->output(),
-            'rapport_commissions_'.$period.'.pdf'
+            'rapport_commissions_'.$period.'_'.now()->format('Ymd_His').'.pdf'
         );
     }
 
@@ -2991,11 +2995,14 @@ public function history(Request $request)
     {
         try {
             if (! $request->boolean('pdf')) {
-                return view('partials.pdf.preview-shell', [
-                    'title' => 'Rapport Historique des Ventes POS',
-                    'backUrl' => route('cashier.history', $request->except('pdf')),
-                    'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-                ]);
+                $query = collect($request->except(['pdf', 'download', 't']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
+                return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                    'Rapport Historique des Ventes POS',
+                    route('cashier.history', $query),
+                    $request->url(),
+                    $query
+                ));
             }
 
             $this->preparePdfExport(300, '512M');
@@ -3126,7 +3133,8 @@ public function history(Request $request)
                 $periodLabel = 'Jusqu\'au '.\Carbon\Carbon::parse($request->date_to)->format('d/m/Y');
             }
 
-            return $this->streamPdfView(
+            return $this->streamOrDownloadPdfView(
+                $request->boolean('download'),
                 'cashier.history-pdf',
                 [
                     'rows' => $rows,
@@ -3137,7 +3145,7 @@ public function history(Request $request)
                     'letterheadBase64' => $this->loadPdfLetterheadBase64(),
                     'date_generated' => now()->format('d/m/Y H:i'),
                 ],
-                'rapport_historique_ventes_pos_'.now()->format('Y-m-d').'.pdf',
+                'rapport_historique_ventes_pos_'.now()->format('Ymd_His').'.pdf',
                 'a4',
                 'landscape',
                 300,

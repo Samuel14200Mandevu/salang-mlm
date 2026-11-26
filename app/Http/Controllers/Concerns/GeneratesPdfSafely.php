@@ -211,6 +211,48 @@ trait GeneratesPdfSafely
     }
 
     /**
+     * Inline ou attachment depuis un binaire déjà généré.
+     */
+    protected function streamOrDownloadPdfBinary(
+        bool $download,
+        string $binary,
+        string $filename,
+    ): BinaryFileResponse|Response {
+        if ($download) {
+            return $this->downloadPdfBinary($binary, $filename);
+        }
+
+        return response($binary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
+    }
+
+    /**
+     * Données communes de l’aperçu PDF : Retour à gauche, Télécharger à droite.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array{title:string,backUrl:string,pdfUrl:string,downloadUrl:string}
+     */
+    protected function pdfPreviewShellData(string $title, string $backUrl, string $url, array $query = []): array
+    {
+        $query = collect($query)
+            ->except(['pdf', 'download', 't'])
+            ->filter(fn ($v) => $v !== null && $v !== '')
+            ->all();
+
+        return [
+            'title' => $title,
+            'backUrl' => $backUrl,
+            'pdfUrl' => $url.'?'.http_build_query(array_merge($query, ['pdf' => 1])),
+            'downloadUrl' => $url.'?'.http_build_query(array_merge($query, ['pdf' => 1, 'download' => 1])),
+        ];
+    }
+
+    /**
      * Journalise une erreur d’export PDF.
      */
     protected function logPdfFailure(string $context, \Throwable $e, array $extra = []): void

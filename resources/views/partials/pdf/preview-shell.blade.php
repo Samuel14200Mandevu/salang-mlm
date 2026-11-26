@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>{{ $title ?? 'Aperçu PDF' }}</title>
     <style>
         * { box-sizing: border-box; }
@@ -22,7 +24,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             padding: 10px 12px;
             padding-top: max(10px, env(safe-area-inset-top));
             padding-left: max(12px, env(safe-area-inset-left));
@@ -39,12 +41,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        .toolbar__actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
+            text-align: center;
         }
         .toolbar a {
             display: inline-flex;
@@ -57,6 +54,7 @@
             font-weight: 600;
             text-decoration: none;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         .btn-back {
             background: #fff;
@@ -107,27 +105,52 @@
     </style>
 </head>
 <body>
+@php
+    $bust = (string) time();
+    $withQuery = static function (string $url, array $extra) use ($bust): string {
+        $parts = parse_url($url);
+        $query = [];
+        if (! empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+        unset($query['t']);
+        $query = array_merge($query, $extra, ['t' => $bust]);
+        $base = ($parts['scheme'] ?? null) && ($parts['host'] ?? null)
+            ? ($parts['scheme'].'://'.$parts['host'].($parts['port'] ?? null ? ':'.$parts['port'] : '').($parts['path'] ?? ''))
+            : ($parts['path'] ?? $url);
+        if (! str_starts_with((string) $base, 'http') && ! str_starts_with((string) $base, '/')) {
+            $base = $url;
+            $qPos = strpos($base, '?');
+            if ($qPos !== false) {
+                $base = substr($base, 0, $qPos);
+            }
+        }
+
+        return $base.'?'.http_build_query($query);
+    };
+
+    $resolvedPdfUrl = $withQuery((string) ($pdfUrl ?? ''), ['pdf' => 1]);
+    $resolvedDownloadUrl = $withQuery(
+        (string) ($downloadUrl ?? $pdfUrl ?? ''),
+        ['pdf' => 1, 'download' => 1]
+    );
+@endphp
     <div class="toolbar">
         <a href="{{ $backUrl }}" class="btn-back">← Retour</a>
         <div class="toolbar__title">{{ $title ?? 'Aperçu PDF' }}</div>
-        <div class="toolbar__actions">
-            @if(!empty($downloadUrl))
-                <a href="{{ $downloadUrl }}" class="btn-download">Télécharger</a>
-            @endif
-        </div>
+        <a href="{{ $resolvedDownloadUrl }}" class="btn-download" download>Télécharger</a>
     </div>
     <div class="viewer-wrap">
-        {{-- Iframe directe (comme ce matin) : SAMEORIGIN autorise l’embed same-site --}}
         <iframe
             class="viewer"
             id="pdfViewer"
-            src="{{ $pdfUrl }}"
+            src="{{ $resolvedPdfUrl }}"
             title="{{ $title ?? 'Aperçu PDF' }}"
         ></iframe>
         <div class="viewer-fallback" id="pdfFallback">
             <div>
-                <p>Aperçu indisponible sur cet appareil. Ouvrez le PDF.</p>
-                <a href="{{ $downloadUrl ?? $pdfUrl }}" class="btn-download">Ouvrir le PDF</a>
+                <p>Aperçu indisponible sur cet appareil. Téléchargez le PDF à jour.</p>
+                <a href="{{ $resolvedDownloadUrl }}" class="btn-download" download>Télécharger</a>
             </div>
         </div>
     </div>
@@ -137,7 +160,6 @@
             var isIOS = /iPad|iPhone|iPod/.test(ua)
                 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             if (!isIOS) return;
-            // iOS Safari n’affiche souvent pas le PDF dans une iframe : proposer l’ouverture.
             var fallback = document.getElementById('pdfFallback');
             if (fallback) {
                 setTimeout(function () {

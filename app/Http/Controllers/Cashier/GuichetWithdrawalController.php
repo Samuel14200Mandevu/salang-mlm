@@ -710,18 +710,20 @@ class GuichetWithdrawalController extends Controller
         ], fn ($v) => filled($v));
 
         if (! $request->boolean('pdf')) {
-            return view('partials.pdf.preview-shell', [
-                'title' => 'Rapport fin de paiement — '.$period,
-                'backUrl' => route('cashier.guichet.index', $indexQuery),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-            ]);
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                'Rapport fin de paiement — '.$period,
+                route('cashier.guichet.index', $indexQuery),
+                $request->url(),
+                $indexQuery
+            ));
         }
 
         $payload = $this->buildFinalPaymentReport($period);
         $generatedAt = now();
-        $filename = 'rapport_fin_paiement_bonus_'.$period.'.pdf';
+        $filename = 'rapport_fin_paiement_bonus_'.$period.'_'.now()->format('Ymd_His').'.pdf';
 
-        return $this->streamPdfView(
+        return $this->streamOrDownloadPdfView(
+            $request->boolean('download'),
             'cashier.guichet.daily-pdf',
             array_merge($payload, [
                 'period' => $period,
@@ -952,11 +954,12 @@ class GuichetWithdrawalController extends Controller
         ], fn ($v) => filled($v));
 
         if (! $request->boolean('pdf')) {
-            return view('partials.pdf.preview-shell', [
-                'title' => $docTitle,
-                'backUrl' => route('cashier.guichet.index', $indexQuery),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-            ]);
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                $docTitle,
+                route('cashier.guichet.index', $indexQuery),
+                $request->url(),
+                $indexQuery
+            ));
         }
 
         $paidByUserType = Commission::query()
@@ -1024,9 +1027,10 @@ class GuichetWithdrawalController extends Controller
         }
 
         $generatedAt = now();
-        $filename = 'feuille_signatures_'.$phase.'_'.$period.'_'.$reportDate->format('Y-m-d').'.pdf';
+        $filename = 'feuille_signatures_'.$phase.'_'.$period.'_'.$reportDate->format('Y-m-d').'_'.now()->format('His').'.pdf';
 
-        return $this->streamPdfView(
+        return $this->streamOrDownloadPdfView(
+            $request->boolean('download'),
             'cashier.guichet.signoff-pdf',
             [
                 'rows' => $rows,

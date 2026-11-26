@@ -639,11 +639,14 @@ class CommissionController extends Controller
     public function exportPDF(Request $request)
     {
         if (! $request->boolean('pdf')) {
-            return view('partials.pdf.preview-shell', [
-                'title' => 'Rapport des Commissions',
-                'backUrl' => route('admin.commissions', $request->except('pdf')),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
-            ]);
+            $query = collect($request->except(['pdf', 'download', 't']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                'Rapport des Commissions',
+                route('admin.commissions', $query),
+                $request->url(),
+                $query
+            ));
         }
 
         try {
@@ -746,10 +749,11 @@ class CommissionController extends Controller
             'date_generated' => now()->format('d/m/Y H:i'),
         ];
 
-        return $this->downloadPdfView(
+        return $this->streamOrDownloadPdfView(
+            $request->boolean('download'),
             'admin.commissions.commission-pdf',
             $data,
-            'rapport_commissions_'.date('Y-m-d').'.pdf',
+            'rapport_commissions_'.now()->format('Ymd_His').'.pdf',
             'a4',
             'portrait',
             300,
