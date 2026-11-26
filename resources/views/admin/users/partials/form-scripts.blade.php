@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', function () {
         it_manager: 'Responsable IT : assistance et publications. Compte staff (pas de réseau MLM).'
     };
 
-    function updateHeaderListLinks(role) {
+    function updateHeaderRoleLinks(selector, role, ariaPrefix) {
         const isStaff = role === 'cashier' || role === 'it_manager' || role === 'admin';
-        document.querySelectorAll('[data-edit-list-link]').forEach(function (link) {
+        document.querySelectorAll(selector).forEach(function (link) {
             const url = isStaff
                 ? link.getAttribute('data-staff-url')
                 : link.getAttribute('data-members-url');
@@ -32,13 +32,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (label) {
                 link.setAttribute('title', label);
-                link.setAttribute('aria-label', 'Retour à ' + label);
-                const labelEl = link.querySelector('[data-edit-list-label]');
+                link.setAttribute('aria-label', ariaPrefix ? (ariaPrefix + ' ' + label) : label);
+                const labelEl = link.querySelector('[data-edit-list-label], [data-edit-detail-label]');
                 if (labelEl) {
                     labelEl.textContent = label;
                 }
             }
         });
+    }
+
+    function updateHeaderListLinks(role) {
+        updateHeaderRoleLinks('[data-edit-detail-link]', role, '');
+        updateHeaderRoleLinks('[data-edit-list-link]', role, 'Retour à');
     }
 
     function updateRoleDisplay(role) {
