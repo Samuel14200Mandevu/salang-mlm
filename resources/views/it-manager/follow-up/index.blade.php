@@ -15,26 +15,28 @@
         <p class="text-sm text-[var(--text-secondary)] mt-1">Invités des 30 derniers jours sans étape complétée.</p>
     </div>
     <div class="flex items-center gap-2 min-w-0 flex-1 justify-end ml-4">
-        <a href="{{ route('it-manager.activity-register.show') }}"
-           class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center"
-           title="Registre d’activité"
-           aria-label="Ouvrir le registre d’activité">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-            </svg>
-        </a>
-        <button type="button"
-                class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
-                data-follow-up-toggle
-                aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
-                aria-controls="followUpInvitePanel"
-                title="Ajouter des invités"
-                aria-label="Ajouter des invités">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-        </button>
-        <div class="header-search admin-search-full">
+        <div class="flex items-center gap-1.5 shrink-0 self-center">
+            <a href="{{ route('it-manager.activity-register.show') }}"
+               class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center"
+               title="Registre d’activité"
+               aria-label="Ouvrir le registre d’activité">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+            </a>
+            <button type="button"
+                    class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
+                    data-follow-up-toggle
+                    aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
+                    aria-controls="followUpInvitePanel"
+                    title="Ajouter des invités"
+                    aria-label="Ajouter des invités">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+        </div>
+        <div class="header-search admin-search-full min-w-0">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -60,21 +62,21 @@
         </div>
         <div class="shop-catalog-banner__tools">
             <a href="{{ route('it-manager.activity-register.show') }}"
-               class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center"
+               class="shop-banner-icon-btn !bg-[var(--primary)] !border-[var(--primary)]"
                aria-label="Ouvrir le registre d’activité"
                title="Registre">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
             </a>
             <button type="button"
-                    class="btn btn-primary btn-sm shrink-0 !p-0 w-9 h-9 min-h-0 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-white/70' : '' }}"
+                    class="shop-banner-icon-btn !bg-[var(--primary)] !border-[var(--primary)] {{ $inviteFormOpen ? 'is-active' : '' }}"
                     data-follow-up-toggle
                     aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
                     aria-controls="followUpInvitePanel"
                     title="Ajouter des invités"
                     aria-label="Ajouter des invités">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
             </button>
@@ -269,10 +271,10 @@
 
 <div id="followUpStatGrid" class="follow-up-stat-grid mb-5">
     @foreach ([
-        ['formation', 'Formation', $counts['formation']],
-        ['adhesion', 'Sans adhésion', $counts['adhesion']],
-        ['consultation', 'Sans consult.', $counts['consultation']],
-        ['purchase', 'Sans achat', $counts['purchase']],
+        ['formation', 'Formation', (int) $counts['formation']],
+        ['adhesion', 'Adhésion', (int) $counts['adhesion']],
+        ['consultation', 'Consult.', (int) $counts['consultation']],
+        ['purchase', 'Achat', (int) $counts['purchase']],
     ] as [$key, $label, $count])
         <a href="{{ route('it-manager.follow-up.index', array_filter(['filter' => $key, 'member_code' => ($memberCode ?? null) ?: null])) }}"
            class="rounded-lg border px-3 py-3 {{ $filter === $key ? 'border-[var(--color-primary-600)] bg-[var(--bg-secondary)]' : 'border-[var(--border-color)] bg-[var(--bg-card)]' }}">
@@ -335,14 +337,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             toggleBtns.forEach(function (btn) {
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                btn.classList.toggle('ring-2', open);
-                btn.classList.toggle('ring-offset-2', open);
                 if (btn.closest('.shop-catalog-banner')) {
-                    btn.classList.toggle('ring-white/70', open);
-                    btn.classList.remove('ring-[var(--primary)]');
+                    btn.classList.toggle('is-active', open);
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-[var(--primary)]');
                 } else {
+                    btn.classList.toggle('ring-2', open);
+                    btn.classList.toggle('ring-offset-2', open);
                     btn.classList.toggle('ring-[var(--primary)]', open);
-                    btn.classList.remove('ring-white/70');
                 }
             });
             if (open && memberInput) {

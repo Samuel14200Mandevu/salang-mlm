@@ -9,6 +9,10 @@
             'member_code' => ($memberCode ?? null) ?: null,
         ]));
         $rowNumber = $groups->firstItem() + $index;
+        $formationCount = (int) ($group->formation_count ?? 0);
+        $adhesionCount = (int) ($group->adhesion_count ?? 0);
+        $consultationCount = (int) ($group->consultation_count ?? 0);
+        $purchaseCount = (int) ($group->purchase_count ?? 0);
     @endphp
     <tr class="border-t border-[var(--border-light)] hover:bg-[var(--bg-secondary)]/50 cursor-pointer"
         onclick="window.location.href=@js($detailUrl)">
@@ -19,10 +23,10 @@
             <p class="font-medium text-[var(--text-primary)]">{{ $member?->name ?: '—' }}</p>
             <p class="text-xs font-mono text-[var(--text-muted)]">{{ $group->member_code ?: ($member?->sponsor_id ?: '—') }}</p>
         </td>
-        <td class="px-3 py-2.5 text-center tabular-nums">{{ (int) $group->formation_count }}/{{ (int) $group->invites_count }}</td>
-        <td class="px-3 py-2.5 text-center tabular-nums">{{ (int) $group->adhesion_count }}/{{ (int) $group->invites_count }}</td>
-        <td class="px-3 py-2.5 text-center tabular-nums">{{ (int) $group->consultation_count }}/{{ (int) $group->invites_count }}</td>
-        <td class="px-3 py-2.5 text-center tabular-nums">{{ (int) $group->purchase_count }}/{{ (int) $group->invites_count }}</td>
+        <td class="px-3 py-2.5 text-center tabular-nums">{{ $formationCount }}</td>
+        <td class="px-3 py-2.5 text-center tabular-nums">{{ $adhesionCount }}</td>
+        <td class="px-3 py-2.5 text-center tabular-nums">{{ $consultationCount }}</td>
+        <td class="px-3 py-2.5 text-center tabular-nums">{{ $purchaseCount }}</td>
     </tr>
 @empty
     <tr>
