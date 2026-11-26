@@ -14,10 +14,10 @@
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Suivi adhésions registre</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Invités des 30 derniers jours sans étape complétée.</p>
     </div>
-    <div class="follow-up-desktop-tools flex items-center gap-3 shrink-0 ml-auto">
-        <div class="flex items-center gap-2 shrink-0">
+    <div class="follow-up-desktop-tools shrink-0 ml-auto">
+        <div class="follow-up-desktop-actions">
             <a href="{{ route('it-manager.activity-register.show') }}"
-               class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center relative z-10"
+               class="btn btn-primary btn-sm follow-up-desktop-action"
                title="Registre d’activité"
                aria-label="Ouvrir le registre d’activité">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -25,7 +25,7 @@
                 </svg>
             </a>
             <button type="button"
-                    class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center relative z-10 {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
+                    class="btn btn-primary btn-sm follow-up-desktop-action {{ $inviteFormOpen ? 'is-open' : '' }}"
                     data-follow-up-toggle
                     aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
                     aria-controls="followUpInvitePanel"
@@ -36,7 +36,7 @@
                 </svg>
             </button>
         </div>
-        <div class="follow-up-desktop-search header-search shrink-0">
+        <div class="follow-up-desktop-search header-search">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -339,11 +339,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
                 if (btn.closest('.shop-catalog-banner')) {
                     btn.classList.toggle('is-active', open);
-                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-[var(--primary)]');
+                    btn.classList.remove('is-open');
                 } else {
-                    btn.classList.toggle('ring-2', open);
-                    btn.classList.toggle('ring-offset-2', open);
-                    btn.classList.toggle('ring-[var(--primary)]', open);
+                    btn.classList.toggle('is-open', open);
+                    btn.classList.remove('is-active');
                 }
             });
             if (open && memberInput) {
