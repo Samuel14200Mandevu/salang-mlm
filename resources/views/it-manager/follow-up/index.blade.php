@@ -101,96 +101,124 @@
     </div>
 @endif
 
+@php
+    $inviteFormOpen = $errors->any() || old('member_code') !== null || old('guests') !== null;
+@endphp
 <section class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 mb-5">
-    <h2 class="text-sm font-semibold text-[var(--text-primary)] mb-3">Ajouter des invités</h2>
-    <form method="POST" action="{{ route('it-manager.follow-up.store') }}" class="space-y-4" id="followUpInviteForm">
-        @csrf
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-                <label for="follow_up_member_code" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                    Code membre <span class="text-rose-600">*</span>
-                </label>
-                <input type="text"
-                       id="follow_up_member_code"
-                       name="member_code"
-                       value="{{ old('member_code', $memberCode) }}"
-                       required
-                       autocomplete="off"
-                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm font-mono tracking-wide uppercase @error('member_code') border-rose-400 @enderror">
-                <div id="followUpMemberLookup" class="mt-1.5 text-sm min-h-[1.25rem]" aria-live="polite"></div>
-            </div>
-            <div>
-                <label for="follow_up_invite_type" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                    Formation <span class="text-rose-600">*</span>
-                </label>
-                <select id="follow_up_invite_type"
-                        name="invite_type"
-                        class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
-                    <option value="formation" @selected(old('invite_type', 'formation') === 'formation')>Formation</option>
-                    <option value="autre" @selected(old('invite_type') === 'autre')>Autre</option>
-                </select>
-            </div>
-        </div>
+    <div class="flex items-center justify-between gap-3">
+        <h2 class="text-sm font-semibold text-[var(--text-primary)]">Ajouter des invités</h2>
+        <button type="button"
+                id="followUpToggleFormBtn"
+                class="btn btn-primary btn-sm shrink-0"
+                aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
+                aria-controls="followUpInvitePanel">
+            {{ $inviteFormOpen ? 'Masquer' : 'Ajouter' }}
+        </button>
+    </div>
 
-        <div id="followUpGuestsList" class="space-y-3">
-            @php
-                $oldGuests = old('guests');
-                if (! is_array($oldGuests) || $oldGuests === []) {
-                    $oldGuests = [['nom' => '', 'postnom' => '']];
-                }
-            @endphp
-            @foreach ($oldGuests as $index => $guest)
-                <div class="follow-up-guest-row rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)]/40 p-3"
-                     data-guest-row>
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                            Invité <span data-guest-number>{{ $index + 1 }}</span>
-                        </p>
-                        @if ($index > 0)
-                            <button type="button"
-                                    class="text-xs text-rose-600 hover:underline"
-                                    data-remove-guest>
-                                Retirer
-                            </button>
-                        @endif
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                                Nom <span class="text-rose-600">*</span>
-                            </label>
-                            <input type="text"
-                                   name="guests[{{ $index }}][nom]"
-                                   value="{{ $guest['nom'] ?? '' }}"
-                                   required
-                                   class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                                Post-Nom <span class="text-rose-600">*</span>
-                            </label>
-                            <input type="text"
-                                   name="guests[{{ $index }}][postnom]"
-                                   value="{{ $guest['postnom'] ?? '' }}"
-                                   required
-                                   class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
-                        </div>
-                    </div>
+    <div id="followUpInvitePanel"
+         class="{{ $inviteFormOpen ? '' : 'hidden' }} mt-4"
+         @unless($inviteFormOpen) hidden @endunless>
+        <form method="POST" action="{{ route('it-manager.follow-up.store') }}" class="space-y-4" id="followUpInviteForm">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label for="follow_up_activity_date" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                        Date <span class="text-rose-600">*</span>
+                    </label>
+                    <input type="date"
+                           id="follow_up_activity_date"
+                           name="activity_date"
+                           value="{{ old('activity_date', now()->toDateString()) }}"
+                           required
+                           class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm @error('activity_date') border-rose-400 @enderror">
                 </div>
-            @endforeach
-        </div>
+                <div>
+                    <label for="follow_up_member_code" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                        Code membre <span class="text-rose-600">*</span>
+                    </label>
+                    <input type="text"
+                           id="follow_up_member_code"
+                           name="member_code"
+                           value="{{ old('member_code', $memberCode) }}"
+                           required
+                           autocomplete="off"
+                           class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm font-mono tracking-wide uppercase @error('member_code') border-rose-400 @enderror">
+                    <div id="followUpMemberLookup" class="mt-1.5 text-sm min-h-[1.25rem]" aria-live="polite"></div>
+                </div>
+                <div>
+                    <label for="follow_up_invite_type" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                        Formation <span class="text-rose-600">*</span>
+                    </label>
+                    <select id="follow_up_invite_type"
+                            name="invite_type"
+                            class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
+                        <option value="formation" @selected(old('invite_type', 'formation') === 'formation')>Formation</option>
+                        <option value="autre" @selected(old('invite_type') === 'autre')>Autre</option>
+                    </select>
+                </div>
+            </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-            <button type="button"
-                    id="followUpAddGuestBtn"
-                    class="btn btn-outline btn-sm">
-                Ajouter invité
-            </button>
-            <button type="submit" class="btn btn-primary btn-sm">
-                Enregistrer
-            </button>
-        </div>
-    </form>
+            <div id="followUpGuestsList" class="space-y-3">
+                @php
+                    $oldGuests = old('guests');
+                    if (! is_array($oldGuests) || $oldGuests === []) {
+                        $oldGuests = [['nom' => '', 'postnom' => '']];
+                    }
+                @endphp
+                @foreach ($oldGuests as $index => $guest)
+                    <div class="follow-up-guest-row rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)]/40 p-3"
+                         data-guest-row>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                                Invité <span data-guest-number>{{ $index + 1 }}</span>
+                            </p>
+                            @if ($index > 0)
+                                <button type="button"
+                                        class="text-xs text-rose-600 hover:underline"
+                                        data-remove-guest>
+                                    Retirer
+                                </button>
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                                    Nom <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text"
+                                       name="guests[{{ $index }}][nom]"
+                                       value="{{ $guest['nom'] ?? '' }}"
+                                       required
+                                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                                    Post-Nom <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text"
+                                       name="guests[{{ $index }}][postnom]"
+                                       value="{{ $guest['postnom'] ?? '' }}"
+                                       required
+                                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button"
+                        id="followUpAddGuestBtn"
+                        class="btn btn-outline btn-sm">
+                    Ajouter invité
+                </button>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
 </section>
 
 <template id="followUpGuestTemplate">
@@ -279,11 +307,30 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     (function inviteForm() {
+        const toggleBtn = document.getElementById('followUpToggleFormBtn');
+        const panel = document.getElementById('followUpInvitePanel');
         const list = document.getElementById('followUpGuestsList');
         const addBtn = document.getElementById('followUpAddGuestBtn');
         const template = document.getElementById('followUpGuestTemplate');
         const memberInput = document.getElementById('follow_up_member_code');
         const memberResult = document.getElementById('followUpMemberLookup');
+
+        if (toggleBtn && panel) {
+            toggleBtn.addEventListener('click', function () {
+                const open = panel.classList.toggle('hidden') === false;
+                if (open) {
+                    panel.removeAttribute('hidden');
+                } else {
+                    panel.setAttribute('hidden', '');
+                }
+                toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                toggleBtn.textContent = open ? 'Masquer' : 'Ajouter';
+                if (open && memberInput) {
+                    memberInput.focus();
+                }
+            });
+        }
+
         if (!list || !addBtn || !template) return;
 
         const lookupUrl = @json(route('it-manager.activity-register.lookup-member'));
