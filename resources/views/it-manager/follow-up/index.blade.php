@@ -14,10 +14,10 @@
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Suivi adhésions registre</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Invités des 30 derniers jours sans étape complétée.</p>
     </div>
-    <div class="flex items-center gap-2 min-w-0 flex-1 justify-end ml-4">
-        <div class="flex items-center gap-1.5 shrink-0 self-center">
+    <div class="follow-up-desktop-tools flex items-center gap-3 shrink-0 ml-auto">
+        <div class="flex items-center gap-2 shrink-0">
             <a href="{{ route('it-manager.activity-register.show') }}"
-               class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center"
+               class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center relative z-10"
                title="Registre d’activité"
                aria-label="Ouvrir le registre d’activité">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -25,7 +25,7 @@
                 </svg>
             </a>
             <button type="button"
-                    class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
+                    class="btn btn-primary btn-sm shrink-0 !p-0 !min-h-0 w-9 h-9 rounded-full inline-flex items-center justify-center relative z-10 {{ $inviteFormOpen ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : '' }}"
                     data-follow-up-toggle
                     aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
                     aria-controls="followUpInvitePanel"
@@ -36,7 +36,7 @@
                 </svg>
             </button>
         </div>
-        <div class="header-search admin-search-full min-w-0">
+        <div class="follow-up-desktop-search header-search shrink-0">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

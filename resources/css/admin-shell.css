@@ -141,6 +141,24 @@
   width: auto;
 }
 
+/* Suivi : boutons + recherche sans chevauchement (min-width flex) */
+.it-manager-shell .it-desktop-head .follow-up-desktop-tools {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.it-manager-shell .it-desktop-head .follow-up-desktop-search.header-search {
+  flex: 0 1 18rem;
+  width: 18rem;
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.it-manager-shell .it-desktop-head .follow-up-desktop-search .search-wrapper {
+  flex: none;
+  width: 100%;
+}
+
 .admin-app .search-wrapper .clear-btn {
   position: absolute;
   right: 0.45rem;
