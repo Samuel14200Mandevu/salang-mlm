@@ -543,134 +543,64 @@ public function createOrder(Request $request)
     /**
      * Rapport GLOBAL des commissions (même gabarit / impression que l’admin).
      */
-    public function exportGlobalCommissionPdf(Request $request)
+    public function exportGlobalCommissionPdf(Request $request, \App\Services\MLM\GlobalCommissionReportPdf $reportPdf)
     {
+        $period = $request->filled('period') ? (string) $request->period : 'all';
+        if ($period === '') {
+            $period = 'all';
+        }
+
+        $query = collect($request->except(['pdf', 'download']))->filter(fn ($v) => $v !== null && $v !== '')->all();
+
         if (! $request->boolean('pdf')) {
             return view('partials.pdf.preview-shell', [
                 'title' => 'Rapport Global des Commissions',
-                'backUrl' => route('cashier.commissions', $request->except('pdf')),
-                'pdfUrl' => $request->fullUrlWithQuery(['pdf' => 1]),
+                'backUrl' => route('cashier.commissions', $request->except(['pdf', 'download'])),
+                'pdfUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1])),
+                'downloadUrl' => $request->url().'?'.http_build_query(array_merge($query, ['pdf' => 1, 'download' => 1])),
             ]);
         }
 
         try {
-            $coreTypes = ['direct', 'indirect', 'leadership', 'cash_pos'];
-            $period = $request->filled('period') ? (string) $request->period : 'all';
-            if ($period === '') {
-                $period = 'all';
-            }
+            $commissions = $reportPdf->loadCommissions($period, function ($q) use ($request) {
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $q->whereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('sponsor_id', 'like', "%{$search}%");
+                    });
+                }
 
-            $query = Commission::query()
-                ->with([
-                    'user:id,name,sponsor_id,parrain_id,rank_level,pv_balance',
-                    'user.parrain:id,sponsor_id',
-                ])
-                ->whereIn('type', $coreTypes);
+                if ($request->filled('type') && $request->type !== 'all') {
+                    $q->where('type', $request->type);
+                }
 
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('sponsor_id', 'like', "%{$search}%");
-                });
-            }
-
-            if ($request->filled('type') && $request->type !== 'all') {
-                $query->where('type', $request->type);
-            }
-
-            if ($request->filled('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
-            if ($period !== 'all') {
-                $query->where('period', $period);
-            }
-
-            $commissions = $query
-                ->select(['id', 'user_id', 'type', 'amount', 'period'])
-                ->orderBy('user_id')
-                ->orderBy('type')
-                ->get();
+                if ($request->filled('status') && $request->status !== 'all') {
+                    $q->where('status', $request->status);
+                }
+            });
 
             if ($commissions->isEmpty()) {
                 return back()->with('error', 'Aucune commission trouvée pour ce rapport.');
             }
 
-            $totals = [
-                'direct' => (float) $commissions->where('type', 'direct')->sum('amount'),
-                'indirect' => (float) $commissions->where('type', 'indirect')->sum('amount'),
-                'leadership' => (float) $commissions->where('type', 'leadership')->sum('amount'),
-                'cash_pos' => (float) $commissions->where('type', 'cash_pos')->sum('amount'),
-                'total' => (float) $commissions->sum('amount'),
-            ];
+            $built = $reportPdf->buildFromRows($commissions, $period);
 
-            $commissionsCount = $commissions->count();
-
-            $typeStats = [];
-            foreach ($coreTypes as $type) {
-                $typeItems = $commissions->where('type', $type);
-                $count = $typeItems->count();
-                $total = (float) $typeItems->sum('amount');
-                $typeStats[$type] = [
-                    'count' => $count,
-                    'total' => $total,
-                    'percentage' => $totals['total'] > 0 ? ($total / $totals['total']) * 100 : 0,
-                    'average' => $count > 0 ? $total / $count : 0,
-                ];
-            }
-
-            $userIds = $commissions->pluck('user_id')->unique()->values()->all();
-            $pvByUser = [];
-            if ($period !== 'all' && $userIds !== []) {
-                $pvByUser = PVHistory::query()
-                    ->whereIn('user_id', $userIds)
-                    ->where('period', $period)
-                    ->select('user_id', DB::raw('SUM(amount) as total_pv'))
-                    ->groupBy('user_id')
-                    ->pluck('total_pv', 'user_id')
-                    ->toArray();
-            }
-
-            $beneficiaires = $commissions->groupBy('user_id')->map(function ($items, $userId) use ($pvByUser, $period) {
-                $user = $items->first()->user;
-                $parrain = $user?->parrain;
-
-                return [
-                    'name' => $user?->name ?? 'N/A',
-                    'id' => $userId,
-                    'code' => $user?->sponsor_id ?? 'N/A',
-                    'parrain_code' => $parrain?->sponsor_id ?? 'N/A',
-                    'rank_level' => $user?->rank_level ?? 'N/A',
-                    'pv' => $period !== 'all'
-                        ? (float) ($pvByUser[$userId] ?? 0)
-                        : (float) ($user?->pv_balance ?? 0),
-                    'direct' => (float) $items->where('type', 'direct')->sum('amount'),
-                    'indirect' => (float) $items->where('type', 'indirect')->sum('amount'),
-                    'leadership' => (float) $items->where('type', 'leadership')->sum('amount'),
-                    'cash_pos' => (float) $items->where('type', 'cash_pos')->sum('amount'),
-                    'total' => (float) $items->sum('amount'),
-                ];
-            })->sortByDesc('total');
-
-            unset($commissions);
-
-            $periodSlug = preg_replace('/[^0-9A-Za-z_-]+/', '_', $period) ?: 'all';
-
-            return $this->streamPdfView(
+            return $this->streamOrDownloadPdfView(
+                $request->boolean('download'),
                 'admin.pv.commission-global-pdf',
                 [
                     'period' => $period,
-                    'commissionsCount' => $commissionsCount,
-                    'totals' => $totals,
-                    'typeStats' => $typeStats,
-                    'beneficiaires' => $beneficiaires,
+                    'commissionsCount' => $built['commissionsCount'],
+                    'totals' => $built['totals'],
+                    'typeStats' => $built['typeStats'],
+                    'beneficiaires' => $built['beneficiaires'],
                     'logoBase64' => $this->loadPdfLogoBase64(),
                     'letterheadBase64' => $this->loadPdfLetterheadBase64(),
                     'date_generated' => now()->format('d/m/Y H:i'),
                 ],
-                "rapport_global_commissions_{$periodSlug}.pdf",
+                $reportPdf->filename($period),
                 'a4',
                 'landscape',
                 300,

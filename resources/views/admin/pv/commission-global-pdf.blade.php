@@ -33,8 +33,8 @@
         .salang-letterhead__img {
             width: 100%;
             max-width: 100%;
-            height: 145px;
-            min-height: 145px;
+            height: 145px !important;
+            max-height: 145px;
             display: block;
         }
 
@@ -291,13 +291,15 @@
         </div>
     @endif
 
-    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 330])
+    @include('partials.pdf.letterhead', ['letterheadCompact' => false, 'letterheadImgHeight' => 145])
 
     <!-- CONTENU PRINCIPAL -->
     <div class="page-content">
 
         <!-- TITRE -->
         @php
+            // Pas de virgule milliers (1,234.56) : en FR ça se lit comme 1.23 — espace + point décimal.
+            $money = static fn ($n) => number_format((float) $n, 2, '.', ' ');
             $periodLabel = $period;
             if ($period === 'all') {
                 $periodLabel = 'Toutes les périodes';
@@ -364,22 +366,22 @@
                         <td class="text-left"><strong>{{ $beneficiaire['name'] }}</strong></td>
                         <td class="text-center" style="color:#000; font-weight:bold;">{{ $beneficiaire['parrain_code'] ?? 'N/A' }}</td>
                         <td>{{ $beneficiaire['rank_level'] ?? 'N/A' }}</td>
-                        <td class="text-right" style="color:#0E2F76; font-weight:bold;">{{ number_format($userPV, 1, ',', ' ') }}</td>
-                        <td class="text-right td-direct">${{ number_format($beneficiaire['direct'] ?? 0, 2) }}</td>
-                        <td class="text-right td-indirect">${{ number_format($beneficiaire['indirect'] ?? 0, 2) }}</td>
-                        <td class="text-right td-leadership">${{ number_format($beneficiaire['leadership'] ?? 0, 2) }}</td>
-                        <td class="text-right td-cash">${{ number_format($beneficiaire['cash_pos'] ?? 0, 2) }}</td>
-                        <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ number_format($beneficiaire['total'], 2) }}</td>
+                        <td class="text-right" style="color:#0E2F76; font-weight:bold;">{{ number_format($userPV, 1, '.', ' ') }}</td>
+                        <td class="text-right td-direct">${{ $money($beneficiaire['direct'] ?? 0) }}</td>
+                        <td class="text-right td-indirect">${{ $money($beneficiaire['indirect'] ?? 0) }}</td>
+                        <td class="text-right td-leadership">${{ $money($beneficiaire['leadership'] ?? 0) }}</td>
+                        <td class="text-right td-cash">${{ $money($beneficiaire['cash_pos'] ?? 0) }}</td>
+                        <td class="text-right" style="color:#0E2F76; font-weight:bold;">${{ $money($beneficiaire['total']) }}</td>
                     </tr>
                 @endforeach
                 <tr class="total-row">
                     <td colspan="5" style="text-align:right;">TOTAL GÉNÉRAL :</td>
-                    <td class="text-right" style="color:#0E2F76;">{{ number_format($totalPV, 1, ',', ' ') }}</td>
-                    <td class="text-right td-direct">${{ number_format($totals['direct'] ?? 0, 2) }}</td>
-                    <td class="text-right td-indirect">${{ number_format($totals['indirect'] ?? 0, 2) }}</td>
-                    <td class="text-right td-leadership">${{ number_format($totals['leadership'] ?? 0, 2) }}</td>
-                    <td class="text-right td-cash">${{ number_format($totals['cash_pos'] ?? 0, 2) }}</td>
-                    <td class="text-right" style="color:#0E2F76;">${{ number_format($totals['total'] ?? 0, 2) }}</td>
+                    <td class="text-right" style="color:#0E2F76;">{{ number_format($totalPV, 1, '.', ' ') }}</td>
+                    <td class="text-right td-direct">${{ $money($totals['direct'] ?? 0) }}</td>
+                    <td class="text-right td-indirect">${{ $money($totals['indirect'] ?? 0) }}</td>
+                    <td class="text-right td-leadership">${{ $money($totals['leadership'] ?? 0) }}</td>
+                    <td class="text-right td-cash">${{ $money($totals['cash_pos'] ?? 0) }}</td>
+                    <td class="text-right" style="color:#0E2F76;">${{ $money($totals['total'] ?? 0) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -409,17 +411,17 @@
                             </span>
                         </td>
                         <td>{{ $stat['count'] }}</td>
-                        <td class="text-right" style="font-weight:bold;">${{ number_format($stat['total'], 2) }}</td>
-                        <td>{{ number_format($stat['percentage'], 1) }}%</td>
-                        <td class="text-right">${{ number_format($stat['average'], 2) }}</td>
+                        <td class="text-right" style="font-weight:bold;">${{ $money($stat['total']) }}</td>
+                        <td>{{ number_format($stat['percentage'], 1, '.', ' ') }}%</td>
+                        <td class="text-right">${{ $money($stat['average']) }}</td>
                     </tr>
                 @endforeach
                 <tr class="total-row">
                     <td class="text-left"><strong>TOTAL GÉNÉRAL</strong></td>
                     <td><strong>{{ $commissionsCount }}</strong></td>
-                    <td class="text-right" style="color:#0E2F76;"><strong>${{ number_format($totals['total'] ?? 0, 2) }}</strong></td>
+                    <td class="text-right" style="color:#0E2F76;"><strong>${{ $money($totals['total'] ?? 0) }}</strong></td>
                     <td><strong>100%</strong></td>
-                    <td class="text-right"><strong>${{ number_format($commissionsCount > 0 ? $totals['total'] / $commissionsCount : 0, 2) }}</strong></td>
+                    <td class="text-right"><strong>${{ $money($commissionsCount > 0 ? $totals['total'] / $commissionsCount : 0) }}</strong></td>
                 </tr>
             </tbody>
         </table>

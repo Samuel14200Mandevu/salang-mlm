@@ -154,6 +154,8 @@ trait GeneratesPdfSafely
 
         return response()->download($tmp, $filename, [
             'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
         ])->deleteFileAfterSend(true);
     }
 
@@ -180,10 +182,32 @@ trait GeneratesPdfSafely
         return response($binary, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
-            'Cache-Control' => 'private, max-age=0, must-revalidate',
+            // Pas de cache navigateur / proxy : évite un vieux PDF après recalcul
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
             // Garantit l’aperçu iframe même si un proxy impose DENY ailleurs
             'X-Frame-Options' => 'SAMEORIGIN',
         ]);
+    }
+
+    /**
+     * Inline (aperçu) ou attachment (bouton Télécharger) — même binaire DomPDF.
+     */
+    protected function streamOrDownloadPdfView(
+        bool $download,
+        string $view,
+        array $data,
+        string $filename,
+        string $paper = 'a4',
+        string $orientation = 'portrait',
+        int $seconds = 300,
+        string $memory = '512M',
+    ): BinaryFileResponse|Response {
+        if ($download) {
+            return $this->downloadPdfView($view, $data, $filename, $paper, $orientation, $seconds, $memory);
+        }
+
+        return $this->streamPdfView($view, $data, $filename, $paper, $orientation, $seconds, $memory);
     }
 
     /**
