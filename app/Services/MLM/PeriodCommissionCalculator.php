@@ -128,13 +128,13 @@ class PeriodCommissionCalculator
                     $fromUserId,
                     $paidMeta
                 );
-                $netDirect = $this->netPendingAfterPaid(
+                $netDirect = round($this->netPendingAfterPaid(
                     $directBonus['amount'],
                     'direct',
                     $fromUserId,
                     $paidRemaining
-                );
-                if ($netDirect > 0.00001) {
+                ), 2);
+                if ($netDirect > 0) {
                     $directBonus['amount'] = $netDirect;
                     Commission::create(array_merge($directBonus, [
                         'commission_period_id' => $period->id,
@@ -152,8 +152,9 @@ class PeriodCommissionCalculator
             foreach ($commissions as $data) {
                 $type = (string) ($data['type'] ?? '');
                 $fromUserId = (int) ($data['from_user_id'] ?? 0);
-                $net = $this->netPendingAfterPaid($data['amount'], $type, $fromUserId, $paidRemaining);
-                if ($net <= 0.00001) {
+                $net = round($this->netPendingAfterPaid($data['amount'], $type, $fromUserId, $paidRemaining), 2);
+                // Évite les pending $0.00 (ex. 4.662 − 4.66 déjà payé → 0.002 stocké en 0.00).
+                if ($net <= 0) {
                     continue;
                 }
                 $data['amount'] = $net;
