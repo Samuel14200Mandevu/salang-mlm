@@ -9,6 +9,7 @@ use App\Services\ActivityRegisterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class FollowUpController extends Controller
@@ -41,20 +42,49 @@ class FollowUpController extends Controller
             });
         };
 
-        $query = ActivityEntry::query()
-            ->with(['member:id,name,sponsor_id', 'sheet:id,activity_date'])
+        $matchingEntryIds = ActivityEntry::query()
             ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', '>=', $from))
-            ->tap($byMemberCode)
-            ->latest('id');
+            ->tap($byMemberCode);
 
         match ($filter) {
-            'formation' => $query->where('formation_done', true),
-            'adhesion' => $query->where('adhesion_done', false),
-            'consultation' => $query->where('consultation_done', false),
-            'purchase' => $query->where('purchase_done', false),
+            'formation' => $matchingEntryIds->where('formation_done', true),
+            'adhesion' => $matchingEntryIds->where('adhesion_done', false),
+            'consultation' => $matchingEntryIds->where('consultation_done', false),
+            'purchase' => $matchingEntryIds->where('purchase_done', false),
         };
 
-        $entries = $query->paginate(30)->withQueryString();
+        $matchingPairs = (clone $matchingEntryIds)
+            ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
+            ->select('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date) as activity_date'))
+            ->groupBy('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date)'));
+
+        $groups = ActivityEntry::query()
+            ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
+            ->joinSub($matchingPairs, 'matched', function ($join) {
+                $join->on('matched.member_id', '=', 'activity_entries.member_id')
+                    ->whereRaw('DATE(activity_sheets.activity_date) = matched.activity_date');
+            })
+            ->select([
+                'activity_entries.member_id',
+                DB::raw('MAX(activity_entries.member_code) as member_code'),
+                DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
+                DB::raw('COUNT(*) as invites_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END) as formation_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END) as adhesion_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END) as consultation_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END) as purchase_count'),
+            ])
+            ->groupBy('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date)'))
+            ->orderByDesc('activity_date')
+            ->orderBy('activity_entries.member_id')
+            ->paginate(30)
+            ->withQueryString();
+
+        $memberIds = collect($groups->items())->pluck('member_id')->unique()->filter()->values();
+        $members = User::query()
+            ->whereIn('id', $memberIds)
+            ->get(['id', 'name', 'sponsor_id'])
+            ->keyBy('id');
 
         $counts = [
             'formation' => ActivityEntry::query()
@@ -79,10 +109,16 @@ class FollowUpController extends Controller
                 ->count(),
         ];
 
-        return view('it-manager.follow-up.index', compact('entries', 'filter', 'counts', 'memberCode'));
+        return view('it-manager.follow-up.index', [
+            'groups' => $groups,
+            'members' => $members,
+            'filter' => $filter,
+            'counts' => $counts,
+            'memberCode' => $memberCode,
+        ]);
     }
 
-    public function show(Request $request, ActivityEntry $entry): View
+    public function show(Request $request, User $member): View
     {
         $filter = $request->string('filter')->toString() ?: 'formation';
         if (! in_array($filter, ['formation', 'adhesion', 'consultation', 'purchase'], true)) {
@@ -90,10 +126,47 @@ class FollowUpController extends Controller
         }
 
         $memberCode = trim((string) $request->query('member_code', ''));
+        $focusDate = $request->query('date');
+        $focusDay = $focusDate ? Carbon::parse($focusDate)->toDateString() : null;
 
-        $entry->load(['member:id,name,sponsor_id', 'sheet:id,activity_date']);
+        $dateStats = ActivityEntry::query()
+            ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
+            ->where('activity_entries.member_id', $member->id)
+            ->select([
+                DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
+                DB::raw('COUNT(*) as invites_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END) as formation_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END) as adhesion_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END) as consultation_count'),
+                DB::raw('SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END) as purchase_count'),
+            ])
+            ->groupBy(DB::raw('DATE(activity_sheets.activity_date)'))
+            ->orderByDesc('activity_date')
+            ->get();
 
-        return view('it-manager.follow-up.show', compact('entry', 'filter', 'memberCode'));
+        if (! $focusDay && $dateStats->isNotEmpty()) {
+            $focusDay = (string) $dateStats->first()->activity_date;
+        }
+
+        $dayEntries = collect();
+        if ($focusDay) {
+            $dayEntries = ActivityEntry::query()
+                ->with(['sheet:id,activity_date'])
+                ->where('member_id', $member->id)
+                ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', $focusDay))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+        }
+
+        return view('it-manager.follow-up.show', [
+            'member' => $member,
+            'dateStats' => $dateStats,
+            'dayEntries' => $dayEntries,
+            'focusDay' => $focusDay,
+            'filter' => $filter,
+            'memberCode' => $memberCode,
+        ]);
     }
 
     /**
