@@ -93,10 +93,12 @@ class GuichetWithdrawalController extends Controller
             $completedRemittedQuery->whereDate('completed_at', $dateFilter);
         }
 
-        // En attente = bonus D/I/L pas encore crédités au portefeuille.
+        // En attente = bonus D/I/L pas encore crédités au portefeuille
+        // (périodes affichables uniquement — exclut l’historique masqué / pré-2026).
         $pendingCommissionsAmount = (float) Commission::query()
             ->whereIn('type', ['direct', 'indirect', 'leadership'])
             ->whereIn('status', ['pending', 'approved'])
+            ->displayablePeriod()
             ->where('amount', '>', 0)
             ->sum('amount');
 
@@ -209,6 +211,7 @@ class GuichetWithdrawalController extends Controller
             ->where('user_id', $userId)
             ->whereIn('type', ['direct', 'indirect', 'leadership'])
             ->whereIn('status', ['pending', 'approved', 'paid'])
+            ->displayablePeriod()
             ->where('amount', '>', 0)
             ->orderByDesc('period')
             ->value('period');
