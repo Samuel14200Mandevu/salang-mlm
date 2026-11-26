@@ -4,13 +4,17 @@ namespace App\Http\Controllers\ItManager;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityEntry;
+use App\Models\User;
+use App\Services\ActivityRegisterService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class FollowUpController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        protected ActivityRegisterService $register
+    ) {
         $this->middleware(['auth', 'active', 'role:it_manager|admin']);
     }
 
@@ -89,5 +93,74 @@ class FollowUpController extends Controller
         $entry->load(['member:id,name,sponsor_id', 'sheet:id,activity_date']);
 
         return view('it-manager.follow-up.show', compact('entry', 'filter', 'memberCode'));
+    }
+
+    /**
+     * Ajoute un ou plusieurs invités (nom + post-nom) pour aujourd’hui.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'member_code' => ['required', 'string', 'max:32'],
+            'invite_type' => ['required', 'in:formation,autre'],
+            'guests' => ['required', 'array', 'min:1'],
+            'guests.*.nom' => ['required', 'string', 'max:120'],
+            'guests.*.postnom' => ['required', 'string', 'max:120'],
+        ], [
+            'member_code.required' => 'Le code membre (parrain) est obligatoire.',
+            'guests.required' => 'Ajoutez au moins un invité.',
+            'guests.*.nom.required' => 'Le nom est obligatoire.',
+            'guests.*.postnom.required' => 'Le post-nom est obligatoire.',
+        ]);
+
+        $member = User::query()
+            ->where('sponsor_id', trim($data['member_code']))
+            ->where('is_active', true)
+            ->first();
+
+        if (! $member) {
+            return back()->withInput()->withErrors([
+                'member_code' => 'Aucun membre actif trouvé pour ce code.',
+            ]);
+        }
+
+        $created = 0;
+        $names = [];
+        $day = now()->startOfDay();
+
+        foreach ($data['guests'] as $guest) {
+            $nom = trim((string) ($guest['nom'] ?? ''));
+            $postnom = trim((string) ($guest['postnom'] ?? ''));
+            if ($nom === '' || $postnom === '') {
+                continue;
+            }
+
+            $entry = $this->register->addParticipant(
+                date: $day,
+                member: $member,
+                data: [
+                    'nom' => $nom,
+                    'postnom' => $postnom,
+                    'invite_type' => $data['invite_type'],
+                ],
+                actor: $request->user(),
+            );
+            $created++;
+            $names[] = $entry->displayName();
+        }
+
+        if ($created === 0) {
+            return back()->withInput()->withErrors([
+                'guests' => 'Indiquez au moins un invité avec nom et post-nom.',
+            ]);
+        }
+
+        $label = $created === 1
+            ? 'Invité « '.$names[0].' » ajouté'
+            : $created.' invités ajoutés ('.implode(', ', $names).')';
+
+        return redirect()
+            ->route('it-manager.follow-up.index', ['filter' => 'formation'])
+            ->with('success', $label.' pour '.$member->name.'.');
     }
 }

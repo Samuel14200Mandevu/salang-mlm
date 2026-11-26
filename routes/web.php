@@ -313,6 +313,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         });
 
         Route::get('/follow-up', [\App\Http\Controllers\ItManager\FollowUpController::class, 'index'])->name('follow-up.index');
+        Route::post('/follow-up', [\App\Http\Controllers\ItManager\FollowUpController::class, 'store'])->name('follow-up.store');
         Route::get('/follow-up/{entry}', [\App\Http\Controllers\ItManager\FollowUpController::class, 'show'])->name('follow-up.show');
         Route::get('/members', [\App\Http\Controllers\ItManager\MembersController::class, 'index'])->name('members.index');
 

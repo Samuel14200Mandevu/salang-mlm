@@ -86,6 +86,149 @@
     </div>
 </div>
 
+@if (session('success'))
+    <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        {{ session('success') }}
+    </div>
+@endif
+@if ($errors->any())
+    <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <ul class="list-disc list-inside space-y-0.5">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+<section class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 mb-5">
+    <h2 class="text-sm font-semibold text-[var(--text-primary)] mb-3">Ajouter des invités</h2>
+    <form method="POST" action="{{ route('it-manager.follow-up.store') }}" class="space-y-4" id="followUpInviteForm">
+        @csrf
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+                <label for="follow_up_member_code" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Code membre <span class="text-rose-600">*</span>
+                </label>
+                <input type="text"
+                       id="follow_up_member_code"
+                       name="member_code"
+                       value="{{ old('member_code', $memberCode) }}"
+                       required
+                       autocomplete="off"
+                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm font-mono tracking-wide uppercase @error('member_code') border-rose-400 @enderror">
+                <div id="followUpMemberLookup" class="mt-1.5 text-sm min-h-[1.25rem]" aria-live="polite"></div>
+            </div>
+            <div>
+                <label for="follow_up_invite_type" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Formation <span class="text-rose-600">*</span>
+                </label>
+                <select id="follow_up_invite_type"
+                        name="invite_type"
+                        class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm">
+                    <option value="formation" @selected(old('invite_type', 'formation') === 'formation')>Formation</option>
+                    <option value="autre" @selected(old('invite_type') === 'autre')>Autre</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="followUpGuestsList" class="space-y-3">
+            @php
+                $oldGuests = old('guests');
+                if (! is_array($oldGuests) || $oldGuests === []) {
+                    $oldGuests = [['nom' => '', 'postnom' => '']];
+                }
+            @endphp
+            @foreach ($oldGuests as $index => $guest)
+                <div class="follow-up-guest-row rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)]/40 p-3"
+                     data-guest-row>
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                            Invité <span data-guest-number>{{ $index + 1 }}</span>
+                        </p>
+                        @if ($index > 0)
+                            <button type="button"
+                                    class="text-xs text-rose-600 hover:underline"
+                                    data-remove-guest>
+                                Retirer
+                            </button>
+                        @endif
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                                Nom <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="text"
+                                   name="guests[{{ $index }}][nom]"
+                                   value="{{ $guest['nom'] ?? '' }}"
+                                   required
+                                   class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                                Post-Nom <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="text"
+                                   name="guests[{{ $index }}][postnom]"
+                                   value="{{ $guest['postnom'] ?? '' }}"
+                                   required
+                                   class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button"
+                    id="followUpAddGuestBtn"
+                    class="btn btn-outline btn-sm">
+                Ajouter invité
+            </button>
+            <button type="submit" class="btn btn-primary btn-sm">
+                Enregistrer
+            </button>
+        </div>
+    </form>
+</section>
+
+<template id="followUpGuestTemplate">
+    <div class="follow-up-guest-row rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)]/40 p-3"
+         data-guest-row>
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                Invité <span data-guest-number></span>
+            </p>
+            <button type="button"
+                    class="text-xs text-rose-600 hover:underline"
+                    data-remove-guest>
+                Retirer
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Nom <span class="text-rose-600">*</span>
+                </label>
+                <input type="text"
+                       data-guest-nom
+                       required
+                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Post-Nom <span class="text-rose-600">*</span>
+                </label>
+                <input type="text"
+                       data-guest-postnom
+                       required
+                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm">
+            </div>
+        </div>
+    </div>
+</template>
+
 <div id="followUpStatGrid" class="follow-up-stat-grid mb-5">
     @foreach ([
         ['formation', 'Formation', $counts['formation']],
@@ -135,6 +278,125 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    (function inviteForm() {
+        const list = document.getElementById('followUpGuestsList');
+        const addBtn = document.getElementById('followUpAddGuestBtn');
+        const template = document.getElementById('followUpGuestTemplate');
+        const memberInput = document.getElementById('follow_up_member_code');
+        const memberResult = document.getElementById('followUpMemberLookup');
+        if (!list || !addBtn || !template) return;
+
+        const lookupUrl = @json(route('it-manager.activity-register.lookup-member'));
+        let lookupTimer = null;
+        let lastCode = '';
+
+        function renumberGuests() {
+            list.querySelectorAll('[data-guest-row]').forEach(function (row, index) {
+                const numberEl = row.querySelector('[data-guest-number]');
+                if (numberEl) numberEl.textContent = String(index + 1);
+
+                const nom = row.querySelector('[name*="[nom]"], [data-guest-nom]');
+                const postnom = row.querySelector('[name*="[postnom]"], [data-guest-postnom]');
+                if (nom) {
+                    nom.setAttribute('name', 'guests[' + index + '][nom]');
+                    nom.removeAttribute('data-guest-nom');
+                }
+                if (postnom) {
+                    postnom.setAttribute('name', 'guests[' + index + '][postnom]');
+                    postnom.removeAttribute('data-guest-postnom');
+                }
+
+                const removeBtn = row.querySelector('[data-remove-guest]');
+                if (removeBtn) {
+                    removeBtn.style.display = index === 0 ? 'none' : '';
+                }
+            });
+        }
+
+        addBtn.addEventListener('click', function () {
+            const node = template.content.cloneNode(true);
+            list.appendChild(node);
+            renumberGuests();
+            const rows = list.querySelectorAll('[data-guest-row]');
+            const last = rows[rows.length - 1];
+            const firstInput = last ? last.querySelector('input') : null;
+            if (firstInput) firstInput.focus();
+        });
+
+        list.addEventListener('click', function (event) {
+            const btn = event.target.closest('[data-remove-guest]');
+            if (!btn) return;
+            const row = btn.closest('[data-guest-row]');
+            if (!row || list.querySelectorAll('[data-guest-row]').length <= 1) return;
+            row.remove();
+            renumberGuests();
+        });
+
+        renumberGuests();
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function lookupMember(code) {
+            if (!memberResult) return;
+            if (!code) {
+                lastCode = '';
+                memberResult.innerHTML = '';
+                return;
+            }
+            if (code === lastCode) return;
+            lastCode = code;
+            memberResult.innerHTML = '<span class="text-[var(--text-muted)]">Vérification…</span>';
+
+            fetch(lookupUrl + '?code=' + encodeURIComponent(code), {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (memberInput.value.trim() !== code) return;
+                    if (data.valid) {
+                        const nom = data.member.nom || '';
+                        const postnom = data.member.postnom || '';
+                        const label = postnom
+                            ? '<span class="font-semibold text-emerald-800">' + escapeHtml(nom) + '</span> <span class="text-emerald-700">' + escapeHtml(postnom) + '</span>'
+                            : '<span class="font-semibold text-emerald-800">' + escapeHtml(data.member.name || nom) + '</span>';
+                        memberResult.innerHTML = '<p class="text-sm">' + label + '</p>';
+                    } else {
+                        memberResult.innerHTML = '<span class="text-rose-600 text-xs">' + escapeHtml(data.message || 'Code introuvable') + '</span>';
+                    }
+                })
+                .catch(function () {
+                    if (memberInput.value.trim() !== code) return;
+                    memberResult.innerHTML = '<span class="text-rose-600 text-xs">Erreur de vérification</span>';
+                });
+        }
+
+        if (memberInput) {
+            memberInput.addEventListener('input', function () {
+                clearTimeout(lookupTimer);
+                const code = memberInput.value.trim();
+                if (!code) {
+                    lastCode = '';
+                    if (memberResult) memberResult.innerHTML = '';
+                    return;
+                }
+                lookupTimer = setTimeout(function () { lookupMember(code); }, 350);
+            });
+            memberInput.addEventListener('blur', function () {
+                lookupMember(memberInput.value.trim());
+            });
+            if (memberInput.value.trim()) {
+                lookupMember(memberInput.value.trim());
+            }
+        }
+    })();
+
     const searchInputs = [
         document.getElementById('followUpSearchInput'),
         document.getElementById('followUpSearchInputDesktop'),
