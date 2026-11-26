@@ -1,6 +1,3 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
-@include('layouts.partials.head')
 @php
     $isItManagerShell = auth()->user()?->usesItManagerShell() ?? false;
     // Responsable IT = bleu admin (#1E5DAD), pas le thème grade membre
@@ -8,6 +5,13 @@
         ? \App\Support\MlmRank::dashboardAccent(auth()->user()?->rank_level)
         : null;
 @endphp
+<!DOCTYPE html>
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    class="h-full"
+    @if($memberRankAccent) data-member-rank-theme="{{ $memberRankAccent }}" @endif
+>
+@include('layouts.partials.head')
 <body @class([
     'cashier-app member-app public-body h-full bg-[var(--bg-page)] text-[var(--text-primary)] antialiased',
     $memberRankAccent ? 'member-rank-theme' : null,
