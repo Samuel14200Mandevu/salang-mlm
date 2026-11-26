@@ -3,9 +3,12 @@
 @section('title', 'Suivi registre')
 
 @section('content')
-@php $hasMemberCodeSearch = $memberCode !== ''; @endphp
+@php
+    $hasMemberCodeSearch = $memberCode !== '';
+    $inviteFormOpen = $errors->any() || old('member_code') !== null || old('guests') !== null;
+@endphp
 
-{{-- Desktop — titre à gauche, registre + recherche à droite --}}
+{{-- Desktop — titre à gauche, registre + ajouter + recherche à droite --}}
 <div class="it-desktop-head it-desktop-only mb-6 items-center justify-between gap-4">
     <div class="member-page-intro mb-0 min-w-0">
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Suivi adhésions registre</h1>
@@ -20,6 +23,17 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
         </a>
+        <button type="button"
+                class="shop-banner-icon-btn shrink-0 {{ $inviteFormOpen ? 'is-active' : '' }}"
+                data-follow-up-toggle
+                aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
+                aria-controls="followUpInvitePanel"
+                title="Ajouter des invités"
+                aria-label="Ajouter des invités">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+        </button>
         <div class="header-search admin-search-full">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -53,6 +67,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
             </a>
+            <button type="button"
+                    class="shop-banner-icon-btn {{ $inviteFormOpen ? 'is-active' : '' }}"
+                    data-follow-up-toggle
+                    aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
+                    aria-controls="followUpInvitePanel"
+                    title="Ajouter des invités"
+                    aria-label="Ajouter des invités">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
             <button type="button"
                     class="shop-banner-icon-btn {{ $hasMemberCodeSearch ? 'is-active' : '' }}"
                     id="followUpSearchToggle"
@@ -101,27 +126,13 @@
     </div>
 @endif
 
-@php
-    $inviteFormOpen = $errors->any() || old('member_code') !== null || old('guests') !== null;
-@endphp
-<section class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 mb-5">
-    <div class="flex items-center justify-between gap-3">
-        <h2 class="text-sm font-semibold text-[var(--text-primary)]">Ajouter des invités</h2>
-        <button type="button"
-                id="followUpToggleFormBtn"
-                class="btn btn-primary btn-sm shrink-0"
-                aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
-                aria-controls="followUpInvitePanel">
-            {{ $inviteFormOpen ? 'Masquer' : 'Ajouter' }}
-        </button>
-    </div>
-
-    <div id="followUpInvitePanel"
-         class="{{ $inviteFormOpen ? '' : 'hidden' }} mt-4"
+<section id="followUpInvitePanel"
+         class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-4 mb-5 {{ $inviteFormOpen ? '' : 'hidden' }}"
          @unless($inviteFormOpen) hidden @endunless>
-        <form method="POST" action="{{ route('it-manager.follow-up.store') }}" class="space-y-4" id="followUpInviteForm">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <h2 class="text-sm font-semibold text-[var(--text-primary)] mb-3">Ajouter des invités</h2>
+    <form method="POST" action="{{ route('it-manager.follow-up.store') }}" class="space-y-4" id="followUpInviteForm">
+        @csrf
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                     <label for="follow_up_activity_date" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                         Date <span class="text-rose-600">*</span>
@@ -207,18 +218,17 @@
                 @endforeach
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <button type="button"
-                        id="followUpAddGuestBtn"
-                        class="btn btn-outline btn-sm">
-                    Ajouter invité
-                </button>
-                <button type="submit" class="btn btn-primary btn-sm">
-                    Enregistrer
-                </button>
-            </div>
-        </form>
-    </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button"
+                    id="followUpAddGuestBtn"
+                    class="btn btn-outline btn-sm">
+                Ajouter invité
+            </button>
+            <button type="submit" class="btn btn-primary btn-sm">
+                Enregistrer
+            </button>
+        </div>
+    </form>
 </section>
 
 <template id="followUpGuestTemplate">
@@ -307,7 +317,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     (function inviteForm() {
-        const toggleBtn = document.getElementById('followUpToggleFormBtn');
+        const toggleBtns = document.querySelectorAll('[data-follow-up-toggle]');
         const panel = document.getElementById('followUpInvitePanel');
         const list = document.getElementById('followUpGuestsList');
         const addBtn = document.getElementById('followUpAddGuestBtn');
@@ -315,21 +325,29 @@ document.addEventListener('DOMContentLoaded', function () {
         const memberInput = document.getElementById('follow_up_member_code');
         const memberResult = document.getElementById('followUpMemberLookup');
 
-        if (toggleBtn && panel) {
-            toggleBtn.addEventListener('click', function () {
-                const open = panel.classList.toggle('hidden') === false;
-                if (open) {
-                    panel.removeAttribute('hidden');
-                } else {
-                    panel.setAttribute('hidden', '');
-                }
-                toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                toggleBtn.textContent = open ? 'Masquer' : 'Ajouter';
-                if (open && memberInput) {
-                    memberInput.focus();
-                }
+        function setInviteFormOpen(open) {
+            if (!panel) return;
+            panel.classList.toggle('hidden', !open);
+            if (open) {
+                panel.removeAttribute('hidden');
+            } else {
+                panel.setAttribute('hidden', '');
+            }
+            toggleBtns.forEach(function (btn) {
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                btn.classList.toggle('is-active', open);
             });
+            if (open && memberInput) {
+                memberInput.focus();
+            }
         }
+
+        toggleBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const open = panel && panel.classList.contains('hidden');
+                setInviteFormOpen(open);
+            });
+        });
 
         if (!list || !addBtn || !template) return;
 
