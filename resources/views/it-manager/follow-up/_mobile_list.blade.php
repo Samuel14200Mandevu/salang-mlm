@@ -1,10 +1,8 @@
 @forelse ($groups as $index => $group)
     @php
         $member = $members->get($group->member_id);
-        $date = \Illuminate\Support\Carbon::parse($group->activity_date)->toDateString();
         $detailUrl = route('it-manager.follow-up.show', array_filter([
             'member' => $group->member_id,
-            'date' => $date,
             'filter' => $filter,
             'member_code' => ($memberCode ?? null) ?: null,
         ]));
@@ -18,11 +16,7 @@
        class="follow-up-mobile-card block rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-3">
         <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    <span class="tabular-nums">N° {{ $rowNumber }}</span>
-                    <span aria-hidden="true">·</span>
-                    <span class="tabular-nums">{{ \Illuminate\Support\Carbon::parse($group->activity_date)->format('d/m/Y') }}</span>
-                </div>
+                <p class="text-xs tabular-nums text-[var(--text-muted)]">N° {{ $rowNumber }}</p>
                 <p class="mt-0.5 font-semibold text-[var(--text-primary)] truncate">
                     {{ $member?->name ?: '—' }}
                 </p>
@@ -44,6 +38,6 @@
     </a>
 @empty
     <div class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-10 text-center text-sm text-[var(--text-muted)]">
-        Aucun groupe pour ce filtre.
+        Aucun membre pour ce filtre.
     </div>
 @endforelse

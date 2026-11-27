@@ -8,35 +8,14 @@
     $inviteFormOpen = $errors->any() || old('member_code') !== null || old('guests') !== null;
 @endphp
 
-{{-- Desktop — titre à gauche, registre + ajouter + recherche à droite --}}
-<div class="it-desktop-head it-desktop-only mb-6 items-center justify-between gap-4">
+{{-- Desktop — comme admin Membres : titre | recherche | icônes --}}
+<div class="it-desktop-head it-desktop-only mb-6 !flex !flex-row !flex-nowrap items-center justify-between gap-4">
     <div class="member-page-intro mb-0 min-w-0">
         <h1 class="text-2xl font-bold text-[var(--text-primary)]">Suivi adhésions registre</h1>
         <p class="text-sm text-[var(--text-secondary)] mt-1">Invités des 30 derniers jours sans étape complétée.</p>
     </div>
-    <div class="follow-up-desktop-tools shrink-0 ml-auto">
-        <div class="follow-up-desktop-actions">
-            <a href="{{ route('it-manager.activity-register.show') }}"
-               class="btn btn-primary btn-sm follow-up-desktop-action"
-               title="Registre d’activité"
-               aria-label="Ouvrir le registre d’activité">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
-            </a>
-            <button type="button"
-                    class="btn btn-primary btn-sm follow-up-desktop-action {{ $inviteFormOpen ? 'is-open' : '' }}"
-                    data-follow-up-toggle
-                    aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
-                    aria-controls="followUpInvitePanel"
-                    title="Ajouter des invités"
-                    aria-label="Ajouter des invités">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-            </button>
-        </div>
-        <div class="follow-up-desktop-search header-search">
+    <div class="follow-up-desktop-tools ml-auto !flex !flex-row !flex-nowrap items-center gap-2">
+        <div class="follow-up-desktop-search header-search shrink">
             <div class="search-wrapper">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -49,10 +28,35 @@
                        value="{{ $memberCode }}">
             </div>
         </div>
+        <a href="{{ route('it-manager.follow-up.global-pdf', array_filter(['member_code' => ($memberCode ?? null) ?: null])) }}"
+           class="btn btn-outline btn-sm follow-up-desktop-action btn-pdf-icon shrink-0"
+           title="Aperçu du rapport global"
+           aria-label="Aperçu du rapport global PDF">
+            <x-pdf-icon size="sm" />
+        </a>
+        <a href="{{ route('it-manager.activity-register.show') }}"
+           class="btn btn-outline btn-sm follow-up-desktop-action shrink-0"
+           title="Registre d’activité"
+           aria-label="Ouvrir le registre d’activité">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+        </a>
+        <button type="button"
+                class="btn btn-primary btn-sm follow-up-desktop-action shrink-0 {{ $inviteFormOpen ? 'is-open' : '' }}"
+                data-follow-up-toggle
+                aria-expanded="{{ $inviteFormOpen ? 'true' : 'false' }}"
+                aria-controls="followUpInvitePanel"
+                title="Ajouter des invités"
+                aria-label="Ajouter des invités">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+        </button>
     </div>
 </div>
 
-{{-- Mobile --}}
+{{-- Mobile — comme admin Membres : recherche puis actions --}}
 <div class="shop-catalog-head it-mobile-only mb-5">
     <div class="shop-catalog-banner">
         <div class="shop-catalog-banner__text">
@@ -61,8 +65,24 @@
             <p class="shop-catalog-banner__sub">Invités sans étape complétée</p>
         </div>
         <div class="shop-catalog-banner__tools">
+            <button type="button"
+                    class="shop-banner-icon-btn {{ $hasMemberCodeSearch ? 'is-active' : '' }}"
+                    id="followUpSearchToggle"
+                    aria-expanded="{{ $hasMemberCodeSearch ? 'true' : 'false' }}"
+                    aria-controls="followUpSearchPanel"
+                    aria-label="Rechercher par code membre">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </button>
+            <a href="{{ route('it-manager.follow-up.global-pdf', array_filter(['member_code' => ($memberCode ?? null) ?: null])) }}"
+               class="shop-banner-icon-btn btn-pdf-icon"
+               aria-label="Aperçu du rapport global PDF"
+               title="Aperçu rapport global">
+                <x-pdf-icon size="sm" />
+            </a>
             <a href="{{ route('it-manager.activity-register.show') }}"
-               class="shop-banner-icon-btn !bg-[var(--primary)] !border-[var(--primary)]"
+               class="shop-banner-icon-btn"
                aria-label="Ouvrir le registre d’activité"
                title="Registre">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
@@ -78,16 +98,6 @@
                     aria-label="Ajouter des invités">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-            </button>
-            <button type="button"
-                    class="shop-banner-icon-btn {{ $hasMemberCodeSearch ? 'is-active' : '' }}"
-                    id="followUpSearchToggle"
-                    aria-expanded="{{ $hasMemberCodeSearch ? 'true' : 'false' }}"
-                    aria-controls="followUpSearchPanel"
-                    aria-label="Rechercher par code membre">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
             </button>
         </div>
@@ -116,6 +126,11 @@
 @if (session('success'))
     <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
         {{ session('success') }}
+    </div>
+@endif
+@if (session('error'))
+    <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {{ session('error') }}
     </div>
 @endif
 @if ($errors->any())
@@ -284,19 +299,18 @@
     @endforeach
 </div>
 
-{{-- Mobile : N° / Date / Invités / Membre → détail au clic --}}
+{{-- Mobile : N° / Invités / Membre → détail au clic --}}
 <div id="followUpMobileList" class="follow-up-mobile-list it-mobile-only space-y-2 mb-4">
     @include('it-manager.follow-up._mobile_list')
 </div>
 
-{{-- Desktop : groupes date + membre --}}
+{{-- Desktop : une ligne par membre (dates dans le détail) --}}
 <div class="it-desktop-only rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[var(--bg-secondary)] text-left text-[0.6875rem] uppercase tracking-wide text-[var(--text-secondary)]">
                     <th class="px-3 py-2.5">N°</th>
-                    <th class="px-3 py-2.5">Date</th>
                     <th class="px-3 py-2.5">Invités</th>
                     <th class="px-3 py-2.5">Membre</th>
                     <th class="px-3 py-2.5 text-center">Form.</th>
@@ -527,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
+                    <td colspan="7" class="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
                         Recherche en cours…
                     </td>
                 </tr>
@@ -583,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (tableBody) {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="8" class="px-3 py-8 text-center text-sm text-[var(--danger)]">
+                            <td colspan="7" class="px-3 py-8 text-center text-sm text-[var(--danger)]">
                                 Une erreur est survenue lors de la recherche
                             </td>
                         </tr>

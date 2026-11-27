@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\ItManager;
 
+use App\Http\Controllers\Concerns\GeneratesPdfSafely;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityEntry;
 use App\Models\ActivitySheet;
@@ -9,12 +10,16 @@ use App\Models\User;
 use App\Services\ActivityRegisterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FollowUpController extends Controller
 {
+    use GeneratesPdfSafely;
+
     public function __construct(
         protected ActivityRegisterService $register
     ) {
@@ -55,29 +60,27 @@ class FollowUpController extends Controller
             'sans_adhesion' => $matchingEntryIds->where('adhesion_done', false),
         };
 
-        $matchingPairs = (clone $matchingEntryIds)
-            ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
-            ->select('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date) as activity_date'))
-            ->groupBy('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date)'));
+        $matchingMemberIds = (clone $matchingEntryIds)
+            ->select('activity_entries.member_id')
+            ->whereNotNull('activity_entries.member_id')
+            ->groupBy('activity_entries.member_id');
 
         $groups = ActivityEntry::query()
             ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
-            ->joinSub($matchingPairs, 'matched', function ($join) {
-                $join->on('matched.member_id', '=', 'activity_entries.member_id')
-                    ->whereRaw('DATE(activity_sheets.activity_date) = matched.activity_date');
-            })
+            ->whereDate('activity_sheets.activity_date', '>=', $from)
+            ->whereIn('activity_entries.member_id', $matchingMemberIds)
             ->select([
                 'activity_entries.member_id',
                 DB::raw('MAX(activity_entries.member_code) as member_code'),
-                DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
+                DB::raw('MAX(DATE(activity_sheets.activity_date)) as latest_activity_date'),
                 DB::raw('COUNT(*) as invites_count'),
                 DB::raw('COALESCE(SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END), 0) as formation_count'),
                 DB::raw('COALESCE(SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END), 0) as adhesion_count'),
                 DB::raw('COALESCE(SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END), 0) as consultation_count'),
                 DB::raw('COALESCE(SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END), 0) as purchase_count'),
             ])
-            ->groupBy('activity_entries.member_id', DB::raw('DATE(activity_sheets.activity_date)'))
-            ->orderByDesc('activity_date')
+            ->groupBy('activity_entries.member_id')
+            ->orderByDesc('latest_activity_date')
             ->orderBy('activity_entries.member_id')
             ->paginate(30)
             ->withQueryString();
@@ -120,6 +123,105 @@ class FollowUpController extends Controller
         ]);
     }
 
+    /**
+     * Rapport global PDF — aperçu (Retour / Télécharger), puis flux DomPDF.
+     */
+    public function exportGlobalPdf(Request $request): BinaryFileResponse|Response|RedirectResponse|View
+    {
+        $memberCode = trim((string) $request->query('member_code', ''));
+        $queryParams = array_filter([
+            'member_code' => $memberCode !== '' ? $memberCode : null,
+        ]);
+
+        if (! $request->boolean('pdf')) {
+            $exists = ActivityEntry::query()
+                ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', '>=', now()->subDays(30)->toDateString()))
+                ->whereNotNull('member_id')
+                ->when($memberCode !== '', function ($q) use ($memberCode) {
+                    $q->where(function ($inner) use ($memberCode) {
+                        $inner->where('member_code', 'like', "%{$memberCode}%")
+                            ->orWhereHas('member', fn ($m) => $m->where('sponsor_id', 'like', "%{$memberCode}%"));
+                    });
+                })
+                ->exists();
+
+            if (! $exists) {
+                return back()->with('error', 'Aucun invité à exporter pour cette période.');
+            }
+
+            return view('partials.pdf.preview-shell', $this->pdfPreviewShellData(
+                'Rapport global — Suivi registre',
+                route('it-manager.follow-up.index', $queryParams),
+                $request->url(),
+                $queryParams,
+            ));
+        }
+
+        $from = now()->subDays(30)->startOfDay();
+        $to = now()->endOfDay();
+
+        $query = ActivityEntry::query()
+            ->with(['member:id,name,sponsor_id', 'sheet:id,activity_date'])
+            ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', '>=', $from->toDateString()))
+            ->whereNotNull('member_id');
+
+        if ($memberCode !== '') {
+            $query->where(function ($inner) use ($memberCode) {
+                $inner->where('member_code', 'like', "%{$memberCode}%")
+                    ->orWhereHas('member', fn ($m) => $m->where('sponsor_id', 'like', "%{$memberCode}%"));
+            });
+        }
+
+        $entries = $query->orderBy('member_id')->orderBy('id')->get();
+
+        if ($entries->isEmpty()) {
+            return back()->with('error', 'Aucun invité à exporter pour cette période.');
+        }
+
+        $rows = $entries->groupBy('member_id')->map(function ($items) {
+            $member = $items->first()->member;
+
+            return [
+                'name' => $member?->name ?: '—',
+                'code' => $member?->sponsor_id ?: ($items->first()->member_code ?: '—'),
+                'invites' => $items->count(),
+                'formation' => $items->where('formation_done', true)->count(),
+                'adhesion' => $items->where('adhesion_done', true)->count(),
+                'consultation' => $items->where('consultation_done', true)->count(),
+                'purchase' => $items->where('purchase_done', true)->count(),
+            ];
+        })->sortBy('name', SORT_NATURAL|SORT_FLAG_CASE)->values();
+
+        $totals = [
+            'members' => $rows->count(),
+            'invites' => (int) $rows->sum('invites'),
+            'formation' => (int) $rows->sum('formation'),
+            'adhesion' => (int) $rows->sum('adhesion'),
+            'consultation' => (int) $rows->sum('consultation'),
+            'purchase' => (int) $rows->sum('purchase'),
+        ];
+
+        $filename = 'rapport_global_suivi_registre_'.now()->format('Ymd_His').'.pdf';
+
+        return $this->streamOrDownloadPdfView(
+            $request->boolean('download'),
+            'it-manager.follow-up.global-pdf',
+            [
+                'rows' => $rows,
+                'totals' => $totals,
+                'from' => $from,
+                'to' => $to,
+                'memberCode' => $memberCode,
+                'generatedAt' => now(),
+                'logoBase64' => $this->loadPdfLogoBase64(),
+                'letterheadBase64' => $this->loadPdfLetterheadBase64(),
+            ],
+            $filename,
+            'a4',
+            'landscape',
+        );
+    }
+
     public function show(Request $request, User $member): View
     {
         $filter = $request->string('filter')->toString() ?: 'formation';
@@ -128,44 +230,40 @@ class FollowUpController extends Controller
         }
 
         $memberCode = trim((string) $request->query('member_code', ''));
-        $focusDate = $request->query('date');
-        $focusDay = $focusDate ? Carbon::parse($focusDate)->toDateString() : null;
 
-        $dateStats = ActivityEntry::query()
-            ->join('activity_sheets', 'activity_sheets.id', '=', 'activity_entries.activity_sheet_id')
-            ->where('activity_entries.member_id', $member->id)
-            ->select([
-                DB::raw('DATE(activity_sheets.activity_date) as activity_date'),
-                DB::raw('COUNT(*) as invites_count'),
-                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.formation_done THEN 1 ELSE 0 END), 0) as formation_count'),
-                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.adhesion_done THEN 1 ELSE 0 END), 0) as adhesion_count'),
-                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.consultation_done THEN 1 ELSE 0 END), 0) as consultation_count'),
-                DB::raw('COALESCE(SUM(CASE WHEN activity_entries.purchase_done THEN 1 ELSE 0 END), 0) as purchase_count'),
-            ])
-            ->groupBy(DB::raw('DATE(activity_sheets.activity_date)'))
-            ->orderByDesc('activity_date')
-            ->get();
+        $allEntries = ActivityEntry::query()
+            ->with(['sheet:id,activity_date'])
+            ->where('member_id', $member->id)
+            ->whereHas('sheet')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->sortByDesc(fn (ActivityEntry $entry) => optional($entry->sheet)->activity_date
+                ? Carbon::parse($entry->sheet->activity_date)->timestamp
+                : 0)
+            ->values();
 
-        if (! $focusDay && $dateStats->isNotEmpty()) {
-            $focusDay = (string) $dateStats->first()->activity_date;
-        }
+        $entriesByDate = $allEntries
+            ->groupBy(fn (ActivityEntry $entry) => optional($entry->sheet)->activity_date
+                ? Carbon::parse($entry->sheet->activity_date)->toDateString()
+                : 'unknown')
+            ->map(fn ($entries) => $entries->sortBy([
+                ['sort_order', 'asc'],
+                ['id', 'asc'],
+            ])->values());
 
-        $dayEntries = collect();
-        if ($focusDay) {
-            $dayEntries = ActivityEntry::query()
-                ->with(['sheet:id,activity_date'])
-                ->where('member_id', $member->id)
-                ->whereHas('sheet', fn ($q) => $q->whereDate('activity_date', $focusDay))
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get();
-        }
+        $memberTotals = [
+            'invites' => $allEntries->count(),
+            'formation' => $allEntries->where('formation_done', true)->count(),
+            'adhesion' => $allEntries->where('adhesion_done', true)->count(),
+            'consultation' => $allEntries->where('consultation_done', true)->count(),
+            'purchase' => $allEntries->where('purchase_done', true)->count(),
+        ];
 
         return view('it-manager.follow-up.show', [
             'member' => $member,
-            'dateStats' => $dateStats,
-            'dayEntries' => $dayEntries,
-            'focusDay' => $focusDay,
+            'entriesByDate' => $entriesByDate,
+            'memberTotals' => $memberTotals,
             'filter' => $filter,
             'memberCode' => $memberCode,
         ]);
@@ -193,7 +291,6 @@ class FollowUpController extends Controller
             return redirect()
                 ->route('it-manager.follow-up.show', array_filter([
                     'member' => $member,
-                    'date' => $fromDay,
                     'filter' => $data['filter'] ?? null,
                     'member_code' => ($data['member_code'] ?? null) ?: null,
                 ]))
@@ -225,7 +322,6 @@ class FollowUpController extends Controller
         return redirect()
             ->route('it-manager.follow-up.show', array_filter([
                 'member' => $member,
-                'date' => $toDay,
                 'filter' => $data['filter'] ?? null,
                 'member_code' => ($data['member_code'] ?? null) ?: null,
             ]))
