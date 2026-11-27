@@ -34,14 +34,6 @@
            aria-label="Aperçu du rapport global PDF">
             <x-pdf-icon size="sm" />
         </a>
-        <a href="{{ route('it-manager.activity-register.show') }}"
-           class="btn btn-outline btn-sm follow-up-desktop-action shrink-0"
-           title="Registre d’activité"
-           aria-label="Ouvrir le registre d’activité">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-            </svg>
-        </a>
         <button type="button"
                 class="btn btn-primary btn-sm follow-up-desktop-action shrink-0 {{ $inviteFormOpen ? 'is-open' : '' }}"
                 data-follow-up-toggle
@@ -80,14 +72,6 @@
                aria-label="Aperçu du rapport global PDF"
                title="Aperçu rapport global">
                 <x-pdf-icon size="sm" />
-            </a>
-            <a href="{{ route('it-manager.activity-register.show') }}"
-               class="shop-banner-icon-btn"
-               aria-label="Ouvrir le registre d’activité"
-               title="Registre">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
             </a>
             <button type="button"
                     class="shop-banner-icon-btn !bg-[var(--primary)] !border-[var(--primary)] {{ $inviteFormOpen ? 'is-active' : '' }}"

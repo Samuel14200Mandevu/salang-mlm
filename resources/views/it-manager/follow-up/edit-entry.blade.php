@@ -4,12 +4,17 @@
 
 @section('content')
 @php
-    $backUrl = route('it-manager.follow-up.show', array_filter([
-        'member' => $entry->member_id,
-        'date' => $entry->sheet?->activity_date?->toDateString(),
-        'filter' => $filter,
-        'member_code' => ($memberCode ?? null) ?: null,
-    ]));
+    $fromRegister = ($from ?? null) === 'register';
+    $backUrl = $fromRegister
+        ? route('it-manager.activity-register.show', [
+            'date' => $returnDate ?? $entry->sheet?->activity_date?->toDateString(),
+        ])
+        : route('it-manager.follow-up.show', array_filter([
+            'member' => $entry->member_id,
+            'date' => $entry->sheet?->activity_date?->toDateString(),
+            'filter' => $filter,
+            'member_code' => ($memberCode ?? null) ?: null,
+        ]));
 @endphp
 
 <div class="mb-4">
@@ -18,7 +23,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
-        Retour au détail
+        {{ $fromRegister ? 'Retour au registre' : 'Retour au détail' }}
     </a>
 </div>
 
@@ -46,10 +51,15 @@
     <form method="POST" action="{{ route('it-manager.activity-register.entries.update', $entry) }}" class="space-y-4">
         @csrf
         @method('PATCH')
-        <input type="hidden" name="return_member" value="{{ $entry->member_id }}">
-        <input type="hidden" name="return_date" value="{{ $entry->sheet?->activity_date?->toDateString() }}">
-        <input type="hidden" name="return_filter" value="{{ $filter }}">
-        <input type="hidden" name="return_member_code" value="{{ $memberCode }}">
+        @if ($fromRegister)
+            <input type="hidden" name="return_to" value="register">
+            <input type="hidden" name="return_date" value="{{ $returnDate ?? $entry->sheet?->activity_date?->toDateString() }}">
+        @else
+            <input type="hidden" name="return_member" value="{{ $entry->member_id }}">
+            <input type="hidden" name="return_date" value="{{ $entry->sheet?->activity_date?->toDateString() }}">
+            <input type="hidden" name="return_filter" value="{{ $filter }}">
+            <input type="hidden" name="return_member_code" value="{{ $memberCode }}">
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
@@ -165,11 +175,28 @@
                         <input type="checkbox"
                                name="{{ $flag }}"
                                value="1"
+                               @if ($flag === 'purchase_done') id="purchase_done" data-purchase-toggle @endif
                                class="rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                               @checked(old($flag, $done))>
+                               @checked((string) old($flag, $done ? '1' : '0') === '1')>
                         {{ $label }}
                     </label>
                 @endforeach
+            </div>
+        </div>
+
+        <div class="border-t border-[var(--border-light)] pt-4" id="purchaseAmountField">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-3">Montant d’achat</h3>
+            <div class="max-w-xs">
+                <label for="purchases_amount" class="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                    Montant ($) <span id="purchaseAmountRequiredMark" class="text-rose-600 {{ (string) old('purchase_done', $entry->purchase_done ? '1' : '0') === '1' ? '' : 'hidden' }}">*</span>
+                </label>
+                <input type="number" step="0.01" min="0" id="purchases_amount" name="purchases_amount"
+                       value="{{ old('purchases_amount', $entry->purchases_amount) }}"
+                       @if ((string) old('purchase_done', $entry->purchase_done ? '1' : '0') === '1') required @endif
+                       class="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-sm @error('purchases_amount') border-rose-400 @enderror">
+                @error('purchases_amount')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -179,4 +206,28 @@
         </div>
     </form>
 </section>
+
+<script>
+(function () {
+    const toggle = document.querySelector('[data-purchase-toggle]');
+    const input = document.getElementById('purchases_amount');
+    const requiredMark = document.getElementById('purchaseAmountRequiredMark');
+    if (!toggle || !input) return;
+
+    function sync() {
+        const on = toggle.checked;
+        input.required = on;
+        if (requiredMark) {
+            requiredMark.classList.toggle('hidden', !on);
+        }
+        if (!on) {
+            // garder la valeur affichée pour correction, mais non obligatoire
+            input.removeAttribute('required');
+        }
+    }
+
+    toggle.addEventListener('change', sync);
+    sync();
+})();
+</script>
 @endsection

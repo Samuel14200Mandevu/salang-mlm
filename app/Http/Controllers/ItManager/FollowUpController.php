@@ -189,6 +189,9 @@ class FollowUpController extends Controller
                 'adhesion' => $items->where('adhesion_done', true)->count(),
                 'consultation' => $items->where('consultation_done', true)->count(),
                 'purchase' => $items->where('purchase_done', true)->count(),
+                'purchase_amount' => (float) $items
+                    ->where('purchase_done', true)
+                    ->sum(fn ($entry) => (float) ($entry->purchases_amount ?? 0)),
             ];
         })->sortBy('name', SORT_NATURAL|SORT_FLAG_CASE)->values();
 
@@ -199,6 +202,7 @@ class FollowUpController extends Controller
             'adhesion' => (int) $rows->sum('adhesion'),
             'consultation' => (int) $rows->sum('consultation'),
             'purchase' => (int) $rows->sum('purchase'),
+            'purchase_amount' => (float) $rows->sum('purchase_amount'),
         ];
 
         $filename = 'rapport_global_suivi_registre_'.now()->format('Ymd_His').'.pdf';
@@ -340,12 +344,17 @@ class FollowUpController extends Controller
 
         $filter = $request->string('filter')->toString() ?: 'formation';
         $memberCode = trim((string) $request->query('member_code', ''));
+        $from = $request->string('from')->toString() ?: null;
+        $returnDate = $request->string('return_date')->toString()
+            ?: $entry->sheet?->activity_date?->toDateString();
 
         return view('it-manager.follow-up.edit-entry', [
             'entry' => $entry,
             'member' => $entry->member,
             'filter' => $filter,
             'memberCode' => $memberCode,
+            'from' => $from,
+            'returnDate' => $returnDate,
         ]);
     }
 

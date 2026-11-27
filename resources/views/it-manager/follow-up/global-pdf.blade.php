@@ -124,13 +124,14 @@
         <thead>
             <tr>
                 <th style="width: 4%;" class="num">N°</th>
-                <th style="width: 34%;">Membre</th>
-                <th style="width: 14%;">Code</th>
-                <th style="width: 8%;" class="num">Total</th>
-                <th style="width: 10%;" class="num">Form.</th>
-                <th style="width: 10%;" class="num">Adh.</th>
-                <th style="width: 10%;" class="num">Cons.</th>
-                <th style="width: 10%;" class="num">Achat</th>
+                <th style="width: 28%;">Membre</th>
+                <th style="width: 12%;">Code</th>
+                <th style="width: 7%;" class="num">Total</th>
+                <th style="width: 8%;" class="num">Form.</th>
+                <th style="width: 8%;" class="num">Adh.</th>
+                <th style="width: 8%;" class="num">Cons.</th>
+                <th style="width: 8%;" class="num">Achat</th>
+                <th style="width: 17%;" class="num">Montant</th>
             </tr>
         </thead>
         <tbody>
@@ -144,6 +145,13 @@
                     <td class="num">{{ $row['adhesion'] }}</td>
                     <td class="num">{{ $row['consultation'] }}</td>
                     <td class="num">{{ $row['purchase'] }}</td>
+                    <td class="num">
+                        @if (($row['purchase_amount'] ?? 0) > 0)
+                            {{ number_format((float) $row['purchase_amount'], 2, ',', ' ') }} $
+                        @else
+                            —
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -155,6 +163,7 @@
                 <td class="num">{{ $totals['adhesion'] }}</td>
                 <td class="num">{{ $totals['consultation'] }}</td>
                 <td class="num">{{ $totals['purchase'] }}</td>
+                <td class="num">{{ number_format((float) ($totals['purchase_amount'] ?? 0), 2, ',', ' ') }} $</td>
             </tr>
         </tfoot>
     </table>

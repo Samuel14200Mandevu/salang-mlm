@@ -48,18 +48,36 @@ class ActivityRegisterController extends Controller
         $day = Carbon::parse($date ?: $request->string('date')->toString() ?: now()->toDateString());
         $sheet = ActivitySheet::findForDate($day) ?? ActivitySheet::draftForDate($day);
 
-        if ($sheet->exists) {
-            $sheet->load([
+        $daySheets = ActivitySheet::query()
+            ->with([
                 'entries.member:id,name,sponsor_id',
                 'entries.adhesionUser:id,name,sponsor_id',
                 'entries.consultation:id,numero,nom_complet',
                 'entries.order:id,total,status',
-            ]);
-        }
+                'entries.sheet:id,activity_date',
+            ])
+            ->has('entries')
+            ->latest('activity_date')
+            ->get();
+
+        $allEntries = $daySheets
+            ->flatMap->entries
+            ->sortByDesc(fn (ActivityEntry $entry) => $entry->sheet?->activity_date?->toDateString().'-'.str_pad((string) $entry->sort_order, 4, '0', STR_PAD_LEFT))
+            ->values();
+
+        $membersGrouped = $allEntries
+            ->groupBy('member_id')
+            ->map(function ($memberEntries) {
+                return $memberEntries->groupBy(
+                    fn (ActivityEntry $entry) => $entry->sheet?->activity_date?->toDateString() ?? 'unknown'
+                );
+            });
 
         return view('it-manager.activity-register.show', [
             'sheet' => $sheet,
             'day' => $day,
+            'allEntries' => $allEntries,
+            'membersGrouped' => $membersGrouped,
         ]);
     }
 
@@ -176,7 +194,11 @@ class ActivityRegisterController extends Controller
             'adhesion_done' => ['sometimes', 'boolean'],
             'consultation_done' => ['sometimes', 'boolean'],
             'purchase_done' => ['sometimes', 'boolean'],
-            'purchases_amount' => ['nullable', 'numeric', 'min:0'],
+            'purchases_amount' => [
+                $request->boolean('purchase_done') ? 'required' : 'nullable',
+                'numeric',
+                'min:0',
+            ],
             'net_sales_amount' => ['nullable', 'numeric', 'min:0'],
             'validated_amount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -191,10 +213,13 @@ class ActivityRegisterController extends Controller
             'participant_profession' => ['nullable', 'string', 'max:120'],
             'participant_identity_number' => ['nullable', 'string', 'max:80'],
             'invite_type' => ['sometimes', 'in:formation,autre'],
+            'return_to' => ['nullable', 'in:register'],
             'return_member' => ['nullable', 'integer'],
             'return_date' => ['nullable', 'date'],
             'return_filter' => ['nullable', 'string', 'max:32'],
             'return_member_code' => ['nullable', 'string', 'max:32'],
+        ], [
+            'purchases_amount.required' => 'Le montant d’achat est obligatoire lorsque l’achat est coché.',
         ]);
 
         $payload = [];
@@ -214,6 +239,10 @@ class ActivityRegisterController extends Controller
             if (array_key_exists($field, $data)) {
                 $payload[$field] = $data[$field] !== '' ? $data[$field] : null;
             }
+        }
+
+        if (($payload['purchase_done'] ?? null) === false) {
+            $payload['purchases_amount'] = null;
         }
 
         $nameTouched = $request->has('participant_nom')
@@ -250,6 +279,14 @@ class ActivityRegisterController extends Controller
         }
 
         $entry->forceFill($payload)->save();
+
+        if (($data['return_to'] ?? null) === 'register') {
+            return redirect()
+                ->route('it-manager.activity-register.show', [
+                    'date' => $data['return_date'] ?? $entry->sheet?->activity_date?->toDateString(),
+                ])
+                ->with('success', 'Invité mis à jour.');
+        }
 
         if (! empty($data['return_member'])) {
             return redirect()
