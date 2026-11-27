@@ -141,31 +141,42 @@
   width: auto;
 }
 
-/* Suivi : boutons + recherche — écart fixe, pas de chevauchement */
+/* Suivi : une seule ligne — recherche + icônes (comme admin Membres) */
 .it-manager-shell .it-desktop-head .follow-up-desktop-tools {
   display: flex !important;
-  align-items: center;
-  flex: 0 0 auto;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 0 1 auto;
+  width: auto !important;
   max-width: 100%;
-  column-gap: 1rem !important;
-  row-gap: 0.5rem;
+  min-width: 0;
+  gap: 0.5rem !important;
 }
 
 .it-manager-shell .it-desktop-head .follow-up-desktop-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 0.5rem;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  gap: 0.5rem !important;
 }
 
 .it-manager-shell .it-desktop-head .follow-up-desktop-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 2.25rem !important;
   height: 2.25rem !important;
+  min-width: 2.25rem !important;
   min-height: 2.25rem !important;
   max-width: 2.25rem !important;
   padding: 0 !important;
   border-radius: 999px !important;
-  flex: 0 0 2.25rem;
+  flex: 0 0 2.25rem !important;
   position: relative;
   z-index: 2;
 }
@@ -175,10 +186,11 @@
 }
 
 .it-manager-shell .it-desktop-head .follow-up-desktop-search.header-search {
-  flex: 0 0 18rem !important;
-  width: 18rem !important;
-  min-width: 14rem !important;
-  max-width: 18rem !important;
+  display: block !important;
+  flex: 0 1 16rem !important;
+  width: 16rem !important;
+  min-width: 11rem !important;
+  max-width: 16rem !important;
   margin-left: 0 !important;
   position: relative;
   z-index: 1;
