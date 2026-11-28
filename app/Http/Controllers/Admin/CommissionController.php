@@ -66,6 +66,9 @@ class CommissionController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        } else {
+            // Les annulées ne s’affichent que via le filtre « Annulé ».
+            $query->where('status', '!=', 'cancelled');
         }
 
         if ($request->filled('period') && $request->period !== 'all') {

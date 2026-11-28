@@ -85,26 +85,21 @@
     @endforeach
 </div>
 
-<div class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="bg-[var(--bg-secondary)] text-left text-[0.6875rem] uppercase tracking-wide text-[var(--text-secondary)]">
-                    <th class="px-3 py-2.5">Statut</th>
-                    <th class="px-3 py-2.5">Visiteur</th>
-                    <th class="px-3 py-2.5">Sujet</th>
-                    <th class="px-3 py-2.5">Date</th>
-                    <th class="px-3 py-2.5"></th>
-                </tr>
-            </thead>
-            <tbody id="contactsTableBody">
-                @include('site-management.contacts._table_rows')
-            </tbody>
-        </table>
-    </div>
+{{-- Mobile : liste type WhatsApp --}}
+<div id="contactsMobileList" class="contact-convo-list it-mobile-only mb-4">
+    @include('site-management.contacts._mobile_list')
 </div>
+<div id="contactsPaginationMobile" class="it-mobile-only mt-4">{{ $messages->links() }}</div>
 
-<div id="contactsPagination" class="mt-4">{{ $messages->links() }}</div>
+{{-- Desktop : liste seule (lecture sur la page show) --}}
+<div class="contact-gmail contact-gmail--list-only it-desktop-only">
+    <aside class="contact-gmail__list-pane">
+        <div id="contactsDesktopList" class="contact-gmail__list">
+            @include('site-management.contacts._desktop_list', ['selectedMessage' => $selectedMessage ?? null])
+        </div>
+        <div id="contactsPagination" class="contact-gmail__pager">{{ $messages->links() }}</div>
+    </aside>
+</div>
 @endsection
 
 @push('scripts')
@@ -161,16 +156,14 @@ document.addEventListener('DOMContentLoaded', function () {
         url.searchParams.set('page', '1');
 
         const currentRequest = ++requestId;
-        const tableBody = document.getElementById('contactsTableBody');
+        const desktopList = document.getElementById('contactsDesktopList');
+        const mobileList = document.getElementById('contactsMobileList');
 
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
-                        Recherche en cours…
-                    </td>
-                </tr>
-            `;
+        if (desktopList) {
+            desktopList.innerHTML = '<div class="contact-gmail-empty">Recherche en cours…</div>';
+        }
+        if (mobileList) {
+            mobileList.innerHTML = '<div class="contact-convo-empty">Recherche en cours…</div>';
         }
 
         fetch(url.toString(), {
@@ -184,16 +177,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const doc = new DOMParser().parseFromString(html, 'text/html');
 
-                const newTableBody = doc.getElementById('contactsTableBody');
-                if (tableBody && newTableBody) {
-                    tableBody.innerHTML = newTableBody.innerHTML;
+                const newDesktopList = doc.getElementById('contactsDesktopList');
+                if (desktopList && newDesktopList) {
+                    desktopList.innerHTML = newDesktopList.innerHTML;
                 }
 
-                const pagination = document.getElementById('contactsPagination');
-                const newPagination = doc.getElementById('contactsPagination');
-                if (pagination) {
-                    pagination.innerHTML = newPagination ? newPagination.innerHTML : '';
+                const newMobileList = doc.getElementById('contactsMobileList');
+                if (mobileList && newMobileList) {
+                    mobileList.innerHTML = newMobileList.innerHTML;
                 }
+
+                ['contactsPagination', 'contactsPaginationMobile'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    const neu = doc.getElementById(id);
+                    if (el) {
+                        el.innerHTML = neu ? neu.innerHTML : '';
+                    }
+                });
 
                 const statGrid = document.getElementById('contactsStatGrid');
                 const newStatGrid = doc.getElementById('contactsStatGrid');
@@ -208,16 +208,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.history.replaceState({}, '', url.toString());
             })
             .catch(function () {
-                if (currentRequest !== requestId || !tableBody) {
+                if (currentRequest !== requestId) {
                     return;
                 }
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="px-3 py-8 text-center text-sm text-[var(--danger)]">
-                            Une erreur est survenue lors de la recherche
-                        </td>
-                    </tr>
-                `;
+                if (desktopList) {
+                    desktopList.innerHTML = '<div class="contact-gmail-empty text-[var(--danger)]">Erreur de recherche</div>';
+                }
+                if (mobileList) {
+                    mobileList.innerHTML = '<div class="contact-convo-empty text-[var(--danger)]">Erreur de recherche</div>';
+                }
             });
     }
 });

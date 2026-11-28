@@ -273,17 +273,17 @@
             <button type="button"
                     class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
                     data-register-member-toggle
-                    aria-expanded="true"
+                    aria-expanded="false"
                     aria-controls="register-member-body-{{ $memberId }}"
-                    title="Réduire le détail"
-                    aria-label="Réduire le détail de {{ $member?->name ?? 'membre' }}">
-                <svg class="w-4 h-4 transition-transform duration-200" data-register-member-chevron fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    title="Afficher le détail"
+                    aria-label="Afficher le détail de {{ $member?->name ?? 'membre' }}">
+                <svg class="w-4 h-4 transition-transform duration-200 rotate-180" data-register-member-chevron fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
         </header>
 
-        <div id="register-member-body-{{ $memberId }}" data-register-member-body>
+        <div id="register-member-body-{{ $memberId }}" data-register-member-body class="hidden">
         @foreach ($entriesByDate as $sheetDayKey => $memberEntries)
             @php
                 $dayLabel = $sheetDayKey === 'unknown'

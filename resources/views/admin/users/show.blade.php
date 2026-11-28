@@ -267,7 +267,10 @@
 @include('admin.layouts.partials.desktop-page-header', [
     'title' => 'Détails de Membre',
     'subtitle' => $userShowSubtitle,
-    'actions' => view('admin.users.partials.show-header-actions', compact('user'))->render(),
+    'actions' => view('admin.users.partials.show-header-actions', [
+        'user' => $user,
+        'backToUser' => $backToUser ?? null,
+    ])->render(),
 ])
 
 <div class="admin-page-header page-header md:hidden animate-fadeInUp">
@@ -276,7 +279,10 @@
             <h1 class="page-title">Détails de Membre</h1>
             <p class="page-subtitle">{{ $userShowSubtitle }}</p>
         </div>
-        @include('admin.users.partials.show-mobile-banner-actions', ['user' => $user])
+        @include('admin.users.partials.show-mobile-banner-actions', [
+            'user' => $user,
+            'backToUser' => $backToUser ?? null,
+        ])
     </div>
 </div>
 
@@ -533,7 +539,7 @@
             <div class="admin-entity-list md:hidden">
                 @foreach($filleuls as $filleul)
                     @php $flRank = (int) ($filleul->rank_level ?? 0); @endphp
-                    <a href="{{ route('admin.users.show', $filleul->id) }}" class="admin-entity-card">
+                    <a href="{{ route('admin.users.show', ['id' => $filleul->id, 'from' => $user->id]) }}" class="admin-entity-card">
                         <div class="admin-entity-card__top">
                             <div class="min-w-0">
                                 <div class="admin-entity-card__name">{{ $filleul->name }}</div>
@@ -571,7 +577,7 @@
                     <tbody>
                         @foreach($filleuls as $filleul)
                         <tr class="cursor-pointer hover:bg-[var(--bg-secondary)]"
-                            onclick="window.location='{{ route('admin.users.show', $filleul->id) }}'">
+                            onclick="window.location='{{ route('admin.users.show', ['id' => $filleul->id, 'from' => $user->id]) }}'">
                             <td class="text-xs">{{ $filleul->id }}</td>
                             <td class="text-sm">{{ $filleul->name }}</td>
                             <td class="text-xs text-[var(--text-secondary)]">{{ $filleul->email }}</td>

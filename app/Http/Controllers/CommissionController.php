@@ -601,6 +601,8 @@ class CommissionController extends Controller
             })
             ->when($request->filled('status'), function ($query) use ($request) {
                 return $query->where('status', $request->status);
+            }, function ($query) {
+                return $query->where('status', '!=', 'cancelled');
             })
             ->when($request->filled('period'), function ($query) use ($request) {
                 return $query->where('period', $request->period);

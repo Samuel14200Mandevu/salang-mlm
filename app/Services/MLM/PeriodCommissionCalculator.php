@@ -76,7 +76,14 @@ class PeriodCommissionCalculator
                 ->whereIn('status', ['pending', 'approved', 'cancelled']);
 
             if ($userId) {
-                $orphanQuery->where('user_id', $userId);
+                // Bonus du membre + I&L des ascendants générés depuis ce membre.
+                $orphanQuery->where(function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->orWhere(function ($q2) use ($userId) {
+                            $q2->where('from_user_id', $userId)
+                                ->whereIn('type', ['indirect', 'leadership']);
+                        });
+                });
             }
 
             $orphanQuery->delete();
@@ -170,6 +177,68 @@ class PeriodCommissionCalculator
             'created' => $totalCreated,
             'total_amount' => $totalAmount,
         ];
+    }
+
+    /**
+     * Après un changement de PV sur un membre : recalcule son D/I/L,
+     * purge les I&L non payés des ascendants issus de lui, puis recalcule
+     * chaque ascendant (I&L restants sur le PV encore présent).
+     *
+     * @return array{created:int, total_amount:float, ancestors:int, purged_source_il:int}
+     */
+    public function recalculateSourceAndAncestors(CommissionPeriod $period, int $sourceUserId): array
+    {
+        $result = $this->calculateForPeriod($period, $sourceUserId);
+
+        // Couvre le cas « encore du PV » : le calcul source ne touche pas
+        // les lignes I&L créditées aux ascendants (user_id = ascendant).
+        $purgedSourceIl = Commission::query()
+            ->where('commission_period_id', $period->id)
+            ->where('from_user_id', $sourceUserId)
+            ->whereIn('type', ['indirect', 'leadership'])
+            ->whereIn('status', ['pending', 'approved', 'cancelled'])
+            ->delete();
+
+        $created = (int) ($result['created'] ?? 0);
+        $totalAmount = (float) ($result['total_amount'] ?? 0);
+        $ancestorIds = $this->ancestorIds($sourceUserId);
+
+        foreach ($ancestorIds as $ancestorId) {
+            $ancestorResult = $this->calculateForPeriod($period, $ancestorId);
+            $created += (int) ($ancestorResult['created'] ?? 0);
+            $totalAmount += (float) ($ancestorResult['total_amount'] ?? 0);
+        }
+
+        return [
+            'created' => $created,
+            'total_amount' => $totalAmount,
+            'ancestors' => count($ancestorIds),
+            'purged_source_il' => (int) $purgedSourceIl,
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function ancestorIds(int $userId, int $maxGenerations = self::MAX_TREE_GENERATIONS): array
+    {
+        $ids = [];
+        $currentId = $userId;
+
+        for ($i = 0; $i < $maxGenerations; $i++) {
+            $parrainId = User::query()->where('id', $currentId)->value('parrain_id');
+            if (! $parrainId) {
+                break;
+            }
+            $parrainId = (int) $parrainId;
+            if (in_array($parrainId, $ids, true)) {
+                break;
+            }
+            $ids[] = $parrainId;
+            $currentId = $parrainId;
+        }
+
+        return $ids;
     }
 
     // ═══════════════════════════════════════════════════════════════

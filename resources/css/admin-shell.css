@@ -2017,3 +2017,727 @@ html.dark .admin-app .badge-admin {
     border-radius: 50%;
     margin: 0 auto 0.375rem;
 }
+
+/* ===== Messages site — liste & détail type WhatsApp (mobile) ===== */
+.contact-convo-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.contact-convo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: background 0.15s ease;
+}
+
+.contact-convo-row:last-child {
+  border-bottom: none;
+}
+
+.contact-convo-row:active,
+.contact-convo-row:hover {
+  background: var(--bg-hover);
+}
+
+.contact-convo-row--unread {
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+}
+
+.contact-convo-avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.contact-convo-avatar--sm {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.875rem;
+}
+
+.contact-convo-row__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.contact-convo-row__top,
+.contact-convo-row__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.contact-convo-row__title {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.contact-convo-row__time {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.contact-convo-row--unread .contact-convo-row__time {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.contact-convo-row__bottom {
+  margin-top: 0.15rem;
+}
+
+.contact-convo-row__preview {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-convo-row__subject {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.contact-convo-row__unread {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.contact-convo-empty {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.contact-chat-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.contact-chat-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  margin: -0.25rem -0.25rem 0.75rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border-radius: 0.75rem;
+}
+
+.contact-chat-topbar__back,
+.contact-chat-topbar__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.contact-chat-topbar__back:hover,
+.contact-chat-topbar__action:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.contact-chat-topbar__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-chat-topbar__name {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.contact-chat-topbar__sub {
+  font-size: 0.6875rem;
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
+.contact-chat-shell {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  min-height: 22rem;
+}
+
+.contact-chat-panel {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+}
+
+.contact-chat-thread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0.75rem 1rem;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--color-primary-50) 78%, var(--bg-page)),
+      color-mix(in srgb, var(--color-primary-100) 55%, var(--bg-page))
+    );
+  min-height: 14rem;
+}
+
+html.dark .contact-chat-thread,
+.dark .contact-chat-thread {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--primary) 12%, var(--bg-page)),
+      var(--bg-page)
+    );
+}
+
+.contact-chat-day {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 0.35rem;
+}
+
+.contact-chat-day span {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 1px 1px rgba(15, 51, 92, 0.04);
+}
+
+.contact-chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+
+.contact-chat-row--incoming {
+  justify-content: flex-start;
+}
+
+.contact-chat-bubble-group {
+  max-width: min(88%, 28rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-chat-bubble-meta {
+  margin: 0 0 0.2rem 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  color: var(--primary);
+}
+
+.contact-chat-bubble {
+  position: relative;
+  padding: 0.45rem 0.65rem 0.35rem;
+  border-radius: 0.55rem 0.55rem 0.55rem 0.15rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 1px 0.5px rgba(15, 51, 92, 0.06);
+  color: var(--text-primary);
+}
+
+.contact-chat-bubble__subject {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.contact-chat-bubble__text {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.contact-chat-bubble-time {
+  margin-top: 0.2rem;
+  margin-left: 0.2rem;
+  font-size: 0.625rem;
+  color: var(--text-tertiary);
+  align-self: flex-end;
+}
+
+.contact-chat-info {
+  align-self: center;
+  margin-top: 0.25rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.contact-chat-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem 0.75rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-light);
+}
+
+.contact-chat-footer__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.contact-chat-footer__primary:hover {
+  background: var(--primary-hover);
+  color: #fff;
+}
+
+.contact-chat-footer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.contact-chat-footer__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contact-chat-footer__btn--danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border-color));
+}
+
+@media (max-width: 768px) {
+  .contact-chat-page {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+  }
+
+  .contact-chat-shell {
+    border: none;
+    border-radius: 0;
+    min-height: calc(100dvh - 11.5rem);
+    background: transparent;
+  }
+
+  .contact-chat-thread {
+    flex: 1 1 auto;
+    min-height: 12rem;
+    border-radius: 0;
+  }
+
+  .contact-chat-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+  }
+
+  .contact-convo-list {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .contact-chat-shell {
+    max-width: 48rem;
+  }
+
+  .contact-chat-thread {
+    min-height: 16rem;
+  }
+}
+
+/* ===== Messages site — desktop type Gmail ===== */
+.contact-gmail {
+  display: grid;
+  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  min-height: 32rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.contact-gmail--reader-only {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: none;
+}
+
+.contact-gmail--list-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.contact-gmail--list-only .contact-gmail__list-pane {
+  border-right: none;
+}
+
+.contact-gmail--list-only .contact-gmail__list {
+  max-height: calc(100vh - 16rem);
+}
+
+.contact-gmail__list-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.contact-gmail__list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 18rem);
+}
+
+.contact-gmail__pager {
+  border-top: 1px solid var(--border-light);
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-secondary);
+}
+
+.contact-gmail__reader-pane {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-gmail-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(5.5rem, 7.5rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: background 0.12s ease;
+}
+
+.contact-gmail-row:hover {
+  background: var(--bg-hover);
+}
+
+.contact-gmail-row.is-active {
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.contact-gmail-row.is-unread .contact-gmail-row__sender,
+.contact-gmail-row.is-unread .contact-gmail-row__subject {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.contact-gmail-row__avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.contact-gmail-row__avatar--sm {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.8125rem;
+}
+
+.contact-gmail-row__sender {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-gmail-row__content {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.contact-gmail-row__subject {
+  color: var(--text-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-gmail-row__sep {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.contact-gmail-row__snippet {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.contact-gmail-row__date {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.contact-gmail-row.is-unread .contact-gmail-row__date {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.contact-gmail-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.contact-gmail-reader {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.contact-gmail-reader__head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.contact-gmail-reader__status-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.contact-gmail-reader__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.contact-gmail-reader__back:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+  border-color: var(--primary-blue-border);
+}
+
+.contact-gmail-reader__subject {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+}
+
+.contact-gmail-reader__from {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.contact-gmail-reader__toolbar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.contact-gmail-reader__toolbar form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.contact-gmail-reader__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.contact-gmail-reader__action:hover {
+  background: var(--bg-card);
+  color: var(--primary);
+}
+
+.contact-gmail-reader__action:active {
+  transform: scale(0.94);
+}
+
+.contact-gmail-reader__action--primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.contact-gmail-reader__action--primary:hover {
+  background: var(--primary-hover);
+  color: #fff;
+}
+
+.contact-gmail-reader__action--danger:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.contact-gmail-reader__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.15rem 1.25rem 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-card);
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1100px) {
+  .contact-gmail {
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+  }
+
+  .contact-gmail-row {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+
+  .contact-gmail-row__sender {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .contact-gmail {
+    max-height: calc(100vh - 12rem);
+  }
+
+  .contact-gmail--reader-only {
+    /* titre + stats au-dessus sur la page show */
+    max-height: calc(100vh - 16rem);
+    min-height: 22rem;
+  }
+}

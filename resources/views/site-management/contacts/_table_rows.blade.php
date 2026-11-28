@@ -1,5 +1,9 @@
 @forelse ($messages as $msg)
-    <tr class="border-t border-[var(--border-light)] hover:bg-[var(--bg-hover)]">
+    <tr class="border-t border-[var(--border-light)] hover:bg-[var(--bg-hover)] cursor-pointer contact-table-row"
+        data-href="{{ route('site-management.contacts.show', $msg) }}"
+        tabindex="0"
+        role="link"
+        aria-label="Ouvrir le message de {{ $msg->name }}">
         <td class="px-3 py-2.5">
             <span class="inline-flex rounded-md px-2 py-0.5 text-[0.625rem] font-semibold
                 {{ $msg->status === 'new' ? 'bg-sky-100 text-sky-800' : ($msg->status === 'archived' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-800') }}">
@@ -13,7 +17,7 @@
         <td class="px-3 py-2.5 text-[var(--text-secondary)]">{{ \Illuminate\Support\Str::limit($msg->subject, 48) }}</td>
         <td class="px-3 py-2.5 text-[var(--text-muted)] whitespace-nowrap">{{ $msg->created_at?->format('d/m/Y H:i') }}</td>
         <td class="px-3 py-2.5 text-right">
-            <a href="{{ route('site-management.contacts.show', $msg) }}" class="text-sm font-semibold text-primary-600">Ouvrir</a>
+            <span class="text-sm font-semibold text-primary-600">Ouvrir</span>
         </td>
     </tr>
 @empty

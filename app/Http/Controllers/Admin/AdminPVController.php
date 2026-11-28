@@ -8,10 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Package;
 use App\Models\Rank;
+use App\Models\CommissionPeriod;
 use App\Models\PVHistory;
 use App\Models\Transaction;
 use App\Models\RankHistory;
 use App\Services\MLM\AdvancedRankCalculator;
+use App\Services\MLM\PeriodCommissionCalculator;
 use App\Services\MLM\TeamPVCalculator;
 use App\Jobs\UpdateRanks;
 use App\Jobs\UpdateTeamPV;
@@ -592,6 +594,7 @@ class AdminPVController extends Controller
     {
         $history = PVHistory::findOrFail($historyId);
         $userId = $history->user_id;
+        $historyPeriod = $history->period;
 
         DB::beginTransaction();
         try {
@@ -617,6 +620,21 @@ class AdminPVController extends Controller
                 $parrain = User::find($user->parrain_id);
                 if ($parrain && $parrain->is_active) {
                     $this->updateParrainAndAncestorsTeamPV($parrain);
+                }
+            }
+
+            // 3. Bonus du membre + I&L ascendants (non payés) pour la période du PV
+            if (is_string($historyPeriod) && $historyPeriod !== '') {
+                try {
+                    $commissionPeriod = CommissionPeriod::findOrCreateForValue($historyPeriod);
+                    app(PeriodCommissionCalculator::class)
+                        ->recalculateSourceAndAncestors($commissionPeriod, (int) $user->id);
+                } catch (\Throwable $e) {
+                    Log::warning('Recalcul D/I/L après suppression PV échoué', [
+                        'user_id' => $user->id,
+                        'period' => $historyPeriod,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
 

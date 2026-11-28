@@ -197,6 +197,12 @@ class UserController extends Controller
         $commissionsCount = $commissionsStats['count'] ?? 0;
         $totalCommissions = $commissionsStats['total'] ?? 0;
 
+        // Retour vers le membre parent si on vient d’un clic filleul (?from=).
+        $backFromId = (int) request()->query('from');
+        $backToUser = ($backFromId > 0 && $backFromId !== (int) $user->id)
+            ? User::query()->select(['id', 'name', 'sponsor_id'])->find($backFromId)
+            : null;
+
         return view('admin.users.show', compact(
             'user',
             'parrain',
@@ -212,7 +218,8 @@ class UserController extends Controller
             'recentTransactions',
             'recentCommissions',
             'tree',
-            'packages'
+            'packages',
+            'backToUser'
         ));
     }
 

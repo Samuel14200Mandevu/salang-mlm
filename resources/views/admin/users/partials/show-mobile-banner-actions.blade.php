@@ -2,11 +2,18 @@
 @php
     $showRole = $user->roles->first()?->name ?? 'user';
     $showIsStaff = in_array($showRole, ['admin', 'it_manager', 'cashier'], true);
-    $showListUrl = $showIsStaff ? route('admin.cashiers.index') : route('admin.users');
-    $showListLabel = $showIsStaff ? 'Employés' : 'Membres';
+    if (! empty($backToUser)) {
+        $showListUrl = route('admin.users.show', $backToUser->id);
+        $showListLabel = 'Retour';
+        $showListTitle = 'Retour vers '.$backToUser->name;
+    } else {
+        $showListUrl = $showIsStaff ? route('admin.cashiers.index') : route('admin.users');
+        $showListLabel = $showIsStaff ? 'Employés' : 'Membres';
+        $showListTitle = 'Retour à '.$showListLabel;
+    }
 @endphp
 <div class="admin-title-banner__tools admin-title-banner__tools--member-show">
-    <a href="{{ $showListUrl }}" class="btn btn-outline btn-sm btn-round-icon" title="{{ $showListLabel }}" aria-label="Retour à {{ $showListLabel }}">
+    <a href="{{ $showListUrl }}" class="btn btn-outline btn-sm btn-round-icon" title="{{ $showListTitle }}" aria-label="{{ $showListTitle }}">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>

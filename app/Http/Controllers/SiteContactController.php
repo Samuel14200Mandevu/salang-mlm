@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,35 +17,18 @@ class SiteContactController extends Controller
 
     public function index(Request $request): View
     {
-        $status = $request->string('status')->toString();
-        $q = $request->string('q')->toString();
+        [$status, $q, $messages, $counts] = $this->inboxData($request);
 
-        $messages = ContactMessage::query()
-            ->when(in_array($status, [ContactMessage::STATUS_NEW, ContactMessage::STATUS_READ, ContactMessage::STATUS_ARCHIVED], true), function ($query) use ($status) {
-                $query->where('status', $status);
-            })
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($inner) use ($q) {
-                    $inner->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('subject', 'like', "%{$q}%");
-                });
-            })
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
-
-        $counts = [
-            'all' => ContactMessage::query()->count(),
-            'new' => ContactMessage::query()->where('status', ContactMessage::STATUS_NEW)->count(),
-            'read' => ContactMessage::query()->where('status', ContactMessage::STATUS_READ)->count(),
-            'archived' => ContactMessage::query()->where('status', ContactMessage::STATUS_ARCHIVED)->count(),
-        ];
-
-        return view('site-management.contacts.index', compact('messages', 'counts', 'status', 'q'));
+        return view('site-management.contacts.index', [
+            'messages' => $messages,
+            'counts' => $counts,
+            'status' => $status,
+            'q' => $q,
+            'selectedMessage' => null,
+        ]);
     }
 
-    public function show(ContactMessage $contactMessage): View
+    public function show(Request $request, ContactMessage $contactMessage): View
     {
         if ($contactMessage->isNew()) {
             $contactMessage->markRead(auth()->user());
@@ -54,6 +38,14 @@ class SiteContactController extends Controller
 
         return view('site-management.contacts.show', [
             'message' => $contactMessage,
+            'status' => $request->string('status')->toString(),
+            'q' => $request->string('q')->toString(),
+            'counts' => [
+                'all' => ContactMessage::query()->count(),
+                'new' => ContactMessage::query()->where('status', ContactMessage::STATUS_NEW)->count(),
+                'read' => ContactMessage::query()->where('status', ContactMessage::STATUS_READ)->count(),
+                'archived' => ContactMessage::query()->where('status', ContactMessage::STATUS_ARCHIVED)->count(),
+            ],
         ]);
     }
 
@@ -84,5 +76,38 @@ class SiteContactController extends Controller
         return redirect()
             ->route('site-management.contacts.index')
             ->with('success', 'Message supprimé.');
+    }
+
+    /**
+     * @return array{0: string, 1: string, 2: LengthAwarePaginator, 3: array<string, int>}
+     */
+    protected function inboxData(Request $request): array
+    {
+        $status = $request->string('status')->toString();
+        $q = $request->string('q')->toString();
+
+        $messages = ContactMessage::query()
+            ->when(in_array($status, [ContactMessage::STATUS_NEW, ContactMessage::STATUS_READ, ContactMessage::STATUS_ARCHIVED], true), function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%")
+                        ->orWhere('subject', 'like', "%{$q}%");
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $counts = [
+            'all' => ContactMessage::query()->count(),
+            'new' => ContactMessage::query()->where('status', ContactMessage::STATUS_NEW)->count(),
+            'read' => ContactMessage::query()->where('status', ContactMessage::STATUS_READ)->count(),
+            'archived' => ContactMessage::query()->where('status', ContactMessage::STATUS_ARCHIVED)->count(),
+        ];
+
+        return [$status, $q, $messages, $counts];
     }
 }
