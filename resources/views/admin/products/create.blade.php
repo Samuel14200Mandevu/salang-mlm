@@ -15,6 +15,8 @@
         'actions' => '<a href="'.route('admin.products').'" class="btn btn-outline btn-sm">Catalogue</a>',
     ])
 
+    @include('admin.pharmacy.partials.nav')
+
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
         <div class="admin-mobile-page-head is-mobile-banner">
             <div class="admin-title-banner__text">

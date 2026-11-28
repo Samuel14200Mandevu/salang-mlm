@@ -445,6 +445,8 @@
     ])->render(),
 ])
 
+@include('admin.pharmacy.partials.nav')
+
 <div class="admin-mobile-page space-y-4 sm:space-y-6">
 
     <div class="admin-page-header page-header md:hidden animate-fadeInUp">
