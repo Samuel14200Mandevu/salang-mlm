@@ -226,11 +226,13 @@
     $searchOpen = filled(request('search'));
     $stockFilter = request('stock');
 
-    $stockSubtitle = ($stats['total'] ?? 0).' produits référencés';
-    if ($stockFilter === 'low') {
-        $stockSubtitle = 'Stock bas · '.($stats['listed'] ?? 0).' produit(s)';
+    $stockSubtitle = ($stats['total'] ?? 0).' produits · valeur $'.number_format((float) ($stats['stock_value'] ?? 0), 2);
+    if ($stockFilter === 'low' || $stockFilter === 'reorder') {
+        $stockSubtitle = 'À commander · '.($stats['listed'] ?? 0).' produit(s)';
     } elseif ($stockFilter === 'out') {
         $stockSubtitle = 'Rupture · '.($stats['listed'] ?? 0).' produit(s)';
+    } elseif ($stockFilter === 'expiring') {
+        $stockSubtitle = 'Péremption · '.($stats['listed'] ?? 0).' produit(s)';
     } elseif ($stockFilter === 'ok') {
         $stockSubtitle = 'Stock OK · '.($stats['listed'] ?? 0).' produit(s)';
     }
@@ -284,11 +286,12 @@
         <div class="p-3 salang-flash-error border rounded-lg text-sm">{{ session('error') }}</div>
     @endif
 
-    <x-ui.stat-grid class="grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 animate-fadeInUp">
-        <x-ui.stat title="Total" :value="$stats['total'] ?? 0" id="kpi-stock-total" padding="p-3" />
-        <x-ui.stat title="Actifs" :value="$stats['active'] ?? 0" id="kpi-stock-active" padding="p-3" />
-        <x-ui.stat title="Stock bas" :value="$stats['low_stock'] ?? 0" id="kpi-stock-low" padding="p-3" />
+    <x-ui.stat-grid class="grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 animate-fadeInUp">
+        <x-ui.stat title="Références" :value="$stats['active'] ?? 0" id="kpi-stock-active" padding="p-3" />
+        <x-ui.stat title="Valeur stock ($)" :value="number_format((float) ($stats['stock_value'] ?? 0), 2)" id="kpi-stock-value" padding="p-3" />
         <x-ui.stat title="Rupture" :value="$stats['out_of_stock'] ?? 0" id="kpi-stock-out" padding="p-3" />
+        <x-ui.stat title="À commander" :value="$stats['reorder'] ?? 0" id="kpi-stock-reorder" padding="p-3" />
+        <x-ui.stat title="Péremption" :value="$stats['expiring'] ?? 0" id="kpi-stock-expiring" padding="p-3" />
     </x-ui.stat-grid>
 
     <form method="POST" action="{{ route('admin.products.stock-bulk') }}" class="space-y-4" id="bulkStockForm">
@@ -393,31 +396,39 @@
                     <thead>
                         <tr>
                             <th>Produit</th>
-                            <th class="hidden sm:table-cell">SKU</th>
-                            <th>Stock actuel</th>
+                            <th class="hidden sm:table-cell">SKU / EAN</th>
+                            <th>Stock</th>
+                            <th class="hidden md:table-cell">Seuil</th>
+                            <th class="hidden lg:table-cell">Péremption</th>
+                            <th>Statut</th>
                             <th style="min-width: 7rem;" id="qtyColumnLabel">Quantité</th>
                             <th class="hidden md:table-cell text-right">Fiche</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($products as $index => $product)
-                            @php
-                                $stockTone = match (true) {
-                                    $product->stock <= 0 => 'badge-danger',
-                                    $product->stock <= 5 => 'badge-warning',
-                                    default => 'badge-success',
-                                };
-                            @endphp
                             <tr>
                                 <td>
                                     <div class="font-medium text-sm text-[var(--text-primary)]">{{ $product->name }}</div>
                                     <div class="text-[11px] text-[var(--text-tertiary)] sm:hidden font-mono">{{ $product->sku ?: '—' }}</div>
                                 </td>
                                 <td class="hidden sm:table-cell font-mono text-xs text-[var(--text-tertiary)]">
-                                    {{ $product->sku ?: '—' }}
+                                    <div>{{ $product->sku ?: '—' }}</div>
+                                    @if($product->ean)
+                                        <div class="text-[10px]">{{ $product->ean }}</div>
+                                    @endif
                                 </td>
                                 <td>
-                                    <span class="badge {{ $stockTone }}">{{ $product->stock }}</span>
+                                    <span class="badge {{ $product->pharmacyStatusBadgeClass() }}">{{ $product->stock }}</span>
+                                </td>
+                                <td class="hidden md:table-cell text-xs tabular-nums text-[var(--text-secondary)]">
+                                    {{ $product->minStockThreshold() }}
+                                </td>
+                                <td class="hidden lg:table-cell text-xs text-[var(--text-secondary)]">
+                                    {{ $product->expires_at?->format('d/m/Y') ?? '—' }}
+                                </td>
+                                <td>
+                                    <span class="badge {{ $product->pharmacyStatusBadgeClass() }}">{{ $product->pharmacyStatusLabel() }}</span>
                                 </td>
                                 <td>
                                     <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $product->id }}">
@@ -435,7 +446,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-10 text-[var(--text-secondary)]">
+                                <td colspan="8" class="text-center py-10 text-[var(--text-secondary)]">
                                     Aucun produit pour ce filtre.
                                 </td>
                             </tr>

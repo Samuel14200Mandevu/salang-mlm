@@ -4,7 +4,10 @@
 
 @section('content')
 @php
-    $stockSubtitle = 'Stock actuel : '.$product->stock
+    $stockSubtitle = 'Stock : '.$product->stock
+        .' · seuil '.$product->minStockThreshold()
+        .' · '.$product->pharmacyStatusLabel()
+        .($product->expires_at ? ' · pér. '.$product->expires_at->format('d/m/Y') : '')
         .' · '.($product->sku ? 'SKU '.$product->sku : 'Sans SKU');
 @endphp
 <div class="space-y-4 sm:space-y-6">

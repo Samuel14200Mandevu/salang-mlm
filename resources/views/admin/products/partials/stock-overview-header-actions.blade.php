@@ -4,8 +4,9 @@
     $filterActive = filled($stockFilter) || (request()->exists('active_only') && ! $activeOnly);
 
     $filterButtonLabel = match ($stockFilter) {
-        'low' => 'Stock bas',
+        'low', 'reorder' => 'À commander',
         'out' => 'Rupture',
+        'expiring' => 'Péremption',
         'ok' => 'Stock OK',
         default => (! $activeOnly ? 'Tous statuts' : 'Filtrer'),
     };
@@ -62,15 +63,20 @@
                 <span>Tous (actifs)</span>
                 <span class="filter-count">{{ $stats['total'] ?? 0 }}</span>
             </a>
-            <a href="{{ $filterUrl(['stock' => 'low', 'active_only' => '1']) }}"
-               class="{{ $stockFilter === 'low' ? 'is-active' : '' }}">
-                <span>Stock bas</span>
-                <span class="filter-count">{{ $stats['low'] ?? 0 }}</span>
-            </a>
             <a href="{{ $filterUrl(['stock' => 'out', 'active_only' => '1']) }}"
                class="{{ $stockFilter === 'out' ? 'is-active' : '' }}">
                 <span>Rupture</span>
                 <span class="filter-count">{{ $stats['out'] ?? 0 }}</span>
+            </a>
+            <a href="{{ $filterUrl(['stock' => 'reorder', 'active_only' => '1']) }}"
+               class="{{ in_array($stockFilter, ['low', 'reorder'], true) ? 'is-active' : '' }}">
+                <span>À commander</span>
+                <span class="filter-count">{{ $stats['reorder'] ?? $stats['low'] ?? 0 }}</span>
+            </a>
+            <a href="{{ $filterUrl(['stock' => 'expiring', 'active_only' => '1']) }}"
+               class="{{ $stockFilter === 'expiring' ? 'is-active' : '' }}">
+                <span>Péremption</span>
+                <span class="filter-count">{{ $stats['expiring'] ?? 0 }}</span>
             </a>
             <a href="{{ $filterUrl(['stock' => 'ok', 'active_only' => '1']) }}"
                class="{{ $stockFilter === 'ok' ? 'is-active' : '' }}">

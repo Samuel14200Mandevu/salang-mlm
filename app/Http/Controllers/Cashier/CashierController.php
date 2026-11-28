@@ -163,6 +163,7 @@ public function dashboard()
         $product = Product::where('is_active', true)
             ->where(function ($query) use ($sku) {
                 $query->where('sku', $sku)
+                    ->orWhere('ean', $sku)
                     ->orWhere('metadata->barcode_content', $sku);
             })
             ->first();

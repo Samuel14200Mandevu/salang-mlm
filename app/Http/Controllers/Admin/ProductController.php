@@ -138,7 +138,10 @@ class ProductController extends Controller
             'pv_value' => 'nullable|integer|min:0|max:1000',
             'cost' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'min_stock' => 'nullable|integer|min:0|max:100000',
+            'expires_at' => 'nullable|date',
             'sku' => 'nullable|string|max:255|unique:products',
+            'ean' => 'nullable|string|max:32|unique:products,ean',
             'category' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:255',
             'packaging' => 'nullable|string|max:255',
@@ -150,6 +153,9 @@ class ProductController extends Controller
 
         $data = $request->all();
         $data['pv_value'] = $request->pv_value ?? $this->getDefaultPV();
+        $data['min_stock'] = $request->filled('min_stock') ? (int) $request->min_stock : 10;
+        $data['ean'] = $request->filled('ean') ? trim((string) $request->ean) : null;
+        $data['expires_at'] = $request->filled('expires_at') ? $request->expires_at : null;
         
         // Gestion de l'image
         if ($request->hasFile('image')) {
@@ -215,7 +221,10 @@ class ProductController extends Controller
             'pv_value' => 'nullable|integer|min:0|max:1000',
             'cost' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'min_stock' => 'nullable|integer|min:0|max:100000',
+            'expires_at' => 'nullable|date',
             'sku' => 'nullable|string|max:255|unique:products,sku,' . $id,
+            'ean' => 'nullable|string|max:32|unique:products,ean,' . $id,
             'category' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:255',
             'packaging' => 'nullable|string|max:255',
@@ -227,6 +236,9 @@ class ProductController extends Controller
 
         $data = $request->all();
         $data['pv_value'] = $request->pv_value ?? $this->getDefaultPV();
+        $data['min_stock'] = $request->filled('min_stock') ? (int) $request->min_stock : (int) ($product->min_stock ?? 10);
+        $data['ean'] = $request->filled('ean') ? trim((string) $request->ean) : null;
+        $data['expires_at'] = $request->filled('expires_at') ? $request->expires_at : null;
 
         // Gestion de l'image
         if ($request->hasFile('image')) {
@@ -283,15 +295,24 @@ class ProductController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('ean', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
         if ($request->filled('stock')) {
             match ($request->stock) {
-                'out' => $query->where('stock', '<=', 0),
-                'low' => $query->where('stock', '>', 0)->where('stock', '<=', 5),
-                'ok' => $query->where('stock', '>', 5),
+                'out' => $query->outOfStock(),
+                'low', 'reorder' => $query->belowMinStock(),
+                'expiring' => $query->where(function ($q) {
+                    $q->expired()->orWhere(fn ($q2) => $q2->expiringSoon());
+                }),
+                'ok' => $query->where('stock', '>', 0)
+                    ->whereColumn('stock', '>', 'min_stock')
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                            ->orWhereDate('expires_at', '>', now()->startOfDay()->addDays(Product::EXPIRY_ALERT_DAYS));
+                    }),
                 default => null,
             };
         }
@@ -305,18 +326,31 @@ class ProductController extends Controller
             $query->where('is_active', true);
         }
 
-        $products = $query->get(['id', 'name', 'sku', 'category', 'stock', 'is_active', 'image']);
+        $products = $query->get([
+            'id', 'name', 'sku', 'ean', 'category', 'stock', 'min_stock',
+            'expires_at', 'cost', 'is_active', 'image',
+        ]);
 
-        $lowStock = Product::query()->where('is_active', true)->where('stock', '>', 0)->where('stock', '<=', 5)->count();
-        $outOfStock = Product::query()->where('is_active', true)->where('stock', '<=', 0)->count();
+        $activeBase = Product::query()->where('is_active', true);
+        $outOfStock = (clone $activeBase)->outOfStock()->count();
+        $reorder = (clone $activeBase)->belowMinStock()->count();
+        $expiring = (clone $activeBase)->where(function ($q) {
+            $q->expired()->orWhere(fn ($q2) => $q2->expiringSoon());
+        })->count();
+        $stockValue = (float) (clone $activeBase)
+            ->selectRaw('COALESCE(SUM(stock * COALESCE(cost, 0)), 0) as value')
+            ->value('value');
 
         $stats = [
             'total' => Product::count(),
             'active' => Product::where('is_active', true)->count(),
             'units' => (int) Product::where('is_active', true)->sum('stock'),
-            'low_stock' => $lowStock,
+            'stock_value' => $stockValue,
+            'low_stock' => $reorder,
             'out_of_stock' => $outOfStock,
-            'low' => $lowStock,
+            'reorder' => $reorder,
+            'expiring' => $expiring,
+            'low' => $reorder,
             'out' => $outOfStock,
             'listed' => $products->count(),
         ];

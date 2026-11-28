@@ -34,7 +34,7 @@
     </a>
 
     <button type="button"
-            class="nav-item nav-item--button {{ request()->routeIs('admin.cashiers*', 'admin.packages*', 'admin.products*', 'admin.kyc*', 'admin.consultations*', 'admin.wallets*', 'admin.withdrawals*', 'admin.ranks*', 'admin.reports*', 'admin.pos-reports.*', 'admin.settings*', 'admin.pv.*') ? 'active' : '' }}"
+            class="nav-item nav-item--button {{ request()->routeIs('admin.cashiers*', 'admin.packages*', 'admin.products*', 'admin.pharmacy*', 'admin.kyc*', 'admin.consultations*', 'admin.wallets*', 'admin.withdrawals*', 'admin.ranks*', 'admin.reports*', 'admin.pos-reports.*', 'admin.settings*', 'admin.pv.*') ? 'active' : '' }}"
             @click="mobileMoreOpen = !mobileMoreOpen"
             :class="{ 'active': mobileMoreOpen }"
             aria-label="Ouvrir le menu administration"

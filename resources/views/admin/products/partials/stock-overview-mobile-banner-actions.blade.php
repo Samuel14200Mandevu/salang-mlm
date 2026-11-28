@@ -47,13 +47,17 @@
                class="{{ ! $filterActive ? 'is-active' : '' }}">
                 <span>Tous (actifs)</span>
             </a>
-            <a href="{{ $filterUrl(['stock' => 'low', 'active_only' => '1']) }}"
-               class="{{ $stockFilter === 'low' ? 'is-active' : '' }}">
-                <span>Stock bas</span>
-            </a>
             <a href="{{ $filterUrl(['stock' => 'out', 'active_only' => '1']) }}"
                class="{{ $stockFilter === 'out' ? 'is-active' : '' }}">
                 <span>Rupture</span>
+            </a>
+            <a href="{{ $filterUrl(['stock' => 'reorder', 'active_only' => '1']) }}"
+               class="{{ in_array($stockFilter, ['low', 'reorder'], true) ? 'is-active' : '' }}">
+                <span>À commander</span>
+            </a>
+            <a href="{{ $filterUrl(['stock' => 'expiring', 'active_only' => '1']) }}"
+               class="{{ $stockFilter === 'expiring' ? 'is-active' : '' }}">
+                <span>Péremption</span>
             </a>
             <a href="{{ $filterUrl(['stock' => 'ok', 'active_only' => '1']) }}"
                class="{{ $stockFilter === 'ok' ? 'is-active' : '' }}">

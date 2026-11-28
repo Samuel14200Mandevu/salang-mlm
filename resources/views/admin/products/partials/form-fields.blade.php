@@ -65,14 +65,29 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="sku">Code-barres (SKU)</label>
+                    <label for="sku">Code produit / SKU</label>
                     <input type="text"
                            id="sku"
                            name="sku"
                            value="{{ $val('sku') }}"
                            class="form-control font-mono"
-                           placeholder="SAL-000001 ou EAN">
-                    <span class="help-text">Vide = généré automatiquement</span>
+                           placeholder="M001 / SAL-000001">
+                    <span class="help-text">Vide = généré automatiquement · scan POS</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="ean">Code-barres fabricant (EAN)</label>
+                    <input type="text"
+                           id="ean"
+                           name="ean"
+                           value="{{ $val('ean') }}"
+                           class="form-control font-mono"
+                           placeholder="6001234567893"
+                           maxlength="32">
+                    <span class="help-text">Optionnel · scannable en caisse</span>
+                    @error('ean')
+                        <p class="field-error">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="form-group product-form-grid__full">
@@ -236,11 +251,11 @@
 
         <section class="product-form-section">
             <div class="product-form-section__head">
-                <h3>Stock</h3>
-                <p>Quantité disponible à la création / maj.</p>
+                <h3>Stock &amp; péremption</h3>
+                <p>Quantité, seuil de réappro et date de péremption.</p>
             </div>
-            <div class="form-group mb-0">
-                <label for="stock">Stock <span class="required">*</span></label>
+            <div class="form-group">
+                <label for="stock">Stock actuel <span class="required">*</span></label>
                 <input type="number"
                        id="stock"
                        name="stock"
@@ -250,11 +265,42 @@
                        required>
                 @if($isEdit)
                     <span class="help-text">
-                        Mouvements détaillés :
+                        Mouvements :
                         <a href="{{ route('admin.products.stock', $product->id) }}" class="text-[var(--primary)] hover:underline">Gestion du stock</a>
                     </span>
                 @endif
                 @error('stock')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="form-group">
+                <label for="min_stock">Seuil min. (à commander)</label>
+                <input type="number"
+                       id="min_stock"
+                       name="min_stock"
+                       min="0"
+                       value="{{ $val('min_stock', 10) }}"
+                       class="form-control @error('min_stock') form-control-error @enderror">
+                <span class="help-text">Alerte quand stock ≤ ce seuil</span>
+                @error('min_stock')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="form-group mb-0">
+                <label for="expires_at">Péremption</label>
+                @php
+                    $expiresRaw = $val('expires_at');
+                    $expiresInput = $expiresRaw
+                        ? \Illuminate\Support\Carbon::parse($expiresRaw)->format('Y-m-d')
+                        : '';
+                @endphp
+                <input type="date"
+                       id="expires_at"
+                       name="expires_at"
+                       value="{{ $expiresInput }}"
+                       class="form-control @error('expires_at') form-control-error @enderror">
+                <span class="help-text">Alerte &lt; 90 jours</span>
+                @error('expires_at')
                     <p class="field-error">{{ $message }}</p>
                 @enderror
             </div>

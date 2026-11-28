@@ -789,6 +789,38 @@ Route::prefix('pv')->name('pv.')->group(function () {
         Route::get('/products', [AdminProductController::class, 'index'])->name('products');
 
         // ============================================================
+        // PHARMACIE (kit Excel : dashboard, achats, ventes, caisse, assurances, registres)
+        // ============================================================
+        Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\Pharmacy\DashboardController::class, 'index'])->name('dashboard');
+
+            Route::get('/purchases', [\App\Http\Controllers\Admin\Pharmacy\PurchaseController::class, 'index'])->name('purchases.index');
+            Route::get('/purchases/create', [\App\Http\Controllers\Admin\Pharmacy\PurchaseController::class, 'create'])->name('purchases.create');
+            Route::post('/purchases', [\App\Http\Controllers\Admin\Pharmacy\PurchaseController::class, 'store'])->name('purchases.store');
+            Route::get('/purchases/{purchase}', [\App\Http\Controllers\Admin\Pharmacy\PurchaseController::class, 'show'])->name('purchases.show');
+            Route::put('/purchases/{purchase}/payment', [\App\Http\Controllers\Admin\Pharmacy\PurchaseController::class, 'updatePayment'])->name('purchases.payment');
+
+            Route::get('/sales', [\App\Http\Controllers\Admin\Pharmacy\SaleController::class, 'index'])->name('sales.index');
+            Route::get('/sales/create', [\App\Http\Controllers\Admin\Pharmacy\SaleController::class, 'create'])->name('sales.create');
+            Route::post('/sales', [\App\Http\Controllers\Admin\Pharmacy\SaleController::class, 'store'])->name('sales.store');
+            Route::get('/sales/{sale}', [\App\Http\Controllers\Admin\Pharmacy\SaleController::class, 'show'])->name('sales.show');
+
+            Route::get('/cash', [\App\Http\Controllers\Admin\Pharmacy\CashController::class, 'index'])->name('cash.index');
+            Route::post('/cash', [\App\Http\Controllers\Admin\Pharmacy\CashController::class, 'store'])->name('cash.store');
+            Route::put('/cash/float', [\App\Http\Controllers\Admin\Pharmacy\CashController::class, 'updateFloat'])->name('cash.float');
+
+            Route::get('/insurers', [\App\Http\Controllers\Admin\Pharmacy\InsurerController::class, 'index'])->name('insurers.index');
+            Route::post('/insurers', [\App\Http\Controllers\Admin\Pharmacy\InsurerController::class, 'store'])->name('insurers.store');
+            Route::put('/insurers/{insurer}', [\App\Http\Controllers\Admin\Pharmacy\InsurerController::class, 'update'])->name('insurers.update');
+
+            Route::get('/registers', [\App\Http\Controllers\Admin\Pharmacy\RegisterController::class, 'index'])->name('registers.index');
+            Route::post('/registers/suppliers', [\App\Http\Controllers\Admin\Pharmacy\RegisterController::class, 'storeSupplier'])->name('registers.suppliers.store');
+            Route::put('/registers/suppliers/{supplier}', [\App\Http\Controllers\Admin\Pharmacy\RegisterController::class, 'updateSupplier'])->name('registers.suppliers.update');
+            Route::post('/registers/patients', [\App\Http\Controllers\Admin\Pharmacy\RegisterController::class, 'storePatient'])->name('registers.patients.store');
+            Route::put('/registers/patients/{patient}', [\App\Http\Controllers\Admin\Pharmacy\RegisterController::class, 'updatePatient'])->name('registers.patients.update');
+        });
+
+        // ============================================================
         // ORDERS ADMIN
         // ============================================================
         Route::prefix('orders')->name('orders.')->group(function () {
